@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fluxen design tokens — see docs/DESIGN_SYSTEM.md */
+  --color-canvas: #eceef4;
+  --color-surface: #f6f7fb;
+  --color-card: #ffffff;
+
+  --color-ink: #16181d;
+  --color-ink-secondary: #5c6270;
+  --color-ink-faint: #9aa1b1;
+  --color-line: #e4e7ee;
+
+  --color-primary: #3556f4;
+  --color-primary-hover: #2a46d6;
+  --color-primary-soft: #e8ecfe;
+
+  --color-success: #16a34a;
+  --color-success-soft: #e5f6ec;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fdf3e0;
+  --color-orange: #f97316;
+  --color-orange-soft: #feeee2;
+  --color-critical: #e5484d;
+  --color-critical-soft: #fdeaeb;
+  --color-info: #6b7280;
+  --color-info-soft: #eef0f3;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 24px;
+  --radius-tile: 16px;
+  --radius-field: 12px;
+
+  --shadow-card: 0 1px 2px rgb(22 24 29 / 4%), 0 8px 24px rgb(22 24 29 / 6%);
+  --shadow-float: 0 2px 4px rgb(22 24 29 / 5%), 0 16px 48px rgb(22 24 29 / 10%);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+@utility gradient-coral {
+  background-image: linear-gradient(135deg, #fde5d8 0%, #e9d5f2 45%, #fbc7b6 100%);
+}
+
+@utility gradient-mint {
+  background-image: linear-gradient(135deg, #d8f4ee 0%, #bfeef2 50%, #8fd8ee 100%);
+}
+
+@utility label-micro {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
