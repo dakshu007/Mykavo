@@ -94,7 +94,8 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members WorkspaceMember[]
+  members  WorkspaceMember[]
+  websites Website[]
 
   @@index([ownerId])
   @@map("workspace")
@@ -112,6 +113,61 @@ model WorkspaceMember {
   @@unique([workspaceId, userId])
   @@index([userId])
   @@map("workspace_member")
+}
+
+// ---------- Websites & monitored pages (Phase 2) ----------
+
+enum WebsiteStatus {
+  PENDING
+  DISCOVERING
+  BASELINING
+  ACTIVE
+  PAUSED
+  ERROR
+}
+
+enum ScanFrequency {
+  WEEKLY
+  DAILY
+}
+
+model Website {
+  id            String        @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name          String
+  url           String
+  normalizedUrl String
+  status        WebsiteStatus @default(PENDING)
+  scanFrequency ScanFrequency @default(WEEKLY)
+  timezone      String        @default("UTC")
+  lastScanAt    DateTime?
+  nextScanAt    DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  monitoredPages MonitoredPage[]
+
+  @@unique([workspaceId, normalizedUrl])
+  @@index([workspaceId])
+  @@index([status, nextScanAt])
+  @@map("website")
+}
+
+model MonitoredPage {
+  id            String   @id @default(cuid())
+  websiteId     String
+  website       Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  url           String
+  normalizedUrl String
+  name          String?
+  enabled       Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([websiteId, normalizedUrl])
+  @@index([websiteId])
+  @@map("monitored_page")
 }
 
 // ---------- Waitlist (migrated from Phase 0 file store) ----------
