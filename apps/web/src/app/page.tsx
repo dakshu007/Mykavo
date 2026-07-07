@@ -27,7 +27,6 @@ import { MarketingFooter } from "@/components/marketing/footer";
 import { HeroUrlInput } from "@/components/marketing/hero-url-input";
 import { PlanCards } from "@/components/marketing/plan-cards";
 import { DashboardPreview } from "@/components/preview/dashboard-preview";
-import { WaitlistForm } from "@/components/waitlist-form";
 import { ButtonLink } from "@/components/ui/button";
 import { site } from "@/config/site";
 
@@ -148,7 +147,7 @@ export default function HomePage() {
             {site.description}
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <ButtonLink href="/#waitlist" size="lg">
+            <ButtonLink href="/signup" size="lg">
               Start Monitoring Free
             </ButtonLink>
             <ButtonLink href="/#how-it-works" size="lg" variant="secondary">
@@ -491,15 +490,25 @@ export default function HomePage() {
                 Stop finding out about broken websites from your users
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/70">
-                Join the waitlist for early access. Free plan included — monitor your first
-                website in minutes.
+                Create a free account — monitor your first website in minutes. No credit card
+                required.
               </p>
-              <div className="mx-auto mt-8 flex max-w-xl justify-center">
-                <WaitlistForm
-                  source="landing_final_cta"
-                  align="center"
-                  className="[&>p]:text-white/50"
-                />
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <ButtonLink
+                  href="/signup"
+                  size="lg"
+                  className="bg-white text-ink hover:bg-white/90"
+                >
+                  Start Monitoring Free
+                </ButtonLink>
+                <ButtonLink
+                  href="/preview"
+                  size="lg"
+                  variant="ghost"
+                  className="text-white/80 hover:bg-white/10 hover:text-white"
+                >
+                  Explore the dashboard
+                </ButtonLink>
               </div>
             </div>
           </div>

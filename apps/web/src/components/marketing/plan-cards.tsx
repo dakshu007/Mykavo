@@ -36,7 +36,7 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
             ))}
           </ul>
           <Link
-            href="/#waitlist"
+            href="/signup"
             className={cn(
               "mt-6 inline-flex h-11 items-center justify-center rounded-full text-sm font-medium transition-colors",
               plan.highlighted

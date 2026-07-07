@@ -3,7 +3,7 @@ import { Check, Minus } from "lucide-react";
 import { MarketingNav } from "@/components/marketing/nav";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { PlanCards } from "@/components/marketing/plan-cards";
-import { WaitlistForm } from "@/components/waitlist-form";
+import { ButtonLink } from "@/components/ui/button";
 import { TrackOnView } from "@/components/track-on-view";
 import { plans } from "@/config/plans";
 
@@ -138,14 +138,16 @@ export default function PricingPage() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto mt-20 max-w-xl text-center" id="waitlist">
+        <section className="mx-auto mt-20 max-w-xl text-center">
           <h2 className="text-2xl font-semibold tracking-tight text-ink">
             Ready when you are
           </h2>
           <p className="mb-6 mt-2 text-[15px] text-ink-secondary">
-            Join the waitlist — early access seats open in small batches.
+            Start on the free plan — upgrade whenever your websites need more.
           </p>
-          <WaitlistForm source="pricing" align="center" />
+          <ButtonLink href="/signup" size="lg">
+            Start Monitoring Free
+          </ButtonLink>
         </section>
       </main>
       <MarketingFooter />

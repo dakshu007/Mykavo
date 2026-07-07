@@ -114,21 +114,22 @@ export async function assertSafeUrl(rawUrl: string | URL): Promise<URL> {
 
   const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
 
-  if (
-    BLOCKED_HOSTNAMES.has(hostname) ||
-    BLOCKED_HOST_SUFFIXES.some((s) => hostname.endsWith(s)) ||
-    !hostname.includes(".")
-  ) {
-    throw new UnsafeUrlError("BLOCKED_HOST", "This host is not allowed.");
-  }
-
-  // Literal IP in the URL (including bracketed IPv6)
+  // Literal IP in the URL (including bracketed IPv6) — classify before the
+  // hostname heuristics so IPv6 literals aren't misreported as blocked hosts.
   const literal = hostname.startsWith("[") ? hostname.slice(1, -1) : hostname;
   if (isIP(literal)) {
     if (isBlockedIp(literal)) {
       throw new UnsafeUrlError("BLOCKED_IP", "This IP address is not allowed.");
     }
     return url;
+  }
+
+  if (
+    BLOCKED_HOSTNAMES.has(hostname) ||
+    BLOCKED_HOST_SUFFIXES.some((s) => hostname.endsWith(s)) ||
+    !hostname.includes(".")
+  ) {
+    throw new UnsafeUrlError("BLOCKED_HOST", "This host is not allowed.");
   }
 
   let addresses: Array<{ address: string }>;

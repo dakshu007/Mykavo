@@ -1,10 +1,9 @@
 /**
- * Waitlist persistence behind an interface so Phase 1 can swap in Prisma
- * without touching the API route. Phase 0 uses an append-only JSONL file.
+ * Waitlist persistence. Phase 1: Prisma-backed (WaitlistEntry table),
+ * replacing the Phase 0 file store behind the same interface.
  */
 
-import { appendFile, mkdir, readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { prisma, Prisma } from "@fluxen/database";
 
 export interface WaitlistEntry {
   email: string;
@@ -16,47 +15,29 @@ export interface WaitlistStore {
   add(entry: WaitlistEntry): Promise<{ created: boolean }>;
 }
 
-class FileWaitlistStore implements WaitlistStore {
-  private filePath: string;
-
-  constructor(filePath: string) {
-    this.filePath = filePath;
-  }
-
-  private async existingEmails(): Promise<Set<string>> {
+class PrismaWaitlistStore implements WaitlistStore {
+  async add(entry: WaitlistEntry): Promise<{ created: boolean }> {
     try {
-      const raw = await readFile(this.filePath, "utf-8");
-      const emails = new Set<string>();
-      for (const line of raw.split("\n")) {
-        if (!line.trim()) continue;
-        try {
-          const parsed = JSON.parse(line) as WaitlistEntry;
-          emails.add(parsed.email);
-        } catch {
-          // skip malformed line
-        }
+      await prisma.waitlistEntry.create({
+        data: { email: entry.email, source: entry.source },
+      });
+      return { created: true };
+    } catch (err) {
+      // Unique violation on email → already on the list; not an error.
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        return { created: false };
       }
-      return emails;
-    } catch {
-      return new Set();
+      throw err;
     }
   }
-
-  async add(entry: WaitlistEntry): Promise<{ created: boolean }> {
-    const existing = await this.existingEmails();
-    if (existing.has(entry.email)) return { created: false };
-    await mkdir(dirname(this.filePath), { recursive: true });
-    await appendFile(this.filePath, JSON.stringify(entry) + "\n", "utf-8");
-    return { created: true };
-  }
 }
-
-const defaultPath =
-  process.env.WAITLIST_FILE ?? join(process.cwd(), ".data", "waitlist.jsonl");
 
 let store: WaitlistStore | null = null;
 
 export function getWaitlistStore(): WaitlistStore {
-  if (!store) store = new FileWaitlistStore(defaultPath);
+  if (!store) store = new PrismaWaitlistStore();
   return store;
 }

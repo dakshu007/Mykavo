@@ -31,8 +31,11 @@ export function MarketingNav() {
             </Link>
           ))}
         </nav>
-        <div className="hidden md:block">
-          <ButtonLink href="/#waitlist" size="sm">
+        <div className="hidden items-center gap-2 md:flex">
+          <ButtonLink href="/login" size="sm" variant="ghost">
+            Sign in
+          </ButtonLink>
+          <ButtonLink href="/signup" size="sm">
             Start Monitoring Free
           </ButtonLink>
         </div>
@@ -60,8 +63,13 @@ export function MarketingNav() {
               </li>
             ))}
             <li className="pt-2">
-              <ButtonLink href="/#waitlist" className="w-full">
+              <ButtonLink href="/signup" className="w-full">
                 Start Monitoring Free
+              </ButtonLink>
+            </li>
+            <li>
+              <ButtonLink href="/login" variant="secondary" className="w-full">
+                Sign in
               </ButtonLink>
             </li>
           </ul>

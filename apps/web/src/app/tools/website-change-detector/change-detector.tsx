@@ -454,7 +454,7 @@ export function ChangeDetector() {
             changes.
           </p>
           <Link
-            href="/#waitlist"
+            href="/signup"
             className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-ink transition-colors hover:bg-white/90"
             onClick={() => track("cta_clicked", { cta: "tool_to_waitlist" })}
           >

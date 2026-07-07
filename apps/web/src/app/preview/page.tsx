@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MarketingNav } from "@/components/marketing/nav";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { DashboardPreview } from "@/components/preview/dashboard-preview";
-import { WaitlistForm } from "@/components/waitlist-form";
+import { ButtonLink } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Dashboard Preview — Fluxen",
@@ -27,14 +27,16 @@ export default function PreviewPage() {
           </p>
         </div>
         <DashboardPreview />
-        <div className="mx-auto mt-14 max-w-xl text-center" id="waitlist">
+        <div className="mx-auto mt-14 max-w-xl text-center">
           <h2 className="text-2xl font-semibold tracking-tight text-ink">
             Want this for your websites?
           </h2>
           <p className="mb-6 mt-2 text-[15px] text-ink-secondary">
-            Join the waitlist and be first in when monitoring seats open.
+            Create a free account — no credit card required.
           </p>
-          <WaitlistForm source="preview" align="center" />
+          <ButtonLink href="/signup" size="lg">
+            Start Monitoring Free
+          </ButtonLink>
         </div>
       </main>
       <MarketingFooter />
