@@ -5,6 +5,7 @@
  */
 
 export const SCAN_WEBSITE_QUEUE = "scan-website";
+export const SCHEDULER_SWEEP_QUEUE = "scheduler-sweep";
 
 export interface ScanWebsiteJob {
   scanId: string;

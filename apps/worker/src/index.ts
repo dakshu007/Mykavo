@@ -7,9 +7,16 @@
 import "dotenv/config";
 import { PgBoss } from "pg-boss";
 import { BrowserPool } from "@fluxen/scanner";
-import { SCAN_WEBSITE_QUEUE, type ScanWebsiteJob } from "@fluxen/shared";
+import {
+  SCAN_WEBSITE_QUEUE,
+  SCHEDULER_SWEEP_QUEUE,
+  type ScanWebsiteJob,
+} from "@fluxen/shared";
 import { logger } from "./logger";
 import { runScanWebsiteJob } from "./scan-website";
+import { runSchedulerSweep } from "./scheduler";
+
+const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -46,7 +53,17 @@ async function main() {
     },
   );
 
-  logger.info("worker started", { queue: SCAN_WEBSITE_QUEUE });
+  // Central scheduler (spec §40): a single cron sweep, not one job per website.
+  await boss.createQueue(SCHEDULER_SWEEP_QUEUE).catch(() => {});
+  await boss.work(SCHEDULER_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runSchedulerSweep(boss);
+  });
+  await boss.schedule(SCHEDULER_SWEEP_QUEUE, SWEEP_CRON);
+
+  logger.info("worker started", {
+    queue: SCAN_WEBSITE_QUEUE,
+    schedulerCron: SWEEP_CRON,
+  });
 
   async function shutdown(signal: string) {
     logger.info("shutting down", { signal });

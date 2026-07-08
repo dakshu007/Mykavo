@@ -92,6 +92,9 @@ importers:
       '@fluxen/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@fluxen/email':
+        specifier: workspace:*
+        version: link:../../packages/email
       '@fluxen/scanner':
         specifier: workspace:*
         version: link:../../packages/scanner
@@ -149,6 +152,12 @@ importers:
       prisma:
         specifier: ^6.16.0
         version: 6.19.3(typescript@5.9.3)
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@20.19.43)(vite@8.1.3(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0))
+
+  packages/email:
+    devDependencies:
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@20.19.43)(vite@8.1.3(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0))

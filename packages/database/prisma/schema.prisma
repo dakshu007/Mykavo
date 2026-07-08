@@ -95,8 +95,10 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members  WorkspaceMember[]
-  websites Website[]
+  members              WorkspaceMember[]
+  websites             Website[]
+  notificationChannels NotificationChannel[]
+  notifications        Notification[]
 
   @@index([ownerId])
   @@map("workspace")
@@ -151,6 +153,7 @@ model Website {
   scans          Scan[]
   baselines      Baseline[]
   changeEvents   ChangeEvent[]
+  notifications  Notification[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -216,8 +219,9 @@ model Scan {
   errorMessage    String?
   createdAt       DateTime        @default(now())
 
-  snapshots    PageSnapshot[]
-  changeEvents ChangeEvent[]
+  snapshots     PageSnapshot[]
+  changeEvents  ChangeEvent[]
+  notifications Notification[]
 
   @@index([websiteId, createdAt(sort: Desc)])
   @@map("scan")
@@ -382,6 +386,59 @@ model ChangeEvent {
   @@index([scanId])
   @@index([detectedAt(sort: Desc)])
   @@map("change_event")
+}
+
+// ---------- Notifications (Phase 7) ----------
+
+enum NotificationChannelType {
+  EMAIL
+  SLACK
+  WEBHOOK
+  DISCORD
+  MICROSOFT_TEAMS
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model NotificationChannel {
+  id            String                  @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  type          NotificationChannelType @default(EMAIL)
+  enabled       Boolean                 @default(true)
+  // { recipients: string[], minSeverity: "MEDIUM" | "HIGH" | "CRITICAL", failureAlerts: boolean }
+  configuration Json
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@unique([workspaceId, type])
+  @@index([workspaceId])
+  @@map("notification_channel")
+}
+
+model Notification {
+  id           String                  @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  websiteId    String?
+  website      Website?                @relation(fields: [websiteId], references: [id], onDelete: SetNull)
+  scanId       String?
+  scan         Scan?                   @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  channelType  NotificationChannelType
+  recipient    String
+  subject      String
+  status       NotificationStatus      @default(PENDING)
+  sentAt       DateTime?
+  errorCode    String?
+  errorMessage String?
+  createdAt    DateTime                @default(now())
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@map("notification")
 }
 
 // ---------- Waitlist (migrated from Phase 0 file store) ----------

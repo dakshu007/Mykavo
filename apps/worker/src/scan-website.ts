@@ -13,8 +13,10 @@ import {
   scanPage,
   type ArtifactStorage,
 } from "@fluxen/scanner";
+import { computeNextScanAt } from "@fluxen/shared";
 import { logger } from "./logger";
 import { runComparisonForScan } from "./compare-scan";
+import { notifyForScan } from "./notify";
 
 const PAGE_CONCURRENCY = 3;
 
@@ -173,12 +175,18 @@ export async function runScanWebsiteJob(
       errorCode: status === "FAILED" ? "ALL_PAGES_FAILED" : null,
     },
   });
+  const finishedAt = new Date();
+  const nowActive = status !== "FAILED";
   await prisma.website.update({
     where: { id: website.id },
     data: {
-      lastScanAt: new Date(),
-      // A finished scan (even partial) puts the website into ACTIVE monitoring.
-      status: status === "FAILED" ? "ERROR" : "ACTIVE",
+      lastScanAt: finishedAt,
+      // A finished scan (even partial) puts the website into ACTIVE monitoring
+      // and re-arms recurring scans (spec §40). Failures pause scheduling.
+      status: nowActive ? "ACTIVE" : "ERROR",
+      nextScanAt: nowActive
+        ? computeNextScanAt(website.scanFrequency, finishedAt)
+        : null,
     },
   });
 
@@ -199,6 +207,16 @@ export async function runScanWebsiteJob(
       logger.info("changes detected", { ...log, changes, highest });
     } catch (err) {
       logger.error("comparison failed", log, err);
+    }
+  }
+
+  // Notify — grouped summary for change-bearing scans, alert for failures
+  // (spec §27). Baseline scans never notify (they create no change events).
+  if (scan.triggerType !== "BASELINE") {
+    try {
+      await notifyForScan(scanId);
+    } catch (err) {
+      logger.error("notification failed", log, err);
     }
   }
 

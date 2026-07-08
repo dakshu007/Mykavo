@@ -10,6 +10,7 @@
   "dependencies": {
     "@fluxen/comparison-engine": "workspace:*",
     "@fluxen/database": "workspace:*",
+    "@fluxen/email": "workspace:*",
     "@fluxen/scanner": "workspace:*",
     "@fluxen/shared": "workspace:*",
     "dotenv": "^17.0.0",

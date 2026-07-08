@@ -1,12 +1,69 @@
-import { Bell } from "lucide-react";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { CheckCircle2, Mail, XCircle } from "lucide-react";
+import { prisma } from "@fluxen/database";
+import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { getEmailSettings } from "@/lib/notification-settings";
+import { Card, CardHeader } from "@/components/ui/card";
+import { NotificationSettingsForm } from "@/components/dashboard/notification-settings-form";
 
-export default function NotificationsPage() {
+export default async function NotificationsPage() {
+  const session = await requireSession();
+  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+
+  const [settings, history] = await Promise.all([
+    getEmailSettings(workspace.id, session.user.email),
+    prisma.notification.findMany({
+      where: { workspaceId: workspace.id },
+      include: { website: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 25,
+    }),
+  ]);
+
   return (
-    <EmptyState
-      icon={Bell}
-      title="No notifications yet"
-      description="Email alerts for critical and high-severity changes arrive with scheduled monitoring (Phase 7). You'll configure recipients and severity preferences here."
-    />
+    <div className="max-w-2xl space-y-6">
+      <Card>
+        <CardHeader
+          title="Email notifications"
+          action={
+            <span className="inline-flex size-10 items-center justify-center rounded-xl bg-surface">
+              <Mail className="size-4.5 text-ink-secondary" aria-hidden />
+            </span>
+          }
+        />
+        <NotificationSettingsForm initial={settings} />
+      </Card>
+
+      <Card>
+        <CardHeader title="Recent notifications" />
+        {history.length === 0 ? (
+          <p className="py-4 text-sm text-ink-secondary">
+            No notifications sent yet. When a scan finds important changes, a grouped summary is
+            emailed to your recipients and logged here.
+          </p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {history.map((n) => (
+              <li key={n.id} className="flex items-center gap-3 py-3">
+                {n.status === "SENT" ? (
+                  <CheckCircle2 className="size-4.5 shrink-0 text-success" aria-hidden />
+                ) : (
+                  <XCircle className="size-4.5 shrink-0 text-critical" aria-hidden />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">{n.subject}</p>
+                  <p className="truncate text-xs text-ink-faint">
+                    {n.website?.name ?? "—"} · {n.recipient}
+                    {n.errorMessage ? ` · ${n.errorMessage}` : ""}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-ink-faint">
+                  {n.createdAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </div>
   );
 }
