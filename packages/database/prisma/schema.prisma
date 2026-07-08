@@ -99,6 +99,8 @@ model Workspace {
   websites             Website[]
   notificationChannels NotificationChannel[]
   notifications        Notification[]
+  subscription         Subscription?
+  checkoutIntents      CheckoutIntent[]
 
   @@index([ownerId])
   @@map("workspace")
@@ -439,6 +441,58 @@ model Notification {
 
   @@index([workspaceId, createdAt(sort: Desc)])
   @@map("notification")
+}
+
+// ---------- Billing (Phase 8 — Dodo Payments) ----------
+
+model Subscription {
+  id                 String    @id @default(cuid())
+  workspaceId        String    @unique
+  workspace          Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // Entitlement source of truth: "free" | "pro". Set by verified webhooks.
+  planId             String    @default("free")
+  // Provider status string (dodo): active | on_hold | cancelled | expired | failed | pending.
+  status             String    @default("active")
+  provider           String    @default("dodo")
+  dodoCustomerId     String?
+  dodoSubscriptionId String?   @unique
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  // Logical time of the last applied webhook event — guards against
+  // out-of-order/retried delivery re-applying a stale transition.
+  lastEventAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([dodoCustomerId])
+  @@map("subscription")
+}
+
+// Server-issued, unguessable checkout attribution (Phase 8 security).
+// Stamped into checkout metadata so a webhook can map a payment back to the
+// workspace WITHOUT trusting a client-editable workspace id.
+model CheckoutIntent {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  consumedAt  DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+  @@map("checkout_intent")
+}
+
+// Webhook idempotency (spec §38): every processed event id is recorded once.
+model ProcessedWebhookEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  eventType   String
+  processedAt DateTime @default(now())
+
+  @@map("processed_webhook_event")
 }
 
 // ---------- Waitlist (migrated from Phase 0 file store) ----------

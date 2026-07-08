@@ -5,7 +5,10 @@
  */
 
 import { prisma } from "@fluxen/database";
-import { getPlan, type Plan } from "@/config/plans";
+import { formatLimit } from "@/config/plans";
+import { getWorkspacePlan } from "@/lib/billing/subscription";
+
+export { getWorkspacePlan };
 
 export class LimitError extends Error {
   constructor(
@@ -17,23 +20,15 @@ export class LimitError extends Error {
   }
 }
 
-/**
- * Resolve the workspace's plan. Until Stripe billing lands (Phase 8),
- * every workspace is on the Free plan.
- */
-export async function getWorkspacePlan(workspaceId: string): Promise<Plan> {
-  void workspaceId; // used once Subscription lookup lands in Phase 8
-  return getPlan("free");
-}
-
 /** Throws LimitError when the workspace cannot add another website. */
 export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
   const plan = await getWorkspacePlan(workspaceId);
+  if (plan.limits.websites === Infinity) return;
   const count = await prisma.website.count({ where: { workspaceId } });
   if (count >= plan.limits.websites) {
     throw new LimitError(
       "WEBSITE_LIMIT",
-      `Your ${plan.name} plan monitors up to ${plan.limits.websites} website${plan.limits.websites === 1 ? "" : "s"}. Upgrade to add more.`,
+      `Your ${plan.name} plan monitors up to ${formatLimit(plan.limits.websites)} website${plan.limits.websites === 1 ? "" : "s"}. Upgrade to Pro for unlimited.`,
     );
   }
 }
@@ -48,6 +43,7 @@ export async function assertPageLimit(
   requestedCount: number,
 ): Promise<void> {
   const plan = await getWorkspacePlan(workspaceId);
+  if (plan.limits.monitoredPages === Infinity) return;
   const otherPages = await prisma.monitoredPage.count({
     where: { website: { workspaceId }, websiteId: { not: websiteId } },
   });
@@ -55,7 +51,7 @@ export async function assertPageLimit(
     const available = Math.max(0, plan.limits.monitoredPages - otherPages);
     throw new LimitError(
       "PAGE_LIMIT",
-      `Your ${plan.name} plan monitors up to ${plan.limits.monitoredPages} pages across all websites (${available} still available). Upgrade for more.`,
+      `Your ${plan.name} plan monitors up to ${formatLimit(plan.limits.monitoredPages)} pages across all websites (${available} still available). Upgrade to Pro for unlimited.`,
     );
   }
 }

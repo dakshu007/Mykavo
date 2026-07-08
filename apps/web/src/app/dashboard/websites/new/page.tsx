@@ -17,7 +17,10 @@ export default async function NewWebsitePage() {
 
   if (websiteCount >= plan.limits.websites) redirect("/dashboard/websites");
 
-  const pageBudget = Math.max(0, plan.limits.monitoredPages - pagesUsed);
+  const pageBudget =
+    plan.limits.monitoredPages === Infinity
+      ? Infinity
+      : Math.max(0, plan.limits.monitoredPages - pagesUsed);
 
   return (
     <div className="space-y-5">
@@ -30,8 +33,9 @@ export default async function NewWebsitePage() {
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Add a website</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Your {plan.name} plan can monitor {pageBudget} more page
-          {pageBudget === 1 ? "" : "s"}.
+          {pageBudget === Infinity
+            ? "Your Pro plan monitors unlimited pages."
+            : `Your ${plan.name} plan can monitor ${pageBudget} more page${pageBudget === 1 ? "" : "s"}.`}
         </p>
       </div>
       <AddWebsiteWizard pageBudget={pageBudget} />

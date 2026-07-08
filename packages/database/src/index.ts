@@ -27,3 +27,13 @@ export {
   OPEN_STATUSES,
   type ChangeAction,
 } from "./changes";
+export {
+  getWorkspaceEntitlement,
+  upgradeWorkspaceToPro,
+  downgradeWorkspaceToFree,
+  findWorkspaceByDodoSubscription,
+  createCheckoutIntent,
+  consumeCheckoutIntent,
+  type Entitlement,
+  type UpgradeInput,
+} from "./subscription";

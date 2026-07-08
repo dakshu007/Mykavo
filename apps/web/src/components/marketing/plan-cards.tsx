@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function PlanCards({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+    <div className="mx-auto grid max-w-3xl gap-5 md:grid-cols-2">
       {plans.map((plan) => (
         <div
           key={plan.id}

@@ -102,7 +102,9 @@ export function PageSelector({
               : "bg-primary-soft text-primary",
           )}
         >
-          {selected.size} of {pageBudget} selected
+          {pageBudget === Infinity
+            ? `${selected.size} selected`
+            : `${selected.size} of ${pageBudget} selected`}
         </span>
       </div>
 

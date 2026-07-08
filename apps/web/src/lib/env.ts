@@ -18,6 +18,12 @@ const serverEnvSchema = z.object({
   // https://console.cloud.google.com → APIs & Services → Credentials.
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  APP_URL: z.string().url().optional(),
+  // Dodo Payments (optional — billing degrades gracefully when unset).
+  DODO_PRODUCT_ID: z.string().optional(),
+  DODO_WEBHOOK_SECRET: z.string().optional(),
+  DODO_API_KEY: z.string().optional(),
+  DODO_MODE: z.enum(["test", "live"]).optional(),
 });
 
 function loadServerEnv() {

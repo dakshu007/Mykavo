@@ -118,7 +118,7 @@ const faqs = [
   },
   {
     q: "How many websites can I monitor?",
-    a: "The free plan monitors 1 website with 5 pages. Paid plans scale from 5 websites ($12/mo) to 100 websites and 2,500 pages ($79/mo) for agencies.",
+    a: "The free plan monitors 1 website with 5 pages. Pro is $12/month with unlimited websites and unlimited monitored pages — ideal for agencies and teams managing many sites.",
   },
   {
     q: "Is it safe to point Fluxen at my site?",

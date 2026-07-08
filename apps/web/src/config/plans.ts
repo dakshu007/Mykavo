@@ -1,10 +1,13 @@
 /**
  * Single source of truth for pricing and plan limits (spec §37).
- * Never hardcode plan limits elsewhere — server-side enforcement (Phase 8+)
+ * Never hardcode plan limits elsewhere — server-side enforcement (limits.ts)
  * and all UI read from this module.
+ *
+ * Fluxen ships two plans: Free, and Pro at $12/month with no limits.
+ * "Unlimited" numeric limits use Infinity so `count >= limit` is never true.
  */
 
-export type PlanId = "free" | "starter" | "pro" | "agency";
+export type PlanId = "free" | "pro";
 
 export type ScanFrequency = "WEEKLY" | "DAILY";
 
@@ -14,7 +17,9 @@ export interface Plan {
   priceMonthlyUsd: number;
   headline: string;
   limits: {
+    /** Infinity means unlimited. */
     websites: number;
+    /** Infinity means unlimited. */
     monitoredPages: number;
     scanFrequency: ScanFrequency;
     historyDays: number;
@@ -56,67 +61,14 @@ export const plans: Plan[] = [
     ],
   },
   {
-    id: "starter",
-    name: "Starter",
-    priceMonthlyUsd: 12,
-    headline: "Daily monitoring for your key sites.",
-    limits: {
-      websites: 5,
-      monitoredPages: 50,
-      scanFrequency: "DAILY",
-      historyDays: 90,
-      manualScans: true,
-      conversionElementMonitoring: false,
-      multiUserWorkspace: false,
-      advancedMonitoringSettings: false,
-      priorityScanning: false,
-      clientReports: false,
-    },
-    features: [
-      "5 websites",
-      "50 monitored pages",
-      "Daily scans",
-      "90-day history",
-      "Email alerts",
-      "Manual scans",
-    ],
-  },
-  {
     id: "pro",
     name: "Pro",
-    priceMonthlyUsd: 29,
-    headline: "Serious monitoring for professionals.",
+    priceMonthlyUsd: 12,
+    headline: "Unlimited monitoring for everything you manage.",
     highlighted: true,
     limits: {
-      websites: 25,
-      monitoredPages: 500,
-      scanFrequency: "DAILY",
-      historyDays: 365,
-      manualScans: true,
-      conversionElementMonitoring: true,
-      multiUserWorkspace: false,
-      advancedMonitoringSettings: true,
-      priorityScanning: true,
-      clientReports: false,
-    },
-    features: [
-      "25 websites",
-      "500 monitored pages",
-      "Daily scans",
-      "1-year history",
-      "Advanced monitoring settings",
-      "Conversion element monitoring",
-      "Priority scanning",
-    ],
-  },
-  {
-    id: "agency",
-    name: "Agency",
-    priceMonthlyUsd: 79,
-    headline: "Every client website in one dashboard.",
-    limits: {
-      websites: 100,
-      monitoredPages: 2500,
+      websites: Infinity,
+      monitoredPages: Infinity,
       scanFrequency: "DAILY",
       historyDays: 365,
       manualScans: true,
@@ -127,18 +79,29 @@ export const plans: Plan[] = [
       clientReports: true,
     },
     features: [
-      "100 websites",
-      "2,500 monitored pages",
+      "Unlimited websites",
+      "Unlimited monitored pages",
       "Daily scans",
-      "Multi-user workspace",
-      "Client-ready reports",
-      "Priority support",
+      "1-year history",
+      "Manual scans",
+      "Advanced monitoring settings",
+      "Conversion element monitoring",
+      "Priority scanning",
+      "Email alerts",
     ],
   },
 ];
+
+export const FREE_PLAN_ID: PlanId = "free";
+export const PAID_PLAN_ID: PlanId = "pro";
 
 export function getPlan(id: PlanId): Plan {
   const plan = plans.find((p) => p.id === id);
   if (!plan) throw new Error(`Unknown plan: ${id}`);
   return plan;
+}
+
+/** Human display for a possibly-infinite limit. */
+export function formatLimit(value: number): string {
+  return value === Infinity ? "Unlimited" : value.toLocaleString("en-US");
 }

@@ -27,7 +27,10 @@ export default async function EditPagesPage({
       where: { website: { workspaceId: workspace.id }, websiteId: { not: website.id } },
     }),
   ]);
-  const pageBudget = Math.max(0, plan.limits.monitoredPages - otherPages);
+  const pageBudget =
+    plan.limits.monitoredPages === Infinity
+      ? Infinity
+      : Math.max(0, plan.limits.monitoredPages - otherPages);
 
   return (
     <div className="space-y-5">
@@ -40,8 +43,9 @@ export default async function EditPagesPage({
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Monitored pages</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Your {plan.name} plan can monitor up to {pageBudget} page
-          {pageBudget === 1 ? "" : "s"} on this website.
+          {pageBudget === Infinity
+            ? "Your Pro plan monitors unlimited pages on this website."
+            : `Your ${plan.name} plan can monitor up to ${pageBudget} page${pageBudget === 1 ? "" : "s"} on this website.`}
         </p>
       </div>
       <PageEditor

@@ -5,12 +5,12 @@ import { MarketingFooter } from "@/components/marketing/footer";
 import { PlanCards } from "@/components/marketing/plan-cards";
 import { ButtonLink } from "@/components/ui/button";
 import { TrackOnView } from "@/components/track-on-view";
-import { plans } from "@/config/plans";
+import { plans, formatLimit } from "@/config/plans";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for website change monitoring. Free plan for 1 website; agency plans up to 100 websites and 2,500 monitored pages.",
+    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $12/month for unlimited websites and pages.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -18,8 +18,8 @@ const comparisonRows: Array<{
   label: string;
   value: (p: (typeof plans)[number]) => string | boolean;
 }> = [
-  { label: "Websites", value: (p) => String(p.limits.websites) },
-  { label: "Monitored pages", value: (p) => p.limits.monitoredPages.toLocaleString("en-US") },
+  { label: "Websites", value: (p) => formatLimit(p.limits.websites) },
+  { label: "Monitored pages", value: (p) => formatLimit(p.limits.monitoredPages) },
   { label: "Scan frequency", value: (p) => (p.limits.scanFrequency === "DAILY" ? "Daily" : "Weekly") },
   { label: "History retention", value: (p) => (p.limits.historyDays >= 365 ? "1 year" : `${p.limits.historyDays} days`) },
   { label: "Email alerts", value: () => true },
@@ -62,8 +62,8 @@ export default function PricingPage() {
             Monitoring that pays for itself
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
-            One missed regression costs more than a year of Fluxen. Start free, upgrade when your
-            websites do.
+            One missed regression costs more than a year of Fluxen. Start free with one website,
+            or go Pro for $12/month — unlimited websites and pages, no catch.
           </p>
         </div>
 
