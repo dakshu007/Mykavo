@@ -5,7 +5,7 @@
  * are skipped, so a retried job resumes where it stopped.
  */
 
-import { prisma } from "@fluxen/database";
+import { prisma, createInitialBaselinesForScan } from "@fluxen/database";
 import {
   BrowserPool,
   ScanPageError,
@@ -176,10 +176,21 @@ export async function runScanWebsiteJob(
     where: { id: website.id },
     data: {
       lastScanAt: new Date(),
-      // A finished scan (even partial) puts the website into ACTIVE
-      // monitoring; full baseline semantics arrive in Phase 4.
+      // A finished scan (even partial) puts the website into ACTIVE monitoring.
       status: status === "FAILED" ? "ERROR" : "ACTIVE",
     },
   });
+
+  // The first successful scan establishes baselines (spec §14): every
+  // successfully-scanned page without an existing baseline gets version 1.
+  if (scan.triggerType === "BASELINE" && scanned > 0) {
+    try {
+      const baselines = await createInitialBaselinesForScan(prisma, scanId);
+      logger.info("baselines created", { ...log, baselines });
+    } catch (err) {
+      logger.error("baseline creation failed", log, err);
+    }
+  }
+
   logger.info("scan finished", { ...log, status, scanned, failed });
 }

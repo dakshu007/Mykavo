@@ -22,10 +22,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions         Session[]
-  accounts         Account[]
-  ownedWorkspaces  Workspace[]       @relation("WorkspaceOwner")
-  memberships      WorkspaceMember[]
+  sessions          Session[]
+  accounts          Account[]
+  ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
+  memberships       WorkspaceMember[]
+  approvedBaselines Baseline[]        @relation("BaselineApprover")
 
   @@map("user")
 }
@@ -148,6 +149,7 @@ model Website {
 
   monitoredPages MonitoredPage[]
   scans          Scan[]
+  baselines      Baseline[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -167,6 +169,7 @@ model MonitoredPage {
   updatedAt     DateTime @updatedAt
 
   snapshots PageSnapshot[]
+  baselines Baseline[]
 
   @@unique([websiteId, normalizedUrl])
   @@index([websiteId])
@@ -246,8 +249,9 @@ model PageSnapshot {
   errorMessage               String?
   createdAt                  DateTime @default(now())
 
-  links   PageLink[]
-  scripts PageScript[]
+  links     PageLink[]
+  scripts   PageScript[]
+  baselines Baseline[]
 
   @@unique([scanId, monitoredPageId])
   @@index([monitoredPageId, createdAt(sort: Desc)])
@@ -280,6 +284,36 @@ model PageScript {
 
   @@index([pageSnapshotId])
   @@map("page_script")
+}
+
+// ---------- Baselines (Phase 4) ----------
+
+enum BaselineStatus {
+  ACTIVE
+  SUPERSEDED
+}
+
+model Baseline {
+  id               String         @id @default(cuid())
+  websiteId        String
+  website          Website        @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  monitoredPageId  String
+  monitoredPage    MonitoredPage  @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
+  pageSnapshotId   String
+  pageSnapshot     PageSnapshot   @relation(fields: [pageSnapshotId], references: [id], onDelete: Cascade)
+  version          Int
+  status           BaselineStatus @default(ACTIVE)
+  approvedByUserId String?
+  approvedByUser   User?          @relation("BaselineApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  approvedAt       DateTime?
+  createdAt        DateTime       @default(now())
+
+  // One version number per page; the single-ACTIVE-per-page invariant is
+  // additionally enforced by a partial unique index (see migration).
+  @@unique([monitoredPageId, version])
+  @@index([websiteId])
+  @@index([monitoredPageId, status])
+  @@map("baseline")
 }
 
 // ---------- Waitlist (migrated from Phase 0 file store) ----------

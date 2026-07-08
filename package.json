@@ -7,7 +7,7 @@
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm --filter web typecheck",
     "worker": "pnpm --filter worker dev",
-    "test": "pnpm --filter web test"
+    "test": "pnpm -r --if-present test"
   },
   "packageManager": "pnpm@10.18.3"
 }

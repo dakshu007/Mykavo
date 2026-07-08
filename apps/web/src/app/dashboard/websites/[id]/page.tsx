@@ -21,7 +21,15 @@ export default async function WebsiteDetailPage({
   const website = await prisma.website.findFirst({
     where: { id, workspaceId: workspace.id },
     include: {
-      monitoredPages: { orderBy: { createdAt: "asc" } },
+      monitoredPages: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          baselines: {
+            where: { status: "ACTIVE" },
+            select: { version: true },
+          },
+        },
+      },
       scans: { orderBy: { createdAt: "desc" }, take: 5 },
     },
   });
@@ -31,6 +39,9 @@ export default async function WebsiteDetailPage({
   const hasFinishedScan = website.scans.some(
     (s) => s.status === "COMPLETED" || s.status === "PARTIAL",
   );
+  const pagesWithBaseline = website.monitoredPages.filter(
+    (p) => p.baselines.length > 0,
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -65,12 +76,24 @@ export default async function WebsiteDetailPage({
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <p className="label-micro mb-2">Monitored pages</p>
           <p className="text-4xl font-semibold tracking-tight text-ink">
             {website.monitoredPages.length}
           </p>
+        </Card>
+        <Card>
+          <p className="label-micro mb-2">Baselined</p>
+          <p className="text-4xl font-semibold tracking-tight text-ink">
+            {pagesWithBaseline}
+            <span className="text-lg text-ink-faint">/{website.monitoredPages.length}</span>
+          </p>
+          {website.monitoredPages.length > 0 && pagesWithBaseline < website.monitoredPages.length && (
+            <p className="mt-1 text-[13px] text-ink-faint">
+              Run a baseline scan to capture the rest.
+            </p>
+          )}
         </Card>
         <Card>
           <p className="label-micro mb-2">Scan frequency</p>
@@ -80,16 +103,11 @@ export default async function WebsiteDetailPage({
         </Card>
         <Card>
           <p className="label-micro mb-2">Last scan</p>
-          <p className="text-4xl font-semibold tracking-tight text-ink">
+          <p className="text-3xl font-semibold tracking-tight text-ink">
             {website.lastScanAt
               ? website.lastScanAt.toLocaleDateString("en-US", { dateStyle: "medium" })
               : "—"}
           </p>
-          {!website.lastScanAt && (
-            <p className="mt-1 text-[13px] text-ink-faint">
-              Baseline scanning arrives in the next release.
-            </p>
-          )}
         </Card>
       </div>
 
@@ -119,20 +137,30 @@ export default async function WebsiteDetailPage({
           <ul className="divide-y divide-line">
             {website.monitoredPages.map((page) => {
               const path = new URL(page.url).pathname + new URL(page.url).search;
+              const baselineVersion = page.baselines[0]?.version;
               return (
-                <li key={page.id} className="flex items-center gap-4 py-3">
-                  <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink">
-                    {path === "/" ? "/ (homepage)" : path}
-                  </span>
-                  <a
-                    href={page.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-ink-faint hover:text-primary"
-                    aria-label={`Open ${path}`}
+                <li key={page.id}>
+                  <Link
+                    href={`/dashboard/websites/${website.id}/pages/${page.id}`}
+                    className="group flex items-center gap-4 py-3"
                   >
-                    <ExternalLink className="size-4" aria-hidden />
-                  </a>
+                    <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink group-hover:text-primary">
+                      {path === "/" ? "/ (homepage)" : path}
+                    </span>
+                    {baselineVersion ? (
+                      <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
+                        Baseline v{baselineVersion}
+                      </span>
+                    ) : (
+                      <span className="shrink-0 rounded-full bg-info-soft px-2.5 py-0.5 text-[11px] font-semibold text-info">
+                        No baseline
+                      </span>
+                    )}
+                    <ExternalLink
+                      className="size-4 shrink-0 text-ink-faint group-hover:text-primary"
+                      aria-hidden
+                    />
+                  </Link>
                 </li>
               );
             })}

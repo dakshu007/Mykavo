@@ -5,6 +5,7 @@ import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ScanStatusBadge } from "@/components/dashboard/scan-status";
+import { SetBaselineButton } from "@/components/dashboard/set-baseline-button";
 import { AutoRefresh } from "./auto-refresh";
 
 export default async function ScanDetailPage({
@@ -22,7 +23,16 @@ export default async function ScanDetailPage({
       website: { select: { id: true, name: true, url: true } },
       snapshots: {
         include: {
-          monitoredPage: { select: { url: true } },
+          monitoredPage: {
+            select: {
+              id: true,
+              url: true,
+              baselines: {
+                where: { status: "ACTIVE" },
+                select: { pageSnapshotId: true, version: true },
+              },
+            },
+          },
           _count: { select: { links: true, scripts: true } },
         },
         orderBy: { createdAt: "asc" },
@@ -101,6 +111,8 @@ export default async function ScanDetailPage({
                 }
               })();
               const failed = snap.errorCode !== null;
+              const activeBaseline = snap.monitoredPage.baselines[0];
+              const isBaseline = activeBaseline?.pageSnapshotId === snap.id;
               return (
                 <li key={snap.id} className="flex items-start gap-4 py-4">
                   {snap.screenshotStorageKey ? (
@@ -137,11 +149,14 @@ export default async function ScanDetailPage({
                       </>
                     )}
                   </div>
-                  {!failed && (
-                    <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-green-700">
-                      Captured
-                    </span>
-                  )}
+                  {!failed &&
+                    (isBaseline ? (
+                      <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                        Baseline v{activeBaseline?.version}
+                      </span>
+                    ) : (
+                      <SetBaselineButton snapshotId={snap.id} size="sm" />
+                    ))}
                 </li>
               );
             })}

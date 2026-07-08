@@ -8,12 +8,15 @@
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0"
   },
   "devDependencies": {
-    "prisma": "^6.16.0"
+    "dotenv": "^17.4.2",
+    "prisma": "^6.16.0",
+    "vitest": "^4.1.10"
   }
 }

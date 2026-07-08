@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, CalendarClock, FileSearch, Globe, Plus, Radar } from "lucide-react";
+import { Bell, FileSearch, Globe, Plus, Radar, ShieldCheck } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
@@ -9,20 +9,23 @@ export default async function DashboardOverviewPage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
-  const [websites, pageCount] = await Promise.all([
+  const [websites, pageCount, baselineCount] = await Promise.all([
     prisma.website.findMany({
       where: { workspaceId: workspace.id },
       include: { _count: { select: { monitoredPages: true } } },
       orderBy: { createdAt: "asc" },
     }),
     prisma.monitoredPage.count({ where: { website: { workspaceId: workspace.id } } }),
+    prisma.baseline.count({
+      where: { status: "ACTIVE", website: { workspaceId: workspace.id } },
+    }),
   ]);
 
   const stats = [
     { label: "Websites monitored", value: websites.length, icon: Globe },
     { label: "Pages monitored", value: pageCount, icon: FileSearch },
+    { label: "Baselined pages", value: baselineCount, icon: ShieldCheck },
     { label: "Open changes", value: 0, icon: Bell },
-    { label: "Scans this week", value: 0, icon: CalendarClock },
   ];
 
   return (
