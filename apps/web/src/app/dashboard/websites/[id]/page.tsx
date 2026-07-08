@@ -5,6 +5,8 @@ import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
+import { ScanStatusBadge } from "@/components/dashboard/scan-status";
+import { RunScanButton } from "@/components/dashboard/run-scan-button";
 import { WebsiteActions } from "./website-actions";
 
 export default async function WebsiteDetailPage({
@@ -18,11 +20,17 @@ export default async function WebsiteDetailPage({
 
   const website = await prisma.website.findFirst({
     where: { id, workspaceId: workspace.id },
-    include: { monitoredPages: { orderBy: { createdAt: "asc" } } },
+    include: {
+      monitoredPages: { orderBy: { createdAt: "asc" } },
+      scans: { orderBy: { createdAt: "desc" }, take: 5 },
+    },
   });
   if (!website) notFound();
 
   const hostname = new URL(website.url).hostname;
+  const hasFinishedScan = website.scans.some(
+    (s) => s.status === "COMPLETED" || s.status === "PARTIAL",
+  );
 
   return (
     <div className="space-y-6">
@@ -48,7 +56,12 @@ export default async function WebsiteDetailPage({
               <ExternalLink className="size-3" aria-hidden />
             </a>
           </div>
-          <WebsiteStatusBadge status={website.status} />
+          <div className="flex items-center gap-4">
+            <WebsiteStatusBadge status={website.status} />
+            {website.monitoredPages.length > 0 && (
+              <RunScanButton websiteId={website.id} isFirstScan={!hasFinishedScan} />
+            )}
+          </div>
         </div>
       </div>
 
@@ -126,6 +139,46 @@ export default async function WebsiteDetailPage({
           </ul>
         )}
       </Card>
+
+      {website.scans.length > 0 && (
+        <Card>
+          <CardHeader
+            title="Recent scans"
+            action={
+              <Link
+                href="/dashboard/scans"
+                className="text-[13px] font-medium text-primary hover:underline"
+              >
+                All scans →
+              </Link>
+            }
+          />
+          <ul className="divide-y divide-line">
+            {website.scans.map((scan) => (
+              <li key={scan.id}>
+                <Link
+                  href={`/dashboard/scans/${scan.id}`}
+                  className="group flex items-center gap-4 py-3"
+                >
+                  <span className="flex-1 text-sm text-ink group-hover:text-primary">
+                    {scan.triggerType === "BASELINE" ? "Baseline scan" : "Scan"}
+                    <span className="ml-2 text-xs text-ink-faint">
+                      {scan.createdAt.toLocaleString("en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  </span>
+                  <span className="text-xs text-ink-secondary">
+                    {scan.pagesScanned}/{scan.pagesRequested} pages
+                  </span>
+                  <ScanStatusBadge status={scan.status} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card>
         <CardHeader title="Danger zone" />

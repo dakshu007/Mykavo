@@ -1,0 +1,22 @@
+{
+  "name": "worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fluxen/database": "workspace:*",
+    "@fluxen/scanner": "workspace:*",
+    "@fluxen/shared": "workspace:*",
+    "dotenv": "^17.0.0",
+    "pg-boss": "^12.25.1",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}

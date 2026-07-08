@@ -71,10 +71,10 @@ Tooling: pnpm workspaces (+ Turborepo when the worker app lands). Phase 0 ships 
 | Database | PostgreSQL + Prisma |
 | Auth | Better Auth |
 | Payments | Stripe (Checkout, Portal, Webhooks, Subscriptions) |
-| Background jobs | Trigger.dev (alt: BullMQ + Redis) |
-| Browser automation | Playwright |
+| Background jobs | **pg-boss** (PostgreSQL-backed queue — zero extra infra; chosen over BullMQ+Redis to stay zero-budget) |
+| Browser automation | Playwright (bundled Chromium) |
 | Email | Resend + React Email |
-| Object storage | Cloudflare R2 (alt: S3) — screenshots never live in Postgres |
+| Object storage | Local disk in dev behind an `ArtifactStorage` interface → Cloudflare R2 free tier in prod. Screenshots never live in Postgres |
 
 ## 5. Core Domain Concepts
 

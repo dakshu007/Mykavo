@@ -147,6 +147,7 @@ model Website {
   updatedAt     DateTime      @updatedAt
 
   monitoredPages MonitoredPage[]
+  scans          Scan[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -165,9 +166,120 @@ model MonitoredPage {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  snapshots PageSnapshot[]
+
   @@unique([websiteId, normalizedUrl])
   @@index([websiteId])
   @@map("monitored_page")
+}
+
+// ---------- Scans & snapshots (Phase 3) ----------
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  PARTIAL
+  FAILED
+}
+
+enum ScanTriggerType {
+  BASELINE
+  SCHEDULED
+  MANUAL
+}
+
+enum LinkType {
+  INTERNAL
+  EXTERNAL
+}
+
+model Scan {
+  id              String          @id @default(cuid())
+  websiteId       String
+  website         Website         @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  status          ScanStatus      @default(QUEUED)
+  triggerType     ScanTriggerType
+  startedAt       DateTime?
+  completedAt     DateTime?
+  pagesRequested  Int             @default(0)
+  pagesScanned    Int             @default(0)
+  pagesFailed     Int             @default(0)
+  changesDetected Int             @default(0)
+  highestSeverity String?
+  errorCode       String?
+  errorMessage    String?
+  createdAt       DateTime        @default(now())
+
+  snapshots PageSnapshot[]
+
+  @@index([websiteId, createdAt(sort: Desc)])
+  @@map("scan")
+}
+
+model PageSnapshot {
+  id                         String   @id @default(cuid())
+  scanId                     String
+  scan                       Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  monitoredPageId            String
+  monitoredPage              MonitoredPage @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
+  websiteId                  String
+  url                        String
+  finalUrl                   String?
+  httpStatus                 Int?
+  responseTimeMs             Int?
+  htmlHash                   String?
+  domHash                    String?
+  textHash                   String?
+  screenshotStorageKey       String?
+  screenshotHash             String?
+  visualDifferencePercentage Float?
+  title                      String?
+  metaDescription            String?
+  canonicalUrl               String?
+  robotsMeta                 String?
+  h1Values                   Json?
+  structuredDataHash         String?
+  pageWeightBytes            Int?
+  requestCount               Int?
+  errorCode                  String?
+  errorMessage               String?
+  createdAt                  DateTime @default(now())
+
+  links   PageLink[]
+  scripts PageScript[]
+
+  @@unique([scanId, monitoredPageId])
+  @@index([monitoredPageId, createdAt(sort: Desc)])
+  @@map("page_snapshot")
+}
+
+model PageLink {
+  id             String       @id @default(cuid())
+  pageSnapshotId String
+  pageSnapshot   PageSnapshot @relation(fields: [pageSnapshotId], references: [id], onDelete: Cascade)
+  url            String
+  normalizedUrl  String
+  linkType       LinkType
+  statusCode     Int?
+  createdAt      DateTime     @default(now())
+
+  @@index([pageSnapshotId])
+  @@map("page_link")
+}
+
+model PageScript {
+  id             String       @id @default(cuid())
+  pageSnapshotId String
+  pageSnapshot   PageSnapshot @relation(fields: [pageSnapshotId], references: [id], onDelete: Cascade)
+  src            String
+  domain         String
+  scriptHash     String?
+  isThirdParty   Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([pageSnapshotId])
+  @@map("page_script")
 }
 
 // ---------- Waitlist (migrated from Phase 0 file store) ----------
