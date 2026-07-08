@@ -150,6 +150,7 @@ model Website {
   monitoredPages MonitoredPage[]
   scans          Scan[]
   baselines      Baseline[]
+  changeEvents   ChangeEvent[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -168,8 +169,9 @@ model MonitoredPage {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  snapshots PageSnapshot[]
-  baselines Baseline[]
+  snapshots    PageSnapshot[]
+  baselines    Baseline[]
+  changeEvents ChangeEvent[]
 
   @@unique([websiteId, normalizedUrl])
   @@index([websiteId])
@@ -214,7 +216,8 @@ model Scan {
   errorMessage    String?
   createdAt       DateTime        @default(now())
 
-  snapshots PageSnapshot[]
+  snapshots    PageSnapshot[]
+  changeEvents ChangeEvent[]
 
   @@index([websiteId, createdAt(sort: Desc)])
   @@map("scan")
@@ -249,9 +252,11 @@ model PageSnapshot {
   errorMessage               String?
   createdAt                  DateTime @default(now())
 
-  links     PageLink[]
-  scripts   PageScript[]
-  baselines Baseline[]
+  links                 PageLink[]
+  scripts               PageScript[]
+  baselines             Baseline[]
+  changesAsPrevious     ChangeEvent[] @relation("ChangePreviousSnapshot")
+  changesAsCurrent      ChangeEvent[] @relation("ChangeCurrentSnapshot")
 
   @@unique([scanId, monitoredPageId])
   @@index([monitoredPageId, createdAt(sort: Desc)])
@@ -314,6 +319,69 @@ model Baseline {
   @@index([websiteId])
   @@index([monitoredPageId, status])
   @@map("baseline")
+}
+
+// ---------- Change events (Phase 5) ----------
+
+enum ChangeCategory {
+  AVAILABILITY
+  VISUAL
+  SEO
+  CONTENT
+  LINKS
+  SCRIPT
+  PERFORMANCE
+  CONVERSION
+}
+
+enum ChangeSeverity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ChangeStatus {
+  NEW
+  REVIEWED
+  APPROVED
+  RESOLVED
+  IGNORED
+}
+
+model ChangeEvent {
+  id                 String         @id @default(cuid())
+  websiteId          String
+  website            Website        @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  monitoredPageId    String
+  monitoredPage      MonitoredPage  @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
+  previousSnapshotId String?
+  previousSnapshot   PageSnapshot?  @relation("ChangePreviousSnapshot", fields: [previousSnapshotId], references: [id], onDelete: SetNull)
+  currentSnapshotId  String?
+  currentSnapshot    PageSnapshot?  @relation("ChangeCurrentSnapshot", fields: [currentSnapshotId], references: [id], onDelete: SetNull)
+  scanId             String
+  scan               Scan           @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  category           ChangeCategory
+  changeType         String
+  severity           ChangeSeverity
+  title              String
+  description        String
+  previousValue      String?
+  currentValue       String?
+  metadata           Json?
+  status             ChangeStatus   @default(NEW)
+  detectedAt         DateTime       @default(now())
+  resolvedAt         DateTime?
+  approvedAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([websiteId, status, severity])
+  @@index([monitoredPageId])
+  @@index([scanId])
+  @@index([detectedAt(sort: Desc)])
+  @@map("change_event")
 }
 
 // ---------- Waitlist (migrated from Phase 0 file store) ----------

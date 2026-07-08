@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fluxen/comparison-engine": "workspace:*",
     "@fluxen/database": "workspace:*",
     "@fluxen/scanner": "workspace:*",
     "@fluxen/shared": "workspace:*",

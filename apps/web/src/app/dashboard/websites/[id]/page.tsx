@@ -6,6 +6,7 @@ import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
 import { ScanStatusBadge } from "@/components/dashboard/scan-status";
+import { ChangeSeverityBadge } from "@/components/dashboard/change-badges";
 import { RunScanButton } from "@/components/dashboard/run-scan-button";
 import { WebsiteActions } from "./website-actions";
 
@@ -35,6 +36,11 @@ export default async function WebsiteDetailPage({
   });
   if (!website) notFound();
 
+  const openChanges = await prisma.changeEvent.findMany({
+    where: { websiteId: website.id, status: { in: ["NEW", "REVIEWED"] } },
+    select: { severity: true },
+  });
+
   const hostname = new URL(website.url).hostname;
   const hasFinishedScan = website.scans.some(
     (s) => s.status === "COMPLETED" || s.status === "PARTIAL",
@@ -42,6 +48,15 @@ export default async function WebsiteDetailPage({
   const pagesWithBaseline = website.monitoredPages.filter(
     (p) => p.baselines.length > 0,
   ).length;
+
+  const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 } as const;
+  const highestSeverity =
+    openChanges.length > 0
+      ? openChanges.reduce(
+          (top, c) => (severityRank[c.severity] > severityRank[top] ? c.severity : top),
+          "INFO" as (typeof openChanges)[number]["severity"],
+        )
+      : null;
 
   return (
     <div className="space-y-6">
@@ -96,10 +111,13 @@ export default async function WebsiteDetailPage({
           )}
         </Card>
         <Card>
-          <p className="label-micro mb-2">Scan frequency</p>
-          <p className="text-4xl font-semibold tracking-tight text-ink">
-            {website.scanFrequency === "DAILY" ? "Daily" : "Weekly"}
-          </p>
+          <p className="label-micro mb-2">Open changes</p>
+          <p className="text-4xl font-semibold tracking-tight text-ink">{openChanges.length}</p>
+          {highestSeverity && (
+            <div className="mt-2">
+              <ChangeSeverityBadge severity={highestSeverity} />
+            </div>
+          )}
         </Card>
         <Card>
           <p className="label-micro mb-2">Last scan</p>

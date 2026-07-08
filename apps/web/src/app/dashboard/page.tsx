@@ -9,15 +9,20 @@ export default async function DashboardOverviewPage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
-  const [websites, pageCount, baselineCount] = await Promise.all([
+  const [websites, pageCount, baselineCount, openChanges] = await Promise.all([
     prisma.website.findMany({
       where: { workspaceId: workspace.id },
-      include: { _count: { select: { monitoredPages: true } } },
+      include: {
+        _count: { select: { monitoredPages: true } },
+      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.monitoredPage.count({ where: { website: { workspaceId: workspace.id } } }),
     prisma.baseline.count({
       where: { status: "ACTIVE", website: { workspaceId: workspace.id } },
+    }),
+    prisma.changeEvent.count({
+      where: { website: { workspaceId: workspace.id }, status: { in: ["NEW", "REVIEWED"] } },
     }),
   ]);
 
@@ -25,7 +30,7 @@ export default async function DashboardOverviewPage() {
     { label: "Websites monitored", value: websites.length, icon: Globe },
     { label: "Pages monitored", value: pageCount, icon: FileSearch },
     { label: "Baselined pages", value: baselineCount, icon: ShieldCheck },
-    { label: "Open changes", value: 0, icon: Bell },
+    { label: "Open changes", value: openChanges, icon: Bell },
   ];
 
   return (

@@ -14,6 +14,10 @@ const serverEnvSchema = z.object({
     .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   BETTER_AUTH_URL: z.string().url().optional(),
   WAITLIST_FILE: z.string().optional(),
+  // Google OAuth (optional). Create credentials at
+  // https://console.cloud.google.com → APIs & Services → Credentials.
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
 function loadServerEnv() {

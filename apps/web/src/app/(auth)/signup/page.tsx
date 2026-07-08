@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth, googleEnabled } from "@/lib/auth";
 import { AuthForm } from "@/components/auth-form";
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export default async function SignupPage() {
       <p className="mb-6 text-sm text-ink-secondary">
         Free plan included — no credit card required.
       </p>
-      <AuthForm mode="signup" />
+      <AuthForm mode="signup" googleEnabled={googleEnabled} />
     </>
   );
 }

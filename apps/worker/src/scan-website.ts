@@ -14,6 +14,7 @@ import {
   type ArtifactStorage,
 } from "@fluxen/scanner";
 import { logger } from "./logger";
+import { runComparisonForScan } from "./compare-scan";
 
 const PAGE_CONCURRENCY = 3;
 
@@ -181,14 +182,23 @@ export async function runScanWebsiteJob(
     },
   });
 
-  // The first successful scan establishes baselines (spec §14): every
-  // successfully-scanned page without an existing baseline gets version 1.
   if (scan.triggerType === "BASELINE" && scanned > 0) {
+    // The first successful scan establishes baselines (spec §14): every
+    // successfully-scanned page without an existing baseline gets version 1.
     try {
       const baselines = await createInitialBaselinesForScan(prisma, scanId);
       logger.info("baselines created", { ...log, baselines });
     } catch (err) {
       logger.error("baseline creation failed", log, err);
+    }
+  } else if (scanned > 0) {
+    // SCHEDULED / MANUAL scans compare against the approved baseline and
+    // create change events (spec §24).
+    try {
+      const { changes, highest } = await runComparisonForScan(scanId);
+      logger.info("changes detected", { ...log, changes, highest });
+    } catch (err) {
+      logger.error("comparison failed", log, err);
     }
   }
 
