@@ -21,3 +21,9 @@ export {
   setSnapshotAsBaseline,
   createInitialBaselinesForScan,
 } from "./baseline";
+export {
+  applyChangeAction,
+  updateBaselineFromSnapshot,
+  OPEN_STATUSES,
+  type ChangeAction,
+} from "./changes";

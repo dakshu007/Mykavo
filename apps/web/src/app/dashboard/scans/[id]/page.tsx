@@ -6,6 +6,8 @@ import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ScanStatusBadge } from "@/components/dashboard/scan-status";
 import { SetBaselineButton } from "@/components/dashboard/set-baseline-button";
+import { ChangeSeverityBadge, ChangeCategoryChip } from "@/components/dashboard/change-badges";
+import { ApproveScanButton } from "@/components/dashboard/approve-scan-button";
 import { AutoRefresh } from "./auto-refresh";
 
 export default async function ScanDetailPage({
@@ -40,6 +42,19 @@ export default async function ScanDetailPage({
     },
   });
   if (!scan) notFound();
+
+  const changes = await prisma.changeEvent.findMany({
+    where: { scanId: id },
+    include: { monitoredPage: { select: { url: true } } },
+    orderBy: [{ detectedAt: "desc" }],
+  });
+  const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 } as const;
+  const sortedChanges = [...changes].sort(
+    (a, b) => severityRank[b.severity] - severityRank[a.severity],
+  );
+  const openChangeCount = changes.filter(
+    (c) => c.status === "NEW" || c.status === "REVIEWED",
+  ).length;
 
   const inFlight = scan.status === "QUEUED" || scan.status === "RUNNING";
 
@@ -92,6 +107,49 @@ export default async function ScanDetailPage({
           </Card>
         ))}
       </div>
+
+      {changes.length > 0 && (
+        <Card>
+          <CardHeader
+            title={`Changes detected (${changes.length})`}
+            action={
+              openChangeCount > 0 ? (
+                <ApproveScanButton scanId={scan.id} openChangeCount={openChangeCount} />
+              ) : (
+                <span className="rounded-full bg-success-soft px-3.5 py-1.5 text-[13px] font-medium text-green-700">
+                  All reviewed
+                </span>
+              )
+            }
+          />
+          <ul className="divide-y divide-line">
+            {sortedChanges.map((c) => {
+              const path = (() => {
+                try {
+                  const u = new URL(c.monitoredPage.url);
+                  return u.pathname + u.search;
+                } catch {
+                  return c.monitoredPage.url;
+                }
+              })();
+              return (
+                <li key={c.id}>
+                  <Link href={`/dashboard/changes/${c.id}`} className="flex items-center gap-4 py-3">
+                    <ChangeSeverityBadge severity={c.severity} className="w-24 shrink-0 justify-center" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-ink">{c.title}</p>
+                      <p className="truncate font-mono text-xs text-ink-faint">
+                        {path === "/" ? "/ (homepage)" : path}
+                      </p>
+                    </div>
+                    <ChangeCategoryChip category={c.category} />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
 
       <Card>
         <CardHeader title="Page results" />

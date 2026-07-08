@@ -9,6 +9,7 @@ import {
   ChangeSeverityBadge,
   ChangeStatusBadge,
 } from "@/components/dashboard/change-badges";
+import { ChangeActions } from "@/components/dashboard/change-actions";
 
 function pathOf(url: string): string {
   try {
@@ -34,12 +35,12 @@ export default async function ChangeDetailPage({
       website: { select: { id: true, name: true, url: true } },
       monitoredPage: { select: { id: true, url: true, websiteId: true } },
       previousSnapshot: { select: { id: true, screenshotStorageKey: true } },
-      currentSnapshot: { select: { id: true, screenshotStorageKey: true } },
+      currentSnapshot: { select: { id: true, screenshotStorageKey: true, errorCode: true } },
     },
   });
   if (!change) notFound();
 
-  const isVisual = change.category === "VISUAL";
+  const canUpdateBaseline = !!change.currentSnapshot && !change.currentSnapshot.errorCode;
   const hasDiff =
     change.metadata &&
     typeof change.metadata === "object" &&
@@ -68,7 +69,14 @@ export default async function ChangeDetailPage({
       </div>
 
       <Card>
-        <p className="text-[15px] leading-7 text-ink">{change.description}</p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="max-w-xl text-[15px] leading-7 text-ink">{change.description}</p>
+          <ChangeActions
+            changeId={change.id}
+            status={change.status}
+            canUpdateBaseline={canUpdateBaseline}
+          />
+        </div>
       </Card>
 
       {/* Before / after values */}
@@ -166,11 +174,6 @@ export default async function ChangeDetailPage({
             </div>
           ))}
         </dl>
-        {isVisual && (
-          <p className="mt-3 text-[13px] text-ink-faint">
-            Review actions (approve, ignore, update baseline) arrive in the next release.
-          </p>
-        )}
       </Card>
     </div>
   );

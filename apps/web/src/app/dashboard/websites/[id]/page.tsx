@@ -111,7 +111,17 @@ export default async function WebsiteDetailPage({
           )}
         </Card>
         <Card>
-          <p className="label-micro mb-2">Open changes</p>
+          <div className="flex items-start justify-between">
+            <p className="label-micro mb-2">Open changes</p>
+            {openChanges.length > 0 && (
+              <Link
+                href={`/dashboard/changes?website=${website.id}`}
+                className="text-[13px] font-medium text-primary hover:underline"
+              >
+                View
+              </Link>
+            )}
+          </div>
           <p className="text-4xl font-semibold tracking-tight text-ink">{openChanges.length}</p>
           {highestSeverity && (
             <div className="mt-2">
