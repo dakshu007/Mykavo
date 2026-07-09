@@ -27,11 +27,7 @@ const comparisonRows: Array<{
   { label: "History retention", value: (p) => (p.limits.historyDays >= 365 ? "1 year" : `${p.limits.historyDays} days`) },
   { label: "Email alerts", value: () => true },
   { label: "Manual scans", value: (p) => p.limits.manualScans },
-  { label: "Advanced monitoring settings", value: (p) => p.limits.advancedMonitoringSettings },
   { label: "Conversion element monitoring", value: (p) => p.limits.conversionElementMonitoring },
-  { label: "Priority scanning", value: (p) => p.limits.priorityScanning },
-  { label: "Multi-user workspace", value: (p) => p.limits.multiUserWorkspace },
-  { label: "Client-ready reports", value: (p) => p.limits.clientReports },
 ];
 
 const pricingFaqs = [

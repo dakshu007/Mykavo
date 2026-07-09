@@ -41,10 +41,6 @@ export interface Plan {
     /** Max user-triggered scans per UTC day (0 when manualScans is false). */
     manualScansPerDay: number;
     conversionElementMonitoring: boolean;
-    multiUserWorkspace: boolean;
-    advancedMonitoringSettings: boolean;
-    priorityScanning: boolean;
-    clientReports: boolean;
   };
   features: string[];
   highlighted?: boolean;
@@ -64,10 +60,6 @@ export const plans: Plan[] = [
       manualScans: false,
       manualScansPerDay: 0,
       conversionElementMonitoring: false,
-      multiUserWorkspace: false,
-      advancedMonitoringSettings: false,
-      priorityScanning: false,
-      clientReports: false,
     },
     features: [
       "1 website",
@@ -94,10 +86,6 @@ export const plans: Plan[] = [
       manualScans: true,
       manualScansPerDay: 20,
       conversionElementMonitoring: true,
-      multiUserWorkspace: true,
-      advancedMonitoringSettings: true,
-      priorityScanning: true,
-      clientReports: true,
     },
     features: [
       "50 websites included",
@@ -106,9 +94,7 @@ export const plans: Plan[] = [
       "Daily scans",
       "1-year history",
       "Manual scans",
-      "Advanced monitoring settings",
       "Conversion element monitoring",
-      "Priority scanning",
       "Email alerts",
     ],
   },
