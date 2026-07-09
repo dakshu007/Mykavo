@@ -16,8 +16,8 @@ Fluxen is built strictly phase-by-phase. A phase begins only when the previous p
 | **7 — Scheduling & Notifications** | Central scheduler, recurring scans, retries, Resend email alerts, preferences, scan summaries, failure alerts | Fluxen monitors automatically without user action |
 | **8 — Billing** ✅ | Dodo Payments Checkout, idempotent webhooks, sync, portal, plan enforcement, upgrade/cancel. **Free + Pro $12/mo (50 sites) + self-serve $6/mo add-ons (+30 sites each)** | Customers pay; limits (incl. add-on capacity) enforced server-side |
 | **9 — Conversion Monitoring** ✅ | Per-page monitored elements (name/selector/importance/expected existence·visibility·text·href), Pro-gated CRUD + UI, in-page checks in the scanner, CONVERSION comparison + severity rules, capped 20/page | Users monitor business-critical CTAs and forms |
-| **10 — Production Hardening** ◀ next | Rate limits, quotas, concurrency controls, security audit, error monitoring, metrics, indexes, storage lifecycle, backups, retention cleanup, load tests, abuse prevention | Safe and reliable for public paying customers |
-| **11 — SEO Growth Engine** | Remaining free tools, SEO landing-page architecture, structured data, sitemaps, internal linking, conversion tracking | Scalable organic acquisition system |
+| **10 — Production Hardening** ✅ | Retention cleanup cron (plan-based, artifact-aware, baseline-safe), per-plan scan quotas + concurrent-scan cap, per-workspace + auth rate limits, duplicate-scan advisory lock (§40), retention indexes. Deferred to ops: external error-monitoring/APM, metrics, Redis limiter (multi-instance), load tests, backups | Safe and reliable for public paying customers (code-level) |
+| **11 — SEO Growth Engine** ◀ next | Remaining free tools, SEO landing-page architecture, structured data, sitemaps, internal linking, conversion tracking | Scalable organic acquisition system |
 
 ## Phase 0 Work Breakdown (current)
 

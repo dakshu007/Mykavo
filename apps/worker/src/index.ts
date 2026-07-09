@@ -10,13 +10,16 @@ import { BrowserPool } from "@fluxen/scanner";
 import {
   SCAN_WEBSITE_QUEUE,
   SCHEDULER_SWEEP_QUEUE,
+  RETENTION_SWEEP_QUEUE,
   type ScanWebsiteJob,
 } from "@fluxen/shared";
 import { logger } from "./logger";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
+import { runRetentionSweep } from "./retention";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
+const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -60,9 +63,18 @@ async function main() {
   });
   await boss.schedule(SCHEDULER_SWEEP_QUEUE, SWEEP_CRON);
 
+  // Retention cleanup (spec §60/§91): a daily sweep deletes expired snapshots,
+  // their artifacts, and old change events per each workspace's plan window.
+  await boss.createQueue(RETENTION_SWEEP_QUEUE).catch(() => {});
+  await boss.work(RETENTION_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runRetentionSweep();
+  });
+  await boss.schedule(RETENTION_SWEEP_QUEUE, RETENTION_CRON);
+
   logger.info("worker started", {
     queue: SCAN_WEBSITE_QUEUE,
     schedulerCron: SWEEP_CRON,
+    retentionCron: RETENTION_CRON,
   });
 
   async function shutdown(signal: string) {

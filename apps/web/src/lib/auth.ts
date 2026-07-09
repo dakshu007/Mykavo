@@ -28,6 +28,19 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
   },
+  // Brute-force protection (Phase 10, spec §43/§59). Better Auth enables rate
+  // limiting in production; credential endpoints get much stricter per-IP caps.
+  // Uses in-memory storage (single instance) — switch to database storage when
+  // running multiple web instances. (Add a "/request-password-reset" rule here
+  // if/when an email password-reset flow is introduced.)
+  rateLimit: {
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 5 },
+    },
+  },
   ...(googleEnabled
     ? {
         socialProviders: {

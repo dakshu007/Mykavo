@@ -22,10 +22,12 @@ This file is the single source of truth for picking the project back up in a fre
 | **7 — Scheduling & notifications** | pg-boss cron scheduler (recurring scans, no user action), grouped email alerts (Resend/console), preferences | ✅ |
 | **8 — Billing** | **Free + Pro $12/mo (50 websites) + self-serve $6/mo add-ons (+30 websites each)**, via **Dodo Payments**, auto-upgrade on payment, security-hardened webhook | ✅ |
 | **9 — Conversion monitoring** | Per-page monitored elements — CTA/form existence·visibility·text·href checks → CONVERSION change events, Pro-gated UI + CRUD | ✅ |
-| **10 — Production hardening** | Rate limits, quotas, concurrency, indexes, retention, abuse prevention | ⬜ next |
-| **11 — SEO growth engine** | More free tools, SEO landing pages, structured data | ⬜ |
+| **10 — Production hardening** | Retention cleanup cron (plan-based, artifact-aware), per-plan scan quotas + concurrency cap, per-workspace + auth rate limits, duplicate-scan DB lock, retention indexes | ✅ |
+| **11 — SEO growth engine** | More free tools, SEO landing pages, structured data | ⬜ next |
 
-Every phase is one git commit (`git log --oneline`). 169 tests pass.
+Every phase is one git commit (`git log --oneline`). 174 tests pass.
+
+**Phase 10 scope note:** the *code-level* hardening is done (above). Explicitly deferred to ops (some need paid services, against the zero-budget rule): external error monitoring/APM (Sentry), Prometheus/StatsD metrics, a shared (Redis) rate-limit store for multi-instance, load testing, and a managed backup strategy. The in-app rate limiters and Better Auth throttle are **per-process/in-memory** — correct for single-instance; swap to a shared store before scaling out horizontally.
 
 ---
 
@@ -38,6 +40,7 @@ Every phase is one git commit (`git log --oneline`). 169 tests pass.
 - **PostgreSQL 17** runs locally (Homebrew). Database: **`fluxen_dev`**, connection `postgresql://dakshu@localhost:5432/fluxen_dev`.
 - **After any Prisma schema change, restart the Next dev server** — it caches a stale generated client and throws `Cannot read properties of undefined`.
 - **Run only ONE worker at a time.** `pkill -f "tsx src/index.ts"` does NOT match it — use `pkill -f "apps/worker/src/index.ts"`. Stale workers silently steal queue jobs and run old code.
+- **The retention sweep permanently deletes data** older than each workspace's plan window (30d Free / 365d Pro): expired snapshots + their artifacts + old change events. It runs daily in the worker (`RETENTION_CRON`, default `0 3 * * *`), pages in batches, and **never deletes baseline-referenced snapshots** (that would cascade-destroy the baseline). It's a no-op until data ages past the window.
 - Everything is **zero-budget**: only free/open-source and free-tier services (local Postgres, pg-boss, Playwright, console-email, Dodo test mode). No dependency requires a credit card in dev.
 
 ---
@@ -99,7 +102,7 @@ Copy `apps/web/.env.example` → `apps/web/.env.local` and `apps/worker/.env.exa
 - `ARTIFACT_DIR` (must match the worker's)
 
 **Worker (`apps/worker/.env`)**
-- `DATABASE_URL` · `ARTIFACT_DIR` (same path as web) · `SCHEDULER_CRON` (default `*/5 * * * *`)
+- `DATABASE_URL` · `ARTIFACT_DIR` (same path as web) · `SCHEDULER_CRON` (default `*/5 * * * *`) · `RETENTION_CRON` (default `0 3 * * *`, daily retention sweep)
 - `APP_URL` (email links) · email: `RESEND_API_KEY` + `EMAIL_FROM` (optional — logs to console without them)
 
 Secrets are gitignored (`.env*` except `.env.example`). `.data/` (artifacts) is gitignored.
@@ -123,6 +126,6 @@ Secrets are gitignored (`.env*` except `.env.example`). `.data/` (artifacts) is 
 
 ## Next up
 
-**Phase 10 — Production hardening:** rate limiting, scan quotas, worker concurrency controls, DB indexes + query optimization, artifact storage lifecycle/retention cleanup, and abuse prevention. See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
+**Phase 11 — SEO growth engine:** the remaining free acquisition tools (redirect-chain checker, meta-tag checker, bulk URL status, script detector), SEO landing-page architecture, structured data, sitemap/internal-linking, and product-led CTAs. See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
-Phase 9 (conversion monitoring) is **done**: users define business-critical elements per page (signup button, checkout CTA, contact form) by CSS selector with expected existence/visibility/text/href; every scan observes them (`MonitoredElement` → `MonitoredElementResult`) and the comparison engine raises CONVERSION change events (e.g. `"Start free trial" is missing`). Pro-gated (worker skips checks for non-Pro workspaces), capped at 20 elements/page. UI lives on the per-page detail screen.
+Phase 10 (production hardening) is **done**: a daily **retention sweep** deletes expired snapshots + artifacts + change events per plan window (baseline snapshots protected); **per-plan scan quotas** (Pro 20 manual/day) + a **concurrent-scan cap** (10/workspace); **per-workspace rate limits** on scan/website-create and a **Better Auth brute-force throttle**; a **DB advisory lock** enforces spec §40 "no duplicate scans"; retention indexes added. Passed a multi-agent adversarial review (2 low findings, both fixed). Deferred to ops: external error-monitoring/APM, metrics, a shared (Redis) limiter for multi-instance, load testing, backups.

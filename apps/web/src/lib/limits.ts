@@ -5,18 +5,66 @@
  */
 
 import { prisma } from "@fluxen/database";
-import { formatLimit, WEBSITE_ADDON } from "@/config/plans";
+import { formatLimit, WEBSITE_ADDON, type Plan } from "@/config/plans";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
 
 export { getWorkspacePlan, getEffectiveWebsiteLimit };
 
+/** Max simultaneously QUEUED/RUNNING scans per workspace (abuse guard, spec §43). */
+export const MAX_CONCURRENT_SCANS_PER_WORKSPACE = 10;
+
 export class LimitError extends Error {
   constructor(
-    public readonly code: "WEBSITE_LIMIT" | "PAGE_LIMIT",
+    public readonly code:
+      | "WEBSITE_LIMIT"
+      | "PAGE_LIMIT"
+      | "SCAN_CONCURRENCY"
+      | "MANUAL_SCAN_QUOTA",
     message: string,
   ) {
     super(message);
     this.name = "LimitError";
+  }
+}
+
+function startOfUtcDay(now: Date = new Date()): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+/**
+ * Guards a scan trigger (spec §43): the workspace must be under the concurrent-
+ * scan cap, and — for MANUAL re-scans — under its plan's daily manual quota.
+ * Throws LimitError (callers map to HTTP 429).
+ */
+export async function assertScanAllowed(
+  workspaceId: string,
+  plan: Plan,
+  triggerType: "BASELINE" | "MANUAL",
+): Promise<void> {
+  const inFlight = await prisma.scan.count({
+    where: { website: { workspaceId }, status: { in: ["QUEUED", "RUNNING"] } },
+  });
+  if (inFlight >= MAX_CONCURRENT_SCANS_PER_WORKSPACE) {
+    throw new LimitError(
+      "SCAN_CONCURRENCY",
+      `Too many scans running at once (limit ${MAX_CONCURRENT_SCANS_PER_WORKSPACE}). Wait for some to finish, then try again.`,
+    );
+  }
+
+  if (triggerType === "MANUAL" && plan.limits.manualScansPerDay !== Infinity) {
+    const usedToday = await prisma.scan.count({
+      where: {
+        website: { workspaceId },
+        triggerType: "MANUAL",
+        createdAt: { gte: startOfUtcDay() },
+      },
+    });
+    if (usedToday >= plan.limits.manualScansPerDay) {
+      throw new LimitError(
+        "MANUAL_SCAN_QUOTA",
+        `You've used all ${plan.limits.manualScansPerDay} manual scans for today (resets at midnight UTC).`,
+      );
+    }
   }
 }
 

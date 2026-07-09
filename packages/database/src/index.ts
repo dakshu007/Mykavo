@@ -28,6 +28,12 @@ export {
   type ChangeAction,
 } from "./changes";
 export {
+  findExpiredSnapshots,
+  deleteSnapshots,
+  deleteExpiredChangeEvents,
+  type ExpiredSnapshot,
+} from "./retention";
+export {
   getWorkspaceEntitlement,
   upgradeWorkspaceToPro,
   downgradeWorkspaceToFree,

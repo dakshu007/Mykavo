@@ -269,6 +269,8 @@ model PageSnapshot {
 
   @@unique([scanId, monitoredPageId])
   @@index([monitoredPageId, createdAt(sort: Desc)])
+  // Retention sweep: expired snapshots per website by age (Phase 10).
+  @@index([websiteId, createdAt])
   @@map("page_snapshot")
 }
 
@@ -456,6 +458,8 @@ model ChangeEvent {
   @@index([monitoredPageId])
   @@index([scanId])
   @@index([detectedAt(sort: Desc)])
+  // Retention sweep: expired change events per website by age (Phase 10).
+  @@index([websiteId, detectedAt])
   @@map("change_event")
 }
 

@@ -9,6 +9,8 @@
  * `count >= limit` is never true.
  */
 
+import { PLAN_HISTORY_DAYS } from "@fluxen/shared";
+
 export type PlanId = "free" | "pro";
 
 /**
@@ -36,6 +38,8 @@ export interface Plan {
     scanFrequency: ScanFrequency;
     historyDays: number;
     manualScans: boolean;
+    /** Max user-triggered scans per UTC day (0 when manualScans is false). */
+    manualScansPerDay: number;
     conversionElementMonitoring: boolean;
     multiUserWorkspace: boolean;
     advancedMonitoringSettings: boolean;
@@ -56,8 +60,9 @@ export const plans: Plan[] = [
       websites: 1,
       monitoredPages: 5,
       scanFrequency: "WEEKLY",
-      historyDays: 30,
+      historyDays: PLAN_HISTORY_DAYS.free,
       manualScans: false,
+      manualScansPerDay: 0,
       conversionElementMonitoring: false,
       multiUserWorkspace: false,
       advancedMonitoringSettings: false,
@@ -85,8 +90,9 @@ export const plans: Plan[] = [
       websites: 50,
       monitoredPages: Infinity,
       scanFrequency: "DAILY",
-      historyDays: 365,
+      historyDays: PLAN_HISTORY_DAYS.pro,
       manualScans: true,
+      manualScansPerDay: 20,
       conversionElementMonitoring: true,
       multiUserWorkspace: true,
       advancedMonitoringSettings: true,

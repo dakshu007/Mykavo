@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fluxen/database";
 import { getApiContext, getOwnedWebsite } from "@/lib/api-auth";
-import { getWorkspacePlan } from "@/lib/limits";
+import { getWorkspacePlan, assertScanAllowed, LimitError } from "@/lib/limits";
+import { rateLimit } from "@/lib/security/rate-limit";
 import { enqueueScanWebsite } from "@/lib/queue";
 import { logger } from "@/lib/logger";
 
@@ -11,6 +12,15 @@ type Params = { params: Promise<{ id: string }> };
 export async function POST(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Burst guard: cap scan triggers per workspace per minute (spec §43).
+  const rl = rateLimit(`scan:${ctx.workspace.id}`, { limit: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many scan requests. Please wait a moment and try again." },
+      { status: 429, headers: { "retry-after": String(rl.retryAfterSeconds) } },
+    );
+  }
 
   const { id } = await params;
   const website = await getOwnedWebsite(ctx, id);
@@ -43,21 +53,49 @@ export async function POST(_request: Request, { params }: Params) {
     select: { id: true },
   });
   const triggerType = hasFinishedScan ? "MANUAL" : "BASELINE";
-  if (triggerType === "MANUAL") {
-    const plan = await getWorkspacePlan(ctx.workspace.id);
-    if (!plan.limits.manualScans) {
-      return NextResponse.json(
-        {
-          error: `Manual re-scans require a paid plan. Your ${plan.name} plan scans automatically on schedule.`,
-        },
-        { status: 403 },
-      );
-    }
+  const plan = await getWorkspacePlan(ctx.workspace.id);
+  if (triggerType === "MANUAL" && !plan.limits.manualScans) {
+    return NextResponse.json(
+      {
+        error: `Manual re-scans require a paid plan. Your ${plan.name} plan scans automatically on schedule.`,
+      },
+      { status: 403 },
+    );
   }
 
-  const scan = await prisma.scan.create({
-    data: { websiteId: website.id, triggerType, status: "QUEUED" },
+  // Concurrency cap + daily manual-scan quota (spec §43).
+  try {
+    await assertScanAllowed(ctx.workspace.id, plan, triggerType);
+  } catch (err) {
+    if (err instanceof LimitError) {
+      return NextResponse.json({ error: err.message }, { status: 429 });
+    }
+    throw err;
+  }
+
+  // Authoritative no-duplicate-scan guard (spec §40: use database locking).
+  // A per-website advisory lock serializes concurrent triggers so the recheck +
+  // create is atomic — the earlier findFirst is only a fast-path. Works across
+  // processes too, unlike the in-memory rate limiter.
+  const created = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${website.id})::int8)`;
+    const conflict = await tx.scan.findFirst({
+      where: { websiteId: website.id, status: { in: ["QUEUED", "RUNNING"] } },
+      select: { id: true },
+    });
+    if (conflict) return { conflictScanId: conflict.id };
+    const scan = await tx.scan.create({
+      data: { websiteId: website.id, triggerType, status: "QUEUED" },
+    });
+    return { scan };
   });
+  if ("conflictScanId" in created) {
+    return NextResponse.json(
+      { error: "A scan is already in progress for this website.", scanId: created.conflictScanId },
+      { status: 409 },
+    );
+  }
+  const scan = created.scan;
 
   try {
     await enqueueScanWebsite({ scanId: scan.id });

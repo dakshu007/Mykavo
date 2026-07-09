@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@fluxen/database";
 import { getApiContext } from "@/lib/api-auth";
 import { assertCanAddWebsite, LimitError } from "@/lib/limits";
+import { rateLimit } from "@/lib/security/rate-limit";
 import { assertSafeUrl, UnsafeUrlError } from "@/lib/security/ssrf";
 import { normalizeUrl, parseUrlInput } from "@/lib/url";
 import { logger } from "@/lib/logger";
@@ -27,6 +28,15 @@ const createSchema = z.object({
 export async function POST(request: Request) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Website creation resolves DNS + fetches the target — cap it per workspace.
+  const rl = rateLimit(`website-create:${ctx.workspace.id}`, { limit: 20, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down and try again." },
+      { status: 429, headers: { "retry-after": String(rl.retryAfterSeconds) } },
+    );
+  }
 
   let input: z.infer<typeof createSchema>;
   try {
