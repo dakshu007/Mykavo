@@ -4,8 +4,8 @@
     {
       "name": "web",
       "runtimeExecutable": "/Users/dakshu/.hermes/node/bin/pnpm",
-      "runtimeArgs": ["--filter", "web", "dev"],
-      "port": 3000
+      "runtimeArgs": ["--filter", "web", "exec", "next", "dev", "-p", "3010"],
+      "port": 3010
     }
   ]
 }

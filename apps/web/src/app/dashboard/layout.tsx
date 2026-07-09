@@ -26,7 +26,7 @@ export default async function DashboardLayout({
         />
       </div>
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">
-        <DashboardMobileNav />
+        <DashboardMobileNav isBlogAdmin={isBlogAdmin(session.user.email)} />
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <p className="text-[17px] font-semibold tracking-tight text-ink">

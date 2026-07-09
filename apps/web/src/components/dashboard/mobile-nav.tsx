@@ -18,9 +18,11 @@ const nav = [
 ];
 
 /** Horizontal pill navigation shown below the lg breakpoint. */
-export function DashboardMobileNav() {
+export function DashboardMobileNav({ isBlogAdmin = false }: { isBlogAdmin?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  // Blog CMS entry is allowlist-gated; the pages/APIs enforce it server-side.
+  const items = isBlogAdmin ? [...nav, { href: "/dashboard/blog", label: "Blog" }] : nav;
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -45,10 +47,11 @@ export function DashboardMobileNav() {
         className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label="Dashboard"
       >
-        {nav.map((item) => {
-          const active = item.exact
-            ? pathname === item.href
-            : pathname.startsWith(item.href);
+        {items.map((item) => {
+          const active =
+            "exact" in item && item.exact
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
