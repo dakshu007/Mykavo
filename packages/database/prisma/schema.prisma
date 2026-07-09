@@ -4,6 +4,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // "native" for local dev; the rhel target is the engine for Netlify/AWS
+  // Lambda (Node 20 / OpenSSL 3) where the serverless functions run.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

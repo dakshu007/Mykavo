@@ -1,0 +1,26 @@
+# Netlify build for the Fluxen web app (pnpm monorepo).
+#
+# Deploy with the workspace package selected explicitly so Netlify's monorepo
+# detection doesn't prompt and it sets base/publish to apps/web itself:
+#     netlify deploy --build --prod --filter web
+# Do NOT set base/publish here — with --filter, Netlify manages them, and a
+# hardcoded publish (e.g. ".next") resolves to the repo root and 404s.
+#
+# Prisma: schema has binaryTargets ["native","rhel-openssl-3.0.x"] and
+# next.config marks @prisma/client external + sets outputFileTracingRoot so the
+# Linux query-engine binary is bundled into the Lambda. Build from a checkout
+# that is NOT nested inside another repo, or file-tracing bundles the wrong
+# node_modules.
+#
+# The scan worker is NOT deployed here — it needs a persistent host (Railway /
+# Render / Fly). On Netlify the web app + API run; scans/audits stay queued
+# until a worker is connected to the same Postgres.
+
+[build]
+  command = "pnpm install && pnpm --filter @fluxen/database exec prisma generate && pnpm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
