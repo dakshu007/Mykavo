@@ -50,12 +50,21 @@ Every phase is one git commit (`git log --oneline`). 178 tests pass.
 
 ## Running it locally
 
+> **⚠️ You MUST run the worker.** The web app only *enqueues* scans and Lighthouse
+> audits; the **worker** process executes them. Without it, every scan/audit sits
+> QUEUED forever — "adding a site does nothing" and "Run audit spins." Use
+> `pnpm dev:all` (runs both) or run `pnpm dev` **and** `pnpm worker` in two terminals.
+
 ```bash
 export PATH="/Users/dakshu/.hermes/node/bin:$PATH"
 
 pnpm install
-pnpm dev        # web app → http://localhost:3000
-pnpm worker     # scan worker (scheduler + queue consumer) — run in a 2nd terminal
+pnpm dev:all    # ⭐ web (→ http://localhost:3000) + worker together — the normal way to run
+
+# …or run the two halves separately (two terminals):
+pnpm dev        # web app only → http://localhost:3000
+pnpm worker     # scan + audit worker (queue consumer + scheduler) — REQUIRED
+
 pnpm test       # all package tests
 pnpm lint       # web eslint
 pnpm typecheck  # web tsc  (worker: pnpm --filter worker typecheck)

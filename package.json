@@ -3,11 +3,15 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter web dev",
+    "worker": "pnpm --filter worker dev",
+    "dev:all": "concurrently -n web,worker -c cyan,magenta \"pnpm dev\" \"pnpm worker\"",
     "build": "pnpm --filter web build",
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm --filter web typecheck",
-    "worker": "pnpm --filter worker dev",
     "test": "pnpm -r --if-present test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   },
   "packageManager": "pnpm@10.18.3"
 }
