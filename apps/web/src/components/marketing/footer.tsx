@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/logo";
+import { Logo } from "@/components/brand/logo";
 import { site } from "@/config/site";
 
 const columns = [
@@ -33,7 +33,9 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-300 px-5 py-14 lg:px-8">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <Logo />
+            <Link href="/" aria-label="Fluxen home" className="inline-flex">
+              <Logo />
+            </Link>
             <p className="mt-4 max-w-70 text-sm leading-6 text-ink-secondary">
               {site.tagline} Website change and regression monitoring for agencies, developers,
               and website teams.

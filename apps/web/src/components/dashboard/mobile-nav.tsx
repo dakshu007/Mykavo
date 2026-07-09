@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { LogoMark } from "@/components/logo";
+import { Logo } from "@/components/brand/logo";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -31,9 +31,8 @@ export function DashboardMobileNav() {
   return (
     <div className="mb-4 lg:hidden">
       <div className="mb-3 flex items-center justify-between">
-        <Link href="/dashboard" className="inline-flex items-center gap-2">
-          <LogoMark className="size-8" />
-          <span className="text-[15px] font-semibold tracking-tight text-ink">Fluxen</span>
+        <Link href="/dashboard" aria-label="Dashboard home" className="inline-flex">
+          <Logo markSize={24} wordmarkClassName="text-[15px]" />
         </Link>
         <button
           onClick={handleSignOut}

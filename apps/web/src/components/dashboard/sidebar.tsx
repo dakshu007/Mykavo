@@ -12,7 +12,7 @@ import {
   LogOut,
   Settings,
 } from "lucide-react";
-import { LogoMark } from "@/components/logo";
+import { LogoMark } from "@/components/brand/logo";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ export function DashboardSidebar({ workspaceName }: { workspaceName: string }) {
   return (
     <aside className="flex h-full flex-col">
       <Link href="/dashboard" className="mb-1 flex items-center gap-2.5 px-3 py-2">
-        <LogoMark />
+        <LogoMark size={30} />
         <span className="min-w-0">
           <span className="block text-[15px] font-semibold tracking-tight text-ink">
             Fluxen

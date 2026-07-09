@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { LogoMark } from "@/components/logo";
+import { LogoMark } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { PreviewOverview } from "./overview";
 import { PreviewWebsites } from "./websites";
@@ -36,7 +36,7 @@ export function DashboardPreview({ className }: { className?: string }) {
       {/* Header row */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <LogoMark />
+          <LogoMark size={32} />
           <div>
             <p className="text-[17px] font-semibold tracking-tight text-ink">
               Good morning, Alex
