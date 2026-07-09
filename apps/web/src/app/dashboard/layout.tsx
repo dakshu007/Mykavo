@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { isBlogAdmin } from "@/lib/blog-admin";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
 
@@ -19,7 +20,10 @@ export default async function DashboardLayout({
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
       <div className="sticky top-6 hidden h-[calc(100vh-3rem)] w-60 shrink-0 rounded-card bg-card p-3 shadow-card lg:block">
-        <DashboardSidebar workspaceName={workspace.name} />
+        <DashboardSidebar
+          workspaceName={workspace.name}
+          isBlogAdmin={isBlogAdmin(session.user.email)}
+        />
       </div>
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">
         <DashboardMobileNav />

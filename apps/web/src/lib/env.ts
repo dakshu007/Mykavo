@@ -19,6 +19,9 @@ const serverEnvSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   APP_URL: z.string().url().optional(),
+  // Blog mini-CMS admins (optional). Comma-separated emails allowed to
+  // write/publish blog posts from the dashboard. Unset = CMS disabled.
+  BLOG_ADMIN_EMAILS: z.string().optional(),
   // Dodo Payments (optional — billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
   DODO_WEBHOOK_SECRET: z.string().optional(),
