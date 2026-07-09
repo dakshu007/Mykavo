@@ -15,22 +15,17 @@ export default async function EditPagesPage({
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
   const { id } = await params;
 
-  // All three queries only need the route param and workspace — run in parallel.
-  const [website, plan, otherPages] = await Promise.all([
+  // Both queries only need the route param and workspace — run in parallel.
+  const [website, plan] = await Promise.all([
     prisma.website.findFirst({
       where: { id, workspaceId: workspace.id },
       include: { monitoredPages: { orderBy: { createdAt: "asc" } } },
     }),
     getWorkspacePlan(workspace.id),
-    prisma.monitoredPage.count({
-      where: { website: { workspaceId: workspace.id }, websiteId: { not: id } },
-    }),
   ]);
   if (!website) notFound();
-  const pageBudget =
-    plan.limits.monitoredPages === Infinity
-      ? Infinity
-      : Math.max(0, plan.limits.monitoredPages - otherPages);
+  // Page limits are per website — the budget doesn't depend on other websites.
+  const pageBudget = plan.limits.pagesPerWebsite;
 
   return (
     <div className="space-y-5">

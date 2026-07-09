@@ -183,7 +183,7 @@ describe("website add-ons", () => {
       status: "active",
     });
 
-    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(60);
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(2);
     expect((await listActiveWebsiteAddons(prisma, workspaceId)).length).toBe(2);
     expect(await findWorkspaceByAddonSubscription(prisma, "addon_1")).toBe(workspaceId);
   });
@@ -197,7 +197,7 @@ describe("website add-ons", () => {
       });
     }
     expect(await prisma.websiteAddon.count({ where: { workspaceId } })).toBe(1);
-    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(30);
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(1);
   });
 
   it("revoking removes the capacity", async () => {
@@ -206,7 +206,7 @@ describe("website add-ons", () => {
       dodoSubscriptionId: "addon_rev",
       status: "active",
     });
-    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(30);
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(1);
     await revokeWebsiteAddon(prisma, { dodoSubscriptionId: "addon_rev", status: "cancelled" });
     expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(0);
     expect((await listActiveWebsiteAddons(prisma, workspaceId)).length).toBe(0);
@@ -227,6 +227,6 @@ describe("website add-ons", () => {
       status: "cancelled",
       eventAt: t0,
     });
-    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(30);
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(1);
   });
 });

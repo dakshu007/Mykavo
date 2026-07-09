@@ -42,7 +42,9 @@ export default async function BillingPage({
   const pro = getPlan("pro");
   const justCheckedOut = sp.checkout === "success";
   const needsPro = sp.addon === "needs-pro";
+  const addonLimitReached = sp.addon === "limit";
   const addonUnits = addons.length;
+  const atAddonCap = addonUnits >= WEBSITE_ADDON.maxUnits;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -61,7 +63,18 @@ export default async function BillingPage({
           <Sparkles className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
           <p className="text-sm text-ink">
             Website add-ons extend the Pro plan. Upgrade to Pro first, then you can add
-            {" "}{WEBSITE_ADDON.websitesPerUnit} more websites anytime for ${WEBSITE_ADDON.priceMonthlyUsd}/mo.
+            {" "}{WEBSITE_ADDON.websitesPerUnit} more website anytime for ${WEBSITE_ADDON.priceMonthlyUsd}/mo
+            (up to {WEBSITE_ADDON.maxUnits}).
+          </p>
+        </div>
+      )}
+
+      {addonLimitReached && (
+        <div className="flex items-start gap-3 rounded-card bg-warning-soft px-5 py-4">
+          <Sparkles className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
+          <p className="text-sm text-ink">
+            You already have the maximum of {WEBSITE_ADDON.maxUnits} website add-ons on this
+            workspace.
           </p>
         </div>
       )}
@@ -145,7 +158,7 @@ export default async function BillingPage({
           <p className="mt-1 text-[13px] text-ink-faint">
             {pro.limits.websites} included
             {addonUnits > 0 &&
-              ` + ${addonUnits} add-on${addonUnits === 1 ? "" : "s"} × ${WEBSITE_ADDON.websitesPerUnit}`}
+              ` + ${addonUnits} add-on website${addonUnits === 1 ? "" : "s"} (max ${WEBSITE_ADDON.maxUnits})`}
           </p>
 
           {addonUnits > 0 && (
@@ -156,7 +169,7 @@ export default async function BillingPage({
                   className="flex items-center justify-between px-4 py-3 text-sm"
                 >
                   <span className="text-ink">
-                    Add-on {i + 1} · +{a.websitesGranted} websites
+                    Add-on {i + 1} · +{a.websitesGranted} website{a.websitesGranted === 1 ? "" : "s"}
                   </span>
                   <span className="text-[13px] text-ink-faint">
                     {a.cancelAtPeriodEnd
@@ -171,19 +184,25 @@ export default async function BillingPage({
           )}
 
           {websiteAddonEnabled ? (
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <a
-                href="/api/billing/addon"
-                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover"
-              >
-                <Plus className="size-4" aria-hidden />
-                Add {WEBSITE_ADDON.websitesPerUnit} more — ${WEBSITE_ADDON.priceMonthlyUsd}/mo
-              </a>
-              <p className="text-[13px] text-ink-faint">
-                Billed as a separate subscription. Cancel add-ons anytime
-                {dodoApiConfigured() ? " from Manage billing." : " in your Dodo account."}
+            atAddonCap ? (
+              <p className="mt-5 text-[13px] text-ink-faint">
+                You&apos;ve reached the maximum of {WEBSITE_ADDON.maxUnits} website add-ons.
               </p>
-            </div>
+            ) : (
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <a
+                  href="/api/billing/addon"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover"
+                >
+                  <Plus className="size-4" aria-hidden />
+                  Add {WEBSITE_ADDON.websitesPerUnit} more website — ${WEBSITE_ADDON.priceMonthlyUsd}/mo
+                </a>
+                <p className="text-[13px] text-ink-faint">
+                  Billed as a separate subscription. Cancel add-ons anytime
+                  {dodoApiConfigured() ? " from Manage billing." : " in your Dodo account."}
+                </p>
+              </div>
+            )
           ) : (
             <p className="mt-5 text-[13px] text-ink-faint">
               Need more than {formatLimit(websiteLimit)} websites? Website add-ons aren&apos;t
@@ -205,7 +224,7 @@ export default async function BillingPage({
                 Upgrade to Pro — ${pro.priceMonthlyUsd}/month
               </h2>
               <p className="mt-1 text-sm text-ink-secondary">
-                50 websites and unlimited monitored pages, daily scans, and every advanced feature — add more websites anytime.
+                8 websites with 20 monitored pages each, daily scans, and every advanced feature — add more websites anytime.
               </p>
             </div>
           </div>

@@ -79,7 +79,7 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
   if (count >= limit) {
     const hint =
       plan.id === "pro"
-        ? `Add ${WEBSITE_ADDON.websitesPerUnit} more for $${WEBSITE_ADDON.priceMonthlyUsd}/mo from Billing.`
+        ? `Add ${WEBSITE_ADDON.websitesPerUnit} more for $${WEBSITE_ADDON.priceMonthlyUsd}/mo from Billing (up to ${WEBSITE_ADDON.maxUnits} add-ons).`
         : "Upgrade to Pro to monitor more websites.";
     throw new LimitError(
       "WEBSITE_LIMIT",
@@ -89,24 +89,23 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
 }
 
 /**
- * Throws LimitError when setting `requestedCount` monitored pages on
- * `websiteId` would exceed the workspace-wide page limit.
+ * Throws LimitError when setting `requestedCount` monitored pages on a
+ * website would exceed the plan's per-website page limit. Only gates new
+ * selections — websites that already exceed the limit keep their pages.
  */
 export async function assertPageLimit(
   workspaceId: string,
-  websiteId: string,
+  _websiteId: string,
   requestedCount: number,
 ): Promise<void> {
   const plan = await getWorkspacePlan(workspaceId);
-  if (plan.limits.monitoredPages === Infinity) return;
-  const otherPages = await prisma.monitoredPage.count({
-    where: { website: { workspaceId }, websiteId: { not: websiteId } },
-  });
-  if (otherPages + requestedCount > plan.limits.monitoredPages) {
-    const available = Math.max(0, plan.limits.monitoredPages - otherPages);
+  if (plan.limits.pagesPerWebsite === Infinity) return;
+  if (requestedCount > plan.limits.pagesPerWebsite) {
+    const upsell =
+      plan.id === "pro" ? "" : " Upgrade to Pro to monitor more pages per website.";
     throw new LimitError(
       "PAGE_LIMIT",
-      `Your ${plan.name} plan monitors up to ${formatLimit(plan.limits.monitoredPages)} pages across all websites (${available} still available). Upgrade to Pro for unlimited.`,
+      `Your ${plan.name} plan monitors up to ${formatLimit(plan.limits.pagesPerWebsite)} pages per website.${upsell}`,
     );
   }
 }

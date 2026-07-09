@@ -118,7 +118,7 @@ const faqs = [
   },
   {
     q: "How many websites can I monitor?",
-    a: "The free plan monitors 1 website with 5 pages. Pro is $12/month with 50 websites and unlimited monitored pages, and you can add 30 more websites anytime for $6/month — ideal for agencies and teams managing many sites.",
+    a: "The free plan monitors 1 website with 5 pages. Pro is $12/month with 8 websites and 20 monitored pages per website, and you can add another website anytime for $6/month (up to 3) — ideal for freelancers and teams managing several sites.",
   },
   {
     q: "Is it safe to point Fluxen at my site?",

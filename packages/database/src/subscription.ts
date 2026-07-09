@@ -177,7 +177,9 @@ export async function applyWebsiteAddon(db: Db, input: WebsiteAddonInput): Promi
       dodoSubscriptionId: input.dodoSubscriptionId,
       dodoCustomerId: input.dodoCustomerId ?? null,
       status: input.status,
-      websitesGranted: input.websitesGranted ?? 30,
+      // Each $6/mo add-on unit grants one extra website (mirrors
+      // WEBSITE_ADDON.websitesPerUnit in the web app's plans config).
+      websitesGranted: input.websitesGranted ?? 1,
       currentPeriodEnd: input.currentPeriodEnd ?? null,
       cancelAtPeriodEnd: input.cancelAtPeriodEnd ?? false,
       lastEventAt: input.eventAt ?? null,

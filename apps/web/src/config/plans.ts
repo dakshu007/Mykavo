@@ -3,10 +3,10 @@
  * Never hardcode plan limits elsewhere — server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
- * Fluxen ships two plans: Free, and Pro at $12/month. Pro includes 50 websites
- * and unlimited monitored pages; buyers can add capacity in $6/month blocks of
- * 30 websites (see WEBSITE_ADDON). "Unlimited" numeric limits use Infinity so
- * `count >= limit` is never true.
+ * Fluxen ships two plans: Free, and Pro at $12/month. Pro includes 8 websites
+ * with 20 monitored pages each; buyers can extend capacity with $6/month
+ * add-ons of one website each, up to 3 (see WEBSITE_ADDON). "Unlimited"
+ * numeric limits use Infinity so `count >= limit` is never true.
  */
 
 import { PLAN_HISTORY_DAYS } from "@fluxen/shared";
@@ -15,11 +15,13 @@ export type PlanId = "free" | "pro";
 
 /**
  * Self-serve website-capacity add-on. Each purchased unit is its own recurring
- * charge and grants `websitesPerUnit` extra websites on top of the Pro base.
- * A workspace's effective website limit = Pro base + (active units × 30).
+ * charge and grants `websitesPerUnit` extra websites on top of the Pro base,
+ * capped at `maxUnits` active units per workspace. A workspace's effective
+ * website limit = Pro base + min(active units, maxUnits) × websitesPerUnit.
  */
 export const WEBSITE_ADDON = {
-  websitesPerUnit: 30,
+  websitesPerUnit: 1,
+  maxUnits: 3,
   priceMonthlyUsd: 6,
 } as const;
 
@@ -33,8 +35,8 @@ export interface Plan {
   limits: {
     /** Infinity means unlimited. */
     websites: number;
-    /** Infinity means unlimited. */
-    monitoredPages: number;
+    /** Monitored pages allowed per website. Infinity means unlimited. */
+    pagesPerWebsite: number;
     scanFrequency: ScanFrequency;
     historyDays: number;
     manualScans: boolean;
@@ -54,7 +56,7 @@ export const plans: Plan[] = [
     headline: "Start monitoring one important website.",
     limits: {
       websites: 1,
-      monitoredPages: 5,
+      pagesPerWebsite: 5,
       scanFrequency: "WEEKLY",
       historyDays: PLAN_HISTORY_DAYS.free,
       manualScans: false,
@@ -73,14 +75,14 @@ export const plans: Plan[] = [
     id: "pro",
     name: "Pro",
     priceMonthlyUsd: 12,
-    headline: "50 websites and unlimited pages — add more anytime.",
+    headline: "8 websites, 20 pages each — add more anytime.",
     highlighted: true,
     limits: {
-      // Base capacity. Effective limit = 50 + (active add-on units × 30),
-      // computed server-side in lib/limits.ts — never read this number alone
-      // for enforcement.
-      websites: 50,
-      monitoredPages: Infinity,
+      // Base capacity. Effective limit = 8 + capped add-on units, computed
+      // server-side in lib/billing/subscription.ts — never read this number
+      // alone for enforcement.
+      websites: 8,
+      pagesPerWebsite: 20,
       scanFrequency: "DAILY",
       historyDays: PLAN_HISTORY_DAYS.pro,
       manualScans: true,
@@ -88,9 +90,9 @@ export const plans: Plan[] = [
       conversionElementMonitoring: true,
     },
     features: [
-      "50 websites included",
-      `Add ${WEBSITE_ADDON.websitesPerUnit} more anytime for $${WEBSITE_ADDON.priceMonthlyUsd}/mo`,
-      "Unlimited monitored pages",
+      "8 websites included",
+      `Add ${WEBSITE_ADDON.websitesPerUnit} more anytime for $${WEBSITE_ADDON.priceMonthlyUsd}/mo (up to ${WEBSITE_ADDON.maxUnits})`,
+      "20 monitored pages per website",
       "Daily scans",
       "1-year history",
       "Manual scans",

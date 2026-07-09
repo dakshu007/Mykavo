@@ -9,19 +9,16 @@ import { AddWebsiteWizard } from "./add-website-wizard";
 export default async function NewWebsitePage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
-  const [plan, websiteLimit, websiteCount, pagesUsed] = await Promise.all([
+  const [plan, websiteLimit, websiteCount] = await Promise.all([
     getWorkspacePlan(workspace.id),
     getEffectiveWebsiteLimit(workspace.id),
     prisma.website.count({ where: { workspaceId: workspace.id } }),
-    prisma.monitoredPage.count({ where: { website: { workspaceId: workspace.id } } }),
   ]);
 
   if (websiteCount >= websiteLimit) redirect("/dashboard/websites");
 
-  const pageBudget =
-    plan.limits.monitoredPages === Infinity
-      ? Infinity
-      : Math.max(0, plan.limits.monitoredPages - pagesUsed);
+  // Page limits are per website, so a new website starts with the full budget.
+  const pageBudget = plan.limits.pagesPerWebsite;
 
   return (
     <div className="space-y-5">
@@ -35,8 +32,8 @@ export default async function NewWebsitePage() {
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Add a website</h1>
         <p className="mt-1 text-sm text-ink-secondary">
           {pageBudget === Infinity
-            ? "Your Pro plan monitors unlimited pages."
-            : `Your ${plan.name} plan can monitor ${pageBudget} more page${pageBudget === 1 ? "" : "s"}.`}
+            ? `Your ${plan.name} plan monitors unlimited pages per website.`
+            : `Your ${plan.name} plan monitors up to ${pageBudget} pages per website.`}
         </p>
       </div>
       <AddWebsiteWizard pageBudget={pageBudget} />

@@ -12,31 +12,39 @@ describe("plans config", () => {
   it("free plan matches spec §37 limits", () => {
     expect(getPlan("free").limits).toMatchObject({
       websites: 1,
-      monitoredPages: 5,
+      pagesPerWebsite: 5,
       scanFrequency: "WEEKLY",
       historyDays: 30,
     });
   });
 
-  it("pro plan includes 50 base websites, unlimited pages", () => {
+  it("pro plan includes 8 base websites with 20 pages each", () => {
     const pro = getPlan("pro");
-    expect(pro.limits.websites).toBe(50);
-    expect(pro.limits.monitoredPages).toBe(Infinity);
+    expect(pro.limits.websites).toBe(8);
+    expect(pro.limits.pagesPerWebsite).toBe(20);
     expect(pro.limits.scanFrequency).toBe("DAILY");
     expect(pro.limits.manualScans).toBe(true);
     expect(pro.limits.conversionElementMonitoring).toBe(true);
   });
 
-  it("website add-on grants 30 sites for $6/mo", () => {
-    expect(WEBSITE_ADDON.websitesPerUnit).toBe(30);
+  it("website add-on grants 1 site for $6/mo, capped at 3 units", () => {
+    expect(WEBSITE_ADDON.websitesPerUnit).toBe(1);
+    expect(WEBSITE_ADDON.maxUnits).toBe(3);
     expect(WEBSITE_ADDON.priceMonthlyUsd).toBe(6);
+  });
+
+  it("pro can never exceed base + capped add-on capacity (11 websites)", () => {
+    const pro = getPlan("pro");
+    expect(
+      pro.limits.websites + WEBSITE_ADDON.maxUnits * WEBSITE_ADDON.websitesPerUnit,
+    ).toBe(11);
   });
 
   it("pro limits are at least free limits (never a downgrade)", () => {
     const free = getPlan("free");
     const pro = getPlan("pro");
     expect(pro.limits.websites).toBeGreaterThanOrEqual(free.limits.websites);
-    expect(pro.limits.monitoredPages).toBeGreaterThanOrEqual(free.limits.monitoredPages);
+    expect(pro.limits.pagesPerWebsite).toBeGreaterThanOrEqual(free.limits.pagesPerWebsite);
     expect(pro.priceMonthlyUsd).toBeGreaterThan(free.priceMonthlyUsd);
   });
 
