@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { Logo } from "@/components/brand/logo";
 import { ButtonLink } from "@/components/ui/button";
 
 const links = [
@@ -19,7 +19,9 @@ export function MarketingNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/60 bg-canvas/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-300 items-center justify-between px-5 lg:px-8">
-        <Logo />
+        <Link href="/" aria-label="Fluxen home">
+          <Logo />
+        </Link>
         <nav className="hidden items-center gap-7 md:flex" aria-label="Main">
           {links.map((l) => (
             <Link
