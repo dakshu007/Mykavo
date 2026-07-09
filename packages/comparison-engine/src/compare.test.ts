@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { compareSnapshots, type ComparableSnapshot } from "./compare";
+import {
+  compareSnapshots,
+  type ComparableSnapshot,
+  type ComparableElement,
+} from "./compare";
 
 const BASE: ComparableSnapshot = {
   httpStatus: 200,
@@ -24,10 +28,28 @@ const BASE: ComparableSnapshot = {
     { domain: "www.googletagmanager.com", isThirdParty: true, service: "Google Tag Manager" },
     { domain: "js.stripe.com", isThirdParty: true, service: "Stripe" },
   ],
+  elements: [],
 };
 
 function withChanges(overrides: Partial<ComparableSnapshot>): ComparableSnapshot {
   return { ...BASE, ...overrides };
+}
+
+function el(overrides: Partial<ComparableElement> = {}): ComparableElement {
+  return {
+    monitoredElementId: "el1",
+    name: "Start free trial",
+    importance: "CRITICAL",
+    expectedExistence: true,
+    expectedVisibility: true,
+    expectedText: null,
+    expectedHref: null,
+    exists: true,
+    visible: true,
+    text: "Start free trial",
+    href: "/signup",
+    ...overrides,
+  };
 }
 
 describe("compareSnapshots", () => {
@@ -106,5 +128,83 @@ describe("compareSnapshots", () => {
     const domOnly = compareSnapshots(BASE, withChanges({ domHash: "dom-b" }));
     expect(domOnly.some((c) => c.changeType === "dom_changed")).toBe(true);
     expect(domOnly.some((c) => c.changeType === "text_changed")).toBe(false);
+  });
+});
+
+describe("compareSnapshots — conversion elements (spec §23)", () => {
+  it("flags a missing critical element as CRITICAL", () => {
+    const baseline = withChanges({ elements: [el({ exists: true })] });
+    const current = withChanges({
+      elements: [el({ exists: false, visible: false, text: null, href: null })],
+    });
+    const missing = compareSnapshots(baseline, current).find(
+      (c) => c.changeType === "conversion_element_missing",
+    );
+    expect(missing?.category).toBe("CONVERSION");
+    expect(missing?.severity).toBe("CRITICAL");
+    expect(missing?.title).toMatch(/Start free trial/);
+  });
+
+  it("scales missing-element severity by importance (NORMAL → MEDIUM)", () => {
+    const baseline = withChanges({ elements: [el({ importance: "NORMAL" })] });
+    const current = withChanges({
+      elements: [el({ importance: "NORMAL", exists: false, visible: false })],
+    });
+    const missing = compareSnapshots(baseline, current).find(
+      (c) => c.changeType === "conversion_element_missing",
+    );
+    expect(missing?.severity).toBe("MEDIUM");
+  });
+
+  it("flags a hidden element", () => {
+    const changes = compareSnapshots(
+      withChanges({ elements: [el({ visible: true })] }),
+      withChanges({ elements: [el({ visible: false })] }),
+    );
+    const hidden = changes.find((c) => c.changeType === "conversion_element_hidden");
+    expect(hidden?.category).toBe("CONVERSION");
+    expect(hidden?.severity).toBe("CRITICAL");
+  });
+
+  it("flags a changed CTA link destination", () => {
+    const hrefChange = compareSnapshots(
+      withChanges({ elements: [el({ href: "/signup" })] }),
+      withChanges({ elements: [el({ href: "/pricing" })] }),
+    ).find((c) => c.changeType === "conversion_element_href_changed");
+    expect(hrefChange?.previousValue).toBe("/signup");
+    expect(hrefChange?.currentValue).toBe("/pricing");
+  });
+
+  it("flags CTA text changes, honoring a pinned expected value", () => {
+    const textChange = compareSnapshots(
+      withChanges({ elements: [el({ text: "Start free trial" })] }),
+      withChanges({ elements: [el({ text: "Sold out", expectedText: "Start free trial" })] }),
+    ).find((c) => c.changeType === "conversion_element_text_changed");
+    expect(textChange).toBeDefined();
+    expect(textChange?.currentValue).toBe("Sold out");
+  });
+
+  it("does not compare an element with no baseline observation", () => {
+    const conv = compareSnapshots(
+      withChanges({ elements: [] }),
+      withChanges({ elements: [el({ exists: false })] }),
+    ).filter((c) => c.category === "CONVERSION");
+    expect(conv).toHaveLength(0);
+  });
+
+  it("flags an element that appeared when it was expected absent", () => {
+    const appeared = compareSnapshots(
+      withChanges({ elements: [el({ expectedExistence: false, exists: false, visible: false })] }),
+      withChanges({ elements: [el({ expectedExistence: false, exists: true })] }),
+    ).find((c) => c.changeType === "conversion_element_appeared");
+    expect(appeared?.category).toBe("CONVERSION");
+  });
+
+  it("suppresses conversion diffs when the page is broken", () => {
+    const changes = compareSnapshots(
+      withChanges({ elements: [el({ exists: true })] }),
+      withChanges({ httpStatus: 500, elements: [el({ exists: false, visible: false })] }),
+    );
+    expect(changes.every((c) => c.category === "AVAILABILITY")).toBe(true);
   });
 });

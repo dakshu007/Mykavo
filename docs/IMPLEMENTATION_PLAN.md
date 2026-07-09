@@ -14,9 +14,9 @@ Fluxen is built strictly phase-by-phase. A phase begins only when the previous p
 | **5 — Comparison Engine** | HTTP/SEO/DOM/text/link/script/perf/screenshot/element comparison, change grouping, severity engine | Meaningful changes detected between baseline and scan |
 | **6 — Changes Interface** | Changes list + filters, change detail, before/after values + screenshots, diff visualization, review/approve/ignore, baseline update flow | Users understand and manage detected changes |
 | **7 — Scheduling & Notifications** | Central scheduler, recurring scans, retries, Resend email alerts, preferences, scan summaries, failure alerts | Fluxen monitors automatically without user action |
-| **8 — Stripe Billing** | Products/prices, Checkout, webhooks (idempotent), sync, portal, plan enforcement, upgrade/downgrade/cancel/payment-failure | Customers pay; limits enforced server-side |
-| **9 — Conversion Monitoring** | Monitored elements UI, selector validation, existence/visibility/text/href checks, importance | Users monitor business-critical CTAs and forms |
-| **10 — Production Hardening** | Rate limits, quotas, concurrency controls, security audit, error monitoring, metrics, indexes, storage lifecycle, backups, retention cleanup, load tests, abuse prevention | Safe and reliable for public paying customers |
+| **8 — Billing** ✅ | Dodo Payments Checkout, idempotent webhooks, sync, portal, plan enforcement, upgrade/cancel. **Free + Pro $12/mo (50 sites) + self-serve $6/mo add-ons (+30 sites each)** | Customers pay; limits (incl. add-on capacity) enforced server-side |
+| **9 — Conversion Monitoring** ✅ | Per-page monitored elements (name/selector/importance/expected existence·visibility·text·href), Pro-gated CRUD + UI, in-page checks in the scanner, CONVERSION comparison + severity rules, capped 20/page | Users monitor business-critical CTAs and forms |
+| **10 — Production Hardening** ◀ next | Rate limits, quotas, concurrency controls, security audit, error monitoring, metrics, indexes, storage lifecycle, backups, retention cleanup, load tests, abuse prevention | Safe and reliable for public paying customers |
 | **11 — SEO Growth Engine** | Remaining free tools, SEO landing-page architecture, structured data, sitemaps, internal linking, conversion tracking | Scalable organic acquisition system |
 
 ## Phase 0 Work Breakdown (current)

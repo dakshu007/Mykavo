@@ -127,3 +127,58 @@ export function extractInPage(): InPageExtraction {
     visibleText,
   };
 }
+
+export interface ElementProbe {
+  id: string;
+  selector: string;
+}
+
+export interface ElementObservation {
+  id: string;
+  exists: boolean;
+  visible: boolean;
+  text: string | null;
+  href: string | null;
+}
+
+/**
+ * Observe conversion elements in-page (spec §23, Phase 9). Runs inside the
+ * browser via page.evaluate, so — like extractInPage — it must be a
+ * self-contained serializable function. For each probe (a MonitoredElement id
+ * plus its CSS selector) it reports whether the FIRST match exists, whether it
+ * is visible, and its text/href. The comparison engine diffs these against the
+ * baseline snapshot's observations to raise CONVERSION change events.
+ */
+export function checkElementsInPage(probes: ElementProbe[]): ElementObservation[] {
+  const doc = document;
+
+  function isVisible(el: Element): boolean {
+    const html = el as HTMLElement;
+    const style = window.getComputedStyle(el);
+    if (style.display === "none") return false;
+    if (style.visibility === "hidden" || style.visibility === "collapse") return false;
+    if (parseFloat(style.opacity || "1") === 0) return false;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return false;
+    // offsetParent is null when an ancestor is display:none; fixed-position
+    // elements are the documented exception to that rule.
+    if (html.offsetParent === null && style.position !== "fixed") return false;
+    return true;
+  }
+
+  return probes.map((probe) => {
+    let el: Element | null = null;
+    try {
+      el = doc.querySelector(probe.selector);
+    } catch {
+      // Invalid selector — report as not found rather than throwing.
+      el = null;
+    }
+    if (!el) {
+      return { id: probe.id, exists: false, visible: false, text: null, href: null };
+    }
+    const text = (el.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 500) || null;
+    const href = el.hasAttribute("href") ? el.getAttribute("href") : null;
+    return { id: probe.id, exists: true, visible: isVisible(el), text, href };
+  });
+}

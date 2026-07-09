@@ -51,7 +51,7 @@ interface SnapshotRow {
 }
 
 async function toComparable(snapshot: SnapshotRow): Promise<ComparableSnapshot> {
-  const [links, scripts] = await Promise.all([
+  const [links, scripts, elements] = await Promise.all([
     prisma.pageLink.findMany({
       where: { pageSnapshotId: snapshot.id },
       select: { normalizedUrl: true, linkType: true },
@@ -59,6 +59,24 @@ async function toComparable(snapshot: SnapshotRow): Promise<ComparableSnapshot> 
     prisma.pageScript.findMany({
       where: { pageSnapshotId: snapshot.id },
       select: { domain: true, isThirdParty: true, src: true },
+    }),
+    // Conversion-element observations (Phase 9). Orphaned results (config
+    // deleted) are dropped — they can't be matched against the baseline.
+    prisma.monitoredElementResult.findMany({
+      where: { pageSnapshotId: snapshot.id, monitoredElementId: { not: null } },
+      select: {
+        monitoredElementId: true,
+        name: true,
+        importance: true,
+        expectedExistence: true,
+        expectedVisibility: true,
+        expectedText: true,
+        expectedHref: true,
+        exists: true,
+        visible: true,
+        text: true,
+        href: true,
+      },
     }),
   ]);
 
@@ -81,6 +99,19 @@ async function toComparable(snapshot: SnapshotRow): Promise<ComparableSnapshot> 
       domain: s.domain,
       isThirdParty: s.isThirdParty,
       service: detectService(s.src),
+    })),
+    elements: elements.map((e) => ({
+      monitoredElementId: e.monitoredElementId as string,
+      name: e.name,
+      importance: e.importance,
+      expectedExistence: e.expectedExistence,
+      expectedVisibility: e.expectedVisibility,
+      expectedText: e.expectedText,
+      expectedHref: e.expectedHref,
+      exists: e.exists,
+      visible: e.visible,
+      text: e.text,
+      href: e.href,
     })),
   };
 }

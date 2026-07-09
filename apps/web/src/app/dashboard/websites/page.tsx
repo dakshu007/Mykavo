@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Globe, Plus } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
-import { getWorkspacePlan } from "@/lib/limits";
+import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
+import { formatLimit } from "@/config/plans";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
@@ -10,16 +11,17 @@ import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
 export default async function WebsitesPage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
-  const [websites, plan] = await Promise.all([
+  const [websites, plan, websiteLimit] = await Promise.all([
     prisma.website.findMany({
       where: { workspaceId: workspace.id },
       include: { _count: { select: { monitoredPages: true } } },
       orderBy: { createdAt: "asc" },
     }),
     getWorkspacePlan(workspace.id),
+    getEffectiveWebsiteLimit(workspace.id),
   ]);
 
-  const atLimit = websites.length >= plan.limits.websites;
+  const atLimit = websites.length >= websiteLimit;
 
   if (websites.length === 0) {
     return (
@@ -42,12 +44,15 @@ export default async function WebsitesPage() {
   return (
     <Card>
       <CardHeader
-        title={`Websites (${websites.length} of ${plan.limits.websites})`}
+        title={`Websites (${websites.length} of ${formatLimit(websiteLimit)})`}
         action={
           atLimit ? (
-            <span className="rounded-full bg-surface px-4 py-2 text-[13px] font-medium text-ink-faint">
-              {plan.name} plan limit reached
-            </span>
+            <Link
+              href="/dashboard/billing"
+              className="rounded-full bg-surface px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:text-primary"
+            >
+              {plan.id === "pro" ? "Add capacity" : `${plan.name} limit reached — upgrade`}
+            </Link>
           ) : (
             <Link
               href="/dashboard/websites/new"

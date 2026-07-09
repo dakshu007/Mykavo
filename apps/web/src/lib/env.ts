@@ -21,6 +21,9 @@ const serverEnvSchema = z.object({
   APP_URL: z.string().url().optional(),
   // Dodo Payments (optional — billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
+  // Website capacity add-on product ($6/mo per +30 websites). When unset, the
+  // add-on purchase UI stays hidden.
+  DODO_ADDON_PRODUCT_ID: z.string().optional(),
   DODO_WEBHOOK_SECRET: z.string().optional(),
   DODO_API_KEY: z.string().optional(),
   DODO_MODE: z.enum(["test", "live"]).optional(),

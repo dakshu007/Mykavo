@@ -5,10 +5,10 @@
  */
 
 import { prisma } from "@fluxen/database";
-import { formatLimit } from "@/config/plans";
-import { getWorkspacePlan } from "@/lib/billing/subscription";
+import { formatLimit, WEBSITE_ADDON } from "@/config/plans";
+import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
 
-export { getWorkspacePlan };
+export { getWorkspacePlan, getEffectiveWebsiteLimit };
 
 export class LimitError extends Error {
   constructor(
@@ -22,13 +22,20 @@ export class LimitError extends Error {
 
 /** Throws LimitError when the workspace cannot add another website. */
 export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
-  const plan = await getWorkspacePlan(workspaceId);
-  if (plan.limits.websites === Infinity) return;
+  const [plan, limit] = await Promise.all([
+    getWorkspacePlan(workspaceId),
+    getEffectiveWebsiteLimit(workspaceId),
+  ]);
+  if (limit === Infinity) return;
   const count = await prisma.website.count({ where: { workspaceId } });
-  if (count >= plan.limits.websites) {
+  if (count >= limit) {
+    const hint =
+      plan.id === "pro"
+        ? `Add ${WEBSITE_ADDON.websitesPerUnit} more for $${WEBSITE_ADDON.priceMonthlyUsd}/mo from Billing.`
+        : "Upgrade to Pro to monitor more websites.";
     throw new LimitError(
       "WEBSITE_LIMIT",
-      `Your ${plan.name} plan monitors up to ${formatLimit(plan.limits.websites)} website${plan.limits.websites === 1 ? "" : "s"}. Upgrade to Pro for unlimited.`,
+      `Your ${plan.name} plan monitors up to ${formatLimit(limit)} website${limit === 1 ? "" : "s"}. ${hint}`,
     );
   }
 }

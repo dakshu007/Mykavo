@@ -3,11 +3,23 @@
  * Never hardcode plan limits elsewhere — server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
- * Fluxen ships two plans: Free, and Pro at $12/month with no limits.
- * "Unlimited" numeric limits use Infinity so `count >= limit` is never true.
+ * Fluxen ships two plans: Free, and Pro at $12/month. Pro includes 50 websites
+ * and unlimited monitored pages; buyers can add capacity in $6/month blocks of
+ * 30 websites (see WEBSITE_ADDON). "Unlimited" numeric limits use Infinity so
+ * `count >= limit` is never true.
  */
 
 export type PlanId = "free" | "pro";
+
+/**
+ * Self-serve website-capacity add-on. Each purchased unit is its own recurring
+ * charge and grants `websitesPerUnit` extra websites on top of the Pro base.
+ * A workspace's effective website limit = Pro base + (active units × 30).
+ */
+export const WEBSITE_ADDON = {
+  websitesPerUnit: 30,
+  priceMonthlyUsd: 6,
+} as const;
 
 export type ScanFrequency = "WEEKLY" | "DAILY";
 
@@ -64,10 +76,13 @@ export const plans: Plan[] = [
     id: "pro",
     name: "Pro",
     priceMonthlyUsd: 12,
-    headline: "Unlimited monitoring for everything you manage.",
+    headline: "50 websites and unlimited pages — add more anytime.",
     highlighted: true,
     limits: {
-      websites: Infinity,
+      // Base capacity. Effective limit = 50 + (active add-on units × 30),
+      // computed server-side in lib/limits.ts — never read this number alone
+      // for enforcement.
+      websites: 50,
       monitoredPages: Infinity,
       scanFrequency: "DAILY",
       historyDays: 365,
@@ -79,7 +94,8 @@ export const plans: Plan[] = [
       clientReports: true,
     },
     features: [
-      "Unlimited websites",
+      "50 websites included",
+      `Add ${WEBSITE_ADDON.websitesPerUnit} more anytime for $${WEBSITE_ADDON.priceMonthlyUsd}/mo`,
       "Unlimited monitored pages",
       "Daily scans",
       "1-year history",

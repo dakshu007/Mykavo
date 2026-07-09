@@ -20,12 +20,12 @@ This file is the single source of truth for picking the project back up in a fre
 | **5 — Comparison engine** | `severity-engine` + `comparison-engine` (deterministic + pixelmatch visual diff), ChangeEvents; **+ Google sign-in** | ✅ |
 | **6 — Changes interface** | Review/approve/ignore/resolve, update-baseline flow, approve-entire-scan, filters | ✅ |
 | **7 — Scheduling & notifications** | pg-boss cron scheduler (recurring scans, no user action), grouped email alerts (Resend/console), preferences | ✅ |
-| **8 — Billing** | **Two plans: Free + Pro $12/mo unlimited**, via **Dodo Payments**, auto-upgrade on payment, security-hardened webhook | ✅ |
-| **9 — Conversion monitoring** | Custom monitored elements (CTA/form existence/visibility/text/href) | ⬜ next |
-| **10 — Production hardening** | Rate limits, quotas, concurrency, indexes, retention, abuse prevention | ⬜ |
+| **8 — Billing** | **Free + Pro $12/mo (50 websites) + self-serve $6/mo add-ons (+30 websites each)**, via **Dodo Payments**, auto-upgrade on payment, security-hardened webhook | ✅ |
+| **9 — Conversion monitoring** | Per-page monitored elements — CTA/form existence·visibility·text·href checks → CONVERSION change events, Pro-gated UI + CRUD | ✅ |
+| **10 — Production hardening** | Rate limits, quotas, concurrency, indexes, retention, abuse prevention | ⬜ next |
 | **11 — SEO growth engine** | More free tools, SEO landing pages, structured data | ⬜ |
 
-Every phase is one git commit (`git log --oneline`). 151 tests pass.
+Every phase is one git commit (`git log --oneline`). 169 tests pass.
 
 ---
 
@@ -95,7 +95,7 @@ Copy `apps/web/.env.example` → `apps/web/.env.local` and `apps/worker/.env.exa
 **Web (`apps/web/.env.local`)**
 - `DATABASE_URL` (required) · `BETTER_AUTH_SECRET` (32+ chars) · `BETTER_AUTH_URL` · `APP_URL`
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (optional — enables "Continue with Google")
-- `DODO_WEBHOOK_SECRET` (required for billing webhook) · `DODO_PRODUCT_ID` (defaults to the Pro product) · `DODO_API_KEY` + `DODO_MODE` (optional — in-app cancel + portal)
+- `DODO_WEBHOOK_SECRET` (required for billing webhook) · `DODO_PRODUCT_ID` (defaults to the Pro product) · `DODO_ADDON_PRODUCT_ID` (the $6/mo website add-on product — unset hides the add-on UI) · `DODO_API_KEY` + `DODO_MODE` (optional — in-app cancel + portal)
 - `ARTIFACT_DIR` (must match the worker's)
 
 **Worker (`apps/worker/.env`)**
@@ -108,10 +108,12 @@ Secrets are gitignored (`.env*` except `.env.example`). `.data/` (artifacts) is 
 
 ## Billing specifics (Phase 8 — Dodo Payments)
 
-- **Two plans only:** Free, and **Pro $12/mo = unlimited** (config: `apps/web/src/config/plans.ts`, `Infinity` limits rendered as "Unlimited").
-- Payment provider is **Dodo Payments** (product `pdt_0Niiijjb1NtzJsNQpp0iD`). Successful payment → workspace auto-upgraded to Pro via a verified webhook.
+- **Two plans:** Free, and **Pro $12/mo = 50 websites + unlimited pages** (config: `apps/web/src/config/plans.ts`). Pages stay `Infinity` ("Unlimited"); websites are a finite base.
+- **Self-serve website add-ons:** on Pro, buy **+30 websites for $6/mo** (repeatable — 80, 110, 140…). Each purchase is its own recurring Dodo subscription tracked in the `WebsiteAddon` table; **effective website limit = 50 + (active add-ons × 30)**, computed server-side in `lib/billing/subscription.ts::getEffectiveWebsiteLimit` and enforced in `lib/limits.ts`. `WEBSITE_ADDON` in `config/plans.ts` holds the 30/$6 numbers. Manage from **dashboard → Billing** (capacity card + "Add 30 more" button).
+- Payment provider is **Dodo Payments** (base product `pdt_0Niiijjb1NtzJsNQpp0iD`). Successful payment → workspace auto-upgraded / capacity granted via a verified webhook.
+- **To enable add-ons:** create a **recurring $6/mo product** in Dodo and set its id as `DODO_ADDON_PRODUCT_ID`. Until then the add-on button is hidden and the billing page shows "add-ons aren't enabled" (Pro base still works).
 - **To go live:** register a webhook in Dodo pointing at `<APP_URL>/api/webhooks/dodo`, set `DODO_WEBHOOK_SECRET` (its `whsec_…`). Set `DODO_API_KEY` + `DODO_MODE` only if you want the in-app cancel button + customer portal.
-- **Security (do not regress):** attribution uses an unguessable server-issued `CheckoutIntent` token (never the client-editable `metadata.workspaceId`); dedupe + entitlement change happen in one transaction; a `lastEventAt` guard rejects out-of-order events. These fixes came from an adversarial security review — keep them.
+- **Security (do not regress):** attribution uses an unguessable server-issued `CheckoutIntent` token (never client-editable metadata) — the token now also carries a `kind` (`pro` | `website_addon`) so the webhook routes to the right handler without trusting the client; dedupe + entitlement change happen in one transaction; a `lastEventAt` guard (on both `Subscription` and `WebsiteAddon`) rejects out-of-order events. These fixes came from an adversarial security review — keep them.
 
 ---
 
@@ -121,4 +123,6 @@ Secrets are gitignored (`.env*` except `.env.example`). `.data/` (artifacts) is 
 
 ## Next up
 
-**Phase 9 — Conversion Element Monitoring:** let users define business-critical elements (signup button, checkout CTA, contact form) by CSS selector with expected existence/visibility/text/href, checked on every scan (e.g. `Critical: "Start Free Trial" button is missing from /pricing`). The `MonitoredElement` model is specced in [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) but not yet built.
+**Phase 10 — Production hardening:** rate limiting, scan quotas, worker concurrency controls, DB indexes + query optimization, artifact storage lifecycle/retention cleanup, and abuse prevention. See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
+
+Phase 9 (conversion monitoring) is **done**: users define business-critical elements per page (signup button, checkout CTA, contact form) by CSS selector with expected existence/visibility/text/href; every scan observes them (`MonitoredElement` → `MonitoredElementResult`) and the comparison engine raises CONVERSION change events (e.g. `"Start free trial" is missing`). Pro-gated (worker skips checks for non-Pro workspaces), capped at 20 elements/page. UI lives on the per-page detail screen.

@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { prisma, type Website, type Workspace } from "@fluxen/database";
+import { prisma, type Website, type Workspace, type MonitoredPage } from "@fluxen/database";
 import { auth } from "@/lib/auth";
 
 /**
@@ -34,5 +34,20 @@ export async function getOwnedWebsite(
 ): Promise<Website | null> {
   return prisma.website.findFirst({
     where: { id: websiteId, workspaceId: ctx.workspace.id },
+  });
+}
+
+/**
+ * Loads a monitored page only if it belongs to the given website AND that
+ * website belongs to the caller's workspace (double-scoped: no cross-workspace
+ * or cross-website access).
+ */
+export async function getOwnedMonitoredPage(
+  ctx: ApiContext,
+  websiteId: string,
+  pageId: string,
+): Promise<MonitoredPage | null> {
+  return prisma.monitoredPage.findFirst({
+    where: { id: pageId, websiteId, website: { workspaceId: ctx.workspace.id } },
   });
 }

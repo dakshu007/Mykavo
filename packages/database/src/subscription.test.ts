@@ -10,6 +10,11 @@ import {
   upgradeWorkspaceToPro,
   downgradeWorkspaceToFree,
   findWorkspaceByDodoSubscription,
+  applyWebsiteAddon,
+  revokeWebsiteAddon,
+  findWorkspaceByAddonSubscription,
+  listActiveWebsiteAddons,
+  getWorkspaceAddonWebsites,
   createCheckoutIntent,
   consumeCheckoutIntent,
 } from "./subscription";
@@ -131,11 +136,24 @@ describe("out-of-order event guard", () => {
 });
 
 describe("checkout intents (unforgeable attribution)", () => {
-  it("resolves and consumes a valid token exactly once", async () => {
+  it("resolves and consumes a valid token exactly once, carrying its kind", async () => {
     await createCheckoutIntent(prisma, { token: "tok_ok", workspaceId, userId: RUN });
-    expect(await consumeCheckoutIntent(prisma, "tok_ok")).toBe(workspaceId);
+    expect(await consumeCheckoutIntent(prisma, "tok_ok")).toEqual({ workspaceId, kind: "pro" });
     // Second consume returns null (already used) — no double-attribution.
     expect(await consumeCheckoutIntent(prisma, "tok_ok")).toBeNull();
+  });
+
+  it("preserves the add-on kind through consumption", async () => {
+    await createCheckoutIntent(prisma, {
+      token: "tok_addon",
+      workspaceId,
+      userId: RUN,
+      kind: "website_addon",
+    });
+    expect(await consumeCheckoutIntent(prisma, "tok_addon")).toEqual({
+      workspaceId,
+      kind: "website_addon",
+    });
   });
 
   it("returns null for unknown or expired tokens", async () => {
@@ -147,5 +165,68 @@ describe("checkout intents (unforgeable attribution)", () => {
       ttlMinutes: -1,
     });
     expect(await consumeCheckoutIntent(prisma, "tok_expired")).toBeNull();
+  });
+});
+
+describe("website add-ons", () => {
+  it("grants extra website capacity that sums across active add-ons", async () => {
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(0);
+
+    await applyWebsiteAddon(prisma, {
+      workspaceId,
+      dodoSubscriptionId: "addon_1",
+      status: "active",
+    });
+    await applyWebsiteAddon(prisma, {
+      workspaceId,
+      dodoSubscriptionId: "addon_2",
+      status: "active",
+    });
+
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(60);
+    expect((await listActiveWebsiteAddons(prisma, workspaceId)).length).toBe(2);
+    expect(await findWorkspaceByAddonSubscription(prisma, "addon_1")).toBe(workspaceId);
+  });
+
+  it("is idempotent on repeated active events (keyed by subscription id)", async () => {
+    for (const _ of [1, 2, 3]) {
+      await applyWebsiteAddon(prisma, {
+        workspaceId,
+        dodoSubscriptionId: "addon_dup",
+        status: "active",
+      });
+    }
+    expect(await prisma.websiteAddon.count({ where: { workspaceId } })).toBe(1);
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(30);
+  });
+
+  it("revoking removes the capacity", async () => {
+    await applyWebsiteAddon(prisma, {
+      workspaceId,
+      dodoSubscriptionId: "addon_rev",
+      status: "active",
+    });
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(30);
+    await revokeWebsiteAddon(prisma, { dodoSubscriptionId: "addon_rev", status: "cancelled" });
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(0);
+    expect((await listActiveWebsiteAddons(prisma, workspaceId)).length).toBe(0);
+  });
+
+  it("ignores a stale (out-of-order) add-on event", async () => {
+    const t1 = new Date("2026-07-08T10:00:00Z");
+    const t0 = new Date("2026-07-08T09:00:00Z");
+    await applyWebsiteAddon(prisma, {
+      workspaceId,
+      dodoSubscriptionId: "addon_ooo",
+      status: "active",
+      eventAt: t1,
+    });
+    // A stale cancel must not deactivate a newer activation.
+    await revokeWebsiteAddon(prisma, {
+      dodoSubscriptionId: "addon_ooo",
+      status: "cancelled",
+      eventAt: t0,
+    });
+    expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(30);
   });
 });

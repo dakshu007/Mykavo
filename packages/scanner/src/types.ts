@@ -1,3 +1,26 @@
+export type ElementImportance = "NORMAL" | "IMPORTANT" | "CRITICAL";
+
+/** A conversion element to observe on the page (Phase 9). */
+export interface MonitoredElementInput {
+  /** The MonitoredElement id — used to match baseline vs current results. */
+  id: string;
+  name: string;
+  selector: string;
+  importance: ElementImportance;
+  expectedExistence: boolean;
+  expectedVisibility: boolean;
+  expectedText: string | null;
+  expectedHref: string | null;
+}
+
+/** The observed state of a monitored element on a single scan (Phase 9). */
+export interface MonitoredElementCheck extends MonitoredElementInput {
+  exists: boolean;
+  visible: boolean;
+  text: string | null;
+  href: string | null;
+}
+
 export interface ScanPageOptions {
   /** Navigation timeout in ms. Default 30_000. */
   timeoutMs?: number;
@@ -5,6 +28,8 @@ export interface ScanPageOptions {
   postLoadDelayMs?: number;
   /** Storage key prefix for artifacts (e.g. "ws/<workspaceId>/scan/<scanId>"). */
   artifactPrefix: string;
+  /** Conversion elements to check on this page (Phase 9). */
+  elements?: MonitoredElementInput[];
 }
 
 export interface ScannedLink {
@@ -39,6 +64,8 @@ export interface PageScanResult {
   requestCount: number;
   links: ScannedLink[];
   scripts: ScannedScript[];
+  /** Observed state of each requested monitored element (Phase 9). */
+  elements: MonitoredElementCheck[];
 }
 
 export class ScanPageError extends Error {

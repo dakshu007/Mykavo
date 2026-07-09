@@ -148,3 +148,59 @@ describe("notification eligibility (spec §27)", () => {
     expect(score({ kind: "content_text" })!.notify).toBe(false);
   });
 });
+
+describe("conversion element rules (spec §23)", () => {
+  it("a missing element scales severity by importance", () => {
+    expect(score({ kind: "element_missing", name: "CTA", importance: "CRITICAL" })!.severity).toBe(
+      "CRITICAL",
+    );
+    expect(score({ kind: "element_missing", name: "CTA", importance: "IMPORTANT" })!.severity).toBe(
+      "HIGH",
+    );
+    expect(score({ kind: "element_missing", name: "CTA", importance: "NORMAL" })!.severity).toBe(
+      "MEDIUM",
+    );
+  });
+
+  it("missing and hidden are CONVERSION and notify at HIGH+", () => {
+    const missing = score({ kind: "element_missing", name: "CTA", importance: "CRITICAL" })!;
+    expect(missing.category).toBe("CONVERSION");
+    expect(missing.notify).toBe(true);
+    const hidden = score({ kind: "element_hidden", name: "CTA", importance: "IMPORTANT" })!;
+    expect(hidden.changeType).toBe("conversion_element_hidden");
+    expect(hidden.severity).toBe("HIGH");
+  });
+
+  it("a changed link destination is high-impact", () => {
+    const c = score({
+      kind: "element_href_changed",
+      name: "CTA",
+      importance: "IMPORTANT",
+      previous: "/a",
+      current: "/b",
+    })!;
+    expect(c.severity).toBe("HIGH");
+    expect(c.category).toBe("CONVERSION");
+  });
+
+  it("a text change is MEDIUM (HIGH for critical elements)", () => {
+    expect(
+      score({
+        kind: "element_text_changed",
+        name: "CTA",
+        importance: "NORMAL",
+        previous: "Buy",
+        current: "Sold",
+      })!.severity,
+    ).toBe("MEDIUM");
+    expect(
+      score({
+        kind: "element_text_changed",
+        name: "CTA",
+        importance: "CRITICAL",
+        previous: "Buy",
+        current: "Sold",
+      })!.severity,
+    ).toBe("HIGH");
+  });
+});

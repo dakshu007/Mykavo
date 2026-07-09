@@ -3,19 +3,20 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
-import { getWorkspacePlan } from "@/lib/limits";
+import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { AddWebsiteWizard } from "./add-website-wizard";
 
 export default async function NewWebsitePage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
-  const [plan, websiteCount, pagesUsed] = await Promise.all([
+  const [plan, websiteLimit, websiteCount, pagesUsed] = await Promise.all([
     getWorkspacePlan(workspace.id),
+    getEffectiveWebsiteLimit(workspace.id),
     prisma.website.count({ where: { workspaceId: workspace.id } }),
     prisma.monitoredPage.count({ where: { website: { workspaceId: workspace.id } } }),
   ]);
 
-  if (websiteCount >= plan.limits.websites) redirect("/dashboard/websites");
+  if (websiteCount >= websiteLimit) redirect("/dashboard/websites");
 
   const pageBudget =
     plan.limits.monitoredPages === Infinity

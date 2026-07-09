@@ -5,7 +5,7 @@
  * are skipped, so a retried job resumes where it stopped.
  */
 
-import { prisma, createInitialBaselinesForScan } from "@fluxen/database";
+import { prisma, createInitialBaselinesForScan, getWorkspaceEntitlement } from "@fluxen/database";
 import {
   BrowserPool,
   ScanPageError,
@@ -30,7 +30,12 @@ export async function runScanWebsiteJob(
     include: {
       website: {
         include: {
-          monitoredPages: { where: { enabled: true }, orderBy: { createdAt: "asc" } },
+          monitoredPages: {
+            where: { enabled: true },
+            orderBy: { createdAt: "asc" },
+            // Conversion elements to observe on each page (Phase 9).
+            include: { monitoredElements: { where: { enabled: true } } },
+          },
         },
       },
     },
@@ -52,6 +57,11 @@ export async function runScanWebsiteJob(
     workspaceId: website.workspaceId,
   };
   const pages = website.monitoredPages;
+
+  // Conversion element monitoring is Pro-only (spec §37). Gate here so a
+  // downgraded workspace's configured elements simply stop being checked.
+  const entitlement = await getWorkspaceEntitlement(prisma, website.workspaceId);
+  const conversionEnabled = entitlement?.planId === "pro";
 
   await prisma.scan.update({
     where: { id: scanId },
@@ -82,9 +92,21 @@ export async function runScanWebsiteJob(
 
   async function scanOne(page: (typeof pages)[number]): Promise<void> {
     const artifactPrefix = `ws/${website.workspaceId}/scan/${scanId}/${page.id}`;
+    const elementInputs = conversionEnabled
+      ? page.monitoredElements.map((e) => ({
+          id: e.id,
+          name: e.name,
+          selector: e.selector,
+          importance: e.importance,
+          expectedExistence: e.expectedExistence,
+          expectedVisibility: e.expectedVisibility,
+          expectedText: e.expectedText,
+          expectedHref: e.expectedHref,
+        }))
+      : [];
     try {
       const result = await pool.withBrowser((browser) =>
-        scanPage(browser, page.url, storage, { artifactPrefix }),
+        scanPage(browser, page.url, storage, { artifactPrefix, elements: elementInputs }),
       );
       await prisma.pageSnapshot.create({
         data: {
@@ -120,6 +142,22 @@ export async function runScanWebsiteJob(
               src: s.src.slice(0, 2048),
               domain: s.domain,
               isThirdParty: s.isThirdParty,
+            })),
+          },
+          monitoredElementResults: {
+            create: result.elements.map((e) => ({
+              monitoredElementId: e.id,
+              name: e.name,
+              selector: e.selector.slice(0, 1000),
+              importance: e.importance,
+              expectedExistence: e.expectedExistence,
+              expectedVisibility: e.expectedVisibility,
+              expectedText: e.expectedText,
+              expectedHref: e.expectedHref ? e.expectedHref.slice(0, 2048) : null,
+              exists: e.exists,
+              visible: e.visible,
+              text: e.text ? e.text.slice(0, 1000) : null,
+              href: e.href ? e.href.slice(0, 2048) : null,
             })),
           },
         },

@@ -19,6 +19,8 @@ export type ChangeCategory =
   | "PERFORMANCE"
   | "CONVERSION";
 
+export type ElementImportance = "NORMAL" | "IMPORTANT" | "CRITICAL";
+
 const SEVERITY_ORDER: Severity[] = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 /** Returns the most severe of the given severities, or null if empty. */
@@ -55,7 +57,25 @@ export type ChangeSignal =
   | { kind: "page_weight"; previousBytes: number; currentBytes: number }
   | { kind: "request_count"; previous: number; current: number }
   | { kind: "response_time"; previousMs: number; currentMs: number }
-  | { kind: "visual_diff"; percentage: number };
+  | { kind: "visual_diff"; percentage: number }
+  // Conversion elements (spec §23, Phase 9)
+  | { kind: "element_missing"; name: string; importance: ElementImportance }
+  | { kind: "element_hidden"; name: string; importance: ElementImportance }
+  | { kind: "element_appeared"; name: string; importance: ElementImportance }
+  | {
+      kind: "element_text_changed";
+      name: string;
+      importance: ElementImportance;
+      previous: string | null;
+      current: string | null;
+    }
+  | {
+      kind: "element_href_changed";
+      name: string;
+      importance: ElementImportance;
+      previous: string | null;
+      current: string | null;
+    };
 
 export interface ScoredChange {
   category: ChangeCategory;
@@ -354,7 +374,71 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         currentValue: `${p.toFixed(1)}% changed`,
       });
     }
+
+    case "element_missing":
+      return finalize({
+        category: "CONVERSION",
+        changeType: "conversion_element_missing",
+        severity: byImportance(signal.importance),
+        title: `"${signal.name}" is missing`,
+        description: `The monitored conversion element "${signal.name}" is no longer on the page. Visitors can't see or use it — this can directly cost signups or sales.`,
+        previousValue: "Present",
+        currentValue: "Missing",
+      });
+
+    case "element_hidden":
+      return finalize({
+        category: "CONVERSION",
+        changeType: "conversion_element_hidden",
+        severity: byImportance(signal.importance),
+        title: `"${signal.name}" is no longer visible`,
+        description: `The monitored conversion element "${signal.name}" is still in the page but hidden from visitors (display, visibility, opacity, or zero size).`,
+        previousValue: "Visible",
+        currentValue: "Hidden",
+      });
+
+    case "element_appeared":
+      return finalize({
+        category: "CONVERSION",
+        changeType: "conversion_element_appeared",
+        severity: signal.importance === "CRITICAL" ? "HIGH" : "MEDIUM",
+        title: `"${signal.name}" appeared unexpectedly`,
+        description: `The monitored element "${signal.name}" was expected to be absent but is now present on the page.`,
+        previousValue: "Absent",
+        currentValue: "Present",
+      });
+
+    case "element_text_changed":
+      return finalize({
+        category: "CONVERSION",
+        changeType: "conversion_element_text_changed",
+        severity: signal.importance === "CRITICAL" ? "HIGH" : "MEDIUM",
+        title: `"${signal.name}" text changed`,
+        description: `The text of the monitored conversion element "${signal.name}" changed. Confirm the call-to-action still reads correctly.`,
+        previousValue: fmt(signal.previous),
+        currentValue: fmt(signal.current),
+      });
+
+    case "element_href_changed":
+      return finalize({
+        category: "CONVERSION",
+        changeType: "conversion_element_href_changed",
+        severity: byImportance(signal.importance),
+        title: `"${signal.name}" link destination changed`,
+        description: `The link target of the monitored conversion element "${signal.name}" changed. A wrong destination can silently break conversions.`,
+        previousValue: fmt(signal.previous),
+        currentValue: fmt(signal.current),
+      });
   }
+}
+
+/** Conversion-element severity scaled by the user's declared importance. */
+function byImportance(importance: ElementImportance): Severity {
+  return importance === "CRITICAL"
+    ? "CRITICAL"
+    : importance === "IMPORTANT"
+      ? "HIGH"
+      : "MEDIUM";
 }
 
 function kb(bytes: number): string {

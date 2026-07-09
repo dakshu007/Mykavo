@@ -7,9 +7,19 @@
 import { createHash } from "node:crypto";
 import type { Browser, Page } from "playwright";
 import { assertSafeUrl, UnsafeUrlError, normalizeUrl, isSameOrigin } from "@fluxen/shared";
-import { extractInPage, type InPageExtraction } from "./extract";
+import {
+  extractInPage,
+  checkElementsInPage,
+  type InPageExtraction,
+  type ElementObservation,
+} from "./extract";
 import type { ArtifactStorage } from "./storage";
-import { ScanPageError, type PageScanResult, type ScanPageOptions } from "./types";
+import {
+  ScanPageError,
+  type PageScanResult,
+  type ScanPageOptions,
+  type MonitoredElementCheck,
+} from "./types";
 
 const VIEWPORT = { width: 1440, height: 900 };
 const MAX_SCREENSHOT_HEIGHT = 8000;
@@ -128,6 +138,28 @@ export async function scanPage(
       `(() => { const __name = (fn) => fn; return (${extractInPage.toString()})(); })()`,
     );
 
+    // Conversion element checks (spec §23, Phase 9). Evaluated on the same
+    // stabilized page, injected as source with the __name shim like extraction.
+    const elementInputs = options.elements ?? [];
+    let elements: MonitoredElementCheck[] = [];
+    if (elementInputs.length > 0) {
+      const probes = elementInputs.map((e) => ({ id: e.id, selector: e.selector }));
+      const observed: ElementObservation[] = await page.evaluate(
+        `(() => { const __name = (fn) => fn; const probes = ${JSON.stringify(probes)}; return (${checkElementsInPage.toString()})(probes); })()`,
+      );
+      const byId = new Map(observed.map((o) => [o.id, o]));
+      elements = elementInputs.map((e) => {
+        const o = byId.get(e.id);
+        return {
+          ...e,
+          exists: o?.exists ?? false,
+          visible: o?.visible ?? false,
+          text: o?.text ?? null,
+          href: o?.href ?? null,
+        };
+      });
+    }
+
     const finalUrl = page.url();
     const base = new URL(finalUrl);
 
@@ -208,6 +240,7 @@ export async function scanPage(
       requestCount,
       links,
       scripts,
+      elements,
     };
   } finally {
     await context.close().catch(() => {});

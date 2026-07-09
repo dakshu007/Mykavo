@@ -144,12 +144,137 @@ export async function findWorkspaceByDodoSubscription(
   return sub?.workspaceId ?? null;
 }
 
+/* ---------- Website capacity add-ons (Phase 8.1) ---------- */
+
+export interface WebsiteAddonInput {
+  workspaceId: string;
+  dodoSubscriptionId: string;
+  dodoCustomerId?: string | null;
+  status: string;
+  websitesGranted?: number;
+  currentPeriodEnd?: Date | null;
+  cancelAtPeriodEnd?: boolean;
+  /** Logical event time — used to reject stale, out-of-order events. */
+  eventAt?: Date | null;
+}
+
+/**
+ * Activate/refresh a website add-on from a verified active/renewed/paid
+ * webhook. Keyed by its own Dodo subscription id, so a workspace can hold
+ * several. The workspace binding is set once at creation and never rewritten
+ * on update (an add-on can't be moved to another workspace).
+ */
+export async function applyWebsiteAddon(db: Db, input: WebsiteAddonInput): Promise<void> {
+  const existing = await db.websiteAddon.findUnique({
+    where: { dodoSubscriptionId: input.dodoSubscriptionId },
+  });
+  if (existing && isStale(existing.lastEventAt, input.eventAt)) return; // out-of-order guard
+
+  await db.websiteAddon.upsert({
+    where: { dodoSubscriptionId: input.dodoSubscriptionId },
+    create: {
+      workspaceId: input.workspaceId,
+      dodoSubscriptionId: input.dodoSubscriptionId,
+      dodoCustomerId: input.dodoCustomerId ?? null,
+      status: input.status,
+      websitesGranted: input.websitesGranted ?? 30,
+      currentPeriodEnd: input.currentPeriodEnd ?? null,
+      cancelAtPeriodEnd: input.cancelAtPeriodEnd ?? false,
+      lastEventAt: input.eventAt ?? null,
+    },
+    // Never rewrite workspaceId here — the add-on stays bound to its buyer.
+    update: {
+      status: input.status,
+      dodoCustomerId: input.dodoCustomerId ?? undefined,
+      websitesGranted: input.websitesGranted ?? undefined,
+      currentPeriodEnd: input.currentPeriodEnd ?? undefined,
+      cancelAtPeriodEnd: input.cancelAtPeriodEnd ?? false,
+      lastEventAt: input.eventAt ?? undefined,
+    },
+  });
+}
+
+/** Deactivate a website add-on (cancelled/expired/failed/on_hold). */
+export async function revokeWebsiteAddon(
+  db: Db,
+  input: { dodoSubscriptionId: string; status: string; eventAt?: Date | null },
+): Promise<void> {
+  const existing = await db.websiteAddon.findUnique({
+    where: { dodoSubscriptionId: input.dodoSubscriptionId },
+  });
+  if (!existing) return; // nothing to revoke
+  if (isStale(existing.lastEventAt, input.eventAt)) return; // out-of-order guard
+  await db.websiteAddon.update({
+    where: { dodoSubscriptionId: input.dodoSubscriptionId },
+    data: {
+      status: input.status,
+      cancelAtPeriodEnd: false,
+      lastEventAt: input.eventAt ?? undefined,
+    },
+  });
+}
+
+export async function findWorkspaceByAddonSubscription(
+  db: Db,
+  dodoSubscriptionId: string,
+): Promise<string | null> {
+  const addon = await db.websiteAddon.findUnique({
+    where: { dodoSubscriptionId },
+    select: { workspaceId: true },
+  });
+  return addon?.workspaceId ?? null;
+}
+
+export interface ActiveWebsiteAddon {
+  dodoSubscriptionId: string;
+  websitesGranted: number;
+  currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd: boolean;
+}
+
+/** Active add-ons for a workspace (for billing display). */
+export async function listActiveWebsiteAddons(
+  db: Db,
+  workspaceId: string,
+): Promise<ActiveWebsiteAddon[]> {
+  const rows = await db.websiteAddon.findMany({
+    where: { workspaceId, status: { in: [...ACTIVE_STATUSES] } },
+    select: {
+      dodoSubscriptionId: true,
+      websitesGranted: true,
+      currentPeriodEnd: true,
+      cancelAtPeriodEnd: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows;
+}
+
+/** Total extra websites granted by a workspace's active add-ons. */
+export async function getWorkspaceAddonWebsites(
+  db: Db,
+  workspaceId: string,
+): Promise<number> {
+  const rows = await db.websiteAddon.findMany({
+    where: { workspaceId, status: { in: [...ACTIVE_STATUSES] } },
+    select: { websitesGranted: true },
+  });
+  return rows.reduce((sum, r) => sum + r.websitesGranted, 0);
+}
+
 /* ---------- Checkout intents (unforgeable attribution) ---------- */
 
 /** Create a checkout intent and return its unguessable token. */
 export async function createCheckoutIntent(
   db: Db,
-  params: { token: string; workspaceId: string; userId: string; ttlMinutes?: number },
+  params: {
+    token: string;
+    workspaceId: string;
+    userId: string;
+    /** "pro" (base plan) | "website_addon". Defaults to "pro". */
+    kind?: string;
+    ttlMinutes?: number;
+  },
 ): Promise<void> {
   const ttl = params.ttlMinutes ?? 60;
   await db.checkoutIntent.create({
@@ -157,26 +282,35 @@ export async function createCheckoutIntent(
       token: params.token,
       workspaceId: params.workspaceId,
       userId: params.userId,
+      kind: params.kind ?? "pro",
       expiresAt: new Date(Date.now() + ttl * 60_000),
     },
   });
 }
 
+export interface ConsumedIntent {
+  workspaceId: string;
+  /** What was purchased: "pro" | "website_addon". */
+  kind: string;
+}
+
 /**
- * Resolve + consume a checkout token → workspace id. Returns null when the
- * token is unknown, expired, or already consumed. Marks it consumed so a
- * token can attribute at most one workspace binding.
+ * Resolve + consume a checkout token → { workspace, kind }. Returns null when
+ * the token is unknown, expired, or already consumed. Marks it consumed so a
+ * token can attribute at most one workspace binding. `kind` is server-issued
+ * (never client-editable), so the webhook trusts it to route the payment to
+ * the base-plan vs add-on handler.
  */
 export async function consumeCheckoutIntent(
   db: Db,
   token: string,
   now: Date = new Date(),
-): Promise<string | null> {
+): Promise<ConsumedIntent | null> {
   const intent = await db.checkoutIntent.findUnique({ where: { token } });
   if (!intent || intent.consumedAt || intent.expiresAt < now) return null;
   await db.checkoutIntent.update({
     where: { token },
     data: { consumedAt: now },
   });
-  return intent.workspaceId;
+  return { workspaceId: intent.workspaceId, kind: intent.kind };
 }

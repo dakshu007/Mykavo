@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPlan, plans, formatLimit } from "./plans";
+import { getPlan, plans, formatLimit, WEBSITE_ADDON } from "./plans";
 
 describe("plans config", () => {
   it("contains exactly two plans: free and pro ($12)", () => {
@@ -18,13 +18,18 @@ describe("plans config", () => {
     });
   });
 
-  it("pro plan is unlimited on websites and pages", () => {
+  it("pro plan includes 50 base websites, unlimited pages", () => {
     const pro = getPlan("pro");
-    expect(pro.limits.websites).toBe(Infinity);
+    expect(pro.limits.websites).toBe(50);
     expect(pro.limits.monitoredPages).toBe(Infinity);
     expect(pro.limits.scanFrequency).toBe("DAILY");
     expect(pro.limits.manualScans).toBe(true);
     expect(pro.limits.conversionElementMonitoring).toBe(true);
+  });
+
+  it("website add-on grants 30 sites for $6/mo", () => {
+    expect(WEBSITE_ADDON.websitesPerUnit).toBe(30);
+    expect(WEBSITE_ADDON.priceMonthlyUsd).toBe(6);
   });
 
   it("pro limits are at least free limits (never a downgrade)", () => {

@@ -20,6 +20,21 @@ export interface SnapshotScript {
   service: string | null;
 }
 
+/** Observed state of a monitored conversion element (spec §23, Phase 9). */
+export interface ComparableElement {
+  monitoredElementId: string;
+  name: string;
+  importance: "NORMAL" | "IMPORTANT" | "CRITICAL";
+  expectedExistence: boolean;
+  expectedVisibility: boolean;
+  expectedText: string | null;
+  expectedHref: string | null;
+  exists: boolean;
+  visible: boolean;
+  text: string | null;
+  href: string | null;
+}
+
 export interface ComparableSnapshot {
   httpStatus: number | null;
   finalUrl: string | null;
@@ -36,6 +51,7 @@ export interface ComparableSnapshot {
   responseTimeMs: number | null;
   links: SnapshotLink[];
   scripts: SnapshotScript[];
+  elements: ComparableElement[];
 }
 
 /** Known-service detection so script identity survives cache-busting query strings. */
@@ -183,6 +199,55 @@ export function compareSnapshots(
         currentMs: current.responseTimeMs,
       });
     }
+
+    // --- Conversion elements (spec §23): diff each element's observed state
+    // against the baseline, matched by monitored-element id. ---
+    const baselineElements = new Map(
+      baseline.elements.map((e) => [e.monitoredElementId, e]),
+    );
+    for (const c of current.elements) {
+      const b = baselineElements.get(c.monitoredElementId);
+      if (!b) continue; // no baseline observation yet (element added post-baseline)
+
+      if (c.expectedExistence) {
+        // Element should be present. Flag only a real regression: present at
+        // baseline, gone now.
+        if (b.exists && !c.exists) {
+          signals.push({ kind: "element_missing", name: c.name, importance: c.importance });
+          continue; // gone → don't also diff its visibility/text/href
+        }
+        if (!c.exists) continue; // absent in both — no change to report
+
+        if (c.expectedVisibility && b.visible && !c.visible) {
+          signals.push({ kind: "element_hidden", name: c.name, importance: c.importance });
+        }
+        // Text/href: compare against the pinned expected value when the user set
+        // one, otherwise against the baseline observation.
+        const textRef = c.expectedText ?? b.text;
+        if (textRef !== null && normalizeText(textRef) !== normalizeText(c.text)) {
+          signals.push({
+            kind: "element_text_changed",
+            name: c.name,
+            importance: c.importance,
+            previous: textRef,
+            current: c.text,
+          });
+        }
+        const hrefRef = c.expectedHref ?? b.href;
+        if (hrefRef !== null && hrefRef !== c.href) {
+          signals.push({
+            kind: "element_href_changed",
+            name: c.name,
+            importance: c.importance,
+            previous: hrefRef,
+            current: c.href,
+          });
+        }
+      } else if (!b.exists && c.exists) {
+        // Element is expected to be ABSENT — flag when it appears.
+        signals.push({ kind: "element_appeared", name: c.name, importance: c.importance });
+      }
+    }
   }
 
   const scored = signals
@@ -191,6 +256,10 @@ export function compareSnapshots(
 
   const order = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
   return scored.sort((a, b) => order.indexOf(a.severity) - order.indexOf(b.severity));
+}
+
+function normalizeText(v: string | null): string {
+  return (v ?? "").replace(/\s+/g, " ").trim();
 }
 
 function normalizeForCompare(url: string): string {

@@ -5,6 +5,9 @@ import {
   upgradeWorkspaceToPro,
   downgradeWorkspaceToFree,
   findWorkspaceByDodoSubscription,
+  applyWebsiteAddon,
+  revokeWebsiteAddon,
+  findWorkspaceByAddonSubscription,
   consumeCheckoutIntent,
 } from "@fluxen/database";
 import { verifyDodoWebhook, DodoWebhookError } from "@/lib/billing/webhook";
@@ -116,15 +119,60 @@ export async function POST(request: Request) {
         throw err;
       }
 
-      // Resolve workspace: stored binding first, else consume the token.
-      let workspaceId: string | null = subscriptionId
-        ? await findWorkspaceByDodoSubscription(tx, subscriptionId)
-        : null;
+      // Resolve workspace AND route (base plan vs website add-on). An existing
+      // subscription binding wins; otherwise the server-issued checkout intent
+      // supplies both the workspace and the trusted purchase `kind` (never the
+      // client-editable metadata).
+      let workspaceId: string | null = null;
+      let route: "pro" | "website_addon" = "pro";
+      if (subscriptionId) {
+        const baseWs = await findWorkspaceByDodoSubscription(tx, subscriptionId);
+        if (baseWs) {
+          workspaceId = baseWs;
+          route = "pro";
+        } else {
+          const addonWs = await findWorkspaceByAddonSubscription(tx, subscriptionId);
+          if (addonWs) {
+            workspaceId = addonWs;
+            route = "website_addon";
+          }
+        }
+      }
       if (!workspaceId && token) {
-        workspaceId = await consumeCheckoutIntent(tx, token);
+        const intent = await consumeCheckoutIntent(tx, token);
+        if (intent) {
+          workspaceId = intent.workspaceId;
+          route = intent.kind === "website_addon" ? "website_addon" : "pro";
+        }
       }
       if (!workspaceId) return "unattributed" as const;
 
+      // --- Website add-on subscriptions (each active row = +30 websites) ---
+      if (route === "website_addon") {
+        if (grants && subscriptionId) {
+          await applyWebsiteAddon(tx, {
+            workspaceId,
+            dodoSubscriptionId: subscriptionId,
+            dodoCustomerId: data.customer?.customer_id ?? null,
+            status: "active",
+            currentPeriodEnd: parseDate(data.next_billing_date),
+            cancelAtPeriodEnd: data.cancel_at_next_billing_date ?? false,
+            eventAt,
+          });
+          return "addon_activated" as const;
+        }
+        if (revokes && subscriptionId) {
+          await revokeWebsiteAddon(tx, {
+            dodoSubscriptionId: subscriptionId,
+            status: status || "cancelled",
+            eventAt,
+          });
+          return "addon_revoked" as const;
+        }
+        return "noop" as const;
+      }
+
+      // --- Base Pro plan ---
       if (grants) {
         await upgradeWorkspaceToPro(tx, {
           workspaceId,

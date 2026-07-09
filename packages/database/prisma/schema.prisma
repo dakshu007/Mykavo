@@ -101,6 +101,7 @@ model Workspace {
   notifications        Notification[]
   subscription         Subscription?
   checkoutIntents      CheckoutIntent[]
+  websiteAddons        WebsiteAddon[]
 
   @@index([ownerId])
   @@map("workspace")
@@ -174,9 +175,10 @@ model MonitoredPage {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  snapshots    PageSnapshot[]
-  baselines    Baseline[]
-  changeEvents ChangeEvent[]
+  snapshots         PageSnapshot[]
+  baselines         Baseline[]
+  changeEvents      ChangeEvent[]
+  monitoredElements MonitoredElement[]
 
   @@unique([websiteId, normalizedUrl])
   @@index([websiteId])
@@ -258,11 +260,12 @@ model PageSnapshot {
   errorMessage               String?
   createdAt                  DateTime @default(now())
 
-  links                 PageLink[]
-  scripts               PageScript[]
-  baselines             Baseline[]
-  changesAsPrevious     ChangeEvent[] @relation("ChangePreviousSnapshot")
-  changesAsCurrent      ChangeEvent[] @relation("ChangeCurrentSnapshot")
+  links                   PageLink[]
+  scripts                 PageScript[]
+  baselines               Baseline[]
+  changesAsPrevious       ChangeEvent[] @relation("ChangePreviousSnapshot")
+  changesAsCurrent        ChangeEvent[] @relation("ChangeCurrentSnapshot")
+  monitoredElementResults MonitoredElementResult[]
 
   @@unique([scanId, monitoredPageId])
   @@index([monitoredPageId, createdAt(sort: Desc)])
@@ -295,6 +298,72 @@ model PageScript {
 
   @@index([pageSnapshotId])
   @@map("page_script")
+}
+
+// ---------- Conversion element monitoring (Phase 9) ----------
+
+enum MonitoredElementImportance {
+  NORMAL
+  IMPORTANT
+  CRITICAL
+}
+
+// A business-critical element a user wants watched on a page (e.g. the
+// "Start free trial" CTA, a pricing button, a contact form). Checked on every
+// scan; a change from the baseline state produces a CONVERSION change event.
+model MonitoredElement {
+  id                 String                     @id @default(cuid())
+  monitoredPageId    String
+  monitoredPage      MonitoredPage              @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
+  name               String
+  selector           String
+  // Declared expectations. Existence/visibility default to true (the element
+  // should be present and shown). expectedText/expectedHref are optional pins:
+  // when set, the current value is compared against them instead of the
+  // baseline value, giving an absolute guarantee.
+  expectedExistence  Boolean                    @default(true)
+  expectedVisibility Boolean                    @default(true)
+  expectedText       String?
+  expectedHref       String?
+  importance         MonitoredElementImportance @default(IMPORTANT)
+  enabled            Boolean                    @default(true)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  results MonitoredElementResult[]
+
+  @@index([monitoredPageId])
+  @@map("monitored_element")
+}
+
+// The observed state of a monitored element on a single snapshot. Stored per
+// snapshot (like PageLink/PageScript) so comparison is self-contained: the
+// baseline snapshot carries the state to diff the current scan against. The
+// element's config is copied in so history survives config edits/deletes.
+model MonitoredElementResult {
+  id                 String                     @id @default(cuid())
+  pageSnapshotId     String
+  pageSnapshot       PageSnapshot               @relation(fields: [pageSnapshotId], references: [id], onDelete: Cascade)
+  // Nullable + SetNull: deleting the config keeps historical results readable.
+  monitoredElementId String?
+  monitoredElement   MonitoredElement?          @relation(fields: [monitoredElementId], references: [id], onDelete: SetNull)
+  name               String
+  selector           String
+  importance         MonitoredElementImportance
+  expectedExistence  Boolean
+  expectedVisibility Boolean
+  expectedText       String?
+  expectedHref       String?
+  // Observed state at scan time.
+  exists             Boolean
+  visible            Boolean
+  text               String?
+  href               String?
+  createdAt          DateTime                   @default(now())
+
+  @@index([pageSnapshotId])
+  @@index([monitoredElementId])
+  @@map("monitored_element_result")
 }
 
 // ---------- Baselines (Phase 4) ----------
@@ -477,12 +546,40 @@ model CheckoutIntent {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   userId      String
+  // What the buyer is checking out: "pro" (base plan) | "website_addon".
+  // Travels with the server-issued intent so the webhook never trusts the
+  // client to say which product was purchased.
+  kind        String    @default("pro")
   consumedAt  DateTime?
   expiresAt   DateTime
   createdAt   DateTime  @default(now())
 
   @@index([workspaceId])
   @@map("checkout_intent")
+}
+
+// A recurring website-capacity add-on (Phase 8.1). Each active row grants
+// `websitesGranted` extra websites on top of the Pro base. A workspace can hold
+// many, each its own Dodo subscription — buying "30 more" again just adds a row.
+model WebsiteAddon {
+  id                 String    @id @default(cuid())
+  workspaceId        String
+  workspace          Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dodoSubscriptionId String    @unique
+  dodoCustomerId     String?
+  // Provider status; only "active" grants capacity.
+  status             String    @default("active")
+  websitesGranted    Int       @default(30)
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  // Logical time of the last applied webhook event — out-of-order guard.
+  lastEventAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([workspaceId])
+  @@index([dodoCustomerId])
+  @@map("website_addon")
 }
 
 // Webhook idempotency (spec §38): every processed event id is recorded once.

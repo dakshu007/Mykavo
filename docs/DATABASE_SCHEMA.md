@@ -73,9 +73,18 @@ Indexes: `(monitoredPageId, createdAt desc)`, `(scanId)`.
 `status: NEW | REVIEWED | APPROVED | RESOLVED | IGNORED`
 Indexes: `(websiteId, status, severity)`, `(scanId)`, `(detectedAt desc)`.
 
-### MonitoredElement
+### MonitoredElement (Phase 9 — conversion monitoring)
 `id, monitoredPageId, name, selector, expectedExistence, expectedVisibility, expectedText, expectedHref, importance, enabled, createdAt, updatedAt`
 `importance: NORMAL | IMPORTANT | CRITICAL`
+Per-page config: a business-critical element (CTA, form, button) to watch. Pro-only; capped at 20 per page. `expectedText`/`expectedHref` are optional "pins" — when set, the current value is compared against them instead of the baseline.
+
+### MonitoredElementResult (Phase 9)
+`id, pageSnapshotId, monitoredElementId (nullable, SetNull), name, selector, importance, expectedExistence, expectedVisibility, expectedText, expectedHref, exists, visible, text, href, createdAt`
+The observed state of a monitored element on one snapshot — stored per snapshot like `PageLink`/`PageScript` so comparison is self-contained (the baseline snapshot carries the state to diff against). The comparison engine matches baseline vs current by `monitoredElementId` and raises CONVERSION change events (missing/hidden/text-changed/href-changed/appeared). The element's config is copied in so history survives config edits/deletes. Index: `(pageSnapshotId)`.
+
+### WebsiteAddon (Phase 8.1 — self-serve capacity add-ons)
+`id, workspaceId, dodoSubscriptionId (unique), dodoCustomerId, status, websitesGranted, currentPeriodEnd, cancelAtPeriodEnd, lastEventAt, createdAt, updatedAt`
+Each active row grants `websitesGranted` (default 30) extra websites on top of the Pro base of 50, for $6/mo. A workspace can hold many (each its own Dodo subscription). Effective website limit = 50 + Σ(active add-ons). Same `lastEventAt` out-of-order guard as `Subscription`. `CheckoutIntent` gained a `kind` field (`pro | website_addon`) so the webhook routes each payment without trusting client metadata.
 
 ### NotificationChannel
 `id, workspaceId, type, enabled, configuration (jsonb), createdAt, updatedAt`

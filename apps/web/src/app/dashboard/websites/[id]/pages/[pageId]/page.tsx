@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { getWorkspacePlan } from "@/lib/limits";
 import { Card, CardHeader } from "@/components/ui/card";
 import { SetBaselineButton } from "@/components/dashboard/set-baseline-button";
+import { MonitoredElementsManager } from "@/components/dashboard/monitored-elements-manager";
 
 function pathOf(url: string): string {
   try {
@@ -58,13 +60,40 @@ export default async function MonitoredPageDetail({
           scan: { select: { id: true, triggerType: true } },
         },
       },
+      // Conversion elements + their latest observed state (Phase 9).
+      monitoredElements: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          results: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { exists: true, visible: true },
+          },
+        },
+      },
     },
   });
   if (!page) notFound();
 
+  const plan = await getWorkspacePlan(workspace.id);
   const path = pathOf(page.url);
   const active = page.baselines.find((b) => b.status === "ACTIVE");
   const activeSnapshotId = active?.pageSnapshot.id;
+
+  const elementViews = page.monitoredElements.map((el) => ({
+    id: el.id,
+    name: el.name,
+    selector: el.selector,
+    importance: el.importance,
+    expectedExistence: el.expectedExistence,
+    expectedVisibility: el.expectedVisibility,
+    expectedText: el.expectedText,
+    expectedHref: el.expectedHref,
+    enabled: el.enabled,
+    latest: el.results[0]
+      ? { exists: el.results[0].exists, visible: el.results[0].visible }
+      : null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -175,6 +204,46 @@ export default async function MonitoredPageDetail({
           </ul>
         </Card>
       )}
+
+      {/* Conversion elements (Phase 9) */}
+      <Card>
+        {plan.limits.conversionElementMonitoring ? (
+          <MonitoredElementsManager
+            websiteId={page.website.id}
+            pageId={page.id}
+            elements={elementViews}
+          />
+        ) : (
+          <div>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold tracking-tight text-ink">
+                  Conversion elements
+                </h2>
+                <p className="mt-0.5 text-[13px] text-ink-secondary">
+                  Monitor critical buttons, forms, and CTAs — get alerted the moment one goes
+                  missing, hidden, or changes.
+                </p>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold text-primary">
+                <Sparkles className="size-3.5" aria-hidden /> Pro
+              </span>
+            </div>
+            {elementViews.length > 0 && (
+              <p className="mt-3 text-[13px] text-amber-700">
+                {elementViews.length} configured element{elementViews.length === 1 ? "" : "s"}{" "}
+                {elementViews.length === 1 ? "is" : "are"} paused on your current plan.
+              </p>
+            )}
+            <Link
+              href="/dashboard/billing"
+              className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover"
+            >
+              Upgrade to Pro
+            </Link>
+          </div>
+        )}
+      </Card>
 
       {/* Recent snapshots */}
       {page.snapshots.length > 0 && (

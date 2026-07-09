@@ -10,7 +10,7 @@ import { plans, formatLimit } from "@/config/plans";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $12/month for unlimited websites and pages.",
+    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $12/month for 50 websites and unlimited pages — add more anytime.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -18,7 +18,10 @@ const comparisonRows: Array<{
   label: string;
   value: (p: (typeof plans)[number]) => string | boolean;
 }> = [
-  { label: "Websites", value: (p) => formatLimit(p.limits.websites) },
+  {
+    label: "Websites",
+    value: (p) => (p.id === "pro" ? "50 + add-ons" : formatLimit(p.limits.websites)),
+  },
   { label: "Monitored pages", value: (p) => formatLimit(p.limits.monitoredPages) },
   { label: "Scan frequency", value: (p) => (p.limits.scanFrequency === "DAILY" ? "Daily" : "Weekly") },
   { label: "History retention", value: (p) => (p.limits.historyDays >= 365 ? "1 year" : `${p.limits.historyDays} days`) },
@@ -42,7 +45,7 @@ const pricingFaqs = [
   },
   {
     q: "What happens if I hit my plan limits?",
-    a: "Fluxen keeps monitoring everything already configured and asks you to upgrade before adding more websites or pages. Nothing is silently dropped.",
+    a: "Fluxen keeps monitoring everything already configured. On Pro you can add 30 more websites anytime for $6/month; otherwise it asks you to upgrade before adding more. Nothing is silently dropped.",
   },
   {
     q: "Do you offer annual billing?",
@@ -63,7 +66,7 @@ export default function PricingPage() {
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
             One missed regression costs more than a year of Fluxen. Start free with one website,
-            or go Pro for $12/month — unlimited websites and pages, no catch.
+            or go Pro for $12/month — 50 websites and unlimited pages, add more anytime.
           </p>
         </div>
 

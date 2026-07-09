@@ -11,4 +11,7 @@ export {
   type ScanPageOptions,
   type ScannedLink,
   type ScannedScript,
+  type ElementImportance,
+  type MonitoredElementInput,
+  type MonitoredElementCheck,
 } from "./types";
