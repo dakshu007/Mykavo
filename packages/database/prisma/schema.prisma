@@ -638,6 +638,33 @@ model ProcessedWebhookEvent {
   @@map("processed_webhook_event")
 }
 
+// ---------- Blog (built-in mini-CMS for SEO content) ----------
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  title          String
+  excerpt        String?
+  // Markdown source — rendered with react-markdown (raw HTML stays escaped).
+  content        String
+  status         BlogPostStatus @default(DRAFT)
+  // Set on first publish, preserved across unpublish/re-publish cycles.
+  publishedAt    DateTime?
+  authorName     String         @default("Fluxen Team")
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status, publishedAt])
+  @@map("blog_post")
+}
+
 // ---------- Waitlist (migrated from Phase 0 file store) ----------
 
 model WaitlistEntry {

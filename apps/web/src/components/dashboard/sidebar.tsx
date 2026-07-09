@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   GitCompareArrows,
   LogOut,
+  PenLine,
   Settings,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
@@ -26,9 +27,19 @@ const nav = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function DashboardSidebar({ workspaceName }: { workspaceName: string }) {
+export function DashboardSidebar({
+  workspaceName,
+  isBlogAdmin = false,
+}: {
+  workspaceName: string;
+  isBlogAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  // Blog CMS entry is allowlist-gated; the pages/APIs enforce it server-side.
+  const items = isBlogAdmin
+    ? [...nav, { href: "/dashboard/blog", label: "Blog", icon: PenLine }]
+    : nav;
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -49,7 +60,7 @@ export function DashboardSidebar({ workspaceName }: { workspaceName: string }) {
       </Link>
 
       <nav className="mt-4 flex-1 space-y-1" aria-label="Dashboard">
-        {nav.map((item) => {
+        {items.map((item) => {
           const active = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href);
