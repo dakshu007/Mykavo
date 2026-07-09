@@ -34,6 +34,18 @@ Every phase is one git commit (`git log --oneline`). 178 tests pass.
 
 ---
 
+## 🚀 Production deployment (live)
+
+The **web app is LIVE at https://fluxenn.netlify.app** (Netlify) backed by a **Neon Postgres** — marketing, sign-up, log-in, and the authenticated dashboard all work. Full runbook + secrets + gotchas are in the `fluxen-deployment` memory. Essentials:
+
+- **The worker is NOT deployed.** Netlify runs the web app + API only; it can't host the persistent pg-boss/Playwright worker. So **scans and Lighthouse audits do not run in production** — adding a website saves it, but its scan stays QUEUED forever. To finish: deploy `apps/worker` to **Railway / Render / Fly** with the same `DATABASE_URL` (+ object storage for screenshots). This is the top remaining task.
+- **Redeploy:** `netlify deploy --build --prod --filter web` — `--filter web` is required (pnpm monorepo). **Build from a checkout NOT nested inside another git repo** (the dev worktree is nested → Next file-tracing bundles the wrong `node_modules` and Prisma's Linux engine goes missing → `PrismaClientInitializationError`). We build from an `rsync`'d copy at `/tmp/fluxen-clean`.
+- **Config** (committed, `netlify.toml` + `apps/web/next.config.ts` + schema `binaryTargets`): no `base`/`publish` in `netlify.toml` (with `--filter` Netlify sets them; a hardcoded publish 404s SSR); `serverExternalPackages: ["@prisma/client",…]` + `outputFileTracingRoot`; `binaryTargets = ["native","rhel-openssl-3.0.x"]`.
+- **Neon:** runtime uses the pooled URL (`?sslmode=require&pgbouncer=true`); migrations need the direct URL (drop `-pooler`/`channel_binding`). All 12 migrations applied. Retrieve the URL with `netlify env:get DATABASE_URL` (site linked to `fluxenn`, id `3c4a3c88…`; do **not** deploy to `rank-tracker-hub`, a different user site).
+- **Env set on Netlify:** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `APP_URL`, `DODO_ADDON_PRODUCT_ID`. Still optional: Google OAuth, `DODO_WEBHOOK_SECRET` (billing), a verified Resend domain (emails).
+
+---
+
 ## ⚠️ Environment gotchas (read first)
 
 - **pnpm/node are NOT on PATH.** They live at `~/.hermes/node/bin`. Prefix commands:
