@@ -69,12 +69,30 @@ export default async function ChangesPage({
   const websiteFilter = sp.website;
   const showResolved = sp.status === "all";
 
-  const [totalCount, websites] = await Promise.all([
+  // The list query is independent of the count/filter queries, so all three
+  // run in parallel rather than waiting on the empty-state check.
+  const [totalCount, websites, changes] = await Promise.all([
     prisma.changeEvent.count({ where: { website: { workspaceId: workspace.id } } }),
     prisma.website.findMany({
       where: { workspaceId: workspace.id, changeEvents: { some: {} } },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+    }),
+    prisma.changeEvent.findMany({
+      where: {
+        website: { workspaceId: workspace.id },
+        websiteId: websiteFilter,
+        severity: severityFilter,
+        category: categoryFilter,
+        status: showResolved ? undefined : { in: OPEN_STATUSES },
+      },
+      include: {
+        website: { select: { name: true, url: true } },
+        monitoredPage: { select: { url: true } },
+        currentSnapshot: { select: { errorCode: true } },
+      },
+      orderBy: [{ detectedAt: "desc" }],
+      take: 100,
     }),
   ]);
 
@@ -87,23 +105,6 @@ export default async function ChangesPage({
       />
     );
   }
-
-  const changes = await prisma.changeEvent.findMany({
-    where: {
-      website: { workspaceId: workspace.id },
-      websiteId: websiteFilter,
-      severity: severityFilter,
-      category: categoryFilter,
-      status: showResolved ? undefined : { in: OPEN_STATUSES },
-    },
-    include: {
-      website: { select: { name: true, url: true } },
-      monitoredPage: { select: { url: true } },
-      currentSnapshot: { select: { errorCode: true } },
-    },
-    orderBy: [{ detectedAt: "desc" }],
-    take: 100,
-  });
 
   const pill = (active: boolean) =>
     active

@@ -19,35 +19,37 @@ export default async function ScanDetailPage({
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
   const { id } = await params;
 
-  const scan = await prisma.scan.findFirst({
-    where: { id, website: { workspaceId: workspace.id } },
-    include: {
-      website: { select: { id: true, name: true, url: true } },
-      snapshots: {
-        include: {
-          monitoredPage: {
-            select: {
-              id: true,
-              url: true,
-              baselines: {
-                where: { status: "ACTIVE" },
-                select: { pageSnapshotId: true, version: true },
+  // Both queries scope to the workspace, so they can run in parallel.
+  const [scan, changes] = await Promise.all([
+    prisma.scan.findFirst({
+      where: { id, website: { workspaceId: workspace.id } },
+      include: {
+        website: { select: { id: true, name: true, url: true } },
+        snapshots: {
+          include: {
+            monitoredPage: {
+              select: {
+                id: true,
+                url: true,
+                baselines: {
+                  where: { status: "ACTIVE" },
+                  select: { pageSnapshotId: true, version: true },
+                },
               },
             },
+            _count: { select: { links: true, scripts: true } },
           },
-          _count: { select: { links: true, scripts: true } },
+          orderBy: { createdAt: "asc" },
         },
-        orderBy: { createdAt: "asc" },
       },
-    },
-  });
+    }),
+    prisma.changeEvent.findMany({
+      where: { scanId: id, website: { workspaceId: workspace.id } },
+      include: { monitoredPage: { select: { url: true } } },
+      orderBy: [{ detectedAt: "desc" }],
+    }),
+  ]);
   if (!scan) notFound();
-
-  const changes = await prisma.changeEvent.findMany({
-    where: { scanId: id },
-    include: { monitoredPage: { select: { url: true } } },
-    orderBy: [{ detectedAt: "desc" }],
-  });
   const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 } as const;
   const sortedChanges = [...changes].sort(
     (a, b) => severityRank[b.severity] - severityRank[a.severity],
