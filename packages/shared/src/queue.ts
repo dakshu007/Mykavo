@@ -7,7 +7,12 @@
 export const SCAN_WEBSITE_QUEUE = "scan-website";
 export const SCHEDULER_SWEEP_QUEUE = "scheduler-sweep";
 export const RETENTION_SWEEP_QUEUE = "retention-sweep";
+export const LIGHTHOUSE_AUDIT_QUEUE = "lighthouse-audit";
 
 export interface ScanWebsiteJob {
   scanId: string;
+}
+
+export interface LighthouseAuditJob {
+  auditId: string;
 }

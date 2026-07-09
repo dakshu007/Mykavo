@@ -11,12 +11,15 @@ import {
   SCAN_WEBSITE_QUEUE,
   SCHEDULER_SWEEP_QUEUE,
   RETENTION_SWEEP_QUEUE,
+  LIGHTHOUSE_AUDIT_QUEUE,
   type ScanWebsiteJob,
+  type LighthouseAuditJob,
 } from "@fluxen/shared";
 import { logger } from "./logger";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
 import { runRetentionSweep } from "./retention";
+import { runLighthouseAuditJob } from "./lighthouse-audit";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
@@ -70,6 +73,20 @@ async function main() {
     await runRetentionSweep();
   });
   await boss.schedule(RETENTION_SWEEP_QUEUE, RETENTION_CRON);
+
+  // On-demand Lighthouse audits. Heavyweight (~10–40s, CPU-bound), so one at a
+  // time (batchSize 1) with a single retry.
+  await boss
+    .createQueue(LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60 })
+    .catch(() => {});
+  await boss.work<LighthouseAuditJob>(
+    LIGHTHOUSE_AUDIT_QUEUE,
+    { batchSize: 1, pollingIntervalSeconds: 2 },
+    async ([job]) => {
+      logger.info("lighthouse job received", { jobId: job.id, auditId: job.data.auditId });
+      await runLighthouseAuditJob(job.data.auditId);
+    },
+  );
 
   logger.info("worker started", {
     queue: SCAN_WEBSITE_QUEUE,

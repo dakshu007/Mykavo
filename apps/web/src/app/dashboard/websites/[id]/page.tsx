@@ -8,6 +8,10 @@ import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
 import { ScanStatusBadge } from "@/components/dashboard/scan-status";
 import { ChangeSeverityBadge } from "@/components/dashboard/change-badges";
 import { RunScanButton } from "@/components/dashboard/run-scan-button";
+import {
+  PerformanceAuditPanel,
+  type AuditView,
+} from "@/components/dashboard/performance-audit-panel";
 import { WebsiteActions } from "./website-actions";
 
 export default async function WebsiteDetailPage({
@@ -32,9 +36,27 @@ export default async function WebsiteDetailPage({
         },
       },
       scans: { orderBy: { createdAt: "desc" }, take: 5 },
+      performanceAudits: { orderBy: { createdAt: "desc" }, take: 10 },
     },
   });
   if (!website) notFound();
+
+  const auditViews: AuditView[] = website.performanceAudits.map((a) => ({
+    id: a.id,
+    status: a.status,
+    performanceScore: a.performanceScore,
+    accessibilityScore: a.accessibilityScore,
+    bestPracticesScore: a.bestPracticesScore,
+    seoScore: a.seoScore,
+    lcpMs: a.lcpMs,
+    fcpMs: a.fcpMs,
+    tbtMs: a.tbtMs,
+    ttiMs: a.ttiMs,
+    speedIndexMs: a.speedIndexMs,
+    cls: a.cls,
+    errorCode: a.errorCode,
+    createdAt: a.createdAt.toISOString(),
+  }));
 
   const openChanges = await prisma.changeEvent.findMany({
     where: { websiteId: website.id, status: { in: ["NEW", "REVIEWED"] } },
@@ -138,6 +160,11 @@ export default async function WebsiteDetailPage({
           </p>
         </Card>
       </div>
+
+      {/* Lighthouse performance audit (on-demand) */}
+      <Card>
+        <PerformanceAuditPanel websiteId={website.id} initialAudits={auditViews} />
+      </Card>
 
       <Card>
         <CardHeader

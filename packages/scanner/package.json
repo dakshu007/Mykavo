@@ -8,8 +8,16 @@
     ".": "./src/index.ts",
     "./storage": "./src/storage.ts"
   },
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@fluxen/shared": "workspace:*",
+    "chrome-launcher": "^1.2.0",
+    "lighthouse": "^12.8.2",
     "playwright": "^1.58.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

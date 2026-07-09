@@ -24,10 +24,13 @@ This file is the single source of truth for picking the project back up in a fre
 | **9 — Conversion monitoring** | Per-page monitored elements — CTA/form existence·visibility·text·href checks → CONVERSION change events, Pro-gated UI + CRUD | ✅ |
 | **10 — Production hardening** | Retention cleanup cron (plan-based, artifact-aware), per-plan scan quotas + concurrency cap, per-workspace + auth rate limits, duplicate-scan DB lock, retention indexes | ✅ |
 | **11 — SEO growth engine** | More free tools, SEO landing pages, structured data | ⬜ next |
+| **+ Performance audits** | On-demand **Lighthouse** audit per website (scores + Core Web Vitals), free for all plans, rate-limited | ✅ |
 
-Every phase is one git commit (`git log --oneline`). 174 tests pass.
+Every phase is one git commit (`git log --oneline`). 178 tests pass.
 
 **Phase 10 scope note:** the *code-level* hardening is done (above). Explicitly deferred to ops (some need paid services, against the zero-budget rule): external error monitoring/APM (Sentry), Prometheus/StatsD metrics, a shared (Redis) rate-limit store for multi-instance, load testing, and a managed backup strategy. The in-app rate limiters and Better Auth throttle are **per-process/in-memory** — correct for single-instance; swap to a shared store before scaling out horizontally.
+
+**Performance audits (Lighthouse):** a "Run audit" button on each website detail page runs a Google Lighthouse audit (`packages/scanner/src/lighthouse.ts` drives Playwright's bundled Chromium via `chrome-launcher`) and shows the 4 category scores + Core Web Vitals with history. On-demand only (never per scan — Lighthouse is ~10–40s/CPU-heavy, spec §22/§62), **free for all plans**, capped at 5 audits/workspace/hour. The audit keeps Chrome's OS sandbox **on** (the URL is untrusted) and re-checks the URL through the SSRF guard first. Needs Playwright's Chromium installed (`pnpm --filter @fluxen/scanner exec playwright install chromium`). Adds `lighthouse` + `chrome-launcher` to `@fluxen/scanner`.
 
 ---
 

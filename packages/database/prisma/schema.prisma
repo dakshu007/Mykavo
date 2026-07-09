@@ -152,11 +152,12 @@ model Website {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  monitoredPages MonitoredPage[]
-  scans          Scan[]
-  baselines      Baseline[]
-  changeEvents   ChangeEvent[]
-  notifications  Notification[]
+  monitoredPages    MonitoredPage[]
+  scans             Scan[]
+  baselines         Baseline[]
+  changeEvents      ChangeEvent[]
+  notifications     Notification[]
+  performanceAudits PerformanceAudit[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -366,6 +367,44 @@ model MonitoredElementResult {
   @@index([pageSnapshotId])
   @@index([monitoredElementId])
   @@map("monitored_element_result")
+}
+
+// ---------- Performance audits (Lighthouse) ----------
+
+enum PerformanceAuditStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// An on-demand Lighthouse audit of a website URL. Category scores are 0–100
+// (Lighthouse's 0–1 score × 100); Core Web Vitals are in ms except `cls`
+// (unitless). Rows are created QUEUED by the web app and completed by the
+// worker.
+model PerformanceAudit {
+  id                 String                 @id @default(cuid())
+  websiteId          String
+  website            Website                @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  url                String
+  status             PerformanceAuditStatus @default(QUEUED)
+  performanceScore   Int?
+  accessibilityScore Int?
+  bestPracticesScore Int?
+  seoScore           Int?
+  lcpMs              Int?
+  fcpMs              Int?
+  tbtMs              Int?
+  ttiMs              Int?
+  speedIndexMs       Int?
+  cls                Float?
+  errorCode          String?
+  errorMessage       String?
+  createdAt          DateTime               @default(now())
+  completedAt        DateTime?
+
+  @@index([websiteId, createdAt(sort: Desc)])
+  @@map("performance_audit")
 }
 
 // ---------- Baselines (Phase 4) ----------
