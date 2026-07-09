@@ -23,22 +23,33 @@ export default async function WebsiteDetailPage({
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
   const { id } = await params;
 
-  const website = await prisma.website.findFirst({
-    where: { id, workspaceId: workspace.id },
-    include: {
-      monitoredPages: {
-        orderBy: { createdAt: "asc" },
-        include: {
-          baselines: {
-            where: { status: "ACTIVE" },
-            select: { version: true },
+  // Both queries scope to the workspace, so they can run in parallel.
+  const [website, openChanges] = await Promise.all([
+    prisma.website.findFirst({
+      where: { id, workspaceId: workspace.id },
+      include: {
+        monitoredPages: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            baselines: {
+              where: { status: "ACTIVE" },
+              select: { version: true },
+            },
           },
         },
+        scans: { orderBy: { createdAt: "desc" }, take: 5 },
+        performanceAudits: { orderBy: { createdAt: "desc" }, take: 10 },
       },
-      scans: { orderBy: { createdAt: "desc" }, take: 5 },
-      performanceAudits: { orderBy: { createdAt: "desc" }, take: 10 },
-    },
-  });
+    }),
+    prisma.changeEvent.findMany({
+      where: {
+        websiteId: id,
+        website: { workspaceId: workspace.id },
+        status: { in: ["NEW", "REVIEWED"] },
+      },
+      select: { severity: true },
+    }),
+  ]);
   if (!website) notFound();
 
   const auditViews: AuditView[] = website.performanceAudits.map((a) => ({
@@ -57,11 +68,6 @@ export default async function WebsiteDetailPage({
     errorCode: a.errorCode,
     createdAt: a.createdAt.toISOString(),
   }));
-
-  const openChanges = await prisma.changeEvent.findMany({
-    where: { websiteId: website.id, status: { in: ["NEW", "REVIEWED"] } },
-    select: { severity: true },
-  });
 
   const hostname = new URL(website.url).hostname;
   const hasFinishedScan = website.scans.some(
