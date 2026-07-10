@@ -30,6 +30,17 @@ export interface ScanPageOptions {
   artifactPrefix: string;
   /** Conversion elements to check on this page (Phase 9). */
   elements?: MonitoredElementInput[];
+  /**
+   * CSS selectors removed from the DOM before hashing/extraction and absent
+   * from the screenshot — excluded from comparison entirely (spec §25).
+   * Re-normalized defensively; invalid selectors are skipped per-selector.
+   */
+  ignoredSelectors?: string[];
+  /**
+   * CSS selectors covered with a solid block in the screenshot only —
+   * content is still compared (spec §25). Invalid selectors are skipped.
+   */
+  screenshotMasks?: string[];
 }
 
 export interface ScannedLink {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { prisma, getLatestHealthCheck, getUptimeStats } from "@fluxen/database";
-import { daysUntil } from "@fluxen/shared";
+import { daysUntil, parseSelectorList } from "@fluxen/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
@@ -15,6 +15,7 @@ import {
 } from "@/components/dashboard/performance-audit-panel";
 import { WebsiteActions } from "./website-actions";
 import { MutedAlertsBanner, MuteAlertsControl } from "./mute-alerts";
+import { ComparisonSettings } from "./comparison-settings";
 import { StatusBadgeSettings } from "./status-badge-settings";
 
 /** Time windows for the health queries — one clock read per request. */
@@ -410,6 +411,15 @@ export default async function WebsiteDetailPage({
         <MuteAlertsControl
           websiteId={website.id}
           mutedUntilIso={mutedUntil ? mutedUntil.toISOString() : null}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="Comparison settings" />
+        <ComparisonSettings
+          websiteId={website.id}
+          initialIgnored={parseSelectorList(website.ignoredSelectors)}
+          initialMasks={parseSelectorList(website.screenshotMasks)}
         />
       </Card>
 

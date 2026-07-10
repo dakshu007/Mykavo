@@ -5,11 +5,19 @@
  */
 
 import { createHash } from "node:crypto";
-import type { Browser, Page } from "playwright";
-import { assertSafeUrl, UnsafeUrlError, normalizeUrl, isSameOrigin } from "@fluxen/shared";
+import type { Browser, Locator, Page } from "playwright";
+import {
+  assertSafeUrl,
+  UnsafeUrlError,
+  normalizeUrl,
+  isSameOrigin,
+  parseSelectorList,
+} from "@fluxen/shared";
 import {
   extractInPage,
   checkElementsInPage,
+  removeElementsInPage,
+  filterValidSelectorsInPage,
   type InPageExtraction,
   type ElementObservation,
 } from "./extract";
@@ -23,6 +31,9 @@ import {
 
 const VIEWPORT = { width: 1440, height: 900 };
 const MAX_SCREENSHOT_HEIGHT = 8000;
+// Solid block painted over masked elements (spec §25). A fixed opaque color
+// keeps masked regions byte-identical between scans regardless of content.
+const MASK_COLOR = "#0f172a";
 const USER_AGENT =
   "Mozilla/5.0 (compatible; FluxenBot/0.1; +https://fluxen.app/bot) website change detection";
 
@@ -130,6 +141,24 @@ export async function scanPage(
     await page.waitForTimeout(postLoadDelayMs);
 
     const rawHtml = await page.content();
+
+    // Ignored selectors (spec §25/§36): remove matching elements from the
+    // live DOM after stabilization and BEFORE extraction, so they are
+    // excluded from DOM/text hashing, link/script extraction, element checks,
+    // and the screenshot. Removal (vs visibility:hidden) also collapses
+    // variable-height noise — a rotating banner can't shift layout between
+    // scans. htmlHash above intentionally still covers the raw page. Invalid
+    // selectors are skipped per-selector in-page; a failed evaluate degrades
+    // to "nothing removed" rather than failing the scan.
+    const ignoredSelectors = parseSelectorList(options.ignoredSelectors);
+    if (ignoredSelectors.length > 0) {
+      await page
+        .evaluate(
+          `(() => { const __name = (fn) => fn; const selectors = ${JSON.stringify(ignoredSelectors)}; return (${removeElementsInPage.toString()})(selectors); })()`,
+        )
+        .catch(() => {});
+    }
+
     // tsx/esbuild wrap named functions with a `__name(fn, "name")` helper for
     // stack traces. Passing such a function to page.evaluate serializes those
     // calls into the browser, where `__name` is undefined. Inject the function
@@ -196,6 +225,24 @@ export async function scanPage(
       }
     });
 
+    // Screenshot masks (spec §25/§36): cover matching elements with a solid
+    // block in the screenshot only — content is still compared. Playwright's
+    // native `mask` option is used (with a fixed maskColor) because it tracks
+    // element geometry at capture time — correct through full-page scroll
+    // stitching and fixed/sticky positioning, which hand-placed absolute
+    // overlays get wrong — and cleans up after itself. Selectors are
+    // pre-filtered in-page so invalid user CSS never throws at capture.
+    const maskSelectors = parseSelectorList(options.screenshotMasks);
+    let maskLocators: Locator[] = [];
+    if (maskSelectors.length > 0) {
+      const validMaskSelectors = await page
+        .evaluate<string[]>(
+          `(() => { const __name = (fn) => fn; const selectors = ${JSON.stringify(maskSelectors)}; return (${filterValidSelectorsInPage.toString()})(selectors); })()`,
+        )
+        .catch((): string[] => []);
+      maskLocators = validMaskSelectors.map((selector) => page.locator(selector));
+    }
+
     // Deterministic screenshot (spec §17), height-capped.
     let screenshotStorageKey: string | null = null;
     let screenshotHash: string | null = null;
@@ -204,6 +251,7 @@ export async function scanPage(
       const screenshot = await page.screenshot({
         type: "jpeg",
         quality: 80,
+        ...(maskLocators.length > 0 ? { mask: maskLocators, maskColor: MASK_COLOR } : {}),
         ...(bodyHeight > MAX_SCREENSHOT_HEIGHT
           ? { clip: { x: 0, y: 0, width: VIEWPORT.width, height: MAX_SCREENSHOT_HEIGHT } }
           : { fullPage: true }),
