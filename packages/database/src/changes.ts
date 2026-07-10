@@ -12,31 +12,40 @@ export const OPEN_STATUSES: ChangeStatus[] = ["NEW", "REVIEWED"];
 
 export type ChangeAction = "review" | "approve" | "ignore" | "resolve" | "reopen";
 
+/**
+ * The update payload for a triage action — status plus the timestamp fields
+ * that status implies. Shared by the single-change PATCH and the bulk route so
+ * both apply identical transitions.
+ */
+export function changeActionData(
+  action: ChangeAction,
+  now: Date = new Date(),
+): Partial<Pick<ChangeEvent, "approvedAt" | "resolvedAt">> &
+  Pick<ChangeEvent, "status"> {
+  switch (action) {
+    case "review":
+      return { status: "REVIEWED" };
+    case "approve":
+      return { status: "APPROVED", approvedAt: now };
+    case "ignore":
+      return { status: "IGNORED" };
+    case "resolve":
+      return { status: "RESOLVED", resolvedAt: now };
+    case "reopen":
+      return { status: "NEW", approvedAt: null, resolvedAt: null };
+  }
+}
+
 /** Apply a triage action to a single change event. Pure status transition. */
 export async function applyChangeAction(
   prisma: PrismaClient,
   changeId: string,
   action: ChangeAction,
 ): Promise<ChangeEvent> {
-  const now = new Date();
-  const data: Partial<
-    Pick<ChangeEvent, "status" | "approvedAt" | "resolvedAt">
-  > = (() => {
-    switch (action) {
-      case "review":
-        return { status: "REVIEWED" };
-      case "approve":
-        return { status: "APPROVED", approvedAt: now };
-      case "ignore":
-        return { status: "IGNORED" };
-      case "resolve":
-        return { status: "RESOLVED", resolvedAt: now };
-      case "reopen":
-        return { status: "NEW", approvedAt: null, resolvedAt: null };
-    }
-  })();
-
-  return prisma.changeEvent.update({ where: { id: changeId }, data });
+  return prisma.changeEvent.update({
+    where: { id: changeId },
+    data: changeActionData(action),
+  });
 }
 
 /**

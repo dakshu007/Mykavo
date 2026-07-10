@@ -23,6 +23,7 @@ export {
 } from "./baseline";
 export {
   applyChangeAction,
+  changeActionData,
   updateBaselineFromSnapshot,
   OPEN_STATUSES,
   type ChangeAction,

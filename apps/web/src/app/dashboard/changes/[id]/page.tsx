@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { prisma } from "@fluxen/database";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { requireSession, getCurrentMembership } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import {
   ChangeCategoryChip,
@@ -10,6 +10,10 @@ import {
   ChangeStatusBadge,
 } from "@/components/dashboard/change-badges";
 import { ChangeActions } from "@/components/dashboard/change-actions";
+import {
+  ChangeNoteForm,
+  ChangeNoteDeleteButton,
+} from "@/components/dashboard/change-notes";
 import { ScreenshotCompare } from "@/components/dashboard/screenshot-compare";
 import { defaultCompareMode } from "@/lib/screenshot-compare";
 
@@ -22,13 +26,25 @@ function pathOf(url: string): string {
   }
 }
 
+/** Compact "2h ago"-style date for the notes thread. */
+function relativeDate(d: Date): string {
+  const mins = Math.floor((Date.now() - d.getTime()) / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString("en-US", { dateStyle: "medium" });
+}
+
 export default async function ChangeDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const session = await requireSession();
-  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
   const { id } = await params;
 
   const change = await prisma.changeEvent.findFirst({
@@ -40,9 +56,17 @@ export default async function ChangeDetailPage({
       currentSnapshot: {
         select: { id: true, screenshotStorageKey: true, createdAt: true, errorCode: true },
       },
+      notes: {
+        include: { author: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
   if (!change) notFound();
+
+  // Notes are mutations — viewers read the thread but cannot write to it.
+  const canWriteNotes = role === "OWNER" || role === "ADMIN" || role === "MEMBER";
+  const canModerateNotes = role === "OWNER" || role === "ADMIN";
 
   const canUpdateBaseline = !!change.currentSnapshot && !change.currentSnapshot.errorCode;
   const hasDiff =
@@ -91,6 +115,43 @@ export default async function ChangeDetailPage({
             canUpdateBaseline={canUpdateBaseline}
           />
         </div>
+      </Card>
+
+      {/* Notes thread */}
+      <Card>
+        <CardHeader title="Notes" />
+        {change.notes.length === 0 ? (
+          <p className="text-sm text-ink-secondary">
+            No notes yet.
+            {canWriteNotes ? " Leave context for your team — root cause, next steps, who's on it." : ""}
+          </p>
+        ) : (
+          <ul className="divide-y divide-line">
+            {change.notes.map((note) => (
+              <li key={note.id} className="flex gap-3 py-3.5 first:pt-0">
+                <span
+                  aria-hidden
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[13px] font-semibold text-primary"
+                >
+                  {note.author.name.trim().charAt(0).toUpperCase() || "?"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px]">
+                    <span className="font-medium text-ink">{note.author.name}</span>{" "}
+                    <span className="text-ink-faint">· {relativeDate(note.createdAt)}</span>
+                  </p>
+                  <p className="mt-1 text-sm leading-6 whitespace-pre-wrap break-words text-ink">
+                    {note.body}
+                  </p>
+                </div>
+                {(note.author.id === session.user.id || canModerateNotes) && (
+                  <ChangeNoteDeleteButton changeId={change.id} noteId={note.id} />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {canWriteNotes && <ChangeNoteForm changeId={change.id} />}
       </Card>
 
       {/* Before / after values */}
