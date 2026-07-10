@@ -31,6 +31,7 @@ model User {
   memberships       WorkspaceMember[]
   sentInvites       WorkspaceInvite[] @relation("WorkspaceInviter")
   approvedBaselines Baseline[]        @relation("BaselineApprover")
+  changeNotes       ChangeNote[]      @relation("ChangeNoteAuthor")
 
   @@map("user")
 }
@@ -623,6 +624,8 @@ model ChangeEvent {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
+  notes ChangeNote[]
+
   @@index([websiteId, status, severity])
   @@index([monitoredPageId])
   @@index([scanId])
@@ -630,6 +633,22 @@ model ChangeEvent {
   // Retention sweep: expired change events per website by age (Phase 10).
   @@index([websiteId, detectedAt])
   @@map("change_event")
+}
+
+// Short discussion thread on a change event (triage collaboration). Notes
+// cascade with their change event and author; body length (1–2000 chars) is
+// enforced at the API boundary.
+model ChangeNote {
+  id            String      @id @default(cuid())
+  changeEventId String
+  changeEvent   ChangeEvent @relation(fields: [changeEventId], references: [id], onDelete: Cascade)
+  authorId      String
+  author        User        @relation("ChangeNoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  body          String
+  createdAt     DateTime    @default(now())
+
+  @@index([changeEventId])
+  @@map("change_note")
 }
 
 // ---------- Notifications (Phase 7) ----------
