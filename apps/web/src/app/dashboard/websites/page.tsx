@@ -22,6 +22,8 @@ export default async function WebsitesPage() {
   ]);
 
   const atLimit = websites.length >= websiteLimit;
+  // Maintenance window chip — a past muteAlertsUntil simply means not muted.
+  const now = new Date();
 
   if (websites.length === 0) {
     return (
@@ -88,7 +90,14 @@ export default async function WebsitesPage() {
                   </Link>
                 </td>
                 <td className="py-4 pr-4">
-                  <WebsiteStatusBadge status={w.status} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <WebsiteStatusBadge status={w.status} />
+                    {w.muteAlertsUntil && w.muteAlertsUntil > now && (
+                      <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                        Muted
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="py-4 pr-4 text-sm text-ink-secondary">
                   {w._count.monitoredPages}

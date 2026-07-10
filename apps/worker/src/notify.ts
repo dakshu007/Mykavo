@@ -153,12 +153,25 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
   const scan = await prisma.scan.findUnique({
     where: { id: scanId },
     include: {
-      website: { select: { id: true, name: true, url: true, workspaceId: true } },
+      website: {
+        select: { id: true, name: true, url: true, workspaceId: true, muteAlertsUntil: true },
+      },
     },
   });
   if (!scan) return false;
 
   const { website } = scan;
+
+  // Maintenance window (spec §25): change events are already recorded by the
+  // compare step — just don't send anything (no emails, channels, or rows).
+  if (website.muteAlertsUntil && website.muteAlertsUntil > new Date()) {
+    logger.info("alerts muted, skipped", {
+      scanId,
+      websiteId: website.id,
+      muteAlertsUntil: website.muteAlertsUntil.toISOString(),
+    });
+    return false;
+  }
   const host = (() => {
     try {
       return new URL(website.url).hostname;
