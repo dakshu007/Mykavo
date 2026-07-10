@@ -7,6 +7,7 @@
 import { prisma } from "@fluxen/database";
 import { formatLimit, WEBSITE_ADDON, type Plan } from "@/config/plans";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
+import { hasSeatAvailable } from "@/lib/team";
 
 export { getWorkspacePlan, getEffectiveWebsiteLimit };
 
@@ -19,7 +20,8 @@ export class LimitError extends Error {
       | "WEBSITE_LIMIT"
       | "PAGE_LIMIT"
       | "SCAN_CONCURRENCY"
-      | "MANUAL_SCAN_QUOTA",
+      | "MANUAL_SCAN_QUOTA"
+      | "MEMBER_LIMIT",
     message: string,
   ) {
     super(message);
@@ -86,6 +88,29 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
       `Your ${plan.name} plan monitors up to ${formatLimit(limit)} website${limit === 1 ? "" : "s"}. ${hint}`,
     );
   }
+}
+
+/**
+ * Throws LimitError when the workspace has no free seat for another member.
+ * Seats = active members + pending (unaccepted, unexpired) invites, so a
+ * standing invite can never overshoot the plan when accepted. Teams are a
+ * Pro feature — Free is single-seat, which yields the upgrade message.
+ */
+export async function assertCanInviteMember(workspaceId: string): Promise<void> {
+  const plan = await getWorkspacePlan(workspaceId);
+  const [activeMembers, pendingInvites] = await Promise.all([
+    prisma.workspaceMember.count({ where: { workspaceId } }),
+    prisma.workspaceInvite.count({
+      where: { workspaceId, acceptedAt: null, expiresAt: { gt: new Date() } },
+    }),
+  ]);
+  if (hasSeatAvailable(plan.limits.maxMembers, activeMembers, pendingInvites)) return;
+
+  const message =
+    plan.id === "free"
+      ? "Team members are a Pro feature. Upgrade to Pro to invite up to 5 teammates."
+      : `Your ${plan.name} plan includes ${plan.limits.maxMembers} seats (members plus pending invites). Remove a member or revoke an invite to free one up.`;
+  throw new LimitError("MEMBER_LIMIT", message);
 }
 
 /**

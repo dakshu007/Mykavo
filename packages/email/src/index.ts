@@ -6,6 +6,7 @@ export {
   recoveryAlertEmail,
   sslExpiryAlertEmail,
   weeklyReportEmail,
+  workspaceInviteEmail,
   type Severity,
   type ChangeLine,
   type ScanSummaryData,
@@ -16,4 +17,5 @@ export {
   type WeeklyReportData,
   type WeeklySeverityCount,
   type WeeklyLighthouseScores,
+  type WorkspaceInviteData,
 } from "./templates";

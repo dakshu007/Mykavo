@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fluxen/database";
-import { getApiContext, getOwnedWebsite } from "@/lib/api-auth";
+import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan, assertScanAllowed, LimitError } from "@/lib/limits";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { enqueueScanWebsite } from "@/lib/queue";
@@ -12,6 +12,8 @@ type Params = { params: Promise<{ id: string }> };
 export async function POST(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   // Burst guard: cap scan triggers per workspace per minute (spec §43).
   const rl = rateLimit(`scan:${ctx.workspace.id}`, { limit: 10, windowMs: 60_000 });

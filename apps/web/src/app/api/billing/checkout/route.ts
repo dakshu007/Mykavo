@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { prisma, createCheckoutIntent } from "@fluxen/database";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { requireSession, getCurrentMembership } from "@/lib/session";
+import { canManageBilling } from "@/lib/team";
 import { buildCheckoutUrl } from "@/lib/billing/config";
 import { logger } from "@/lib/logger";
 
@@ -13,7 +14,13 @@ import { logger } from "@/lib/logger";
  */
 export async function GET() {
   const session = await requireSession();
-  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
+  if (!canManageBilling(role)) {
+    return NextResponse.json(
+      { error: "Only the workspace owner can manage billing." },
+      { status: 403 },
+    );
+  }
 
   const token = randomBytes(32).toString("base64url");
   await createCheckoutIntent(prisma, {

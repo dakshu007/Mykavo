@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@fluxen/database";
 import { WEBHOOK_CHANNEL_TYPES, validateChannelUrl } from "@fluxen/shared";
-import { getApiContext } from "@/lib/api-auth";
+import { getApiContext, requireRole } from "@/lib/api-auth";
 import {
   MAX_CHANNELS_PER_WORKSPACE,
   buildChannelConfiguration,
@@ -36,6 +36,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   // Channel creation resolves DNS on a user-supplied URL — cap it.
   const rl = rateLimit(`channel-create:${ctx.workspace.id}`, { limit: 10, windowMs: 60_000 });

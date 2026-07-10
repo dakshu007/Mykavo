@@ -1,15 +1,27 @@
 import { headers } from "next/headers";
-import { prisma, type Website, type Workspace, type MonitoredPage } from "@fluxen/database";
+import { NextResponse } from "next/server";
+import {
+  prisma,
+  type Website,
+  type Workspace,
+  type WorkspaceRole,
+  type MonitoredPage,
+} from "@fluxen/database";
 import { auth } from "@/lib/auth";
+import { resolveCurrentMembership } from "@/lib/session";
 
 /**
- * Authorization helpers for API route handlers. Workspace scope is always
- * derived from the session — never from client input (spec §59).
+ * Authorization helpers for API route handlers. Workspace scope AND role are
+ * always derived from the session + verified membership rows — never from
+ * client input (spec §59).
  */
 
 export interface ApiContext {
   userId: string;
+  userEmail: string;
   workspace: Workspace;
+  /** The caller's role in the current workspace — drives requireRole. */
+  role: WorkspaceRole;
 }
 
 /** Returns null when unauthenticated or without a workspace membership. */
@@ -17,14 +29,32 @@ export async function getApiContext(): Promise<ApiContext | null> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return null;
 
-  const membership = await prisma.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    include: { workspace: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const membership = await resolveCurrentMembership(session.user.id);
   if (!membership) return null;
 
-  return { userId: session.user.id, workspace: membership.workspace };
+  return {
+    userId: session.user.id,
+    userEmail: session.user.email,
+    workspace: membership.workspace,
+    role: membership.role,
+  };
+}
+
+/**
+ * Role gate for mutating routes (spec §39): returns a 403 response when the
+ * caller's role is not in `allowed`, or null when the request may proceed.
+ * Usage: `const denied = requireRole(ctx, "OWNER", "ADMIN"); if (denied) return denied;`
+ */
+export function requireRole(
+  ctx: ApiContext,
+  ...allowed: WorkspaceRole[]
+): NextResponse | null {
+  if (allowed.includes(ctx.role)) return null;
+  const message =
+    ctx.role === "VIEWER"
+      ? "Viewers have read-only access. Ask a workspace admin to make this change."
+      : "Only the workspace owner can do this.";
+  return NextResponse.json({ error: message }, { status: 403 });
 }
 
 /** Loads a website only if it belongs to the caller's workspace. */

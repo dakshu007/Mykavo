@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth, googleEnabled } from "@/lib/auth";
 import { AuthForm } from "@/components/auth-form";
+import { safeNextPath } from "@/lib/team";
 
 export const metadata: Metadata = {
   title: "Create your account",
@@ -10,9 +11,15 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default async function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  // Only same-origin relative paths — never an open redirect.
+  const next = safeNextPath((await searchParams).next);
   const session = await auth.api.getSession({ headers: await headers() });
-  if (session) redirect("/dashboard");
+  if (session) redirect(next ?? "/dashboard");
 
   return (
     <>
@@ -22,7 +29,7 @@ export default async function SignupPage() {
       <p className="mb-6 text-sm text-ink-secondary">
         Free plan included — no credit card required.
       </p>
-      <AuthForm mode="signup" googleEnabled={googleEnabled} />
+      <AuthForm mode="signup" googleEnabled={googleEnabled} redirectTo={next ?? undefined} />
     </>
   );
 }

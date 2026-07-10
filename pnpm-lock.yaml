@@ -20,6 +20,9 @@ importers:
       '@fluxen/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@fluxen/email':
+        specifier: workspace:*
+        version: link:../../packages/email
       '@fluxen/scanner':
         specifier: workspace:*
         version: link:../../packages/scanner

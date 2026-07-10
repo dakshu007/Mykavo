@@ -14,6 +14,10 @@ import {
   Settings,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
+import {
+  WorkspaceSwitcher,
+  type WorkspaceOption,
+} from "@/components/dashboard/workspace-switcher";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +34,14 @@ const nav = [
 export function DashboardSidebar({
   workspaceName,
   isBlogAdmin = false,
+  workspaces = [],
+  currentWorkspaceId,
 }: {
   workspaceName: string;
   isBlogAdmin?: boolean;
+  /** All workspaces the user belongs to — switcher renders when >1. */
+  workspaces?: WorkspaceOption[];
+  currentWorkspaceId?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -58,6 +67,13 @@ export function DashboardSidebar({
           <span className="block truncate text-[11px] text-ink-faint">{workspaceName}</span>
         </span>
       </Link>
+
+      {workspaces.length > 1 && currentWorkspaceId && (
+        <WorkspaceSwitcher
+          workspaces={workspaces}
+          currentWorkspaceId={currentWorkspaceId}
+        />
+      )}
 
       <nav className="mt-4 flex-1 space-y-1" aria-label="Dashboard">
         {items.map((item) => {

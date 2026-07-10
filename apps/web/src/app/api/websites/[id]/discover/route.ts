@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fluxen/database";
-import { getApiContext, getOwnedWebsite } from "@/lib/api-auth";
+import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { discoverPages, DiscoveryError } from "@/lib/discovery";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { normalizeUrl } from "@/lib/url";
@@ -11,6 +11,8 @@ type Params = { params: Promise<{ id: string }> };
 export async function POST(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   // Discovery makes several outbound requests — bound it per workspace.
   const limit = rateLimit(`discover:${ctx.workspace.id}`, {

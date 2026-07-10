@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@fluxen/database";
-import { getApiContext, getOwnedWebsite } from "@/lib/api-auth";
+import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { enqueueLighthouseAudit } from "@/lib/queue";
 import { logger } from "@/lib/logger";
@@ -38,6 +38,8 @@ export async function GET(_request: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id } = await params;
   const website = await getOwnedWebsite(ctx, id);

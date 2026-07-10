@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma, applyChangeAction } from "@fluxen/database";
-import { getApiContext } from "@/lib/api-auth";
+import { getApiContext, requireRole } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
@@ -14,6 +14,8 @@ const bodySchema = z.object({
 export async function PATCH(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id } = await params;
   const change = await prisma.changeEvent.findFirst({

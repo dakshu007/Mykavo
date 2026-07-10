@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, setSnapshotAsBaseline } from "@fluxen/database";
-import { getApiContext } from "@/lib/api-auth";
+import { getApiContext, requireRole } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
@@ -9,6 +9,8 @@ type Params = { params: Promise<{ id: string }> };
 export async function POST(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id } = await params;
 

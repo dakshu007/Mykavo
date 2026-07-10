@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dispatchChannelMessage } from "@fluxen/shared";
-import { getApiContext } from "@/lib/api-auth";
+import { getApiContext, requireRole } from "@/lib/api-auth";
 import { getOwnedAlertChannel } from "@/lib/notification-channels";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { logger } from "@/lib/logger";
@@ -14,6 +14,8 @@ type Params = { params: Promise<{ id: string }> };
 export async function POST(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   // Tests hit a user-supplied URL — cap the rate.
   const rl = rateLimit(`channel-test:${ctx.workspace.id}`, { limit: 10, windowMs: 60_000 });

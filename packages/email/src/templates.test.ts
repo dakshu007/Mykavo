@@ -3,6 +3,7 @@ import {
   scanSummaryEmail,
   failureAlertEmail,
   weeklyReportEmail,
+  workspaceInviteEmail,
   type WeeklyReportData,
 } from "./templates";
 
@@ -148,5 +149,42 @@ describe("failureAlertEmail", () => {
     });
     expect(subject).toBe("Scan failed for aurora-outdoor.com");
     expect(html).toContain("The homepage returned HTTP 500.");
+  });
+});
+
+describe("workspaceInviteEmail", () => {
+  const data = {
+    inviterName: "Ada Lovelace",
+    workspaceName: "Aurora Agency",
+    roleLabel: "Member",
+    acceptUrl: "https://fluxen.app/invite/tok_abc123",
+    expiresInDays: 7,
+  };
+
+  it("builds the '{inviter} invited you to {workspace} on Fluxen' subject", () => {
+    expect(workspaceInviteEmail(data).subject).toBe(
+      "Ada Lovelace invited you to Aurora Agency on Fluxen",
+    );
+  });
+
+  it("includes the role, accept link button, and expiry note", () => {
+    const { html, text } = workspaceInviteEmail(data);
+    expect(html).toContain("Accept invitation");
+    expect(html).toContain(data.acceptUrl);
+    expect(html).toContain("Member");
+    expect(html).toContain("expires in 7 days");
+    expect(text).toContain(`Accept: ${data.acceptUrl}`);
+    expect(text).toContain("expires in 7 days");
+  });
+
+  it("HTML-escapes the inviter and workspace names", () => {
+    const evil = workspaceInviteEmail({
+      ...data,
+      inviterName: "<script>x</script>",
+      workspaceName: "A & B <Co>",
+    });
+    expect(evil.html).not.toContain("<script>x</script>");
+    expect(evil.html).toContain("&lt;script&gt;");
+    expect(evil.html).toContain("A &amp; B &lt;Co&gt;");
   });
 });

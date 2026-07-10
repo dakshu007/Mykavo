@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, type MonitoredElement } from "@fluxen/database";
-import { getApiContext, getOwnedMonitoredPage, type ApiContext } from "@/lib/api-auth";
+import { getApiContext, getOwnedMonitoredPage, type ApiContext, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import { updateElementSchema, normalizePin } from "@/lib/monitored-elements";
 import { logger } from "@/lib/logger";
@@ -24,6 +24,8 @@ async function getOwnedElement(
 export async function PATCH(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id, pageId, elementId } = await params;
   const element = await getOwnedElement(ctx, id, pageId, elementId);
@@ -66,6 +68,8 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id, pageId, elementId } = await params;
   const element = await getOwnedElement(ctx, id, pageId, elementId);
