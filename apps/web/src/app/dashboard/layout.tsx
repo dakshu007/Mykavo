@@ -36,12 +36,21 @@ export default async function DashboardLayout({
               Here&apos;s what changed across your websites
             </p>
           </div>
-          <span
-            className="inline-flex size-11 items-center justify-center rounded-full bg-card text-sm font-semibold text-ink shadow-card"
-            aria-label="Account"
-          >
-            {session.user.name.charAt(0).toUpperCase()}
-          </span>
+          {session.user.image ? (
+            // eslint-disable-next-line @next/next/no-img-element -- avatar may be an inline data URL, which next/image cannot optimize
+            <img
+              src={session.user.image}
+              alt={`${session.user.name} profile photo`}
+              className="size-11 shrink-0 rounded-full bg-card object-cover shadow-card"
+            />
+          ) : (
+            <span
+              className="inline-flex size-11 items-center justify-center rounded-full bg-card text-sm font-semibold text-ink shadow-card"
+              aria-label="Account"
+            >
+              {session.user.name.charAt(0).toUpperCase()}
+            </span>
+          )}
         </div>
         {children}
       </div>
