@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
+import { greetingForHour, hourInTimeZone, timezoneFromNetlifyGeo } from "@/lib/greeting";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
 import { CommandPalette } from "@/components/dashboard/command-palette";
+import { Greeting } from "@/components/dashboard/greeting";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -18,6 +21,13 @@ export default async function DashboardLayout({
 }) {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+
+  // Greeting follows the visitor's clock, not the server's (Netlify = UTC).
+  // Server guess from the request's geo timezone; the client re-derives from
+  // the actual local clock after mount.
+  const visitorTz = timezoneFromNetlifyGeo((await headers()).get("x-nf-geo"));
+  const visitorHour = (visitorTz ? hourInTimeZone(visitorTz) : null) ?? new Date().getHours();
+  const initialGreeting = greetingForHour(visitorHour);
   // All memberships power the sidebar workspace switcher (shown when >1).
   const memberships = await prisma.workspaceMember.findMany({
     where: { userId: session.user.id },
@@ -40,9 +50,10 @@ export default async function DashboardLayout({
         <DashboardMobileNav isBlogAdmin={isBlogAdmin(session.user.email)} />
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <p className="text-[17px] font-semibold tracking-tight text-ink">
-              {greeting()}, {session.user.name.split(" ")[0]}
-            </p>
+            <Greeting
+              name={session.user.name.split(" ")[0]}
+              initialGreeting={initialGreeting}
+            />
             <p className="text-[13px] text-ink-secondary">
               Here&apos;s what changed across your websites
             </p>
@@ -67,11 +78,4 @@ export default async function DashboardLayout({
       </div>
     </div>
   );
-}
-
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
 }
