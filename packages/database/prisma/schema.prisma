@@ -193,6 +193,11 @@ model Website {
   // the screenshot only — their content is still compared (dates, counters).
   ignoredSelectors Json?
   screenshotMasks  Json?
+  // Organization tags (agency labels: client, team, retainer…). JSON array
+  // of lowercase display tags — max 5 per website, each 1–20 chars of
+  // [a-z0-9-] (normalized + enforced in the API; parsed defensively via
+  // parseTags in apps/web/src/lib/tags.ts).
+  tags          Json?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

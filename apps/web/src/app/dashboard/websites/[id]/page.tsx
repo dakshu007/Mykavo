@@ -13,7 +13,9 @@ import {
   PerformanceAuditPanel,
   type AuditView,
 } from "@/components/dashboard/performance-audit-panel";
+import { parseTags } from "@/lib/tags";
 import { WebsiteActions } from "./website-actions";
+import { TagEditor } from "./tag-editor";
 import { MutedAlertsBanner, MuteAlertsControl } from "./mute-alerts";
 import { ComparisonSettings } from "./comparison-settings";
 import { StatusBadgeSettings } from "./status-badge-settings";
@@ -405,6 +407,11 @@ export default async function WebsiteDetailPage({
           </ul>
         </Card>
       )}
+
+      <Card>
+        <CardHeader title="Tags" />
+        <TagEditor websiteId={website.id} initialTags={parseTags(website.tags)} />
+      </Card>
 
       <Card>
         <CardHeader title="Mute alerts" />
