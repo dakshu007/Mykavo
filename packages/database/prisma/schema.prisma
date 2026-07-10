@@ -161,6 +161,7 @@ model Website {
   changeEvents      ChangeEvent[]
   notifications     Notification[]
   performanceAudits PerformanceAudit[]
+  siteMetaSnapshots SiteMetaSnapshot[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -227,12 +228,46 @@ model Scan {
   errorMessage    String?
   createdAt       DateTime        @default(now())
 
-  snapshots     PageSnapshot[]
-  changeEvents  ChangeEvent[]
-  notifications Notification[]
+  snapshots        PageSnapshot[]
+  changeEvents     ChangeEvent[]
+  notifications    Notification[]
+  siteMetaSnapshot SiteMetaSnapshot?
 
   @@index([websiteId, createdAt(sort: Desc)])
   @@map("scan")
+}
+
+// Per-scan capture of site-level SEO infrastructure: robots.txt and the
+// sitemap (spec §19 family — "robots.txt Monitoring" / "Sitemap Monitoring").
+// One row per scan (plain fetch, no Playwright). Comparison runs against the
+// most recent PREVIOUS capture for the website — site meta has no
+// user-approved baseline concept, so "previous scan" is the reference.
+model SiteMetaSnapshot {
+  id        String  @id @default(cuid())
+  scanId    String  @unique
+  scan      Scan    @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  websiteId String
+  website   Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  // robots.txt observation. Content is capped at 64 KB (truncated with a
+  // note); the hash covers the FULL fetched body so change detection is not
+  // fooled by truncation. Null status = fetch failed (DNS/timeout/etc.).
+  robotsTxtStatus  Int?
+  robotsTxtContent String?
+  robotsTxtHash    String?
+
+  // Sitemap observation: the candidate URL fetched (first robots.txt
+  // declaration, else {origin}/sitemap.xml), its status, total <loc> count
+  // (index files expand up to 3 children), and the top-level document hash.
+  sitemapUrl      String?
+  sitemapStatus   Int?
+  sitemapUrlCount Int?
+  sitemapHash     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([websiteId, createdAt(sort: Desc)])
+  @@map("site_meta_snapshot")
 }
 
 model PageSnapshot {
@@ -473,8 +508,10 @@ model ChangeEvent {
   id                 String         @id @default(cuid())
   websiteId          String
   website            Website        @relation(fields: [websiteId], references: [id], onDelete: Cascade)
-  monitoredPageId    String
-  monitoredPage      MonitoredPage  @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
+  // Null for site-wide changes (robots.txt / sitemap) that belong to the
+  // website rather than a monitored page.
+  monitoredPageId    String?
+  monitoredPage      MonitoredPage? @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
   previousSnapshotId String?
   previousSnapshot   PageSnapshot?  @relation("ChangePreviousSnapshot", fields: [previousSnapshotId], references: [id], onDelete: SetNull)
   currentSnapshotId  String?

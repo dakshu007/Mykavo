@@ -58,6 +58,21 @@ export type ChangeSignal =
   | { kind: "request_count"; previous: number; current: number }
   | { kind: "response_time"; previousMs: number; currentMs: number }
   | { kind: "visual_diff"; percentage: number }
+  // Site-level robots.txt / sitemap regressions (spec §19 family). These are
+  // website-wide signals — the resulting change events carry no monitored page.
+  | { kind: "robots_txt_removed"; previousStatus: number; currentStatus: number | null }
+  | {
+      kind: "robots_txt_changed";
+      /** True when there was no readable robots.txt before (appeared vs changed). */
+      appeared: boolean;
+      /** True when the NEW content blocks all crawlers and the old one did not. */
+      newlyBlocksAll: boolean;
+      previous: string | null;
+      current: string | null;
+    }
+  | { kind: "sitemap_removed"; sitemapUrl: string; currentStatus: number | null }
+  | { kind: "sitemap_url_count"; previous: number; current: number; sitemapUrl: string }
+  | { kind: "sitemap_content_changed"; sitemapUrl: string }
   // Conversion elements (spec §23, Phase 9)
   | { kind: "element_missing"; name: string; importance: ElementImportance }
   | { kind: "element_hidden"; name: string; importance: ElementImportance }
@@ -375,6 +390,97 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
       });
     }
 
+    case "robots_txt_removed":
+      return finalize({
+        category: "SEO",
+        changeType: "robots_txt_removed",
+        severity: "MEDIUM",
+        title: "robots.txt no longer reachable",
+        description: `robots.txt previously returned HTTP ${signal.previousStatus} but is now ${
+          signal.currentStatus === null ? "unreachable" : `returning HTTP ${signal.currentStatus}`
+        }. Crawlers fall back to crawling everything, and declared sitemaps are no longer advertised.`,
+        previousValue: `HTTP ${signal.previousStatus}`,
+        currentValue: signal.currentStatus === null ? "Unreachable" : `HTTP ${signal.currentStatus}`,
+      });
+
+    case "robots_txt_changed": {
+      if (signal.newlyBlocksAll) {
+        return finalize({
+          category: "SEO",
+          changeType: "robots_txt_blocks_all",
+          severity: "CRITICAL",
+          title: "robots.txt now blocks all crawlers",
+          description:
+            "The robots.txt file now contains a `User-agent: *` group with `Disallow: /`. Every search engine crawler is blocked from the entire site — pages will drop out of search results.",
+          previousValue: clip(signal.previous),
+          currentValue: clip(signal.current),
+        });
+      }
+      return finalize({
+        category: "SEO",
+        changeType: signal.appeared ? "robots_txt_appeared" : "robots_txt_changed",
+        severity: "MEDIUM",
+        title: signal.appeared ? "robots.txt appeared" : "robots.txt content changed",
+        description: signal.appeared
+          ? "A robots.txt file is now being served where there was none before. Review its rules — it controls what search engines may crawl."
+          : "The robots.txt content changed. Review the new rules — crawl directives affect what search engines index.",
+        previousValue: clip(signal.previous),
+        currentValue: clip(signal.current),
+      });
+    }
+
+    case "sitemap_removed":
+      return finalize({
+        category: "SEO",
+        changeType: "sitemap_removed",
+        severity: "HIGH",
+        title: "Sitemap no longer reachable",
+        description: `The sitemap at ${signal.sitemapUrl} previously returned HTTP 200 but is now ${
+          signal.currentStatus === null ? "unreachable" : `returning HTTP ${signal.currentStatus}`
+        }. Search engines lose their index of the site's pages.`,
+        previousValue: "HTTP 200",
+        currentValue: signal.currentStatus === null ? "Unreachable" : `HTTP ${signal.currentStatus}`,
+      });
+
+    case "sitemap_url_count": {
+      const shrank =
+        signal.previous >= 10 &&
+        signal.current < signal.previous &&
+        (signal.previous - signal.current) / signal.previous > 0.5;
+      if (shrank) {
+        return finalize({
+          category: "SEO",
+          changeType: "sitemap_shrank",
+          severity: "HIGH",
+          title: `Sitemap shrank from ${signal.previous} to ${signal.current} URLs`,
+          description: `The sitemap at ${signal.sitemapUrl} lost more than half of its URLs. If unintended, a deploy or CMS change may have dropped pages from the sitemap.`,
+          previousValue: `${signal.previous} URLs`,
+          currentValue: `${signal.current} URLs`,
+        });
+      }
+      // Sitemaps churn normally — keep ordinary count movement quiet.
+      return finalize({
+        category: "SEO",
+        changeType: "sitemap_url_count_changed",
+        severity: "INFO",
+        title: `Sitemap URL count changed ${signal.previous} → ${signal.current}`,
+        description: `The sitemap at ${signal.sitemapUrl} now lists ${signal.current} URLs (was ${signal.previous}).`,
+        previousValue: `${signal.previous} URLs`,
+        currentValue: `${signal.current} URLs`,
+      });
+    }
+
+    case "sitemap_content_changed":
+      return finalize({
+        category: "SEO",
+        changeType: "sitemap_content_changed",
+        severity: "INFO",
+        title: "Sitemap content changed",
+        description: `The sitemap at ${signal.sitemapUrl} changed without altering its URL count (reordered entries, lastmod updates, or swapped URLs).`,
+        previousValue: null,
+        currentValue: null,
+      });
+
     case "element_missing":
       return finalize({
         category: "CONVERSION",
@@ -443,6 +549,15 @@ function byImportance(importance: ElementImportance): Severity {
 
 function kb(bytes: number): string {
   return `${Math.round(bytes / 1024)} KB`;
+}
+
+/**
+ * Clip long text (e.g. robots.txt bodies) for the compact previous/current
+ * value fields. Full content travels in the change event's metadata.
+ */
+function clip(v: string | null, max = 400): string {
+  if (v === null || v === "") return "—";
+  return v.length > max ? `${v.slice(0, max)}…` : v;
 }
 
 /** Attach notification eligibility: immediate for CRITICAL/HIGH (spec §27). */
