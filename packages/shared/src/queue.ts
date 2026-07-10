@@ -9,6 +9,7 @@ export const SCHEDULER_SWEEP_QUEUE = "scheduler-sweep";
 export const RETENTION_SWEEP_QUEUE = "retention-sweep";
 export const LIGHTHOUSE_AUDIT_QUEUE = "lighthouse-audit";
 export const HEALTH_SWEEP_QUEUE = "health-sweep";
+export const REPORT_SWEEP_QUEUE = "report-sweep";
 
 export interface ScanWebsiteJob {
   scanId: string;

@@ -13,6 +13,7 @@ import {
   RETENTION_SWEEP_QUEUE,
   LIGHTHOUSE_AUDIT_QUEUE,
   HEALTH_SWEEP_QUEUE,
+  REPORT_SWEEP_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
 } from "@fluxen/shared";
@@ -22,10 +23,12 @@ import { runSchedulerSweep } from "./scheduler";
 import { runRetentionSweep } from "./retention";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
 import { runHealthSweep } from "./health";
+import { runReportSweep } from "./report";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
 const HEALTH_CRON = process.env.HEALTH_CRON ?? "*/5 * * * *"; // every 5 minutes
+const REPORT_CRON = process.env.REPORT_CRON ?? "0 8 * * 1"; // Mondays 08:00 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -84,6 +87,14 @@ async function main() {
   });
   await boss.schedule(HEALTH_SWEEP_QUEUE, HEALTH_CRON);
 
+  // Weekly client-ready reports (spec §37): one summary email per ACTIVE
+  // website every Monday morning — the agency forward-to-client selling point.
+  await boss.createQueue(REPORT_SWEEP_QUEUE).catch(() => {});
+  await boss.work(REPORT_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runReportSweep();
+  });
+  await boss.schedule(REPORT_SWEEP_QUEUE, REPORT_CRON);
+
   // On-demand Lighthouse audits. Heavyweight (~10–40s, CPU-bound), so one at a
   // time (batchSize 1) with a single retry.
   await boss
@@ -103,6 +114,7 @@ async function main() {
     schedulerCron: SWEEP_CRON,
     retentionCron: RETENTION_CRON,
     healthCron: HEALTH_CRON,
+    reportCron: REPORT_CRON,
   });
 
   async function shutdown(signal: string) {

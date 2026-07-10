@@ -8,6 +8,8 @@ export interface EmailSettings {
   recipients: string[];
   minSeverity: "MEDIUM" | "HIGH" | "CRITICAL";
   failureAlerts: boolean;
+  /** Weekly client-ready summary per website (Mondays). Defaults to true. */
+  weeklyReports: boolean;
   enabled: boolean;
   /** True when saved explicitly; false when these are inherited defaults. */
   configured: boolean;
@@ -26,6 +28,7 @@ export async function getEmailSettings(
       recipients: [ownerEmail],
       minSeverity: "HIGH",
       failureAlerts: true,
+      weeklyReports: true,
       enabled: true,
       configured: false,
     };
@@ -36,6 +39,7 @@ export async function getEmailSettings(
     recipients: Array.isArray(cfg.recipients) && cfg.recipients.length > 0 ? cfg.recipients : [ownerEmail],
     minSeverity: cfg.minSeverity ?? "HIGH",
     failureAlerts: cfg.failureAlerts ?? true,
+    weeklyReports: cfg.weeklyReports ?? true,
     enabled: channel.enabled,
     configured: true,
   };

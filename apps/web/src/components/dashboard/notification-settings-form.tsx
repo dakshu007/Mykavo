@@ -17,6 +17,7 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
   const [recipients, setRecipients] = useState(initial.recipients.join(", "));
   const [minSeverity, setMinSeverity] = useState<EmailSettings["minSeverity"]>(initial.minSeverity);
   const [failureAlerts, setFailureAlerts] = useState(initial.failureAlerts);
+  const [weeklyReports, setWeeklyReports] = useState(initial.weeklyReports);
   const [enabled, setEnabled] = useState(initial.enabled);
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState("");
@@ -34,7 +35,7 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
       const res = await fetch("/api/notifications/settings", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ recipients: list, minSeverity, failureAlerts, enabled }),
+        body: JSON.stringify({ recipients: list, minSeverity, failureAlerts, weeklyReports, enabled }),
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Could not save settings.");
@@ -121,6 +122,21 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
         />
         <span className="text-sm text-ink">
           Also alert me when a scan fails (site down or unreachable)
+        </span>
+      </label>
+
+      <label className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={weeklyReports}
+          onChange={(e) => setWeeklyReports(e.target.checked)}
+          className="mt-0.5 size-4 accent-[#3556f4]"
+        />
+        <span>
+          <span className="block text-sm font-medium text-ink">Weekly report</span>
+          <span className="block text-[13px] text-ink-secondary">
+            A client-ready summary of every website, each Monday.
+          </span>
         </span>
       </label>
 

@@ -8,6 +8,7 @@ const schema = z.object({
   recipients: z.array(z.string().trim().toLowerCase().email()).min(1).max(10),
   minSeverity: z.enum(["MEDIUM", "HIGH", "CRITICAL"]),
   failureAlerts: z.boolean(),
+  weeklyReports: z.boolean(),
   enabled: z.boolean(),
 });
 
@@ -39,6 +40,7 @@ export async function PUT(request: Request) {
         recipients,
         minSeverity: body.minSeverity,
         failureAlerts: body.failureAlerts,
+        weeklyReports: body.weeklyReports,
       },
     },
     update: {
@@ -47,6 +49,7 @@ export async function PUT(request: Request) {
         recipients,
         minSeverity: body.minSeverity,
         failureAlerts: body.failureAlerts,
+        weeklyReports: body.weeklyReports,
       },
     },
   });

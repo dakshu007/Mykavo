@@ -183,6 +183,142 @@ export function sslExpiryAlertEmail(data: SslExpiryAlertData): { subject: string
   return { subject, html: shell(inner), text };
 }
 
+// ---------- Weekly client-ready report (spec §37 "client-ready reports") ----------
+
+export interface WeeklySeverityCount {
+  severity: Severity;
+  count: number;
+}
+
+export interface WeeklyLighthouseScores {
+  performance: number | null;
+  accessibility: number | null;
+  bestPractices: number | null;
+  seo: number | null;
+}
+
+export interface WeeklyReportData {
+  websiteName: string;
+  websiteHost: string;
+  /** e.g. "Jul 3 – Jul 10, 2026". */
+  periodLabel: string;
+  scansRun: number;
+  scansFailed: number;
+  totalChanges: number;
+  /** Non-zero severities only, highest first. */
+  changesBySeverity: WeeklySeverityCount[];
+  /** Rounded percentage (0–100), or null when no checks ran. */
+  uptimePercent: number | null;
+  /** Average response time in ms, or null when unknown. */
+  avgResponseMs: number | null;
+  /** Whole days until certificate expiry, or null when unknown. */
+  sslDaysLeft: number | null;
+  lighthouse: WeeklyLighthouseScores | null;
+  /** True when there is nothing to worry about — reassuring variant. */
+  allQuiet: boolean;
+  dashboardUrl: string;
+}
+
+function statCell(value: string, caption: string): string {
+  return `<td style="width:33%;padding:14px 16px;background:#f5f6fa;border-radius:12px">
+    <div style="font-size:20px;font-weight:600;letter-spacing:-0.01em;color:#16181d">${esc(value)}</div>
+    <div style="font-size:12px;color:#5c6270;margin-top:2px">${esc(caption)}</div>
+  </td>`;
+}
+
+/**
+ * Weekly summary an agency can forward to its client: uptime, scans, changes
+ * by severity, SSL and Lighthouse status, with an "all quiet" variant when
+ * there is nothing to report.
+ */
+export function weeklyReportEmail(data: WeeklyReportData): { subject: string; html: string; text: string } {
+  const changesWord = data.totalChanges === 0 ? "no changes" : `${data.totalChanges} change${data.totalChanges === 1 ? "" : "s"}`;
+  const subject =
+    `Weekly report for ${data.websiteHost} — ${changesWord}` +
+    (data.uptimePercent !== null ? `, ${data.uptimePercent}% uptime` : "");
+
+  const severityRows = data.changesBySeverity
+    .map(
+      (line) => `<tr>
+        <td style="padding:9px 0;border-bottom:1px solid #eef0f3;width:110px">
+          <span style="display:inline-block;font-size:11px;font-weight:700;color:${SEVERITY_COLOR[line.severity]}">${label(line.severity)}</span>
+        </td>
+        <td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px;color:#16181d">${line.count} change${line.count === 1 ? "" : "s"}</td>
+      </tr>`,
+    )
+    .join("");
+
+  const sslLine =
+    data.sslDaysLeft === null
+      ? ""
+      : data.sslDaysLeft <= 0
+        ? `<p style="margin:0 0 8px;font-size:14px;color:#b42318">SSL certificate has expired — renew it now.</p>`
+        : data.sslDaysLeft <= 14
+          ? `<p style="margin:0 0 8px;font-size:14px;color:#92600a">SSL certificate expires in ${data.sslDaysLeft} day${data.sslDaysLeft === 1 ? "" : "s"} — renewal recommended.</p>`
+          : `<p style="margin:0 0 8px;font-size:14px;color:#5c6270">SSL certificate valid for another ${data.sslDaysLeft} days.</p>`;
+
+  const lighthouseParts = data.lighthouse
+    ? [
+        ["Performance", data.lighthouse.performance],
+        ["Accessibility", data.lighthouse.accessibility],
+        ["Best Practices", data.lighthouse.bestPractices],
+        ["SEO", data.lighthouse.seo],
+      ]
+        .filter((entry): entry is [string, number] => entry[1] !== null)
+        .map(([name, score]) => `${name} ${score}`)
+    : [];
+  const lighthouseLine =
+    lighthouseParts.length > 0
+      ? `<p style="margin:0 0 8px;font-size:14px;color:#5c6270">Lighthouse: ${esc(lighthouseParts.join(" · "))}</p>`
+      : "";
+
+  const quietBox = data.allQuiet
+    ? `<div style="background:#e8f7ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#166534;margin-bottom:20px">No unexpected changes — everything looks healthy.</div>`
+    : "";
+
+  const scansCaption = data.scansFailed > 0 ? `scans (${data.scansFailed} failed)` : "scans run";
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Weekly report</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · ${esc(data.periodLabel)}</p>
+    ${quietBox}
+    <table style="width:100%;border-collapse:separate;border-spacing:6px 0;margin:0 -6px 20px"><tr>
+      ${statCell(data.uptimePercent !== null ? `${data.uptimePercent}%` : "—", "uptime")}
+      ${statCell(String(data.scansRun), scansCaption)}
+      ${statCell(String(data.totalChanges), data.totalChanges === 1 ? "change detected" : "changes detected")}
+    </tr></table>
+    ${severityRows ? `<table style="width:100%;border-collapse:collapse;margin-bottom:20px">${severityRows}</table>` : ""}
+    ${data.avgResponseMs !== null ? `<p style="margin:0 0 8px;font-size:14px;color:#5c6270">Average response time: ${data.avgResponseMs} ms.</p>` : ""}
+    ${sslLine}
+    ${lighthouseLine}
+    <div style="margin-top:24px">${button(data.dashboardUrl, "Open dashboard")}</div>
+  `;
+
+  const textLines = [
+    `Weekly report for ${data.websiteHost} (${data.periodLabel})`,
+    "",
+    ...(data.allQuiet ? ["No unexpected changes — everything looks healthy.", ""] : []),
+    `Uptime: ${data.uptimePercent !== null ? `${data.uptimePercent}%` : "n/a"}`,
+    `Scans: ${data.scansRun} run${data.scansFailed > 0 ? `, ${data.scansFailed} failed` : ""}`,
+    `Changes: ${data.totalChanges}`,
+    ...data.changesBySeverity.map((line) => `- [${label(line.severity)}] ${line.count} change${line.count === 1 ? "" : "s"}`),
+    ...(data.avgResponseMs !== null ? [`Average response time: ${data.avgResponseMs} ms`] : []),
+    ...(data.sslDaysLeft !== null
+      ? [
+          data.sslDaysLeft <= 0
+            ? "SSL certificate has expired."
+            : `SSL certificate valid for another ${data.sslDaysLeft} day${data.sslDaysLeft === 1 ? "" : "s"}.`,
+        ]
+      : []),
+    ...(lighthouseParts.length > 0 ? [`Lighthouse: ${lighthouseParts.join(" · ")}`] : []),
+    "",
+    `Dashboard: ${data.dashboardUrl}`,
+  ];
+
+  return { subject, html: shell(inner), text: textLines.join("\n") };
+}
+
 export function failureAlertEmail(data: FailureAlertData): { subject: string; html: string; text: string } {
   const subject = `Scan failed for ${data.websiteHost}`;
   const inner = `
