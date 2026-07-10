@@ -1,15 +1,37 @@
 import Link from "next/link";
-import { Bell, FileSearch, Globe, Plus, Radar, ShieldCheck } from "lucide-react";
+import { cookies } from "next/headers";
+import { Bell, FileSearch, Globe, Plus, ShieldCheck } from "lucide-react";
 import { prisma, getLatestHealthChecksForWorkspace } from "@fluxen/database";
+import { WEBHOOK_CHANNEL_TYPES } from "@fluxen/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { deriveOnboarding, ONBOARDING_DISMISSED_COOKIE } from "@/lib/onboarding";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
+import { LogoMark } from "@/components/brand/logo";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
 
 export default async function DashboardOverviewPage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
-  const [websites, pageCount, baselineCount, openChanges, healthChecks] = await Promise.all([
+  const cookieStore = await cookies();
+  const checklistDismissed =
+    cookieStore.get(ONBOARDING_DISMISSED_COOKIE)?.value === workspace.id;
+
+  // Checklist-only counts are skipped entirely once the card is dismissed —
+  // websites/pages/baselines below already cover the first three steps.
+  const skip = Promise.resolve(0);
+  const [
+    websites,
+    pageCount,
+    baselineCount,
+    openChanges,
+    healthChecks,
+    completedScans,
+    extraChannels,
+    memberCount,
+    pendingInvites,
+  ] = await Promise.all([
     prisma.website.findMany({
       where: { workspaceId: workspace.id },
       include: {
@@ -25,8 +47,44 @@ export default async function DashboardOverviewPage() {
       where: { website: { workspaceId: workspace.id }, status: { in: ["NEW", "REVIEWED"] } },
     }),
     getLatestHealthChecksForWorkspace(prisma, workspace.id),
+    checklistDismissed
+      ? skip
+      : prisma.scan.count({
+          where: {
+            website: { workspaceId: workspace.id },
+            status: { in: ["COMPLETED", "PARTIAL"] },
+          },
+        }),
+    checklistDismissed
+      ? skip
+      : prisma.notificationChannel.count({
+          where: { workspaceId: workspace.id, type: { in: [...WEBHOOK_CHANNEL_TYPES] } },
+        }),
+    checklistDismissed
+      ? skip
+      : prisma.workspaceMember.count({ where: { workspaceId: workspace.id } }),
+    checklistDismissed
+      ? skip
+      : prisma.workspaceInvite.count({
+          where: {
+            workspaceId: workspace.id,
+            acceptedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+        }),
   ]);
   const healthByWebsite = new Map(healthChecks.map((h) => [h.websiteId, h.up]));
+
+  const onboarding = deriveOnboarding({
+    websites: websites.length,
+    monitoredPages: pageCount,
+    completedScans,
+    activeBaselines: baselineCount,
+    extraChannels,
+    members: memberCount,
+    pendingInvites,
+  });
+  const showChecklist = !checklistDismissed && !onboarding.allRequiredDone;
 
   const stats = [
     { label: "Websites monitored", value: websites.length, icon: Globe },
@@ -37,42 +95,50 @@ export default async function DashboardOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label}>
-            <CardHeader
-              title={s.label}
-              action={
-                <IconChip className="bg-surface">
-                  <s.icon className="size-4.5 text-ink-secondary" aria-hidden />
-                </IconChip>
-              }
-            />
-            <p className="text-5xl font-semibold tracking-tight text-ink">{s.value}</p>
-          </Card>
-        ))}
-      </div>
+      {showChecklist && (
+        <OnboardingChecklist steps={onboarding.steps} doneCount={onboarding.doneCount} />
+      )}
 
       {websites.length === 0 ? (
-        <div className="rounded-card bg-card p-8 text-center shadow-card">
-          <span className="mb-4 inline-flex size-12 items-center justify-center rounded-xl bg-primary-soft">
-            <Radar className="size-6 text-primary" aria-hidden />
+        // Zero websites: a grid of zeros says nothing — lead with the one
+        // action that matters instead.
+        <div className="rounded-card bg-card px-8 py-14 text-center shadow-card">
+          <span className="mb-5 inline-flex size-14 items-center justify-center rounded-2xl bg-primary-soft">
+            <LogoMark size={30} aria-hidden />
           </span>
-          <h2 className="text-xl font-semibold tracking-tight text-ink">
-            Add your first website
+          <h2 className="text-2xl font-semibold tracking-tight text-ink">
+            Monitor your first website
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">
-            Point Fluxen at a website, and it discovers your pages from sitemaps and homepage
-            links. Pick the pages that matter and you&apos;re ready for baseline monitoring.
+            Fluxen discovers your pages, captures an approved baseline, then alerts you when
+            something important changes or breaks.
           </p>
           <Link
             href="/dashboard/websites/new"
-            className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+            className="mt-7 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
           >
             <Plus className="size-4" aria-hidden /> Add website
           </Link>
         </div>
       ) : (
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((s) => (
+            <Card key={s.label}>
+              <CardHeader
+                title={s.label}
+                action={
+                  <IconChip className="bg-surface">
+                    <s.icon className="size-4.5 text-ink-secondary" aria-hidden />
+                  </IconChip>
+                }
+              />
+              <p className="text-5xl font-semibold tracking-tight text-ink">{s.value}</p>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {websites.length > 0 && (
         <Card>
           <CardHeader
             title="Your websites"

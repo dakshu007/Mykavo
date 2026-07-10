@@ -29,6 +29,14 @@ export default async function ScansPage() {
         icon={History}
         title="No scans yet"
         description="Run a baseline scan from a website's page to capture its first snapshot. Scan history — status, duration, pages, and failures — appears here."
+        action={
+          <Link
+            href="/dashboard/websites"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          >
+            Run your baseline scan
+          </Link>
+        }
       />
     );
   }
