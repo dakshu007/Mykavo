@@ -15,3 +15,10 @@ export {
   type ChangeCategory,
   type ElementImportance,
 } from "@fluxen/severity-engine";
+export {
+  compareSiteMeta,
+  robotsBlocksAll,
+  parseSitemap,
+  type SiteMetaComparable,
+  type ParsedSitemap,
+} from "./site-meta";

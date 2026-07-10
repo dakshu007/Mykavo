@@ -16,6 +16,7 @@ import {
 import { computeNextScanAt } from "@fluxen/shared";
 import { logger } from "./logger";
 import { runComparisonForScan } from "./compare-scan";
+import { captureSiteMeta } from "./site-meta";
 import { notifyForScan } from "./notify";
 
 const PAGE_CONCURRENCY = 3;
@@ -227,6 +228,12 @@ export async function runScanWebsiteJob(
         : null,
     },
   });
+
+  // Site-level SEO capture (robots.txt + sitemap) — once per scan, before
+  // comparison reads it. Never fails the scan.
+  if (scanned > 0) {
+    await captureSiteMeta({ scanId, websiteId: website.id, websiteUrl: website.url });
+  }
 
   if (scan.triggerType === "BASELINE" && scanned > 0) {
     // The first successful scan establishes baselines (spec §14): every

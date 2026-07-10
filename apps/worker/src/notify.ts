@@ -227,7 +227,8 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
     .map((c) => ({
       severity: c.severity as Severity,
       title: c.title,
-      pagePath: pagePath(c.monitoredPage.url),
+      // Site-wide changes (robots.txt / sitemap) have no monitored page.
+      pagePath: c.monitoredPage ? pagePath(c.monitoredPage.url) : "Site-wide",
     }));
 
   const dashboardUrl = `${dashboardBase}/dashboard/changes?website=${website.id}`;

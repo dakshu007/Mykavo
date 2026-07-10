@@ -63,7 +63,7 @@ export default async function ChangeDetailPage({
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink">{change.title}</h1>
         <p className="mt-1 font-mono text-[13px] text-ink-faint">
           {new URL(change.website.url).hostname}
-          {pathOf(change.monitoredPage.url)} ·{" "}
+          {change.monitoredPage ? pathOf(change.monitoredPage.url) : " · Site-wide"} ·{" "}
           {change.detectedAt.toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })}
         </p>
       </div>
@@ -152,12 +152,14 @@ export default async function ChangeDetailPage({
         <CardHeader
           title="Details"
           action={
-            <Link
-              href={`/dashboard/websites/${change.monitoredPage.websiteId}/pages/${change.monitoredPage.id}`}
-              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary hover:underline"
-            >
-              View page baseline <ExternalLink className="size-3.5" aria-hidden />
-            </Link>
+            change.monitoredPage ? (
+              <Link
+                href={`/dashboard/websites/${change.monitoredPage.websiteId}/pages/${change.monitoredPage.id}`}
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary hover:underline"
+              >
+                View page baseline <ExternalLink className="size-3.5" aria-hidden />
+              </Link>
+            ) : undefined
           }
         />
         <dl className="divide-y divide-line">

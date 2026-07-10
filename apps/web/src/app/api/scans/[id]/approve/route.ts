@@ -22,8 +22,14 @@ export async function POST(_request: Request, { params }: Params) {
   if (!scan) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Only pages that actually have an open change need re-baselining.
+  // Site-wide changes (monitoredPageId null) have no baseline to move.
   const changedPages = await prisma.changeEvent.findMany({
-    where: { scanId: id, status: { in: ["NEW", "REVIEWED"] }, currentSnapshotId: { not: null } },
+    where: {
+      scanId: id,
+      status: { in: ["NEW", "REVIEWED"] },
+      currentSnapshotId: { not: null },
+      monitoredPageId: { not: null },
+    },
     select: { monitoredPageId: true, currentSnapshotId: true },
     distinct: ["monitoredPageId"],
   });
@@ -31,7 +37,7 @@ export async function POST(_request: Request, { params }: Params) {
   let pagesBaselined = 0;
   let approvedChanges = 0;
   for (const page of changedPages) {
-    if (!page.currentSnapshotId) continue;
+    if (!page.currentSnapshotId || !page.monitoredPageId) continue;
     const result = await updateBaselineFromSnapshot(prisma, {
       websiteId: scan.websiteId,
       monitoredPageId: page.monitoredPageId,

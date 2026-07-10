@@ -127,6 +127,7 @@ export default async function ScanDetailPage({
           <ul className="divide-y divide-line">
             {sortedChanges.map((c) => {
               const path = (() => {
+                if (!c.monitoredPage) return "Site-wide";
                 try {
                   const u = new URL(c.monitoredPage.url);
                   return u.pathname + u.search;

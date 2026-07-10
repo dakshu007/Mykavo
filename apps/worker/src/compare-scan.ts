@@ -11,6 +11,7 @@ import { prisma, type ChangeSeverity } from "@fluxen/database";
 import {
   compareSnapshots,
   compareScreenshots,
+  compareSiteMeta,
   highestSeverity,
   scoreChange,
   type ComparableSnapshot,
@@ -266,6 +267,44 @@ export async function runComparisonForScan(
       severities.push(change.severity);
       totalChanges++;
     }
+  }
+
+  // Site-level robots.txt / sitemap regressions (website-wide — no page).
+  // Compared against the most recent previous capture: site meta has no
+  // user-approved baseline concept. First capture produces no events.
+  try {
+    const currentMeta = await prisma.siteMetaSnapshot.findUnique({ where: { scanId } });
+    if (currentMeta) {
+      const previousMeta = await prisma.siteMetaSnapshot.findFirst({
+        where: {
+          websiteId: scan.websiteId,
+          scanId: { not: scanId },
+          createdAt: { lt: currentMeta.createdAt },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      for (const change of compareSiteMeta(previousMeta, currentMeta)) {
+        await prisma.changeEvent.create({
+          data: {
+            websiteId: scan.websiteId,
+            monitoredPageId: null,
+            scanId,
+            category: CATEGORY_TO_ENUM[change.category],
+            changeType: change.changeType,
+            severity: change.severity as ChangeSeverity,
+            title: change.title,
+            description: change.description,
+            previousValue: change.previousValue,
+            currentValue: change.currentValue,
+            status: "NEW",
+          },
+        });
+        severities.push(change.severity);
+        totalChanges++;
+      }
+    }
+  } catch (err) {
+    logger.error("site meta comparison failed", { scanId }, err);
   }
 
   const highest = highestSeverity(severities) as ChangeSeverity | null;

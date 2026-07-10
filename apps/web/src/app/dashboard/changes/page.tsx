@@ -193,7 +193,7 @@ export default async function ChangesPage({
                   <p className="truncate text-xs text-ink-faint">
                     <span className="font-mono">
                       {new URL(c.website.url).hostname}
-                      {pathOf(c.monitoredPage.url)}
+                      {c.monitoredPage ? pathOf(c.monitoredPage.url) : " · Site-wide"}
                     </span>
                   </p>
                 </Link>

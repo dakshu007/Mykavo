@@ -25,6 +25,13 @@ export async function POST(_request: Request, { params }: Params) {
     },
   });
   if (!change) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // Site-wide changes (robots.txt / sitemap) have no page or baseline to update.
+  if (!change.monitoredPageId) {
+    return NextResponse.json(
+      { error: "Site-wide changes have no page baseline to update. Mark it reviewed instead." },
+      { status: 400 },
+    );
+  }
   if (!change.currentSnapshotId || change.currentSnapshot?.errorCode) {
     return NextResponse.json(
       { error: "This change has no successful snapshot to use as a baseline." },
