@@ -279,6 +279,19 @@ export function parsePost(markdown: string): ParsedPost {
   return { segments, headings };
 }
 
+/**
+ * Line-level shortcode and fence tokens, exported so the visual editor's
+ * markdown splitter matches this renderer's parsing exactly (additive export
+ * — the parsing above is unchanged).
+ */
+export const SHORTCODE_LINE_TOKENS = {
+  cta: CTA_TOKEN,
+  toc: TOC_TOKEN,
+  faqOpen: FAQ_OPEN_TOKEN,
+  faqClose: FAQ_CLOSE_TOKEN,
+  fence: FENCE,
+} as const;
+
 /** All FAQ items across segments — used for FAQPage JSON-LD. */
 export function collectFaqItems(segments: readonly BlockSegment[]): FaqItem[] {
   return segments.flatMap((segment) => (segment.type === "faq" ? segment.items : []));

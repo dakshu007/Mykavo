@@ -193,6 +193,62 @@
   }
 }
 
+/* Visual blog editor (Tiptap) — the content area reuses .blog-prose so it
+   matches the public post typography; these rules add editing affordances. */
+@layer components {
+  .visual-editor .ProseMirror {
+    min-height: 30rem;
+    padding: 1rem 0.25rem 2.5rem;
+    outline: none;
+    caret-color: var(--color-primary);
+  }
+  .visual-editor .ProseMirror:focus-visible {
+    outline: none;
+  }
+  /* Placeholder (from @tiptap/extension-placeholder). */
+  .visual-editor .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: var(--color-ink-faint);
+  }
+  /* Node selection (atom blocks, images, hr). */
+  .visual-editor .ProseMirror-selectednode {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+    outline-offset: 2px;
+    border-radius: var(--radius-field);
+  }
+  /* Editable tables get full cell borders (the read view only underlines). */
+  .visual-editor .ProseMirror table {
+    table-layout: fixed;
+  }
+  .visual-editor .ProseMirror th,
+  .visual-editor .ProseMirror td {
+    position: relative;
+    border: 1px solid var(--color-line);
+    padding: 0.45em 0.6em;
+    vertical-align: top;
+  }
+  .visual-editor .ProseMirror th {
+    background-color: var(--color-surface);
+  }
+  .visual-editor .ProseMirror .selectedCell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+  .visual-editor .ProseMirror table p {
+    margin: 0;
+  }
+  /* Gap cursor between/around atom blocks. */
+  .visual-editor .ProseMirror-gapcursor::after {
+    border-top: 1px solid var(--color-ink);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
