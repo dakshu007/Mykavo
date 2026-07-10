@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { join } from "node:path";
 import { prisma } from "@fluxen/database";
-import { LocalDiskStorage } from "@fluxen/scanner/storage";
+import { getDefaultStorage } from "@fluxen/scanner/storage";
 import { getApiContext } from "@/lib/api-auth";
 
 type Params = { params: Promise<{ id: string }> };
@@ -24,9 +23,7 @@ export async function GET(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const storage = new LocalDiskStorage(
-    process.env.ARTIFACT_DIR ?? join(process.cwd(), ".data", "artifacts"),
-  );
+  const storage = getDefaultStorage();
   const data = await storage.get(key);
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
