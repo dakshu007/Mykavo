@@ -5,6 +5,7 @@ import { prisma } from "@fluxen/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import { logger } from "@/lib/logger";
+import { parseTags } from "@/lib/tags";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -48,6 +49,10 @@ const patchSchema = z.object({
   // Comparison settings (spec §25/§36): [] clears a list; omitted = unchanged.
   ignoredSelectors: selectorListSchema.optional(),
   screenshotMasks: selectorListSchema.optional(),
+  // Organization tags: [] clears; omitted = unchanged. Entries are
+  // re-normalized + deduped + capped server-side (parseTags) — the generous
+  // input bounds here only stop obviously abusive payloads.
+  tags: z.array(z.string().max(100)).max(25).optional(),
 });
 
 export async function PATCH(request: Request, { params }: Params) {
@@ -103,6 +108,8 @@ export async function PATCH(request: Request, { params }: Params) {
           : undefined,
       ignoredSelectors: input.ignoredSelectors,
       screenshotMasks: input.screenshotMasks,
+      // Never trust client normalization — canonical form is enforced here.
+      tags: input.tags === undefined ? undefined : parseTags(input.tags),
     },
   });
 
