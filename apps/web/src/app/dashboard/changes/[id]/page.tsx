@@ -10,6 +10,8 @@ import {
   ChangeStatusBadge,
 } from "@/components/dashboard/change-badges";
 import { ChangeActions } from "@/components/dashboard/change-actions";
+import { ScreenshotCompare } from "@/components/dashboard/screenshot-compare";
+import { defaultCompareMode } from "@/lib/screenshot-compare";
 
 function pathOf(url: string): string {
   try {
@@ -34,17 +36,29 @@ export default async function ChangeDetailPage({
     include: {
       website: { select: { id: true, name: true, url: true } },
       monitoredPage: { select: { id: true, url: true, websiteId: true } },
-      previousSnapshot: { select: { id: true, screenshotStorageKey: true } },
-      currentSnapshot: { select: { id: true, screenshotStorageKey: true, errorCode: true } },
+      previousSnapshot: { select: { id: true, screenshotStorageKey: true, createdAt: true } },
+      currentSnapshot: {
+        select: { id: true, screenshotStorageKey: true, createdAt: true, errorCode: true },
+      },
     },
   });
   if (!change) notFound();
 
   const canUpdateBaseline = !!change.currentSnapshot && !change.currentSnapshot.errorCode;
   const hasDiff =
-    change.metadata &&
     typeof change.metadata === "object" &&
-    "diffStorageKey" in (change.metadata as Record<string, unknown>);
+    change.metadata !== null &&
+    typeof (change.metadata as Record<string, unknown>).diffStorageKey === "string";
+
+  const beforeSrc = change.previousSnapshot?.screenshotStorageKey
+    ? `/api/snapshots/${change.previousSnapshot.id}/screenshot`
+    : null;
+  const afterSrc = change.currentSnapshot?.screenshotStorageKey
+    ? `/api/snapshots/${change.currentSnapshot.id}/screenshot`
+    : null;
+  const diffSrc = hasDiff ? `/api/changes/${change.id}/diff` : null;
+  const shotDate = (d: Date | undefined) =>
+    d?.toLocaleDateString("en-US", { dateStyle: "medium" }) ?? null;
 
   return (
     <div className="space-y-6">
@@ -101,49 +115,20 @@ export default async function ChangeDetailPage({
       )}
 
       {/* Screenshots (visual changes carry a diff too) */}
-      {(change.previousSnapshot?.screenshotStorageKey ||
-        change.currentSnapshot?.screenshotStorageKey) && (
+      {(beforeSrc || afterSrc) && (
         <Card>
           <CardHeader title="Before and after" />
-          <div className={`grid gap-4 ${hasDiff ? "lg:grid-cols-3" : "sm:grid-cols-2"}`}>
-            <figure>
-              <figcaption className="label-micro mb-2">Baseline</figcaption>
-              {change.previousSnapshot?.screenshotStorageKey ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`/api/snapshots/${change.previousSnapshot.id}/screenshot`}
-                  alt="Baseline screenshot"
-                  className="w-full rounded-tile border border-line object-cover object-top"
-                />
-              ) : (
-                <NoShot />
-              )}
-            </figure>
-            <figure>
-              <figcaption className="label-micro mb-2">Current</figcaption>
-              {change.currentSnapshot?.screenshotStorageKey ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`/api/snapshots/${change.currentSnapshot.id}/screenshot`}
-                  alt="Current screenshot"
-                  className="w-full rounded-tile border border-line object-cover object-top"
-                />
-              ) : (
-                <NoShot />
-              )}
-            </figure>
-            {hasDiff && (
-              <figure>
-                <figcaption className="label-micro mb-2">Difference</figcaption>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/api/changes/${change.id}/diff`}
-                  alt="Visual difference"
-                  className="w-full rounded-tile border border-line object-cover object-top"
-                />
-              </figure>
+          <ScreenshotCompare
+            beforeSrc={beforeSrc}
+            afterSrc={afterSrc}
+            diffSrc={diffSrc}
+            beforeLabel={shotDate(change.previousSnapshot?.createdAt)}
+            afterLabel={shotDate(change.currentSnapshot?.createdAt)}
+            initialMode={defaultCompareMode(
+              { hasBefore: !!beforeSrc, hasAfter: !!afterSrc, hasDiff },
+              change.category === "VISUAL",
             )}
-          </div>
+          />
         </Card>
       )}
 
@@ -177,14 +162,6 @@ export default async function ChangeDetailPage({
           ))}
         </dl>
       </Card>
-    </div>
-  );
-}
-
-function NoShot() {
-  return (
-    <div className="flex h-40 items-center justify-center rounded-tile border border-line bg-surface text-[13px] text-ink-faint">
-      No screenshot
     </div>
   );
 }
