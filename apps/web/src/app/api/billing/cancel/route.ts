@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fluxen/database";
-import { getApiContext } from "@/lib/api-auth";
+import { getApiContext, requireRole } from "@/lib/api-auth";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
 import { cancelSubscriptionAtPeriodEnd, dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { logger } from "@/lib/logger";
@@ -13,6 +13,8 @@ import { logger } from "@/lib/logger";
 export async function POST() {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER");
+  if (denied) return denied;
 
   const sub = await getWorkspaceSubscription(ctx.workspace.id);
   if (!sub || sub.planId !== "pro" || !sub.dodoSubscriptionId) {

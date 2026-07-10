@@ -1,8 +1,9 @@
 import { cache } from "react";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { prisma } from "@fluxen/database";
+import { prisma, type Workspace, type WorkspaceRole } from "@fluxen/database";
 import { auth } from "@/lib/auth";
+import { resolveWorkspaceSelection, WORKSPACE_COOKIE } from "@/lib/team";
 
 /**
  * Server-side session helpers. All dashboard pages and APIs resolve
@@ -20,25 +21,60 @@ export async function requireSession() {
   return session;
 }
 
+export interface CurrentMembership {
+  workspace: Workspace;
+  role: WorkspaceRole;
+}
+
 /**
- * Resolves the user's workspace via membership (OWNER-only in the MVP).
- * Self-heals accounts created before the auto-create hook by creating
- * the personal workspace on first dashboard access.
+ * Resolves which of the user's memberships is "current": the one named by the
+ * httpOnly workspace cookie when it matches a verified membership row, else
+ * the oldest membership. The cookie is a hint, never an authority.
+ * Returns null for users with no memberships at all.
  */
-export const getCurrentWorkspace = cache(async (userId: string, userName: string) => {
-  const membership = await prisma.workspaceMember.findFirst({
+export async function resolveCurrentMembership(
+  userId: string,
+): Promise<CurrentMembership | null> {
+  const memberships = await prisma.workspaceMember.findMany({
     where: { userId },
     include: { workspace: true },
     orderBy: { createdAt: "asc" },
   });
-  if (membership) return membership.workspace;
+  const cookieStore = await cookies();
+  const selected = resolveWorkspaceSelection(
+    cookieStore.get(WORKSPACE_COOKIE)?.value,
+    memberships,
+  );
+  if (!selected) return null;
+  return { workspace: selected.workspace, role: selected.role };
+}
 
-  const firstName = userName.trim().split(/\s+/)[0] || "My";
-  return prisma.workspace.create({
-    data: {
-      name: `${firstName}'s Workspace`,
-      ownerId: userId,
-      members: { create: { userId, role: "OWNER" } },
-    },
-  });
-});
+/**
+ * Resolves the user's current workspace + role via membership. Self-heals
+ * accounts created before the auto-create hook by creating the personal
+ * workspace on first dashboard access.
+ */
+export const getCurrentMembership = cache(
+  async (userId: string, userName: string): Promise<CurrentMembership> => {
+    const current = await resolveCurrentMembership(userId);
+    if (current) return current;
+
+    const firstName = userName.trim().split(/\s+/)[0] || "My";
+    const workspace = await prisma.workspace.create({
+      data: {
+        name: `${firstName}'s Workspace`,
+        ownerId: userId,
+        members: { create: { userId, role: "OWNER" } },
+      },
+    });
+    return { workspace, role: "OWNER" };
+  },
+);
+
+/** Back-compat convenience: just the current workspace. */
+export const getCurrentWorkspace = cache(
+  async (userId: string, userName: string): Promise<Workspace> => {
+    const { workspace } = await getCurrentMembership(userId, userName);
+    return workspace;
+  },
+);

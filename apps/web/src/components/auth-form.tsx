@@ -69,11 +69,17 @@ function GoogleMark() {
 export function AuthForm({
   mode,
   googleEnabled = false,
+  redirectTo,
 }: {
   mode: "login" | "signup";
   googleEnabled?: boolean;
+  /** Same-origin relative path to return to after auth (validated server-side). */
+  redirectTo?: string;
 }) {
   const router = useRouter();
+  const target = redirectTo ?? "/dashboard";
+  // Keep the invite (or other) return path when hopping between login/signup.
+  const nextQuery = redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : "";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -88,7 +94,7 @@ export function AuthForm({
     if (mode === "signup") track("account_created", { provider: "google" });
     const result = await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: target,
     });
     if (result.error) {
       setError(result.error.message ?? "Google sign-in failed. Please try again.");
@@ -115,7 +121,7 @@ export function AuthForm({
     }
 
     if (mode === "signup") track("account_created");
-    router.push("/dashboard");
+    router.push(target);
     router.refresh();
   }
 
@@ -188,14 +194,20 @@ export function AuthForm({
           {mode === "signup" ? (
             <>
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-primary hover:underline">
+              <Link
+                href={`/login${nextQuery}`}
+                className="font-medium text-primary hover:underline"
+              >
                 Sign in
               </Link>
             </>
           ) : (
             <>
               New to Fluxen?{" "}
-              <Link href="/signup" className="font-medium text-primary hover:underline">
+              <Link
+                href={`/signup${nextQuery}`}
+                className="font-medium text-primary hover:underline"
+              >
                 Create an account
               </Link>
             </>

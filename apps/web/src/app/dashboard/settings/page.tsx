@@ -1,14 +1,63 @@
+import { prisma } from "@fluxen/database";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ProfileForm } from "@/components/dashboard/profile-form";
+import {
+  TeamSettings,
+  type PendingInviteView,
+  type TeamMemberView,
+} from "@/components/dashboard/team-settings";
 import { formatLimit } from "@/config/plans";
 import { getWorkspacePlan } from "@/lib/limits";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { appBaseUrl } from "@/lib/app-url";
+import { canManageMembers } from "@/lib/team";
+import { requireSession, getCurrentMembership } from "@/lib/session";
+
+function roleLabel(role: string): string {
+  return role.charAt(0) + role.slice(1).toLowerCase();
+}
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString("en-US", { dateStyle: "medium" });
+}
 
 export default async function SettingsPage() {
   const session = await requireSession();
-  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  const { workspace, role } = await getCurrentMembership(
+    session.user.id,
+    session.user.name,
+  );
   const plan = await getWorkspacePlan(workspace.id);
+
+  const [memberRows, inviteRows] = await Promise.all([
+    prisma.workspaceMember.findMany({
+      where: { workspaceId: workspace.id },
+      include: { user: { select: { id: true, name: true, email: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.workspaceInvite.findMany({
+      where: { workspaceId: workspace.id, acceptedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
+
+  const manager = canManageMembers(role);
+  const members: TeamMemberView[] = memberRows.map((m) => ({
+    id: m.id,
+    userId: m.userId,
+    name: m.user.name,
+    email: m.user.email,
+    role: m.role,
+    joined: formatDate(m.createdAt),
+  }));
+  const invites: PendingInviteView[] = inviteRows.map((inv) => ({
+    id: inv.id,
+    email: inv.email,
+    role: inv.role,
+    expires: formatDate(inv.expiresAt),
+    // Invite tokens are only ever surfaced to OWNER/ADMIN.
+    ...(manager ? { acceptUrl: `${appBaseUrl()}/invite/${inv.token}` } : {}),
+  }));
 
   // Key limits straight from the plan config — never hardcoded (spec §37).
   const planLimits: Array<[string, string]> = [
@@ -20,7 +69,7 @@ export default async function SettingsPage() {
 
   const rows: Array<[string, string]> = [
     ["Workspace name", workspace.name],
-    ["Your role", "Owner"],
+    ["Your role", roleLabel(role)],
     ["Account name", session.user.name],
     ["Account email", session.user.email],
     ["Member since", workspace.createdAt.toLocaleDateString("en-US", { dateStyle: "long" })],
@@ -52,6 +101,18 @@ export default async function SettingsPage() {
       </Card>
 
       <Card>
+        <CardHeader title="Team" />
+        <TeamSettings
+          members={members}
+          invites={invites}
+          currentUserId={session.user.id}
+          currentRole={role}
+          maxMembers={plan.limits.maxMembers}
+          isFreePlan={plan.id === "free"}
+        />
+      </Card>
+
+      <Card>
         <CardHeader title="Profile" />
         <ProfileForm
           initialName={session.user.name}
@@ -70,8 +131,7 @@ export default async function SettingsPage() {
           ))}
         </dl>
         <p className="mt-4 text-sm text-ink-secondary">
-          Workspace renaming, team members, and notification preferences arrive in later
-          releases.
+          Workspace renaming and notification preferences arrive in later releases.
         </p>
       </Card>
     </div>

@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@fluxen/database";
-import { getApiContext, getOwnedWebsite } from "@/lib/api-auth";
+import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import { logger } from "@/lib/logger";
 
@@ -53,6 +53,8 @@ const patchSchema = z.object({
 export async function PATCH(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id } = await params;
   const website = await getOwnedWebsite(ctx, id);
@@ -110,6 +112,8 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id } = await params;
   const website = await getOwnedWebsite(ctx, id);

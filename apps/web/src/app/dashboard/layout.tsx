@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
@@ -16,6 +17,12 @@ export default async function DashboardLayout({
 }) {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  // All memberships power the sidebar workspace switcher (shown when >1).
+  const memberships = await prisma.workspaceMember.findMany({
+    where: { userId: session.user.id },
+    select: { workspace: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
@@ -23,6 +30,8 @@ export default async function DashboardLayout({
         <DashboardSidebar
           workspaceName={workspace.name}
           isBlogAdmin={isBlogAdmin(session.user.email)}
+          workspaces={memberships.map((m) => m.workspace)}
+          currentWorkspaceId={workspace.id}
         />
       </div>
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">

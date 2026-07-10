@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@fluxen/database";
-import { getApiContext } from "@/lib/api-auth";
+import { getApiContext, requireRole } from "@/lib/api-auth";
 import { getOwnedAlertChannel } from "@/lib/notification-channels";
 import { logger } from "@/lib/logger";
 
@@ -13,6 +13,8 @@ const patchSchema = z.object({ enabled: z.boolean() });
 export async function PATCH(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id } = await params;
   const channel = await getOwnedAlertChannel(ctx.workspace.id, id);
@@ -36,6 +38,8 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id } = await params;
   const channel = await getOwnedAlertChannel(ctx.workspace.id, id);

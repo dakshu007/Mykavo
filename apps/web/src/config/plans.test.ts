@@ -27,6 +27,12 @@ describe("plans config", () => {
     expect(pro.limits.conversionElementMonitoring).toBe(true);
   });
 
+  it("team seats are a Pro feature: free is single-seat, pro gets 5", () => {
+    expect(getPlan("free").limits.maxMembers).toBe(1);
+    expect(getPlan("pro").limits.maxMembers).toBe(5);
+    expect(getPlan("pro").features).toContain("Up to 5 team members");
+  });
+
   it("website add-on grants 1 site for $6/mo, capped at 3 units", () => {
     expect(WEBSITE_ADDON.websitesPerUnit).toBe(1);
     expect(WEBSITE_ADDON.maxUnits).toBe(3);

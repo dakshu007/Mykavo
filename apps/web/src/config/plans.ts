@@ -43,6 +43,11 @@ export interface Plan {
     /** Max user-triggered scans per UTC day (0 when manualScans is false). */
     manualScansPerDay: number;
     conversionElementMonitoring: boolean;
+    /**
+     * Workspace seats: active members + pending invites. Teams are a Pro
+     * feature — Free is single-seat (the owner).
+     */
+    maxMembers: number;
   };
   features: string[];
   highlighted?: boolean;
@@ -62,6 +67,7 @@ export const plans: Plan[] = [
       manualScans: false,
       manualScansPerDay: 0,
       conversionElementMonitoring: false,
+      maxMembers: 1,
     },
     features: [
       "1 website",
@@ -88,6 +94,7 @@ export const plans: Plan[] = [
       manualScans: true,
       manualScansPerDay: 20,
       conversionElementMonitoring: true,
+      maxMembers: 5,
     },
     features: [
       "8 websites included",
@@ -97,6 +104,7 @@ export const plans: Plan[] = [
       "1-year history",
       "Manual scans",
       "Conversion element monitoring",
+      "Up to 5 team members",
       "Email alerts",
     ],
   },

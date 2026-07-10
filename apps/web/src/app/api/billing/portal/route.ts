@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { requireSession, getCurrentMembership } from "@/lib/session";
+import { canManageBilling } from "@/lib/team";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
 import { createCustomerPortalSession, dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { logger } from "@/lib/logger";
@@ -7,7 +8,13 @@ import { logger } from "@/lib/logger";
 /** Redirect the user to Dodo's customer portal to manage their subscription. */
 export async function GET() {
   const session = await requireSession();
-  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
+  if (!canManageBilling(role)) {
+    return NextResponse.json(
+      { error: "Only the workspace owner can manage billing." },
+      { status: 403 },
+    );
+  }
 
   if (!dodoApiConfigured()) {
     return NextResponse.json(

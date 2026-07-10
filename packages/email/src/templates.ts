@@ -319,6 +319,42 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
   return { subject, html: shell(inner), text: textLines.join("\n") };
 }
 
+// ---------- Workspace invites (multi-user workspaces) ----------
+
+export interface WorkspaceInviteData {
+  /** Display name of the person sending the invite. */
+  inviterName: string;
+  workspaceName: string;
+  /** Human role label, e.g. "Admin", "Member", "Viewer". */
+  roleLabel: string;
+  /** Absolute accept link: {APP_URL}/invite/{token}. */
+  acceptUrl: string;
+  /** Whole days until the invite expires. */
+  expiresInDays: number;
+}
+
+export function workspaceInviteEmail(data: WorkspaceInviteData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `${data.inviterName} invited you to ${data.workspaceName} on Fluxen`;
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Workspace invitation</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.inviterName)} invited you to ${esc(data.workspaceName)}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">You've been invited as a ${esc(data.roleLabel)}. Fluxen monitors websites for important changes and regressions — accept to see what this workspace is watching.</p>
+    ${button(data.acceptUrl, "Accept invitation")}
+    <p style="margin:20px 0 0;font-size:12px;color:#9aa1b1">This invitation expires in ${data.expiresInDays} day${data.expiresInDays === 1 ? "" : "s"}. If you weren't expecting it, you can safely ignore this email.</p>
+  `;
+  const text =
+    `${data.inviterName} invited you to ${data.workspaceName} on Fluxen\n\n` +
+    `You've been invited as a ${data.roleLabel}.\n\n` +
+    `Accept: ${data.acceptUrl}\n\n` +
+    `This invitation expires in ${data.expiresInDays} day${data.expiresInDays === 1 ? "" : "s"}. ` +
+    `If you weren't expecting it, you can safely ignore this email.`;
+  return { subject, html: shell(inner), text };
+}
+
 export function failureAlertEmail(data: FailureAlertData): { subject: string; html: string; text: string } {
   const subject = `Scan failed for ${data.websiteHost}`;
   const inner = `

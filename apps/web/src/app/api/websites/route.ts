@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@fluxen/database";
-import { getApiContext } from "@/lib/api-auth";
+import { getApiContext, requireRole } from "@/lib/api-auth";
 import { assertCanAddWebsite, LimitError } from "@/lib/limits";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { assertSafeUrl, UnsafeUrlError } from "@/lib/security/ssrf";
@@ -28,6 +28,8 @@ const createSchema = z.object({
 export async function POST(request: Request) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   // Website creation resolves DNS + fetches the target — cap it per workspace.
   const rl = rateLimit(`website-create:${ctx.workspace.id}`, { limit: 20, windowMs: 60_000 });

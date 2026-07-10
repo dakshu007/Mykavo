@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fluxen/database";
-import { getApiContext, getOwnedMonitoredPage } from "@/lib/api-auth";
+import { getApiContext, getOwnedMonitoredPage, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import {
   createElementSchema,
@@ -15,6 +15,8 @@ type Params = { params: Promise<{ id: string; pageId: string }> };
 export async function POST(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
+  if (denied) return denied;
 
   const { id, pageId } = await params;
   const page = await getOwnedMonitoredPage(ctx, id, pageId);

@@ -29,6 +29,7 @@ model User {
   accounts          Account[]
   ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
   memberships       WorkspaceMember[]
+  sentInvites       WorkspaceInvite[] @relation("WorkspaceInviter")
   approvedBaselines Baseline[]        @relation("BaselineApprover")
 
   @@map("user")
@@ -99,6 +100,7 @@ model Workspace {
   updatedAt DateTime @updatedAt
 
   members              WorkspaceMember[]
+  invites              WorkspaceInvite[]
   websites             Website[]
   notificationChannels NotificationChannel[]
   notifications        Notification[]
@@ -122,6 +124,28 @@ model WorkspaceMember {
   @@unique([workspaceId, userId])
   @@index([userId])
   @@map("workspace_member")
+}
+
+// An email invitation to join a workspace (Pro team feature). The token is
+// the ONLY way in — 24 random bytes, base64url, sent by email. Invites expire
+// after 7 days; acceptedAt marks consumption. OWNER is never invitable — a
+// workspace has exactly one owner. One PENDING invite per email per workspace
+// is enforced by a partial unique index (see migration).
+model WorkspaceInvite {
+  id          String        @id @default(cuid())
+  workspaceId String
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email       String
+  role        WorkspaceRole
+  token       String        @unique
+  invitedById String
+  invitedBy   User          @relation("WorkspaceInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([workspaceId])
+  @@map("workspace_invite")
 }
 
 // ---------- Websites & monitored pages (Phase 2) ----------
