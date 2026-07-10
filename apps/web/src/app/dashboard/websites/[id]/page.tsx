@@ -38,7 +38,7 @@ export default async function WebsiteDetailPage({
           },
         },
         scans: { orderBy: { createdAt: "desc" }, take: 5 },
-        performanceAudits: { orderBy: { createdAt: "desc" }, take: 10 },
+        performanceAudits: { orderBy: { createdAt: "desc" }, take: 25 },
       },
     }),
     prisma.changeEvent.findMany({

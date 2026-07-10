@@ -1,8 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, Gauge, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  auditTrendSummary,
+  buildAuditTrend,
+  formatSignedDelta,
+  formatTrendDate,
+  type AuditTrend,
+  type TrendScoreKey,
+} from "@/lib/audit-trend";
 
 export interface AuditView {
   id: string;
@@ -60,6 +68,156 @@ function isPending(status: AuditView["status"]): boolean {
   return status === "QUEUED" || status === "RUNNING";
 }
 
+/** Line + legend-dot colour per score — always paired with a text label. */
+const TREND_COLORS: Record<TrendScoreKey, string> = {
+  performanceScore: "#3556f4", // royal-blue primary
+  accessibilityScore: "#16a34a", // green
+  bestPracticesScore: "#d97706", // amber
+  seoScore: "#7c3aed", // violet
+};
+
+// Sparkline geometry — viewBox units; the SVG scales to the card width.
+const CHART_W = 640;
+const CHART_H = 120;
+const CHART_TOP = 8;
+const CHART_BOTTOM = CHART_H - 8;
+const CHART_LEFT = 30;
+const CHART_RIGHT = CHART_W - 8;
+/** Gridline scores: 0/50/100 plus 90 — Lighthouse's "good" threshold. */
+const GRID_SCORES = [100, 90, 50, 0];
+
+function chartY(score: number): number {
+  return CHART_TOP + ((100 - score) / 100) * (CHART_BOTTOM - CHART_TOP);
+}
+
+function fmtDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function deltaClasses(delta: number | null): string {
+  if (delta === null || delta === 0) return "text-ink-secondary";
+  return delta > 0 ? "text-green-700" : "text-red-700";
+}
+
+/** Multi-line score sparkline + legend + latest-vs-previous delta line. */
+function TrendSection({ trend }: { trend: AuditTrend }) {
+  const n = trend.points.length;
+  const chartX = (i: number) =>
+    CHART_LEFT + (i / (n - 1)) * (CHART_RIGHT - CHART_LEFT);
+
+  return (
+    <div className="mt-5 border-t border-line pt-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+        <h3 className="text-[13px] font-semibold text-ink">Trend</h3>
+        <span className="max-w-full truncate font-mono text-[12px] text-ink-faint">
+          {pathOf(trend.url)} · {n} audits
+        </span>
+      </div>
+
+      <svg
+        viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+        className="mt-2 block w-full"
+        role="img"
+        aria-label={auditTrendSummary(trend)}
+      >
+        {GRID_SCORES.map((score) => (
+          <g key={score} className="text-line">
+            <line
+              x1={CHART_LEFT}
+              x2={CHART_RIGHT}
+              y1={chartY(score)}
+              y2={chartY(score)}
+              stroke="currentColor"
+              strokeWidth={1}
+              strokeDasharray={score === 90 ? "3 3" : undefined}
+            />
+            <text
+              x={CHART_LEFT - 6}
+              y={chartY(score) + 3}
+              textAnchor="end"
+              fontSize={9}
+              className="text-ink-faint"
+              fill="currentColor"
+            >
+              {score}
+            </text>
+          </g>
+        ))}
+
+        {trend.categories.map((category) => {
+          const color = TREND_COLORS[category.key];
+          const dots = trend.points
+            .map((point, i) => ({ point, i, score: point.scores[category.key] }))
+            .filter((d): d is typeof d & { score: number } => d.score !== null);
+          if (dots.length === 0) return null;
+          return (
+            <g key={category.key}>
+              {dots.length >= 2 && (
+                <polyline
+                  points={dots
+                    .map((d) => `${chartX(d.i).toFixed(1)},${chartY(d.score).toFixed(1)}`)
+                    .join(" ")}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={1.5}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              )}
+              {dots.map((d) => (
+                <circle
+                  key={d.point.createdAt + String(d.i)}
+                  cx={chartX(d.i).toFixed(1)}
+                  cy={chartY(d.score).toFixed(1)}
+                  r={3}
+                  fill={color}
+                >
+                  <title>{`${category.label} ${d.score} — ${fmtDateTime(d.point.createdAt)}`}</title>
+                </circle>
+              ))}
+            </g>
+          );
+        })}
+      </svg>
+
+      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+        {trend.categories.map((category) => (
+          <li
+            key={category.key}
+            className="flex items-center gap-1.5 text-[12px] text-ink-secondary"
+          >
+            <span
+              aria-hidden
+              className="inline-block size-2 rounded-full"
+              style={{ backgroundColor: TREND_COLORS[category.key] }}
+            />
+            {category.label}{" "}
+            <span className="font-medium text-ink tabular-nums">
+              {category.latest ?? "—"}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-2 text-[12px] text-ink-secondary">
+        {trend.categories.map((category, i) => (
+          <span key={category.key}>
+            {i > 0 && <span className="text-ink-faint"> · </span>}
+            {category.label}{" "}
+            <span className={cn("font-medium tabular-nums", deltaClasses(category.delta))}>
+              {category.delta === null ? "—" : formatSignedDelta(category.delta)}
+            </span>
+          </span>
+        ))}{" "}
+        since {formatTrendDate(trend.previousAt)}
+      </p>
+    </div>
+  );
+}
+
 const POLL_INTERVAL_MS = 3000;
 /** A pending audit polled longer than this is treated as dead (worker crashed). */
 const STALE_AFTER_MS = 5 * 60 * 1000;
@@ -100,6 +258,20 @@ export function PerformanceAuditPanel({
   const stalePending = pendingStatus && gaveUpFor === latestId;
   const shown = audits.find((a) => a.status === "COMPLETED") ?? null;
   const busy = starting || pending;
+
+  // Score trend for the page selected in the picker (falling back to the url
+  // of the most recent audit). Recomputed when polling delivers new audits.
+  const trend = useMemo(() => {
+    const selectedPath =
+      selected === CUSTOM ? null : selected === HOMEPAGE ? homepagePath : selected;
+    const preferredUrl =
+      selectedPath === null
+        ? null
+        : (audits.find(
+            (a) => a.status === "COMPLETED" && pathOf(a.url) === selectedPath,
+          )?.url ?? null);
+    return buildAuditTrend(audits, preferredUrl);
+  }, [audits, selected, homepagePath]);
 
   const refresh = useCallback(async () => {
     try {
@@ -311,6 +483,8 @@ export function PerformanceAuditPanel({
               </div>
             ))}
           </dl>
+
+          {trend && <TrendSection trend={trend} />}
 
           <p className="mt-3 text-[12px] text-ink-faint">
             Audited {new Date(shown.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
