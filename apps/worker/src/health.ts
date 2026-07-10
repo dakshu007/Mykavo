@@ -41,6 +41,14 @@ const USER_AGENT =
 
 const dashboardBase = process.env.APP_URL ?? "http://localhost:3000";
 
+interface HealthWebsite {
+  id: string;
+  name: string;
+  url: string;
+  workspaceId: string;
+  muteAlertsUntil: Date | null;
+}
+
 interface ProbeResult {
   up: boolean;
   httpStatus: number | null;
@@ -115,12 +123,22 @@ function describeFailure(result: ProbeResult): string {
 }
 
 async function alertHealth(
-  website: { id: string; name: string; url: string; workspaceId: string },
+  website: HealthWebsite,
   email: { subject: string; html: string; text: string },
   channelTitle: string,
   channelLines: string[],
   severity: string,
 ): Promise<void> {
+  // Maintenance window (spec §25): incidents are still recorded by the
+  // callers — just don't send anything (no emails, channels, or rows).
+  if (website.muteAlertsUntil && website.muteAlertsUntil > new Date()) {
+    logger.info("alerts muted, skipped", {
+      websiteId: website.id,
+      workspaceId: website.workspaceId,
+      muteAlertsUntil: website.muteAlertsUntil.toISOString(),
+    });
+    return;
+  }
   const dashboardUrl = `${dashboardBase}/dashboard/websites/${website.id}`;
   const config = await resolveEmailConfig(website.workspaceId);
   if (config?.failureAlerts) {
@@ -152,12 +170,7 @@ async function alertHealth(
 }
 
 /** Check one website: probe, record, run incident machines, alert. */
-async function checkWebsite(website: {
-  id: string;
-  name: string;
-  url: string;
-  workspaceId: string;
-}): Promise<void> {
+async function checkWebsite(website: HealthWebsite): Promise<void> {
   const host = (() => {
     try {
       return new URL(website.url).hostname;
@@ -279,7 +292,7 @@ async function checkWebsite(website: {
 export async function runHealthSweep(): Promise<void> {
   const websites = await prisma.website.findMany({
     where: { status: "ACTIVE" },
-    select: { id: true, name: true, url: true, workspaceId: true },
+    select: { id: true, name: true, url: true, workspaceId: true, muteAlertsUntil: true },
   });
   if (websites.length === 0) return;
 

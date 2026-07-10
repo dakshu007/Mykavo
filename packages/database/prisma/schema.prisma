@@ -152,6 +152,13 @@ model Website {
   timezone      String        @default("UTC")
   lastScanAt    DateTime?
   nextScanAt    DateTime?
+  // Maintenance window (spec §25): while in the future, alerts are not sent
+  // (change events / incidents still recorded). Null or past = not muted.
+  muteAlertsUntil DateTime?
+  // Public uptime badge. The opaque token is the ONLY public identifier —
+  // website ids must never be exposed publicly. Disabling keeps the token.
+  badgeEnabled  Boolean       @default(false)
+  publicToken   String?       @unique
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

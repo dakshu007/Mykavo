@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@fluxen/database";
@@ -25,6 +26,10 @@ const patchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   scanFrequency: z.enum(["WEEKLY", "DAILY"]).optional(),
   paused: z.boolean().optional(),
+  // Maintenance window (spec §25): mute alerts for N hours; null = unmute.
+  muteHours: z.union([z.literal(1), z.literal(8), z.literal(24)]).nullable().optional(),
+  // Public status badge; enabling mints a token once, disabling keeps it.
+  badgeEnabled: z.boolean().optional(),
 });
 
 export async function PATCH(request: Request, { params }: Params) {
@@ -64,6 +69,18 @@ export async function PATCH(request: Request, { params }: Params) {
           : input.paused
             ? "PAUSED"
             : "PENDING",
+      muteAlertsUntil:
+        input.muteHours === undefined
+          ? undefined
+          : input.muteHours === null
+            ? null
+            : new Date(Date.now() + input.muteHours * 60 * 60 * 1000),
+      badgeEnabled: input.badgeEnabled,
+      // The badge URL identifier — opaque, never the website id (spec §59).
+      publicToken:
+        input.badgeEnabled === true && !website.publicToken
+          ? randomBytes(18).toString("base64url")
+          : undefined,
     },
   });
 

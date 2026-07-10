@@ -14,6 +14,8 @@ import {
   type AuditView,
 } from "@/components/dashboard/performance-audit-panel";
 import { WebsiteActions } from "./website-actions";
+import { MutedAlertsBanner, MuteAlertsControl } from "./mute-alerts";
+import { StatusBadgeSettings } from "./status-badge-settings";
 
 /** Time windows for the health queries — one clock read per request. */
 function healthWindows(): { now: Date; since24h: Date; since7d: Date } {
@@ -110,6 +112,16 @@ export default async function WebsiteDetailPage({
     (p) => p.baselines.length > 0,
   ).length;
 
+  // Maintenance window: a past muteAlertsUntil simply means not muted.
+  const mutedUntil =
+    website.muteAlertsUntil && website.muteAlertsUntil > now
+      ? website.muteAlertsUntil
+      : null;
+  const appBase = process.env.APP_URL ?? "http://localhost:3000";
+  const badgeUrl = website.publicToken
+    ? `${appBase}/api/badge/${website.publicToken}`
+    : null;
+
   const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 } as const;
   const highestSeverity =
     openChanges.length > 0
@@ -151,6 +163,13 @@ export default async function WebsiteDetailPage({
           </div>
         </div>
       </div>
+
+      {mutedUntil && (
+        <MutedAlertsBanner
+          websiteId={website.id}
+          mutedUntilIso={mutedUntil.toISOString()}
+        />
+      )}
 
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -385,6 +404,24 @@ export default async function WebsiteDetailPage({
           </ul>
         </Card>
       )}
+
+      <Card>
+        <CardHeader title="Mute alerts" />
+        <MuteAlertsControl
+          websiteId={website.id}
+          mutedUntilIso={mutedUntil ? mutedUntil.toISOString() : null}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="Public status badge" />
+        <StatusBadgeSettings
+          websiteId={website.id}
+          siteUrl={website.url}
+          badgeUrl={badgeUrl}
+          enabled={website.badgeEnabled}
+        />
+      </Card>
 
       <Card>
         <CardHeader title="Danger zone" />
