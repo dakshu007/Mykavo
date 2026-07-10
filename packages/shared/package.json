@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./url": "./src/url.ts",
     "./ssrf": "./src/ssrf.ts",
-    "./channels": "./src/channels.ts"
+    "./channels": "./src/channels.ts",
+    "./script-services": "./src/script-services.ts"
   },
   "scripts": {
     "test": "vitest run"
