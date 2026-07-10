@@ -176,9 +176,35 @@ export default async function ChangesPage({
         </div>
       </div>
       {changes.length === 0 ? (
-        <p className="py-8 text-center text-sm text-ink-secondary">
-          No changes match this filter.
-        </p>
+        severityFilter || categoryFilter || websiteFilter || showResolved ? (
+          <div className="py-10 text-center">
+            <p className="text-sm font-medium text-ink">Nothing matches these filters</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-ink-secondary">
+              Changes were detected, just none with this combination of severity, category,
+              status, or site.
+            </p>
+            <Link
+              href="/dashboard/changes"
+              className="mt-3 inline-block text-[13px] font-medium text-primary hover:underline"
+            >
+              Clear filters
+            </Link>
+          </div>
+        ) : (
+          <div className="py-10 text-center">
+            <p className="text-sm font-medium text-ink">No open changes</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-ink-secondary">
+              You&apos;re all caught up — everything detected has been approved, resolved, or
+              ignored.
+            </p>
+            <Link
+              href={buildHref(sp, { status: "all" })}
+              className="mt-3 inline-block text-[13px] font-medium text-primary hover:underline"
+            >
+              View all changes
+            </Link>
+          </div>
+        )
       ) : (
         <ul className="divide-y divide-line">
           {changes.map((c) => {
