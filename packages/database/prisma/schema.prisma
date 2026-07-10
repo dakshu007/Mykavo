@@ -161,6 +161,8 @@ model Website {
   changeEvents      ChangeEvent[]
   notifications     Notification[]
   performanceAudits PerformanceAudit[]
+  healthChecks      HealthCheck[]
+  healthIncidents   HealthIncident[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -408,6 +410,53 @@ model PerformanceAudit {
 
   @@index([websiteId, createdAt(sort: Desc)])
   @@map("performance_audit")
+}
+
+// ---------- Site health (uptime + SSL expiry) ----------
+
+enum HealthIncidentKind {
+  DOWN
+  SSL_EXPIRING
+}
+
+// One lightweight availability probe of a website's homepage (plain GET, no
+// Playwright), recorded by the worker's health sweep every few minutes.
+// Up/down rule: up = ANY HTTP response with status < 500 and != 404;
+// down = network error, timeout, 5xx, or 404 (see @fluxen/shared isHttpUp).
+model HealthCheck {
+  id             String    @id @default(cuid())
+  websiteId      String
+  website        Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  checkedAt      DateTime  @default(now())
+  up             Boolean
+  httpStatus     Int?
+  responseTimeMs Int?
+  // Certificate notAfter for https sites; null for http or when the TLS
+  // metadata probe fails (never fails the check itself).
+  sslValidTo     DateTime?
+  errorCode      String?
+
+  @@index([websiteId, checkedAt(sort: Desc)])
+  @@map("health_check")
+}
+
+// An open (resolvedAt null) or historical health problem. DOWN opens after
+// two CONSECUTIVE failed checks (single-blip false-positive guard, spec §25)
+// and resolves on the first successful check. SSL_EXPIRING opens when the
+// certificate expires within 14 days and resolves once a check sees a
+// renewed certificate. lastNotifiedAt rate-limits alerts to once per 24h.
+model HealthIncident {
+  id             String             @id @default(cuid())
+  websiteId      String
+  website        Website            @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  kind           HealthIncidentKind
+  openedAt       DateTime           @default(now())
+  resolvedAt     DateTime?
+  lastNotifiedAt DateTime?
+  detail         String?
+
+  @@index([websiteId, resolvedAt])
+  @@map("health_incident")
 }
 
 // ---------- Baselines (Phase 4) ----------

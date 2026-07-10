@@ -104,6 +104,85 @@ export function scanSummaryEmail(data: ScanSummaryData): { subject: string; html
   return { subject, html: shell(inner), text };
 }
 
+// ---------- Site health alerts (uptime + SSL expiry) ----------
+
+export interface DownAlertData {
+  websiteName: string;
+  websiteHost: string;
+  /** Short failure description, e.g. "HTTP 503" or "request timed out". */
+  reason: string;
+  /** Human duration, e.g. "10+ minutes", "3h 12m". */
+  downFor: string;
+  dashboardUrl: string;
+}
+
+export interface RecoveryAlertData {
+  websiteName: string;
+  websiteHost: string;
+  /** Total outage duration, e.g. "23m". */
+  downFor: string;
+  dashboardUrl: string;
+}
+
+export interface SslExpiryAlertData {
+  websiteName: string;
+  websiteHost: string;
+  /** Whole days until expiry — zero or negative means already expired. */
+  daysLeft: number;
+  /** Formatted expiry date, e.g. "Jul 24, 2026". */
+  expiresOn: string;
+  dashboardUrl: string;
+}
+
+export function downAlertEmail(data: DownAlertData): { subject: string; html: string; text: string } {
+  const subject = `\u{1F534} ${data.websiteHost} appears DOWN — ${data.reason} for ${data.downFor}`;
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#e5484d">Website down</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)} appears to be down</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · down for ${esc(data.downFor)}</p>
+    <div style="background:#fdeaeb;border-radius:12px;padding:14px 16px;font-size:14px;color:#b42318;margin-bottom:24px">${esc(data.reason)} — confirmed by two consecutive checks. We'll email you again when it recovers.</div>
+    ${button(data.dashboardUrl, "Open dashboard")}
+  `;
+  const text =
+    `${data.websiteHost} appears DOWN — ${data.reason} for ${data.downFor}\n\n` +
+    `Confirmed by two consecutive checks. We'll email you again when it recovers.\n\n` +
+    `Dashboard: ${data.dashboardUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
+export function recoveryAlertEmail(data: RecoveryAlertData): { subject: string; html: string; text: string } {
+  const subject = `\u{2705} ${data.websiteHost} recovered — down for ${data.downFor}`;
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a">Recovered</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)} is back up</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · total downtime ${esc(data.downFor)}</p>
+    ${button(data.dashboardUrl, "Open dashboard")}
+  `;
+  const text =
+    `${data.websiteHost} recovered — down for ${data.downFor}\n\nDashboard: ${data.dashboardUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
+export function sslExpiryAlertEmail(data: SslExpiryAlertData): { subject: string; html: string; text: string } {
+  const expired = data.daysLeft <= 0;
+  const when = expired
+    ? `expired on ${data.expiresOn}`
+    : `expires in ${data.daysLeft} day${data.daysLeft === 1 ? "" : "s"} (${data.expiresOn})`;
+  const subject = `\u{26A0}\u{FE0F} SSL certificate for ${data.websiteHost} ${expired ? "has expired" : `expires in ${data.daysLeft} day${data.daysLeft === 1 ? "" : "s"}`}`;
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${expired ? "#e5484d" : "#f59e0b"}">SSL certificate ${expired ? "expired" : "expiring"}</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Certificate for ${esc(data.websiteName)} ${esc(when)}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)}</p>
+    <div style="background:${expired ? "#fdeaeb" : "#fdf3e0"};border-radius:12px;padding:14px 16px;font-size:14px;color:${expired ? "#b42318" : "#92600a"};margin-bottom:24px">Renew the certificate before visitors see browser security warnings. We'll remind you daily until it's renewed.</div>
+    ${button(data.dashboardUrl, "Open dashboard")}
+  `;
+  const text =
+    `SSL certificate for ${data.websiteHost} ${when}\n\n` +
+    `Renew the certificate before visitors see browser security warnings.\n\n` +
+    `Dashboard: ${data.dashboardUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
 export function failureAlertEmail(data: FailureAlertData): { subject: string; html: string; text: string } {
   const subject = `Scan failed for ${data.websiteHost}`;
   const inner = `

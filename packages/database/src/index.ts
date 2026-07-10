@@ -34,6 +34,20 @@ export {
   type ExpiredSnapshot,
 } from "./retention";
 export {
+  recordHealthCheck,
+  getLatestHealthCheck,
+  getLatestHealthChecksForWorkspace,
+  findOpenHealthIncident,
+  openHealthIncident,
+  resolveHealthIncident,
+  markHealthIncidentNotified,
+  getUptimeStats,
+  deleteExpiredHealthChecks,
+  type HealthCheckInput,
+  type LatestHealthCheckSummary,
+  type UptimeStats,
+} from "./health";
+export {
   getWorkspaceEntitlement,
   upgradeWorkspaceToPro,
   downgradeWorkspaceToFree,
