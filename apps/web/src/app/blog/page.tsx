@@ -14,7 +14,10 @@ export const metadata: Metadata = {
   title: "Blog",
   description:
     "Guides and practical notes on website change detection, regression monitoring, SEO health, and keeping client websites working — from the Fluxen team.",
-  alternates: { canonical: "/blog" },
+  alternates: {
+    canonical: "/blog",
+    types: { "application/rss+xml": "/blog/feed.xml" },
+  },
 };
 
 const dateFormat = new Intl.DateTimeFormat("en-US", {
