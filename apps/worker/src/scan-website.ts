@@ -13,7 +13,7 @@ import {
   scanPage,
   type ArtifactStorage,
 } from "@fluxen/scanner";
-import { computeNextScanAt } from "@fluxen/shared";
+import { computeNextScanAt, parseSelectorList } from "@fluxen/shared";
 import { logger } from "./logger";
 import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";
@@ -58,6 +58,13 @@ export async function runScanWebsiteJob(
     workspaceId: website.workspaceId,
   };
   const pages = website.monitoredPages;
+
+  // Stabilization settings (spec §25/§36): website-level ignored selectors
+  // and screenshot masks apply to every page scan. The Json? columns are
+  // parsed defensively — anything that isn't a clean selector array degrades
+  // to no selectors rather than failing the scan.
+  const ignoredSelectors = parseSelectorList(website.ignoredSelectors);
+  const screenshotMasks = parseSelectorList(website.screenshotMasks);
 
   // Conversion element monitoring is Pro-only (spec §37). Gate here so a
   // downgraded workspace's configured elements simply stop being checked.
@@ -107,7 +114,12 @@ export async function runScanWebsiteJob(
       : [];
     try {
       const result = await pool.withBrowser((browser) =>
-        scanPage(browser, page.url, storage, { artifactPrefix, elements: elementInputs }),
+        scanPage(browser, page.url, storage, {
+          artifactPrefix,
+          elements: elementInputs,
+          ignoredSelectors,
+          screenshotMasks,
+        }),
       );
       await prisma.pageSnapshot.create({
         data: {

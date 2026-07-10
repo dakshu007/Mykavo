@@ -5,5 +5,6 @@ export * from "./channels";
 export * from "./queue";
 export * from "./schedule";
 export * from "./retention";
+export * from "./stabilization";
 export * from "./health";
 export * from "./report";

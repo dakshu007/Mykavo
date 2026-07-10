@@ -22,6 +22,21 @@ export async function GET(_request: Request, { params }: Params) {
   return NextResponse.json({ website });
 }
 
+// Stabilization selector lists (spec §25/§36): trimmed, non-empty CSS
+// selectors, max 20 per list × 200 chars. Braces/newlines are rejected —
+// they indicate pasted CSS rules, not selectors. Full syntax validation
+// happens in the browser at scan time (invalid selectors are skipped).
+const selectorListSchema = z
+  .array(
+    z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .refine((s) => !/[{}\r\n]/.test(s), "Not a valid CSS selector."),
+  )
+  .max(20);
+
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   scanFrequency: z.enum(["WEEKLY", "DAILY"]).optional(),
@@ -30,6 +45,9 @@ const patchSchema = z.object({
   muteHours: z.union([z.literal(1), z.literal(8), z.literal(24)]).nullable().optional(),
   // Public status badge; enabling mints a token once, disabling keeps it.
   badgeEnabled: z.boolean().optional(),
+  // Comparison settings (spec §25/§36): [] clears a list; omitted = unchanged.
+  ignoredSelectors: selectorListSchema.optional(),
+  screenshotMasks: selectorListSchema.optional(),
 });
 
 export async function PATCH(request: Request, { params }: Params) {
@@ -81,6 +99,8 @@ export async function PATCH(request: Request, { params }: Params) {
         input.badgeEnabled === true && !website.publicToken
           ? randomBytes(18).toString("base64url")
           : undefined,
+      ignoredSelectors: input.ignoredSelectors,
+      screenshotMasks: input.screenshotMasks,
     },
   });
 

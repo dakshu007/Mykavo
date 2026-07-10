@@ -128,6 +128,46 @@ export function extractInPage(): InPageExtraction {
   };
 }
 
+/**
+ * Remove ignored elements from the live DOM (spec §25 false-positive
+ * controls). Runs inside the browser via page.evaluate, so — like
+ * extractInPage — it must be a self-contained serializable function.
+ * Each selector is applied inside its own try/catch: an invalid selector
+ * is skipped and must never fail the scan. Returns the number of elements
+ * removed (useful for diagnostics; callers may ignore it).
+ */
+export function removeElementsInPage(selectors: string[]): number {
+  let removed = 0;
+  for (const selector of selectors) {
+    try {
+      for (const el of Array.from(document.querySelectorAll(selector))) {
+        el.remove();
+        removed++;
+      }
+    } catch {
+      // Invalid selector — skip it; the rest still apply.
+    }
+  }
+  return removed;
+}
+
+/**
+ * Keep only selectors the browser's CSS engine accepts (per-selector
+ * try/catch). Runs in-page via page.evaluate — self-contained. Used to
+ * pre-filter screenshot mask selectors so Playwright's mask locators never
+ * throw on invalid user-supplied CSS.
+ */
+export function filterValidSelectorsInPage(selectors: string[]): string[] {
+  return selectors.filter((selector) => {
+    try {
+      document.querySelector(selector);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+}
+
 export interface ElementProbe {
   id: string;
   selector: string;
