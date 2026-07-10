@@ -1,16 +1,19 @@
-import { CheckCircle2, Mail, XCircle } from "lucide-react";
+import { BellRing, CheckCircle2, Mail, XCircle } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getEmailSettings } from "@/lib/notification-settings";
+import { getAlertChannels } from "@/lib/notification-channels";
 import { Card, CardHeader } from "@/components/ui/card";
 import { NotificationSettingsForm } from "@/components/dashboard/notification-settings-form";
+import { AlertChannels } from "@/components/dashboard/alert-channels";
 
 export default async function NotificationsPage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
-  const [settings, history] = await Promise.all([
+  const [settings, channels, history] = await Promise.all([
     getEmailSettings(workspace.id, session.user.email),
+    getAlertChannels(workspace.id),
     prisma.notification.findMany({
       where: { workspaceId: workspace.id },
       include: { website: { select: { name: true } } },
@@ -31,6 +34,18 @@ export default async function NotificationsPage() {
           }
         />
         <NotificationSettingsForm initial={settings} />
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Alert channels"
+          action={
+            <span className="inline-flex size-10 items-center justify-center rounded-xl bg-surface">
+              <BellRing className="size-4.5 text-ink-secondary" aria-hidden />
+            </span>
+          }
+        />
+        <AlertChannels initial={channels} />
       </Card>
 
       <Card>
