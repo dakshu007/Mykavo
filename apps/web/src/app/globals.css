@@ -92,6 +92,11 @@
     letter-spacing: -0.01em;
     margin: 2em 0 0.6em;
   }
+  /* Table-of-contents anchor targets land below the sticky marketing nav. */
+  .blog-prose h2,
+  .blog-prose h3 {
+    scroll-margin-top: 5.5rem;
+  }
   .blog-prose h1 {
     font-size: 1.7em;
   }

@@ -4,6 +4,7 @@ import { ArrowRight, PenLine } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { MarketingNav } from "@/components/marketing/nav";
 import { MarketingFooter } from "@/components/marketing/footer";
+import { readingTimeMinutes } from "@/components/blog/blocks";
 
 // Dynamic on purpose: a post published from the dashboard must be visible
 // immediately, without a redeploy. ISR + revalidatePath is a future optimization.
@@ -32,6 +33,7 @@ export default async function BlogIndexPage() {
       excerpt: true,
       authorName: true,
       publishedAt: true,
+      content: true,
     },
   });
 
@@ -82,6 +84,8 @@ export default async function BlogIndexPage() {
                   )}
                   <span aria-hidden> · </span>
                   {post.authorName}
+                  <span aria-hidden> · </span>
+                  {readingTimeMinutes(post.content)} min read
                 </p>
                 <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink">
                   <Link
