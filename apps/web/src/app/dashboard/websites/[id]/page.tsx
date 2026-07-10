@@ -55,6 +55,7 @@ export default async function WebsiteDetailPage({
   const auditViews: AuditView[] = website.performanceAudits.map((a) => ({
     id: a.id,
     status: a.status,
+    url: a.url,
     performanceScore: a.performanceScore,
     accessibilityScore: a.accessibilityScore,
     bestPracticesScore: a.bestPracticesScore,
@@ -69,7 +70,18 @@ export default async function WebsiteDetailPage({
     createdAt: a.createdAt.toISOString(),
   }));
 
-  const hostname = new URL(website.url).hostname;
+  const homepageUrl = new URL(website.url);
+  const hostname = homepageUrl.hostname;
+  // Page picker options for the audit panel (serializable strings only).
+  const homepagePath = homepageUrl.pathname + homepageUrl.search;
+  const auditPagePaths = Array.from(
+    new Set(
+      website.monitoredPages.map((p) => {
+        const u = new URL(p.url);
+        return u.pathname + u.search;
+      }),
+    ),
+  ).filter((p) => p !== homepagePath);
   const hasFinishedScan = website.scans.some(
     (s) => s.status === "COMPLETED" || s.status === "PARTIAL",
   );
@@ -169,7 +181,13 @@ export default async function WebsiteDetailPage({
 
       {/* Lighthouse performance audit (on-demand) */}
       <Card>
-        <PerformanceAuditPanel websiteId={website.id} initialAudits={auditViews} />
+        <PerformanceAuditPanel
+          websiteId={website.id}
+          hostname={hostname}
+          homepagePath={homepagePath}
+          pagePaths={auditPagePaths}
+          initialAudits={auditViews}
+        />
       </Card>
 
       <Card>

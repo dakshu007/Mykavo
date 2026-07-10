@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Gauge, Loader2, RefreshCw } from "lucide-react";
+import { ExternalLink, Gauge, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface AuditView {
   id: string;
   status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+  url: string;
   performanceScore: number | null;
   accessibilityScore: number | null;
   bestPracticesScore: number | null;
@@ -45,6 +46,16 @@ function fmtCls(v: number | null): string {
   return v === null ? "—" : v.toFixed(3);
 }
 
+/** Path + query of an audited URL, for compact display. */
+function pathOf(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.pathname + u.search;
+  } catch {
+    return url;
+  }
+}
+
 function isPending(status: AuditView["status"]): boolean {
   return status === "QUEUED" || status === "RUNNING";
 }
@@ -53,16 +64,30 @@ const POLL_INTERVAL_MS = 3000;
 /** A pending audit polled longer than this is treated as dead (worker crashed). */
 const STALE_AFTER_MS = 5 * 60 * 1000;
 
+/** Select value meaning "audit the homepage" — no path is sent to the API. */
+const HOMEPAGE = "";
+/** Select value that reveals the custom-path input. */
+const CUSTOM = "__custom__";
+
 export function PerformanceAuditPanel({
   websiteId,
+  hostname,
+  homepagePath,
+  pagePaths,
   initialAudits,
 }: {
   websiteId: string;
+  hostname: string;
+  homepagePath: string;
+  /** Monitored page paths (path + query), homepage excluded, deduplicated. */
+  pagePaths: string[];
   initialAudits: AuditView[];
 }) {
   const [audits, setAudits] = useState<AuditView[]>(initialAudits);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
+  const [selected, setSelected] = useState<string>(HOMEPAGE);
+  const [customPath, setCustomPath] = useState("");
   // The audit id we've given up polling — keyed so a new audit re-enables
   // automatically, with no reset effect. Render stays pure (no Date.now()).
   const [gaveUpFor, setGaveUpFor] = useState<string | null>(null);
@@ -74,6 +99,7 @@ export function PerformanceAuditPanel({
   const pending = pendingStatus && gaveUpFor !== latestId;
   const stalePending = pendingStatus && gaveUpFor === latestId;
   const shown = audits.find((a) => a.status === "COMPLETED") ?? null;
+  const busy = starting || pending;
 
   const refresh = useCallback(async () => {
     try {
@@ -105,11 +131,29 @@ export function PerformanceAuditPanel({
   }, [pending, audits, refresh, latestId]);
 
   async function runAudit() {
-    if (starting || pending) return;
+    if (busy) return;
+
+    // Which page? Homepage sends no path; the server enforces same-origin.
+    let path: string | undefined;
+    if (selected === CUSTOM) {
+      const trimmed = customPath.trim();
+      if (!trimmed.startsWith("/")) {
+        setError('Enter a path starting with "/" — for example /pricing.');
+        return;
+      }
+      path = trimmed;
+    } else if (selected !== HOMEPAGE) {
+      path = selected;
+    }
+
     setStarting(true);
     setError("");
     try {
-      const res = await fetch(`/api/websites/${websiteId}/audit`, { method: "POST" });
+      const res = await fetch(`/api/websites/${websiteId}/audit`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(path === undefined ? {} : { path }),
+      });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Could not start the audit.");
       await refresh();
@@ -122,22 +166,65 @@ export function PerformanceAuditPanel({
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
-            <Gauge className="size-4.5 text-ink-secondary" aria-hidden /> Performance
-          </h2>
-          <p className="mt-0.5 text-[13px] text-ink-secondary">
-            On-demand Lighthouse audit — scores and Core Web Vitals for the homepage.
-          </p>
-        </div>
+      <div>
+        <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
+          <Gauge className="size-4.5 text-ink-secondary" aria-hidden /> Performance
+        </h2>
+        <p className="mt-0.5 text-[13px] text-ink-secondary">
+          On-demand Lighthouse audit — scores and Core Web Vitals for any page of this site.
+        </p>
+      </div>
+
+      {/* Page picker + run button */}
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <label htmlFor={`audit-page-${websiteId}`} className="sr-only">
+          Page to audit
+        </label>
+        <select
+          id={`audit-page-${websiteId}`}
+          value={selected}
+          onChange={(e) => {
+            setSelected(e.target.value);
+            setError("");
+          }}
+          disabled={busy}
+          className="h-9 max-w-full rounded-field border border-line bg-card px-3 font-mono text-[13px] text-ink focus:border-primary focus:outline-none disabled:opacity-60"
+        >
+          <option value={HOMEPAGE}>{homepagePath} (homepage)</option>
+          {pagePaths.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+          <option value={CUSTOM}>Custom path…</option>
+        </select>
+
+        {selected === CUSTOM && (
+          <div className="flex h-9 items-stretch overflow-hidden rounded-field border border-line bg-card focus-within:border-primary">
+            <span className="flex select-none items-center border-r border-line bg-surface px-2.5 font-mono text-[13px] text-ink-faint">
+              {hostname}
+            </span>
+            <input
+              value={customPath}
+              onChange={(e) => {
+                setCustomPath(e.target.value);
+                setError("");
+              }}
+              placeholder="/pricing"
+              disabled={busy}
+              aria-label="Custom path"
+              className="w-36 bg-transparent px-2.5 font-mono text-[13px] text-ink placeholder:text-ink-faint focus:outline-none disabled:opacity-60 sm:w-44"
+            />
+          </div>
+        )}
+
         <button
           type="button"
           onClick={runAudit}
-          disabled={starting || pending}
+          disabled={busy}
           className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-white transition-colors hover:bg-black disabled:opacity-60"
         >
-          {starting || pending ? (
+          {busy ? (
             <Loader2 className="size-4 animate-spin" aria-hidden />
           ) : (
             <RefreshCw className="size-4" aria-hidden />
@@ -146,22 +233,30 @@ export function PerformanceAuditPanel({
         </button>
       </div>
 
+      {selected === CUSTOM && (
+        <p className="mt-1.5 text-[12px] text-ink-faint">
+          Only pages on {hostname} can be audited.
+        </p>
+      )}
+
       {error && (
         <p className="mt-3 text-[13px] text-red-700" role="alert">
           {error}
         </p>
       )}
 
-      {pending && (
+      {pending && latest && (
         <p className="mt-4 text-[13px] text-ink-secondary">
-          Auditing {latest?.status === "RUNNING" ? "in progress" : "queued"} — this usually takes
-          20–40 seconds.
+          Auditing <span className="font-mono text-ink">{pathOf(latest.url)}</span> —{" "}
+          {latest.status === "RUNNING" ? "in progress" : "queued"}, this usually takes 20–40
+          seconds.
         </p>
       )}
 
       {latest?.status === "FAILED" && !pending && (
         <p className="mt-4 text-[13px] text-amber-700">
-          The last audit failed{latest.errorCode ? ` (${latest.errorCode})` : ""}. Try again.
+          The last audit of <span className="font-mono">{pathOf(latest.url)}</span> failed
+          {latest.errorCode ? ` (${latest.errorCode})` : ""}. Try again.
         </p>
       )}
 
@@ -173,7 +268,17 @@ export function PerformanceAuditPanel({
 
       {shown ? (
         <>
-          <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <a
+            href={shown.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex max-w-full items-center gap-1.5 font-mono text-[13px] font-medium text-ink hover:text-primary"
+          >
+            <span className="truncate">{pathOf(shown.url)}</span>
+            <ExternalLink className="size-3 shrink-0" aria-hidden />
+          </a>
+
+          <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {CATEGORIES.map((c) => {
               const score = shown[c.key] as number | null;
               return (
