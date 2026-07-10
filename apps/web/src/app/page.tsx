@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Baseline,
   Bell,
+  Braces,
   CheckCircle2,
   Code2,
   Eye,
@@ -12,11 +13,14 @@ import {
   GitCompareArrows,
   Globe,
   Link2Off,
+  ListChecks,
   MousePointerClick,
   Radar,
+  Route,
   Search,
   ShieldCheck,
   Store,
+  Tags,
   Timer,
   Users,
   Wrench,
@@ -97,6 +101,39 @@ const useCases = [
   { icon: Wrench, title: "Maintenance businesses", desc: "Prove your maintenance value with monitoring history and clear change reports." },
   { icon: Store, title: "E-commerce", desc: "Checkout buttons, payment scripts, and product pages — watched on every scan." },
   { icon: Globe, title: "Website owners", desc: "Sleep well knowing someone is watching your most important pages every day." },
+];
+
+const freeTools = [
+  {
+    icon: GitCompareArrows,
+    href: "/tools/website-change-detector",
+    title: "Website Change Detector",
+    desc: "Snapshot a page's status, SEO tags, links, and scripts — then compare two URLs or re-check later to see what changed.",
+  },
+  {
+    icon: Tags,
+    href: "/tools/meta-tag-checker",
+    title: "Meta Tag Checker",
+    desc: "Grade a page's title, meta description, canonical, robots meta, Open Graph tags, and H1s with clear pass/warn guidance.",
+  },
+  {
+    icon: Route,
+    href: "/tools/redirect-chain-checker",
+    title: "Redirect Chain Checker",
+    desc: "Trace every redirect hop with its status code, and catch loops and needlessly long chains.",
+  },
+  {
+    icon: ListChecks,
+    href: "/tools/bulk-url-status-checker",
+    title: "Bulk URL Status Checker",
+    desc: "Check the status codes and response times of up to 20 URLs in one go — spot 404s and 500s instantly.",
+  },
+  {
+    icon: Braces,
+    href: "/tools/script-detector",
+    title: "Script Detector",
+    desc: "List every external script on a page and identify services like Google Analytics, Tag Manager, Meta Pixel, and Stripe.",
+  },
 ];
 
 const faqs = [
@@ -405,38 +442,33 @@ export default function HomePage() {
         </section>
 
         {/* 12. Free tools */}
-        <section className="bg-surface py-24">
+        <section className="bg-surface py-24" id="free-tools">
           <div className="mx-auto max-w-300 px-5 lg:px-8">
             <SectionHeading
               eyebrow="Free tools"
               title="Try Fluxen's detection engine free"
-              sub="No account needed. More free tools are on the way."
+              sub="Five free tools, no account needed. Every one is powered by the same engine that runs Fluxen's monitoring."
             />
-            <div className="mx-auto max-w-2xl">
-              <Link
-                href="/tools/website-change-detector"
-                className="group flex items-center justify-between gap-4 rounded-card bg-card p-7 shadow-card transition-shadow hover:shadow-float"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft">
-                    <GitCompareArrows className="size-6 text-primary" aria-hidden />
-                  </span>
-                  <div>
-                    <h3 className="text-[17px] font-semibold text-ink">
-                      Website Change Detector
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-ink-secondary">
-                      Snapshot any page&apos;s status, SEO tags, links, and scripts. Compare two
-                      URLs side-by-side, or save a snapshot and re-check it later to see exactly
-                      what changed.
-                    </p>
+            <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {freeTools.map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="group flex flex-col rounded-card bg-card p-6 shadow-card transition-shadow hover:shadow-float"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft">
+                      <tool.icon className="size-5 text-primary" aria-hidden />
+                    </span>
+                    <ArrowRight
+                      className="size-5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-1"
+                      aria-hidden
+                    />
                   </div>
-                </div>
-                <ArrowRight
-                  className="size-5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-1"
-                  aria-hidden
-                />
-              </Link>
+                  <h3 className="mt-4 text-[15px] font-semibold text-ink">{tool.title}</h3>
+                  <p className="mt-1.5 text-sm leading-6 text-ink-secondary">{tool.desc}</p>
+                </Link>
+              ))}
             </div>
           </div>
         </section>

@@ -4,14 +4,24 @@
  * here; the production scanner (Phase 3) uses Playwright + a real DOM.
  */
 
+import { identifyScriptService } from "@fluxen/shared/script-services";
 import { normalizeUrl, resolveHref, isSameOrigin } from "@/lib/url";
 import type { SafeFetchResult } from "@/lib/security/ssrf";
+import { attr, stripTags } from "./html";
 
 export interface ScriptInfo {
   src: string;
   domain: string;
   isThirdParty: boolean;
   service: string | null;
+}
+
+/** Result shape of the free Script Detector tool. */
+export interface ScriptDetectionReport {
+  url: string;
+  finalUrl: string;
+  httpStatus: number;
+  scripts: ScriptInfo[];
 }
 
 export interface PageToolSnapshot {
@@ -32,37 +42,27 @@ export interface PageToolSnapshot {
   scripts: ScriptInfo[];
 }
 
-const KNOWN_SERVICES: Array<[RegExp, string]> = [
-  [/googletagmanager\.com/i, "Google Tag Manager"],
-  [/google-analytics\.com|googleanalytics/i, "Google Analytics"],
-  [/connect\.facebook\.net/i, "Meta Pixel"],
-  [/js\.stripe\.com/i, "Stripe"],
-  [/hotjar\.com/i, "Hotjar"],
-  [/intercom(?:cdn)?\.(io|com)/i, "Intercom"],
-  [/hs-scripts\.com|hubspot/i, "HubSpot"],
-  [/clarity\.ms/i, "Microsoft Clarity"],
-  [/plausible\.io/i, "Plausible"],
-];
-
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#0?39;|&apos;/g, "'")
-    .replace(/&nbsp;/g, " ")
-    .trim();
-}
-
-function stripTags(s: string): string {
-  return decodeEntities(s.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
-}
-
-function attr(tag: string, name: string): string | null {
-  const m = tag.match(new RegExp(`${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, "i"));
-  if (!m) return null;
-  return decodeEntities(m[2] ?? m[3] ?? m[4] ?? "");
+/** Extract deduplicated external script files (`<script src>`) from raw HTML. */
+export function extractScripts(html: string, baseUrl: string): ScriptInfo[] {
+  const base = new URL(baseUrl);
+  const scripts: ScriptInfo[] = [];
+  const seen = new Set<string>();
+  for (const tag of html.match(/<script\b[^>]*>/gi) ?? []) {
+    const src = attr(tag, "src");
+    if (!src) continue;
+    const resolved = resolveHref(src, baseUrl);
+    if (!resolved || (resolved.protocol !== "http:" && resolved.protocol !== "https:")) continue;
+    const key = normalizeUrl(resolved, { stripAllParams: true });
+    if (seen.has(key)) continue;
+    seen.add(key);
+    scripts.push({
+      src: resolved.href,
+      domain: resolved.hostname,
+      isThirdParty: !isSameOrigin(resolved, base),
+      service: identifyScriptService(resolved.href),
+    });
+  }
+  return scripts;
 }
 
 export function extractSnapshot(fetched: SafeFetchResult, requestedUrl: string): PageToolSnapshot {
@@ -108,24 +108,7 @@ export function extractSnapshot(fetched: SafeFetchResult, requestedUrl: string):
     else externalLinkCount++;
   }
 
-  const scripts: ScriptInfo[] = [];
-  const seenScripts = new Set<string>();
-  for (const tag of html.match(/<script\b[^>]*>/gi) ?? []) {
-    const src = attr(tag, "src");
-    if (!src) continue;
-    const resolved = resolveHref(src, base);
-    if (!resolved) continue;
-    const key = normalizeUrl(resolved, { stripAllParams: true });
-    if (seenScripts.has(key)) continue;
-    seenScripts.add(key);
-    const service = KNOWN_SERVICES.find(([re]) => re.test(resolved.href))?.[1] ?? null;
-    scripts.push({
-      src: resolved.href,
-      domain: resolved.hostname,
-      isThirdParty: !isSameOrigin(resolved, baseUrl),
-      service,
-    });
-  }
+  const scripts = extractScripts(html, base);
 
   return {
     url: requestedUrl,

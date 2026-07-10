@@ -6,7 +6,17 @@ import { site } from "@/config/site";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const routes = ["", "/pricing", "/preview", "/tools/website-change-detector", "/blog"];
+  const routes = [
+    "",
+    "/pricing",
+    "/preview",
+    "/tools/website-change-detector",
+    "/tools/meta-tag-checker",
+    "/tools/redirect-chain-checker",
+    "/tools/bulk-url-status-checker",
+    "/tools/script-detector",
+    "/blog",
+  ];
   const entries: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${site.url}${route}`,
     changeFrequency: "weekly",

@@ -15,7 +15,13 @@ const columns = [
   },
   {
     title: "Free tools",
-    links: [{ href: "/tools/website-change-detector", label: "Website Change Detector" }],
+    links: [
+      { href: "/tools/website-change-detector", label: "Website Change Detector" },
+      { href: "/tools/meta-tag-checker", label: "Meta Tag Checker" },
+      { href: "/tools/redirect-chain-checker", label: "Redirect Chain Checker" },
+      { href: "/tools/bulk-url-status-checker", label: "Bulk URL Status Checker" },
+      { href: "/tools/script-detector", label: "Script Detector" },
+    ],
   },
   {
     title: "Monitoring",
