@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@fluxen/database";
 import { getApiContext, getOwnedWebsite } from "@/lib/api-auth";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { enqueueLighthouseAudit } from "@/lib/queue";
 import { logger } from "@/lib/logger";
+import { MAX_AUDIT_PATH_LENGTH, resolveAuditUrl } from "@/lib/audit-url";
 
 type Params = { params: Promise<{ id: string }> };
+
+/** Optional body: which page of the website to audit (default: homepage). */
+const postSchema = z.object({
+  path: z.string().max(MAX_AUDIT_PATH_LENGTH).optional(),
+});
 
 /** Lighthouse audits are expensive — a tight per-workspace cap (spec §43/§60). */
 const AUDITS_PER_HOUR = 5;
@@ -28,13 +35,31 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 /** Trigger an on-demand Lighthouse audit. Available on all plans, rate-limited. */
-export async function POST(_request: Request, { params }: Params) {
+export async function POST(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
   const website = await getOwnedWebsite(ctx, id);
   if (!website) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Optional body selects which page to audit. An empty body (legacy callers)
+  // means the homepage; a malformed body is a client error.
+  let path: string | undefined;
+  try {
+    const raw = await request.text();
+    if (raw.trim() !== "") ({ path } = postSchema.parse(JSON.parse(raw)));
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  // Same-origin enforcement: users may audit any page of THIS website, never
+  // another domain (spec §11, §59). The worker re-runs the SSRF guard on the
+  // stored URL before Chrome fetches it.
+  const target = resolveAuditUrl(website.url, path);
+  if (!target.ok) {
+    return NextResponse.json({ error: target.error }, { status: 400 });
+  }
 
   const rl = rateLimit(`audit:${ctx.workspace.id}`, {
     limit: AUDITS_PER_HOUR,
@@ -65,7 +90,7 @@ export async function POST(_request: Request, { params }: Params) {
     });
     if (inflight) return { conflictId: inflight.id };
     const audit = await tx.performanceAudit.create({
-      data: { websiteId: website.id, url: website.url, status: "QUEUED" },
+      data: { websiteId: website.id, url: target.url, status: "QUEUED" },
     });
     return { audit };
   });
@@ -95,6 +120,7 @@ export async function POST(_request: Request, { params }: Params) {
     auditId: audit.id,
     websiteId: website.id,
     workspaceId: ctx.workspace.id,
+    url: audit.url,
   });
   return NextResponse.json({ audit }, { status: 201 });
 }
