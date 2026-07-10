@@ -71,7 +71,11 @@ export default async function BlogPostPage({ params }: Params) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // Escape "<" so post-authored text (e.g. "</script>") can't terminate
+        // the script element — JSON.stringify alone does not prevent this.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <MarketingNav />
       <main className="mx-auto w-full max-w-300 flex-1 px-5 py-16 lg:px-8">
