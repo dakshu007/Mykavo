@@ -12,6 +12,7 @@ import {
   SCHEDULER_SWEEP_QUEUE,
   RETENTION_SWEEP_QUEUE,
   LIGHTHOUSE_AUDIT_QUEUE,
+  HEALTH_SWEEP_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
 } from "@fluxen/shared";
@@ -20,9 +21,11 @@ import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
 import { runRetentionSweep } from "./retention";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
+import { runHealthSweep } from "./health";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
+const HEALTH_CRON = process.env.HEALTH_CRON ?? "*/5 * * * *"; // every 5 minutes
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -74,6 +77,13 @@ async function main() {
   });
   await boss.schedule(RETENTION_SWEEP_QUEUE, RETENTION_CRON);
 
+  // Site-health sweep: uptime probe + SSL expiry for every ACTIVE website.
+  await boss.createQueue(HEALTH_SWEEP_QUEUE).catch(() => {});
+  await boss.work(HEALTH_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runHealthSweep();
+  });
+  await boss.schedule(HEALTH_SWEEP_QUEUE, HEALTH_CRON);
+
   // On-demand Lighthouse audits. Heavyweight (~10–40s, CPU-bound), so one at a
   // time (batchSize 1) with a single retry.
   await boss
@@ -92,6 +102,7 @@ async function main() {
     queue: SCAN_WEBSITE_QUEUE,
     schedulerCron: SWEEP_CRON,
     retentionCron: RETENTION_CRON,
+    healthCron: HEALTH_CRON,
   });
 
   async function shutdown(signal: string) {

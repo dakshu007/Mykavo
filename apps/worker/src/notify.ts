@@ -40,7 +40,7 @@ interface ChannelConfig {
 const DEFAULT_MIN_SEVERITY: Severity = "HIGH";
 
 /** Resolve the workspace's email channel config, falling back to owner email. */
-async function resolveEmailConfig(workspaceId: string): Promise<ChannelConfig | null> {
+export async function resolveEmailConfig(workspaceId: string): Promise<ChannelConfig | null> {
   const channel = await prisma.notificationChannel.findUnique({
     where: { workspaceId_type: { workspaceId, type: "EMAIL" } },
   });
@@ -109,10 +109,10 @@ async function record(
  * (spec §27 future channels). Each dispatch is recorded as a Notification row;
  * one channel failing never affects the others or the email path.
  */
-async function fanOutToChannels(
+export async function fanOutToChannels(
   workspaceId: string,
   websiteId: string,
-  scanId: string,
+  scanId: string | null,
   message: ChannelMessage,
 ): Promise<void> {
   const channels = await prisma.notificationChannel.findMany({

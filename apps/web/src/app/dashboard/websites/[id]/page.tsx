@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma, getLatestHealthCheck, getUptimeStats } from "@fluxen/database";
+import { daysUntil } from "@fluxen/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
@@ -14,6 +15,16 @@ import {
 } from "@/components/dashboard/performance-audit-panel";
 import { WebsiteActions } from "./website-actions";
 
+/** Time windows for the health queries — one clock read per request. */
+function healthWindows(): { now: Date; since24h: Date; since7d: Date } {
+  const now = Date.now();
+  return {
+    now: new Date(now),
+    since24h: new Date(now - 24 * 60 * 60 * 1000),
+    since7d: new Date(now - 7 * 24 * 60 * 60 * 1000),
+  };
+}
+
 export default async function WebsiteDetailPage({
   params,
 }: {
@@ -23,8 +34,9 @@ export default async function WebsiteDetailPage({
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
   const { id } = await params;
 
-  // Both queries scope to the workspace, so they can run in parallel.
-  const [website, openChanges] = await Promise.all([
+  const { now, since24h, since7d } = healthWindows();
+  // All queries scope to the workspace/route param, so they run in parallel.
+  const [website, openChanges, latestHealth, uptime24h, uptime7d] = await Promise.all([
     prisma.website.findFirst({
       where: { id, workspaceId: workspace.id },
       include: {
@@ -49,8 +61,17 @@ export default async function WebsiteDetailPage({
       },
       select: { severity: true },
     }),
+    getLatestHealthCheck(prisma, id),
+    getUptimeStats(prisma, { websiteId: id, since: since24h }),
+    getUptimeStats(prisma, { websiteId: id, since: since7d }),
   ]);
   if (!website) notFound();
+
+  const sslDaysLeft = latestHealth?.sslValidTo
+    ? daysUntil(latestHealth.sslValidTo, now)
+    : null;
+  const formatUptime = (p: number | null) =>
+    p === null ? "—" : `${p === 100 ? "100" : p.toFixed(1)}%`;
 
   const auditViews: AuditView[] = website.performanceAudits.map((a) => ({
     id: a.id,
@@ -178,6 +199,84 @@ export default async function WebsiteDetailPage({
           </p>
         </Card>
       </div>
+
+      {/* Site health: availability + SSL (5-minute worker sweep) */}
+      <Card>
+        <CardHeader title="Health" />
+        {latestHealth === null ? (
+          <p className="py-2 text-sm text-ink-secondary">
+            First health check runs within 5 minutes of monitoring starting.
+          </p>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <div>
+              <p className="label-micro mb-2">Status</p>
+              <p className="flex items-center gap-2 text-xl font-semibold tracking-tight text-ink">
+                <span
+                  aria-hidden
+                  className={`inline-block size-2.5 rounded-full ${latestHealth.up ? "bg-green-500" : "bg-red-500"}`}
+                />
+                {latestHealth.up ? "Up" : "Down"}
+              </p>
+              <p className="mt-1 text-[13px] text-ink-faint">
+                {latestHealth.httpStatus !== null
+                  ? `HTTP ${latestHealth.httpStatus}`
+                  : (latestHealth.errorCode ?? "No response")}
+                {" · checked "}
+                {latestHealth.checkedAt.toLocaleTimeString("en-US", { timeStyle: "short" })}
+              </p>
+            </div>
+            <div>
+              <p className="label-micro mb-2">Uptime · 24h</p>
+              <p className="text-xl font-semibold tracking-tight text-ink">
+                {formatUptime(uptime24h.uptimePercent)}
+              </p>
+              {uptime24h.avgResponseTimeMs !== null && (
+                <p className="mt-1 text-[13px] text-ink-faint">
+                  {Math.round(uptime24h.avgResponseTimeMs)} ms avg response
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="label-micro mb-2">Uptime · 7d</p>
+              <p className="text-xl font-semibold tracking-tight text-ink">
+                {formatUptime(uptime7d.uptimePercent)}
+              </p>
+              <p className="mt-1 text-[13px] text-ink-faint">
+                {uptime7d.totalChecks.toLocaleString("en-US")} checks
+              </p>
+            </div>
+            <div>
+              <p className="label-micro mb-2">SSL certificate</p>
+              {latestHealth.sslValidTo ? (
+                <>
+                  <p
+                    className={`text-xl font-semibold tracking-tight ${
+                      sslDaysLeft !== null && sslDaysLeft <= 14
+                        ? "text-red-600"
+                        : sslDaysLeft !== null && sslDaysLeft <= 30
+                          ? "text-amber-600"
+                          : "text-ink"
+                    }`}
+                  >
+                    {sslDaysLeft !== null && sslDaysLeft <= 0
+                      ? "Expired"
+                      : `${sslDaysLeft} days left`}
+                  </p>
+                  <p className="mt-1 text-[13px] text-ink-faint">
+                    Valid until{" "}
+                    {latestHealth.sslValidTo.toLocaleDateString("en-US", { dateStyle: "medium" })}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xl font-semibold tracking-tight text-ink-faint">
+                  {website.url.startsWith("https:") ? "—" : "No HTTPS"}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Lighthouse performance audit (on-demand) */}
       <Card>

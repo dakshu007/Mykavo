@@ -14,6 +14,7 @@ import {
   findExpiredSnapshots,
   deleteSnapshots,
   deleteExpiredChangeEvents,
+  deleteExpiredHealthChecks,
 } from "@fluxen/database";
 import { historyDaysForPlan } from "@fluxen/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@fluxen/scanner";
@@ -27,6 +28,7 @@ export interface RetentionResult {
   snapshotsDeleted: number;
   changeEventsDeleted: number;
   artifactsDeleted: number;
+  healthChecksDeleted: number;
 }
 
 export async function runRetentionSweep(
@@ -42,6 +44,7 @@ export async function runRetentionSweep(
   let snapshotsDeleted = 0;
   let changeEventsDeleted = 0;
   let artifactsDeleted = 0;
+  let healthChecksDeleted = 0;
 
   for (const website of websites) {
     let days = windowDaysByWorkspace.get(website.workspaceId);
@@ -53,6 +56,13 @@ export async function runRetentionSweep(
     const cutoff = new Date(now - days * DAY_MS);
 
     changeEventsDeleted += await deleteExpiredChangeEvents(prisma, {
+      websiteId: website.id,
+      cutoff,
+    });
+
+    // Health checks accumulate ~288 rows/site/day — prune with the same
+    // window. Incidents are kept forever (tiny, long-term value).
+    healthChecksDeleted += await deleteExpiredHealthChecks(prisma, {
       websiteId: website.id,
       cutoff,
     });
@@ -91,11 +101,13 @@ export async function runRetentionSweep(
     snapshotsDeleted,
     changeEventsDeleted,
     artifactsDeleted,
+    healthChecksDeleted,
   });
   return {
     websites: websites.length,
     snapshotsDeleted,
     changeEventsDeleted,
     artifactsDeleted,
+    healthChecksDeleted,
   };
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Bell, FileSearch, Globe, Plus, Radar, ShieldCheck } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma, getLatestHealthChecksForWorkspace } from "@fluxen/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
@@ -9,7 +9,7 @@ export default async function DashboardOverviewPage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
-  const [websites, pageCount, baselineCount, openChanges] = await Promise.all([
+  const [websites, pageCount, baselineCount, openChanges, healthChecks] = await Promise.all([
     prisma.website.findMany({
       where: { workspaceId: workspace.id },
       include: {
@@ -24,7 +24,9 @@ export default async function DashboardOverviewPage() {
     prisma.changeEvent.count({
       where: { website: { workspaceId: workspace.id }, status: { in: ["NEW", "REVIEWED"] } },
     }),
+    getLatestHealthChecksForWorkspace(prisma, workspace.id),
   ]);
+  const healthByWebsite = new Map(healthChecks.map((h) => [h.websiteId, h.up]));
 
   const stats = [
     { label: "Websites monitored", value: websites.length, icon: Globe },
@@ -90,6 +92,29 @@ export default async function DashboardOverviewPage() {
                   href={`/dashboard/websites/${w.id}`}
                   className="group flex items-center gap-4 py-3.5"
                 >
+                  <span
+                    aria-label={
+                      healthByWebsite.get(w.id) === undefined
+                        ? "Health unknown"
+                        : healthByWebsite.get(w.id)
+                          ? "Up"
+                          : "Down"
+                    }
+                    title={
+                      healthByWebsite.get(w.id) === undefined
+                        ? "Health unknown"
+                        : healthByWebsite.get(w.id)
+                          ? "Up"
+                          : "Down"
+                    }
+                    className={`inline-block size-2.5 shrink-0 rounded-full ${
+                      healthByWebsite.get(w.id) === undefined
+                        ? "bg-line"
+                        : healthByWebsite.get(w.id)
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                    }`}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-ink group-hover:text-primary">
                       {w.name}
