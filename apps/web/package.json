@@ -17,6 +17,15 @@
     "@fluxen/scanner": "workspace:*",
     "@fluxen/shared": "workspace:*",
     "@hookform/resolvers": "^5.4.0",
+    "@tiptap/core": "3.27.3",
+    "@tiptap/extension-image": "3.27.3",
+    "@tiptap/extension-link": "3.27.3",
+    "@tiptap/extension-placeholder": "3.27.3",
+    "@tiptap/extension-table": "3.27.3",
+    "@tiptap/pm": "3.27.3",
+    "@tiptap/react": "3.27.3",
+    "@tiptap/starter-kit": "3.27.3",
+    "@tiptap/suggestion": "3.27.3",
     "better-auth": "^1.6.23",
     "clsx": "^2.1.1",
     "lucide-react": "^1.23.0",
@@ -28,6 +37,7 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.6.0",
+    "tiptap-markdown": "0.9.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -37,6 +47,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "jsdom": "^26.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
