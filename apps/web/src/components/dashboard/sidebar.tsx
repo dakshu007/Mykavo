@@ -14,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
+import { CommandPaletteTrigger } from "@/components/dashboard/command-palette";
 import {
   WorkspaceSwitcher,
   type WorkspaceOption,
@@ -98,6 +99,8 @@ export function DashboardSidebar({
           );
         })}
       </nav>
+
+      <CommandPaletteTrigger />
 
       <button
         onClick={handleSignOut}

@@ -4,6 +4,7 @@ import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
+import { CommandPalette } from "@/components/dashboard/command-palette";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -26,6 +27,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
+      <CommandPalette isBlogAdmin={isBlogAdmin(session.user.email)} />
       <div className="sticky top-6 hidden h-[calc(100vh-3rem)] w-60 shrink-0 rounded-card bg-card p-3 shadow-card lg:block">
         <DashboardSidebar
           workspaceName={workspace.name}
