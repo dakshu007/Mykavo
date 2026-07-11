@@ -19,6 +19,7 @@ import { TagEditor } from "./tag-editor";
 import { MutedAlertsBanner, MuteAlertsControl } from "./mute-alerts";
 import { ComparisonSettings } from "./comparison-settings";
 import { StatusBadgeSettings } from "./status-badge-settings";
+import { StatusPageSettings } from "./status-page-settings";
 
 /** Time windows for the health queries — one clock read per request. */
 function healthWindows(): { now: Date; since24h: Date; since7d: Date } {
@@ -123,6 +124,9 @@ export default async function WebsiteDetailPage({
   const appBase = process.env.APP_URL ?? "http://localhost:3000";
   const badgeUrl = website.publicToken
     ? `${appBase}/api/badge/${website.publicToken}`
+    : null;
+  const statusPageUrl = website.publicToken
+    ? `${appBase}/status/${website.publicToken}`
     : null;
 
   const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 } as const;
@@ -437,6 +441,15 @@ export default async function WebsiteDetailPage({
           siteUrl={website.url}
           badgeUrl={badgeUrl}
           enabled={website.badgeEnabled}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="Public status page" />
+        <StatusPageSettings
+          websiteId={website.id}
+          statusPageUrl={statusPageUrl}
+          enabled={website.statusPageEnabled}
         />
       </Card>
 

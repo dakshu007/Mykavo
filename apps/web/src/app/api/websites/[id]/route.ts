@@ -46,6 +46,8 @@ const patchSchema = z.object({
   muteHours: z.union([z.literal(1), z.literal(8), z.literal(24)]).nullable().optional(),
   // Public status badge; enabling mints a token once, disabling keeps it.
   badgeEnabled: z.boolean().optional(),
+  // Public status page; shares the badge token under the same minting rule.
+  statusPageEnabled: z.boolean().optional(),
   // Comparison settings (spec §25/§36): [] clears a list; omitted = unchanged.
   ignoredSelectors: selectorListSchema.optional(),
   screenshotMasks: selectorListSchema.optional(),
@@ -101,9 +103,13 @@ export async function PATCH(request: Request, { params }: Params) {
             ? null
             : new Date(Date.now() + input.muteHours * 60 * 60 * 1000),
       badgeEnabled: input.badgeEnabled,
-      // The badge URL identifier — opaque, never the website id (spec §59).
+      statusPageEnabled: input.statusPageEnabled,
+      // The public URL identifier shared by the badge and the status page —
+      // opaque, never the website id (spec §59). Whichever feature is
+      // enabled first mints it; disabling keeps it so URLs stay stable.
       publicToken:
-        input.badgeEnabled === true && !website.publicToken
+        (input.badgeEnabled === true || input.statusPageEnabled === true) &&
+        !website.publicToken
           ? randomBytes(18).toString("base64url")
           : undefined,
       ignoredSelectors: input.ignoredSelectors,

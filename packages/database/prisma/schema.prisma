@@ -184,6 +184,9 @@ model Website {
   // website ids must never be exposed publicly. Disabling keeps the token.
   badgeEnabled  Boolean       @default(false)
   publicToken   String?       @unique
+  // Public status page at /status/[token] — shares publicToken with the
+  // badge (whichever feature is enabled first mints it). Gated separately.
+  statusPageEnabled Boolean   @default(false)
   // Stabilization / false-positive controls (spec §25/§36). Both are JSON
   // arrays of CSS selector strings (max 20 each, ≤200 chars — enforced in
   // the API; parsed defensively via parseSelectorList in @fluxen/shared).
