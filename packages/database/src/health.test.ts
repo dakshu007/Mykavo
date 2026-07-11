@@ -15,6 +15,9 @@ import {
   resolveHealthIncident,
   markHealthIncidentNotified,
   getUptimeStats,
+  getDailyHealthRollups,
+  getResponseTimeSeries,
+  getRecentHealthIncidents,
   deleteExpiredHealthChecks,
 } from "./health";
 
@@ -178,6 +181,126 @@ describe("getUptimeStats", () => {
     expect(stats.totalChecks).toBe(0);
     expect(stats.uptimePercent).toBeNull();
     expect(stats.avgResponseTimeMs).toBeNull();
+  });
+});
+
+describe("getDailyHealthRollups", () => {
+  // A fixed "now" makes the UTC-day math deterministic regardless of run time.
+  const NOW = new Date("2026-07-10T15:30:00Z");
+
+  it("groups checks by UTC day and fills missing days with nulls", async () => {
+    // Two days ago: 3 up (100/200/300ms) + 1 down → 75%, avg 200ms.
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 100, checkedAt: new Date("2026-07-08T00:00:00Z") });
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 200, checkedAt: new Date("2026-07-08T12:00:00Z") });
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 300, checkedAt: new Date("2026-07-08T23:59:59Z") });
+    await recordHealthCheck(prisma, { websiteId, up: false, responseTimeMs: null, checkedAt: new Date("2026-07-08T06:00:00Z") });
+    // Today: 1 up.
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 150, checkedAt: new Date("2026-07-10T10:00:00Z") });
+    // Before the 7-day window — must not appear.
+    await recordHealthCheck(prisma, { websiteId, up: false, checkedAt: new Date("2026-07-03T23:59:59Z") });
+
+    const rollups = await getDailyHealthRollups(prisma, { websiteId, days: 7, now: NOW });
+
+    expect(rollups).toHaveLength(7);
+    expect(rollups.map((r) => r.date)).toEqual([
+      "2026-07-04", "2026-07-05", "2026-07-06", "2026-07-07",
+      "2026-07-08", "2026-07-09", "2026-07-10",
+    ]);
+
+    const day8 = rollups[4];
+    expect(day8.totalChecks).toBe(4);
+    expect(day8.upChecks).toBe(3);
+    expect(day8.uptimePercent).toBe(75);
+    expect(day8.avgResponseTimeMs).toBe(200); // failed checks excluded from avg
+
+    const today = rollups[6];
+    expect(today.totalChecks).toBe(1);
+    expect(today.uptimePercent).toBe(100);
+    expect(today.avgResponseTimeMs).toBe(150);
+
+    // Gap day: present but explicitly empty.
+    const day9 = rollups[5];
+    expect(day9.totalChecks).toBe(0);
+    expect(day9.upChecks).toBe(0);
+    expect(day9.uptimePercent).toBeNull();
+    expect(day9.avgResponseTimeMs).toBeNull();
+  });
+
+  it("returns all-null days for a never-checked website", async () => {
+    const rollups = await getDailyHealthRollups(prisma, { websiteId, days: 3, now: NOW });
+    expect(rollups).toHaveLength(3);
+    expect(rollups.every((r) => r.totalChecks === 0 && r.uptimePercent === null)).toBe(true);
+  });
+});
+
+describe("getResponseTimeSeries", () => {
+  it("buckets averages by aligned time windows, up checks only", async () => {
+    // Bucket 10:00–10:30 → up 100 + 300 (avg 200) + one down (counted, not averaged).
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 100, checkedAt: new Date("2026-07-10T10:00:00Z") });
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 300, checkedAt: new Date("2026-07-10T10:29:59Z") });
+    await recordHealthCheck(prisma, { websiteId, up: false, responseTimeMs: null, checkedAt: new Date("2026-07-10T10:15:00Z") });
+    // Bucket 11:00–11:30 → single up check.
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 500, checkedAt: new Date("2026-07-10T11:05:00Z") });
+    // Before `since` — excluded.
+    await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 999, checkedAt: OLD });
+
+    const series = await getResponseTimeSeries(prisma, {
+      websiteId,
+      since: new Date("2026-07-10T00:00:00Z"),
+      bucketMinutes: 30,
+    });
+
+    expect(series).toHaveLength(2); // the empty 10:30–11:00 bucket is absent
+    expect(series[0].bucketStart.toISOString()).toBe("2026-07-10T10:00:00.000Z");
+    expect(series[0].avgResponseTimeMs).toBe(200);
+    expect(series[0].totalChecks).toBe(3);
+    expect(series[1].bucketStart.toISOString()).toBe("2026-07-10T11:00:00.000Z");
+    expect(series[1].avgResponseTimeMs).toBe(500);
+    expect(series[1].totalChecks).toBe(1);
+  });
+
+  it("reports null averages for buckets with only failed checks", async () => {
+    await recordHealthCheck(prisma, { websiteId, up: false, checkedAt: new Date("2026-07-10T10:00:00Z") });
+    const series = await getResponseTimeSeries(prisma, {
+      websiteId,
+      since: new Date("2026-07-10T00:00:00Z"),
+      bucketMinutes: 30,
+    });
+    expect(series).toHaveLength(1);
+    expect(series[0].avgResponseTimeMs).toBeNull();
+    expect(series[0].totalChecks).toBe(1);
+  });
+
+  it("returns an empty array when there are no checks in range", async () => {
+    const series = await getResponseTimeSeries(prisma, {
+      websiteId,
+      since: new Date(),
+      bucketMinutes: 30,
+    });
+    expect(series).toEqual([]);
+  });
+});
+
+describe("getRecentHealthIncidents", () => {
+  it("returns the newest incidents first, respecting the limit", async () => {
+    const first = await openHealthIncident(prisma, {
+      websiteId, kind: "DOWN", detail: "HTTP 503", openedAt: new Date("2026-07-01T00:00:00Z"),
+    });
+    await resolveHealthIncident(prisma, first.id, new Date("2026-07-01T01:00:00Z"));
+    const second = await openHealthIncident(prisma, {
+      websiteId, kind: "SSL_EXPIRING", detail: "expires in 10 days", openedAt: new Date("2026-07-05T00:00:00Z"),
+    });
+    const third = await openHealthIncident(prisma, {
+      websiteId, kind: "DOWN", openedAt: new Date("2026-07-09T00:00:00Z"),
+    });
+
+    const recent = await getRecentHealthIncidents(prisma, { websiteId });
+    expect(recent.map((i) => i.id)).toEqual([third.id, second.id, first.id]);
+    expect(recent[0].resolvedAt).toBeNull(); // ongoing
+    expect(recent[2].resolvedAt).not.toBeNull();
+
+    const limited = await getRecentHealthIncidents(prisma, { websiteId, limit: 2 });
+    expect(limited.map((i) => i.id)).toEqual([third.id, second.id]);
   });
 });
 
