@@ -9,6 +9,7 @@
     "./url": "./src/url.ts",
     "./ssrf": "./src/ssrf.ts",
     "./channels": "./src/channels.ts",
+    "./stabilization": "./src/stabilization.ts",
     "./script-services": "./src/script-services.ts"
   },
   "scripts": {

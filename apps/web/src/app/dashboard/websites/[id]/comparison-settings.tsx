@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
-import { selectorLines, validateSelectorLines } from "@fluxen/shared";
+import { selectorLines, validateSelectorLines } from "@fluxen/shared/stabilization";
 
 /**
  * Comparison settings (spec §25/§36 false-positive controls): per-website
