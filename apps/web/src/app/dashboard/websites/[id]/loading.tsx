@@ -6,7 +6,7 @@ import {
   SkeletonStat,
 } from "@/components/dashboard/skeleton";
 
-/** Website detail skeleton: heading, stat grid, pages + scans lists. */
+/** Website detail skeleton: heading, stat grid, uptime card, pages + scans lists. */
 export default function WebsiteDetailLoading() {
   return (
     <div role="status" aria-label="Loading website" className="space-y-6">
@@ -27,6 +27,13 @@ export default function WebsiteDetailLoading() {
         <SkeletonStat />
         <SkeletonStat />
       </div>
+
+      {/* Uptime & performance: day-bar strip + response-time chart */}
+      <Card>
+        <SkeletonCardHeader action />
+        <Skeleton className="h-9 w-full" />
+        <Skeleton className="mt-6 h-36 w-full" />
+      </Card>
 
       <Card>
         <SkeletonCardHeader action />

@@ -43,10 +43,15 @@ export {
   resolveHealthIncident,
   markHealthIncidentNotified,
   getUptimeStats,
+  getDailyHealthRollups,
+  getResponseTimeSeries,
+  getRecentHealthIncidents,
   deleteExpiredHealthChecks,
   type HealthCheckInput,
   type LatestHealthCheckSummary,
   type UptimeStats,
+  type DailyHealthRollup,
+  type ResponseTimeBucket,
 } from "./health";
 export {
   getWorkspaceEntitlement,

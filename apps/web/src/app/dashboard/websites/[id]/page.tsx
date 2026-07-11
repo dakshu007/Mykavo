@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { prisma, getLatestHealthCheck, getUptimeStats } from "@fluxen/database";
+import {
+  prisma,
+  getLatestHealthCheck,
+  getUptimeStats,
+  getDailyHealthRollups,
+  getResponseTimeSeries,
+  getRecentHealthIncidents,
+  type HealthIncidentKind,
+} from "@fluxen/database";
 import { daysUntil, parseSelectorList } from "@fluxen/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -14,6 +22,14 @@ import {
   type AuditView,
 } from "@/components/dashboard/performance-audit-panel";
 import { parseTags } from "@/lib/tags";
+import {
+  HEALTH_WINDOWS,
+  bucketMinutesForWindow,
+  formatDuration,
+  parseHealthWindow,
+} from "@/lib/health-charts";
+import { UptimeBars } from "@/components/charts/uptime-bars";
+import { ResponseTimeChart } from "@/components/charts/response-time-chart";
 import { WebsiteActions } from "./website-actions";
 import { TagEditor } from "./tag-editor";
 import { MutedAlertsBanner, MuteAlertsControl } from "./mute-alerts";
@@ -22,27 +38,60 @@ import { StatusBadgeSettings } from "./status-badge-settings";
 import { StatusPageSettings } from "./status-page-settings";
 
 /** Time windows for the health queries — one clock read per request. */
-function healthWindows(): { now: Date; since24h: Date; since7d: Date } {
+function healthWindows(windowDays: number): {
+  now: Date;
+  since24h: Date;
+  since7d: Date;
+  sinceWindow: Date;
+} {
   const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
   return {
     now: new Date(now),
-    since24h: new Date(now - 24 * 60 * 60 * 1000),
-    since7d: new Date(now - 7 * 24 * 60 * 60 * 1000),
+    since24h: new Date(now - day),
+    since7d: new Date(now - 7 * day),
+    sinceWindow: new Date(now - windowDays * day),
   };
+}
+
+/** Incident-kind chip: colour always paired with a text label. */
+function IncidentKindChip({ kind }: { kind: HealthIncidentKind }) {
+  return kind === "DOWN" ? (
+    <span className="inline-flex shrink-0 rounded-full bg-critical-soft px-2.5 py-0.5 text-[11px] font-semibold text-red-700">
+      Down
+    </span>
+  ) : (
+    <span className="inline-flex shrink-0 rounded-full bg-warning-soft px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+      SSL
+    </span>
+  );
 }
 
 export default async function WebsiteDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ health?: string | string[] }>;
 }) {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
-  const { id } = await params;
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
+  const windowDays = parseHealthWindow(sp.health);
+  const bucketMinutes = bucketMinutesForWindow(windowDays);
 
-  const { now, since24h, since7d } = healthWindows();
+  const { now, since24h, since7d, sinceWindow } = healthWindows(windowDays);
   // All queries scope to the workspace/route param, so they run in parallel.
-  const [website, openChanges, latestHealth, uptime24h, uptime7d] = await Promise.all([
+  const [
+    website,
+    openChanges,
+    latestHealth,
+    uptime24h,
+    uptime7d,
+    healthRollups,
+    responseSeries,
+    incidents,
+  ] = await Promise.all([
     prisma.website.findFirst({
       where: { id, workspaceId: workspace.id },
       include: {
@@ -70,6 +119,9 @@ export default async function WebsiteDetailPage({
     getLatestHealthCheck(prisma, id),
     getUptimeStats(prisma, { websiteId: id, since: since24h }),
     getUptimeStats(prisma, { websiteId: id, since: since7d }),
+    getDailyHealthRollups(prisma, { websiteId: id, days: windowDays, now }),
+    getResponseTimeSeries(prisma, { websiteId: id, since: sinceWindow, bucketMinutes }),
+    getRecentHealthIncidents(prisma, { websiteId: id, limit: 10 }),
   ]);
   if (!website) notFound();
 
@@ -302,6 +354,89 @@ export default async function WebsiteDetailPage({
             </div>
           </div>
         )}
+      </Card>
+
+      {/* Uptime & response-time analytics over the selected window */}
+      <Card>
+        <CardHeader
+          title="Uptime & performance"
+          action={
+            <nav aria-label="Time window" className="flex gap-1.5">
+              {HEALTH_WINDOWS.map((w) => (
+                <Link
+                  key={w.param}
+                  href={`/dashboard/websites/${website.id}?health=${w.param}`}
+                  aria-current={windowDays === w.days ? "page" : undefined}
+                  className={
+                    windowDays === w.days
+                      ? "rounded-full bg-ink px-3 py-1 text-[12px] font-medium text-white"
+                      : "rounded-full border border-line px-3 py-1 text-[12px] font-medium text-ink-secondary hover:text-ink"
+                  }
+                >
+                  {w.label}
+                </Link>
+              ))}
+            </nav>
+          }
+        />
+        <UptimeBars days={healthRollups} windowDays={windowDays} />
+
+        <div className="mt-6 border-t border-line pt-4">
+          <h3 className="mb-2 text-[13px] font-semibold text-ink">Response time</h3>
+          <ResponseTimeChart
+            points={responseSeries.map((b) => ({
+              t: b.bucketStart.getTime(),
+              avgMs: b.avgResponseTimeMs,
+            }))}
+            windowDays={windowDays}
+            bucketMinutes={bucketMinutes}
+            domainStart={sinceWindow.getTime()}
+            domainEnd={now.getTime()}
+          />
+        </div>
+
+        <div className="mt-6 border-t border-line pt-4">
+          <h3 className="text-[13px] font-semibold text-ink">Incident history</h3>
+          {incidents.length === 0 ? (
+            <p className="py-3 text-[13px] text-ink-secondary">
+              No incidents recorded — downtime and expiring SSL certificates will show
+              up here.
+            </p>
+          ) : (
+            <ul className="mt-1 divide-y divide-line">
+              {incidents.map((incident) => (
+                <li
+                  key={incident.id}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5"
+                >
+                  <IncidentKindChip kind={incident.kind} />
+                  <span className="text-[13px] text-ink">
+                    {incident.openedAt.toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </span>
+                  {incident.detail && (
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink-secondary">
+                      {incident.detail}
+                    </span>
+                  )}
+                  <span className="ml-auto shrink-0 text-[13px] tabular-nums">
+                    {incident.resolvedAt ? (
+                      <span className="text-ink-secondary">
+                        {formatDuration(
+                          incident.resolvedAt.getTime() - incident.openedAt.getTime(),
+                        )}
+                      </span>
+                    ) : (
+                      <span className="font-medium text-red-700">Ongoing</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </Card>
 
       {/* Lighthouse performance audit (on-demand) */}
