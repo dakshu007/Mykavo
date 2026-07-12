@@ -24,22 +24,22 @@ function isStaleScan(scanDate: Date): boolean {
 
 /** Score number colour per band — the label text always rides along. */
 const BAND_TEXT: Record<ReturnType<typeof seoScoreBand>["tone"], string> = {
-  success: "text-green-600",
-  warning: "text-amber-600",
-  critical: "text-red-600",
+  success: "text-success-strong",
+  warning: "text-warning-strong",
+  critical: "text-critical-strong",
 };
 
 const BAND_CHIP: Record<ReturnType<typeof seoScoreBand>["tone"], string> = {
-  success: "bg-success-soft text-green-700",
-  warning: "bg-warning-soft text-amber-700",
-  critical: "bg-critical-soft text-red-700",
+  success: "bg-success-soft text-success-strong",
+  warning: "bg-warning-soft text-warning-strong",
+  critical: "bg-critical-soft text-critical-strong",
 };
 
 /** Severity chip: colour always paired with a text label. */
 function SeverityChip({ severity, count }: { severity: SeoSeverity; count: number }) {
   const styles: Record<SeoSeverity, string> = {
-    critical: "bg-critical-soft text-red-700",
-    warning: "bg-warning-soft text-amber-700",
+    critical: "bg-critical-soft text-critical-strong",
+    warning: "bg-warning-soft text-warning-strong",
     info: "bg-info-soft text-info",
   };
   const labels: Record<SeoSeverity, string> = {
@@ -200,7 +200,7 @@ export default async function SeoHealthPage({
               <SeverityChip severity="info" count={report.counts.info} />
             )}
             {report.issues.length === 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-0.5 text-[12px] font-semibold text-green-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-0.5 text-[12px] font-semibold text-success-strong">
                 No issues
               </span>
             )}
@@ -219,7 +219,7 @@ export default async function SeoHealthPage({
       {isStale && (
         <Card className="border border-warning-soft">
           <p className="text-sm text-ink-secondary">
-            <span className="font-semibold text-amber-700">This report may be stale</span>{" "}
+            <span className="font-semibold text-warning-strong">This report may be stale</span>{" "}
             — the latest finished scan is from {scanDateLabel}, more than 7 days ago.{" "}
             <Link
               href={`/dashboard/websites/${website.id}`}
@@ -246,7 +246,7 @@ export default async function SeoHealthPage({
       ) : report.issues.length === 0 ? (
         <Card>
           <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <CheckCircle2 className="size-10 text-green-600" aria-hidden />
+            <CheckCircle2 className="size-10 text-success-strong" aria-hidden />
             <p className="text-lg font-semibold text-ink">
               No SEO issues found across {report.pagesAnalyzed} monitored page
               {report.pagesAnalyzed === 1 ? "" : "s"}
