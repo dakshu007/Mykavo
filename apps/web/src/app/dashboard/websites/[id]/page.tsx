@@ -450,6 +450,24 @@ export default async function WebsiteDetailPage({
         />
       </Card>
 
+      {/* SEO health report (built from the latest scan — no extra queries here) */}
+      <Card>
+        <CardHeader
+          title="SEO health"
+          action={
+            <Link
+              href={`/dashboard/websites/${website.id}/seo`}
+              className="text-[13px] font-medium text-primary hover:underline"
+            >
+              View report →
+            </Link>
+          }
+        />
+        <p className="text-sm text-ink-secondary">
+          Title, description, H1, canonical and indexability checks from your latest scan.
+        </p>
+      </Card>
+
       <Card>
         <CardHeader
           title="Monitored pages"

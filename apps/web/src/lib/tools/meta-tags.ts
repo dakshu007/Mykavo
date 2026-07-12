@@ -92,7 +92,7 @@ export interface MetaCheck {
 }
 
 export const TITLE_LENGTH = { min: 50, max: 60 } as const;
-export const DESCRIPTION_LENGTH = { min: 150, max: 160 } as const;
+export const DESCRIPTION_LENGTH = { min: 120, max: 160 } as const;
 
 export function evaluateTitle(title: string | null): MetaCheck {
   const base = { id: "title", label: "Title tag", value: title };
