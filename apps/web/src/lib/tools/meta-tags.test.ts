@@ -76,19 +76,19 @@ describe("evaluateTitle (50–60 guidance)", () => {
   });
 });
 
-describe("evaluateMetaDescription (150–160 guidance)", () => {
+describe("evaluateMetaDescription (120–160 guidance)", () => {
   it("fails when missing", () => {
     expect(evaluateMetaDescription(null).status).toBe("fail");
   });
 
-  it("warns when shorter than 150 characters", () => {
+  it("warns when shorter than 120 characters", () => {
     const check = evaluateMetaDescription("Too short.");
     expect(check.status).toBe("warn");
-    expect(check.detail).toContain("150–160");
+    expect(check.detail).toContain("120–160");
   });
 
-  it("passes between 150 and 160 characters inclusive", () => {
-    expect(evaluateMetaDescription("x".repeat(150)).status).toBe("pass");
+  it("passes between 120 and 160 characters inclusive", () => {
+    expect(evaluateMetaDescription("x".repeat(120)).status).toBe("pass");
     expect(evaluateMetaDescription("x".repeat(160)).status).toBe("pass");
   });
 

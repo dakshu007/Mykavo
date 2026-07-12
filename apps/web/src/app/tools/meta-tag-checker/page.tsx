@@ -54,7 +54,7 @@ export default function MetaTagCheckerPage() {
           <p>
             Meta tags are the handful of HTML elements that decide how a page appears in search
             results and social shares. The title tag (ideally 50–60 characters) is the headline
-            searchers click; the meta description (150–160 characters) is the pitch underneath
+            searchers click; the meta description (120–160 characters) is the pitch underneath
             it. The canonical URL tells search engines which version of a page to rank, and a
             single stray <span className="font-mono text-[13px] text-ink">noindex</span> in the
             robots meta can silently remove the page from Google entirely.
