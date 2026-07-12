@@ -343,7 +343,8 @@ export function PerformanceAuditPanel({
           <Gauge className="size-4.5 text-ink-secondary" aria-hidden /> Performance
         </h2>
         <p className="mt-0.5 text-[13px] text-ink-secondary">
-          On-demand Lighthouse audit — scores and Core Web Vitals for any page of this site.
+          Lighthouse scores and Core Web Vitals. Audits run automatically every week — or run
+          one now for any page of this site.
         </p>
       </div>
 

@@ -183,6 +183,92 @@ export function sslExpiryAlertEmail(data: SslExpiryAlertData): { subject: string
   return { subject, html: shell(inner), text };
 }
 
+// ---------- Performance-drop alert (weekly Lighthouse audits) ----------
+
+/** One audit's scores; the alert only fires when both performance scores exist. */
+export interface PerformanceDropSnapshot {
+  performance: number;
+  accessibility: number | null;
+  bestPractices: number | null;
+  seo: number | null;
+  lcpMs: number | null;
+}
+
+export interface PerformanceDropData {
+  websiteName: string;
+  websiteHost: string;
+  /** Path of the audited page, e.g. "/" or "/pricing". */
+  pagePath: string;
+  previous: PerformanceDropSnapshot;
+  current: PerformanceDropSnapshot;
+  dashboardUrl: string;
+}
+
+/** "90 → 60 (-30)"; "—" when either side is unknown. */
+function scoreDelta(prev: number | null, curr: number | null): string {
+  if (prev === null || curr === null) return "—";
+  const d = curr - prev;
+  const signed = d === 0 ? "±0" : d > 0 ? `+${d}` : String(d);
+  return `${prev} → ${curr} (${signed})`;
+}
+
+function fmtLcp(v: number | null): string {
+  if (v === null) return "—";
+  return v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v} ms`;
+}
+
+export function performanceDropEmail(data: PerformanceDropData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `\u{1F4C9} Performance dropped on ${data.websiteHost}: ${data.previous.performance} → ${data.current.performance}`;
+
+  const rows: [string, number | null, number | null][] = [
+    ["Performance", data.previous.performance, data.current.performance],
+    ["Accessibility", data.previous.accessibility, data.current.accessibility],
+    ["Best Practices", data.previous.bestPractices, data.current.bestPractices],
+    ["SEO", data.previous.seo, data.current.seo],
+  ];
+
+  const deltaColor = (prev: number | null, curr: number | null): string => {
+    if (prev === null || curr === null || curr === prev) return "#5c6270";
+    return curr < prev ? "#e5484d" : "#16a34a";
+  };
+
+  const scoreRows = rows
+    .map(
+      ([name, prev, curr]) => `<tr>
+        <td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px;color:#16181d;width:130px">${esc(name)}</td>
+        <td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px;font-weight:600;color:${deltaColor(prev, curr)};font-family:ui-monospace,Menlo,monospace">${esc(scoreDelta(prev, curr))}</td>
+      </tr>`,
+    )
+    .join("");
+
+  const lcpLine =
+    data.previous.lcpMs !== null || data.current.lcpMs !== null
+      ? `<p style="margin:0 0 8px;font-size:14px;color:#5c6270">Largest Contentful Paint: <span style="font-family:ui-monospace,Menlo,monospace;color:#16181d">${esc(fmtLcp(data.previous.lcpMs))} → ${esc(fmtLcp(data.current.lcpMs))}</span></p>`
+      : "";
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#e5484d">Performance drop</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Performance on ${esc(data.websiteName)} fell ${data.previous.performance} → ${data.current.performance}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270;font-family:ui-monospace,Menlo,monospace">${esc(data.websiteHost + data.pagePath)}</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px">${scoreRows}</table>
+    ${lcpLine}
+    <div style="margin-top:24px">${button(data.dashboardUrl, "Open dashboard")}</div>
+  `;
+
+  const text =
+    `Performance dropped on ${data.websiteHost}: ${data.previous.performance} → ${data.current.performance}\n\n` +
+    `Audited page: ${data.websiteHost}${data.pagePath}\n\n` +
+    rows.map(([name, prev, curr]) => `- ${name}: ${scoreDelta(prev, curr)}`).join("\n") +
+    `\n- LCP: ${fmtLcp(data.previous.lcpMs)} → ${fmtLcp(data.current.lcpMs)}` +
+    `\n\nDashboard: ${data.dashboardUrl}`;
+
+  return { subject, html: shell(inner), text };
+}
+
 // ---------- Weekly client-ready report (spec §37 "client-ready reports") ----------
 
 export interface WeeklySeverityCount {

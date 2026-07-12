@@ -7,6 +7,7 @@ export {
   sslExpiryAlertEmail,
   weeklyReportEmail,
   workspaceInviteEmail,
+  performanceDropEmail,
   type Severity,
   type ChangeLine,
   type ScanSummaryData,
@@ -18,4 +19,6 @@ export {
   type WeeklySeverityCount,
   type WeeklyLighthouseScores,
   type WorkspaceInviteData,
+  type PerformanceDropData,
+  type PerformanceDropSnapshot,
 } from "./templates";

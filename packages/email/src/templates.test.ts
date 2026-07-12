@@ -4,7 +4,9 @@ import {
   failureAlertEmail,
   weeklyReportEmail,
   workspaceInviteEmail,
+  performanceDropEmail,
   type WeeklyReportData,
+  type PerformanceDropData,
 } from "./templates";
 
 describe("scanSummaryEmail", () => {
@@ -133,6 +135,63 @@ describe("weeklyReportEmail", () => {
 
   it("HTML-escapes the website name", () => {
     const { html } = weeklyReportEmail({ ...base, websiteName: "<b>Evil</b> & Co" });
+    expect(html).not.toContain("<b>Evil</b>");
+    expect(html).toContain("&lt;b&gt;Evil&lt;/b&gt; &amp; Co");
+  });
+});
+
+describe("performanceDropEmail", () => {
+  const base: PerformanceDropData = {
+    websiteName: "Aurora Outdoor",
+    websiteHost: "aurora-outdoor.com",
+    pagePath: "/",
+    previous: { performance: 90, accessibility: 98, bestPractices: 100, seo: 100, lcpMs: 1200 },
+    current: { performance: 62, accessibility: 98, bestPractices: 92, seo: 100, lcpMs: 3400 },
+    dashboardUrl: "https://fluxen.app/dashboard/websites/w1",
+  };
+
+  it("builds the '📉 Performance dropped on {host}: {prev} → {curr}' subject", () => {
+    expect(performanceDropEmail(base).subject).toBe(
+      "\u{1F4C9} Performance dropped on aurora-outdoor.com: 90 → 62",
+    );
+  });
+
+  it("lists the four score deltas, the LCP change, and the dashboard link", () => {
+    const { html } = performanceDropEmail(base);
+    expect(html).toContain("Performance on Aurora Outdoor fell 90 → 62");
+    expect(html).toContain("90 → 62 (-28)");
+    expect(html).toContain("98 → 98 (±0)");
+    expect(html).toContain("100 → 92 (-8)");
+    expect(html).toContain("1.2 s → 3.4 s");
+    expect(html).toContain("aurora-outdoor.com/");
+    expect(html).toContain(base.dashboardUrl);
+  });
+
+  it("provides a plain-text alternative with every delta", () => {
+    const { text } = performanceDropEmail(base);
+    expect(text).toContain("Performance dropped on aurora-outdoor.com: 90 → 62");
+    expect(text).toContain("Audited page: aurora-outdoor.com/");
+    expect(text).toContain("- Performance: 90 → 62 (-28)");
+    expect(text).toContain("- Accessibility: 98 → 98 (±0)");
+    expect(text).toContain("- Best Practices: 100 → 92 (-8)");
+    expect(text).toContain("- SEO: 100 → 100 (±0)");
+    expect(text).toContain("- LCP: 1.2 s → 3.4 s");
+    expect(text).toContain("Dashboard: https://fluxen.app/dashboard/websites/w1");
+  });
+
+  it("renders '—' for scores missing on either side", () => {
+    const { text } = performanceDropEmail({
+      ...base,
+      previous: { ...base.previous, accessibility: null, lcpMs: null },
+      current: { ...base.current, seo: null },
+    });
+    expect(text).toContain("- Accessibility: —");
+    expect(text).toContain("- SEO: —");
+    expect(text).toContain("- LCP: — → 3.4 s");
+  });
+
+  it("HTML-escapes the website name", () => {
+    const { html } = performanceDropEmail({ ...base, websiteName: "<b>Evil</b> & Co" });
     expect(html).not.toContain("<b>Evil</b>");
     expect(html).toContain("&lt;b&gt;Evil&lt;/b&gt; &amp; Co");
   });

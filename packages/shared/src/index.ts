@@ -8,3 +8,4 @@ export * from "./retention";
 export * from "./stabilization";
 export * from "./health";
 export * from "./report";
+export * from "./performance";
