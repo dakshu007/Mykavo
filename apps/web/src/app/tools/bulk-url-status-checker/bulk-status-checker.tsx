@@ -13,10 +13,10 @@ import { statusLabel, type StatusTone } from "@/lib/tools/status-labels";
 const MAX_URLS = 20;
 
 const TONE_CLASS: Record<StatusTone, string> = {
-  success: "bg-success-soft text-green-700",
-  redirect: "bg-warning-soft text-amber-700",
-  clientError: "bg-critical-soft text-red-700",
-  serverError: "bg-critical-soft text-red-700",
+  success: "bg-success-soft text-success-strong",
+  redirect: "bg-warning-soft text-warning-strong",
+  clientError: "bg-critical-soft text-critical-strong",
+  serverError: "bg-critical-soft text-critical-strong",
   info: "bg-info-soft text-info",
 };
 
@@ -57,7 +57,7 @@ function ResultRow({ result }: { result: UrlStatusResult }) {
             {statusLabel(result.status).text}
           </span>
         ) : (
-          <span className="text-[13px] font-medium text-red-700">{result.error}</span>
+          <span className="text-[13px] font-medium text-critical-strong">{result.error}</span>
         )}
       </td>
       <td className="whitespace-nowrap py-3 text-right font-mono text-[13px] text-ink-secondary">
@@ -129,7 +129,7 @@ export function BulkStatusChecker() {
             <p
               className={cn(
                 "text-[13px]",
-                urlCount > MAX_URLS ? "font-medium text-red-700" : "text-ink-faint",
+                urlCount > MAX_URLS ? "font-medium text-critical-strong" : "text-ink-faint",
               )}
             >
               {urlCount} / {MAX_URLS} URLs
@@ -137,7 +137,7 @@ export function BulkStatusChecker() {
             <button
               type="submit"
               disabled={loading || urlCount === 0}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {loading ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -161,9 +161,9 @@ export function BulkStatusChecker() {
               </h2>
               <p className="text-[13px] text-ink-secondary">
                 {broken === 0 ? (
-                  <span className="font-semibold text-green-700">All reachable</span>
+                  <span className="font-semibold text-success-strong">All reachable</span>
                 ) : (
-                  <span className="font-semibold text-red-700">
+                  <span className="font-semibold text-critical-strong">
                     {broken} problem{broken === 1 ? "" : "s"} found
                   </span>
                 )}

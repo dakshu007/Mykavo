@@ -295,19 +295,19 @@ export default function HomePage() {
                   <dl className="space-y-3 font-mono text-[13px]">
                     <div>
                       <dt className="text-ink-faint">title</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-green-800">
+                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
                         Aurora Outdoor — Tents &amp; Camping Gear
                       </dd>
                     </div>
                     <div>
                       <dt className="text-ink-faint">robots</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-green-800">
+                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
                         index, follow
                       </dd>
                     </div>
                     <div>
                       <dt className="text-ink-faint">status</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-green-800">
+                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
                         200 OK
                       </dd>
                     </div>
@@ -318,19 +318,19 @@ export default function HomePage() {
                   <dl className="space-y-3 font-mono text-[13px]">
                     <div>
                       <dt className="text-ink-faint">title</dt>
-                      <dd className="mt-0.5 rounded-md bg-critical-soft px-2 py-1 text-red-700">
+                      <dd className="mt-0.5 rounded-md bg-critical-soft px-2 py-1 text-critical-strong">
                         Home
                       </dd>
                     </div>
                     <div>
                       <dt className="text-ink-faint">robots</dt>
-                      <dd className="mt-0.5 rounded-md bg-critical-soft px-2 py-1 text-red-700">
+                      <dd className="mt-0.5 rounded-md bg-critical-soft px-2 py-1 text-critical-strong">
                         noindex, nofollow
                       </dd>
                     </div>
                     <div>
                       <dt className="text-ink-faint">status</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-green-800">
+                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
                         200 OK
                       </dd>
                     </div>
@@ -338,7 +338,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="border-t border-line bg-surface px-7 py-4 text-sm text-ink-secondary">
-                <span className="font-semibold text-red-700">Critical:</span> page changed from
+                <span className="font-semibold text-critical-strong">Critical:</span> page changed from
                 index to noindex — Fluxen alerts you within one scan cycle.
               </div>
             </div>
@@ -375,10 +375,10 @@ export default function HomePage() {
             <div className="rounded-card bg-surface p-6">
               <div className="space-y-3">
                 {[
-                  { site: "aurora-outdoor.com", state: "3 critical changes", tone: "text-red-700 bg-critical-soft" },
-                  { site: "meridianlegal.co", state: "2 high changes", tone: "text-orange-700 bg-orange-soft" },
-                  { site: "bloomandroot.shop", state: "Healthy", tone: "text-green-700 bg-success-soft" },
-                  { site: "northwinddental.com", state: "Healthy", tone: "text-green-700 bg-success-soft" },
+                  { site: "aurora-outdoor.com", state: "3 critical changes", tone: "text-critical-strong bg-critical-soft" },
+                  { site: "meridianlegal.co", state: "2 high changes", tone: "text-orange-strong bg-orange-soft" },
+                  { site: "bloomandroot.shop", state: "Healthy", tone: "text-success-strong bg-success-soft" },
+                  { site: "northwinddental.com", state: "Healthy", tone: "text-success-strong bg-success-soft" },
                 ].map((row) => (
                   <div
                     key={row.site}
@@ -517,7 +517,7 @@ export default function HomePage() {
         {/* 15. Final CTA */}
         <section className="py-24" id="waitlist">
           <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <div className="rounded-card bg-ink px-6 py-16 text-center sm:px-12">
+            <div className="rounded-card bg-panel px-6 py-16 text-center sm:px-12">
               <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 Stop finding out about broken websites from your users
               </h2>
@@ -529,7 +529,7 @@ export default function HomePage() {
                 <ButtonLink
                   href="/signup"
                   size="lg"
-                  className="bg-white text-ink hover:bg-white/90"
+                  className="bg-white text-panel hover:bg-white/90"
                 >
                   Start Monitoring Free
                 </ButtonLink>

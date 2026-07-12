@@ -16,12 +16,12 @@ import {
  * hover, aria-label on keyboard focus).
  */
 
-/** Band fills — success/warning/critical/line tokens from globals.css. */
-const BAND_FILL: Record<UptimeBand, string> = {
-  good: "#16a34a",
-  degraded: "#f59e0b",
-  bad: "#e5484d",
-  empty: "#e4e7ee",
+/** Band colors — success/warning/critical/line tokens, so they follow the theme. */
+const BAND_CLASSES: Record<UptimeBand, { bar: string; dot: string }> = {
+  good: { bar: "fill-success", dot: "bg-success" },
+  degraded: { bar: "fill-warning", dot: "bg-warning" },
+  bad: { bar: "fill-critical", dot: "bg-critical" },
+  empty: { bar: "fill-line", dot: "bg-line" },
 };
 
 const BAND_LEGEND: readonly { band: UptimeBand; label: string }[] = [
@@ -80,8 +80,7 @@ export function UptimeBars({
             >
               <span
                 aria-hidden
-                className="inline-block size-2 rounded-full"
-                style={{ backgroundColor: BAND_FILL[band] }}
+                className={`inline-block size-2 rounded-full ${BAND_CLASSES[band].dot}`}
               />
               {label}
             </li>
@@ -105,10 +104,9 @@ export function UptimeBars({
               width={barWidth.toFixed(1)}
               height={STRIP_H}
               rx={radius}
-              fill={BAND_FILL[uptimeBand(day.uptimePercent)]}
               tabIndex={0}
               aria-label={label}
-              className="outline-none focus-visible:stroke-primary focus-visible:stroke-2"
+              className={`${BAND_CLASSES[uptimeBand(day.uptimePercent)].bar} outline-none focus-visible:stroke-primary focus-visible:stroke-2`}
             >
               <title>{label}</title>
             </rect>

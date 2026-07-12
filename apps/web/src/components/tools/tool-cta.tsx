@@ -15,12 +15,12 @@ export function ToolCta({
   tool: string;
 }) {
   return (
-    <div className="rounded-card bg-ink px-6 py-8 text-center">
+    <div className="rounded-card bg-panel px-6 py-8 text-center">
       <h2 className="text-xl font-semibold tracking-tight text-white">{heading}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/70">{body}</p>
       <Link
         href="/signup"
-        className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-ink transition-colors hover:bg-white/90"
+        className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-panel transition-colors hover:bg-white/90"
         onClick={() => track("cta_clicked", { cta: "tool_to_waitlist", tool })}
       >
         Start Monitoring Free <ArrowRight className="size-4" aria-hidden />

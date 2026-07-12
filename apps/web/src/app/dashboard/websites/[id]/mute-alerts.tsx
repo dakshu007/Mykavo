@@ -66,7 +66,7 @@ export function MutedAlertsBanner({
       role="status"
       className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-warning-soft px-5 py-3.5"
     >
-      <p className="flex items-center gap-2 text-sm font-medium text-amber-700">
+      <p className="flex items-center gap-2 text-sm font-medium text-warning-strong">
         <BellOff className="size-4 shrink-0" aria-hidden />
         <span suppressHydrationWarning>
           Alerts muted until {formatUntil(mutedUntilIso)} · alerts still recorded, just
@@ -74,11 +74,11 @@ export function MutedAlertsBanner({
         </span>
       </p>
       <div className="flex items-center gap-3">
-        {error && <span className="text-sm text-red-700">{error}</span>}
+        {error && <span className="text-sm text-critical-strong">{error}</span>}
         <button
           onClick={() => patch(null)}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-full bg-card px-4 py-1.5 text-[13px] font-medium text-amber-700 shadow-card transition-colors hover:text-ink disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full bg-card px-4 py-1.5 text-[13px] font-medium text-warning-strong shadow-card transition-colors hover:text-ink disabled:opacity-60"
         >
           {busy && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
           Unmute
@@ -120,7 +120,7 @@ export function MuteAlertsControl({
           <button
             onClick={() => patch(null)}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
           >
             {busy ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -130,12 +130,12 @@ export function MuteAlertsControl({
         )}
       </div>
       {mutedUntilIso && (
-        <p className="mt-2 text-[13px] font-medium text-amber-700" suppressHydrationWarning>
+        <p className="mt-2 text-[13px] font-medium text-warning-strong" suppressHydrationWarning>
           Muted until {formatUntil(mutedUntilIso)}
         </p>
       )}
       {error && (
-        <p className="mt-2 text-sm text-red-700" role="alert">
+        <p className="mt-2 text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}

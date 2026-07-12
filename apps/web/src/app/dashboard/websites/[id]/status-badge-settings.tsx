@@ -31,7 +31,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     >
       {copied ? (
         <>
-          <Check className="size-3.5 text-green-700" aria-hidden /> Copied
+          <Check className="size-3.5 text-success-strong" aria-hidden /> Copied
         </>
       ) : (
         <>
@@ -110,7 +110,7 @@ export function StatusBadgeSettings({
           className={
             enabled
               ? "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-card px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:text-ink disabled:opacity-60"
-              : "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+              : "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
           }
         >
           {busy && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
@@ -131,7 +131,7 @@ export function StatusBadgeSettings({
       )}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}

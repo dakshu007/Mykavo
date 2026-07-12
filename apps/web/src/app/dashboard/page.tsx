@@ -115,7 +115,7 @@ export default async function DashboardOverviewPage() {
           </p>
           <Link
             href="/dashboard/websites/new"
-            className="mt-7 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+            className="mt-7 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
           >
             <Plus className="size-4" aria-hidden /> Add website
           </Link>
@@ -177,8 +177,8 @@ export default async function DashboardOverviewPage() {
                       healthByWebsite.get(w.id) === undefined
                         ? "bg-line"
                         : healthByWebsite.get(w.id)
-                          ? "bg-green-500"
-                          : "bg-red-500"
+                          ? "bg-success"
+                          : "bg-critical"
                     }`}
                   />
                   <div className="min-w-0 flex-1">

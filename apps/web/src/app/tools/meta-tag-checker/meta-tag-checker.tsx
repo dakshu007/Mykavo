@@ -37,10 +37,10 @@ function CheckRow({ check }: { check: MetaCheck }) {
             className={cn(
               "ml-2 text-xs font-medium",
               check.status === "pass"
-                ? "text-green-700"
+                ? "text-success-strong"
                 : check.status === "warn"
-                  ? "text-amber-700"
-                  : "text-red-700",
+                  ? "text-warning-strong"
+                  : "text-critical-strong",
             )}
           >
             {style.label}
@@ -110,11 +110,11 @@ export function MetaTagChecker() {
             <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-[15px] font-semibold text-ink">Meta tag checklist</h2>
               <p className="text-[13px] text-ink-secondary">
-                <span className="font-semibold text-green-700">{summary.pass} passed</span>
+                <span className="font-semibold text-success-strong">{summary.pass} passed</span>
                 {" · "}
-                <span className="font-semibold text-amber-700">{summary.warn} warnings</span>
+                <span className="font-semibold text-warning-strong">{summary.warn} warnings</span>
                 {" · "}
-                <span className="font-semibold text-red-700">{summary.fail} problems</span>
+                <span className="font-semibold text-critical-strong">{summary.fail} problems</span>
               </p>
             </div>
             <p className="mb-4 truncate font-mono text-xs text-ink-faint">

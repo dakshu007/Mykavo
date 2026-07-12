@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 export function ToolError({ message }: { message: string }) {
   return (
     <Card className="border border-critical/20 bg-critical-soft">
-      <p className="text-sm font-medium text-red-700" role="alert">
+      <p className="text-sm font-medium text-critical-strong" role="alert">
         {message}
       </p>
     </Card>

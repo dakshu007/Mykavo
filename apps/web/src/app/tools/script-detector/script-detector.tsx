@@ -112,7 +112,7 @@ export function ScriptDetector() {
                             {s.domain}
                           </p>
                           {s.isThirdParty && (
-                            <p className="text-[11px] font-medium text-amber-700">Third-party</p>
+                            <p className="text-[11px] font-medium text-warning-strong">Third-party</p>
                           )}
                         </td>
                         <td className="py-3 text-[13px] font-medium text-ink">

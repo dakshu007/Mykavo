@@ -14,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPaletteTrigger } from "@/components/dashboard/command-palette";
 import {
   WorkspaceSwitcher,
@@ -89,8 +90,8 @@ export function DashboardSidebar({
               className={cn(
                 "flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-ink text-white"
-                  : "text-ink-secondary hover:bg-black/5 hover:text-ink",
+                  ? "bg-ink text-ink-inverse"
+                  : "text-ink-secondary hover:bg-ink/5 hover:text-ink",
               )}
             >
               <item.icon className="size-4.5 shrink-0" aria-hidden />
@@ -102,9 +103,14 @@ export function DashboardSidebar({
 
       <CommandPaletteTrigger />
 
+      <div className="mt-4 flex items-center justify-between gap-2 px-1">
+        <span className="px-3 text-[11px] font-medium text-ink-faint">Theme</span>
+        <ThemeToggle />
+      </div>
+
       <button
         onClick={handleSignOut}
-        className="mt-4 flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ink-secondary transition-colors hover:bg-black/5 hover:text-ink"
+        className="mt-2 flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ink-secondary transition-colors hover:bg-ink/5 hover:text-ink"
       >
         <LogOut className="size-4.5 shrink-0" aria-hidden />
         Sign out

@@ -60,7 +60,7 @@ export default async function BillingPage({
 
       {needsPro && (
         <div className="flex items-start gap-3 rounded-card bg-warning-soft px-5 py-4">
-          <Sparkles className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
+          <Sparkles className="mt-0.5 size-5 shrink-0 text-warning-strong" aria-hidden />
           <p className="text-sm text-ink">
             Website add-ons extend the Pro plan. Upgrade to Pro first, then you can add
             {" "}{WEBSITE_ADDON.websitesPerUnit} more website anytime for ${WEBSITE_ADDON.priceMonthlyUsd}/mo
@@ -71,7 +71,7 @@ export default async function BillingPage({
 
       {addonLimitReached && (
         <div className="flex items-start gap-3 rounded-card bg-warning-soft px-5 py-4">
-          <Sparkles className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
+          <Sparkles className="mt-0.5 size-5 shrink-0 text-warning-strong" aria-hidden />
           <p className="text-sm text-ink">
             You already have the maximum of {WEBSITE_ADDON.maxUnits} website add-ons on this
             workspace.
@@ -92,12 +92,12 @@ export default async function BillingPage({
           <p className="text-3xl font-semibold tracking-tight text-ink">{plan.name}</p>
           <p className="text-sm text-ink-secondary">${plan.priceMonthlyUsd}/month</p>
           {isPro && (
-            <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-green-700">
+            <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
               Active
             </span>
           )}
           {subscription?.cancelAtPeriodEnd && (
-            <span className="rounded-full bg-warning-soft px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+            <span className="rounded-full bg-warning-soft px-2.5 py-1 text-[11px] font-semibold text-warning-strong">
               Cancels at period end
             </span>
           )}
@@ -117,7 +117,7 @@ export default async function BillingPage({
             <div className="mt-6 flex flex-wrap gap-3">
               <a
                 href="/api/billing/portal"
-                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-medium text-white transition-colors hover:bg-black"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-medium text-ink-inverse transition-colors hover:bg-ink-hover"
               >
                 Manage billing
               </a>
@@ -192,7 +192,7 @@ export default async function BillingPage({
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <a
                   href="/api/billing/addon"
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
                 >
                   <Plus className="size-4" aria-hidden />
                   Add {WEBSITE_ADDON.websitesPerUnit} more website — ${WEBSITE_ADDON.priceMonthlyUsd}/mo
@@ -241,7 +241,7 @@ export default async function BillingPage({
           {billingEnabled ? (
             <a
               href="/api/billing/checkout"
-              className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
             >
               Upgrade to Pro <ArrowRight className="size-4" aria-hidden />
             </a>

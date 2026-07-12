@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
 
 const severityStyles: Record<Severity, { chip: string; dot: string; label: string }> = {
-  CRITICAL: { chip: "bg-critical-soft text-red-700", dot: "bg-critical", label: "Critical" },
-  HIGH: { chip: "bg-orange-soft text-orange-700", dot: "bg-orange", label: "High" },
-  MEDIUM: { chip: "bg-warning-soft text-amber-700", dot: "bg-warning", label: "Medium" },
+  CRITICAL: { chip: "bg-critical-soft text-critical-strong", dot: "bg-critical", label: "Critical" },
+  HIGH: { chip: "bg-orange-soft text-orange-strong", dot: "bg-orange", label: "High" },
+  MEDIUM: { chip: "bg-warning-soft text-warning-strong", dot: "bg-warning", label: "Medium" },
   LOW: { chip: "bg-primary-soft text-primary", dot: "bg-primary", label: "Low" },
   INFO: { chip: "bg-info-soft text-info", dot: "bg-info", label: "Info" },
 };
@@ -36,9 +36,9 @@ export function SeverityBadge({
 export type Health = "healthy" | "attention" | "critical" | "paused";
 
 const healthStyles: Record<Health, { dot: string; text: string; label: string }> = {
-  healthy: { dot: "bg-success", text: "text-green-700", label: "Healthy" },
-  attention: { dot: "bg-warning", text: "text-amber-700", label: "Needs attention" },
-  critical: { dot: "bg-critical", text: "text-red-700", label: "Critical" },
+  healthy: { dot: "bg-success", text: "text-success-strong", label: "Healthy" },
+  attention: { dot: "bg-warning", text: "text-warning-strong", label: "Needs attention" },
+  critical: { dot: "bg-critical", text: "text-critical-strong", label: "Critical" },
   paused: { dot: "bg-ink-faint", text: "text-ink-faint", label: "Paused" },
 };
 

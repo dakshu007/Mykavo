@@ -45,7 +45,7 @@ export function ApproveScanButton({
       <button
         onClick={approve}
         disabled={loading}
-        className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+        className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         {loading ? (
           <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -55,7 +55,7 @@ export function ApproveScanButton({
         Approve entire scan
       </button>
       {error && (
-        <p className="text-[13px] text-red-700" role="alert">
+        <p className="text-[13px] text-critical-strong" role="alert">
           {error}
         </p>
       )}

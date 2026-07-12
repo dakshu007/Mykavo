@@ -50,7 +50,7 @@ export default async function WebsitesPage({
         action={
           <Link
             href="/dashboard/websites/new"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
           >
             <Plus className="size-4" aria-hidden /> Add website
           </Link>
@@ -79,7 +79,7 @@ export default async function WebsitesPage({
             href={tagFilterHref([])}
             className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
               activeTags.length === 0
-                ? "bg-primary text-white"
+                ? "bg-primary text-primary-contrast"
                 : "bg-surface text-ink-secondary hover:text-primary"
             }`}
           >
@@ -97,12 +97,12 @@ export default async function WebsitesPage({
                 aria-pressed={active}
                 className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
                   active
-                    ? "bg-primary text-white"
-                    : "bg-primary-soft text-primary hover:bg-primary hover:text-white"
+                    ? "bg-primary text-primary-contrast"
+                    : "bg-primary-soft text-primary hover:bg-primary hover:text-primary-contrast"
                 }`}
               >
                 {t}
-                <span className={active ? "ml-1.5 text-white/70" : "ml-1.5 text-primary/60"}>
+                <span className={active ? "ml-1.5 text-primary-contrast/70" : "ml-1.5 text-primary/60"}>
                   {tagCounts.get(t)}
                 </span>
               </Link>
@@ -129,7 +129,7 @@ export default async function WebsitesPage({
             ) : (
               <Link
                 href="/dashboard/websites/new"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
               >
                 <Plus className="size-4" aria-hidden /> Add website
               </Link>
@@ -192,7 +192,7 @@ export default async function WebsitesPage({
                       <div className="flex flex-wrap items-center gap-2">
                         <WebsiteStatusBadge status={w.status} />
                         {w.muteAlertsUntil && w.muteAlertsUntil > now && (
-                          <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                          <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-[11px] font-semibold text-warning-strong">
                             Muted
                           </span>
                         )}

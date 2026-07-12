@@ -132,7 +132,7 @@ export function ChangeActions({
               <button
                 onClick={updateBaseline}
                 disabled={busy !== null}
-                className={cn(btn, size, "bg-primary text-white hover:bg-primary-hover")}
+                className={cn(btn, size, "bg-primary text-primary-contrast hover:bg-primary-hover")}
               >
                 {busy === "baseline" ? (
                   <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -207,7 +207,7 @@ export function ChangeActions({
         )}
       </div>
       {error && (
-        <p className="text-[13px] text-red-700" role="alert">
+        <p className="text-[13px] text-critical-strong" role="alert">
           {error}
         </p>
       )}

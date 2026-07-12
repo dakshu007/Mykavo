@@ -118,7 +118,7 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
           type="checkbox"
           checked={failureAlerts}
           onChange={(e) => setFailureAlerts(e.target.checked)}
-          className="size-4 accent-[#3556f4]"
+          className="size-4 accent-primary"
         />
         <span className="text-sm text-ink">
           Also alert me when a scan fails (site down or unreachable)
@@ -130,7 +130,7 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
           type="checkbox"
           checked={weeklyReports}
           onChange={(e) => setWeeklyReports(e.target.checked)}
-          className="mt-0.5 size-4 accent-[#3556f4]"
+          className="mt-0.5 size-4 accent-primary"
         />
         <span>
           <span className="block text-sm font-medium text-ink">Weekly report</span>
@@ -141,7 +141,7 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
       </label>
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}
@@ -150,7 +150,7 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
         <button
           type="submit"
           disabled={status === "saving"}
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+          className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {status === "saving" && <Loader2 className="size-4 animate-spin" aria-hidden />}
           {status === "saved" && <Check className="size-4" aria-hidden />}

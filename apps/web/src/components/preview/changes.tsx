@@ -7,8 +7,8 @@ import { changes } from "./data";
 const statusStyles: Record<string, string> = {
   NEW: "bg-primary-soft text-primary",
   REVIEWED: "bg-info-soft text-info",
-  APPROVED: "bg-success-soft text-green-700",
-  RESOLVED: "bg-success-soft text-green-700",
+  APPROVED: "bg-success-soft text-success-strong",
+  RESOLVED: "bg-success-soft text-success-strong",
 };
 
 export function PreviewChanges() {

@@ -98,7 +98,7 @@ export function PageSelector({
           className={cn(
             "rounded-full px-3.5 py-1.5 text-[13px] font-semibold",
             selected.size >= pageBudget
-              ? "bg-warning-soft text-amber-700"
+              ? "bg-warning-soft text-warning-strong"
               : "bg-primary-soft text-primary",
           )}
         >
@@ -111,7 +111,7 @@ export function PageSelector({
       {warnings.length > 0 && (
         <div className="mb-4 space-y-1 rounded-tile bg-warning-soft px-4 py-3">
           {warnings.map((w) => (
-            <p key={w} className="flex items-start gap-2 text-[13px] text-amber-800">
+            <p key={w} className="flex items-start gap-2 text-[13px] text-warning-strong">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               {w}
             </p>
@@ -164,7 +164,7 @@ export function PageSelector({
                   checked={checked}
                   disabled={disabled}
                   onChange={() => toggle(page.url)}
-                  className="size-4 accent-[#3556f4]"
+                  className="size-4 accent-primary"
                 />
                 <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink">
                   {path === "/" ? "/ (homepage)" : path}

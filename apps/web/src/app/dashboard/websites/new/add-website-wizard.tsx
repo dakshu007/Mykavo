@@ -120,14 +120,14 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
             />
           </div>
           {error && (
-            <p className="text-sm text-red-700" role="alert">
+            <p className="text-sm text-critical-strong" role="alert">
               {error}
             </p>
           )}
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[15px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
           >
             {loading ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -158,7 +158,7 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
       />
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}
@@ -168,7 +168,7 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
         <button
           onClick={handleSave}
           disabled={loading || selected.size === 0}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-8 text-[15px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-8 text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
           Monitor {selected.size} page{selected.size === 1 ? "" : "s"}

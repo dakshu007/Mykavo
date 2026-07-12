@@ -126,7 +126,7 @@ export default async function MonitoredPageDetail({
             title={
               <span className="flex items-center gap-2.5">
                 Current baseline
-                <span className="rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-green-700">
+                <span className="rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-success-strong">
                   Version {active.version}
                 </span>
               </span>
@@ -186,7 +186,7 @@ export default async function MonitoredPageDetail({
                 <span
                   className={
                     b.status === "ACTIVE"
-                      ? "rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-green-700"
+                      ? "rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-success-strong"
                       : "rounded-full bg-info-soft px-2.5 py-0.5 text-[11px] font-semibold text-info"
                   }
                 >
@@ -230,14 +230,14 @@ export default async function MonitoredPageDetail({
               </span>
             </div>
             {elementViews.length > 0 && (
-              <p className="mt-3 text-[13px] text-amber-700">
+              <p className="mt-3 text-[13px] text-warning-strong">
                 {elementViews.length} configured element{elementViews.length === 1 ? "" : "s"}{" "}
                 {elementViews.length === 1 ? "is" : "are"} paused on your current plan.
               </p>
             )}
             <Link
               href="/dashboard/billing"
-              className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover"
+              className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
             >
               Upgrade to Pro
             </Link>
@@ -278,7 +278,7 @@ export default async function MonitoredPageDetail({
                     </p>
                   </div>
                   {isBaseline ? (
-                    <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                    <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
                       Current baseline
                     </span>
                   ) : (

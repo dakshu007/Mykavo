@@ -12,10 +12,10 @@ import type { RedirectChainResult } from "@/lib/tools/redirect-chain";
 import { redirectTypeLabel, statusLabel, type StatusTone } from "@/lib/tools/status-labels";
 
 const TONE_CLASS: Record<StatusTone, string> = {
-  success: "bg-success-soft text-green-700",
-  redirect: "bg-warning-soft text-amber-700",
-  clientError: "bg-critical-soft text-red-700",
-  serverError: "bg-critical-soft text-red-700",
+  success: "bg-success-soft text-success-strong",
+  redirect: "bg-warning-soft text-warning-strong",
+  clientError: "bg-critical-soft text-critical-strong",
+  serverError: "bg-critical-soft text-critical-strong",
   info: "bg-info-soft text-info",
 };
 
@@ -46,7 +46,7 @@ function WarningBanner({ tone, children }: { tone: "warn" | "error"; children: R
         className={cn("mt-0.5 size-4 shrink-0", tone === "error" ? "text-critical" : "text-warning")}
         aria-hidden
       />
-      <p className={cn("text-[13px] leading-6", tone === "error" ? "text-red-700" : "text-amber-700")}>
+      <p className={cn("text-[13px] leading-6", tone === "error" ? "text-critical-strong" : "text-warning-strong")}>
         {children}
       </p>
     </div>

@@ -41,10 +41,10 @@ export interface PendingInviteView {
 }
 
 const ROLE_CHIP: Record<WorkspaceRole, string> = {
-  OWNER: "bg-ink text-white",
+  OWNER: "bg-ink text-ink-inverse",
   ADMIN: "bg-primary-soft text-primary",
-  MEMBER: "bg-black/5 text-ink-secondary",
-  VIEWER: "bg-black/5 text-ink-faint",
+  MEMBER: "bg-ink/5 text-ink-secondary",
+  VIEWER: "bg-ink/5 text-ink-faint",
 };
 
 function roleLabel(role: string): string {
@@ -206,7 +206,7 @@ export function TeamSettings({
                       method: "DELETE",
                     })
                   }
-                  className="shrink-0 text-red-700 hover:bg-red-50 hover:text-red-800"
+                  className="shrink-0 text-critical-strong hover:bg-critical-soft hover:text-critical-strong"
                 >
                   {busy === `remove-${m.id}` && (
                     <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -259,7 +259,7 @@ export function TeamSettings({
                         method: "DELETE",
                       })
                     }
-                    className="shrink-0 text-red-700 hover:bg-red-50 hover:text-red-800"
+                    className="shrink-0 text-critical-strong hover:bg-critical-soft hover:text-critical-strong"
                   >
                     Revoke
                   </Button>
@@ -325,11 +325,11 @@ export function TeamSettings({
         ))}
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}
-      {notice && <p className="text-sm text-green-700">{notice}</p>}
+      {notice && <p className="text-sm text-success-strong">{notice}</p>}
     </div>
   );
 }

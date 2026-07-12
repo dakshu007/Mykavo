@@ -35,8 +35,6 @@ const BOTTOM = H - 26; // room for the x-axis labels
 const LEFT = 42; // room for tick labels like "1.5 s"
 const RIGHT = W - 6;
 
-const LINE_COLOR = "#3556f4"; // royal-blue primary — named in the caption text
-
 /** Render dots (with hover titles) only up to this many valued points. */
 const MAX_DOTS = 48;
 
@@ -113,7 +111,7 @@ export function ResponseTimeChart({
               x2={RIGHT}
               y1={toY(tick).toFixed(1)}
               y2={toY(tick).toFixed(1)}
-              stroke="#e4e7ee"
+              className="stroke-line"
               strokeWidth={1}
             />
             <text
@@ -121,7 +119,7 @@ export function ResponseTimeChart({
               y={toY(tick) + 3}
               textAnchor="end"
               fontSize={9}
-              fill="#9aa1b1"
+              className="fill-ink-faint"
             >
               {tick === 0 ? "0" : formatMs(tick)}
             </text>
@@ -131,12 +129,12 @@ export function ResponseTimeChart({
         {/* Area fill + line, one pair per contiguous run */}
         {segments.map((segment, i) => (
           <g key={i}>
-            <path d={areaPath(segment, BOTTOM)} fill={LINE_COLOR} opacity={0.08} />
+            <path d={areaPath(segment, BOTTOM)} className="fill-primary" opacity={0.08} />
             {segment.length >= 2 ? (
               <path
                 d={linePath(segment)}
                 fill="none"
-                stroke={LINE_COLOR}
+                className="stroke-primary"
                 strokeWidth={1.5}
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -147,7 +145,7 @@ export function ResponseTimeChart({
                 cx={segment[0].x.toFixed(1)}
                 cy={segment[0].y.toFixed(1)}
                 r={2.5}
-                fill={LINE_COLOR}
+                className="fill-primary"
               />
             )}
           </g>
@@ -161,7 +159,7 @@ export function ResponseTimeChart({
               cx={toX(p.t).toFixed(1)}
               cy={toY(p.avgMs).toFixed(1)}
               r={2.5}
-              fill={LINE_COLOR}
+              className="fill-primary"
             >
               <title>{formatBucketLabel(p.t, p.avgMs)}</title>
             </circle>
@@ -190,7 +188,7 @@ export function ResponseTimeChart({
             y={H - 8}
             textAnchor={i === 0 ? "start" : i === axisTimes.length - 1 ? "end" : "middle"}
             fontSize={9}
-            fill="#9aa1b1"
+            className="fill-ink-faint"
           >
             {formatAxisTime(t, windowDays)}
           </text>

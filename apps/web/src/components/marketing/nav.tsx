@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { ThemeToggleCompact } from "@/components/theme-toggle";
 import { ButtonLink } from "@/components/ui/button";
 
 const links = [
@@ -35,6 +36,7 @@ export function MarketingNav() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggleCompact />
           <ButtonLink href="/login" size="sm" variant="ghost">
             Sign in
           </ButtonLink>
@@ -42,14 +44,17 @@ export function MarketingNav() {
             Start Monitoring Free
           </ButtonLink>
         </div>
-        <button
-          className="inline-flex size-10 items-center justify-center rounded-full text-ink md:hidden"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          aria-label={open ? "Close menu" : "Open menu"}
-        >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggleCompact />
+          <button
+            className="inline-flex size-10 items-center justify-center rounded-full text-ink"
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            aria-label={open ? "Close menu" : "Open menu"}
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </div>
       </div>
       {open && (
         <nav className="border-t border-line bg-canvas px-5 py-4 md:hidden" aria-label="Mobile">
@@ -59,7 +64,7 @@ export function MarketingNav() {
                 <Link
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="block rounded-xl px-3 py-2.5 text-[15px] font-medium text-ink hover:bg-black/5"
+                  className="block rounded-xl px-3 py-2.5 text-[15px] font-medium text-ink hover:bg-ink/5"
                 >
                   {l.label}
                 </Link>

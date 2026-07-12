@@ -43,6 +43,12 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+// Stamps the persisted theme choice on <html> before first paint (no FOUC).
+// Absent/invalid values mean "follow the system" — CSS handles that via
+// prefers-color-scheme, so only explicit choices are stamped. Keep in sync
+// with THEME_STORAGE_KEY + applyThemePreference in src/lib/theme.ts.
+const themeBootScript = `try{var t=localStorage.getItem("fluxen-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,8 +57,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      // The boot script mutates <html> before React hydrates.
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

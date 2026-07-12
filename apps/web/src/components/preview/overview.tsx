@@ -79,7 +79,7 @@ export function PreviewOverview() {
         </div>
 
         {/* Alert channels bar (reference: trackers connected) */}
-        <div className="flex items-center justify-between rounded-card bg-[#e6e8ef] px-6 py-4">
+        <div className="flex items-center justify-between rounded-card bg-line px-6 py-4">
           <div>
             <p className="text-[15px] font-semibold text-ink">Alert channels</p>
             <p className="text-[13px] text-ink-secondary">Email connected · Slack coming soon</p>
@@ -175,7 +175,7 @@ export function PreviewOverview() {
                 </span>
                 <span
                   className={cn(
-                    "inline-flex size-6 items-center justify-center rounded-full text-white",
+                    "inline-flex size-6 items-center justify-center rounded-full text-primary-contrast",
                     c.trend === "up" ? "bg-primary" : "bg-orange",
                   )}
                 >

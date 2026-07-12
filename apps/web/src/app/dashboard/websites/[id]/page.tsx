@@ -57,11 +57,11 @@ function healthWindows(windowDays: number): {
 /** Incident-kind chip: colour always paired with a text label. */
 function IncidentKindChip({ kind }: { kind: HealthIncidentKind }) {
   return kind === "DOWN" ? (
-    <span className="inline-flex shrink-0 rounded-full bg-critical-soft px-2.5 py-0.5 text-[11px] font-semibold text-red-700">
+    <span className="inline-flex shrink-0 rounded-full bg-critical-soft px-2.5 py-0.5 text-[11px] font-semibold text-critical-strong">
       Down
     </span>
   ) : (
-    <span className="inline-flex shrink-0 rounded-full bg-warning-soft px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+    <span className="inline-flex shrink-0 rounded-full bg-warning-soft px-2.5 py-0.5 text-[11px] font-semibold text-warning-strong">
       SSL
     </span>
   );
@@ -292,7 +292,7 @@ export default async function WebsiteDetailPage({
               <p className="flex items-center gap-2 text-xl font-semibold tracking-tight text-ink">
                 <span
                   aria-hidden
-                  className={`inline-block size-2.5 rounded-full ${latestHealth.up ? "bg-green-500" : "bg-red-500"}`}
+                  className={`inline-block size-2.5 rounded-full ${latestHealth.up ? "bg-success" : "bg-critical"}`}
                 />
                 {latestHealth.up ? "Up" : "Down"}
               </p>
@@ -331,9 +331,9 @@ export default async function WebsiteDetailPage({
                   <p
                     className={`text-xl font-semibold tracking-tight ${
                       sslDaysLeft !== null && sslDaysLeft <= 14
-                        ? "text-red-600"
+                        ? "text-critical-strong"
                         : sslDaysLeft !== null && sslDaysLeft <= 30
-                          ? "text-amber-600"
+                          ? "text-warning-strong"
                           : "text-ink"
                     }`}
                   >
@@ -369,7 +369,7 @@ export default async function WebsiteDetailPage({
                   aria-current={windowDays === w.days ? "page" : undefined}
                   className={
                     windowDays === w.days
-                      ? "rounded-full bg-ink px-3 py-1 text-[12px] font-medium text-white"
+                      ? "rounded-full bg-ink px-3 py-1 text-[12px] font-medium text-ink-inverse"
                       : "rounded-full border border-line px-3 py-1 text-[12px] font-medium text-ink-secondary hover:text-ink"
                   }
                 >
@@ -429,7 +429,7 @@ export default async function WebsiteDetailPage({
                         )}
                       </span>
                     ) : (
-                      <span className="font-medium text-red-700">Ongoing</span>
+                      <span className="font-medium text-critical-strong">Ongoing</span>
                     )}
                   </span>
                 </li>
@@ -505,7 +505,7 @@ export default async function WebsiteDetailPage({
                       {path === "/" ? "/ (homepage)" : path}
                     </span>
                     {baselineVersion ? (
-                      <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
+                      <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-success-strong">
                         Baseline v{baselineVersion}
                       </span>
                     ) : (
