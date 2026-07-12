@@ -161,13 +161,13 @@ export default async function ChangeDetailPage({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="label-micro mb-2">Baseline</p>
-              <div className="rounded-tile bg-success-soft px-4 py-3 font-mono text-[13px] break-words text-green-800">
+              <div className="rounded-tile bg-success-soft px-4 py-3 font-mono text-[13px] break-words text-success-strong">
                 {change.previousValue ?? "—"}
               </div>
             </div>
             <div>
               <p className="label-micro mb-2">Current</p>
-              <div className="rounded-tile bg-critical-soft px-4 py-3 font-mono text-[13px] break-words text-red-700">
+              <div className="rounded-tile bg-critical-soft px-4 py-3 font-mono text-[13px] break-words text-critical-strong">
                 {change.currentValue ?? "—"}
               </div>
             </div>

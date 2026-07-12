@@ -59,7 +59,7 @@ export function ChangeNoteForm({ changeId }: { changeId: string }) {
         <button
           type="submit"
           disabled={busy || body.trim().length === 0}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-white transition-colors hover:bg-ink/90 disabled:opacity-60"
+          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-ink-inverse transition-colors hover:bg-ink/90 disabled:opacity-60"
         >
           {busy ? (
             <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -69,7 +69,7 @@ export function ChangeNoteForm({ changeId }: { changeId: string }) {
           Add note
         </button>
         {error && (
-          <p className="text-[13px] text-red-700" role="alert">
+          <p className="text-[13px] text-critical-strong" role="alert">
             {error}
           </p>
         )}
@@ -109,7 +109,7 @@ export function ChangeNoteDeleteButton({
       disabled={busy}
       aria-label="Delete note"
       title="Delete note"
-      className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-surface hover:text-red-700 disabled:opacity-60"
+      className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-surface hover:text-critical-strong disabled:opacity-60"
     >
       {busy ? (
         <Loader2 className="size-4 animate-spin" aria-hidden />

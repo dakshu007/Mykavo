@@ -149,7 +149,7 @@ function LinkPopover({ editor, onClose }: { editor: Editor; onClose: () => void 
         <button
           type="button"
           onClick={apply}
-          className="rounded-full bg-primary px-4 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover"
+          className="rounded-full bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
         >
           {current ? "Update link" : "Set link"}
         </button>
@@ -272,7 +272,7 @@ export function ImagePopover({ editor, onClose }: { editor: Editor; onClose: () 
         type="button"
         onClick={insertFromUrl}
         disabled={!url.trim() || uploading}
-        className="mt-2.5 rounded-full bg-primary px-4 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+        className="mt-2.5 rounded-full bg-primary px-4 py-1.5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         Insert from URL
       </button>

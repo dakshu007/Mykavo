@@ -1,67 +1,245 @@
 @import "tailwindcss";
 
+/*
+  Fluxen design tokens — see docs/DESIGN_SYSTEM.md.
+
+  Theming mechanism (Tailwind v4): the `@theme inline` block maps every color
+  token to a plain CSS custom property (`--fx-*`) that we control. `inline`
+  makes utilities carry the mapped value (`var(--fx-…)`) directly, so a token
+  resolves against whatever `--fx-*` is in scope at the element. The `--fx-*`
+  properties are defined three times:
+
+    1. `:root`                                — light (default)
+    2. `@media (prefers-color-scheme: dark)`  — dark via OS preference, unless
+       the user explicitly chose light (`:not([data-theme="light"])`)
+    3. `:root[data-theme="dark"]`             — explicit user choice, always wins
+
+  `data-theme` is stamped on <html> before paint by the inline script in
+  app/layout.tsx (absent = follow the system). Keep blocks 2 and 3 identical.
+  src/lib/theme-contrast.test.ts parses this file and enforces WCAG AA on
+  every meaningful foreground/background pairing — run it after editing values.
+*/
+
+@theme inline {
+  --color-canvas: var(--fx-canvas);
+  --color-surface: var(--fx-surface);
+  --color-card: var(--fx-card);
+
+  --color-ink: var(--fx-ink);
+  --color-ink-secondary: var(--fx-ink-secondary);
+  --color-ink-faint: var(--fx-ink-faint);
+  /* Text placed on bg-ink fills (active nav pills, dark buttons). */
+  --color-ink-inverse: var(--fx-ink-inverse);
+  /* Hover shade for bg-ink fills (was `hover:bg-black`). */
+  --color-ink-hover: var(--fx-ink-hover);
+  --color-line: var(--fx-line);
+  /* Always-dark marketing/CTA panel + code blocks. Does NOT flip with theme. */
+  --color-panel: var(--fx-panel);
+
+  --color-primary: var(--fx-primary);
+  --color-primary-hover: var(--fx-primary-hover);
+  --color-primary-soft: var(--fx-primary-soft);
+  /* Text placed on bg-primary fills (was `text-white` on buttons). */
+  --color-primary-contrast: var(--fx-primary-contrast);
+
+  --color-success: var(--fx-success);
+  --color-success-soft: var(--fx-success-soft);
+  /* Readable text on -soft chips / cards (was text-green-700 etc.). */
+  --color-success-strong: var(--fx-success-strong);
+  --color-warning: var(--fx-warning);
+  --color-warning-soft: var(--fx-warning-soft);
+  --color-warning-strong: var(--fx-warning-strong);
+  --color-orange: var(--fx-orange);
+  --color-orange-soft: var(--fx-orange-soft);
+  --color-orange-strong: var(--fx-orange-strong);
+  --color-critical: var(--fx-critical);
+  --color-critical-soft: var(--fx-critical-soft);
+  --color-critical-strong: var(--fx-critical-strong);
+  --color-info: var(--fx-info);
+  --color-info-soft: var(--fx-info-soft);
+
+  /* Chart-only accents (Lighthouse trend lines). */
+  --color-chart-amber: var(--fx-chart-amber);
+  --color-chart-violet: var(--fx-chart-violet);
+
+  --shadow-card: var(--fx-shadow-card);
+  --shadow-float: var(--fx-shadow-float);
+}
+
 @theme {
-  /* Fluxen design tokens — see docs/DESIGN_SYSTEM.md */
-  --color-canvas: #eceef4;
-  --color-surface: #f6f7fb;
-  --color-card: #ffffff;
-
-  --color-ink: #16181d;
-  --color-ink-secondary: #5c6270;
-  --color-ink-faint: #9aa1b1;
-  --color-line: #e4e7ee;
-
-  --color-primary: #3556f4;
-  --color-primary-hover: #2a46d6;
-  --color-primary-soft: #e8ecfe;
-
-  --color-success: #16a34a;
-  --color-success-soft: #e5f6ec;
-  --color-warning: #f59e0b;
-  --color-warning-soft: #fdf3e0;
-  --color-orange: #f97316;
-  --color-orange-soft: #feeee2;
-  --color-critical: #e5484d;
-  --color-critical-soft: #fdeaeb;
-  --color-info: #6b7280;
-  --color-info-soft: #eef0f3;
-
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --radius-card: 24px;
   --radius-tile: 16px;
   --radius-field: 12px;
+}
 
-  --shadow-card: 0 1px 2px rgb(22 24 29 / 4%), 0 8px 24px rgb(22 24 29 / 6%);
-  --shadow-float: 0 2px 4px rgb(22 24 29 / 5%), 0 16px 48px rgb(22 24 29 / 10%);
+:root {
+  color-scheme: light;
+
+  --fx-canvas: #eceef4;
+  --fx-surface: #f6f7fb;
+  --fx-card: #ffffff;
+
+  --fx-ink: #16181d;
+  --fx-ink-secondary: #5c6270;
+  --fx-ink-faint: #9aa1b1;
+  --fx-ink-inverse: #ffffff;
+  --fx-ink-hover: #000000;
+  --fx-line: #e4e7ee;
+  --fx-panel: #16181d;
+
+  --fx-primary: #3556f4;
+  --fx-primary-hover: #2a46d6;
+  --fx-primary-soft: #e8ecfe;
+  --fx-primary-contrast: #ffffff;
+
+  --fx-success: #16a34a;
+  --fx-success-soft: #e5f6ec;
+  --fx-success-strong: #147a3a;
+  --fx-warning: #f59e0b;
+  --fx-warning-soft: #fdf3e0;
+  --fx-warning-strong: #b45309;
+  --fx-orange: #f97316;
+  --fx-orange-soft: #feeee2;
+  --fx-orange-strong: #c2410c;
+  --fx-critical: #e5484d;
+  --fx-critical-soft: #fdeaeb;
+  --fx-critical-strong: #b91c1c;
+  --fx-info: #666c7a;
+  --fx-info-soft: #eef0f3;
+
+  --fx-chart-amber: #d97706;
+  --fx-chart-violet: #7c3aed;
+
+  --fx-shadow-card: 0 1px 2px rgb(22 24 29 / 4%), 0 8px 24px rgb(22 24 29 / 6%);
+  --fx-shadow-float: 0 2px 4px rgb(22 24 29 / 5%), 0 16px 48px rgb(22 24 29 / 10%);
+
+  --fx-gradient-coral: linear-gradient(135deg, #fde5d8 0%, #e9d5f2 45%, #fbc7b6 100%);
+  --fx-gradient-mint: linear-gradient(135deg, #d8f4ee 0%, #bfeef2 50%, #8fd8ee 100%);
+}
+
+/* Dark palette — deep cool grays, lightened accents. Two copies of the same
+   values: OS preference (unless the user chose light) and explicit choice.
+   KEEP BOTH BLOCKS IDENTICAL. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --fx-canvas: #0e1015;
+  --fx-surface: #14171d;
+  --fx-card: #191d24;
+
+  --fx-ink: #e9ecf2;
+  --fx-ink-secondary: #a8b0c0;
+  --fx-ink-faint: #7d8596;
+  --fx-ink-inverse: #10131a;
+  --fx-ink-hover: #ffffff;
+  --fx-line: #262b35;
+  --fx-panel: #16181d;
+
+  --fx-primary: #7c92fa;
+  --fx-primary-hover: #93a5fb;
+  --fx-primary-soft: #1c2547;
+  --fx-primary-contrast: #0a0e1a;
+
+  --fx-success: #34c979;
+  --fx-success-soft: #122b1d;
+  --fx-success-strong: #5fd695;
+  --fx-warning: #f5a623;
+  --fx-warning-soft: #2e2410;
+  --fx-warning-strong: #f0b750;
+  --fx-orange: #fb8b47;
+  --fx-orange-soft: #33200f;
+  --fx-orange-strong: #ffa06b;
+  --fx-critical: #f16a6f;
+  --fx-critical-soft: #371b1e;
+  --fx-critical-strong: #ff9298;
+  --fx-info: #9aa3b2;
+  --fx-info-soft: #232833;
+
+  --fx-chart-amber: #f0b750;
+  --fx-chart-violet: #a78bfa;
+
+  --fx-shadow-card: 0 1px 2px rgb(0 0 0 / 45%), 0 8px 24px rgb(0 0 0 / 40%);
+  --fx-shadow-float: 0 2px 4px rgb(0 0 0 / 50%), 0 16px 48px rgb(0 0 0 / 55%);
+
+  --fx-gradient-coral: linear-gradient(135deg, #39262c 0%, #2e2542 45%, #3d2823 100%);
+  --fx-gradient-mint: linear-gradient(135deg, #12302c 0%, #123039 50%, #123a4d 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --fx-canvas: #0e1015;
+    --fx-surface: #14171d;
+    --fx-card: #191d24;
+
+    --fx-ink: #e9ecf2;
+    --fx-ink-secondary: #a8b0c0;
+    --fx-ink-faint: #7d8596;
+    --fx-ink-inverse: #10131a;
+    --fx-ink-hover: #ffffff;
+    --fx-line: #262b35;
+    --fx-panel: #16181d;
+
+    --fx-primary: #7c92fa;
+    --fx-primary-hover: #93a5fb;
+    --fx-primary-soft: #1c2547;
+    --fx-primary-contrast: #0a0e1a;
+
+    --fx-success: #34c979;
+    --fx-success-soft: #122b1d;
+    --fx-success-strong: #5fd695;
+    --fx-warning: #f5a623;
+    --fx-warning-soft: #2e2410;
+    --fx-warning-strong: #f0b750;
+    --fx-orange: #fb8b47;
+    --fx-orange-soft: #33200f;
+    --fx-orange-strong: #ffa06b;
+    --fx-critical: #f16a6f;
+    --fx-critical-soft: #371b1e;
+    --fx-critical-strong: #ff9298;
+    --fx-info: #9aa3b2;
+    --fx-info-soft: #232833;
+
+    --fx-chart-amber: #f0b750;
+    --fx-chart-violet: #a78bfa;
+
+    --fx-shadow-card: 0 1px 2px rgb(0 0 0 / 45%), 0 8px 24px rgb(0 0 0 / 40%);
+    --fx-shadow-float: 0 2px 4px rgb(0 0 0 / 50%), 0 16px 48px rgb(0 0 0 / 55%);
+
+    --fx-gradient-coral: linear-gradient(135deg, #39262c 0%, #2e2542 45%, #3d2823 100%);
+    --fx-gradient-mint: linear-gradient(135deg, #12302c 0%, #123039 50%, #123a4d 100%);
+  }
 }
 
 @layer base {
   body {
-    background-color: var(--color-canvas);
-    color: var(--color-ink);
+    background-color: var(--fx-canvas);
+    color: var(--fx-ink);
     font-family: var(--font-sans);
     font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background-color: var(--color-primary-soft);
+    background-color: var(--fx-primary-soft);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid var(--fx-primary);
     outline-offset: 2px;
   }
 }
 
 @utility gradient-coral {
-  background-image: linear-gradient(135deg, #fde5d8 0%, #e9d5f2 45%, #fbc7b6 100%);
+  background-image: var(--fx-gradient-coral);
 }
 
 @utility gradient-mint {
-  background-image: linear-gradient(135deg, #d8f4ee 0%, #bfeef2 50%, #8fd8ee 100%);
+  background-image: var(--fx-gradient-mint);
 }
 
 @utility label-micro {
@@ -70,7 +248,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-ink-faint);
+  color: var(--fx-ink-faint);
 }
 
 /* Hand-rolled typography for blog markdown (react-markdown output). */
@@ -78,7 +256,7 @@
   .blog-prose {
     font-size: 15px;
     line-height: 1.8;
-    color: var(--color-ink-secondary);
+    color: var(--fx-ink-secondary);
   }
   .blog-prose > :first-child {
     margin-top: 0;
@@ -87,7 +265,7 @@
   .blog-prose h2,
   .blog-prose h3,
   .blog-prose h4 {
-    color: var(--color-ink);
+    color: var(--fx-ink);
     font-weight: 600;
     letter-spacing: -0.01em;
     margin: 2em 0 0.6em;
@@ -110,16 +288,16 @@
     margin: 1em 0;
   }
   .blog-prose a {
-    color: var(--color-primary);
+    color: var(--fx-primary);
     font-weight: 500;
     text-decoration: underline;
     text-underline-offset: 3px;
   }
   .blog-prose a:hover {
-    color: var(--color-primary-hover);
+    color: var(--fx-primary-hover);
   }
   .blog-prose strong {
-    color: var(--color-ink);
+    color: var(--fx-ink);
     font-weight: 600;
   }
   .blog-prose ul,
@@ -138,24 +316,27 @@
   }
   .blog-prose blockquote {
     margin: 1.4em 0;
-    border-left: 3px solid var(--color-primary);
+    border-left: 3px solid var(--fx-primary);
     padding-left: 1em;
-    color: var(--color-ink);
+    color: var(--fx-ink);
     font-style: italic;
   }
   .blog-prose code {
     font-family: var(--font-mono);
     font-size: 0.85em;
-    background-color: var(--color-info-soft);
+    background-color: var(--fx-info-soft);
     border-radius: 6px;
     padding: 0.15em 0.4em;
-    color: var(--color-ink);
+    color: var(--fx-ink);
   }
   .blog-prose pre {
     margin: 1.4em 0;
     overflow-x: auto;
     border-radius: var(--radius-tile);
-    background-color: var(--color-ink);
+    /* Always-dark code block (--fx-panel does not flip); the border separates
+       it from dark-mode cards. */
+    background-color: var(--fx-panel);
+    border: 1px solid var(--fx-line);
     padding: 1em 1.25em;
   }
   .blog-prose pre code {
@@ -173,7 +354,7 @@
   .blog-prose hr {
     margin: 2.5em 0;
     border: 0;
-    border-top: 1px solid var(--color-line);
+    border-top: 1px solid var(--fx-line);
   }
   .blog-prose table {
     width: 100%;
@@ -184,11 +365,11 @@
   .blog-prose th {
     text-align: left;
     font-weight: 600;
-    color: var(--color-ink);
+    color: var(--fx-ink);
   }
   .blog-prose th,
   .blog-prose td {
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--fx-line);
     padding: 0.55em 0.75em 0.55em 0;
   }
 }
@@ -200,7 +381,7 @@
     min-height: 30rem;
     padding: 1rem 0.25rem 2.5rem;
     outline: none;
-    caret-color: var(--color-primary);
+    caret-color: var(--fx-primary);
   }
   .visual-editor .ProseMirror:focus-visible {
     outline: none;
@@ -211,11 +392,11 @@
     float: left;
     height: 0;
     pointer-events: none;
-    color: var(--color-ink-faint);
+    color: var(--fx-ink-faint);
   }
   /* Node selection (atom blocks, images, hr). */
   .visual-editor .ProseMirror-selectednode {
-    outline: 2px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--fx-primary) 40%, transparent);
     outline-offset: 2px;
     border-radius: var(--radius-field);
   }
@@ -226,26 +407,26 @@
   .visual-editor .ProseMirror th,
   .visual-editor .ProseMirror td {
     position: relative;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--fx-line);
     padding: 0.45em 0.6em;
     vertical-align: top;
   }
   .visual-editor .ProseMirror th {
-    background-color: var(--color-surface);
+    background-color: var(--fx-surface);
   }
   .visual-editor .ProseMirror .selectedCell::after {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    background-color: color-mix(in srgb, var(--fx-primary) 10%, transparent);
   }
   .visual-editor .ProseMirror table p {
     margin: 0;
   }
   /* Gap cursor between/around atom blocks. */
   .visual-editor .ProseMirror-gapcursor::after {
-    border-top: 1px solid var(--color-ink);
+    border-top: 1px solid var(--fx-ink);
   }
 }
 

@@ -2,9 +2,9 @@ import type { ChangeSeverity, ChangeStatus, ChangeCategory } from "@fluxen/datab
 import { cn } from "@/lib/utils";
 
 const severityStyles: Record<ChangeSeverity, { chip: string; dot: string; label: string }> = {
-  CRITICAL: { chip: "bg-critical-soft text-red-700", dot: "bg-critical", label: "Critical" },
-  HIGH: { chip: "bg-orange-soft text-orange-700", dot: "bg-orange", label: "High" },
-  MEDIUM: { chip: "bg-warning-soft text-amber-700", dot: "bg-warning", label: "Medium" },
+  CRITICAL: { chip: "bg-critical-soft text-critical-strong", dot: "bg-critical", label: "Critical" },
+  HIGH: { chip: "bg-orange-soft text-orange-strong", dot: "bg-orange", label: "High" },
+  MEDIUM: { chip: "bg-warning-soft text-warning-strong", dot: "bg-warning", label: "Medium" },
   LOW: { chip: "bg-primary-soft text-primary", dot: "bg-primary", label: "Low" },
   INFO: { chip: "bg-info-soft text-info", dot: "bg-info", label: "Info" },
 };
@@ -34,8 +34,8 @@ export function ChangeSeverityBadge({
 const statusStyles: Record<ChangeStatus, string> = {
   NEW: "bg-primary-soft text-primary",
   REVIEWED: "bg-info-soft text-info",
-  APPROVED: "bg-success-soft text-green-700",
-  RESOLVED: "bg-success-soft text-green-700",
+  APPROVED: "bg-success-soft text-success-strong",
+  RESOLVED: "bg-success-soft text-success-strong",
   IGNORED: "bg-info-soft text-ink-faint",
 };
 

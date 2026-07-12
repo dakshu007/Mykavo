@@ -210,7 +210,7 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
             <button
               type="submit"
               disabled={busy !== null}
-              className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-50"
             >
               {busy === "add" ? "Adding…" : "Add channel"}
             </button>

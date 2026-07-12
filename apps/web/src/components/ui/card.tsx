@@ -41,7 +41,7 @@ export function IconChip({
   return (
     <span
       className={cn(
-        "inline-flex size-10 items-center justify-center rounded-xl bg-white/60 text-ink",
+        "inline-flex size-10 items-center justify-center rounded-xl bg-card/60 text-ink",
         className,
       )}
     >

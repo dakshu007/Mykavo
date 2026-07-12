@@ -69,7 +69,7 @@ export function TagEditor({
               onClick={() => void persist(tags.filter((t) => t !== tag))}
               disabled={busy}
               aria-label={`Remove tag ${tag}`}
-              className="rounded-full p-0.5 transition-colors hover:bg-primary hover:text-white disabled:opacity-60"
+              className="rounded-full p-0.5 transition-colors hover:bg-primary hover:text-primary-contrast disabled:opacity-60"
             >
               <X className="size-3" aria-hidden />
             </button>
@@ -99,7 +99,7 @@ export function TagEditor({
         {busy && <Loader2 className="size-3.5 animate-spin text-ink-faint" aria-hidden />}
       </div>
       {error ? (
-        <p className="text-[13px] text-red-700" role="alert">
+        <p className="text-[13px] text-critical-strong" role="alert">
           {error}
         </p>
       ) : (

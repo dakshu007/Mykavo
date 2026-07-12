@@ -43,7 +43,7 @@ export function HeroUrlInput() {
       />
       <button
         type="submit"
-        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white transition-colors hover:bg-black"
+        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-ink-inverse transition-colors hover:bg-ink-hover"
       >
         Inspect
         <ArrowRight className="size-4" aria-hidden />

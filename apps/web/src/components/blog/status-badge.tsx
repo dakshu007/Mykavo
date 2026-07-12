@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 const styles = {
   DRAFT: { chip: "bg-info-soft text-info", dot: "bg-info", label: "Draft" },
-  PUBLISHED: { chip: "bg-success-soft text-green-700", dot: "bg-success", label: "Published" },
+  PUBLISHED: { chip: "bg-success-soft text-success-strong", dot: "bg-success", label: "Published" },
 } as const;
 
 export function PostStatusBadge({

@@ -50,7 +50,7 @@ export function ToolUrlForm({
         <button
           type="submit"
           disabled={loading || !url.trim()}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : buttonIcon}
           {buttonLabel}

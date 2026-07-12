@@ -52,7 +52,7 @@ export function SetBaselineButton({
         {label}
       </button>
       {error && (
-        <span className="text-[11px] text-red-700" role="alert">
+        <span className="text-[11px] text-critical-strong" role="alert">
           {error}
         </span>
       )}

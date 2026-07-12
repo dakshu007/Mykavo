@@ -15,7 +15,7 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
           )}
         >
           {plan.highlighted && (
-            <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-white">
+            <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-contrast">
               Most popular
             </span>
           )}
@@ -40,7 +40,7 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
             className={cn(
               "mt-6 inline-flex h-11 items-center justify-center rounded-full text-sm font-medium transition-colors",
               plan.highlighted
-                ? "bg-primary text-white hover:bg-primary-hover"
+                ? "bg-primary text-primary-contrast hover:bg-primary-hover"
                 : "border border-line bg-card text-ink hover:border-ink-faint",
             )}
           >

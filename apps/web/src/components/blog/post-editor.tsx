@@ -245,7 +245,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
               type="button"
               onClick={() => save("PUBLISHED")}
               disabled={!canSave}
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {saving === "PUBLISHED" && <Loader2 className="size-4 animate-spin" aria-hidden />}
               Update
@@ -266,7 +266,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
               type="button"
               onClick={() => save("PUBLISHED")}
               disabled={!canSave}
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {saving === "PUBLISHED" && <Loader2 className="size-4 animate-spin" aria-hidden />}
               Publish
@@ -283,12 +283,12 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
           </>
         )}
         {error && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-critical-strong" role="alert">
             {error}
           </p>
         )}
         {notice && !error && (
-          <p className="text-sm text-green-700" role="status">
+          <p className="text-sm text-success-strong" role="status">
             {notice}
           </p>
         )}

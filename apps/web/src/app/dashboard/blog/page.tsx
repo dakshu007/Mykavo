@@ -99,7 +99,7 @@ export default async function DashboardBlogPage() {
                         href={`/blog/${post.slug}`}
                         target="_blank"
                         aria-label={`View "${post.title}" on the public blog`}
-                        className="inline-flex size-8 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-black/5 hover:text-ink"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-ink/5 hover:text-ink"
                       >
                         <ExternalLink className="size-4" aria-hidden />
                       </Link>
@@ -107,7 +107,7 @@ export default async function DashboardBlogPage() {
                     <Link
                       href={`/dashboard/blog/${post.id}/edit`}
                       aria-label={`Edit "${post.title}"`}
-                      className="inline-flex size-8 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-black/5 hover:text-ink"
+                      className="inline-flex size-8 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-ink/5 hover:text-ink"
                     >
                       <PenLine className="size-4" aria-hidden />
                     </Link>

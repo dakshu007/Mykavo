@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 const styles: Record<ScanStatus, { chip: string; label: string }> = {
   QUEUED: { chip: "bg-info-soft text-info", label: "Queued" },
   RUNNING: { chip: "bg-primary-soft text-primary", label: "Running" },
-  COMPLETED: { chip: "bg-success-soft text-green-700", label: "Completed" },
-  PARTIAL: { chip: "bg-warning-soft text-amber-700", label: "Partial" },
-  FAILED: { chip: "bg-critical-soft text-red-700", label: "Failed" },
+  COMPLETED: { chip: "bg-success-soft text-success-strong", label: "Completed" },
+  PARTIAL: { chip: "bg-warning-soft text-warning-strong", label: "Partial" },
+  FAILED: { chip: "bg-critical-soft text-critical-strong", label: "Failed" },
 };
 
 export function ScanStatusBadge({

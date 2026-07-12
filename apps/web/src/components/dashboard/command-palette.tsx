@@ -294,7 +294,7 @@ function PaletteDialog({
                         onClick={() => go(entry)}
                         className={cn(
                           "flex w-full items-center gap-3 rounded-field px-3 py-2.5 text-left",
-                          active ? "bg-primary-soft" : "hover:bg-black/5",
+                          active ? "bg-primary-soft" : "hover:bg-ink/5",
                         )}
                       >
                         <Icon className="size-4 shrink-0 text-ink-faint" aria-hidden />
@@ -358,7 +358,7 @@ export function CommandPaletteTrigger() {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event(OPEN_EVENT))}
-      className="mt-4 flex w-full items-center gap-3 rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-faint transition-colors hover:bg-black/5 hover:text-ink"
+      className="mt-4 flex w-full items-center gap-3 rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-faint transition-colors hover:bg-ink/5 hover:text-ink"
     >
       <Search className="size-4 shrink-0" aria-hidden />
       Search

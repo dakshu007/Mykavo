@@ -101,7 +101,7 @@ export function PageEditor({
       />
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}
@@ -122,7 +122,7 @@ export function PageEditor({
         <button
           onClick={handleSave}
           disabled={saving || selected.size === 0}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-8 text-[15px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-8 text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {saving && <Loader2 className="size-4 animate-spin" aria-hidden />}
           Save {selected.size} page{selected.size === 1 ? "" : "s"}

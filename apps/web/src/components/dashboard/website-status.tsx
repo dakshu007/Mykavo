@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 
 const styles: Record<WebsiteStatus, { dot: string; text: string; label: string }> = {
   PENDING: { dot: "bg-primary", text: "text-primary", label: "Ready to baseline" },
-  DISCOVERING: { dot: "bg-warning", text: "text-amber-700", label: "Discovering" },
-  BASELINING: { dot: "bg-warning", text: "text-amber-700", label: "Baselining" },
-  ACTIVE: { dot: "bg-success", text: "text-green-700", label: "Monitoring" },
+  DISCOVERING: { dot: "bg-warning", text: "text-warning-strong", label: "Discovering" },
+  BASELINING: { dot: "bg-warning", text: "text-warning-strong", label: "Baselining" },
+  ACTIVE: { dot: "bg-success", text: "text-success-strong", label: "Monitoring" },
   PAUSED: { dot: "bg-ink-faint", text: "text-ink-faint", label: "Paused" },
-  ERROR: { dot: "bg-critical", text: "text-red-700", label: "Error" },
+  ERROR: { dot: "bg-critical", text: "text-critical-strong", label: "Error" },
 };
 
 export function WebsiteStatusBadge({

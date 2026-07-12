@@ -118,7 +118,7 @@ export default async function ScanDetailPage({
               openChangeCount > 0 ? (
                 <ApproveScanButton scanId={scan.id} openChangeCount={openChangeCount} />
               ) : (
-                <span className="rounded-full bg-success-soft px-3.5 py-1.5 text-[13px] font-medium text-green-700">
+                <span className="rounded-full bg-success-soft px-3.5 py-1.5 text-[13px] font-medium text-success-strong">
                   All reviewed
                 </span>
               )
@@ -193,7 +193,7 @@ export default async function ScanDetailPage({
                       {path === "/" ? "/ (homepage)" : path}
                     </p>
                     {failed ? (
-                      <p className="mt-1 text-[13px] text-red-700">
+                      <p className="mt-1 text-[13px] text-critical-strong">
                         {snap.errorCode}: {snap.errorMessage}
                       </p>
                     ) : (
@@ -212,7 +212,7 @@ export default async function ScanDetailPage({
                   </div>
                   {!failed &&
                     (isBaseline ? (
-                      <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                      <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
                         Baseline v{activeBaseline?.version}
                       </span>
                     ) : (

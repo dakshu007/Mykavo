@@ -162,10 +162,10 @@ function DiffResults({ diffs }: { diffs: SnapshotDiff[] }) {
               </span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
-              <div className="rounded-md bg-success-soft px-3 py-2 font-mono text-[13px] text-green-800 break-words">
+              <div className="rounded-md bg-success-soft px-3 py-2 font-mono text-[13px] text-success-strong break-words">
                 {d.previous}
               </div>
-              <div className="rounded-md bg-critical-soft px-3 py-2 font-mono text-[13px] text-red-700 break-words">
+              <div className="rounded-md bg-critical-soft px-3 py-2 font-mono text-[13px] text-critical-strong break-words">
                 {d.current}
               </div>
             </div>
@@ -289,7 +289,7 @@ export function ChangeDetector() {
             className={cn(
               "rounded-full px-4 py-2 text-[13px] font-medium transition-colors",
               mode === t.id
-                ? "bg-ink text-white"
+                ? "bg-ink text-ink-inverse"
                 : "bg-card text-ink-secondary shadow-card hover:text-ink",
             )}
           >
@@ -318,7 +318,7 @@ export function ChangeDetector() {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -343,7 +343,7 @@ export function ChangeDetector() {
                   <button
                     onClick={() => void recheck()}
                     disabled={loading}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-medium text-white hover:bg-black disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-medium text-ink-inverse hover:bg-ink-hover disabled:opacity-60"
                   >
                     <RefreshCw className="size-3.5" aria-hidden /> Re-check for changes
                   </button>
@@ -361,7 +361,7 @@ export function ChangeDetector() {
 
           {error && (
             <Card className="border border-critical/20 bg-critical-soft">
-              <p className="text-sm font-medium text-red-700" role="alert">
+              <p className="text-sm font-medium text-critical-strong" role="alert">
                 {error}
               </p>
             </Card>
@@ -379,7 +379,7 @@ export function ChangeDetector() {
                   </p>
                   <button
                     onClick={saveBaseline}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[13px] font-medium text-white hover:bg-primary-hover"
+                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[13px] font-medium text-primary-contrast hover:bg-primary-hover"
                   >
                     <Bookmark className="size-4" aria-hidden /> Save snapshot
                   </button>
@@ -410,7 +410,7 @@ export function ChangeDetector() {
               <button
                 type="submit"
                 disabled={loading || !urlA.trim() || !urlB.trim()}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -424,7 +424,7 @@ export function ChangeDetector() {
 
           {error && (
             <Card className="border border-critical/20 bg-critical-soft">
-              <p className="text-sm font-medium text-red-700" role="alert">
+              <p className="text-sm font-medium text-critical-strong" role="alert">
                 {error}
               </p>
             </Card>
@@ -444,7 +444,7 @@ export function ChangeDetector() {
 
       {/* Product CTA */}
       {(snapshot || compareResult) && (
-        <div className="rounded-card bg-ink px-6 py-8 text-center">
+        <div className="rounded-card bg-panel px-6 py-8 text-center">
           <h2 className="text-xl font-semibold tracking-tight text-white">
             Monitor changes automatically with Fluxen
           </h2>
@@ -455,7 +455,7 @@ export function ChangeDetector() {
           </p>
           <Link
             href="/signup"
-            className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-ink transition-colors hover:bg-white/90"
+            className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-panel transition-colors hover:bg-white/90"
             onClick={() => track("cta_clicked", { cta: "tool_to_waitlist" })}
           >
             Start Monitoring Free <ArrowRight className="size-4" aria-hidden />

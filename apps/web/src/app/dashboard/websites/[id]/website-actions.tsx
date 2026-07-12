@@ -73,7 +73,7 @@ export function WebsiteActions({
         <button
           onClick={handleDelete}
           disabled={busy !== null}
-          className="inline-flex items-center gap-1.5 rounded-full border border-critical/30 bg-card px-4 py-2 text-[13px] font-medium text-red-700 transition-colors hover:bg-critical-soft disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-full border border-critical/30 bg-card px-4 py-2 text-[13px] font-medium text-critical-strong transition-colors hover:bg-critical-soft disabled:opacity-60"
         >
           {busy === "delete" ? (
             <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -84,7 +84,7 @@ export function WebsiteActions({
         </button>
       </div>
       {error && (
-        <p className="mt-2 text-sm text-red-700" role="alert">
+        <p className="mt-2 text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}

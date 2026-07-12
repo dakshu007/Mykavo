@@ -115,7 +115,7 @@ export function ScreenshotCompare({
             title={available[m.id] ? undefined : m.disabledTitle}
             className={cn(
               "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
-              mode === m.id ? "bg-ink text-white" : "text-ink-secondary hover:text-ink",
+              mode === m.id ? "bg-ink text-ink-inverse" : "text-ink-secondary hover:text-ink",
               !available[m.id] && "cursor-not-allowed opacity-40 hover:text-ink-secondary",
             )}
           >
@@ -226,7 +226,7 @@ function LabelChip({
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-        overlay ? "bg-ink/75 text-white backdrop-blur-sm" : "bg-surface text-ink-secondary",
+        overlay ? "bg-panel/75 text-white backdrop-blur-sm" : "bg-surface text-ink-secondary",
       )}
     >
       <span

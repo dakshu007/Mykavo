@@ -42,7 +42,7 @@ export function RunScanButton({
       <button
         onClick={run}
         disabled={loading}
-        className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+        className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         {loading ? (
           <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -52,7 +52,7 @@ export function RunScanButton({
         {isFirstScan ? "Run baseline scan" : "Run scan"}
       </button>
       {error && (
-        <p className="text-[13px] text-red-700" role="alert">
+        <p className="text-[13px] text-critical-strong" role="alert">
           {error}
         </p>
       )}

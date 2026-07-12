@@ -24,8 +24,8 @@ function BrowserFrame({
         <span
           className={
             tone === "before"
-              ? "ml-auto rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-green-700"
-              : "ml-auto rounded-full bg-critical-soft px-2.5 py-0.5 text-[11px] font-semibold text-red-700"
+              ? "ml-auto rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-success-strong"
+              : "ml-auto rounded-full bg-critical-soft px-2.5 py-0.5 text-[11px] font-semibold text-critical-strong"
           }
         >
           {label}
@@ -44,11 +44,11 @@ function MockPricingBlock({ withButton }: { withButton: boolean }) {
       <div className="h-2.5 w-3/5 rounded-full bg-surface" />
       <div className="pt-2">
         {withButton ? (
-          <span className="inline-flex h-9 items-center rounded-full bg-primary px-5 text-[13px] font-medium text-white">
+          <span className="inline-flex h-9 items-center rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast">
             Start Free Trial
           </span>
         ) : (
-          <span className="inline-flex h-9 items-center rounded-full border-2 border-dashed border-critical/50 px-5 text-[13px] font-medium text-red-700">
+          <span className="inline-flex h-9 items-center rounded-full border-2 border-dashed border-critical/50 px-5 text-[13px] font-medium text-critical-strong">
             Element missing
           </span>
         )}
@@ -89,7 +89,7 @@ export function PreviewChangeDetail() {
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-4 py-2 text-[13px] font-medium text-ink-secondary">
               <X className="size-4" aria-hidden /> Ignore
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-white">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-primary-contrast">
               <Check className="size-4" aria-hidden /> Approve change
             </span>
           </div>
@@ -131,12 +131,12 @@ export function PreviewChangeDetail() {
                 <tr key={r.label}>
                   <td className="py-3.5 pr-4 text-sm font-medium text-ink">{r.label}</td>
                   <td className="py-3.5 pr-4">
-                    <span className="rounded-md bg-success-soft px-2 py-1 font-mono text-[13px] text-green-700">
+                    <span className="rounded-md bg-success-soft px-2 py-1 font-mono text-[13px] text-success-strong">
                       {r.prev}
                     </span>
                   </td>
                   <td className="py-3.5">
-                    <span className="rounded-md bg-critical-soft px-2 py-1 font-mono text-[13px] text-red-700">
+                    <span className="rounded-md bg-critical-soft px-2 py-1 font-mono text-[13px] text-critical-strong">
                       {r.curr}
                     </span>
                   </td>

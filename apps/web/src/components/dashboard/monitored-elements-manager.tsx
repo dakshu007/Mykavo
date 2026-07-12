@@ -47,7 +47,7 @@ const EMPTY_FORM: FormState = {
 };
 
 function importanceClasses(importance: Importance): string {
-  if (importance === "CRITICAL") return "bg-red-50 text-red-700";
+  if (importance === "CRITICAL") return "bg-critical-soft text-critical-strong";
   if (importance === "IMPORTANT") return "bg-primary-soft text-primary";
   return "bg-surface text-ink-secondary";
 }
@@ -66,9 +66,9 @@ function statusOf(el: ElementView): { label: string; tone: "ok" | "warn" | "bad"
 }
 
 const TONE_CLASSES: Record<"ok" | "warn" | "bad" | "muted", string> = {
-  ok: "bg-success-soft text-green-700",
-  warn: "bg-warning-soft text-amber-700",
-  bad: "bg-red-50 text-red-700",
+  ok: "bg-success-soft text-success-strong",
+  warn: "bg-warning-soft text-warning-strong",
+  bad: "bg-critical-soft text-critical-strong",
   muted: "bg-surface text-ink-faint",
 };
 
@@ -176,7 +176,7 @@ export function MonitoredElementsManager({
           <button
             type="button"
             onClick={openAdd}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-white transition-colors hover:bg-black"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-ink-inverse transition-colors hover:bg-ink-hover"
           >
             <Plus className="size-4" aria-hidden /> Add element
           </button>
@@ -272,7 +272,7 @@ export function MonitoredElementsManager({
                 type="checkbox"
                 checked={form.expectedExistence}
                 onChange={(e) => setForm((f) => ({ ...f, expectedExistence: e.target.checked }))}
-                className="size-4 accent-[#3556f4]"
+                className="size-4 accent-primary"
               />
               <span className="text-[13px] text-ink">Must be present</span>
             </label>
@@ -281,14 +281,14 @@ export function MonitoredElementsManager({
                 type="checkbox"
                 checked={form.expectedVisibility}
                 onChange={(e) => setForm((f) => ({ ...f, expectedVisibility: e.target.checked }))}
-                className="size-4 accent-[#3556f4]"
+                className="size-4 accent-primary"
               />
               <span className="text-[13px] text-ink">Must be visible</span>
             </label>
           </div>
 
           {error && (
-            <p className="text-[13px] text-red-700" role="alert">
+            <p className="text-[13px] text-critical-strong" role="alert">
               {error}
             </p>
           )}
@@ -297,7 +297,7 @@ export function MonitoredElementsManager({
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
               {editing === "new" ? "Add element" : "Save changes"}
@@ -366,7 +366,7 @@ export function MonitoredElementsManager({
                     type="button"
                     onClick={() => remove(el.id)}
                     aria-label={`Delete ${el.name}`}
-                    className="inline-flex size-8 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-red-50 hover:text-red-700"
+                    className="inline-flex size-8 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-critical-soft hover:text-critical-strong"
                   >
                     <Trash2 className="size-4" aria-hidden />
                   </button>

@@ -170,7 +170,7 @@ export function ChangesBulkList({ changes }: { changes: ChangeListRow[] }) {
             <button
               onClick={() => bulk("APPROVED")}
               disabled={busy !== null}
-              className={cn(barButton, "bg-primary text-white hover:bg-primary-hover")}
+              className={cn(barButton, "bg-primary text-primary-contrast hover:bg-primary-hover")}
             >
               {busy === "APPROVED" ? (
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -205,7 +205,7 @@ export function ChangesBulkList({ changes }: { changes: ChangeListRow[] }) {
             </button>
           </div>
           {error && (
-            <p className="mt-2 text-[13px] text-red-700" role="alert">
+            <p className="mt-2 text-[13px] text-critical-strong" role="alert">
               {error}
             </p>
           )}

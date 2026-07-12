@@ -32,7 +32,7 @@ export default async function ScansPage() {
         action={
           <Link
             href="/dashboard/websites"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
           >
             Run your baseline scan
           </Link>
@@ -85,7 +85,7 @@ export default async function ScansPage() {
                 <td className="py-4 pr-4 text-sm text-ink-secondary">
                   {scan.pagesScanned}/{scan.pagesRequested}
                   {scan.pagesFailed > 0 && (
-                    <span className="ml-1.5 text-red-700">({scan.pagesFailed} failed)</span>
+                    <span className="ml-1.5 text-critical-strong">({scan.pagesFailed} failed)</span>
                   )}
                 </td>
                 <td className="py-4 pr-4 text-sm text-ink-secondary">

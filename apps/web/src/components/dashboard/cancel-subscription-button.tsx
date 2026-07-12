@@ -44,7 +44,7 @@ export function CancelSubscriptionButton({ apiCancel }: { apiCancel: boolean }) 
         Cancel subscription
       </button>
       {error && (
-        <span className="text-[13px] text-red-700" role="alert">
+        <span className="text-[13px] text-critical-strong" role="alert">
           {error}
         </span>
       )}

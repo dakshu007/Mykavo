@@ -170,7 +170,7 @@ export function ProfileForm({
       </div>
 
       {error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-critical-strong" role="alert">
           {error}
         </p>
       )}

@@ -81,7 +81,7 @@ export default async function ChangesPage({
 
   const pill = (active: boolean) =>
     active
-      ? "rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white"
+      ? "rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-ink-inverse"
       : "rounded-full border border-line px-3.5 py-1.5 text-[13px] font-medium text-ink-secondary hover:text-ink";
 
   // Export honors the exact same filters as the list (same query string).

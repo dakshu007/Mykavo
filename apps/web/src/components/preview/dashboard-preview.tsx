@@ -74,7 +74,7 @@ export function DashboardPreview({ className }: { className?: string }) {
             className={cn(
               "rounded-full px-4 py-2 text-[13px] font-medium transition-colors",
               tab === t.id
-                ? "bg-ink text-white"
+                ? "bg-ink text-ink-inverse"
                 : "bg-card text-ink-secondary shadow-card hover:text-ink",
             )}
           >

@@ -40,9 +40,9 @@ const CATEGORIES: { key: keyof AuditView; label: string }[] = [
 /** Lighthouse colour bands: ≥90 good, 50–89 needs work, <50 poor. */
 function scoreClasses(score: number | null): string {
   if (score === null) return "bg-surface text-ink-faint";
-  if (score >= 90) return "bg-success-soft text-green-700";
-  if (score >= 50) return "bg-warning-soft text-amber-700";
-  return "bg-red-50 text-red-700";
+  if (score >= 90) return "bg-success-soft text-success-strong";
+  if (score >= 50) return "bg-warning-soft text-warning-strong";
+  return "bg-critical-soft text-critical-strong";
 }
 
 function fmtMs(v: number | null): string {
@@ -68,12 +68,13 @@ function isPending(status: AuditView["status"]): boolean {
   return status === "QUEUED" || status === "RUNNING";
 }
 
-/** Line + legend-dot colour per score — always paired with a text label. */
+/** Line + legend-dot colour per score — theme vars (globals.css --fx-*) so the
+ * chart follows light/dark; always paired with a text label. */
 const TREND_COLORS: Record<TrendScoreKey, string> = {
-  performanceScore: "#3556f4", // royal-blue primary
-  accessibilityScore: "#16a34a", // green
-  bestPracticesScore: "#d97706", // amber
-  seoScore: "#7c3aed", // violet
+  performanceScore: "var(--fx-primary)",
+  accessibilityScore: "var(--fx-success)",
+  bestPracticesScore: "var(--fx-chart-amber)",
+  seoScore: "var(--fx-chart-violet)",
 };
 
 // Sparkline geometry — viewBox units; the SVG scales to the card width.
@@ -99,7 +100,7 @@ function fmtDateTime(iso: string): string {
 
 function deltaClasses(delta: number | null): string {
   if (delta === null || delta === 0) return "text-ink-secondary";
-  return delta > 0 ? "text-green-700" : "text-red-700";
+  return delta > 0 ? "text-success-strong" : "text-critical-strong";
 }
 
 /** Multi-line score sparkline + legend + latest-vs-previous delta line. */
@@ -161,7 +162,7 @@ function TrendSection({ trend }: { trend: AuditTrend }) {
                     .map((d) => `${chartX(d.i).toFixed(1)},${chartY(d.score).toFixed(1)}`)
                     .join(" ")}
                   fill="none"
-                  stroke={color}
+                  style={{ stroke: color }}
                   strokeWidth={1.5}
                   strokeLinejoin="round"
                   strokeLinecap="round"
@@ -173,7 +174,7 @@ function TrendSection({ trend }: { trend: AuditTrend }) {
                   cx={chartX(d.i).toFixed(1)}
                   cy={chartY(d.score).toFixed(1)}
                   r={3}
-                  fill={color}
+                  style={{ fill: color }}
                 >
                   <title>{`${category.label} ${d.score} — ${fmtDateTime(d.point.createdAt)}`}</title>
                 </circle>
@@ -394,7 +395,7 @@ export function PerformanceAuditPanel({
           type="button"
           onClick={runAudit}
           disabled={busy}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-white transition-colors hover:bg-black disabled:opacity-60"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-ink-inverse transition-colors hover:bg-ink-hover disabled:opacity-60"
         >
           {busy ? (
             <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -412,7 +413,7 @@ export function PerformanceAuditPanel({
       )}
 
       {error && (
-        <p className="mt-3 text-[13px] text-red-700" role="alert">
+        <p className="mt-3 text-[13px] text-critical-strong" role="alert">
           {error}
         </p>
       )}
@@ -426,14 +427,14 @@ export function PerformanceAuditPanel({
       )}
 
       {latest?.status === "FAILED" && !pending && (
-        <p className="mt-4 text-[13px] text-amber-700">
+        <p className="mt-4 text-[13px] text-warning-strong">
           The last audit of <span className="font-mono">{pathOf(latest.url)}</span> failed
           {latest.errorCode ? ` (${latest.errorCode})` : ""}. Try again.
         </p>
       )}
 
       {stalePending && (
-        <p className="mt-4 text-[13px] text-amber-700">
+        <p className="mt-4 text-[13px] text-warning-strong">
           The last audit didn&apos;t finish. Run it again.
         </p>
       )}

@@ -54,8 +54,8 @@ export function OnboardingChecklist({
         {steps.map((step, i) =>
           step.done ? (
             <li key={step.id} className="flex items-center gap-3.5 py-3">
-              <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-green-100">
-                <Check className="size-3.5 text-green-700" aria-hidden />
+              <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-success-soft">
+                <Check className="size-3.5 text-success-strong" aria-hidden />
               </span>
               <p className="min-w-0 flex-1 truncate text-sm text-ink-faint">
                 {step.title}
