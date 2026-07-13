@@ -2,154 +2,120 @@
 
 > Know what changed. Fix what matters.
 
-Fluxen is a **website change detection & regression monitoring SaaS** for agencies, developers, SEO teams, and website owners. It creates approved baselines of your pages, re-scans them on a schedule, detects meaningful visual / SEO / content / link / script / performance / availability changes, scores them by severity, and emails you when something important breaks.
+Fluxen is a **website change detection & regression monitoring SaaS** for agencies, developers, SEO teams, and website owners. It baselines your pages, re-scans on a schedule, detects meaningful visual / SEO / content / link / script / performance / availability changes, scores them by severity, and alerts you before customers notice.
 
-This file is the single source of truth for picking the project back up in a fresh session. Read it top to bottom.
-
----
-
-## Status — Phases 0–8 complete (of 0–11)
-
-| Phase | What it delivered | Done |
-|---|---|---|
-| **0 — Validation assets** | Marketing site, pricing, dashboard preview, waitlist, free "Website Change Detector" tool | ✅ |
-| **1 — Foundation** | Monorepo, Postgres/Prisma, Better Auth, workspace auto-create, dashboard shell, logging, tests | ✅ |
-| **2 — Website management** | Add website, SSRF-guarded validation, robots/sitemap/link discovery, page selection, plan limits | ✅ |
-| **3 — Scanning engine** | Playwright worker + browser pool, stabilization, DOM normalization, screenshots, snapshots (pg-boss queue) | ✅ |
-| **4 — Baselines** | Auto-create v1 on first scan, versioning, approve/supersede, history (one ACTIVE per page) | ✅ |
-| **5 — Comparison engine** | `severity-engine` + `comparison-engine` (deterministic + pixelmatch visual diff), ChangeEvents; **+ Google sign-in** | ✅ |
-| **6 — Changes interface** | Review/approve/ignore/resolve, update-baseline flow, approve-entire-scan, filters | ✅ |
-| **7 — Scheduling & notifications** | pg-boss cron scheduler (recurring scans, no user action), grouped email alerts (Resend/console), preferences | ✅ |
-| **8 — Billing** | **Free + Pro $12/mo (50 websites) + self-serve $6/mo add-ons (+30 websites each)**, via **Dodo Payments**, auto-upgrade on payment, security-hardened webhook | ✅ |
-| **9 — Conversion monitoring** | Per-page monitored elements — CTA/form existence·visibility·text·href checks → CONVERSION change events, Pro-gated UI + CRUD | ✅ |
-| **10 — Production hardening** | Retention cleanup cron (plan-based, artifact-aware), per-plan scan quotas + concurrency cap, per-workspace + auth rate limits, duplicate-scan DB lock, retention indexes | ✅ |
-| **11 — SEO growth engine** | More free tools, SEO landing pages, structured data | ⬜ next |
-| **+ Performance audits** | On-demand **Lighthouse** audit per website (scores + Core Web Vitals), free for all plans, rate-limited | ✅ |
-
-Every phase is one git commit (`git log --oneline`). 178 tests pass.
-
-**Phase 10 scope note:** the *code-level* hardening is done (above). Explicitly deferred to ops (some need paid services, against the zero-budget rule): external error monitoring/APM (Sentry), Prometheus/StatsD metrics, a shared (Redis) rate-limit store for multi-instance, load testing, and a managed backup strategy. The in-app rate limiters and Better Auth throttle are **per-process/in-memory** — correct for single-instance; swap to a shared store before scaling out horizontally.
-
-**Performance audits (Lighthouse):** a "Run audit" button on each website detail page runs a Google Lighthouse audit (`packages/scanner/src/lighthouse.ts` drives Playwright's bundled Chromium via `chrome-launcher`) and shows the 4 category scores + Core Web Vitals with history. On-demand only (never per scan — Lighthouse is ~10–40s/CPU-heavy, spec §22/§62), **free for all plans**, capped at 5 audits/workspace/hour. The audit keeps Chrome's OS sandbox **on** (the URL is untrusted) and re-checks the URL through the SSRF guard first. Needs Playwright's Chromium installed (`pnpm --filter @fluxen/scanner exec playwright install chromium`). Adds `lighthouse` + `chrome-launcher` to `@fluxen/scanner`.
+This file is the single source of truth for picking the project back up in a fresh session. Read it top to bottom. Deeper operational history lives in the Claude memory dir (`~/.claude/projects/-Users-dakshu-Desktop-Fluxen/memory/` — start with `fluxen-deployment.md`).
 
 ---
 
-## 🚀 Production deployment (live)
+## Status — ALL spec phases (0–11) complete, plus a lot more
 
-The **web app is LIVE at https://fluxenn.netlify.app** (Netlify) backed by a **Neon Postgres** — marketing, sign-up, log-in, and the authenticated dashboard all work. Full runbook + secrets + gotchas are in the `fluxen-deployment` memory. Essentials:
+**LIVE IN PRODUCTION: https://fluxenn.netlify.app**
 
-- **The worker is NOT deployed.** Netlify runs the web app + API only; it can't host the persistent pg-boss/Playwright worker. So **scans and Lighthouse audits do not run in production** — adding a website saves it, but its scan stays QUEUED forever. To finish: deploy `apps/worker` to **Railway / Render / Fly** with the same `DATABASE_URL` (+ object storage for screenshots). This is the top remaining task.
-- **Redeploy:** `netlify deploy --build --prod --filter web` — `--filter web` is required (pnpm monorepo). **Build from a checkout NOT nested inside another git repo** (the dev worktree is nested → Next file-tracing bundles the wrong `node_modules` and Prisma's Linux engine goes missing → `PrismaClientInitializationError`). We build from an `rsync`'d copy at `/tmp/fluxen-clean`.
-- **Config** (committed, `netlify.toml` + `apps/web/next.config.ts` + schema `binaryTargets`): no `base`/`publish` in `netlify.toml` (with `--filter` Netlify sets them; a hardcoded publish 404s SSR); `serverExternalPackages: ["@prisma/client",…]` + `outputFileTracingRoot`; `binaryTargets = ["native","rhel-openssl-3.0.x"]`.
-- **Neon:** runtime uses the pooled URL (`?sslmode=require&pgbouncer=true`); migrations need the direct URL (drop `-pooler`/`channel_binding`). All 12 migrations applied. Retrieve the URL with `netlify env:get DATABASE_URL` (site linked to `fluxenn`, id `3c4a3c88…`; do **not** deploy to `rank-tracker-hub`, a different user site).
-- **Env set on Netlify:** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `APP_URL`, `DODO_ADDON_PRODUCT_ID`. Still optional: Google OAuth, `DODO_WEBHOOK_SECRET` (billing), a verified Resend domain (emails).
+Everything in the original CLAUDE.md spec is built, plus:
+
+| Area | What exists |
+|---|---|
+| **Core monitoring** | Add website → SSRF-guarded validation → robots/sitemap/link discovery → page selection → Playwright baseline scan → scheduled re-scans → deterministic comparison (HTTP/SEO/DOM/text/links/scripts/perf/visual/elements) → severity-scored ChangeEvents |
+| **Site health** | Uptime probe every 5 min + SSL expiry tracking, DOWN/SSL incidents (2-strike open, recovery + 24h renotify), Health card + **Uptime & performance analytics** (7/30/90d day-bars, response-time chart, incident history) |
+| **robots/sitemap** | Per-scan `SiteMetaSnapshot`; `Disallow: /` = CRITICAL, sitemap vanished/shrank >50% = HIGH; site-wide events render "Site-wide" |
+| **Lighthouse** | On-demand per ANY page of a site (dropdown/custom path, same-origin enforced) + **weekly scheduled audits** (Tue 06:00 UTC) + score trend sparkline + **performance-drop alerts** (prev ≥30, drop ≥15) |
+| **SEO health report** | `/dashboard/websites/[id]/seo` — score + grouped issues (titles/descriptions/H1/noindex/canonical/errors) from the latest scan, no extra crawling. `PageLink.statusCode` is never populated → broken-link checks intentionally absent |
+| **Changes UX** | Filters, bulk select/actions, notes thread, filtered CSV export, before/after **slider + pixel-diff modes**, approve/ignore/resolve, update-baseline, approve-entire-scan |
+| **Alerts** | Email + **Slack/Discord/webhook channels** (SSRF-guarded, HMAC-signed generic webhooks, send-test), grouped per scan, severity threshold prefs, **weekly client-ready report emails** (Mon 08:00 UTC), **mute windows** (1h/8h/24h) |
+| **Public** | **Status pages** `/status/[token]` (90-day uptime bars, incidents, "Monitored by Fluxen" growth loop) + **SVG uptime badge** `/api/badge/[token]` — both share `Website.publicToken`, separate enable flags |
+| **Teams** | Invites by email (Pro = 5 seats), roles OWNER/ADMIN/MEMBER/VIEWER enforced on EVERY mutating route (viewer read-only, billing owner-only), workspace switcher (cookie + membership-verified) |
+| **Dashboard polish** | ⌘K command palette (search sites/pages/changes + actions), onboarding checklist (live-derived), website **tags** + filtering, loading skeletons everywhere, router cache, **dark mode** (System/Light/Dark, WCAG-AA-tested tokens) |
+| **Blog CMS** | `/dashboard/blog` (admin allowlist env `BLOG_ADMIN_EMAILS`) with **Gutenberg-style Tiptap visual editor** (Visual/Markdown tabs, H1–H6, tables, image upload→Blobs, `/cta` `/faq` `/toc` blocks, byte-identical shortcode round-trip), public `/blog` + RSS `/blog/feed.xml`, magazine post layout (hero, sticky ToC, author bio) |
+| **Free SEO tools** | `/tools/*`: website-change-detector, meta-tag-checker, redirect-chain-checker (per-hop SSRF revalidation), bulk-url-status-checker, script-detector — all rate-limited + SSRF-guarded, product CTAs |
+| **Billing** | Dodo Payments: Free (1 site, 5 pages) / **Pro $12** (8 sites, 20 pages/site, 5 seats, daily scans) / add-ons **$6 = +1 site, max 3**. Config in `apps/web/src/config/plans.ts` ONLY |
+| **Settings** | Plan card, profile (photo upload → validated data-URL, name), Team management |
+
+**Tests: 556 web · 92 shared · 19 email · 4 scanner · 29+ DB integration.** Run `pnpm --filter web test` etc.
 
 ---
 
-## ⚠️ Environment gotchas (read first)
+## 🚀 Production architecture (all zero-budget)
 
-- **pnpm/node are NOT on PATH.** They live at `~/.hermes/node/bin`. Prefix commands:
-  ```bash
-  export PATH="/Users/dakshu/.hermes/node/bin:$PATH"
-  ```
-- **PostgreSQL 17** runs locally (Homebrew). Database: **`fluxen_dev`**, connection `postgresql://dakshu@localhost:5432/fluxen_dev`.
-- **After any Prisma schema change, restart the Next dev server** — it caches a stale generated client and throws `Cannot read properties of undefined`.
-- **Run only ONE worker at a time.** `pkill -f "tsx src/index.ts"` does NOT match it — use `pkill -f "apps/worker/src/index.ts"`. Stale workers silently steal queue jobs and run old code.
-- **The retention sweep permanently deletes data** older than each workspace's plan window (30d Free / 365d Pro): expired snapshots + their artifacts + old change events. It runs daily in the worker (`RETENTION_CRON`, default `0 3 * * *`), pages in batches, and **never deletes baseline-referenced snapshots** (that would cascade-destroy the baseline). It's a no-op until data ages past the window.
-- Everything is **zero-budget**: only free/open-source and free-tier services (local Postgres, pg-boss, Playwright, console-email, Dodo test mode). No dependency requires a credit card in dev.
+- **Web**: Netlify site `fluxenn` (id `3c4a3c88-f933-4430-9455-e2d693941f67`), serverless in US-East. Deploy = rsync worktree → clean dir → `netlify deploy --build --prod --filter web` (see runbook below).
+- **Database**: **Supabase** project `mdjpcdwqwyufjbzguzfr` (**us-east-1** — MUST be in the functions' region, not near the user; a Mumbai project caused timeouts and was migrated + deleted). Direct host is IPv6-only → always use the pooler `aws-0-us-east-1.pooler.supabase.com`, username `postgres.mdjpcdwqwyufjbzguzfr`. Web uses **transaction pooler :6543** (`?pgbouncer=true&connection_limit=1`); worker + `prisma migrate deploy` use **session pooler :5432**. Neon and Supabase-Mumbai are retired/deleted.
+- **Worker**: runs on this Mac as launchd agent **`com.fluxen.worker-prod`** from **`~/.fluxen/app`** (a code copy — launchd can't execute from `~/Desktop` due to TCC). Env: `~/.fluxen/app/apps/worker/.env.production`. Logs: `~/.fluxen/logs/worker-prod.log`. Restart: `launchctl kickstart -k gui/501/com.fluxen.worker-prod`. Crons: scheduler + health (*/5), retention (daily 03:00), reports (Mon 08:00), audits (Tue 06:00) — all UTC.
+- **Artifacts** (screenshots/diffs): **Netlify Blobs** store `fluxen-artifacts` (`ARTIFACT_STORE=netlify-blobs`). Worker writes with `NETLIFY_SITE_ID`+`NETLIFY_AUTH_TOKEN`; web reads with `NETLIFY_BLOBS_SITE_ID`/`NETLIFY_BLOBS_TOKEN` site env vars. Blog images live at `blog-images/*` in the same store.
+- **Payments**: Dodo (test mode). **Email**: Resend key present but NO verified domain → mail only reaches the account owner (see "Pending").
+
+### Deploy runbook (web)
+```bash
+cd <this repo>   # branch claude/heuristic-agnesi-d235d1 == main == deployed
+rm -rf /tmp/fluxen-deploy
+rsync -a --exclude node_modules --exclude .next --exclude .git --exclude '.env*' \
+  --exclude .data --exclude .netlify --exclude .claude ./ /tmp/fluxen-deploy/
+mkdir -p /tmp/fluxen-deploy/.netlify
+echo '{ "siteId": "3c4a3c88-f933-4430-9455-e2d693941f67" }' > /tmp/fluxen-deploy/.netlify/state.json
+cd /tmp/fluxen-deploy && pnpm install && netlify deploy --build --prod --filter web
+```
+Migrations first (session pooler URL): `cd packages/database && DATABASE_URL=<session-pooler-url> pnpm exec prisma migrate deploy`.
+Worker update: rsync the same excludes to `~/.fluxen/app`, `pnpm install`, `prisma generate` in packages/database, then `launchctl kickstart -k gui/501/com.fluxen.worker-prod`.
 
 ---
+
+## ⚠️ Gotchas (each one cost real debugging time)
+
+- **pnpm/node are NOT on PATH**: `export PATH="/Users/dakshu/.hermes/node/bin:$PATH"` first. Local dev DB: `postgresql://dakshu@localhost:5432/fluxen_dev`.
+- **After Prisma schema changes, restart the Next dev server AND `rm -rf apps/web/.next`** — stale generated client throws `Cannot read properties of undefined`; stale compiled CSS makes theme tokens compute empty.
+- **Only ONE worker per database.** Kill prod worker via launchctl (above); `pkill -f "Fluxen/apps/worker"` does NOT match it.
+- **Client components must NOT import the `@fluxen/shared` barrel** — it re-exports `ssrf.ts` (`node:dns`) and breaks client chunks. Use subpaths: `@fluxen/shared/stabilization`, `/channels`, `/url`, `/script-services`.
+- **Netlify CLI targets whatever `.netlify/state.json` (or a stale global link) says** — ALWAYS confirm `netlify status` shows `fluxenn` before env/deploy commands; a wrong cwd once pointed it at another site (`rank-tracker-hub`). `netlify env:get/list` need `--context production` (secret vars exist).
+- **Agent-tool worktrees branch from `main`**, not the session branch — fast-forward main before launching implementation agents.
+- Interrupting `prisma migrate deploy` mid-run leaves a "failed" migration record — if the DDL actually applied, fix with `prisma migrate resolve --applied <name>`.
+- pg-boss v12: named import `{ PgBoss }`; new `page.evaluate` in the scanner needs the `__name` shim (see scan-page.ts).
+- Local test login: `alex@example.com` / `correct-horse-battery` (Pro, has data). Prod owner: `daksheshbabu@gmail.com` (also the only `BLOG_ADMIN_EMAILS` entry in prod).
 
 ## Running it locally
 
-> **⚠️ You MUST run the worker.** The web app only *enqueues* scans and Lighthouse
-> audits; the **worker** process executes them. Without it, every scan/audit sits
-> QUEUED forever — "adding a site does nothing" and "Run audit spins." Use
-> `pnpm dev:all` (runs both) or run `pnpm dev` **and** `pnpm worker` in two terminals.
-
 ```bash
 export PATH="/Users/dakshu/.hermes/node/bin:$PATH"
-
 pnpm install
-pnpm dev:all    # ⭐ web (→ http://localhost:3000) + worker together — the normal way to run
-
-# …or run the two halves separately (two terminals):
-pnpm dev        # web app only → http://localhost:3000
-pnpm worker     # scan + audit worker (queue consumer + scheduler) — REQUIRED
-
+pnpm dev        # web → http://localhost:3000 (Claude sessions use launch.json → port 3010)
+pnpm worker     # scan worker, 2nd terminal (apps/worker/.env → local DB)
 pnpm test       # all package tests
-pnpm lint       # web eslint
-pnpm typecheck  # web tsc  (worker: pnpm --filter worker typecheck)
-pnpm build      # web production build
+pnpm --filter web lint && pnpm --filter web typecheck && pnpm --filter web build
 ```
+Migrations: `cd packages/database && pnpm exec prisma migrate dev` (23 migrations).
 
-Migrations: `cd packages/database && pnpm exec prisma migrate dev` (8 migrations applied).
-
-**Test account:** `alex@example.com` / `correct-horse-battery` (currently on **Pro** with the `anthropic.com` website + baselines + change history from E2E testing).
-
----
-
-## Repository layout (pnpm workspace + Turborepo-ready)
+## Repository layout (pnpm workspace)
 
 ```
-apps/
-  web/        Next.js 16 (App Router, TS, Tailwind v4) — marketing, dashboard, all APIs
-  worker/     Node worker — pg-boss consumer: scans, comparison, notifications, scheduler cron
+apps/web        Next.js 16 App Router — marketing, dashboard, blog, tools, all APIs
+apps/worker     pg-boss consumer: scans, comparison, health, reports, audits, retention, notifications
 packages/
-  database/          Prisma schema + client + shared DB logic (baseline, changes, subscription) + DB integration tests
-  scanner/           Playwright browser pool, page scan, DOM normalization, artifact storage (local disk → R2)
-  comparison-engine/ Deterministic snapshot diff + visual pixel diff (pixelmatch/jpeg-js/pngjs)
-  severity-engine/   Centralized, pure severity rules (spec §19/§26) — the ONLY place severity is decided
-  email/             Pluggable sender (console/Resend) + scan-summary & failure templates
-  shared/            url normalization, SSRF guard, queue names, schedule helpers
-docs/         ARCHITECTURE, IMPLEMENTATION_PLAN, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM, PHASE_0_VALIDATION
+  database          Prisma schema/client + DB helpers (+ live-DB integration tests)
+  scanner           Playwright pool, page scan, stabilization, lighthouse, artifact storage (disk/Blobs)
+  comparison-engine deterministic diff + pixelmatch visual diff + site-meta (robots/sitemap)
+  severity-engine   the ONLY place severity rules live
+  email             console/Resend sender + all templates
+  shared            url/ssrf/queues/schedule/retention/channels/stabilization/health/report/performance/script-services
+docs/           ARCHITECTURE, IMPLEMENTATION_PLAN, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM
 ```
 
-**Data flow:** web enqueues `scan-website` jobs to **pg-boss** (in the same Postgres, `pgboss` schema) → worker scans pages with Playwright → persists `PageSnapshot`s + screenshots (to `.data/artifacts`, served via authorized routes) → compares against the active `Baseline` → writes `ChangeEvent`s → sends grouped email. A pg-boss **cron** (`scheduler-sweep`) claims due websites and enqueues scans automatically.
+## Design language (user-approved — keep consistent)
 
----
-
-## Design language (important — user-approved)
-
-The UI follows a specific reference the user provided: **soft cool-gray canvas (`#eceef4`), white cards with 24px radii + soft shadows, royal-blue primary (`#3556f4`), pill buttons/chips, at most ~2 gradient accent tiles per screen, a right rail, Geist Sans/Mono.** Severity always pairs color with a text label. Full tokens in [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md). Keep new UI consistent with this.
-
----
+Soft cool-gray canvas, white cards (24px radius, soft shadows), royal-blue primary `#3556f4`, pill buttons/chips, Geist Sans/Mono, severity colors ALWAYS paired with text labels. **All colors flow through `--fx-*` CSS variables in `apps/web/src/app/globals.css`** (light + dark palettes; `lib/theme-contrast.test.ts` enforces WCAG AA on every pairing — never hardcode Tailwind palette classes like `text-red-600`; use the semantic tokens incl. `*-strong`, `ink-inverse`, `panel`). Charts are hand-rolled SVG (`components/charts/`, `lib/health-charts.ts`) — no chart libraries.
 
 ## Environment variables
 
-Copy `apps/web/.env.example` → `apps/web/.env.local` and `apps/worker/.env.example` → `apps/worker/.env`.
+**Web** (`apps/web/.env.local` locally; Netlify env in prod): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `APP_URL`, `BLOG_ADMIN_EMAILS`, `ARTIFACT_STORE=netlify-blobs` (+ `NETLIFY_BLOBS_SITE_ID`/`NETLIFY_BLOBS_TOKEN` in prod), `DODO_*` (webhook secret pending), optional `GOOGLE_CLIENT_ID/SECRET`.
+**Worker** (`apps/worker/.env` local, `~/.fluxen/app/apps/worker/.env.production` prod): `DATABASE_URL`, `APP_URL`, `ARTIFACT_STORE`/`ARTIFACT_DIR`, `NETLIFY_SITE_ID`+`NETLIFY_AUTH_TOKEN`, `RESEND_API_KEY`/`EMAIL_FROM`, cron overrides (`SCHEDULER_CRON`, `HEALTH_CRON`, `RETENTION_CRON`, `REPORT_CRON`, `AUDIT_CRON`).
 
-**Web (`apps/web/.env.local`)**
-- `DATABASE_URL` (required) · `BETTER_AUTH_SECRET` (32+ chars) · `BETTER_AUTH_URL` · `APP_URL`
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (optional — enables "Continue with Google")
-- `DODO_WEBHOOK_SECRET` (required for billing webhook) · `DODO_PRODUCT_ID` (defaults to the Pro product) · `DODO_ADDON_PRODUCT_ID` (the $6/mo website add-on product — unset hides the add-on UI) · `DODO_API_KEY` + `DODO_MODE` (optional — in-app cancel + portal)
-- `ARTIFACT_DIR` (must match the worker's)
+## Pending / known limitations
 
-**Worker (`apps/worker/.env`)**
-- `DATABASE_URL` · `ARTIFACT_DIR` (same path as web) · `SCHEDULER_CRON` (default `*/5 * * * *`) · `RETENTION_CRON` (default `0 3 * * *`, daily retention sweep)
-- `APP_URL` (email links) · email: `RESEND_API_KEY` + `EMAIL_FROM` (optional — logs to console without them)
+1. **Resend domain unverified** → all outbound email (alerts, weekly reports, team invites) only delivers to the Resend account owner. Fix: verify a domain in Resend, set `EMAIL_FROM`, done. (Invite "Copy link" is the workaround.)
+2. **Worker lives on this Mac** — must be on/awake; queued jobs survive 14 days. Proper fix: a ~$5/mo host (Railway/Render) with the same env.
+3. `DODO_WEBHOOK_SECRET` not set in prod (payment attribution incomplete); Dodo still in test mode.
+4. Google OAuth configured in code but no credentials set.
+5. Canonical URLs across the site use `site.url` = `https://fluxen.app` (domain not owned/connected yet) — set `NEXT_PUBLIC_SITE_URL` when a real domain lands.
 
-Secrets are gitignored (`.env*` except `.env.example`). `.data/` (artifacts) is gitignored.
+## Working conventions for future sessions
 
----
-
-## Billing specifics (Phase 8 — Dodo Payments)
-
-- **Two plans:** Free, and **Pro $12/mo = 50 websites + unlimited pages** (config: `apps/web/src/config/plans.ts`). Pages stay `Infinity` ("Unlimited"); websites are a finite base.
-- **Self-serve website add-ons:** on Pro, buy **+30 websites for $6/mo** (repeatable — 80, 110, 140…). Each purchase is its own recurring Dodo subscription tracked in the `WebsiteAddon` table; **effective website limit = 50 + (active add-ons × 30)**, computed server-side in `lib/billing/subscription.ts::getEffectiveWebsiteLimit` and enforced in `lib/limits.ts`. `WEBSITE_ADDON` in `config/plans.ts` holds the 30/$6 numbers. Manage from **dashboard → Billing** (capacity card + "Add 30 more" button).
-- Payment provider is **Dodo Payments** (base product `pdt_0Niiijjb1NtzJsNQpp0iD`). Successful payment → workspace auto-upgraded / capacity granted via a verified webhook.
-- **To enable add-ons:** create a **recurring $6/mo product** in Dodo and set its id as `DODO_ADDON_PRODUCT_ID`. Until then the add-on button is hidden and the billing page shows "add-ons aren't enabled" (Pro base still works).
-- **To go live:** register a webhook in Dodo pointing at `<APP_URL>/api/webhooks/dodo`, set `DODO_WEBHOOK_SECRET` (its `whsec_…`). Set `DODO_API_KEY` + `DODO_MODE` only if you want the in-app cancel button + customer portal.
-- **Security (do not regress):** attribution uses an unguessable server-issued `CheckoutIntent` token (never client-editable metadata) — the token now also carries a `kind` (`pro` | `website_addon`) so the webhook routes to the right handler without trusting the client; dedupe + entitlement change happen in one transaction; a `lastEventAt` guard (on both `Subscription` and `WebsiteAddon`) rejects out-of-order events. These fixes came from an adversarial security review — keep them.
-
----
-
-## Documentation
-
-- [Architecture](docs/ARCHITECTURE.md) · [Implementation plan](docs/IMPLEMENTATION_PLAN.md) · [Database schema](docs/DATABASE_SCHEMA.md) · [Security model](docs/SECURITY_MODEL.md) · [Design system](docs/DESIGN_SYSTEM.md)
-
-## Next up
-
-**Phase 11 — SEO growth engine:** the remaining free acquisition tools (redirect-chain checker, meta-tag checker, bulk URL status, script detector), SEO landing-page architecture, structured data, sitemap/internal-linking, and product-led CTAs. See [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
-
-Phase 10 (production hardening) is **done**: a daily **retention sweep** deletes expired snapshots + artifacts + change events per plan window (baseline snapshots protected); **per-plan scan quotas** (Pro 20 manual/day) + a **concurrent-scan cap** (10/workspace); **per-workspace rate limits** on scan/website-create and a **Better Auth brute-force throttle**; a **DB advisory lock** enforces spec §40 "no duplicate scans"; retention indexes added. Passed a multi-agent adversarial review (2 low findings, both fixed). Deferred to ops: external error-monitoring/APM, metrics, a shared (Redis) limiter for multi-instance, load testing, backups.
+- Feature rounds run as parallel subagents in isolated worktrees (branched from `main` — keep main current!), merged + verified by the orchestrator: lint, typecheck, full tests, production build, real-browser verification, then deploy web + worker + migrations, live smoke, memory update.
+- Hand-write migration SQL in agent worktrees (never connect agents to databases); apply with `migrate deploy` locally + on Supabase at integration.
+- Verify everything on production after deploying — screenshots, curl smoke tests, worker logs.
