@@ -9,15 +9,19 @@
 
 import { prisma, type ChangeSeverity } from "@fluxen/database";
 import {
+  compareBrokenLinks,
   compareSnapshots,
   compareScreenshots,
   compareSiteMeta,
   highestSeverity,
   scoreChange,
   type ComparableSnapshot,
+  type LinkObservation,
+  type PageLinkObservations,
   type ScoredChange,
   type Severity,
 } from "@fluxen/comparison-engine";
+import { normalizeUrl } from "@fluxen/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@fluxen/scanner";
 import { logger } from "./logger";
 
@@ -35,6 +39,7 @@ const CATEGORY_TO_ENUM = {
 interface SnapshotRow {
   id: string;
   monitoredPageId: string;
+  url: string;
   httpStatus: number | null;
   finalUrl: string | null;
   domHash: string | null;
@@ -51,11 +56,13 @@ interface SnapshotRow {
   errorCode: string | null;
 }
 
-async function toComparable(snapshot: SnapshotRow): Promise<ComparableSnapshot> {
+async function toComparable(
+  snapshot: SnapshotRow,
+): Promise<{ comparable: ComparableSnapshot; links: LinkObservation[] }> {
   const [links, scripts, elements] = await Promise.all([
     prisma.pageLink.findMany({
       where: { pageSnapshotId: snapshot.id },
-      select: { normalizedUrl: true, linkType: true },
+      select: { normalizedUrl: true, linkType: true, statusCode: true },
     }),
     prisma.pageScript.findMany({
       where: { pageSnapshotId: snapshot.id },
@@ -81,7 +88,7 @@ async function toComparable(snapshot: SnapshotRow): Promise<ComparableSnapshot> 
     }),
   ]);
 
-  return {
+  const comparable: ComparableSnapshot = {
     httpStatus: snapshot.httpStatus,
     finalUrl: snapshot.finalUrl,
     redirectCount: 0, // redirect chain isn't persisted per-snapshot yet
@@ -115,6 +122,7 @@ async function toComparable(snapshot: SnapshotRow): Promise<ComparableSnapshot> 
       href: e.href,
     })),
   };
+  return { comparable, links };
 }
 
 const KNOWN_SERVICES: Array<[RegExp, string]> = [
@@ -151,6 +159,7 @@ export async function runComparisonForScan(
     select: {
       id: true,
       monitoredPageId: true,
+      url: true,
       httpStatus: true,
       finalUrl: true,
       domHash: true,
@@ -171,6 +180,23 @@ export async function runComparisonForScan(
   const severities: Severity[] = [];
   let totalChanges = 0;
 
+  // Per-page link observations feed one grouped site-wide broken-links
+  // comparison after the loop (spec §20). Monitored pages' own URLs are
+  // excluded there — a broken page already raises an AVAILABILITY event.
+  const baselineLinkPages: PageLinkObservations[] = [];
+  const currentLinkPages: PageLinkObservations[] = [];
+  const monitoredPageUrls = new Set<string>();
+  for (const s of snapshots) {
+    for (const raw of [s.url, s.finalUrl]) {
+      if (!raw) continue;
+      try {
+        monitoredPageUrls.add(normalizeUrl(raw));
+      } catch {
+        // unparseable URL — nothing to exclude
+      }
+    }
+  }
+
   for (const snapshot of snapshots) {
     const baseline = await prisma.baseline.findFirst({
       where: { monitoredPageId: snapshot.monitoredPageId, status: "ACTIVE" },
@@ -179,6 +205,7 @@ export async function runComparisonForScan(
           select: {
             id: true,
             monitoredPageId: true,
+            url: true,
             httpStatus: true,
             finalUrl: true,
             domHash: true,
@@ -202,13 +229,12 @@ export async function runComparisonForScan(
     if (!baseline) continue;
 
     const baselineSnap = baseline.pageSnapshot as SnapshotRow;
-    const [baseComparable, currComparable] = await Promise.all([
-      toComparable(baselineSnap),
-      toComparable(snapshot),
-    ]);
+    const [base, curr] = await Promise.all([toComparable(baselineSnap), toComparable(snapshot)]);
+    baselineLinkPages.push({ pageUrl: snapshot.url, links: base.links });
+    currentLinkPages.push({ pageUrl: snapshot.url, links: curr.links });
 
     const changes: Array<ScoredChange & { metadata?: Record<string, unknown> }> =
-      compareSnapshots(baseComparable, currComparable);
+      compareSnapshots(base.comparable, curr.comparable);
 
     // Visual diff (skipped when the page is broken — screenshot is unreliable).
     const currentBroken = (snapshot.httpStatus ?? 0) >= 400;
@@ -267,6 +293,41 @@ export async function runComparisonForScan(
       severities.push(change.severity);
       totalChanges++;
     }
+  }
+
+  // Broken internal links (spec §20): one grouped site-wide event per scan —
+  // the same dead link often appears on many pages, and per-page events would
+  // flood the changes feed.
+  try {
+    const brokenSignal = compareBrokenLinks(baselineLinkPages, currentLinkPages, {
+      excludeUrls: monitoredPageUrls,
+    });
+    const scored = brokenSignal ? scoreChange(brokenSignal) : null;
+    if (brokenSignal && scored) {
+      await prisma.changeEvent.create({
+        data: {
+          websiteId: scan.websiteId,
+          monitoredPageId: null,
+          scanId,
+          category: CATEGORY_TO_ENUM[scored.category],
+          changeType: scored.changeType,
+          severity: scored.severity as ChangeSeverity,
+          title: scored.title,
+          description: scored.description,
+          previousValue: scored.previousValue,
+          currentValue: scored.currentValue,
+          metadata: {
+            brokenLinks: brokenSignal.samples,
+            totalChecked: brokenSignal.totalChecked,
+          } as never,
+          status: "NEW",
+        },
+      });
+      severities.push(scored.severity);
+      totalChanges++;
+    }
+  } catch (err) {
+    logger.error("broken link comparison failed", { scanId }, err);
   }
 
   // Site-level robots.txt / sitemap regressions (website-wide — no page).

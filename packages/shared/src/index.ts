@@ -1,5 +1,6 @@
 export * from "./url";
 export * from "./ssrf";
+export * from "./link-check";
 export * from "./script-services";
 export * from "./channels";
 export * from "./queue";

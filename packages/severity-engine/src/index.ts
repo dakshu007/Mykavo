@@ -52,6 +52,16 @@ export type ChangeSignal =
   | { kind: "content_dom" }
   | { kind: "internal_links_removed"; count: number; total: number }
   | { kind: "internal_links_added"; count: number }
+  // Site-wide grouped broken-link report (spec §20): the resulting change
+  // event carries no monitored page — the same link may break on many pages.
+  | {
+      kind: "broken_links";
+      count: number;
+      /** Unique internal links whose status was actually checked this scan. */
+      totalChecked: number;
+      /** Worst offenders first: {url, status (0 = unreachable), pages linking to it}. */
+      samples: Array<{ url: string; status: number; pages: number }>;
+    }
   | { kind: "script_removed"; domain: string; service: string | null }
   | { kind: "script_added"; domain: string; service: string | null; isThirdParty: boolean }
   | { kind: "page_weight"; previousBytes: number; currentBytes: number }
@@ -280,6 +290,24 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         description: `${signal.count} internal link${signal.count === 1 ? "" : "s"} present in the baseline ${signal.count === 1 ? "is" : "are"} no longer on the page. Navigation or content links may have been removed.`,
         previousValue: `${signal.total} internal links`,
         currentValue: `${signal.total - signal.count} internal links`,
+      });
+    }
+
+    case "broken_links": {
+      const severity: Severity = signal.count >= 5 ? "HIGH" : "MEDIUM";
+      const plural = signal.count === 1 ? "" : "s";
+      const examples = signal.samples
+        .slice(0, 3)
+        .map((s) => `${linkPath(s.url)} (${s.status === 0 ? "unreachable" : `HTTP ${s.status}`})`)
+        .join(", ");
+      return finalize({
+        category: "LINKS",
+        changeType: "internal_links_broken",
+        severity,
+        title: `${signal.count} broken internal link${plural} detected`,
+        description: `${signal.count} internal link${plural} now return${signal.count === 1 ? "s" : ""} an error (${signal.totalChecked} unique link${signal.totalChecked === 1 ? "" : "s"} checked)${examples ? `: ${examples}` : ""}. Visitors following ${signal.count === 1 ? "it" : "them"} hit a dead end.`,
+        previousValue: "No broken links in baseline",
+        currentValue: `${signal.count} broken link${plural}`,
       });
     }
 
@@ -549,6 +577,16 @@ function byImportance(importance: ElementImportance): Severity {
 
 function kb(bytes: number): string {
   return `${Math.round(bytes / 1024)} KB`;
+}
+
+/** Compact path form for link URLs in user-facing copy. */
+function linkPath(url: string): string {
+  try {
+    const u = new URL(url);
+    return (u.pathname + u.search) || "/";
+  } catch {
+    return url;
+  }
 }
 
 /**

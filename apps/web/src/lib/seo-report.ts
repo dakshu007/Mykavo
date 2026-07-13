@@ -5,15 +5,16 @@
  * Length guidance (title 50–60, description 120–160) is shared with the free
  * Meta Tag Checker via `@/lib/tools/meta-tags`; the thresholds live there.
  *
- * Broken-internal-link checks are intentionally absent: the scanner records
- * PageLink rows but never populates `statusCode` (see
- * apps/worker/src/scan-website.ts), so there is no link-status data to report.
+ * Broken-link checks read the statuses the worker's per-scan link check
+ * records on PageLink rows (apps/worker/src/check-links.ts). Links the check
+ * never probed (null status) are silently skipped — never assumed broken.
  *
  * Health score formula (documented, clamped to 0–100):
  *   score = 100 − 25 × critical − 5 × warning − 1 × info
  * Every issue deducts individually — e.g. two noindex pages cost 50 points.
  */
 
+import { isBrokenLinkStatus } from "@fluxen/comparison-engine";
 import {
   evaluateCanonical,
   evaluateH1,
@@ -27,6 +28,7 @@ export type SeoSeverity = "critical" | "warning" | "info";
 export type SeoCheckId =
   | "page-error"
   | "noindex"
+  | "broken-link"
   | "missing-title"
   | "title-length"
   | "duplicate-title"
@@ -48,6 +50,11 @@ export interface SeoSnapshotInput {
   robotsMeta: string | null;
   /** Prisma Json column — expected string[], but never trusted to be one. */
   h1Values: unknown;
+  /**
+   * Internal PageLink rows for the page. `statusCode` comes from the worker's
+   * per-scan link check; null means the link was never probed.
+   */
+  links?: Array<{ normalizedUrl: string; statusCode: number | null }>;
 }
 
 export interface SeoIssue {
@@ -79,6 +86,7 @@ export const SCORE_WEIGHTS: Record<SeoSeverity, number> = {
 const CHECK_SEVERITY: Record<SeoCheckId, SeoSeverity> = {
   "page-error": "critical",
   noindex: "critical",
+  "broken-link": "warning",
   "missing-title": "warning",
   "title-length": "warning",
   "duplicate-title": "warning",
@@ -98,6 +106,10 @@ export const SEO_CHECK_META: Record<SeoCheckId, { title: string; why: string }> 
   noindex: {
     title: "Pages blocked from indexing",
     why: "A noindex robots meta removes the page from search results entirely — make sure it's intentional.",
+  },
+  "broken-link": {
+    title: "Broken internal links",
+    why: "Links that lead to errors dead-end visitors and waste crawl budget — search engines read them as a poorly maintained site.",
   },
   "missing-title": {
     title: "Missing title tags",
@@ -137,6 +149,7 @@ export const SEO_CHECK_META: Record<SeoCheckId, { title: string; why: string }> 
 export const SEO_CHECK_ORDER: readonly SeoCheckId[] = [
   "page-error",
   "noindex",
+  "broken-link",
   "missing-title",
   "title-length",
   "duplicate-title",
@@ -233,6 +246,45 @@ function contentIssues(snapshot: SeoSnapshotInput): SeoIssue[] {
   return issues;
 }
 
+/**
+ * One issue per unique broken internal link (deduped across pages — the same
+ * dead footer link on 20 pages is one problem, not 20). Attached to the first
+ * page that references it; the message carries the page reach.
+ */
+function brokenLinkIssues(healthy: SeoSnapshotInput[]): SeoIssue[] {
+  const seen = new Map<string, { snapshot: SeoSnapshotInput; status: number; pages: number }>();
+  for (const snapshot of healthy) {
+    const counted = new Set<string>();
+    for (const link of snapshot.links ?? []) {
+      if (!isBrokenLinkStatus(link.statusCode)) continue;
+      if (counted.has(link.normalizedUrl)) continue; // same link twice on one page
+      counted.add(link.normalizedUrl);
+      const entry = seen.get(link.normalizedUrl);
+      if (entry) entry.pages += 1;
+      else {
+        seen.set(link.normalizedUrl, {
+          snapshot,
+          status: link.statusCode as number,
+          pages: 1,
+        });
+      }
+    }
+  }
+  const issues: SeoIssue[] = [];
+  for (const [url, { snapshot, status, pages }] of seen) {
+    const label = status === 0 ? "is unreachable" : `returns HTTP ${status}`;
+    issues.push(
+      issue(
+        "broken-link",
+        snapshot,
+        `Links to a page that ${label}${pages > 1 ? ` (linked from ${pages} pages)` : ""}.`,
+        url,
+      ),
+    );
+  }
+  return issues;
+}
+
 /** Duplicate titles among healthy pages, grouped by exact trimmed match. */
 function duplicateTitleIssues(healthy: SeoSnapshotInput[]): SeoIssue[] {
   const byTitle = new Map<string, SeoSnapshotInput[]>();
@@ -299,6 +351,7 @@ export function buildSeoReport(snapshots: SeoSnapshotInput[]): SeoReport {
     }
   }
   issues.push(...duplicateTitleIssues(healthy));
+  issues.push(...brokenLinkIssues(healthy));
 
   const order = new Map(SEO_CHECK_ORDER.map((check, index) => [check, index]));
   issues.sort(

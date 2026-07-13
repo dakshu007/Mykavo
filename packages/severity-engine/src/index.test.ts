@@ -119,6 +119,33 @@ describe("links rules (spec §20)", () => {
   it("added links are INFO", () => {
     expect(score({ kind: "internal_links_added", count: 5 })!.severity).toBe("INFO");
   });
+  it("a few broken links are MEDIUM, 5+ are HIGH and notify", () => {
+    const few = score({
+      kind: "broken_links",
+      count: 2,
+      totalChecked: 40,
+      samples: [
+        { url: "https://a.com/gone", status: 404, pages: 3 },
+        { url: "https://a.com/dead", status: 0, pages: 1 },
+      ],
+    })!;
+    expect(few.severity).toBe("MEDIUM");
+    expect(few.category).toBe("LINKS");
+    expect(few.notify).toBe(false);
+    expect(few.title).toBe("2 broken internal links detected");
+    expect(few.description).toContain("/gone (HTTP 404)");
+    expect(few.description).toContain("/dead (unreachable)");
+
+    const many = score({
+      kind: "broken_links",
+      count: 17,
+      totalChecked: 120,
+      samples: [{ url: "https://a.com/gone", status: 404, pages: 12 }],
+    })!;
+    expect(many.severity).toBe("HIGH");
+    expect(many.notify).toBe(true);
+    expect(many.title).toBe("17 broken internal links detected");
+  });
 });
 
 describe("visual rules (spec §18)", () => {

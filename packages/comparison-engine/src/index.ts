@@ -7,6 +7,14 @@ export {
 } from "./compare";
 export { compareScreenshots, type VisualDiffResult } from "./visual";
 export {
+  compareBrokenLinks,
+  isBrokenLinkStatus,
+  type LinkObservation,
+  type PageLinkObservations,
+  type BrokenLinkSample,
+  type BrokenLinksSignal,
+} from "./links";
+export {
   scoreChange,
   highestSeverity,
   type ScoredChange,

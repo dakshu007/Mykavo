@@ -119,6 +119,11 @@ export default async function SeoHealthPage({
             canonicalUrl: true,
             robotsMeta: true,
             h1Values: true,
+            // Internal link statuses from the worker's per-scan link check.
+            links: {
+              where: { linkType: "INTERNAL" },
+              select: { normalizedUrl: true, statusCode: true },
+            },
           },
         },
       },

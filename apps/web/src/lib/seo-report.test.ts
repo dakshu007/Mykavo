@@ -279,6 +279,67 @@ describe("duplicate titles", () => {
   });
 });
 
+describe("broken internal links", () => {
+  it("flags a broken link once per unique URL with its page reach", () => {
+    const report = buildSeoReport([
+      healthyPage({
+        links: [
+          { normalizedUrl: "https://example.com/gone", statusCode: 404 },
+          { normalizedUrl: "https://example.com/ok", statusCode: 200 },
+        ],
+      }),
+      healthyPage({
+        monitoredPageId: "page_2",
+        url: "https://example.com/about",
+        title: "z".repeat(52),
+        links: [{ normalizedUrl: "https://example.com/gone", statusCode: 404 }],
+      }),
+    ]);
+    const broken = report.issues.filter((i) => i.check === "broken-link");
+    expect(broken).toHaveLength(1);
+    expect(broken[0].severity).toBe("warning");
+    expect(broken[0].value).toBe("https://example.com/gone");
+    expect(broken[0].message).toContain("HTTP 404");
+    expect(broken[0].message).toContain("linked from 2 pages");
+  });
+
+  it("labels unreachable links and skips unchecked or healthy statuses", () => {
+    const report = buildSeoReport([
+      healthyPage({
+        links: [
+          { normalizedUrl: "https://example.com/dead", statusCode: 0 },
+          { normalizedUrl: "https://example.com/unchecked", statusCode: null },
+          { normalizedUrl: "https://example.com/login", statusCode: 403 },
+        ],
+      }),
+    ]);
+    const broken = report.issues.filter((i) => i.check === "broken-link");
+    expect(broken).toHaveLength(1);
+    expect(broken[0].message).toContain("unreachable");
+  });
+
+  it("ignores links on errored pages and counts a repeated link on one page once", () => {
+    const report = buildSeoReport([
+      healthyPage({
+        httpStatus: 500,
+        links: [{ normalizedUrl: "https://example.com/gone", statusCode: 404 }],
+      }),
+      healthyPage({
+        monitoredPageId: "page_2",
+        url: "https://example.com/about",
+        title: "z".repeat(52),
+        links: [
+          { normalizedUrl: "https://example.com/gone", statusCode: 404 },
+          { normalizedUrl: "https://example.com/gone", statusCode: 404 },
+        ],
+      }),
+    ]);
+    const broken = report.issues.filter((i) => i.check === "broken-link");
+    expect(broken).toHaveLength(1);
+    expect(broken[0].message).not.toContain("linked from");
+  });
+});
+
 describe("score formula (100 − 25·critical − 5·warning − 1·info)", () => {
   it("deducts per severity", () => {
     expect(calculateSeoScore({ critical: 0, warning: 0, info: 0 })).toBe(100);

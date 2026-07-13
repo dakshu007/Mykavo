@@ -17,6 +17,7 @@ import { computeNextScanAt, parseSelectorList } from "@fluxen/shared";
 import { logger } from "./logger";
 import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";
+import { checkLinksForScan } from "./check-links";
 import { notifyForScan } from "./notify";
 
 const PAGE_CONCURRENCY = 3;
@@ -245,6 +246,14 @@ export async function runScanWebsiteJob(
   // comparison reads it. Never fails the scan.
   if (scanned > 0) {
     await captureSiteMeta({ scanId, websiteId: website.id, websiteUrl: website.url });
+
+    // Internal link status check (spec §20) — records PageLink.statusCode so
+    // comparison can report newly broken links. Never fails the scan.
+    try {
+      await checkLinksForScan(scanId);
+    } catch (err) {
+      logger.error("link check failed", log, err);
+    }
   }
 
   if (scan.triggerType === "BASELINE" && scanned > 0) {

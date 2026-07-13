@@ -26,6 +26,29 @@ function pathOf(url: string): string {
   }
 }
 
+interface BrokenLinkRow {
+  url: string;
+  /** Terminal HTTP status; 0 means unreachable. */
+  status: number;
+  /** Monitored pages linking to this URL. */
+  pages: number;
+}
+
+/** Defensive parse of metadata.brokenLinks written by the comparison worker. */
+function parseBrokenLinks(metadata: unknown): BrokenLinkRow[] {
+  if (typeof metadata !== "object" || metadata === null) return [];
+  const list = (metadata as { brokenLinks?: unknown }).brokenLinks;
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (entry): entry is BrokenLinkRow =>
+      typeof entry === "object" &&
+      entry !== null &&
+      typeof (entry as BrokenLinkRow).url === "string" &&
+      typeof (entry as BrokenLinkRow).status === "number" &&
+      typeof (entry as BrokenLinkRow).pages === "number",
+  );
+}
+
 /** Compact "2h ago"-style date for the notes thread. */
 function relativeDate(d: Date): string {
   const mins = Math.floor((Date.now() - d.getTime()) / 60_000);
@@ -69,6 +92,7 @@ export default async function ChangeDetailPage({
   const canModerateNotes = role === "OWNER" || role === "ADMIN";
 
   const canUpdateBaseline = !!change.currentSnapshot && !change.currentSnapshot.errorCode;
+  const brokenLinks = parseBrokenLinks(change.metadata);
   const hasDiff =
     typeof change.metadata === "object" &&
     change.metadata !== null &&
@@ -172,6 +196,36 @@ export default async function ChangeDetailPage({
               </div>
             </div>
           </div>
+        </Card>
+      )}
+
+      {/* Broken internal links (site-wide LINKS events carry the full list) */}
+      {brokenLinks.length > 0 && (
+        <Card>
+          <CardHeader title={`Broken links (${brokenLinks.length})`} />
+          <ul className="divide-y divide-line">
+            {brokenLinks.map((link) => (
+              <li
+                key={link.url}
+                className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2.5 first:pt-0 last:pb-0"
+              >
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 max-w-full truncate font-mono text-[13px] font-medium text-ink hover:text-primary"
+                >
+                  {pathOf(link.url)}
+                </a>
+                <span className="rounded-full bg-critical-soft px-2.5 py-0.5 text-[12px] font-semibold text-critical-strong">
+                  {link.status === 0 ? "Unreachable" : `HTTP ${link.status}`}
+                </span>
+                <span className="text-[13px] text-ink-secondary">
+                  linked from {link.pages} page{link.pages === 1 ? "" : "s"}
+                </span>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 
