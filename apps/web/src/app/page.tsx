@@ -3,8 +3,6 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
-  Baseline,
-  Bell,
   Braces,
   CheckCircle2,
   Code2,
@@ -15,10 +13,8 @@ import {
   Link2Off,
   ListChecks,
   MousePointerClick,
-  Radar,
   Route,
   Search,
-  ShieldCheck,
   Store,
   Tags,
   Timer,
@@ -26,12 +22,24 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
-import { MarketingNav } from "@/components/marketing/nav";
-import { MarketingFooter } from "@/components/marketing/footer";
-import { HeroUrlInput } from "@/components/marketing/hero-url-input";
-import { PlanCards } from "@/components/marketing/plan-cards";
-import { DashboardPreview } from "@/components/preview/dashboard-preview";
-import { ButtonLink } from "@/components/ui/button";
+import { LandingNav } from "@/components/landing/nav";
+import { LandingHero } from "@/components/landing/hero";
+import { LandingUrlInput } from "@/components/landing/url-input";
+import { SignalMarquee } from "@/components/landing/marquee";
+import { StickyCta } from "@/components/landing/sticky-cta";
+import { LandingFooter } from "@/components/landing/footer";
+import {
+  butter,
+  cream,
+  darkCard,
+  eyebrow,
+  fontSans,
+  fontSerif,
+  landingFontVars,
+  lavender,
+  periwinkle,
+} from "@/components/landing/style";
+import { plans } from "@/config/plans";
 import { site } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -51,47 +59,67 @@ const jsonLd = {
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
 };
 
-function SectionHeading({
-  eyebrow,
-  title,
-  sub,
-}: {
-  eyebrow: string;
-  title: string;
-  sub?: string;
-}) {
-  return (
-    <div className="mx-auto mb-12 max-w-2xl text-center">
-      <p className="label-micro mb-3">{eyebrow}</p>
-      <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">{title}</h2>
-      {sub && <p className="mt-4 text-[15px] leading-7 text-ink-secondary">{sub}</p>}
-    </div>
-  );
-}
-
-const categories = [
-  { icon: Zap, name: "Availability", desc: "200 → 404, 500s, timeouts, unexpected redirects." },
-  { icon: Eye, name: "Visual", desc: "Screenshot comparison with pixel-level diffs and masks." },
-  { icon: Search, name: "SEO", desc: "Titles, meta descriptions, canonicals, robots, H1s, noindex." },
-  { icon: FileSearch, name: "Content", desc: "Meaningful text and DOM changes, normalized to cut noise." },
-  { icon: Link2Off, name: "Links", desc: "Internal links that break, vanish, or start redirecting." },
-  { icon: Code2, name: "Scripts", desc: "Analytics, tag managers, or payment scripts added or removed." },
-  { icon: Timer, name: "Performance", desc: "Page weight, request count, and response time regressions." },
-  { icon: MousePointerClick, name: "Conversion", desc: "CTAs, forms, and checkout buttons that go missing or hide." },
-];
+/* ---------------------------------- data --------------------------------- */
 
 const problems = [
-  "A deploy silently breaks the signup button — nobody notices for a week.",
-  "A plugin update flips key pages to noindex — rankings quietly fall.",
-  "Google Analytics disappears during a rebuild — a month of data lost.",
-  "A client edits the homepage — and blames your agency when it breaks.",
+  {
+    text: "A deploy silently breaks the signup button — nobody notices for a week.",
+    color: cream,
+    rotate: "-rotate-1",
+  },
+  {
+    text: "A plugin update flips key pages to noindex — rankings quietly fall.",
+    color: lavender,
+    rotate: "rotate-1",
+  },
+  {
+    text: "Google Analytics disappears during a rebuild — a month of data lost.",
+    color: periwinkle,
+    rotate: "rotate-[0.5deg]",
+  },
+  {
+    text: "A client edits the homepage — and blames your agency when it breaks.",
+    color: butter,
+    rotate: "-rotate-[0.5deg]",
+  },
+];
+
+const categoryChips = [
+  { icon: Zap, name: "Availability" },
+  { icon: Eye, name: "Visual" },
+  { icon: Search, name: "SEO" },
+  { icon: FileSearch, name: "Content" },
+  { icon: Link2Off, name: "Links" },
+  { icon: Code2, name: "Scripts" },
+  { icon: Timer, name: "Performance" },
+  { icon: MousePointerClick, name: "Conversion" },
 ];
 
 const workflow = [
-  { step: "01", title: "Add your websites", desc: "Point Fluxen at every site you manage. It discovers pages via sitemaps and internal links — you pick what matters." },
-  { step: "02", title: "Approve a baseline", desc: "Fluxen captures a full snapshot of each page: screenshots, SEO tags, links, scripts, performance. You approve it as the known-good state." },
-  { step: "03", title: "Monitor automatically", desc: "Recurring scans compare every page against its approved baseline using deterministic checks — consistent and reproducible." },
-  { step: "04", title: "Fix what matters", desc: "Get one grouped alert with severity levels and before-and-after views. Fix regressions, or approve expected changes as the new baseline." },
+  {
+    step: "01",
+    title: "Add your websites",
+    desc: "Point Fluxen at every site you manage. It discovers pages via sitemaps and internal links — you pick what matters.",
+    keyword: "discovers",
+  },
+  {
+    step: "02",
+    title: "Approve a baseline",
+    desc: "Fluxen captures a full snapshot of each page: screenshots, SEO tags, links, scripts, performance. You approve it as the known-good state.",
+    keyword: "known-good",
+  },
+  {
+    step: "03",
+    title: "Monitor automatically",
+    desc: "Recurring scans compare every page against its approved baseline using deterministic checks — consistent and reproducible.",
+    keyword: "deterministic",
+  },
+  {
+    step: "04",
+    title: "Fix what matters",
+    desc: "Get one grouped alert with severity levels and before-and-after views. Fix regressions, or approve expected changes as the new baseline.",
+    keyword: "one grouped alert",
+  },
 ];
 
 const useCases = [
@@ -108,31 +136,41 @@ const freeTools = [
     icon: GitCompareArrows,
     href: "/tools/website-change-detector",
     title: "Website Change Detector",
-    desc: "Snapshot a page's status, SEO tags, links, and scripts — then compare two URLs or re-check later to see what changed.",
+    word: "Compare",
+    color: butter,
+    desc: "Snapshot a page's status, SEO tags, links, and scripts — then re-check later to see what changed.",
   },
   {
     icon: Tags,
     href: "/tools/meta-tag-checker",
     title: "Meta Tag Checker",
-    desc: "Grade a page's title, meta description, canonical, robots meta, Open Graph tags, and H1s with clear pass/warn guidance.",
+    word: "Inspect",
+    color: lavender,
+    desc: "Grade a page's title, description, canonical, robots meta, Open Graph tags, and H1s.",
   },
   {
     icon: Route,
     href: "/tools/redirect-chain-checker",
     title: "Redirect Chain Checker",
-    desc: "Trace every redirect hop with its status code, and catch loops and needlessly long chains.",
+    word: "Trace",
+    color: periwinkle,
+    desc: "Trace every redirect hop with its status code, and catch loops and long chains.",
   },
   {
     icon: ListChecks,
     href: "/tools/bulk-url-status-checker",
     title: "Bulk URL Status Checker",
-    desc: "Check the status codes and response times of up to 20 URLs in one go — spot 404s and 500s instantly.",
+    word: "Sweep",
+    color: cream,
+    desc: "Check status codes and response times of up to 20 URLs in one go.",
   },
   {
     icon: Braces,
     href: "/tools/script-detector",
     title: "Script Detector",
-    desc: "List every external script on a page and identify services like Google Analytics, Tag Manager, Meta Pixel, and Stripe.",
+    word: "Reveal",
+    color: lavender,
+    desc: "List every external script on a page and identify the services behind them.",
   },
 ];
 
@@ -163,390 +201,589 @@ const faqs = [
   },
 ];
 
+/* ------------------------------- primitives ------------------------------ */
+
+/** Full-bleed dark section container. */
+function Dark({ id, children, className = "" }: { id?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <section id={id} className={`mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28 ${className}`}>
+      {children}
+    </section>
+  );
+}
+
+/** Inset rounded light panel — stamped's signature section treatment. */
+function Panel({
+  id,
+  color = "#ffffff",
+  children,
+}: {
+  id?: string;
+  color?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="p-2 sm:p-2.5">
+      <div
+        style={{ backgroundColor: color }}
+        className="mx-auto rounded-[32px] px-5 py-16 sm:rounded-[40px] sm:px-8 lg:py-24"
+      >
+        <div className="mx-auto max-w-5xl">{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function SerifHeading({
+  children,
+  dark = false,
+  className = "",
+}: {
+  children: React.ReactNode;
+  dark?: boolean;
+  className?: string;
+}) {
+  return (
+    <h2
+      className={`${fontSerif} text-center text-4xl leading-[1.05] tracking-[-0.01em] sm:text-5xl lg:text-[56px] ${
+        dark ? "text-white" : "text-[#0d0c0e]"
+      } ${className}`}
+    >
+      {children}
+    </h2>
+  );
+}
+
+/** The split-pill CTA pair used at the end of light panels. */
+function SplitPill({ onLight = true }: { onLight?: boolean }) {
+  return (
+    <div
+      className={`mx-auto mt-12 flex w-fit overflow-hidden rounded-full ${
+        onLight ? "border border-[#0d0c0e]/15" : "border border-white/20"
+      }`}
+    >
+      <Link
+        href="/signup"
+        className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#faed99]"
+      >
+        Start monitoring free
+      </Link>
+      <Link
+        href="/preview"
+        className="bg-[#0d0c0e] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2830]"
+      >
+        Explore the dashboard
+      </Link>
+    </div>
+  );
+}
+
+/* ---------------------------------- page --------------------------------- */
+
 export default function HomePage() {
   return (
-    <>
+    <div className={`${landingFontVars} ${fontSans} bg-[#0d0c0e] text-white antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <MarketingNav />
+      <LandingNav />
+      <StickyCta />
+
       <main>
-        {/* 2. Hero */}
-        <section className="mx-auto max-w-300 px-5 pb-10 pt-20 text-center lg:px-8">
-          <p className="label-micro mb-5">Website change &amp; regression monitoring</p>
-          <h1 className="mx-auto max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight text-ink sm:text-6xl">
-            Know What Changed.
-            <br />
-            <span className="text-primary">Fix What Matters.</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-[17px] leading-8 text-ink-secondary">
-            {site.description}
+        {/* Hero — scroll-scrubbed monitoring story */}
+        <LandingHero />
+
+        {/* Interactive URL input (product-led, no signup) */}
+        <section className="mx-auto max-w-6xl px-5 pb-4 pt-2 lg:px-8">
+          <LandingUrlInput />
+          <p className="mt-3 text-center text-[13px] text-white/40">
+            Free instant inspection — status, SEO tags, links &amp; scripts. No signup needed.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <ButtonLink href="/signup" size="lg">
+            <Link
+              href="/signup"
+              className="rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#faed99]"
+            >
               Start Monitoring Free
-            </ButtonLink>
-            <ButtonLink href="/#how-it-works" size="lg" variant="secondary">
+            </Link>
+            <Link
+              href="/#how-it-works"
+              className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            >
               See How Fluxen Works
-            </ButtonLink>
-          </div>
-
-          {/* 3. Interactive URL input */}
-          <div className="mt-12">
-            <HeroUrlInput />
-            <p className="mt-3 text-[13px] text-ink-faint">
-              Free instant inspection — status, SEO tags, links &amp; scripts. No signup needed.
-            </p>
+            </Link>
           </div>
         </section>
 
-        {/* 4. Dashboard preview */}
-        <section className="mx-auto max-w-300 px-5 pb-8 lg:px-8">
-          <DashboardPreview />
-        </section>
+        {/* Trust ticker — everything a scan checks */}
+        <SignalMarquee />
 
-        {/* 5. Trust indicators — honest, factual */}
-        <section className="mx-auto max-w-300 px-5 py-10 lg:px-8">
-          <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm font-medium text-ink-secondary">
-            <li className="flex items-center gap-2">
-              <GitCompareArrows className="size-4.5 text-primary" aria-hidden />
-              Deterministic detection — reproducible results
-            </li>
-            <li className="flex items-center gap-2">
-              <Baseline className="size-4.5 text-primary" aria-hidden />
-              Approved baselines, versioned history
-            </li>
-            <li className="flex items-center gap-2">
-              <Bell className="size-4.5 text-primary" aria-hidden />
-              Grouped alerts, tuned for low noise
-            </li>
-            <li className="flex items-center gap-2">
-              <ShieldCheck className="size-4.5 text-primary" aria-hidden />
-              Read-only, robots.txt-respecting scans
-            </li>
-          </ul>
-        </section>
+        {/* The problem — white inset panel */}
+        <Panel>
+          <p className="mb-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/45">
+            The problem
+          </p>
+          <SerifHeading>Websites break silently.</SerifHeading>
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#0d0c0e]/65">
+            Nobody re-checks every page after every deploy, plugin update, or client edit. Small
+            changes slip through — and turn into lost rankings, lost conversions, and awkward
+            client calls.
+          </p>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {problems.map((p) => (
+              <div
+                key={p.text}
+                style={{ backgroundColor: p.color }}
+                className={`flex items-start gap-4 rounded-[24px] p-6 ${p.rotate}`}
+              >
+                <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#0d0c0e]">
+                  <AlertTriangle className="size-4 text-white" aria-hidden />
+                </span>
+                <p className="text-[15px] font-medium leading-7 text-[#0d0c0e]">{p.text}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mx-auto mt-12 max-w-2xl text-center text-lg leading-8 text-[#0d0c0e]/70">
+            Fluxen answers one question, continuously:{" "}
+            <span className={`${fontSerif} text-2xl italic text-[#0d0c0e]`}>
+              &ldquo;Did something important change or break on any website I manage?&rdquo;
+            </span>
+          </p>
+        </Panel>
 
-        {/* 6. Core problem */}
-        <section className="bg-surface py-24">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading
-              eyebrow="The problem"
-              title="Websites break silently"
-              sub="Nobody re-checks every page after every deploy, plugin update, or client edit. Small changes slip through — and turn into lost rankings, lost conversions, and awkward client calls."
-            />
-            <div className="grid gap-5 md:grid-cols-2">
-              {problems.map((p) => (
+        {/* What it watches — three feature cards + category chips */}
+        <Dark id="categories">
+          <p className={`${eyebrow} mb-4 text-center`}>What Fluxen watches</p>
+          <SerifHeading dark>
+            Eight kinds of change.
+            <br />
+            <span className="italic">One monitoring layer.</span>
+          </SerifHeading>
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-white/55">
+            Every scan checks each monitored page across all eight categories and scores what it
+            finds by severity — so you see what matters first.
+          </p>
+
+          <div className="mt-14 grid gap-5 lg:grid-cols-3">
+            {/* Visual */}
+            <div className={`${darkCard} flex flex-col p-7`}>
+              <h3 className={`${fontSerif} text-center text-3xl text-white`}>Visual</h3>
+              <div className="my-7 flex flex-1 items-center justify-center">
+                <div className="relative w-full max-w-60">
+                  <div
+                    style={{ backgroundColor: lavender }}
+                    className="absolute -left-3 top-2 h-32 w-1/2 -rotate-3 rounded-2xl opacity-90"
+                  />
+                  <div
+                    style={{ backgroundColor: butter }}
+                    className="relative ml-auto flex h-36 w-3/5 rotate-2 flex-col justify-center gap-2 rounded-2xl p-4 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
+                      Pixel diff
+                    </p>
+                    <p className={`${fontSerif} text-3xl text-[#0d0c0e]`}>12.4%</p>
+                    <p className="text-[11px] font-medium text-[#0d0c0e]/60">
+                      of the page changed overnight
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-center text-sm leading-6 text-white/55">
+                Full-page screenshots compared pixel by pixel, with masks and ignore rules that
+                keep dynamic content from crying wolf.
+              </p>
+            </div>
+
+            {/* SEO */}
+            <div className={`${darkCard} flex flex-col p-7`}>
+              <h3 className={`${fontSerif} text-center text-3xl text-white`}>SEO</h3>
+              <div className="my-7 flex flex-1 flex-col items-center justify-center gap-2">
                 <div
-                  key={p}
-                  className="flex items-start gap-4 rounded-card bg-card p-6 shadow-card"
+                  style={{ backgroundColor: cream }}
+                  className="w-full max-w-60 -rotate-1 rounded-2xl p-3.5 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
                 >
-                  <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-critical-soft">
-                    <AlertTriangle className="size-4.5 text-critical" aria-hidden />
-                  </span>
-                  <p className="text-[15px] leading-7 text-ink">{p}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
+                    Baseline
+                  </p>
+                  <p className="mt-1 font-mono text-[12px] text-[#0d0c0e]">robots: index, follow</p>
                 </div>
-              ))}
-            </div>
-            <p className="mx-auto mt-10 max-w-xl text-center text-[15px] leading-7 text-ink-secondary">
-              Fluxen answers one question, continuously:{" "}
-              <span className="font-semibold text-ink">
-                &ldquo;Did something important change or break on any website I manage?&rdquo;
-              </span>
-            </p>
-          </div>
-        </section>
-
-        {/* 7. Change categories */}
-        <section className="py-24" id="categories">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading
-              eyebrow="What Fluxen watches"
-              title="Eight kinds of change, one monitoring layer"
-              sub="Every scan checks each monitored page across all eight categories and scores what it finds by severity."
-            />
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {categories.map((c) => (
-                <div key={c.name} className="rounded-card bg-card p-6 shadow-card">
-                  <span className="inline-flex size-11 items-center justify-center rounded-xl bg-primary-soft">
-                    <c.icon className="size-5 text-primary" aria-hidden />
-                  </span>
-                  <h3 className="mt-4 text-[15px] font-semibold text-ink">{c.name}</h3>
-                  <p className="mt-1.5 text-sm leading-6 text-ink-secondary">{c.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 8. Before-and-after comparison */}
-        <section className="bg-surface py-24">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading
-              eyebrow="Before and after"
-              title="See exactly what changed"
-              sub="Every change event stores the previous state and the current state — values, screenshots, and diffs — so you never have to guess what happened."
-            />
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-card bg-card shadow-card">
-              <div className="grid divide-y divide-line sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                <div className="p-7">
-                  <p className="label-micro mb-4">Baseline · approved</p>
-                  <dl className="space-y-3 font-mono text-[13px]">
-                    <div>
-                      <dt className="text-ink-faint">title</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
-                        Aurora Outdoor — Tents &amp; Camping Gear
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-ink-faint">robots</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
-                        index, follow
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-ink-faint">status</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
-                        200 OK
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-                <div className="p-7">
-                  <p className="label-micro mb-4">Current scan · today</p>
-                  <dl className="space-y-3 font-mono text-[13px]">
-                    <div>
-                      <dt className="text-ink-faint">title</dt>
-                      <dd className="mt-0.5 rounded-md bg-critical-soft px-2 py-1 text-critical-strong">
-                        Home
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-ink-faint">robots</dt>
-                      <dd className="mt-0.5 rounded-md bg-critical-soft px-2 py-1 text-critical-strong">
-                        noindex, nofollow
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-ink-faint">status</dt>
-                      <dd className="mt-0.5 rounded-md bg-success-soft px-2 py-1 text-success-strong">
-                        200 OK
-                      </dd>
-                    </div>
-                  </dl>
+                <div
+                  style={{ backgroundColor: butter }}
+                  className="w-full max-w-60 rotate-1 rounded-2xl p-3.5 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
+                    Today · critical
+                  </p>
+                  <p className="mt-1 font-mono text-[12px] font-semibold text-[#0d0c0e]">
+                    robots: noindex ⚠
+                  </p>
                 </div>
               </div>
-              <div className="border-t border-line bg-surface px-7 py-4 text-sm text-ink-secondary">
-                <span className="font-semibold text-critical-strong">Critical:</span> page changed from
-                index to noindex — Fluxen alerts you within one scan cycle.
+              <p className="text-center text-sm leading-6 text-white/55">
+                Titles, descriptions, canonicals, robots meta, H1s, sitemaps, and indexability —
+                the tags that decide whether you rank.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div className={`${darkCard} flex flex-col p-7`}>
+              <h3 className={`${fontSerif} text-center text-3xl text-white`}>Links</h3>
+              <div className="my-7 flex flex-1 items-center justify-center">
+                <div
+                  style={{ backgroundColor: periwinkle }}
+                  className="w-full max-w-60 rotate-[1.5deg] rounded-2xl p-4 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
+                    Site-wide · high
+                  </p>
+                  <p className={`${fontSerif} mt-1 text-2xl leading-tight text-[#0d0c0e]`}>
+                    17 internal links broken
+                  </p>
+                  <p className="mt-1.5 font-mono text-[11px] text-[#0d0c0e]/60">
+                    /pricing → 404 · /docs → 404 · …
+                  </p>
+                </div>
               </div>
+              <p className="text-center text-sm leading-6 text-white/55">
+                Every internal link checked on every scan — grouped into one alert when they
+                break, never one email per dead link.
+              </p>
             </div>
           </div>
-        </section>
 
-        {/* 9. Agency workflow */}
-        <section className="py-24">
-          <div className="mx-auto grid max-w-300 items-center gap-12 px-5 lg:grid-cols-2 lg:px-8">
+          <ul className="mt-8 flex flex-wrap justify-center gap-2.5">
+            {categoryChips.map((c) => (
+              <li
+                key={c.name}
+                className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[13px] font-medium text-white/70"
+              >
+                <c.icon className="size-4 text-[#faed99]" aria-hidden />
+                {c.name}
+              </li>
+            ))}
+          </ul>
+        </Dark>
+
+        {/* How it works — butter inset panel */}
+        <Panel id="how-it-works" color={butter}>
+          <p className="mb-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/45">
+            How it works
+          </p>
+          <SerifHeading>
+            Baseline. Monitor.
+            <br />
+            <span className="italic">Detect. Fix.</span>
+          </SerifHeading>
+          <div className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2">
+            {workflow.map((w) => (
+              <div key={w.step}>
+                <span className="inline-flex items-center justify-center rounded-full bg-[#0d0c0e] px-4 py-1.5 font-mono text-[12px] font-semibold text-white">
+                  {w.step}
+                </span>
+                <h3 className={`${fontSerif} mt-4 text-2xl text-[#0d0c0e]`}>{w.title}</h3>
+                <p className="mt-2 text-[14.5px] leading-7 text-[#0d0c0e]/70">
+                  {w.desc.split(w.keyword).map((part, i, arr) => (
+                    <span key={i}>
+                      {part}
+                      {i < arr.length - 1 && (
+                        <span className="font-semibold text-[#0d0c0e] underline decoration-[#0d0c0e]/60 decoration-wavy decoration-1 underline-offset-4">
+                          {w.keyword}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            ))}
+          </div>
+          <SplitPill />
+        </Panel>
+
+        {/* Before / after — dark */}
+        <Dark>
+          <p className={`${eyebrow} mb-4 text-center`}>Before and after</p>
+          <SerifHeading dark>See exactly what changed.</SerifHeading>
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-white/55">
+            Every change event stores the previous state and the current state — values,
+            screenshots, and diffs — so you never have to guess what happened.
+          </p>
+          <div className={`${darkCard} mx-auto mt-12 max-w-3xl overflow-hidden`}>
+            <div className="grid divide-y divide-white/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+              <div className="p-7">
+                <p className={`${eyebrow} mb-4`}>Baseline · approved</p>
+                <dl className="space-y-3 font-mono text-[13px]">
+                  {[
+                    ["title", "Aurora Outdoor — Tents & Camping Gear"],
+                    ["robots", "index, follow"],
+                    ["status", "200 OK"],
+                  ].map(([k, v]) => (
+                    <div key={k}>
+                      <dt className="text-white/40">{k}</dt>
+                      <dd
+                        style={{ backgroundColor: cream }}
+                        className="mt-1 rounded-lg px-2.5 py-1.5 text-[#0d0c0e]"
+                      >
+                        {v}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div className="p-7">
+                <p className={`${eyebrow} mb-4`}>Current scan · today</p>
+                <dl className="space-y-3 font-mono text-[13px]">
+                  {[
+                    ["title", "Home", true],
+                    ["robots", "noindex, nofollow", true],
+                    ["status", "200 OK", false],
+                  ].map(([k, v, changed]) => (
+                    <div key={k as string}>
+                      <dt className="text-white/40">{k}</dt>
+                      <dd
+                        style={{ backgroundColor: changed ? butter : cream }}
+                        className={`mt-1 rounded-lg px-2.5 py-1.5 text-[#0d0c0e] ${changed ? "font-semibold" : ""}`}
+                      >
+                        {v}
+                        {changed ? " ⚠" : ""}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+            <div className="border-t border-white/10 bg-white/[0.03] px-7 py-4 text-sm text-white/60">
+              <span className="font-semibold" style={{ color: butter }}>
+                Critical:
+              </span>{" "}
+              page changed from index to noindex — Fluxen alerts you within one scan cycle.
+            </div>
+          </div>
+        </Dark>
+
+        {/* Agencies — dark split */}
+        <Dark className="!pt-4">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
             <div>
-              <p className="label-micro mb-3">For agencies</p>
-              <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-                Every client website, one dashboard
+              <p className={`${eyebrow} mb-4`}>For agencies</p>
+              <h2 className={`${fontSerif} text-4xl leading-[1.05] text-white sm:text-5xl`}>
+                Every client website,
+                <br />
+                <span className="italic">one dashboard.</span>
               </h2>
-              <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
+              <p className="mt-5 max-w-md text-[15px] leading-7 text-white/55">
                 Stop finding out about broken client sites from angry emails. Fluxen watches every
                 site you maintain and tells you which one needs attention — before the client
                 notices.
               </p>
-              <ul className="mt-7 space-y-3.5">
+              <ul className="mt-8 space-y-3.5">
                 {[
-                  "Monitor up to 100 client websites on one plan",
                   "Severity-ranked change feed across all clients",
                   "Before-and-after evidence for every change",
-                  "Prove the value of your maintenance retainer",
+                  "Weekly client-ready report emails",
+                  "Public status pages and uptime badges",
                 ].map((t) => (
-                  <li key={t} className="flex items-start gap-3 text-[15px] text-ink">
-                    <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
+                  <li key={t} className="flex items-start gap-3 text-[15px] text-white/85">
+                    <CheckCircle2 className="mt-0.5 size-5 shrink-0" style={{ color: butter }} aria-hidden />
                     {t}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="rounded-card bg-surface p-6">
-              <div className="space-y-3">
+            <div className={`${darkCard} p-5`}>
+              <div className="space-y-2.5">
                 {[
-                  { site: "aurora-outdoor.com", state: "3 critical changes", tone: "text-critical-strong bg-critical-soft" },
-                  { site: "meridianlegal.co", state: "2 high changes", tone: "text-orange-strong bg-orange-soft" },
-                  { site: "bloomandroot.shop", state: "Healthy", tone: "text-success-strong bg-success-soft" },
-                  { site: "northwinddental.com", state: "Healthy", tone: "text-success-strong bg-success-soft" },
+                  { site: "aurora-outdoor.com", state: "3 critical changes", color: butter },
+                  { site: "meridianlegal.co", state: "2 high changes", color: lavender },
+                  { site: "bloomandroot.shop", state: "Healthy", color: cream },
+                  { site: "northwinddental.com", state: "Healthy", color: cream },
                 ].map((row) => (
                   <div
                     key={row.site}
-                    className="flex items-center justify-between rounded-tile bg-card px-5 py-4 shadow-card"
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.05] px-5 py-4"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex size-9 items-center justify-center rounded-xl bg-surface">
-                        <Radar className="size-4.5 text-ink-secondary" aria-hidden />
-                      </span>
-                      <span className="font-mono text-[13px] text-ink">{row.site}</span>
-                    </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${row.tone}`}>
+                    <span className="min-w-0 truncate font-mono text-[13px] text-white/85">
+                      {row.site}
+                    </span>
+                    <span
+                      style={{ backgroundColor: row.color }}
+                      className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-[#0d0c0e]"
+                    >
                       {row.state}
                     </span>
                   </div>
                 ))}
               </div>
+              <p className="mt-4 text-center text-[12px] text-white/35">
+                Illustrative dashboard state
+              </p>
             </div>
           </div>
-        </section>
 
-        {/* 10. How Fluxen works */}
-        <section className="bg-surface py-24" id="how-it-works">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading
-              eyebrow="How it works"
-              title="Baseline. Monitor. Detect. Fix."
-              sub="A simple loop that keeps every website in a known-good state."
-            />
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {workflow.map((w) => (
-                <div key={w.step} className="rounded-card bg-card p-6 shadow-card">
-                  <p className="font-mono text-sm font-semibold text-primary">{w.step}</p>
-                  <h3 className="mt-3 text-[15px] font-semibold text-ink">{w.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-ink-secondary">{w.desc}</p>
+          {/* Use cases */}
+          <div className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {useCases.map((u) => (
+              <div key={u.title} className={`${darkCard} p-6`}>
+                <u.icon className="size-5" style={{ color: butter }} aria-hidden />
+                <h3 className="mt-3.5 text-[15px] font-semibold text-white">{u.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-white/55">{u.desc}</p>
+              </div>
+            ))}
+          </div>
+        </Dark>
+
+        {/* Free tools — pastel collage cards */}
+        <Dark id="free-tools" className="!pt-8">
+          <p className={`${eyebrow} mb-4 text-center`}>Free tools</p>
+          <SerifHeading dark>
+            Try the detection engine <span className="italic">free.</span>
+          </SerifHeading>
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-white/55">
+            Five free tools, no account needed. Every one is powered by the same engine that runs
+            Fluxen&apos;s monitoring.
+          </p>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {freeTools.map((tool) => (
+              <Link
+                key={tool.href}
+                href={tool.href}
+                className="group flex flex-col overflow-hidden rounded-[24px] transition-transform duration-300 hover:-translate-y-1"
+                style={{ backgroundColor: tool.color }}
+              >
+                <div className="flex items-center justify-between p-5 pb-0">
+                  <tool.icon className="size-6 text-[#0d0c0e]" aria-hidden />
+                  <ArrowRight
+                    className="size-5 text-[#0d0c0e]/50 transition-transform group-hover:translate-x-1"
+                    aria-hidden
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 11. Use cases */}
-        <section className="py-24" id="use-cases">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading
-              eyebrow="Who it's for"
-              title="Built for people who keep websites working"
-            />
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {useCases.map((u) => (
-                <div key={u.title} className="rounded-card bg-card p-6 shadow-card">
-                  <span className="inline-flex size-11 items-center justify-center rounded-xl bg-primary-soft">
-                    <u.icon className="size-5 text-primary" aria-hidden />
-                  </span>
-                  <h3 className="mt-4 text-[15px] font-semibold text-ink">{u.title}</h3>
-                  <p className="mt-1.5 text-sm leading-6 text-ink-secondary">{u.desc}</p>
+                <p className={`${fontSerif} px-5 pt-3 text-4xl italic text-[#0d0c0e]`}>{tool.word}</p>
+                <div className="mt-4 flex flex-1 flex-col rounded-t-[20px] bg-[#0d0c0e]/[0.06] p-5">
+                  <h3 className="text-[15px] font-semibold text-[#0d0c0e]">{tool.title}</h3>
+                  <p className="mt-1.5 text-[13px] leading-6 text-[#0d0c0e]/65">{tool.desc}</p>
                 </div>
-              ))}
-            </div>
+              </Link>
+            ))}
           </div>
-        </section>
+        </Dark>
 
-        {/* 12. Free tools */}
-        <section className="bg-surface py-24" id="free-tools">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading
-              eyebrow="Free tools"
-              title="Try Fluxen's detection engine free"
-              sub="Five free tools, no account needed. Every one is powered by the same engine that runs Fluxen's monitoring."
-            />
-            <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {freeTools.map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="group flex flex-col rounded-card bg-card p-6 shadow-card transition-shadow hover:shadow-float"
+        {/* Pricing — white inset panel */}
+        <Panel id="pricing">
+          <p className="mb-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/45">
+            Pricing
+          </p>
+          <SerifHeading>
+            Simple plans that scale
+            <br />
+            <span className="italic">with your websites.</span>
+          </SerifHeading>
+          <div className="mx-auto mt-14 grid max-w-3xl gap-5 sm:grid-cols-2">
+            {plans.map((plan) => {
+              const pro = plan.highlighted;
+              return (
+                <div
+                  key={plan.id}
+                  className={`flex flex-col rounded-[28px] p-8 ${
+                    pro ? "bg-[#0d0c0e] text-white" : "border border-[#0d0c0e]/10 bg-[#faf8f2] text-[#0d0c0e]"
+                  }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft">
-                      <tool.icon className="size-5 text-primary" aria-hidden />
-                    </span>
-                    <ArrowRight
-                      className="size-5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-1"
-                      aria-hidden
-                    />
+                    <h3 className={`${fontSerif} text-3xl`}>{plan.name}</h3>
+                    {pro && (
+                      <span
+                        style={{ backgroundColor: butter }}
+                        className="rounded-full px-3 py-1 text-xs font-semibold text-[#0d0c0e]"
+                      >
+                        Most popular
+                      </span>
+                    )}
                   </div>
-                  <h3 className="mt-4 text-[15px] font-semibold text-ink">{tool.title}</h3>
-                  <p className="mt-1.5 text-sm leading-6 text-ink-secondary">{tool.desc}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 13. Pricing */}
-        <section className="py-24" id="pricing">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading
-              eyebrow="Pricing"
-              title="Simple plans that scale with your websites"
-              sub="Start free. Upgrade when you need more websites, more pages, or daily scans."
-            />
-            <PlanCards compact />
-            <p className="mt-8 text-center text-sm text-ink-secondary">
-              Full plan details on the{" "}
-              <Link href="/pricing" className="font-medium text-primary hover:underline">
-                pricing page →
-              </Link>
-            </p>
-          </div>
-        </section>
-
-        {/* 14. FAQ */}
-        <section className="bg-surface py-24">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <SectionHeading eyebrow="FAQ" title="Questions, answered" />
-            <div className="mx-auto max-w-2xl space-y-3">
-              {faqs.map((f) => (
-                <details
-                  key={f.q}
-                  className="group rounded-card bg-card px-6 py-5 shadow-card open:pb-6"
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
-                    {f.q}
-                    <span className="text-ink-faint transition-transform group-open:rotate-45">
-                      +
+                  <p className={`mt-2 text-sm leading-6 ${pro ? "text-white/60" : "text-[#0d0c0e]/60"}`}>
+                    {plan.headline}
+                  </p>
+                  <p className="mt-6">
+                    <span className={`${fontSerif} text-5xl`}>${plan.priceMonthlyUsd}</span>
+                    <span className={`text-sm ${pro ? "text-white/50" : "text-[#0d0c0e]/50"}`}>
+                      {" "}
+                      / month
                     </span>
-                  </summary>
-                  <p className="mt-3 text-sm leading-7 text-ink-secondary">{f.a}</p>
-                </details>
-              ))}
-            </div>
+                  </p>
+                  <ul className="mt-7 flex-1 space-y-3">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-[14px] leading-6">
+                        <CheckCircle2
+                          className="mt-1 size-4 shrink-0"
+                          style={{ color: pro ? butter : "#3d7a33" }}
+                          aria-hidden
+                        />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/signup"
+                    className={`mt-8 rounded-full px-6 py-3.5 text-center text-sm font-semibold transition-colors ${
+                      pro
+                        ? "bg-white text-[#0d0c0e] hover:bg-[#faed99]"
+                        : "bg-[#0d0c0e] text-white hover:bg-[#2a2830]"
+                    }`}
+                  >
+                    {pro ? "Start with Pro" : "Start free"}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
-        </section>
+          <p className="mt-8 text-center text-sm text-[#0d0c0e]/60">
+            Full plan details on the{" "}
+            <Link href="/pricing" className="font-semibold text-[#0d0c0e] underline underline-offset-4">
+              pricing page →
+            </Link>
+          </p>
+        </Panel>
 
-        {/* 15. Final CTA */}
-        <section className="py-24" id="waitlist">
-          <div className="mx-auto max-w-300 px-5 lg:px-8">
-            <div className="rounded-card bg-panel px-6 py-16 text-center sm:px-12">
-              <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                Stop finding out about broken websites from your users
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/70">
-                Create a free account — monitor your first website in minutes. No credit card
-                required.
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <ButtonLink
-                  href="/signup"
-                  size="lg"
-                  className="bg-white text-panel hover:bg-white/90"
-                >
-                  Start Monitoring Free
-                </ButtonLink>
-                <ButtonLink
-                  href="/preview"
-                  size="lg"
-                  variant="ghost"
-                  className="text-white/80 hover:bg-white/10 hover:text-white"
-                >
-                  Explore the dashboard
-                </ButtonLink>
-              </div>
-            </div>
+        {/* FAQ — dark */}
+        <Dark>
+          <p className={`${eyebrow} mb-4 text-center`}>FAQ</p>
+          <SerifHeading dark>Questions, answered.</SerifHeading>
+          <div className="mx-auto mt-12 max-w-2xl space-y-3">
+            {faqs.map((f) => (
+              <details key={f.q} className={`${darkCard} group px-6 py-5 open:pb-6`}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-white [&::-webkit-details-marker]:hidden">
+                  {f.q}
+                  <span
+                    className="text-xl leading-none text-white/40 transition-transform group-open:rotate-45"
+                    aria-hidden
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm leading-7 text-white/60">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </Dark>
+
+        {/* Final CTA — dark panel with butter ring */}
+        <section className="p-2 pb-4 sm:p-2.5">
+          <div
+            style={{ borderColor: butter }}
+            className="mx-auto rounded-[32px] border-[3px] px-5 py-20 text-center sm:rounded-[40px] lg:py-28"
+          >
+            <h2 className={`${fontSerif} mx-auto max-w-3xl text-4xl leading-[1.05] text-white sm:text-6xl`}>
+              Stop finding out about broken websites{" "}
+              <span className="italic">from your users.</span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-[15px] leading-7 text-white/55">
+              Create a free account — monitor your first website in minutes. No credit card
+              required.
+            </p>
+            <SplitPill onLight={false} />
           </div>
         </section>
       </main>
-      <MarketingFooter />
-    </>
+
+      <LandingFooter />
+    </div>
   );
 }
