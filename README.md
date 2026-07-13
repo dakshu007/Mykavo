@@ -29,6 +29,7 @@ Everything in the original CLAUDE.md spec is built, plus:
 | **Dashboard polish** | ⌘K command palette (search sites/pages/changes + actions), onboarding checklist (live-derived), website **tags** + filtering, loading skeletons everywhere, router cache, **dark mode** (System/Light/Dark, WCAG-AA-tested tokens) |
 | **Blog CMS** | `/dashboard/blog` (admin allowlist env `BLOG_ADMIN_EMAILS`) with **Gutenberg-style Tiptap visual editor** (Visual/Markdown tabs, H1–H6, tables, image upload→Blobs, `/cta` `/faq` `/toc` blocks, byte-identical shortcode round-trip), public `/blog` + RSS `/blog/feed.xml`, magazine post layout (hero, sticky ToC, author bio) |
 | **Free SEO tools** | `/tools/*`: website-change-detector, meta-tag-checker, redirect-chain-checker (per-hop SSRF revalidation), bulk-url-status-checker, script-detector — all rate-limited + SSRF-guarded, product CTAs |
+| **Landing page** | stamped.io-style editorial redesign (2026-07-13, user-directed): fixed dark palette + Instrument Serif/Sora, scroll-scrubbed hero, inset pastel panels — all in `apps/web/src/components/landing/` (`style.ts` = its design system, deliberately NOT `--fx-*` tokens). Other marketing pages still use `components/marketing/*` shell |
 | **Billing** | Dodo Payments: Free (1 site, 5 pages) / **Pro $12** (8 sites, 20 pages/site, 5 seats, daily scans) / add-ons **$6 = +1 site, max 3**. Config in `apps/web/src/config/plans.ts` ONLY |
 | **Settings** | Plan card, profile (photo upload → validated data-URL, name), Team management |
 
