@@ -30,7 +30,7 @@ function Strip() {
       {SIGNALS.map((s) => (
         <span key={s} className="flex items-center whitespace-nowrap">
           <span className="px-5 text-[14px] font-medium text-white/55">{s}</span>
-          <span className="size-1 rounded-full bg-[#faed99]/70" />
+          <span className="size-1 rounded-full bg-[#8fa2ff]/80" />
         </span>
       ))}
     </div>

@@ -27,7 +27,7 @@ export function StickyCta() {
       <div className="flex overflow-hidden rounded-full border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
         <Link
           href="/signup"
-          className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#faed99]"
+          className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
         >
           Start free
         </Link>

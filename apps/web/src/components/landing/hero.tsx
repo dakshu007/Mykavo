@@ -10,34 +10,55 @@ import {
   LockKeyhole,
   ShieldCheck,
 } from "lucide-react";
-import { butter, cream, fontSerif, lavender, periwinkle } from "./style";
+import { cream, fontSerif, lavender, periwinkle, primary } from "./style";
 
 /**
  * Scroll-scrubbed hero: the section pins for ~2.5 viewport heights while a
  * "Day N" chip travels along a timeline and the collage cards play Fluxen's
- * monitoring story — baseline approved → quiet scans → change caught.
+ * monitoring story — baseline approved → quiet scans → change caught. The
+ * timeline itself is also a slider: drag the chip (or use arrow keys) to
+ * scrub through the days directly.
  *
  * Everything is transform/opacity only; visitors with reduced motion get a
  * static, un-pinned hero frozen mid-story.
  */
 
 const PHASES = 3;
+const DAYS = 30;
 
 function phaseOf(progress: number): number {
   return Math.min(PHASES - 1, Math.floor(progress * PHASES));
 }
 
-const CHIP_COLORS = [lavender, periwinkle, butter];
+const CHIP_COLORS = [lavender, periwinkle, primary];
 const PHASE_LABELS = ["Baseline approved", "Monitoring quietly", "Change caught"];
 
 /** Tiny presentational rows used inside the collage cards. */
-function MiniRow({ ok, children }: { ok?: boolean; children: React.ReactNode }) {
+function MiniRow({
+  ok,
+  onBlue = false,
+  children,
+}: {
+  ok?: boolean;
+  onBlue?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-[#0d0c0e]/[0.06] px-3 py-2 text-[11.5px] font-medium text-[#0d0c0e]">
+    <div
+      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-[11.5px] font-medium ${
+        onBlue ? "bg-white/15 text-white" : "bg-[#0d0c0e]/[0.06] text-[#0d0c0e]"
+      }`}
+    >
       {ok === undefined ? null : ok ? (
-        <CheckCircle2 className="size-3.5 shrink-0 text-[#3d7a33]" aria-hidden />
+        <CheckCircle2
+          className={`size-3.5 shrink-0 ${onBlue ? "text-white" : "text-[#3d7a33]"}`}
+          aria-hidden
+        />
       ) : (
-        <AlertTriangle className="size-3.5 shrink-0 text-[#a03b2e]" aria-hidden />
+        <AlertTriangle
+          className={`size-3.5 shrink-0 ${onBlue ? "text-white" : "text-[#a03b2e]"}`}
+          aria-hidden
+        />
       )}
       <span className="min-w-0 truncate">{children}</span>
     </div>
@@ -108,8 +129,66 @@ export function LandingHero() {
   // Reduced motion: freeze the story mid-way instead of scroll-scrubbing.
   const progress = reduced ? 0.5 : scrollProgress;
   const phase = phaseOf(progress);
-  const day = 1 + Math.round(progress * 29);
+  const day = 1 + Math.round(progress * (DAYS - 1));
   const chipLeft = 6 + progress * 88; // % along the track
+
+  /**
+   * Direct mouse/touch scrubbing: dragging on the track maps the pointer's
+   * fraction to the hero's pinned scroll range. Page scroll stays the single
+   * source of truth — dragging just drives it.
+   */
+  const trackRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
+
+  function scrollToProgress(fraction: number) {
+    const outer = outerRef.current;
+    if (!outer) return;
+    const rect = outer.getBoundingClientRect();
+    const scrollable = rect.height - window.innerHeight;
+    if (scrollable <= 0) return;
+    const outerTop = window.scrollY + rect.top;
+    window.scrollTo({ top: outerTop + Math.min(1, Math.max(0, fraction)) * scrollable });
+  }
+
+  function scrubTo(clientX: number) {
+    const track = trackRef.current;
+    if (!track) return;
+    const r = track.getBoundingClientRect();
+    scrollToProgress((clientX - r.left) / r.width);
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (reduced) return;
+    draggingRef.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    scrubTo(e.clientX);
+  }
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (draggingRef.current) scrubTo(e.clientX);
+  }
+
+  function endDrag() {
+    draggingRef.current = false;
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (reduced) return;
+    const step = 1 / (DAYS - 1);
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      scrollToProgress(progress + step);
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      scrollToProgress(progress - step);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      scrollToProgress(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      scrollToProgress(1);
+    }
+  }
 
   return (
     <div ref={outerRef} className={reduced ? "" : "h-[280vh]"}>
@@ -124,22 +203,42 @@ export function LandingHero() {
           <span className="italic">Fix what matters.</span>
         </h1>
 
-        {/* Timeline: a month of monitoring scrubbed by scroll */}
-        <div className="mt-10 w-full max-w-2xl sm:mt-12" aria-hidden>
-          <div className="relative h-[3px] rounded-full bg-white/15">
-            <div
-              className="absolute left-0 top-0 h-full rounded-full bg-white/40 transition-[width] duration-150"
-              style={{ width: `${chipLeft}%` }}
-            />
-            <span
-              style={{ left: `${chipLeft}%`, backgroundColor: CHIP_COLORS[phase] }}
-              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-semibold text-[#0d0c0e] shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition-colors duration-500"
-            >
-              Day {day}
-            </span>
+        {/* Timeline: a month of monitoring — scrubbed by scroll OR dragged directly */}
+        <div className="mt-10 w-full max-w-2xl sm:mt-12">
+          <div
+            ref={trackRef}
+            role="slider"
+            tabIndex={reduced ? -1 : 0}
+            aria-label="Monitoring timeline"
+            aria-valuemin={1}
+            aria-valuemax={DAYS}
+            aria-valuenow={day}
+            aria-valuetext={`Day ${day} — ${PHASE_LABELS[phase]}`}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+            onKeyDown={onKeyDown}
+            className="group relative flex h-9 cursor-grab touch-none select-none items-center rounded-full outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-white/60"
+          >
+            <div className="relative h-[3px] w-full rounded-full bg-white/15">
+              <div
+                className="absolute left-0 top-0 h-full rounded-full bg-white/40 transition-[width] duration-150"
+                style={{ width: `${chipLeft}%` }}
+              />
+              <span
+                style={{ left: `${chipLeft}%`, backgroundColor: CHIP_COLORS[phase] }}
+                className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition-colors duration-500 group-active:scale-105 ${
+                  phase === 2 ? "text-white" : "text-[#0d0c0e]"
+                }`}
+              >
+                Day {day}
+              </span>
+            </div>
           </div>
-          <p className="mt-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-white/40 transition-opacity">
+          <p className="mt-3 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-white/40 transition-opacity">
             {PHASE_LABELS[phase]}
+            {!reduced && <span className="normal-case tracking-normal text-white/25"> · drag or scroll</span>}
           </p>
         </div>
 
@@ -164,12 +263,16 @@ export function LandingHero() {
                 <MiniRow ok>9 / 9 pages scanned</MiniRow>
                 <MiniRow ok>0 changes detected</MiniRow>
               </CardShell>
-              <CardShell color={butter} active={phase === 2}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0d0c0e]/50">
+              <CardShell color={primary} active={phase === 2}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
                   Critical · SEO
                 </p>
-                <MiniRow ok={false}>robots: index → noindex</MiniRow>
-                <MiniRow ok={false}>Title tag removed</MiniRow>
+                <MiniRow ok={false} onBlue>
+                  robots: index → noindex
+                </MiniRow>
+                <MiniRow ok={false} onBlue>
+                  Title tag removed
+                </MiniRow>
               </CardShell>
             </div>
           </div>
@@ -180,7 +283,7 @@ export function LandingHero() {
               <div
                 key={p}
                 aria-hidden={phase !== p}
-                style={{ backgroundColor: p === 0 ? lavender : p === 1 ? periwinkle : butter }}
+                style={{ backgroundColor: p === 0 ? lavender : p === 1 ? periwinkle : primary }}
                 className={`absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-full p-8 text-center shadow-[0_24px_60px_rgba(0,0,0,0.45)] transition-opacity duration-700 ${
                   phase === p ? "opacity-100" : "opacity-0"
                 }`}
@@ -209,11 +312,11 @@ export function LandingHero() {
                 )}
                 {p === 2 && (
                   <>
-                    <Bell className="size-7 text-[#0d0c0e]" aria-hidden />
-                    <p className={`${fontSerif} text-[26px] leading-tight text-[#0d0c0e]`}>
+                    <Bell className="size-7 text-white" aria-hidden />
+                    <p className={`${fontSerif} text-[26px] leading-tight text-white`}>
                       One grouped alert
                     </p>
-                    <p className="text-[12px] font-medium text-[#0d0c0e]/60">
+                    <p className="text-[12px] font-medium text-white/70">
                       2 critical · 1 high — before your client notices
                     </p>
                   </>

@@ -6,8 +6,11 @@
  * tokens the dashboard uses. Every color lives here as a constant so the page
  * stays consistent; nothing else in the app should import this file.
  *
- * Fonts: Sora (body) + Instrument Serif (display) via next/font — both free
- * Google fonts, loaded only on routes that render the landing components.
+ * Fonts: Sora (body, next/font) + PP Fragment (display serif). PP Fragment is
+ * a commercial Pangram Pangram font — the licensed .woff2 files must be
+ * dropped into apps/web/public/fonts/ (see the @font-face block in
+ * app/page.tsx). Until they exist, Instrument Serif (free, next/font) renders
+ * as the stand-in via the font stack's fallback.
  */
 
 import { Instrument_Serif, Sora } from "next/font/google";
@@ -30,12 +33,18 @@ export const landingFontVars = `${sora.variable} ${instrumentSerif.variable}`;
 /** Body font utility (Sora). Apply on the landing root. */
 export const fontSans = "[font-family:var(--font-landing-sans),ui-sans-serif,system-ui,sans-serif]";
 
-/** Display serif utility (Instrument Serif) for the big editorial headlines. */
-export const fontSerif = "[font-family:var(--font-landing-serif),Georgia,serif] font-normal";
+/**
+ * Display serif utility for the big editorial headlines: PP Fragment first
+ * (loads via the @font-face in app/page.tsx when the licensed files exist),
+ * Instrument Serif as the always-available fallback.
+ */
+export const fontSerif =
+  "[font-family:'PP_Fragment',var(--font-landing-serif),Georgia,serif] font-normal";
 
 /** Fixed landing palette (never theme-dependent). */
 export const ink = "#0d0c0e"; // near-black canvas + ink on light panels
-export const butter = "#faed99"; // butter-yellow panels & accents
+export const primary = "#3556f4"; // dashboard royal blue — surfaces w/ WHITE text
+export const primarySoft = "#8fa2ff"; // lighter tint for small glyphs on the dark canvas
 export const lavender = "#e5d4f5";
 export const periwinkle = "#c9d8f0";
 export const cream = "#fbf3dd";

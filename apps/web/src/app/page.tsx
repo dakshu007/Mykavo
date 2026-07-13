@@ -29,7 +29,6 @@ import { SignalMarquee } from "@/components/landing/marquee";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import {
-  butter,
   cream,
   darkCard,
   eyebrow,
@@ -38,6 +37,8 @@ import {
   landingFontVars,
   lavender,
   periwinkle,
+  primary,
+  primarySoft,
 } from "@/components/landing/style";
 import { plans } from "@/config/plans";
 import { site } from "@/config/site";
@@ -79,7 +80,8 @@ const problems = [
   },
   {
     text: "A client edits the homepage — and blames your agency when it breaks.",
-    color: butter,
+    color: primary,
+    dark: true,
     rotate: "-rotate-[0.5deg]",
   },
 ];
@@ -137,7 +139,8 @@ const freeTools = [
     href: "/tools/website-change-detector",
     title: "Website Change Detector",
     word: "Compare",
-    color: butter,
+    color: primary,
+    dark: true,
     desc: "Snapshot a page's status, SEO tags, links, and scripts — then re-check later to see what changed.",
   },
   {
@@ -264,7 +267,7 @@ function SplitPill({ onLight = true }: { onLight?: boolean }) {
     >
       <Link
         href="/signup"
-        className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#faed99]"
+        className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
       >
         Start monitoring free
       </Link>
@@ -283,6 +286,19 @@ function SplitPill({ onLight = true }: { onLight?: boolean }) {
 export default function HomePage() {
   return (
     <div className={`${landingFontVars} ${fontSans} bg-[#0d0c0e] text-white antialiased`}>
+      {/* PP Fragment (commercial, Pangram Pangram): activates automatically when
+          the licensed files exist at public/fonts/ — Instrument Serif renders
+          as the fallback until then. */}
+      <style>{`
+        @font-face {
+          font-family: "PP Fragment";
+          src: local("PP Fragment Serif Regular"), local("PPFragment-SerifRegular"),
+            url("/fonts/PPFragment-SerifRegular.woff2") format("woff2");
+          font-weight: 400;
+          font-style: normal;
+          font-display: swap;
+        }
+      `}</style>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -303,7 +319,7 @@ export default function HomePage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/signup"
-              className="rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#faed99]"
+              className="rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
             >
               Start Monitoring Free
             </Link>
@@ -337,10 +353,19 @@ export default function HomePage() {
                 style={{ backgroundColor: p.color }}
                 className={`flex items-start gap-4 rounded-[24px] p-6 ${p.rotate}`}
               >
-                <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#0d0c0e]">
-                  <AlertTriangle className="size-4 text-white" aria-hidden />
+                <span
+                  className={`mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full ${p.dark ? "bg-white" : "bg-[#0d0c0e]"}`}
+                >
+                  <AlertTriangle
+                    className={`size-4 ${p.dark ? "text-[#3556f4]" : "text-white"}`}
+                    aria-hidden
+                  />
                 </span>
-                <p className="text-[15px] font-medium leading-7 text-[#0d0c0e]">{p.text}</p>
+                <p
+                  className={`text-[15px] font-medium leading-7 ${p.dark ? "text-white" : "text-[#0d0c0e]"}`}
+                >
+                  {p.text}
+                </p>
               </div>
             ))}
           </div>
@@ -376,14 +401,14 @@ export default function HomePage() {
                     className="absolute -left-3 top-2 h-32 w-1/2 -rotate-3 rounded-2xl opacity-90"
                   />
                   <div
-                    style={{ backgroundColor: butter }}
+                    style={{ backgroundColor: primary }}
                     className="relative ml-auto flex h-36 w-3/5 rotate-2 flex-col justify-center gap-2 rounded-2xl p-4 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
                       Pixel diff
                     </p>
-                    <p className={`${fontSerif} text-3xl text-[#0d0c0e]`}>12.4%</p>
-                    <p className="text-[11px] font-medium text-[#0d0c0e]/60">
+                    <p className={`${fontSerif} text-3xl text-white`}>12.4%</p>
+                    <p className="text-[11px] font-medium text-white/70">
                       of the page changed overnight
                     </p>
                   </div>
@@ -409,13 +434,13 @@ export default function HomePage() {
                   <p className="mt-1 font-mono text-[12px] text-[#0d0c0e]">robots: index, follow</p>
                 </div>
                 <div
-                  style={{ backgroundColor: butter }}
+                  style={{ backgroundColor: primary }}
                   className="w-full max-w-60 rotate-1 rounded-2xl p-3.5 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
                     Today · critical
                   </p>
-                  <p className="mt-1 font-mono text-[12px] font-semibold text-[#0d0c0e]">
+                  <p className="mt-1 font-mono text-[12px] font-semibold text-white">
                     robots: noindex ⚠
                   </p>
                 </div>
@@ -458,19 +483,19 @@ export default function HomePage() {
                 key={c.name}
                 className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[13px] font-medium text-white/70"
               >
-                <c.icon className="size-4 text-[#faed99]" aria-hidden />
+                <c.icon className="size-4" style={{ color: primarySoft }} aria-hidden />
                 {c.name}
               </li>
             ))}
           </ul>
         </Dark>
 
-        {/* How it works — butter inset panel */}
-        <Panel id="how-it-works" color={butter}>
-          <p className="mb-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/45">
+        {/* How it works — royal-blue inset panel */}
+        <Panel id="how-it-works" color={primary}>
+          <p className="mb-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-white/60">
             How it works
           </p>
-          <SerifHeading>
+          <SerifHeading dark>
             Baseline. Monitor.
             <br />
             <span className="italic">Detect. Fix.</span>
@@ -478,16 +503,16 @@ export default function HomePage() {
           <div className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2">
             {workflow.map((w) => (
               <div key={w.step}>
-                <span className="inline-flex items-center justify-center rounded-full bg-[#0d0c0e] px-4 py-1.5 font-mono text-[12px] font-semibold text-white">
+                <span className="inline-flex items-center justify-center rounded-full bg-white px-4 py-1.5 font-mono text-[12px] font-semibold text-[#0d0c0e]">
                   {w.step}
                 </span>
-                <h3 className={`${fontSerif} mt-4 text-2xl text-[#0d0c0e]`}>{w.title}</h3>
-                <p className="mt-2 text-[14.5px] leading-7 text-[#0d0c0e]/70">
+                <h3 className={`${fontSerif} mt-4 text-2xl text-white`}>{w.title}</h3>
+                <p className="mt-2 text-[14.5px] leading-7 text-white/75">
                   {w.desc.split(w.keyword).map((part, i, arr) => (
                     <span key={i}>
                       {part}
                       {i < arr.length - 1 && (
-                        <span className="font-semibold text-[#0d0c0e] underline decoration-[#0d0c0e]/60 decoration-wavy decoration-1 underline-offset-4">
+                        <span className="font-semibold text-white underline decoration-white/70 decoration-wavy decoration-1 underline-offset-4">
                           {w.keyword}
                         </span>
                       )}
@@ -497,7 +522,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <SplitPill />
+          <SplitPill onLight={false} />
         </Panel>
 
         {/* Before / after — dark */}
@@ -541,8 +566,8 @@ export default function HomePage() {
                     <div key={k as string}>
                       <dt className="text-white/40">{k}</dt>
                       <dd
-                        style={{ backgroundColor: changed ? butter : cream }}
-                        className={`mt-1 rounded-lg px-2.5 py-1.5 text-[#0d0c0e] ${changed ? "font-semibold" : ""}`}
+                        style={{ backgroundColor: changed ? primary : cream }}
+                        className={`mt-1 rounded-lg px-2.5 py-1.5 ${changed ? "font-semibold text-white" : "text-[#0d0c0e]"}`}
                       >
                         {v}
                         {changed ? " ⚠" : ""}
@@ -553,7 +578,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="border-t border-white/10 bg-white/[0.03] px-7 py-4 text-sm text-white/60">
-              <span className="font-semibold" style={{ color: butter }}>
+              <span className="font-semibold" style={{ color: primarySoft }}>
                 Critical:
               </span>{" "}
               page changed from index to noindex — Fluxen alerts you within one scan cycle.
@@ -584,7 +609,11 @@ export default function HomePage() {
                   "Public status pages and uptime badges",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-3 text-[15px] text-white/85">
-                    <CheckCircle2 className="mt-0.5 size-5 shrink-0" style={{ color: butter }} aria-hidden />
+                    <CheckCircle2
+                      className="mt-0.5 size-5 shrink-0"
+                      style={{ color: primarySoft }}
+                      aria-hidden
+                    />
                     {t}
                   </li>
                 ))}
@@ -593,10 +622,10 @@ export default function HomePage() {
             <div className={`${darkCard} p-5`}>
               <div className="space-y-2.5">
                 {[
-                  { site: "aurora-outdoor.com", state: "3 critical changes", color: butter },
-                  { site: "meridianlegal.co", state: "2 high changes", color: lavender },
-                  { site: "bloomandroot.shop", state: "Healthy", color: cream },
-                  { site: "northwinddental.com", state: "Healthy", color: cream },
+                  { site: "aurora-outdoor.com", state: "3 critical changes", color: primary, dark: true },
+                  { site: "meridianlegal.co", state: "2 high changes", color: lavender, dark: false },
+                  { site: "bloomandroot.shop", state: "Healthy", color: cream, dark: false },
+                  { site: "northwinddental.com", state: "Healthy", color: cream, dark: false },
                 ].map((row) => (
                   <div
                     key={row.site}
@@ -607,7 +636,7 @@ export default function HomePage() {
                     </span>
                     <span
                       style={{ backgroundColor: row.color }}
-                      className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-[#0d0c0e]"
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${row.dark ? "text-white" : "text-[#0d0c0e]"}`}
                     >
                       {row.state}
                     </span>
@@ -624,7 +653,7 @@ export default function HomePage() {
           <div className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {useCases.map((u) => (
               <div key={u.title} className={`${darkCard} p-6`}>
-                <u.icon className="size-5" style={{ color: butter }} aria-hidden />
+                <u.icon className="size-5" style={{ color: primarySoft }} aria-hidden />
                 <h3 className="mt-3.5 text-[15px] font-semibold text-white">{u.title}</h3>
                 <p className="mt-1.5 text-sm leading-6 text-white/55">{u.desc}</p>
               </div>
@@ -651,16 +680,33 @@ export default function HomePage() {
                 style={{ backgroundColor: tool.color }}
               >
                 <div className="flex items-center justify-between p-5 pb-0">
-                  <tool.icon className="size-6 text-[#0d0c0e]" aria-hidden />
+                  <tool.icon
+                    className={`size-6 ${tool.dark ? "text-white" : "text-[#0d0c0e]"}`}
+                    aria-hidden
+                  />
                   <ArrowRight
-                    className="size-5 text-[#0d0c0e]/50 transition-transform group-hover:translate-x-1"
+                    className={`size-5 transition-transform group-hover:translate-x-1 ${tool.dark ? "text-white/60" : "text-[#0d0c0e]/50"}`}
                     aria-hidden
                   />
                 </div>
-                <p className={`${fontSerif} px-5 pt-3 text-4xl italic text-[#0d0c0e]`}>{tool.word}</p>
-                <div className="mt-4 flex flex-1 flex-col rounded-t-[20px] bg-[#0d0c0e]/[0.06] p-5">
-                  <h3 className="text-[15px] font-semibold text-[#0d0c0e]">{tool.title}</h3>
-                  <p className="mt-1.5 text-[13px] leading-6 text-[#0d0c0e]/65">{tool.desc}</p>
+                <p
+                  className={`${fontSerif} px-5 pt-3 text-4xl italic ${tool.dark ? "text-white" : "text-[#0d0c0e]"}`}
+                >
+                  {tool.word}
+                </p>
+                <div
+                  className={`mt-4 flex flex-1 flex-col rounded-t-[20px] p-5 ${tool.dark ? "bg-white/10" : "bg-[#0d0c0e]/[0.06]"}`}
+                >
+                  <h3
+                    className={`text-[15px] font-semibold ${tool.dark ? "text-white" : "text-[#0d0c0e]"}`}
+                  >
+                    {tool.title}
+                  </h3>
+                  <p
+                    className={`mt-1.5 text-[13px] leading-6 ${tool.dark ? "text-white/75" : "text-[#0d0c0e]/65"}`}
+                  >
+                    {tool.desc}
+                  </p>
                 </div>
               </Link>
             ))}
@@ -691,8 +737,8 @@ export default function HomePage() {
                     <h3 className={`${fontSerif} text-3xl`}>{plan.name}</h3>
                     {pro && (
                       <span
-                        style={{ backgroundColor: butter }}
-                        className="rounded-full px-3 py-1 text-xs font-semibold text-[#0d0c0e]"
+                        style={{ backgroundColor: primary }}
+                        className="rounded-full px-3 py-1 text-xs font-semibold text-white"
                       >
                         Most popular
                       </span>
@@ -713,7 +759,7 @@ export default function HomePage() {
                       <li key={f} className="flex items-start gap-2.5 text-[14px] leading-6">
                         <CheckCircle2
                           className="mt-1 size-4 shrink-0"
-                          style={{ color: pro ? butter : "#3d7a33" }}
+                          style={{ color: pro ? primarySoft : "#3d7a33" }}
                           aria-hidden
                         />
                         {f}
@@ -724,7 +770,7 @@ export default function HomePage() {
                     href="/signup"
                     className={`mt-8 rounded-full px-6 py-3.5 text-center text-sm font-semibold transition-colors ${
                       pro
-                        ? "bg-white text-[#0d0c0e] hover:bg-[#faed99]"
+                        ? "bg-white text-[#0d0c0e] hover:bg-[#3556f4] hover:text-white"
                         : "bg-[#0d0c0e] text-white hover:bg-[#2a2830]"
                     }`}
                   >
@@ -764,10 +810,10 @@ export default function HomePage() {
           </div>
         </Dark>
 
-        {/* Final CTA — dark panel with butter ring */}
+        {/* Final CTA — dark panel with royal-blue ring */}
         <section className="p-2 pb-4 sm:p-2.5">
           <div
-            style={{ borderColor: butter }}
+            style={{ borderColor: primary }}
             className="mx-auto rounded-[32px] border-[3px] px-5 py-20 text-center sm:rounded-[40px] lg:py-28"
           >
             <h2 className={`${fontSerif} mx-auto max-w-3xl text-4xl leading-[1.05] text-white sm:text-6xl`}>
