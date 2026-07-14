@@ -30,7 +30,7 @@ import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import {
   cream,
-  darkCard,
+  card,
   eyebrow,
   fontSans,
   fontDisplay,
@@ -228,7 +228,7 @@ function Panel({
     <section id={id} className="p-2 sm:p-2.5">
       <div
         style={{ backgroundColor: color }}
-        className="mx-auto rounded-[32px] px-5 py-16 sm:rounded-[40px] sm:px-8 lg:py-24"
+        className="mx-auto rounded-[32px] px-5 py-16 shadow-[0_24px_70px_rgba(38,54,115,0.10)] sm:rounded-[40px] sm:px-8 lg:py-24"
       >
         <div className="mx-auto max-w-5xl">{children}</div>
       </div>
@@ -284,7 +284,7 @@ function SplitPill({ onLight = true }: { onLight?: boolean }) {
 
 export default function HomePage() {
   return (
-    <div className={`${fontSans} bg-[#0d0c0e] text-white antialiased`}>
+    <div className={`${fontSans} bg-[#ecf0ff] text-[#0d0c0e] antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -299,19 +299,19 @@ export default function HomePage() {
         {/* Interactive URL input (product-led, no signup) */}
         <section className="mx-auto max-w-6xl px-5 pb-4 pt-2 lg:px-8">
           <LandingUrlInput />
-          <p className="mt-3 text-center text-[13px] text-white/40">
+          <p className="mt-3 text-center text-[13px] text-[#0d0c0e]/50">
             Free instant inspection — status, SEO tags, links &amp; scripts. No signup needed.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/signup"
-              className="rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
+              className="rounded-full bg-[#0d0c0e] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#3556f4]"
             >
               Start Monitoring Free
             </Link>
             <Link
               href="/#how-it-works"
-              className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="rounded-full border border-[#0d0c0e]/20 px-7 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#0d0c0e]/5"
             >
               See How Fluxen Works
             </Link>
@@ -366,20 +366,20 @@ export default function HomePage() {
         {/* What it watches — three feature cards + category chips */}
         <Dark id="categories">
           <p className={`${eyebrow} mb-4 text-center`}>What Fluxen watches</p>
-          <SerifHeading dark>
+          <SerifHeading>
             Eight kinds of change.
             <br />
             <span className="italic">One monitoring layer.</span>
           </SerifHeading>
-          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-white/55">
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#0d0c0e]/60">
             Every scan checks each monitored page across all eight categories and scores what it
             finds by severity — so you see what matters first.
           </p>
 
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
             {/* Visual */}
-            <div className={`${darkCard} flex flex-col p-7`}>
-              <h3 className={`${fontDisplay} text-center text-3xl text-white`}>Visual</h3>
+            <div className={`${card} flex flex-col p-7`}>
+              <h3 className={`${fontDisplay} text-center text-3xl text-[#0d0c0e]`}>Visual</h3>
               <div className="my-7 flex flex-1 items-center justify-center">
                 <div className="relative w-full max-w-60">
                   <div
@@ -388,9 +388,9 @@ export default function HomePage() {
                   />
                   <div
                     style={{ backgroundColor: primary }}
-                    className="relative ml-auto flex h-36 w-3/5 rotate-2 flex-col justify-center gap-2 rounded-2xl p-4 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                    className="relative ml-auto flex h-36 w-3/5 rotate-2 flex-col justify-center gap-2 rounded-2xl p-4 shadow-[0_14px_34px_rgba(38,54,115,0.16)]"
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/60">
                       Pixel diff
                     </p>
                     <p className={`${fontDisplay} text-3xl text-white`}>12.4%</p>
@@ -400,19 +400,19 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              <p className="text-center text-sm leading-6 text-white/55">
+              <p className="text-center text-sm leading-6 text-[#0d0c0e]/60">
                 Full-page screenshots compared pixel by pixel, with masks and ignore rules that
                 keep dynamic content from crying wolf.
               </p>
             </div>
 
             {/* SEO */}
-            <div className={`${darkCard} flex flex-col p-7`}>
-              <h3 className={`${fontDisplay} text-center text-3xl text-white`}>SEO</h3>
+            <div className={`${card} flex flex-col p-7`}>
+              <h3 className={`${fontDisplay} text-center text-3xl text-[#0d0c0e]`}>SEO</h3>
               <div className="my-7 flex flex-1 flex-col items-center justify-center gap-2">
                 <div
                   style={{ backgroundColor: cream }}
-                  className="w-full max-w-60 -rotate-1 rounded-2xl p-3.5 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                  className="w-full max-w-60 -rotate-1 rounded-2xl p-3.5 shadow-[0_14px_34px_rgba(38,54,115,0.16)]"
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
                     Baseline
@@ -421,9 +421,9 @@ export default function HomePage() {
                 </div>
                 <div
                   style={{ backgroundColor: primary }}
-                  className="w-full max-w-60 rotate-1 rounded-2xl p-3.5 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                  className="w-full max-w-60 rotate-1 rounded-2xl p-3.5 shadow-[0_14px_34px_rgba(38,54,115,0.16)]"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/60">
                     Today · critical
                   </p>
                   <p className="mt-1 font-mono text-[12px] font-semibold text-white">
@@ -431,19 +431,19 @@ export default function HomePage() {
                   </p>
                 </div>
               </div>
-              <p className="text-center text-sm leading-6 text-white/55">
+              <p className="text-center text-sm leading-6 text-[#0d0c0e]/60">
                 Titles, descriptions, canonicals, robots meta, H1s, sitemaps, and indexability —
                 the tags that decide whether you rank.
               </p>
             </div>
 
             {/* Links */}
-            <div className={`${darkCard} flex flex-col p-7`}>
-              <h3 className={`${fontDisplay} text-center text-3xl text-white`}>Links</h3>
+            <div className={`${card} flex flex-col p-7`}>
+              <h3 className={`${fontDisplay} text-center text-3xl text-[#0d0c0e]`}>Links</h3>
               <div className="my-7 flex flex-1 items-center justify-center">
                 <div
                   style={{ backgroundColor: periwinkle }}
-                  className="w-full max-w-60 rotate-[1.5deg] rounded-2xl p-4 shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                  className="w-full max-w-60 rotate-[1.5deg] rounded-2xl p-4 shadow-[0_14px_34px_rgba(38,54,115,0.16)]"
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
                     Site-wide · high
@@ -456,7 +456,7 @@ export default function HomePage() {
                   </p>
                 </div>
               </div>
-              <p className="text-center text-sm leading-6 text-white/55">
+              <p className="text-center text-sm leading-6 text-[#0d0c0e]/60">
                 Every internal link checked on every scan — grouped into one alert when they
                 break, never one email per dead link.
               </p>
@@ -467,9 +467,9 @@ export default function HomePage() {
             {categoryChips.map((c) => (
               <li
                 key={c.name}
-                className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[13px] font-medium text-white/70"
+                className="flex items-center gap-2 rounded-full border border-[#0d0c0e]/15 px-4 py-2 text-[13px] font-medium text-[#0d0c0e]/70"
               >
-                <c.icon className="size-4" style={{ color: primarySoft }} aria-hidden />
+                <c.icon className="size-4" style={{ color: primary }} aria-hidden />
                 {c.name}
               </li>
             ))}
@@ -478,7 +478,7 @@ export default function HomePage() {
 
         {/* How it works — royal-blue inset panel */}
         <Panel id="how-it-works" color={primary}>
-          <p className="mb-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-white/60">
+          <p className="mb-4 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/60">
             How it works
           </p>
           <SerifHeading dark>
@@ -514,12 +514,12 @@ export default function HomePage() {
         {/* Before / after — dark */}
         <Dark>
           <p className={`${eyebrow} mb-4 text-center`}>Before and after</p>
-          <SerifHeading dark>See exactly what changed.</SerifHeading>
-          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-white/55">
+          <SerifHeading>See exactly what changed.</SerifHeading>
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#0d0c0e]/60">
             Every change event stores the previous state and the current state — values,
             screenshots, and diffs — so you never have to guess what happened.
           </p>
-          <div className={`${darkCard} mx-auto mt-12 max-w-3xl overflow-hidden`}>
+          <div className={`${card} mx-auto mt-12 max-w-3xl overflow-hidden`}>
             <div className="grid divide-y divide-white/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
               <div className="p-7">
                 <p className={`${eyebrow} mb-4`}>Baseline · approved</p>
@@ -530,7 +530,7 @@ export default function HomePage() {
                     ["status", "200 OK"],
                   ].map(([k, v]) => (
                     <div key={k}>
-                      <dt className="text-white/40">{k}</dt>
+                      <dt className="text-[#0d0c0e]/50">{k}</dt>
                       <dd
                         style={{ backgroundColor: cream }}
                         className="mt-1 rounded-lg px-2.5 py-1.5 text-[#0d0c0e]"
@@ -550,7 +550,7 @@ export default function HomePage() {
                     ["status", "200 OK", false],
                   ].map(([k, v, changed]) => (
                     <div key={k as string}>
-                      <dt className="text-white/40">{k}</dt>
+                      <dt className="text-[#0d0c0e]/50">{k}</dt>
                       <dd
                         style={{ backgroundColor: changed ? primary : cream }}
                         className={`mt-1 rounded-lg px-2.5 py-1.5 ${changed ? "font-semibold text-white" : "text-[#0d0c0e]"}`}
@@ -563,8 +563,8 @@ export default function HomePage() {
                 </dl>
               </div>
             </div>
-            <div className="border-t border-white/10 bg-white/[0.03] px-7 py-4 text-sm text-white/60">
-              <span className="font-semibold" style={{ color: primarySoft }}>
+            <div className="border-t border-[#0d0c0e]/10 bg-[#0d0c0e]/[0.03] px-7 py-4 text-sm text-[#0d0c0e]/60">
+              <span className="font-semibold" style={{ color: primary }}>
                 Critical:
               </span>{" "}
               page changed from index to noindex — Fluxen alerts you within one scan cycle.
@@ -577,12 +577,12 @@ export default function HomePage() {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div>
               <p className={`${eyebrow} mb-4`}>For agencies</p>
-              <h2 className={`${fontDisplay} text-4xl leading-[1.05] text-white sm:text-5xl`}>
+              <h2 className={`${fontDisplay} text-4xl leading-[1.05] text-[#0d0c0e] sm:text-5xl`}>
                 Every client website,
                 <br />
                 <span className="italic">one dashboard.</span>
               </h2>
-              <p className="mt-5 max-w-md text-[15px] leading-7 text-white/55">
+              <p className="mt-5 max-w-md text-[15px] leading-7 text-[#0d0c0e]/60">
                 Stop finding out about broken client sites from angry emails. Fluxen watches every
                 site you maintain and tells you which one needs attention — before the client
                 notices.
@@ -594,10 +594,10 @@ export default function HomePage() {
                   "Weekly client-ready report emails",
                   "Public status pages and uptime badges",
                 ].map((t) => (
-                  <li key={t} className="flex items-start gap-3 text-[15px] text-white/85">
+                  <li key={t} className="flex items-start gap-3 text-[15px] text-[#0d0c0e]/80">
                     <CheckCircle2
                       className="mt-0.5 size-5 shrink-0"
-                      style={{ color: primarySoft }}
+                      style={{ color: primary }}
                       aria-hidden
                     />
                     {t}
@@ -605,7 +605,7 @@ export default function HomePage() {
                 ))}
               </ul>
             </div>
-            <div className={`${darkCard} p-5`}>
+            <div className={`${card} p-5`}>
               <div className="space-y-2.5">
                 {[
                   { site: "aurora-outdoor.com", state: "3 critical changes", color: primary, dark: true },
@@ -615,9 +615,9 @@ export default function HomePage() {
                 ].map((row) => (
                   <div
                     key={row.site}
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.05] px-5 py-4"
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-[#0d0c0e]/[0.04] px-5 py-4"
                   >
-                    <span className="min-w-0 truncate font-mono text-[13px] text-white/85">
+                    <span className="min-w-0 truncate font-mono text-[13px] text-[#0d0c0e]/80">
                       {row.site}
                     </span>
                     <span
@@ -629,7 +629,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-4 text-center text-[12px] text-white/35">
+              <p className="mt-4 text-center text-[12px] text-[#0d0c0e]/45">
                 Illustrative dashboard state
               </p>
             </div>
@@ -638,10 +638,10 @@ export default function HomePage() {
           {/* Use cases */}
           <div className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {useCases.map((u) => (
-              <div key={u.title} className={`${darkCard} p-6`}>
-                <u.icon className="size-5" style={{ color: primarySoft }} aria-hidden />
-                <h3 className="mt-3.5 text-[15px] font-semibold text-white">{u.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-white/55">{u.desc}</p>
+              <div key={u.title} className={`${card} p-6`}>
+                <u.icon className="size-5" style={{ color: primary }} aria-hidden />
+                <h3 className="mt-3.5 text-[15px] font-semibold text-[#0d0c0e]">{u.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-[#0d0c0e]/60">{u.desc}</p>
               </div>
             ))}
           </div>
@@ -650,10 +650,10 @@ export default function HomePage() {
         {/* Free tools — pastel collage cards */}
         <Dark id="free-tools" className="!pt-8">
           <p className={`${eyebrow} mb-4 text-center`}>Free tools</p>
-          <SerifHeading dark>
+          <SerifHeading>
             Try the detection engine <span className="italic">free.</span>
           </SerifHeading>
-          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-white/55">
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#0d0c0e]/60">
             Five free tools, no account needed. Every one is powered by the same engine that runs
             Fluxen&apos;s monitoring.
           </p>
@@ -662,7 +662,7 @@ export default function HomePage() {
               <Link
                 key={tool.href}
                 href={tool.href}
-                className="group flex flex-col overflow-hidden rounded-[24px] transition-transform duration-300 hover:-translate-y-1"
+                className="group flex flex-col overflow-hidden rounded-[24px] shadow-[0_16px_40px_rgba(38,54,115,0.12)] transition-transform duration-300 hover:-translate-y-1"
                 style={{ backgroundColor: tool.color }}
               >
                 <div className="flex items-center justify-between p-5 pb-0">
@@ -777,20 +777,20 @@ export default function HomePage() {
         {/* FAQ — dark */}
         <Dark>
           <p className={`${eyebrow} mb-4 text-center`}>FAQ</p>
-          <SerifHeading dark>Questions, answered.</SerifHeading>
+          <SerifHeading>Questions, answered.</SerifHeading>
           <div className="mx-auto mt-12 max-w-2xl space-y-3">
             {faqs.map((f) => (
-              <details key={f.q} className={`${darkCard} group px-6 py-5 open:pb-6`}>
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-white [&::-webkit-details-marker]:hidden">
+              <details key={f.q} className={`${card} group px-6 py-5 open:pb-6`}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-[#0d0c0e] [&::-webkit-details-marker]:hidden">
                   {f.q}
                   <span
-                    className="text-xl leading-none text-white/40 transition-transform group-open:rotate-45"
+                    className="text-xl leading-none text-[#0d0c0e]/40 transition-transform group-open:rotate-45"
                     aria-hidden
                   >
                     +
                   </span>
                 </summary>
-                <p className="mt-3 text-sm leading-7 text-white/60">{f.a}</p>
+                <p className="mt-3 text-sm leading-7 text-[#0d0c0e]/60">{f.a}</p>
               </details>
             ))}
           </div>
@@ -802,15 +802,15 @@ export default function HomePage() {
             style={{ borderColor: primary }}
             className="mx-auto rounded-[32px] border-[3px] px-5 py-20 text-center sm:rounded-[40px] lg:py-28"
           >
-            <h2 className={`${fontDisplay} mx-auto max-w-3xl text-4xl leading-[1.05] text-white sm:text-6xl`}>
+            <h2 className={`${fontDisplay} mx-auto max-w-3xl text-4xl leading-[1.05] text-[#0d0c0e] sm:text-6xl`}>
               Stop finding out about broken websites{" "}
               <span className="italic">from your users.</span>
             </h2>
-            <p className="mx-auto mt-6 max-w-xl text-[15px] leading-7 text-white/55">
+            <p className="mx-auto mt-6 max-w-xl text-[15px] leading-7 text-[#0d0c0e]/60">
               Create a free account — monitor your first website in minutes. No credit card
               required.
             </p>
-            <SplitPill onLight={false} />
+            <SplitPill />
           </div>
         </section>
       </main>

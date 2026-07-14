@@ -14,7 +14,7 @@ const links = [
 ];
 
 /**
- * Floating pill navigation: two white capsules over the dark canvas —
+ * Floating pill navigation: two white capsules over the light canvas —
  * logo + links on the left, auth actions on the right. Collapses to a
  * single full-width pill with a dropdown panel on small screens.
  */
@@ -29,7 +29,7 @@ export function LandingNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const shadow = scrolled ? "shadow-[0_12px_40px_rgba(0,0,0,0.45)]" : "shadow-[0_4px_24px_rgba(0,0,0,0.25)]";
+  const shadow = scrolled ? "shadow-[0_12px_36px_rgba(38,54,115,0.18)]" : "shadow-[0_4px_20px_rgba(38,54,115,0.10)]";
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-5 sm:pt-5">
@@ -90,7 +90,7 @@ export function LandingNav() {
       {open && (
         <div
           id="landing-menu"
-          className="mx-auto mt-2 max-w-6xl rounded-3xl bg-white p-3 shadow-[0_20px_60px_rgba(0,0,0,0.5)] lg:hidden"
+          className="mx-auto mt-2 max-w-6xl rounded-3xl bg-white p-3 shadow-[0_20px_50px_rgba(38,54,115,0.20)] lg:hidden"
         >
           <nav aria-label="Main mobile" className="flex flex-col">
             {links.map((l) => (

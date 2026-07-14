@@ -100,7 +100,7 @@ export default async function BlogPostPage({ params }: Params) {
       : null;
 
   return (
-    <div className={`${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
+    <div className={`${fontSans} min-h-svh bg-[#ecf0ff] text-[#0d0c0e] antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd) }}
@@ -117,7 +117,7 @@ export default async function BlogPostPage({ params }: Params) {
         <section className="mx-auto w-full max-w-6xl px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
           <Link
             href="/blog"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-white/55 transition-colors hover:text-white"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0d0c0e]/60 transition-colors hover:text-[#0d0c0e]"
           >
             <ArrowLeft className="size-4" aria-hidden /> All posts
           </Link>
@@ -129,12 +129,12 @@ export default async function BlogPostPage({ params }: Params) {
               Blog
             </span>
             <h1
-              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-white sm:text-5xl lg:text-6xl`}
+              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-[#0d0c0e] sm:text-5xl lg:text-6xl`}
             >
               {post.title}
             </h1>
-            <p className="mt-6 text-sm text-white/55">
-              By <span className="font-medium text-white">{post.authorName}</span>
+            <p className="mt-6 text-sm text-[#0d0c0e]/60">
+              By <span className="font-medium text-[#0d0c0e]">{post.authorName}</span>
               {post.publishedAt && (
                 <>
                   <span aria-hidden> · </span>
@@ -149,12 +149,12 @@ export default async function BlogPostPage({ params }: Params) {
             <div className="mt-8">
               <Link
                 href="/signup"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
+                className="rounded-full bg-[#0d0c0e] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#3556f4]"
               >
                 Start free
               </Link>
             </div>
-            <p className="mt-3 text-[12px] text-white/35">* No credit card required</p>
+            <p className="mt-3 text-[12px] text-[#0d0c0e]/45">* No credit card required</p>
           </div>
         </section>
 
@@ -165,12 +165,12 @@ export default async function BlogPostPage({ params }: Params) {
         <section className="mx-auto w-full max-w-6xl px-5 pb-20 lg:px-8">
           <div className="flex justify-center gap-10">
             <article className="w-full min-w-0 max-w-3xl">
-              <div className="rounded-[28px] bg-card p-7 shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:p-10">
+              <div className="rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-10">
                 <PostContent content={post.content} />
               </div>
 
               {/* Author bio */}
-              <aside className="mt-8 rounded-[28px] bg-card p-7 shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:p-8">
+              <aside className="mt-8 rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-8">
                 <div className="flex items-center gap-4">
                   <span
                     aria-hidden
@@ -193,14 +193,14 @@ export default async function BlogPostPage({ params }: Params) {
                 style={{ borderColor: primary }}
                 className="mt-8 rounded-[28px] border-[3px] px-7 py-12 text-center sm:px-10"
               >
-                <h2 className={`${fontDisplay} text-3xl leading-tight text-white sm:text-4xl`}>
+                <h2 className={`${fontDisplay} text-3xl leading-tight text-[#0d0c0e] sm:text-4xl`}>
                   Know what changed. <span className="italic">Fix what matters.</span>
                 </h2>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-white/55">
+                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#0d0c0e]/60">
                   Fluxen monitors your websites for visual, SEO, link, script, and performance
                   changes — and alerts you before small problems become expensive problems.
                 </p>
-                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-white/20">
+                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#0d0c0e]/15">
                   <Link
                     href="/signup"
                     className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"

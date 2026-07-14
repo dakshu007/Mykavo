@@ -25,7 +25,7 @@ export function LandingUrlInput() {
   return (
     <form
       onSubmit={submit}
-      className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-full bg-white p-2 shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
+      className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-full border border-[#0d0c0e]/[0.06] bg-white p-2 shadow-[0_16px_44px_rgba(38,54,115,0.16)]"
     >
       <span className="ml-3 text-[#0d0c0e]/40">
         <Globe className="size-5" aria-hidden />

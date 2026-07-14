@@ -78,7 +78,7 @@ function CardShell({
     <div
       aria-hidden={!active}
       style={{ backgroundColor: color }}
-      className={`absolute inset-0 flex flex-col justify-center gap-2 rounded-[28px] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] transition-opacity duration-700 ${
+      className={`absolute inset-0 flex flex-col justify-center gap-2 rounded-[28px] p-5 shadow-[0_20px_50px_rgba(38,54,115,0.18)] transition-opacity duration-700 ${
         active ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -196,7 +196,7 @@ export function LandingHero() {
         className={`${reduced ? "" : "sticky top-0 h-svh"} flex flex-col items-center justify-center overflow-hidden px-5 pb-6 pt-24 sm:pt-28`}
       >
         <h1
-          className={`${fontDisplay} max-w-4xl text-center text-[44px] leading-[1.02] tracking-[-0.01em] text-white sm:text-6xl lg:text-7xl`}
+          className={`${fontDisplay} max-w-4xl text-center text-[44px] leading-[1.02] tracking-[-0.01em] text-[#0d0c0e] sm:text-6xl lg:text-7xl`}
         >
           Know what changed.
           <br />
@@ -219,16 +219,16 @@ export function LandingHero() {
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
             onKeyDown={onKeyDown}
-            className="group relative flex h-9 cursor-grab touch-none select-none items-center rounded-full outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-white/60"
+            className="group relative flex h-9 cursor-grab touch-none select-none items-center rounded-full outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#3556f4]/70"
           >
-            <div className="relative h-[3px] w-full rounded-full bg-white/15">
+            <div className="relative h-[3px] w-full rounded-full bg-[#0d0c0e]/15">
               <div
-                className="absolute left-0 top-0 h-full rounded-full bg-white/40 transition-[width] duration-150"
+                className="absolute left-0 top-0 h-full rounded-full bg-[#0d0c0e]/30 transition-[width] duration-150"
                 style={{ width: `${chipLeft}%` }}
               />
               <span
                 style={{ left: `${chipLeft}%`, backgroundColor: CHIP_COLORS[phase] }}
-                className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition-colors duration-500 group-active:scale-105 ${
+                className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-semibold shadow-[0_8px_24px_rgba(38,54,115,0.25)] transition-colors duration-500 group-active:scale-105 ${
                   phase === 2 ? "text-white" : "text-[#0d0c0e]"
                 }`}
               >
@@ -236,9 +236,9 @@ export function LandingHero() {
               </span>
             </div>
           </div>
-          <p className="mt-3 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-white/40 transition-opacity">
+          <p className="mt-3 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/45 transition-opacity">
             {PHASE_LABELS[phase]}
-            {!reduced && <span className="normal-case tracking-normal text-white/25"> · drag or scroll</span>}
+            {!reduced && <span className="normal-case tracking-normal text-[#0d0c0e]/35"> · drag or scroll</span>}
           </p>
         </div>
 
@@ -284,7 +284,7 @@ export function LandingHero() {
                 key={p}
                 aria-hidden={phase !== p}
                 style={{ backgroundColor: p === 0 ? lavender : p === 1 ? periwinkle : primary }}
-                className={`absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-full p-8 text-center shadow-[0_24px_60px_rgba(0,0,0,0.45)] transition-opacity duration-700 ${
+                className={`absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-full p-8 text-center shadow-[0_20px_50px_rgba(38,54,115,0.18)] transition-opacity duration-700 ${
                   phase === p ? "opacity-100" : "opacity-0"
                 }`}
               >
@@ -357,7 +357,7 @@ export function LandingHero() {
           </div>
         </div>
 
-        <p className="mt-4 max-w-xl text-center text-[15px] leading-7 text-white/60 sm:text-base">
+        <p className="mt-4 max-w-xl text-center text-[15px] leading-7 text-[#0d0c0e]/60 sm:text-base">
           Fluxen watches your websites for visual, SEO, content, link, script, performance, and
           conversion changes — and alerts you before small problems become expensive ones.
         </p>

@@ -36,19 +36,19 @@ const columns = [
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-white/10">
+    <footer className="border-t border-[#0d0c0e]/10">
       <div className="mx-auto max-w-6xl px-5 py-16 lg:px-8">
         <div className="flex flex-col items-center gap-4 pb-12 text-center">
           <Link href="/" aria-label="Fluxen home" className="inline-flex items-center gap-2.5">
-            <LogoMark size={30} className="text-white" />
-            <span className="text-xl font-semibold tracking-tight text-white">Fluxen</span>
+            <LogoMark size={30} className="text-[#3556f4]" />
+            <span className="text-xl font-semibold tracking-tight text-[#0d0c0e]">Fluxen</span>
           </Link>
-          <p className="max-w-sm text-sm leading-6 text-white/50">{site.tagline}</p>
+          <p className="max-w-sm text-sm leading-6 text-[#0d0c0e]/60">{site.tagline}</p>
         </div>
         <div className="grid gap-10 text-center sm:grid-cols-3 sm:text-left">
           {columns.map((col) => (
             <nav key={col.title} aria-label={col.title}>
-              <h3 className="mb-4 text-[12px] font-medium uppercase tracking-[0.22em] text-white/40">
+              <h3 className="mb-4 text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/50">
                 {col.title}
               </h3>
               <ul className="space-y-2.5">
@@ -56,7 +56,7 @@ export function LandingFooter() {
                   <li key={l.label}>
                     <Link
                       href={l.href}
-                      className="text-sm text-white/65 transition-colors hover:text-white"
+                      className="text-sm text-[#0d0c0e]/70 transition-colors hover:text-[#0d0c0e]"
                     >
                       {l.label}
                     </Link>
@@ -66,7 +66,7 @@ export function LandingFooter() {
             </nav>
           ))}
         </div>
-        <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-[13px] text-white/40 sm:flex-row">
+        <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-[#0d0c0e]/10 pt-6 text-[13px] text-[#0d0c0e]/50 sm:flex-row">
           <p>© {new Date().getFullYear()} Fluxen. All rights reserved.</p>
           <p>Built for people who keep websites working.</p>
         </div>
