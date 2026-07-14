@@ -3,11 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@fluxen/database";
-import { MarketingNav } from "@/components/marketing/nav";
-import { MarketingFooter } from "@/components/marketing/footer";
+import { LandingNav } from "@/components/landing/nav";
+import { LandingFooter } from "@/components/landing/footer";
+import { PpFragmentFontFace } from "@/components/landing/font-face";
+import {
+  fontSans,
+  fontSerif,
+  landingFontVars,
+  primary,
+} from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
 import { PostContent, PostTocRail } from "@/components/blog/post-content";
-import { ButtonLink } from "@/components/ui/button";
 import { site } from "@/config/site";
 
 // Dynamic on purpose: publishing from the dashboard must be visible
@@ -96,7 +102,8 @@ export default async function BlogPostPage({ params }: Params) {
       : null;
 
   return (
-    <>
+    <div className={`${landingFontVars} ${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
+      <PpFragmentFontFace />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd) }}
@@ -107,55 +114,66 @@ export default async function BlogPostPage({ params }: Params) {
           dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }}
         />
       )}
-      <MarketingNav />
-      <main className="flex-1">
-        {/* Hero band */}
-        <section className="border-b border-line/60 bg-primary-soft/40">
-          <div className="mx-auto w-full max-w-300 px-5 pb-14 pt-10 lg:px-8">
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-secondary transition-colors hover:text-ink"
+      <LandingNav />
+      <main>
+        {/* Hero band on the dark canvas */}
+        <section className="mx-auto w-full max-w-6xl px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-white/55 transition-colors hover:text-white"
+          >
+            <ArrowLeft className="size-4" aria-hidden /> All posts
+          </Link>
+          <div className="mx-auto mt-10 max-w-3xl text-center">
+            <span
+              style={{ backgroundColor: primary }}
+              className="inline-flex items-center rounded-full px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white"
             >
-              <ArrowLeft className="size-4" aria-hidden /> All posts
-            </Link>
-            <div className="mx-auto mt-8 max-w-3xl text-center">
-              <span className="inline-flex items-center rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
-                Blog
-              </span>
-              <h1 className="mt-5 text-3xl font-semibold tracking-tight text-ink sm:text-4xl lg:text-5xl">
-                {post.title}
-              </h1>
-              <p className="mt-5 text-sm text-ink-secondary">
-                By <span className="font-medium text-ink">{post.authorName}</span>
-                {post.publishedAt && (
-                  <>
-                    <span aria-hidden> · </span>
-                    <time dateTime={post.publishedAt.toISOString()}>
-                      {dateFormat.format(post.publishedAt)}
-                    </time>
-                  </>
-                )}
-                <span aria-hidden> · </span>
-                {readMinutes} min read
-              </p>
-              <div className="mt-7">
-                <ButtonLink href="/signup">Start free</ButtonLink>
-              </div>
-              <p className="mt-2.5 text-[12px] text-ink-faint">* No credit card required</p>
+              Blog
+            </span>
+            <h1
+              className={`${fontSerif} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-white sm:text-5xl lg:text-6xl`}
+            >
+              {post.title}
+            </h1>
+            <p className="mt-6 text-sm text-white/55">
+              By <span className="font-medium text-white">{post.authorName}</span>
+              {post.publishedAt && (
+                <>
+                  <span aria-hidden> · </span>
+                  <time dateTime={post.publishedAt.toISOString()}>
+                    {dateFormat.format(post.publishedAt)}
+                  </time>
+                </>
+              )}
+              <span aria-hidden> · </span>
+              {readMinutes} min read
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/signup"
+                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
+              >
+                Start free
+              </Link>
             </div>
+            <p className="mt-3 text-[12px] text-white/35">* No credit card required</p>
           </div>
         </section>
 
-        {/* Body: article + optional sticky ToC rail */}
-        <section className="mx-auto w-full max-w-300 px-5 py-12 lg:px-8">
+        {/* Body: article + optional sticky ToC rail. The article and ToC keep
+            theme-token cards (bg-card & friends) so the markdown typography
+            stays readable in the visitor's light OR dark app theme — white
+            panels on the dark canvas in light mode, stamped-style. */}
+        <section className="mx-auto w-full max-w-6xl px-5 pb-20 lg:px-8">
           <div className="flex justify-center gap-10">
             <article className="w-full min-w-0 max-w-3xl">
-              <div className="rounded-card bg-card p-7 shadow-card sm:p-10">
+              <div className="rounded-[28px] bg-card p-7 shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:p-10">
                 <PostContent content={post.content} />
               </div>
 
               {/* Author bio */}
-              <aside className="mt-10 rounded-card bg-card p-7 shadow-card sm:p-8">
+              <aside className="mt-8 rounded-[28px] bg-card p-7 shadow-[0_24px_60px_rgba(0,0,0,0.45)] sm:p-8">
                 <div className="flex items-center gap-4">
                   <span
                     aria-hidden
@@ -166,25 +184,38 @@ export default async function BlogPostPage({ params }: Params) {
                   <div className="min-w-0">
                     <p className="text-[15px] font-semibold text-ink">{post.authorName}</p>
                     <p className="mt-0.5 text-sm leading-6 text-ink-secondary">
-                      Team Fluxen — writing about website monitoring, SEO, and
-                      catching regressions before customers do.
+                      Team Fluxen — writing about website monitoring, SEO, and catching
+                      regressions before customers do.
                     </p>
                   </div>
                 </div>
               </aside>
 
-              {/* End-of-post product CTA */}
-              <aside className="mt-10 rounded-card bg-card p-7 text-center shadow-card sm:p-10">
-                <h2 className="text-xl font-semibold tracking-tight text-ink">
-                  Know what changed. Fix what matters.
+              {/* End-of-post product CTA — landing style on the dark canvas */}
+              <aside
+                style={{ borderColor: primary }}
+                className="mt-8 rounded-[28px] border-[3px] px-7 py-12 text-center sm:px-10"
+              >
+                <h2 className={`${fontSerif} text-3xl leading-tight text-white sm:text-4xl`}>
+                  Know what changed. <span className="italic">Fix what matters.</span>
                 </h2>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-ink-secondary">
-                  Fluxen monitors your websites for visual, SEO, link, script, and
-                  performance changes — and alerts you before small problems become
-                  expensive problems.
+                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-white/55">
+                  Fluxen monitors your websites for visual, SEO, link, script, and performance
+                  changes — and alerts you before small problems become expensive problems.
                 </p>
-                <div className="mt-5">
-                  <ButtonLink href="/signup">Start Monitoring Free</ButtonLink>
+                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-white/20">
+                  <Link
+                    href="/signup"
+                    className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
+                  >
+                    Start monitoring free
+                  </Link>
+                  <Link
+                    href="/blog"
+                    className="bg-[#0d0c0e] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2830]"
+                  >
+                    More posts
+                  </Link>
                 </div>
               </aside>
             </article>
@@ -197,7 +228,7 @@ export default async function BlogPostPage({ params }: Params) {
           </div>
         </section>
       </main>
-      <MarketingFooter />
-    </>
+      <LandingFooter />
+    </div>
   );
 }

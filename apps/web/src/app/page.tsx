@@ -23,6 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
+import { PpFragmentFontFace } from "@/components/landing/font-face";
 import { LandingHero } from "@/components/landing/hero";
 import { LandingUrlInput } from "@/components/landing/url-input";
 import { SignalMarquee } from "@/components/landing/marquee";
@@ -286,19 +287,7 @@ function SplitPill({ onLight = true }: { onLight?: boolean }) {
 export default function HomePage() {
   return (
     <div className={`${landingFontVars} ${fontSans} bg-[#0d0c0e] text-white antialiased`}>
-      {/* PP Fragment (commercial, Pangram Pangram): activates automatically when
-          the licensed files exist at public/fonts/ — Instrument Serif renders
-          as the fallback until then. */}
-      <style>{`
-        @font-face {
-          font-family: "PP Fragment";
-          src: local("PP Fragment Serif Regular"), local("PPFragment-SerifRegular"),
-            url("/fonts/PPFragment-SerifRegular.woff2") format("woff2");
-          font-weight: 400;
-          font-style: normal;
-          font-display: swap;
-        }
-      `}</style>
+      <PpFragmentFontFace />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

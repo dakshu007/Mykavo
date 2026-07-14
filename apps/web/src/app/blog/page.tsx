@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, PenLine } from "lucide-react";
+import { ArrowRight, PenLine, Rss } from "lucide-react";
 import { prisma } from "@fluxen/database";
-import { MarketingNav } from "@/components/marketing/nav";
-import { MarketingFooter } from "@/components/marketing/footer";
+import { LandingNav } from "@/components/landing/nav";
+import { LandingFooter } from "@/components/landing/footer";
+import { PpFragmentFontFace } from "@/components/landing/font-face";
+import {
+  darkCard,
+  eyebrow,
+  fontSans,
+  fontSerif,
+  landingFontVars,
+  primarySoft,
+} from "@/components/landing/style";
 import { readingTimeMinutes } from "@/components/blog/blocks";
 
 // Dynamic on purpose: a post published from the dashboard must be visible
@@ -41,45 +50,52 @@ export default async function BlogIndexPage() {
   });
 
   return (
-    <>
-      <MarketingNav />
-      <main className="mx-auto w-full max-w-300 flex-1 px-5 py-16 lg:px-8">
-        <div className="mx-auto mb-12 max-w-2xl text-center">
-          <p className="label-micro mb-3">Blog</p>
-          <h1 className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-            Notes on keeping websites working
+    <div className={`${landingFontVars} ${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
+      <PpFragmentFontFace />
+      <LandingNav />
+      <main className="mx-auto w-full max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
+        <div className="mx-auto mb-14 max-w-2xl text-center">
+          <p className={`${eyebrow} mb-4`}>Blog</p>
+          <h1 className={`${fontSerif} text-4xl leading-[1.05] tracking-[-0.01em] sm:text-6xl`}>
+            Notes on keeping
+            <br />
+            <span className="italic">websites working.</span>
           </h1>
-          <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
-            Change detection, regression monitoring, SEO health, and lessons from
-            watching websites break — and fixing them before anyone notices.
+          <p className="mt-6 text-[15px] leading-7 text-white/55">
+            Change detection, regression monitoring, SEO health, and lessons from watching
+            websites break — and fixing them before anyone notices.
           </p>
+          <Link
+            href="/blog/feed.xml"
+            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 transition-colors hover:text-white"
+          >
+            <Rss className="size-3.5" aria-hidden /> RSS feed
+          </Link>
         </div>
 
         {posts.length === 0 ? (
-          <div className="mx-auto flex max-w-xl flex-col items-center rounded-card bg-card px-6 py-16 text-center shadow-card">
-            <span className="mb-4 inline-flex size-12 items-center justify-center rounded-xl bg-primary-soft">
-              <PenLine className="size-6 text-primary" aria-hidden />
-            </span>
-            <h2 className="text-[17px] font-semibold text-ink">No posts yet</h2>
-            <p className="mt-1.5 max-w-sm text-sm leading-6 text-ink-secondary">
-              We&apos;re writing our first guides on website change monitoring.
-              Check back soon — or start monitoring in the meantime.
+          <div className={`${darkCard} mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center`}>
+            <PenLine className="mb-4 size-7" style={{ color: primarySoft }} aria-hidden />
+            <h2 className={`${fontSerif} text-2xl text-white`}>No posts yet.</h2>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-white/55">
+              We&apos;re writing our first guides on website change monitoring. Check back soon —
+              or start monitoring in the meantime.
             </p>
             <Link
               href="/signup"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-hover"
+              className="mt-7 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
             >
-              Start Monitoring Free <ArrowRight className="size-4" aria-hidden />
+              Start Monitoring Free
             </Link>
           </div>
         ) : (
-          <div className="mx-auto grid max-w-3xl gap-5">
+          <div className="mx-auto grid max-w-3xl gap-4">
             {posts.map((post) => (
               <article
                 key={post.slug}
-                className="group rounded-card bg-card p-7 shadow-card transition-shadow hover:shadow-float"
+                className={`${darkCard} group p-7 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.07] sm:p-8`}
               >
-                <p className="text-[13px] text-ink-faint">
+                <p className="text-[13px] text-white/40">
                   {post.publishedAt && (
                     <time dateTime={post.publishedAt.toISOString()}>
                       {dateFormat.format(post.publishedAt)}
@@ -90,29 +106,34 @@ export default async function BlogIndexPage() {
                   <span aria-hidden> · </span>
                   {readingTimeMinutes(post.content)} min read
                 </p>
-                <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink">
+                <h2 className={`${fontSerif} mt-3 text-[28px] leading-tight text-white`}>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="transition-colors group-hover:text-primary"
+                    className="transition-colors group-hover:text-[#8fa2ff]"
                   >
                     {post.title}
                   </Link>
                 </h2>
                 {post.excerpt && (
-                  <p className="mt-2 text-sm leading-7 text-ink-secondary">{post.excerpt}</p>
+                  <p className="mt-3 text-sm leading-7 text-white/55">{post.excerpt}</p>
                 )}
                 <Link
                   href={`/blog/${post.slug}`}
-                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover"
+                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-white"
+                  style={{ color: primarySoft }}
                 >
-                  Read post <ArrowRight className="size-4" aria-hidden />
+                  Read post{" "}
+                  <ArrowRight
+                    className="size-4 transition-transform group-hover:translate-x-1"
+                    aria-hidden
+                  />
                 </Link>
               </article>
             ))}
           </div>
         )}
       </main>
-      <MarketingFooter />
-    </>
+      <LandingFooter />
+    </div>
   );
 }
