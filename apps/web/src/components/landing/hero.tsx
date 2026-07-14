@@ -195,8 +195,11 @@ export function LandingHero() {
       <section
         className={`${reduced ? "" : "sticky top-0 h-svh"} flex flex-col items-center justify-center overflow-hidden px-5 pb-6 pt-24 sm:pt-28`}
       >
+        {/* shrink-0 everywhere: on short viewports flexbox must never shrink
+            these boxes — the collage cards are absolutely positioned and would
+            spill over the content below instead of shrinking with the box. */}
         <h1
-          className={`${fontDisplay} max-w-4xl text-center text-[44px] leading-[1.02] tracking-[-0.01em] text-[#0d0c0e] sm:text-6xl lg:text-7xl`}
+          className={`${fontDisplay} max-w-4xl shrink-0 text-center text-[40px] leading-[1.02] tracking-[-0.01em] text-[#0d0c0e] sm:text-6xl lg:text-7xl`}
         >
           Know what changed.
           <br />
@@ -204,7 +207,7 @@ export function LandingHero() {
         </h1>
 
         {/* Timeline: a month of monitoring — scrubbed by scroll OR dragged directly */}
-        <div className="mt-10 w-full max-w-2xl sm:mt-12">
+        <div className="mt-8 w-full max-w-2xl shrink-0 sm:mt-12">
           <div
             ref={trackRef}
             role="slider"
@@ -243,7 +246,7 @@ export function LandingHero() {
         </div>
 
         {/* Collage cards playing the story */}
-        <div className="relative mt-6 h-[300px] w-full max-w-4xl sm:h-[330px]">
+        <div className="relative mt-8 h-[300px] w-full max-w-4xl shrink-0 sm:h-[340px]">
           {/* Left card */}
           <div className="absolute -left-16 top-8 w-56 -rotate-[7deg] sm:left-[2%] sm:w-64">
             <div className="relative h-[190px]">
@@ -357,10 +360,6 @@ export function LandingHero() {
           </div>
         </div>
 
-        <p className="mt-4 max-w-xl text-center text-[15px] leading-7 text-[#0d0c0e]/60 sm:text-base">
-          Fluxen watches your websites for visual, SEO, content, link, script, performance, and
-          conversion changes — and alerts you before small problems become expensive ones.
-        </p>
       </section>
     </div>
   );

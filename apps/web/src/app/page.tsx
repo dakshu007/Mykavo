@@ -296,8 +296,12 @@ export default function HomePage() {
         {/* Hero — scroll-scrubbed monitoring story */}
         <LandingHero />
 
-        {/* Interactive URL input (product-led, no signup) */}
-        <section className="mx-auto max-w-6xl px-5 pb-4 pt-2 lg:px-8">
+        {/* Sub-copy + interactive URL input (product-led, no signup) */}
+        <section className="mx-auto max-w-6xl px-5 pb-4 pt-10 lg:px-8">
+          <p className="mx-auto mb-10 max-w-xl text-center text-[15px] leading-7 text-[#0d0c0e]/60 sm:text-base">
+            Fluxen watches your websites for visual, SEO, content, link, script, performance,
+            and conversion changes — and alerts you before small problems become expensive ones.
+          </p>
           <LandingUrlInput />
           <p className="mt-3 text-center text-[13px] text-[#0d0c0e]/50">
             Free instant inspection — status, SEO tags, links &amp; scripts. No signup needed.
