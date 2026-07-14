@@ -8,7 +8,6 @@ import { LandingFooter } from "@/components/landing/footer";
 import {
   fontSans,
   fontDisplay,
-  landingFontVars,
   primary,
 } from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
@@ -101,7 +100,7 @@ export default async function BlogPostPage({ params }: Params) {
       : null;
 
   return (
-    <div className={`${landingFontVars} ${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
+    <div className={`${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd) }}

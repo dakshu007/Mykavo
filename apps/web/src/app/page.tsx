@@ -34,7 +34,6 @@ import {
   eyebrow,
   fontSans,
   fontDisplay,
-  landingFontVars,
   lavender,
   periwinkle,
   primary,
@@ -285,7 +284,7 @@ function SplitPill({ onLight = true }: { onLight?: boolean }) {
 
 export default function HomePage() {
   return (
-    <div className={`${landingFontVars} ${fontSans} bg-[#0d0c0e] text-white antialiased`}>
+    <div className={`${fontSans} bg-[#0d0c0e] text-white antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

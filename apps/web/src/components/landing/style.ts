@@ -6,23 +6,12 @@
  * tokens the dashboard uses. Every color lives here as a constant so the page
  * stays consistent; nothing else in the app should import this file.
  *
- * Fonts: Poppins (display headings, next/font) + "Google Sans" body. Google
- * Sans is Google's proprietary font and can't be bundled — the body stack
- * prefers a locally installed "Google Sans" and otherwise renders DM Sans,
- * the site-wide fallback loaded in app/layout.tsx (--font-app-sans).
+ * Fonts: Poppins (display headings) + "Google Sans" body. Both variables are
+ * registered globally in app/layout.tsx: --font-poppins drives every h1/h2
+ * site-wide (globals.css base rule), and Google Sans is Google's proprietary
+ * font that can't be bundled — the body stack prefers a locally installed
+ * "Google Sans" and otherwise renders DM Sans (--font-app-sans).
  */
-
-import { Poppins } from "next/font/google";
-
-export const poppins = Poppins({
-  variable: "--font-landing-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-});
-
-/** className for the landing root: registers the display font variable. */
-export const landingFontVars = poppins.variable;
 
 /** Body font utility ("Google Sans" → DM Sans fallback). Apply on the landing root. */
 export const fontSans =
@@ -30,7 +19,7 @@ export const fontSans =
 
 /** Display utility (Poppins) for the big editorial headlines. */
 export const fontDisplay =
-  "[font-family:var(--font-landing-display),ui-sans-serif,system-ui,sans-serif] font-semibold";
+  "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] font-semibold";
 
 /** Fixed landing palette (never theme-dependent). */
 export const ink = "#0d0c0e"; // near-black canvas + ink on light panels

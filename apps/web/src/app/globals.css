@@ -226,6 +226,12 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Every h1/h2 site-wide renders in Poppins (loaded in app/layout.tsx). */
+  h1,
+  h2 {
+    font-family: var(--font-poppins), var(--font-sans);
+  }
+
   ::selection {
     background-color: var(--fx-primary-soft);
   }

@@ -9,7 +9,6 @@ import {
   eyebrow,
   fontSans,
   fontDisplay,
-  landingFontVars,
   primarySoft,
 } from "@/components/landing/style";
 import { readingTimeMinutes } from "@/components/blog/blocks";
@@ -49,7 +48,7 @@ export default async function BlogIndexPage() {
   });
 
   return (
-    <div className={`${landingFontVars} ${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
+    <div className={`${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
       <LandingNav />
       <main className="mx-auto w-full max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
         <div className="mx-auto mb-14 max-w-2xl text-center">
