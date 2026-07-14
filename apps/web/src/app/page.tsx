@@ -23,7 +23,6 @@ import {
   Zap,
 } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
-import { PpFragmentFontFace } from "@/components/landing/font-face";
 import { LandingHero } from "@/components/landing/hero";
 import { LandingUrlInput } from "@/components/landing/url-input";
 import { SignalMarquee } from "@/components/landing/marquee";
@@ -34,7 +33,7 @@ import {
   darkCard,
   eyebrow,
   fontSans,
-  fontSerif,
+  fontDisplay,
   landingFontVars,
   lavender,
   periwinkle,
@@ -249,7 +248,7 @@ function SerifHeading({
 }) {
   return (
     <h2
-      className={`${fontSerif} text-center text-4xl leading-[1.05] tracking-[-0.01em] sm:text-5xl lg:text-[56px] ${
+      className={`${fontDisplay} text-center text-4xl leading-[1.05] tracking-[-0.01em] sm:text-5xl lg:text-[56px] ${
         dark ? "text-white" : "text-[#0d0c0e]"
       } ${className}`}
     >
@@ -287,7 +286,6 @@ function SplitPill({ onLight = true }: { onLight?: boolean }) {
 export default function HomePage() {
   return (
     <div className={`${landingFontVars} ${fontSans} bg-[#0d0c0e] text-white antialiased`}>
-      <PpFragmentFontFace />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -360,7 +358,7 @@ export default function HomePage() {
           </div>
           <p className="mx-auto mt-12 max-w-2xl text-center text-lg leading-8 text-[#0d0c0e]/70">
             Fluxen answers one question, continuously:{" "}
-            <span className={`${fontSerif} text-2xl italic text-[#0d0c0e]`}>
+            <span className={`${fontDisplay} text-2xl italic text-[#0d0c0e]`}>
               &ldquo;Did something important change or break on any website I manage?&rdquo;
             </span>
           </p>
@@ -382,7 +380,7 @@ export default function HomePage() {
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
             {/* Visual */}
             <div className={`${darkCard} flex flex-col p-7`}>
-              <h3 className={`${fontSerif} text-center text-3xl text-white`}>Visual</h3>
+              <h3 className={`${fontDisplay} text-center text-3xl text-white`}>Visual</h3>
               <div className="my-7 flex flex-1 items-center justify-center">
                 <div className="relative w-full max-w-60">
                   <div
@@ -396,7 +394,7 @@ export default function HomePage() {
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
                       Pixel diff
                     </p>
-                    <p className={`${fontSerif} text-3xl text-white`}>12.4%</p>
+                    <p className={`${fontDisplay} text-3xl text-white`}>12.4%</p>
                     <p className="text-[11px] font-medium text-white/70">
                       of the page changed overnight
                     </p>
@@ -411,7 +409,7 @@ export default function HomePage() {
 
             {/* SEO */}
             <div className={`${darkCard} flex flex-col p-7`}>
-              <h3 className={`${fontSerif} text-center text-3xl text-white`}>SEO</h3>
+              <h3 className={`${fontDisplay} text-center text-3xl text-white`}>SEO</h3>
               <div className="my-7 flex flex-1 flex-col items-center justify-center gap-2">
                 <div
                   style={{ backgroundColor: cream }}
@@ -442,7 +440,7 @@ export default function HomePage() {
 
             {/* Links */}
             <div className={`${darkCard} flex flex-col p-7`}>
-              <h3 className={`${fontSerif} text-center text-3xl text-white`}>Links</h3>
+              <h3 className={`${fontDisplay} text-center text-3xl text-white`}>Links</h3>
               <div className="my-7 flex flex-1 items-center justify-center">
                 <div
                   style={{ backgroundColor: periwinkle }}
@@ -451,7 +449,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0d0c0e]/50">
                     Site-wide · high
                   </p>
-                  <p className={`${fontSerif} mt-1 text-2xl leading-tight text-[#0d0c0e]`}>
+                  <p className={`${fontDisplay} mt-1 text-2xl leading-tight text-[#0d0c0e]`}>
                     17 internal links broken
                   </p>
                   <p className="mt-1.5 font-mono text-[11px] text-[#0d0c0e]/60">
@@ -495,7 +493,7 @@ export default function HomePage() {
                 <span className="inline-flex items-center justify-center rounded-full bg-white px-4 py-1.5 font-mono text-[12px] font-semibold text-[#0d0c0e]">
                   {w.step}
                 </span>
-                <h3 className={`${fontSerif} mt-4 text-2xl text-white`}>{w.title}</h3>
+                <h3 className={`${fontDisplay} mt-4 text-2xl text-white`}>{w.title}</h3>
                 <p className="mt-2 text-[14.5px] leading-7 text-white/75">
                   {w.desc.split(w.keyword).map((part, i, arr) => (
                     <span key={i}>
@@ -580,7 +578,7 @@ export default function HomePage() {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div>
               <p className={`${eyebrow} mb-4`}>For agencies</p>
-              <h2 className={`${fontSerif} text-4xl leading-[1.05] text-white sm:text-5xl`}>
+              <h2 className={`${fontDisplay} text-4xl leading-[1.05] text-white sm:text-5xl`}>
                 Every client website,
                 <br />
                 <span className="italic">one dashboard.</span>
@@ -679,7 +677,7 @@ export default function HomePage() {
                   />
                 </div>
                 <p
-                  className={`${fontSerif} px-5 pt-3 text-4xl italic ${tool.dark ? "text-white" : "text-[#0d0c0e]"}`}
+                  className={`${fontDisplay} px-5 pt-3 text-4xl italic ${tool.dark ? "text-white" : "text-[#0d0c0e]"}`}
                 >
                   {tool.word}
                 </p>
@@ -723,7 +721,7 @@ export default function HomePage() {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className={`${fontSerif} text-3xl`}>{plan.name}</h3>
+                    <h3 className={`${fontDisplay} text-3xl`}>{plan.name}</h3>
                     {pro && (
                       <span
                         style={{ backgroundColor: primary }}
@@ -737,7 +735,7 @@ export default function HomePage() {
                     {plan.headline}
                   </p>
                   <p className="mt-6">
-                    <span className={`${fontSerif} text-5xl`}>${plan.priceMonthlyUsd}</span>
+                    <span className={`${fontDisplay} text-5xl`}>${plan.priceMonthlyUsd}</span>
                     <span className={`text-sm ${pro ? "text-white/50" : "text-[#0d0c0e]/50"}`}>
                       {" "}
                       / month
@@ -805,7 +803,7 @@ export default function HomePage() {
             style={{ borderColor: primary }}
             className="mx-auto rounded-[32px] border-[3px] px-5 py-20 text-center sm:rounded-[40px] lg:py-28"
           >
-            <h2 className={`${fontSerif} mx-auto max-w-3xl text-4xl leading-[1.05] text-white sm:text-6xl`}>
+            <h2 className={`${fontDisplay} mx-auto max-w-3xl text-4xl leading-[1.05] text-white sm:text-6xl`}>
               Stop finding out about broken websites{" "}
               <span className="italic">from your users.</span>
             </h2>

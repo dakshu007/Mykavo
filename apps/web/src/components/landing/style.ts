@@ -6,40 +6,31 @@
  * tokens the dashboard uses. Every color lives here as a constant so the page
  * stays consistent; nothing else in the app should import this file.
  *
- * Fonts: Sora (body, next/font) + PP Fragment (display serif). PP Fragment is
- * a commercial Pangram Pangram font — the licensed .woff2 files must be
- * dropped into apps/web/public/fonts/ (see the @font-face block in
- * app/page.tsx). Until they exist, Instrument Serif (free, next/font) renders
- * as the stand-in via the font stack's fallback.
+ * Fonts: Poppins (display headings, next/font) + "Google Sans" body. Google
+ * Sans is Google's proprietary font and can't be bundled — the body stack
+ * prefers a locally installed "Google Sans" and otherwise renders DM Sans,
+ * the site-wide fallback loaded in app/layout.tsx (--font-app-sans).
  */
 
-import { Instrument_Serif, Sora } from "next/font/google";
+import { Poppins } from "next/font/google";
 
-export const sora = Sora({
-  variable: "--font-landing-sans",
+export const poppins = Poppins({
+  variable: "--font-landing-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
-export const instrumentSerif = Instrument_Serif({
-  variable: "--font-landing-serif",
-  subsets: ["latin"],
-  weight: "400",
-});
+/** className for the landing root: registers the display font variable. */
+export const landingFontVars = poppins.variable;
 
-/** className for the landing root: registers both font variables. */
-export const landingFontVars = `${sora.variable} ${instrumentSerif.variable}`;
+/** Body font utility ("Google Sans" → DM Sans fallback). Apply on the landing root. */
+export const fontSans =
+  "[font-family:'Google_Sans',var(--font-app-sans),ui-sans-serif,system-ui,sans-serif]";
 
-/** Body font utility (Sora). Apply on the landing root. */
-export const fontSans = "[font-family:var(--font-landing-sans),ui-sans-serif,system-ui,sans-serif]";
-
-/**
- * Display serif utility for the big editorial headlines: PP Fragment first
- * (loads via the @font-face in app/page.tsx when the licensed files exist),
- * Instrument Serif as the always-available fallback.
- */
-export const fontSerif =
-  "[font-family:'PP_Fragment',var(--font-landing-serif),Georgia,serif] font-normal";
+/** Display utility (Poppins) for the big editorial headlines. */
+export const fontDisplay =
+  "[font-family:var(--font-landing-display),ui-sans-serif,system-ui,sans-serif] font-semibold";
 
 /** Fixed landing palette (never theme-dependent). */
 export const ink = "#0d0c0e"; // near-black canvas + ink on light panels

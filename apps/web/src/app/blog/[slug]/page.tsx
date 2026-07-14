@@ -5,10 +5,9 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
-import { PpFragmentFontFace } from "@/components/landing/font-face";
 import {
   fontSans,
-  fontSerif,
+  fontDisplay,
   landingFontVars,
   primary,
 } from "@/components/landing/style";
@@ -103,7 +102,6 @@ export default async function BlogPostPage({ params }: Params) {
 
   return (
     <div className={`${landingFontVars} ${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
-      <PpFragmentFontFace />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd) }}
@@ -132,7 +130,7 @@ export default async function BlogPostPage({ params }: Params) {
               Blog
             </span>
             <h1
-              className={`${fontSerif} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-white sm:text-5xl lg:text-6xl`}
+              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-white sm:text-5xl lg:text-6xl`}
             >
               {post.title}
             </h1>
@@ -196,7 +194,7 @@ export default async function BlogPostPage({ params }: Params) {
                 style={{ borderColor: primary }}
                 className="mt-8 rounded-[28px] border-[3px] px-7 py-12 text-center sm:px-10"
               >
-                <h2 className={`${fontSerif} text-3xl leading-tight text-white sm:text-4xl`}>
+                <h2 className={`${fontDisplay} text-3xl leading-tight text-white sm:text-4xl`}>
                   Know what changed. <span className="italic">Fix what matters.</span>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-white/55">

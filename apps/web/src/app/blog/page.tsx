@@ -4,12 +4,11 @@ import { ArrowRight, PenLine, Rss } from "lucide-react";
 import { prisma } from "@fluxen/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
-import { PpFragmentFontFace } from "@/components/landing/font-face";
 import {
   darkCard,
   eyebrow,
   fontSans,
-  fontSerif,
+  fontDisplay,
   landingFontVars,
   primarySoft,
 } from "@/components/landing/style";
@@ -51,12 +50,11 @@ export default async function BlogIndexPage() {
 
   return (
     <div className={`${landingFontVars} ${fontSans} min-h-svh bg-[#0d0c0e] text-white antialiased`}>
-      <PpFragmentFontFace />
       <LandingNav />
       <main className="mx-auto w-full max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <p className={`${eyebrow} mb-4`}>Blog</p>
-          <h1 className={`${fontSerif} text-4xl leading-[1.05] tracking-[-0.01em] sm:text-6xl`}>
+          <h1 className={`${fontDisplay} text-4xl leading-[1.05] tracking-[-0.01em] sm:text-6xl`}>
             Notes on keeping
             <br />
             <span className="italic">websites working.</span>
@@ -76,7 +74,7 @@ export default async function BlogIndexPage() {
         {posts.length === 0 ? (
           <div className={`${darkCard} mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center`}>
             <PenLine className="mb-4 size-7" style={{ color: primarySoft }} aria-hidden />
-            <h2 className={`${fontSerif} text-2xl text-white`}>No posts yet.</h2>
+            <h2 className={`${fontDisplay} text-2xl text-white`}>No posts yet.</h2>
             <p className="mt-2 max-w-sm text-sm leading-6 text-white/55">
               We&apos;re writing our first guides on website change monitoring. Check back soon —
               or start monitoring in the meantime.
@@ -106,7 +104,7 @@ export default async function BlogIndexPage() {
                   <span aria-hidden> · </span>
                   {readingTimeMinutes(post.content)} min read
                 </p>
-                <h2 className={`${fontSerif} mt-3 text-[28px] leading-tight text-white`}>
+                <h2 className={`${fontDisplay} mt-3 text-[28px] leading-tight text-white`}>
                   <Link
                     href={`/blog/${post.slug}`}
                     className="transition-colors group-hover:text-[#8fa2ff]"

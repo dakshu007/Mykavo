@@ -67,7 +67,9 @@
 }
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* "Google Sans" resolves only when locally installed (proprietary font);
+     DM Sans — loaded in app/layout.tsx — is the everyone-else fallback. */
+  --font-sans: "Google Sans", var(--font-app-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --radius-card: 24px;

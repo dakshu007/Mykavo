@@ -10,7 +10,7 @@ import {
   LockKeyhole,
   ShieldCheck,
 } from "lucide-react";
-import { cream, fontSerif, lavender, periwinkle, primary } from "./style";
+import { cream, fontDisplay, lavender, periwinkle, primary } from "./style";
 
 /**
  * Scroll-scrubbed hero: the section pins for ~2.5 viewport heights while a
@@ -196,7 +196,7 @@ export function LandingHero() {
         className={`${reduced ? "" : "sticky top-0 h-svh"} flex flex-col items-center justify-center overflow-hidden px-5 pb-6 pt-24 sm:pt-28`}
       >
         <h1
-          className={`${fontSerif} max-w-4xl text-center text-[44px] leading-[1.02] tracking-[-0.01em] text-white sm:text-6xl lg:text-7xl`}
+          className={`${fontDisplay} max-w-4xl text-center text-[44px] leading-[1.02] tracking-[-0.01em] text-white sm:text-6xl lg:text-7xl`}
         >
           Know what changed.
           <br />
@@ -291,7 +291,7 @@ export function LandingHero() {
                 {p === 0 && (
                   <>
                     <ShieldCheck className="size-7 text-[#0d0c0e]" aria-hidden />
-                    <p className={`${fontSerif} text-[26px] leading-tight text-[#0d0c0e]`}>
+                    <p className={`${fontDisplay} text-[26px] leading-tight text-[#0d0c0e]`}>
                       Monitoring is on
                     </p>
                     <p className="text-[12px] font-medium text-[#0d0c0e]/60">
@@ -302,7 +302,7 @@ export function LandingHero() {
                 {p === 1 && (
                   <>
                     <CheckCircle2 className="size-7 text-[#0d0c0e]" aria-hidden />
-                    <p className={`${fontSerif} text-[26px] leading-tight text-[#0d0c0e]`}>
+                    <p className={`${fontDisplay} text-[26px] leading-tight text-[#0d0c0e]`}>
                       All quiet today
                     </p>
                     <p className="text-[12px] font-medium text-[#0d0c0e]/60">
@@ -313,7 +313,7 @@ export function LandingHero() {
                 {p === 2 && (
                   <>
                     <Bell className="size-7 text-white" aria-hidden />
-                    <p className={`${fontSerif} text-[26px] leading-tight text-white`}>
+                    <p className={`${fontDisplay} text-[26px] leading-tight text-white`}>
                       One grouped alert
                     </p>
                     <p className="text-[12px] font-medium text-white/70">
