@@ -10,28 +10,16 @@ import {
   findWorkspaceByAddonSubscription,
   consumeCheckoutIntent,
 } from "@mykavo/database";
-import { verifyDodoWebhook, DodoWebhookError } from "@/lib/billing/webhook";
+import {
+  verifyDodoWebhook,
+  classifyDodoEvent,
+  DodoWebhookError,
+} from "@/lib/billing/webhook";
 import { DODO_WEBHOOK_SECRET } from "@/lib/billing/config";
 import { logger } from "@/lib/logger";
 
 // The raw body is required for signature verification — never parse it first.
 export const dynamic = "force-dynamic";
-
-/** Event types that grant Pro access (research §2). */
-const GRANT_EVENTS = new Set([
-  "subscription.active",
-  "subscription.renewed",
-  "payment.succeeded",
-]);
-
-/** Event types that revoke access. Both cancel spellings, per research §6.1. */
-const REVOKE_EVENTS = new Set([
-  "subscription.cancelled",
-  "subscription.canceled",
-  "subscription.expired",
-  "subscription.failed",
-  "subscription.on_hold",
-]);
 
 interface DodoData {
   status?: string;
@@ -90,9 +78,16 @@ export async function POST(request: Request) {
     parseDate(event.timestamp) ??
     (webhookTimestamp ? new Date(Number(webhookTimestamp) * 1000) : null);
 
-  const grants = GRANT_EVENTS.has(type) && (status === "" || status === "active");
-  const revokes =
-    REVOKE_EVENTS.has(type) || (status !== "" && status !== "active" && status !== "pending");
+  // Pure classification (see classifyDodoEvent for the two production bugs
+  // this encodes). Ignored/noop events return BEFORE the transaction so they
+  // can never consume the one-time checkout token or touch entitlements.
+  const action = classifyDodoEvent(type, status);
+  if (action === "ignored" || action === "noop") {
+    logger.info(`dodo webhook ${action}`, { webhookId, type, status });
+    return NextResponse.json({ ok: true, result: action });
+  }
+  const grants = action === "grant";
+  const revokes = action === "revoke";
 
   /**
    * Attribute the event to a workspace WITHOUT trusting client-editable

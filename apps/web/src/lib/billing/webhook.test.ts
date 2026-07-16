@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { verifyDodoWebhook, DodoWebhookError } from "./webhook";
+import { verifyDodoWebhook, classifyDodoEvent, DodoWebhookError } from "./webhook";
 
 /** Sign a body the way Dodo (Standard Webhooks) does, for test fixtures. */
 function sign(rawBody: string, id: string, ts: number, secret: string): string {
@@ -86,5 +86,54 @@ describe("verifyDodoWebhook", () => {
     expect(() =>
       verifyDodoWebhook(BODY, headers("evt_8", ts, `v2,${sig}`), SECRET),
     ).toThrowError(/No matching/);
+  });
+});
+
+describe("classifyDodoEvent", () => {
+  it("grants on subscription lifecycle events with active/empty status", () => {
+    expect(classifyDodoEvent("subscription.active", "active")).toBe("grant");
+    expect(classifyDodoEvent("subscription.active", "")).toBe("grant");
+    expect(classifyDodoEvent("subscription.renewed", "active")).toBe("grant");
+  });
+
+  it("grants on payment.succeeded regardless of the PAYMENT status field (prod regression)", () => {
+    // payment.succeeded carries the payment's own status, not the
+    // subscription's — "succeeded" must never read as a revoke.
+    expect(classifyDodoEvent("payment.succeeded", "succeeded")).toBe("grant");
+    expect(classifyDodoEvent("payment.succeeded", "")).toBe("grant");
+  });
+
+  it("ignores non-subscription/payment event families (prod regression)", () => {
+    // A license key's "Delivered" status downgraded a paying workspace
+    // seconds after checkout — these families must never touch entitlements.
+    expect(classifyDodoEvent("license_key.created", "Delivered")).toBe("ignored");
+    expect(classifyDodoEvent("entitlement_grant.created", "Delivered")).toBe("ignored");
+    expect(classifyDodoEvent("dispute.opened", "open")).toBe("ignored");
+    expect(classifyDodoEvent("refund.succeeded", "succeeded")).toBe("ignored");
+    expect(classifyDodoEvent("", "")).toBe("ignored");
+  });
+
+  it("revokes on explicit revoke events", () => {
+    for (const t of [
+      "subscription.cancelled",
+      "subscription.canceled",
+      "subscription.expired",
+      "subscription.failed",
+      "subscription.on_hold",
+    ]) {
+      expect(classifyDodoEvent(t, "")).toBe("revoke");
+    }
+  });
+
+  it("revokes when a subscription event carries a dead status", () => {
+    expect(classifyDodoEvent("subscription.updated", "on_hold")).toBe("revoke");
+    expect(classifyDodoEvent("subscription.updated", "cancelled")).toBe("revoke");
+  });
+
+  it("noops on subscription.updated while active/pending (prod regression: must not burn the checkout token)", () => {
+    expect(classifyDodoEvent("subscription.updated", "active")).toBe("noop");
+    expect(classifyDodoEvent("subscription.updated", "pending")).toBe("noop");
+    expect(classifyDodoEvent("subscription.updated", "")).toBe("noop");
+    expect(classifyDodoEvent("payment.failed", "failed")).toBe("noop");
   });
 });

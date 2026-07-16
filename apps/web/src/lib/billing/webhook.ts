@@ -101,3 +101,57 @@ export function verifyDodoWebhook(
     throw new DodoWebhookError("INVALID_JSON", "Verified body is not valid JSON.");
   }
 }
+
+/* ------------------------- event classification -------------------------- */
+
+/** Event types that grant Pro access (research §2). */
+const GRANT_EVENTS = new Set([
+  "subscription.active",
+  "subscription.renewed",
+  "payment.succeeded",
+]);
+
+/** Event types that revoke access. Both cancel spellings, per research §6.1. */
+const REVOKE_EVENTS = new Set([
+  "subscription.cancelled",
+  "subscription.canceled",
+  "subscription.expired",
+  "subscription.failed",
+  "subscription.on_hold",
+]);
+
+export type DodoEventAction = "ignored" | "noop" | "grant" | "revoke";
+
+/**
+ * Decide what a verified Dodo event means for entitlements. Pure and
+ * unit-tested — this logic once had two production bugs:
+ *
+ *  - Only subscription.* / payment.* lifecycle events may touch entitlements.
+ *    Dodo emits other families (license_key.*, entitlement_grant.*,
+ *    dispute.*) whose `status` describes THAT object — a license key's
+ *    "Delivered" status was read as a revoke and downgraded a paying
+ *    workspace seconds after checkout.
+ *  - payment.* events carry the PAYMENT's status ("succeeded"), not the
+ *    subscription's — payment.succeeded must grant regardless of it, and the
+ *    subscription-status revoke heuristic must never fire on payment events.
+ *
+ * "noop" events (e.g. subscription.updated while active) must return before
+ * attribution: consuming the one-time checkout token on a noop strands the
+ * grant event right behind it as unattributed.
+ */
+export function classifyDodoEvent(type: string, status: string): DodoEventAction {
+  if (!type.startsWith("subscription.") && !type.startsWith("payment.")) {
+    return "ignored";
+  }
+  const grants =
+    GRANT_EVENTS.has(type) &&
+    (type === "payment.succeeded" || status === "" || status === "active");
+  if (grants) return "grant";
+  const revokes =
+    REVOKE_EVENTS.has(type) ||
+    (type.startsWith("subscription.") &&
+      status !== "" &&
+      status !== "active" &&
+      status !== "pending");
+  return revokes ? "revoke" : "noop";
+}
