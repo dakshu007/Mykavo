@@ -10,7 +10,7 @@ This file is the single source of truth for picking the project back up in a fre
 
 ## Status — ALL spec phases (0–11) complete, plus a lot more
 
-**LIVE IN PRODUCTION: https://mykavo.netlify.app**
+**LIVE IN PRODUCTION: https://mykavo.app** (mykavo.netlify.app is the Netlify origin; custom domain via Cloudflare DNS, DNS-only CNAMEs)
 
 Everything in the original CLAUDE.md spec is built, plus:
 
