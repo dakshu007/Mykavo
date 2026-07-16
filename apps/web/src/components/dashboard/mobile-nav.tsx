@@ -38,7 +38,7 @@ export function DashboardMobileNav({ isBlogAdmin = false }: { isBlogAdmin?: bool
         </Link>
         <button
           onClick={handleSignOut}
-          className="inline-flex items-center gap-1.5 rounded-full bg-card px-3.5 py-2 text-xs font-medium text-ink-secondary shadow-card"
+          className="inline-flex items-center gap-1.5 rounded-full bg-card px-3.5 py-2 text-xs font-medium text-ink-secondary shadow-card transition-colors hover:bg-critical-soft hover:text-critical-strong"
         >
           <LogOut className="size-3.5" aria-hidden /> Sign out
         </button>

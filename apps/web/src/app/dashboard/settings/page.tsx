@@ -2,6 +2,7 @@ import { prisma } from "@mykavo/database";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ProfileForm } from "@/components/dashboard/profile-form";
+import { TwoFactorCard } from "@/components/dashboard/two-factor-card";
 import {
   TeamSettings,
   type PendingInviteView,
@@ -29,7 +30,7 @@ export default async function SettingsPage() {
   );
   const plan = await getWorkspacePlan(workspace.id);
 
-  const [memberRows, inviteRows] = await Promise.all([
+  const [memberRows, inviteRows, account] = await Promise.all([
     prisma.workspaceMember.findMany({
       where: { workspaceId: workspace.id },
       include: { user: { select: { id: true, name: true, email: true } } },
@@ -38,6 +39,15 @@ export default async function SettingsPage() {
     prisma.workspaceInvite.findMany({
       where: { workspaceId: workspace.id, acceptedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        twoFactorEnabled: true,
+        // 2FA enable/disable requires a password — Google-only accounts
+        // manage 2FA through Google itself.
+        accounts: { where: { providerId: "credential" }, select: { id: true } },
+      },
     }),
   ]);
 
@@ -117,6 +127,14 @@ export default async function SettingsPage() {
         <ProfileForm
           initialName={session.user.name}
           initialImage={session.user.image ?? null}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="Security" />
+        <TwoFactorCard
+          enabled={account?.twoFactorEnabled ?? false}
+          hasPassword={(account?.accounts.length ?? 0) > 0}
         />
       </Card>
 

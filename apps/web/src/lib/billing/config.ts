@@ -6,9 +6,9 @@
 
 import { site } from "@/config/site";
 
-/** The $12 Pro product id in Dodo. */
+/** The $20 Pro product id in Dodo (test-mode product; override for live). */
 export const DODO_PRODUCT_ID =
-  process.env.DODO_PRODUCT_ID ?? "pdt_0Niiijjb1NtzJsNQpp0iD";
+  process.env.DODO_PRODUCT_ID ?? "pdt_0NjKW2inGBlQ6ycRtvnMd";
 
 /**
  * The $6/mo website add-on product id in Dodo (each purchased unit = +30
@@ -20,12 +20,17 @@ export const DODO_ADDON_PRODUCT_ID = process.env.DODO_ADDON_PRODUCT_ID ?? "";
 /** Whether the website add-on can be purchased (its product is configured). */
 export const websiteAddonEnabled = Boolean(DODO_ADDON_PRODUCT_ID);
 
-const CHECKOUT_BASE =
-  process.env.DODO_CHECKOUT_BASE ?? "https://checkout.dodopayments.com/buy";
-
 export const DODO_WEBHOOK_SECRET = process.env.DODO_WEBHOOK_SECRET ?? "";
 export const DODO_API_KEY = process.env.DODO_API_KEY ?? "";
 export const DODO_MODE = process.env.DODO_MODE === "live" ? "live" : "test";
+
+// Hosted checkout host follows the mode — test products only resolve on the
+// test host and vice versa.
+const CHECKOUT_BASE =
+  process.env.DODO_CHECKOUT_BASE ??
+  (DODO_MODE === "live"
+    ? "https://checkout.dodopayments.com/buy"
+    : "https://test.checkout.dodopayments.com/buy");
 
 /** Whether the checkout button can be shown (product configured). */
 export const billingEnabled = Boolean(DODO_PRODUCT_ID);
@@ -62,7 +67,7 @@ function buildProductCheckoutUrl(
   return url.toString();
 }
 
-/** Checkout URL for the $12 Pro base plan. */
+/** Checkout URL for the $20 Pro base plan. */
 export function buildCheckoutUrl(params: {
   checkoutToken: string;
   email: string;

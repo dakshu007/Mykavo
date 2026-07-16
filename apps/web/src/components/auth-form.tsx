@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { track } from "@/lib/analytics";
+import { BackupCodesPanel, TotpQr, totpSecretFromUri } from "@/components/two-factor";
 
 function Field({
   id,
@@ -15,6 +16,9 @@ function Field({
   onChange,
   autoComplete,
   minLength,
+  inputMode,
+  placeholder,
+  autoFocus,
 }: {
   id: string;
   label: string;
@@ -23,6 +27,9 @@ function Field({
   onChange: (v: string) => void;
   autoComplete: string;
   minLength?: number;
+  inputMode?: "numeric" | "text";
+  placeholder?: string;
+  autoFocus?: boolean;
 }) {
   return (
     <div>
@@ -35,11 +42,27 @@ function Field({
         required
         minLength={minLength}
         autoComplete={autoComplete}
+        inputMode={inputMode}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="h-12 w-full rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
       />
     </div>
+  );
+}
+
+function SubmitButton({ loading, children }: { loading: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="submit"
+      disabled={loading}
+      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+    >
+      {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+      {children}
+    </button>
   );
 }
 
@@ -66,6 +89,12 @@ function GoogleMark() {
   );
 }
 
+type Step =
+  | "credentials" // email + password form
+  | "totp" // login: enter authenticator code
+  | "enroll" // signup: scan QR + confirm first code
+  | "backup"; // signup: show one-time backup codes
+
 export function AuthForm({
   mode,
   googleEnabled = false,
@@ -80,12 +109,23 @@ export function AuthForm({
   const target = redirectTo ?? "/dashboard";
   // Keep the invite (or other) return path when hopping between login/signup.
   const nextQuery = redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : "";
+  const [step, setStep] = useState<Step>("credentials");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [trustDevice, setTrustDevice] = useState(true);
+  const [totpUri, setTotpUri] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function finish() {
+    router.push(target);
+    router.refresh();
+  }
 
   async function continueWithGoogle() {
     if (googleLoading) return;
@@ -103,28 +143,202 @@ export function AuthForm({
     // On success the browser is redirected to Google.
   }
 
-  async function submit(e: React.FormEvent) {
+  async function submitCredentials(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
     setError("");
 
-    const result =
-      mode === "signup"
-        ? await authClient.signUp.email({ name, email, password })
-        : await authClient.signIn.email({ email, password });
+    if (mode === "login") {
+      const result = await authClient.signIn.email({ email, password });
+      if (result.error) {
+        setError(result.error.message ?? "Something went wrong. Please try again.");
+        setLoading(false);
+        return;
+      }
+      // Enrolled accounts get a second step instead of a session.
+      const data = result.data as { twoFactorRedirect?: boolean } | null;
+      if (data?.twoFactorRedirect) {
+        setStep("totp");
+        setLoading(false);
+        return;
+      }
+      finish();
+      return;
+    }
 
+    // Signup: create the account, then immediately start TOTP enrollment.
+    const result = await authClient.signUp.email({ name, email, password });
     if (result.error) {
       setError(result.error.message ?? "Something went wrong. Please try again.");
       setLoading(false);
       return;
     }
-
-    if (mode === "signup") track("account_created");
-    router.push(target);
-    router.refresh();
+    track("account_created");
+    const enable = await authClient.twoFactor.enable({ password });
+    if (enable.error || !enable.data) {
+      // Account exists and is signed in — don't strand the user on an
+      // enrollment error; they can enable 2FA from Settings.
+      finish();
+      return;
+    }
+    setTotpUri(enable.data.totpURI);
+    setBackupCodes(enable.data.backupCodes);
+    setStep("enroll");
+    setLoading(false);
   }
 
+  async function submitLoginCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setError("");
+    const result = useBackupCode
+      ? await authClient.twoFactor.verifyBackupCode({ code: code.trim() })
+      : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice });
+    if (result.error) {
+      setError(result.error.message ?? "That code didn't work. Try again.");
+      setLoading(false);
+      return;
+    }
+    finish();
+  }
+
+  async function submitEnrollCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setError("");
+    const result = await authClient.twoFactor.verifyTotp({ code: code.trim() });
+    if (result.error) {
+      setError(result.error.message ?? "That code didn't match. Try again.");
+      setLoading(false);
+      return;
+    }
+    setStep("backup");
+    setLoading(false);
+  }
+
+  /* ------------------------- login: TOTP challenge ------------------------ */
+  if (step === "totp") {
+    return (
+      <form onSubmit={submitLoginCode} className="space-y-4">
+        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-panel px-4 py-3">
+          <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
+          <p className="text-[13px] leading-5 text-ink-secondary">
+            Two-factor authentication is on for this account. Enter the code from your
+            authenticator app.
+          </p>
+        </div>
+        <Field
+          id="totp-code"
+          label={useBackupCode ? "Backup code" : "6-digit code"}
+          type="text"
+          value={code}
+          onChange={setCode}
+          autoComplete="one-time-code"
+          inputMode={useBackupCode ? "text" : "numeric"}
+          placeholder={useBackupCode ? "xxxxx-xxxxx" : "123456"}
+          autoFocus
+        />
+        {!useBackupCode && (
+          <label className="flex items-center gap-2 text-[13px] text-ink-secondary">
+            <input
+              type="checkbox"
+              checked={trustDevice}
+              onChange={(e) => setTrustDevice(e.target.checked)}
+              className="size-4 accent-[var(--fx-primary)]"
+            />
+            Trust this device for 30 days
+          </label>
+        )}
+        {error && (
+          <p className="text-sm text-critical-strong" role="alert">
+            {error}
+          </p>
+        )}
+        <SubmitButton loading={loading}>Verify and sign in</SubmitButton>
+        <button
+          type="button"
+          onClick={() => {
+            setUseBackupCode((v) => !v);
+            setCode("");
+            setError("");
+          }}
+          className="w-full text-center text-[13px] font-medium text-ink-secondary hover:text-ink"
+        >
+          {useBackupCode ? "Use an authenticator code instead" : "Lost your device? Use a backup code"}
+        </button>
+      </form>
+    );
+  }
+
+  /* ---------------------- signup: scan QR + first code -------------------- */
+  if (step === "enroll") {
+    return (
+      <form onSubmit={submitEnrollCode} className="space-y-4">
+        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-panel px-4 py-3">
+          <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
+          <p className="text-[13px] leading-5 text-ink-secondary">
+            Secure your account: scan this QR code with Google Authenticator (or any TOTP app),
+            then enter the 6-digit code it shows.
+          </p>
+        </div>
+        <TotpQr uri={totpUri} />
+        <p className="break-all text-center text-[12px] text-ink-faint">
+          Can&apos;t scan? Enter this key manually: <span className="font-mono">{totpSecretFromUri(totpUri)}</span>
+        </p>
+        <Field
+          id="enroll-code"
+          label="6-digit code"
+          type="text"
+          value={code}
+          onChange={setCode}
+          autoComplete="one-time-code"
+          inputMode="numeric"
+          placeholder="123456"
+          autoFocus
+        />
+        {error && (
+          <p className="text-sm text-critical-strong" role="alert">
+            {error}
+          </p>
+        )}
+        <SubmitButton loading={loading}>Activate two-factor auth</SubmitButton>
+        <button
+          type="button"
+          onClick={finish}
+          className="w-full text-center text-[13px] font-medium text-ink-faint hover:text-ink-secondary"
+        >
+          Set up later in Settings
+        </button>
+      </form>
+    );
+  }
+
+  /* --------------------- signup: one-time backup codes -------------------- */
+  if (step === "backup") {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-panel px-4 py-3">
+          <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
+          <p className="text-[13px] leading-5 text-ink-secondary">
+            Two-factor authentication is on. One last thing — save your backup codes.
+          </p>
+        </div>
+        <BackupCodesPanel codes={backupCodes} />
+        <button
+          type="button"
+          onClick={finish}
+          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-primary text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
+        >
+          I saved my codes — continue
+        </button>
+      </div>
+    );
+  }
+
+  /* --------------------------- credentials form --------------------------- */
   return (
     <div className="space-y-4">
       {googleEnabled && (
@@ -149,7 +363,7 @@ export function AuthForm({
           </div>
         </>
       )}
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submitCredentials} className="space-y-4">
         {mode === "signup" && (
           <Field
             id="name"
@@ -160,37 +374,32 @@ export function AuthForm({
             autoComplete="name"
           />
         )}
-      <Field
-        id="email"
-        label="Email"
-        type="email"
-        value={email}
-        onChange={setEmail}
-        autoComplete="email"
-      />
-      <Field
-        id="password"
-        label="Password"
-        type="password"
-        value={password}
-        onChange={setPassword}
-        autoComplete={mode === "signup" ? "new-password" : "current-password"}
-        minLength={8}
-      />
-      {error && (
-        <p className="text-sm text-critical-strong" role="alert">
-          {error}
-        </p>
-      )}
-      <button
-        type="submit"
-        disabled={loading}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
-      >
-        {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
-        {mode === "signup" ? "Create account" : "Sign in"}
-      </button>
-      <p className="text-center text-sm text-ink-secondary">
+        <Field
+          id="email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          autoComplete="email"
+        />
+        <Field
+          id="password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+          minLength={8}
+        />
+        {error && (
+          <p className="text-sm text-critical-strong" role="alert">
+            {error}
+          </p>
+        )}
+        <SubmitButton loading={loading}>
+          {mode === "signup" ? "Create account" : "Sign in"}
+        </SubmitButton>
+        <p className="text-center text-sm text-ink-secondary">
           {mode === "signup" ? (
             <>
               Already have an account?{" "}

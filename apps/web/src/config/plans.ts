@@ -3,7 +3,7 @@
  * Never hardcode plan limits elsewhere — server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
- * MyKavo ships two plans: Free, and Pro at $12/month. Pro includes 8 websites
+ * MyKavo ships two plans: Free, and Pro at $20/month. Pro includes 8 websites
  * with 20 monitored pages each; buyers can extend capacity with $6/month
  * add-ons of one website each, up to 3 (see WEBSITE_ADDON). "Unlimited"
  * numeric limits use Infinity so `count >= limit` is never true.
@@ -80,7 +80,7 @@ export const plans: Plan[] = [
   {
     id: "pro",
     name: "Pro",
-    priceMonthlyUsd: 12,
+    priceMonthlyUsd: 20,
     headline: "8 websites, 20 pages each — add more anytime.",
     highlighted: true,
     limits: {

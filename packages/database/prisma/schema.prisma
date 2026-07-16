@@ -17,16 +17,18 @@ datasource db {
 // ---------- Auth (Better Auth managed) ----------
 
 model User {
-  id            String    @id
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String   @id
+  name             String
+  email            String   @unique
+  emailVerified    Boolean  @default(false)
+  image            String?
+  twoFactorEnabled Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   sessions          Session[]
   accounts          Account[]
+  twoFactors        TwoFactor[]
   ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
   memberships       WorkspaceMember[]
   sentInvites       WorkspaceInvite[] @relation("WorkspaceInviter")
@@ -34,6 +36,23 @@ model User {
   changeNotes       ChangeNote[]      @relation("ChangeNoteAuthor")
 
   @@map("user")
+}
+
+/// Better Auth two-factor plugin storage (TOTP secret + hashed backup codes).
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([secret])
+  @@index([userId])
+  @@map("twoFactor")
 }
 
 model Session {

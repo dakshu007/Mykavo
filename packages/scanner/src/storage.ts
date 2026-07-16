@@ -1,14 +1,16 @@
 /**
  * Artifact storage behind an interface (spec §8: screenshots never live in
- * PostgreSQL). Two backends:
+ * PostgreSQL). Three backends:
  *
  * - LocalDiskStorage — development default (ARTIFACT_DIR).
- * - NetlifyBlobsStorage — production (zero-budget: included in Netlify's
- *   plan). The Netlify-hosted web app reads blobs via the ambient function
- *   context; the worker (which runs outside Netlify) authenticates with a
- *   site ID + personal access token.
+ * - R2Storage — production (Cloudflare R2 free tier, S3-compatible API via
+ *   aws4fetch SigV4 signing; zero egress fees). Both the worker and the
+ *   Netlify-hosted web app authenticate with the same scoped API token.
+ * - NetlifyBlobsStorage — legacy production backend (kept for the migration
+ *   window and as a fallback).
  *
- * Select with ARTIFACT_STORE=netlify-blobs; anything else means local disk.
+ * Select with ARTIFACT_STORE=r2 or ARTIFACT_STORE=netlify-blobs; anything
+ * else means local disk.
  */
 
 import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
@@ -96,7 +98,94 @@ export class NetlifyBlobsStorage implements ArtifactStorage {
   }
 }
 
+/**
+ * Cloudflare R2 via its S3-compatible endpoint. Keys are used verbatim as
+ * object keys; the bucket stays PRIVATE — every read goes through an
+ * authorized application route, never a public bucket URL.
+ */
+export class R2Storage implements ArtifactStorage {
+  private clientPromise: Promise<{
+    fetch: (input: string, init?: RequestInit) => Promise<Response>;
+  }> | null = null;
+
+  constructor(
+    private readonly config: {
+      accountId: string;
+      accessKeyId: string;
+      secretAccessKey: string;
+      bucket: string;
+    },
+  ) {}
+
+  private client() {
+    // aws4fetch is ESM-only — dynamic import, same pattern as @netlify/blobs.
+    this.clientPromise ??= import("aws4fetch").then(
+      ({ AwsClient }) =>
+        new AwsClient({
+          accessKeyId: this.config.accessKeyId,
+          secretAccessKey: this.config.secretAccessKey,
+          service: "s3",
+          region: "auto",
+        }),
+    );
+    return this.clientPromise;
+  }
+
+  private url(key: string): string {
+    const encoded = key.split("/").map(encodeURIComponent).join("/");
+    return `https://${this.config.accountId}.r2.cloudflarestorage.com/${this.config.bucket}/${encoded}`;
+  }
+
+  async put(key: string, data: Buffer, contentType: string): Promise<void> {
+    const client = await this.client();
+    const res = await client.fetch(this.url(key), {
+      method: "PUT",
+      headers: { "content-type": contentType },
+      body: new Uint8Array(data),
+    });
+    if (!res.ok) {
+      throw new Error(`R2 put failed for ${key}: ${res.status} ${await res.text()}`);
+    }
+  }
+
+  async get(key: string): Promise<Buffer | null> {
+    const client = await this.client();
+    const res = await client.fetch(this.url(key), { method: "GET" });
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      throw new Error(`R2 get failed for ${key}: ${res.status} ${await res.text()}`);
+    }
+    return Buffer.from(await res.arrayBuffer());
+  }
+
+  async delete(key: string): Promise<void> {
+    const client = await this.client();
+    const res = await client.fetch(this.url(key), { method: "DELETE" });
+    // 404 is fine — delete is idempotent.
+    if (!res.ok && res.status !== 404) {
+      throw new Error(`R2 delete failed for ${key}: ${res.status} ${await res.text()}`);
+    }
+  }
+}
+
+/** Read R2 config from env; throws if selected but incompletely configured. */
+function r2StorageFromEnv(): R2Storage {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const bucket = process.env.R2_BUCKET ?? "mykavo";
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new Error(
+      "ARTIFACT_STORE=r2 requires R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY",
+    );
+  }
+  return new R2Storage({ accountId, accessKeyId, secretAccessKey, bucket });
+}
+
 export function getDefaultStorage(): ArtifactStorage {
+  if (process.env.ARTIFACT_STORE === "r2") {
+    return r2StorageFromEnv();
+  }
   if (process.env.ARTIFACT_STORE === "netlify-blobs") {
     const siteID = process.env.NETLIFY_BLOBS_SITE_ID ?? process.env.NETLIFY_SITE_ID;
     const token = process.env.NETLIFY_BLOBS_TOKEN ?? process.env.NETLIFY_AUTH_TOKEN;

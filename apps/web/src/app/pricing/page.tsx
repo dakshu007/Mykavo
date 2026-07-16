@@ -10,7 +10,7 @@ import { plans, formatLimit, WEBSITE_ADDON } from "@/config/plans";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $12/month for 8 websites with 20 monitored pages each — add more anytime.",
+    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $20/month for 8 websites with 20 monitored pages each — add more anytime.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -74,7 +74,7 @@ export default function PricingPage() {
           </h1>
           <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
             One missed regression costs more than a year of MyKavo. Start free with one website,
-            or go Pro for $12/month — 8 websites with 20 monitored pages each, add more anytime.
+            or go Pro for $20/month — 8 websites with 20 monitored pages each, add more anytime.
           </p>
         </div>
 

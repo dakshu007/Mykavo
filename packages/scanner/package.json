@@ -14,6 +14,7 @@
   "dependencies": {
     "@mykavo/shared": "workspace:*",
     "@netlify/blobs": "^10.7.9",
+    "aws4fetch": "^1.0.20",
     "chrome-launcher": "^1.2.0",
     "lighthouse": "^12.8.2",
     "playwright": "^1.58.0"

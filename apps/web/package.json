@@ -11,12 +11,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "@mykavo/comparison-engine": "workspace:*",
     "@mykavo/database": "workspace:*",
     "@mykavo/email": "workspace:*",
     "@mykavo/scanner": "workspace:*",
     "@mykavo/shared": "workspace:*",
-    "@hookform/resolvers": "^5.4.0",
     "@tiptap/core": "3.27.3",
     "@tiptap/extension-image": "3.27.3",
     "@tiptap/extension-link": "3.27.3",
@@ -31,6 +31,7 @@
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
     "pg-boss": "^12.25.1",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.81.0",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
