@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
 import { site } from "@/config/site";
 import "./globals.css";
+
+// Google Analytics 4 property for mykavo.app — loaded in production only so
+// dev sessions never pollute the data.
+const GA_MEASUREMENT_ID = "G-DQMWRHWFK8";
 
 // Site-wide body font: "Google Sans" is Google's proprietary font (not
 // distributable), so the --font-sans stack in globals.css prefers a locally
@@ -77,7 +82,24 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        {/* Google tag (gtag.js) — production only */}
+        {process.env.NODE_ENV === "production" && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga-gtag" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}');`}
+            </Script>
+          </>
+        )}
+      </body>
     </html>
   );
 }

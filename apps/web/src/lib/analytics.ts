@@ -36,17 +36,23 @@ export type AnalyticsEvent =
 
 type EventProps = Record<string, string | number | boolean>;
 
-interface PlausibleWindow extends Window {
+interface AnalyticsWindow extends Window {
   plausible?: (event: string, options?: { props?: EventProps }) => void;
+  gtag?: (command: "event", name: string, params?: EventProps) => void;
 }
 
 export function track(event: AnalyticsEvent, props?: EventProps): void {
   if (typeof window === "undefined") return;
 
   const provider = process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER;
+  const w = window as AnalyticsWindow;
+
+  // Google Analytics (gtag.js is loaded in the root layout in production):
+  // product events flow there as GA4 custom events whenever it's present.
+  w.gtag?.("event", event, props);
 
   if (provider === "plausible") {
-    (window as PlausibleWindow).plausible?.(event, props ? { props } : undefined);
+    w.plausible?.(event, props ? { props } : undefined);
     return;
   }
 
