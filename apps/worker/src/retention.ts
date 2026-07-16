@@ -15,9 +15,9 @@ import {
   deleteSnapshots,
   deleteExpiredChangeEvents,
   deleteExpiredHealthChecks,
-} from "@fluxen/database";
-import { historyDaysForPlan } from "@fluxen/shared";
-import { getDefaultStorage, type ArtifactStorage } from "@fluxen/scanner";
+} from "@mykavo/database";
+import { historyDaysForPlan } from "@mykavo/shared";
+import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { logger } from "./logger";
 
 const BATCH = 500;

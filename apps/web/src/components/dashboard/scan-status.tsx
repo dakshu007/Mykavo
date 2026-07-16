@@ -1,4 +1,4 @@
-import type { ScanStatus } from "@fluxen/database";
+import type { ScanStatus } from "@mykavo/database";
 import { cn } from "@/lib/utils";
 
 const styles: Record<ScanStatus, { chip: string; label: string }> = {

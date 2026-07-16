@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Eye, Loader2, X } from "lucide-react";
-import type { ChangeCategory, ChangeSeverity, ChangeStatus } from "@fluxen/database";
+import type { ChangeCategory, ChangeSeverity, ChangeStatus } from "@mykavo/database";
 import { cn } from "@/lib/utils";
 import {
   ChangeCategoryChip,

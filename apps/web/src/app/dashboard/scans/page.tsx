@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { History } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";

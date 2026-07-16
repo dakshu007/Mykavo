@@ -1,8 +1,8 @@
-# Fluxen
+# MyKavo
 
 > Know what changed. Fix what matters.
 
-Fluxen is a **website change detection & regression monitoring SaaS** for agencies, developers, SEO teams, and website owners. It baselines your pages, re-scans on a schedule, detects meaningful visual / SEO / content / link / script / performance / availability changes, scores them by severity, and alerts you before customers notice.
+MyKavo is a **website change detection & regression monitoring SaaS** for agencies, developers, SEO teams, and website owners. It baselines your pages, re-scans on a schedule, detects meaningful visual / SEO / content / link / script / performance / availability changes, scores them by severity, and alerts you before customers notice.
 
 This file is the single source of truth for picking the project back up in a fresh session. Read it top to bottom. Deeper operational history lives in the Claude memory dir (`~/.claude/projects/-Users-dakshu-Desktop-Fluxen/memory/` — start with `fluxen-deployment.md`).
 
@@ -10,7 +10,7 @@ This file is the single source of truth for picking the project back up in a fre
 
 ## Status — ALL spec phases (0–11) complete, plus a lot more
 
-**LIVE IN PRODUCTION: https://fluxenn.netlify.app**
+**LIVE IN PRODUCTION: https://mykavo.netlify.app**
 
 Everything in the original CLAUDE.md spec is built, plus:
 
@@ -24,7 +24,7 @@ Everything in the original CLAUDE.md spec is built, plus:
 | **Broken link monitoring** | Per-scan internal-link status check in the worker (`check-links.ts`: HEAD probes w/ GET fallback, SSRF-guarded per hop, 150-link cap, monitored-page statuses reused free, only definite failures recorded — 0/404/410/5xx; 401/403/429/timeouts never flag). Newly-broken links vs baseline → ONE grouped site-wide LINKS event (≥5 HIGH, else MEDIUM) with per-link list on the change detail page |
 | **Changes UX** | Filters, bulk select/actions, notes thread, filtered CSV export, before/after **slider + pixel-diff modes**, approve/ignore/resolve, update-baseline, approve-entire-scan, broken-links list card on site-wide LINKS events |
 | **Alerts** | Email + **Slack/Discord/webhook channels** (SSRF-guarded, HMAC-signed generic webhooks, send-test), grouped per scan, severity threshold prefs, **weekly client-ready report emails** (Mon 08:00 UTC), **mute windows** (1h/8h/24h) |
-| **Public** | **Status pages** `/status/[token]` (90-day uptime bars, incidents, "Monitored by Fluxen" growth loop) + **SVG uptime badge** `/api/badge/[token]` — both share `Website.publicToken`, separate enable flags |
+| **Public** | **Status pages** `/status/[token]` (90-day uptime bars, incidents, "Monitored by MyKavo" growth loop) + **SVG uptime badge** `/api/badge/[token]` — both share `Website.publicToken`, separate enable flags |
 | **Teams** | Invites by email (Pro = 5 seats), roles OWNER/ADMIN/MEMBER/VIEWER enforced on EVERY mutating route (viewer read-only, billing owner-only), workspace switcher (cookie + membership-verified) |
 | **Dashboard polish** | ⌘K command palette (search sites/pages/changes + actions), onboarding checklist (live-derived), website **tags** + filtering, loading skeletons everywhere, router cache, **dark mode** (System/Light/Dark, WCAG-AA-tested tokens) |
 | **Blog CMS** | `/dashboard/blog` (admin allowlist env `BLOG_ADMIN_EMAILS`) with **Gutenberg-style Tiptap visual editor** (Visual/Markdown tabs, H1–H6, tables, image upload→Blobs, `/cta` `/faq` `/toc` blocks, byte-identical shortcode round-trip), public `/blog` + RSS `/blog/feed.xml`, magazine post layout (hero, sticky ToC, author bio) |
@@ -39,7 +39,7 @@ Everything in the original CLAUDE.md spec is built, plus:
 
 ## 🚀 Production architecture (all zero-budget)
 
-- **Web**: Netlify site `fluxenn` (id `3c4a3c88-f933-4430-9455-e2d693941f67`), serverless in US-East. Deploy = rsync worktree → clean dir → `netlify deploy --build --prod --filter web` (see runbook below).
+- **Web**: Netlify site `mykavo` (id `3c4a3c88-f933-4430-9455-e2d693941f67`), serverless in US-East. Deploy = rsync worktree → clean dir → `netlify deploy --build --prod --filter web` (see runbook below).
 - **Database**: **Supabase** project `mdjpcdwqwyufjbzguzfr` (**us-east-1** — MUST be in the functions' region, not near the user; a Mumbai project caused timeouts and was migrated + deleted). Direct host is IPv6-only → always use the pooler `aws-0-us-east-1.pooler.supabase.com`, username `postgres.mdjpcdwqwyufjbzguzfr`. Web uses **transaction pooler :6543** (`?pgbouncer=true&connection_limit=1`); worker + `prisma migrate deploy` use **session pooler :5432**. Neon and Supabase-Mumbai are retired/deleted.
 - **Worker**: runs on this Mac as launchd agent **`com.fluxen.worker-prod`** from **`~/.fluxen/app`** (a code copy — launchd can't execute from `~/Desktop` due to TCC). Env: `~/.fluxen/app/apps/worker/.env.production`. Logs: `~/.fluxen/logs/worker-prod.log`. Restart: `launchctl kickstart -k gui/501/com.fluxen.worker-prod`. Crons: scheduler + health (*/5), retention (daily 03:00), reports (Mon 08:00), audits (Tue 06:00) — all UTC.
 - **Artifacts** (screenshots/diffs): **Netlify Blobs** store `fluxen-artifacts` (`ARTIFACT_STORE=netlify-blobs`). Worker writes with `NETLIFY_SITE_ID`+`NETLIFY_AUTH_TOKEN`; web reads with `NETLIFY_BLOBS_SITE_ID`/`NETLIFY_BLOBS_TOKEN` site env vars. Blog images live at `blog-images/*` in the same store.
@@ -48,12 +48,12 @@ Everything in the original CLAUDE.md spec is built, plus:
 ### Deploy runbook (web)
 ```bash
 cd <this repo>   # branch claude/heuristic-agnesi-d235d1 == main == deployed
-rm -rf /tmp/fluxen-deploy
+rm -rf /tmp/mykavo-deploy
 rsync -a --exclude node_modules --exclude .next --exclude .git --exclude '.env*' \
-  --exclude .data --exclude .netlify --exclude .claude ./ /tmp/fluxen-deploy/
-mkdir -p /tmp/fluxen-deploy/.netlify
-echo '{ "siteId": "3c4a3c88-f933-4430-9455-e2d693941f67" }' > /tmp/fluxen-deploy/.netlify/state.json
-cd /tmp/fluxen-deploy && pnpm install && netlify deploy --build --prod --filter web
+  --exclude .data --exclude .netlify --exclude .claude ./ /tmp/mykavo-deploy/
+mkdir -p /tmp/mykavo-deploy/.netlify
+echo '{ "siteId": "3c4a3c88-f933-4430-9455-e2d693941f67" }' > /tmp/mykavo-deploy/.netlify/state.json
+cd /tmp/mykavo-deploy && pnpm install && netlify deploy --build --prod --filter web
 ```
 Migrations first (session pooler URL): `cd packages/database && DATABASE_URL=<session-pooler-url> pnpm exec prisma migrate deploy`.
 Worker update: rsync the same excludes to `~/.fluxen/app`, `pnpm install`, `prisma generate` in packages/database, then `launchctl kickstart -k gui/501/com.fluxen.worker-prod`.
@@ -64,9 +64,9 @@ Worker update: rsync the same excludes to `~/.fluxen/app`, `pnpm install`, `pris
 
 - **pnpm/node are NOT on PATH**: `export PATH="/Users/dakshu/.hermes/node/bin:$PATH"` first. Local dev DB: `postgresql://dakshu@localhost:5432/fluxen_dev`.
 - **After Prisma schema changes, restart the Next dev server AND `rm -rf apps/web/.next`** — stale generated client throws `Cannot read properties of undefined`; stale compiled CSS makes theme tokens compute empty.
-- **Only ONE worker per database.** Kill prod worker via launchctl (above); `pkill -f "Fluxen/apps/worker"` does NOT match it.
-- **Client components must NOT import the `@fluxen/shared` barrel** — it re-exports `ssrf.ts` (`node:dns`) and breaks client chunks. Use subpaths: `@fluxen/shared/stabilization`, `/channels`, `/url`, `/script-services`.
-- **Netlify CLI targets whatever `.netlify/state.json` (or a stale global link) says** — ALWAYS confirm `netlify status` shows `fluxenn` before env/deploy commands; a wrong cwd once pointed it at another site (`rank-tracker-hub`). `netlify env:get/list` need `--context production` (secret vars exist).
+- **Only ONE worker per database.** Kill prod worker via launchctl (above); `pkill -f "MyKavo/apps/worker"` does NOT match it.
+- **Client components must NOT import the `@mykavo/shared` barrel** — it re-exports `ssrf.ts` (`node:dns`) and breaks client chunks. Use subpaths: `@mykavo/shared/stabilization`, `/channels`, `/url`, `/script-services`.
+- **Netlify CLI targets whatever `.netlify/state.json` (or a stale global link) says** — ALWAYS confirm `netlify status` shows `mykavo` before env/deploy commands; a wrong cwd once pointed it at another site (`rank-tracker-hub`). `netlify env:get/list` need `--context production` (secret vars exist).
 - **Agent-tool worktrees branch from `main`**, not the session branch — fast-forward main before launching implementation agents.
 - Interrupting `prisma migrate deploy` mid-run leaves a "failed" migration record — if the DDL actually applied, fix with `prisma migrate resolve --applied <name>`.
 - pg-boss v12: named import `{ PgBoss }`; new `page.evaluate` in the scanner needs the `__name` shim (see scan-page.ts).
@@ -114,7 +114,7 @@ Soft cool-gray canvas, white cards (24px radius, soft shadows), royal-blue prima
 2. **Worker lives on this Mac** — must be on/awake; queued jobs survive 14 days. Proper fix: a ~$5/mo host (Railway/Render) with the same env.
 3. `DODO_WEBHOOK_SECRET` not set in prod (payment attribution incomplete); Dodo still in test mode.
 4. Google OAuth configured in code but no credentials set.
-5. Canonical URLs across the site use `site.url` = `https://fluxen.app` (domain not owned/connected yet) — set `NEXT_PUBLIC_SITE_URL` when a real domain lands.
+5. Canonical URLs across the site use `site.url` = `https://mykavo.app` (domain not owned/connected yet) — set `NEXT_PUBLIC_SITE_URL` when a real domain lands.
 
 ## Working conventions for future sessions
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { assertPageLimit, LimitError } from "@/lib/limits";
 import { isSameOrigin, normalizeUrl, parseUrlInput } from "@/lib/url";

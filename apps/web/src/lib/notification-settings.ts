@@ -1,4 +1,4 @@
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 
 /**
  * Effective email notification settings for a workspace. Mirrors the worker's

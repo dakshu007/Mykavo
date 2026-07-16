@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getSession } from "@/lib/session";
 import { logger } from "@/lib/logger";
 import { PROFILE_NAME_MAX_LENGTH, profileUpdateSchema } from "./schema";

@@ -8,11 +8,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fluxen/comparison-engine": "workspace:*",
-    "@fluxen/database": "workspace:*",
-    "@fluxen/email": "workspace:*",
-    "@fluxen/scanner": "workspace:*",
-    "@fluxen/shared": "workspace:*",
+    "@mykavo/comparison-engine": "workspace:*",
+    "@mykavo/database": "workspace:*",
+    "@mykavo/email": "workspace:*",
+    "@mykavo/scanner": "workspace:*",
+    "@mykavo/shared": "workspace:*",
     "dotenv": "^17.0.0",
     "pg-boss": "^12.25.1",
     "tsx": "^4.19.0"

@@ -3,4 +3,4 @@
  * Canonical implementation lives in packages/shared (used by web, worker,
  * and scanner alike).
  */
-export * from "@fluxen/shared/url";
+export * from "@mykavo/shared/url";

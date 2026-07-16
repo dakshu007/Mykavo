@@ -203,7 +203,7 @@ export function AuthForm({
             </>
           ) : (
             <>
-              New to Fluxen?{" "}
+              New to MyKavo?{" "}
               <Link
                 href={`/signup${nextQuery}`}
                 className="font-medium text-primary hover:underline"

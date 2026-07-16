@@ -64,7 +64,7 @@ export function VisualEditor({
     () => [
       // Base list, with React node views attached to the shortcode nodes.
       ...buildEditorExtensions().filter(
-        (extension) => !["fluxenCta", "fluxenToc", "fluxenFaq"].includes(extension.name),
+        (extension) => !["mykavoCta", "mykavoToc", "mykavoFaq"].includes(extension.name),
       ),
       CtaBlockWithView,
       TocBlockWithView,

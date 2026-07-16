@@ -55,7 +55,7 @@ function shell(inner: string): string {
   return `<!doctype html><html><body style="margin:0;background:#eceef4;padding:24px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#16181d">
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden">
     <div style="padding:24px 28px;border-bottom:1px solid #e4e7ee">
-      <span style="display:inline-block;font-size:17px;font-weight:600;letter-spacing:-0.01em">Fluxen</span>
+      <span style="display:inline-block;font-size:17px;font-weight:600;letter-spacing:-0.01em">MyKavo</span>
     </div>
     <div style="padding:28px">${inner}</div>
     <div style="padding:20px 28px;border-top:1px solid #e4e7ee;font-size:12px;color:#9aa1b1">
@@ -424,16 +424,16 @@ export function workspaceInviteEmail(data: WorkspaceInviteData): {
   html: string;
   text: string;
 } {
-  const subject = `${data.inviterName} invited you to ${data.workspaceName} on Fluxen`;
+  const subject = `${data.inviterName} invited you to ${data.workspaceName} on MyKavo`;
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Workspace invitation</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.inviterName)} invited you to ${esc(data.workspaceName)}</h1>
-    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">You've been invited as a ${esc(data.roleLabel)}. Fluxen monitors websites for important changes and regressions — accept to see what this workspace is watching.</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">You've been invited as a ${esc(data.roleLabel)}. MyKavo monitors websites for important changes and regressions — accept to see what this workspace is watching.</p>
     ${button(data.acceptUrl, "Accept invitation")}
     <p style="margin:20px 0 0;font-size:12px;color:#9aa1b1">This invitation expires in ${data.expiresInDays} day${data.expiresInDays === 1 ? "" : "s"}. If you weren't expecting it, you can safely ignore this email.</p>
   `;
   const text =
-    `${data.inviterName} invited you to ${data.workspaceName} on Fluxen\n\n` +
+    `${data.inviterName} invited you to ${data.workspaceName} on MyKavo\n\n` +
     `You've been invited as a ${data.roleLabel}.\n\n` +
     `Accept: ${data.acceptUrl}\n\n` +
     `This invitation expires in ${data.expiresInDays} day${data.expiresInDays === 1 ? "" : "s"}. ` +

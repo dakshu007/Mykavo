@@ -129,7 +129,7 @@ export function MetaTagChecker() {
 
           <ToolCta
             heading="Monitor these tags automatically — get alerted when they change."
-            body="Fluxen re-checks titles, descriptions, canonicals, and robots meta on every page you monitor, on a schedule — and emails you when something important changes or disappears."
+            body="MyKavo re-checks titles, descriptions, canonicals, and robots meta on every page you monitor, on a schedule — and emails you when something important changes or disappears."
             tool="meta-tag-checker"
           />
         </>

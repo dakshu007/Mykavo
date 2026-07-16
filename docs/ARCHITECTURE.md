@@ -1,8 +1,8 @@
-# Fluxen — Architecture
+# MyKavo — Architecture
 
 > Know what changed. Fix what matters.
 
-Fluxen is a website change detection and regression monitoring SaaS. This document describes the target architecture and how the codebase evolves toward it phase-by-phase.
+MyKavo is a website change detection and regression monitoring SaaS. This document describes the target architecture and how the codebase evolves toward it phase-by-phase.
 
 ## 1. Architectural Style
 
@@ -129,7 +129,7 @@ Workers scale horizontally, retry idempotently, tolerate partial failures, and s
 
 ## 9. Security Posture
 
-Fluxen fetches user-supplied URLs, so the scanner is treated as hostile territory. Full SSRF pipeline (scheme allowlist, DNS resolution, private/reserved/metadata IP blocking, redirect revalidation, size/time caps, rate limits) is documented in [SECURITY_MODEL.md](./SECURITY_MODEL.md). Every discovered URL is independently re-validated. Scanned HTML is never rendered unsanitized.
+MyKavo fetches user-supplied URLs, so the scanner is treated as hostile territory. Full SSRF pipeline (scheme allowlist, DNS resolution, private/reserved/metadata IP blocking, redirect revalidation, size/time caps, rate limits) is documented in [SECURITY_MODEL.md](./SECURITY_MODEL.md). Every discovered URL is independently re-validated. Scanned HTML is never rendered unsanitized.
 
 ## 10. Cost Control
 

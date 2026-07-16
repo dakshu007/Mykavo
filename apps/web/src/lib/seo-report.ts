@@ -14,7 +14,7 @@
  * Every issue deducts individually — e.g. two noindex pages cost 50 points.
  */
 
-import { isBrokenLinkStatus } from "@fluxen/comparison-engine";
+import { isBrokenLinkStatus } from "@mykavo/comparison-engine";
 import {
   evaluateCanonical,
   evaluateH1,

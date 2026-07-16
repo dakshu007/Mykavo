@@ -1,4 +1,4 @@
-import type { WebsiteStatus } from "@fluxen/database";
+import type { WebsiteStatus } from "@mykavo/database";
 import { cn } from "@/lib/utils";
 
 const styles: Record<WebsiteStatus, { dot: string; text: string; label: string }> = {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { identifyScriptService, SCRIPT_SERVICES } from "@fluxen/shared/script-services";
+import { identifyScriptService, SCRIPT_SERVICES } from "@mykavo/shared/script-services";
 
 describe("identifyScriptService", () => {
   const cases: Array<[string, string]> = [

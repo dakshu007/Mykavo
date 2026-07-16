@@ -1,12 +1,12 @@
 /**
- * Fluxen scan worker. Consumes SCAN_WEBSITE jobs from pg-boss (PostgreSQL-
+ * MyKavo scan worker. Consumes SCAN_WEBSITE jobs from pg-boss (PostgreSQL-
  * backed queue — zero extra infrastructure) and executes them with a
  * bounded Playwright browser pool. Scales horizontally: run more processes.
  */
 
 import "dotenv/config";
 import { PgBoss } from "pg-boss";
-import { BrowserPool } from "@fluxen/scanner";
+import { BrowserPool } from "@mykavo/scanner";
 import {
   SCAN_WEBSITE_QUEUE,
   SCHEDULER_SWEEP_QUEUE,
@@ -17,7 +17,7 @@ import {
   AUDIT_SWEEP_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
-} from "@fluxen/shared";
+} from "@mykavo/shared";
 import { logger } from "./logger";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";

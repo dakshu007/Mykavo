@@ -22,7 +22,7 @@ export {
   type ChangeSignal,
   type ChangeCategory,
   type ElementImportance,
-} from "@fluxen/severity-engine";
+} from "@mykavo/severity-engine";
 export {
   compareSiteMeta,
   robotsBlocksAll,

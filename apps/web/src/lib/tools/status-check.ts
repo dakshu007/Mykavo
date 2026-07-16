@@ -40,7 +40,7 @@ export async function checkUrlStatus(
   const {
     timeoutMs = 10_000,
     maxRedirects = 5,
-    userAgent = "FluxenBot/0.1 (+https://fluxen.app/bot; bulk url status checker)",
+    userAgent = "MyKavoBot/0.1 (+https://mykavo.app/bot; bulk url status checker)",
     fetchImpl = fetch,
     validateUrl = assertSafeUrl,
   } = options;

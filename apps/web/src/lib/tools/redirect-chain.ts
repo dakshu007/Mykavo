@@ -50,7 +50,7 @@ export async function followRedirectChain(
   const {
     maxHops = MAX_REDIRECT_HOPS,
     timeoutMs = 10_000,
-    userAgent = "FluxenBot/0.1 (+https://fluxen.app/bot; redirect chain checker)",
+    userAgent = "MyKavoBot/0.1 (+https://mykavo.app/bot; redirect chain checker)",
     fetchImpl = fetch,
     validateUrl = assertSafeUrl,
   } = options;

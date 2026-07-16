@@ -39,9 +39,9 @@ export function LandingFooter() {
     <footer className="border-t border-[#0d0c0e]/10">
       <div className="mx-auto max-w-6xl px-5 py-16 lg:px-8">
         <div className="flex flex-col items-center gap-4 pb-12 text-center">
-          <Link href="/" aria-label="Fluxen home" className="inline-flex items-center gap-2.5">
+          <Link href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
             <LogoMark size={30} className="text-[#3556f4]" />
-            <span className="text-xl font-semibold tracking-tight text-[#0d0c0e]">Fluxen</span>
+            <span className="text-xl font-semibold tracking-tight text-[#0d0c0e]">MyKavo</span>
           </Link>
           <p className="max-w-sm text-sm leading-6 text-[#0d0c0e]/60">{site.tagline}</p>
         </div>
@@ -67,7 +67,7 @@ export function LandingFooter() {
           ))}
         </div>
         <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-[#0d0c0e]/10 pt-6 text-[13px] text-[#0d0c0e]/50 sm:flex-row">
-          <p>© {new Date().getFullYear()} Fluxen. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} MyKavo. All rights reserved.</p>
           <p>Built for people who keep websites working.</p>
         </div>
       </div>

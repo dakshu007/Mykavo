@@ -7,7 +7,7 @@
  * a retried job produces exactly one set.
  */
 
-import { prisma, type ChangeSeverity } from "@fluxen/database";
+import { prisma, type ChangeSeverity } from "@mykavo/database";
 import {
   compareBrokenLinks,
   compareSnapshots,
@@ -20,9 +20,9 @@ import {
   type PageLinkObservations,
   type ScoredChange,
   type Severity,
-} from "@fluxen/comparison-engine";
-import { normalizeUrl } from "@fluxen/shared";
-import { getDefaultStorage, type ArtifactStorage } from "@fluxen/scanner";
+} from "@mykavo/comparison-engine";
+import { normalizeUrl } from "@mykavo/shared";
+import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { logger } from "./logger";
 
 const CATEGORY_TO_ENUM = {

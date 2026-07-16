@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 

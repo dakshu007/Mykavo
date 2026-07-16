@@ -1,4 +1,4 @@
-# Netlify build for the Fluxen web app (pnpm monorepo).
+# Netlify build for the MyKavo web app (pnpm monorepo).
 #
 # Deploy with the workspace package selected explicitly so Netlify's monorepo
 # detection doesn't prompt and it sets base/publish to apps/web itself:
@@ -17,7 +17,7 @@
 # until a worker is connected to the same Postgres.
 
 [build]
-  command = "pnpm install && pnpm --filter @fluxen/database exec prisma generate && pnpm run build"
+  command = "pnpm install && pnpm --filter @mykavo/database exec prisma generate && pnpm run build"
 
 [build.environment]
   NODE_VERSION = "20"

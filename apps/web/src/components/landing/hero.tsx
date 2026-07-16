@@ -14,7 +14,7 @@ import { cream, fontDisplay, lavender, periwinkle, primary } from "./style";
 
 /**
  * Scroll-scrubbed hero: the section pins for ~2.5 viewport heights while a
- * "Day N" chip travels along a timeline and the collage cards play Fluxen's
+ * "Day N" chip travels along a timeline and the collage cards play MyKavo's
  * monitoring story — baseline approved → quiet scans → change caught. The
  * timeline itself is also a slider: drag the chip (or use arrow keys) to
  * scrub through the days directly.

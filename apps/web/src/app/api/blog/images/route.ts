@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getDefaultStorage } from "@fluxen/scanner/storage";
+import { getDefaultStorage } from "@mykavo/scanner/storage";
 import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { logger } from "@/lib/logger";
 

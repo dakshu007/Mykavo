@@ -10,7 +10,7 @@ CREATE TABLE "blog_post" (
     "content" TEXT NOT NULL,
     "status" "BlogPostStatus" NOT NULL DEFAULT 'DRAFT',
     "publishedAt" TIMESTAMP(3),
-    "authorName" TEXT NOT NULL DEFAULT 'Fluxen Team',
+    "authorName" TEXT NOT NULL DEFAULT 'MyKavo Team',
     "seoTitle" TEXT,
     "seoDescription" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

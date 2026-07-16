@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { discoverPages, DiscoveryError } from "@/lib/discovery";
 import { rateLimit } from "@/lib/security/rate-limit";

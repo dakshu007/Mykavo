@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import { logger } from "@/lib/logger";

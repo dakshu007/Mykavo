@@ -1,4 +1,4 @@
-import type { ChangeSeverity, ChangeStatus, ChangeCategory } from "@fluxen/database";
+import type { ChangeSeverity, ChangeStatus, ChangeCategory } from "@mykavo/database";
 import { cn } from "@/lib/utils";
 
 const severityStyles: Record<ChangeSeverity, { chip: string; dot: string; label: string }> = {

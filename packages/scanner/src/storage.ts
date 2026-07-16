@@ -49,6 +49,8 @@ export class LocalDiskStorage implements ArtifactStorage {
 }
 
 /** Blob store name shared by the worker (writer) and web app (reader). */
+// Deliberately keeps the pre-rename name: every production screenshot/diff
+// already lives in this Netlify Blobs store — renaming it would orphan them.
 const BLOB_STORE_NAME = "fluxen-artifacts";
 
 // Minimal structural type for the store — @netlify/blobs is ESM-only and

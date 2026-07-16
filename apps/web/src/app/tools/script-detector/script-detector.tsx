@@ -137,7 +137,7 @@ export function ScriptDetector() {
 
           <ToolCta
             heading="Get alerted when important scripts are added or removed."
-            body="Fluxen tracks the scripts on every monitored page across scheduled scans — a vanished analytics tag, a missing payment script, or an unknown third-party addition triggers an email alert."
+            body="MyKavo tracks the scripts on every monitored page across scheduled scans — a vanished analytics tag, a missing payment script, or an unknown third-party addition triggers an email alert."
             tool="script-detector"
           />
         </>

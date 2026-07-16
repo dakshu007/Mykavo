@@ -8,7 +8,7 @@
  */
 
 /** Cookie that hides the checklist for a workspace. Value = workspaceId. */
-export const ONBOARDING_DISMISSED_COOKIE = "fluxen-onboarding-dismissed";
+export const ONBOARDING_DISMISSED_COOKIE = "mykavo-onboarding-dismissed";
 
 /** 90 days, in seconds. */
 export const ONBOARDING_DISMISSED_MAX_AGE = 60 * 60 * 24 * 90;
@@ -61,7 +61,7 @@ export function deriveOnboarding(counts: OnboardingCounts): OnboardingState {
     {
       id: "add-website",
       title: "Add your first website",
-      description: "Fluxen validates the URL and discovers your pages.",
+      description: "MyKavo validates the URL and discovers your pages.",
       href: "/dashboard/websites/new",
       done: counts.websites > 0,
       optional: false,

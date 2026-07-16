@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { BlogPostEditor } from "@/components/blog/post-editor";

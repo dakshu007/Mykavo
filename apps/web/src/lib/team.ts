@@ -6,10 +6,10 @@
  * UI reads the same matrix for display).
  */
 
-import type { WorkspaceRole } from "@fluxen/database";
+import type { WorkspaceRole } from "@mykavo/database";
 
 /** httpOnly cookie holding the user's selected workspace id. */
-export const WORKSPACE_COOKIE = "fluxen-workspace";
+export const WORKSPACE_COOKIE = "mykavo-workspace";
 
 /** Invites expire this many days after (re-)issue. */
 export const INVITE_TTL_DAYS = 7;

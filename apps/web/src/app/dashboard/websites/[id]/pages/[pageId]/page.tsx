@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
 import { Card, CardHeader } from "@/components/ui/card";

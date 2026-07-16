@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, PenLine, Plus } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { Card, CardHeader } from "@/components/ui/card";

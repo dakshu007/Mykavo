@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Globe, Plus } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { matchesTagFilter, parseTagFilterParam, parseTags } from "@/lib/tags";
@@ -46,7 +46,7 @@ export default async function WebsitesPage({
       <EmptyState
         icon={Globe}
         title="Add your first website"
-        description="Fluxen validates the URL, discovers your pages from sitemaps and homepage links, and lets you choose exactly which pages to monitor."
+        description="MyKavo validates the URL, discovers your pages from sitemaps and homepage links, and lets you choose exactly which pages to monitor."
         action={
           <Link
             href="/dashboard/websites/new"

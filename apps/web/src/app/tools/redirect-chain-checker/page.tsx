@@ -68,7 +68,7 @@ export default function RedirectChainCheckerPage() {
           <p>
             Redirects also change without anyone deciding they should: an expired plugin rule, a
             CDN misconfiguration, or a migration script can quietly re-route a money page to
-            the homepage. Fluxen re-checks the redirect behavior of every monitored page on a
+            the homepage. MyKavo re-checks the redirect behavior of every monitored page on a
             schedule and alerts you when a destination or status unexpectedly changes.
           </p>
         </section>

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
-  Fluxen design tokens — see docs/DESIGN_SYSTEM.md.
+  MyKavo design tokens — see docs/DESIGN_SYSTEM.md.
 
   Theming mechanism (Tailwind v4): the `@theme inline` block maps every color
   token to a plain CSS custom property (`--fx-*`) that we control. `inline`

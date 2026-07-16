@@ -6,7 +6,7 @@
  * it matters*. Related changes are grouped (e.g. "17 internal links removed").
  */
 
-import { scoreChange, type ScoredChange, type ChangeSignal } from "@fluxen/severity-engine";
+import { scoreChange, type ScoredChange, type ChangeSignal } from "@mykavo/severity-engine";
 
 export interface SnapshotLink {
   normalizedUrl: string;

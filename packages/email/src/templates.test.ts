@@ -20,7 +20,7 @@ describe("scanSummaryEmail", () => {
       { severity: "CRITICAL" as const, title: "HTTP status changed 200 → 404", pagePath: "/checkout" },
       { severity: "HIGH" as const, title: "Canonical URL removed", pagePath: "/" },
     ],
-    dashboardUrl: "https://fluxen.app/dashboard/changes",
+    dashboardUrl: "https://mykavo.app/dashboard/changes",
   };
 
   it("uses a severity-led subject with the host", () => {
@@ -50,7 +50,7 @@ describe("scanSummaryEmail", () => {
   it("provides a plain-text alternative", () => {
     const { text } = scanSummaryEmail(data);
     expect(text).toContain("[Critical] HTTP status changed 200 → 404");
-    expect(text).toContain("Review: https://fluxen.app/dashboard/changes");
+    expect(text).toContain("Review: https://mykavo.app/dashboard/changes");
   });
 });
 
@@ -71,7 +71,7 @@ describe("weeklyReportEmail", () => {
     sslDaysLeft: 83,
     lighthouse: { performance: 92, accessibility: 98, bestPractices: 100, seo: 100 },
     allQuiet: false,
-    dashboardUrl: "https://fluxen.app/dashboard/websites/w1",
+    dashboardUrl: "https://mykavo.app/dashboard/websites/w1",
   };
 
   it("builds a changes + uptime subject", () => {
@@ -130,7 +130,7 @@ describe("weeklyReportEmail", () => {
     expect(text).toContain("- [High] 1 change");
     expect(text).toContain("- [Medium] 2 changes");
     expect(text).toContain("SSL certificate valid for another 83 days.");
-    expect(text).toContain("Dashboard: https://fluxen.app/dashboard/websites/w1");
+    expect(text).toContain("Dashboard: https://mykavo.app/dashboard/websites/w1");
   });
 
   it("HTML-escapes the website name", () => {
@@ -147,7 +147,7 @@ describe("performanceDropEmail", () => {
     pagePath: "/",
     previous: { performance: 90, accessibility: 98, bestPractices: 100, seo: 100, lcpMs: 1200 },
     current: { performance: 62, accessibility: 98, bestPractices: 92, seo: 100, lcpMs: 3400 },
-    dashboardUrl: "https://fluxen.app/dashboard/websites/w1",
+    dashboardUrl: "https://mykavo.app/dashboard/websites/w1",
   };
 
   it("builds the '📉 Performance dropped on {host}: {prev} → {curr}' subject", () => {
@@ -176,7 +176,7 @@ describe("performanceDropEmail", () => {
     expect(text).toContain("- Best Practices: 100 → 92 (-8)");
     expect(text).toContain("- SEO: 100 → 100 (±0)");
     expect(text).toContain("- LCP: 1.2 s → 3.4 s");
-    expect(text).toContain("Dashboard: https://fluxen.app/dashboard/websites/w1");
+    expect(text).toContain("Dashboard: https://mykavo.app/dashboard/websites/w1");
   });
 
   it("renders '—' for scores missing on either side", () => {
@@ -204,7 +204,7 @@ describe("failureAlertEmail", () => {
       websiteHost: "aurora-outdoor.com",
       scanTime: "Jul 8, 2026",
       reason: "The homepage returned HTTP 500.",
-      dashboardUrl: "https://fluxen.app/dashboard",
+      dashboardUrl: "https://mykavo.app/dashboard",
     });
     expect(subject).toBe("Scan failed for aurora-outdoor.com");
     expect(html).toContain("The homepage returned HTTP 500.");
@@ -216,13 +216,13 @@ describe("workspaceInviteEmail", () => {
     inviterName: "Ada Lovelace",
     workspaceName: "Aurora Agency",
     roleLabel: "Member",
-    acceptUrl: "https://fluxen.app/invite/tok_abc123",
+    acceptUrl: "https://mykavo.app/invite/tok_abc123",
     expiresInDays: 7,
   };
 
-  it("builds the '{inviter} invited you to {workspace} on Fluxen' subject", () => {
+  it("builds the '{inviter} invited you to {workspace} on MyKavo' subject", () => {
     expect(workspaceInviteEmail(data).subject).toBe(
-      "Ada Lovelace invited you to Aurora Agency on Fluxen",
+      "Ada Lovelace invited you to Aurora Agency on MyKavo",
     );
   });
 

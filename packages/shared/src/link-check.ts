@@ -74,7 +74,7 @@ export interface LinkProbeResult {
 const PROBE_DEFAULTS: Required<LinkProbeOptions> = {
   timeoutMs: 8_000,
   maxRedirects: 5,
-  userAgent: "FluxenBot/0.1 (+https://fluxen.app/bot; broken link check)",
+  userAgent: "MyKavoBot/0.1 (+https://mykavo.app/bot; broken link check)",
 };
 
 /** Network failures where the link is definitively unreachable for visitors. */

@@ -7,9 +7,9 @@
  */
 
 import "dotenv/config";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { PgBoss } from "pg-boss";
-import { SCAN_WEBSITE_QUEUE } from "@fluxen/shared";
+import { SCAN_WEBSITE_QUEUE } from "@mykavo/shared";
 
 async function main() {
   const websiteId = process.argv[2];

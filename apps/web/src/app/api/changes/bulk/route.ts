@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma, changeActionData, type ChangeAction } from "@fluxen/database";
+import { prisma, changeActionData, type ChangeAction } from "@mykavo/database";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 

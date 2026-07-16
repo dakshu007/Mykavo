@@ -24,7 +24,7 @@ export const blogPostInputSchema = z.object({
   excerpt: optionalText(500),
   content: z.string().max(200_000),
   status: z.enum(["DRAFT", "PUBLISHED"]),
-  authorName: z.string().trim().min(1).max(120).default("Fluxen Team"),
+  authorName: z.string().trim().min(1).max(120).default("MyKavo Team"),
   seoTitle: optionalText(200),
   seoDescription: optionalText(320),
 });

@@ -3,4 +3,4 @@
  * Canonical implementation lives in packages/shared (used by web, worker,
  * and scanner alike). See docs/SECURITY_MODEL.md.
  */
-export * from "@fluxen/shared/ssrf";
+export * from "@mykavo/shared/ssrf";

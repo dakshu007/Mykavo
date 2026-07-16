@@ -117,15 +117,15 @@ export function buildSlashItems(actions: { insertImage: () => void }): SlashMenu
     },
     {
       title: "CTA card",
-      description: "“Try Fluxen” call-to-action with a signup button.",
+      description: "“Try MyKavo” call-to-action with a signup button.",
       icon: Zap,
-      keywords: "cta call to action signup fluxen",
+      keywords: "cta call to action signup mykavo",
       run: (editor, range) =>
         editor
           .chain()
           .focus()
           .deleteRange(range)
-          .insertContent({ type: "fluxenCta" })
+          .insertContent({ type: "mykavoCta" })
           .run(),
     },
     {
@@ -138,7 +138,7 @@ export function buildSlashItems(actions: { insertImage: () => void }): SlashMenu
           .chain()
           .focus()
           .deleteRange(range)
-          .insertContent({ type: "fluxenFaq" })
+          .insertContent({ type: "mykavoFaq" })
           .run(),
     },
     {
@@ -151,7 +151,7 @@ export function buildSlashItems(actions: { insertImage: () => void }): SlashMenu
           .chain()
           .focus()
           .deleteRange(range)
-          .insertContent({ type: "fluxenToc" })
+          .insertContent({ type: "mykavoToc" })
           .run(),
     },
   ];

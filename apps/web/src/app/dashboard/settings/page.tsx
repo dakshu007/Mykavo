@@ -1,4 +1,4 @@
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ProfileForm } from "@/components/dashboard/profile-form";

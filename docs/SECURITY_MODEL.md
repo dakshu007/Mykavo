@@ -1,6 +1,6 @@
-# Fluxen — Security Model
+# MyKavo — Security Model
 
-Fluxen fetches user-provided URLs. The scanning environment is treated as untrusted, and SSRF protection is a first-class product component — not middleware bolted on later.
+MyKavo fetches user-provided URLs. The scanning environment is treated as untrusted, and SSRF protection is a first-class product component — not middleware bolted on later.
 
 ## 1. SSRF Protection Pipeline
 
@@ -31,7 +31,7 @@ Validation order for any URL:
 
 ## 2. Scanned Content Handling
 
-- Scanned website HTML is **never rendered unsanitized** in Fluxen UIs. Extracted values (titles, meta, h1s) are rendered as text, never as HTML.
+- Scanned website HTML is **never rendered unsanitized** in MyKavo UIs. Extracted values (titles, meta, h1s) are rendered as text, never as HTML.
 - Free-tool output renders extracted strings via React text nodes only (auto-escaped); no `dangerouslySetInnerHTML` on scanned content.
 - Screenshots are served from object storage via signed URLs, never proxied raw HTML.
 - Playwright (Phase 3) runs with JavaScript from target sites sandboxed in the browser context; workers hold no production secrets beyond storage write credentials.

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, type MonitoredElement } from "@fluxen/database";
+import { prisma, type MonitoredElement } from "@mykavo/database";
 import { getApiContext, getOwnedMonitoredPage, type ApiContext, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import { updateElementSchema, normalizePin } from "@/lib/monitored-elements";

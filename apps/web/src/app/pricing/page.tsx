@@ -41,11 +41,11 @@ const pricingFaqs = [
   },
   {
     q: "What counts as a monitored page?",
-    a: "Each specific URL Fluxen scans on a schedule. You choose exactly which pages to monitor per website — home, pricing, checkout, key landing pages.",
+    a: "Each specific URL MyKavo scans on a schedule. You choose exactly which pages to monitor per website — home, pricing, checkout, key landing pages.",
   },
   {
     q: "What happens if I hit my plan limits?",
-    a: "Fluxen keeps monitoring everything already configured. On Pro you can add another website anytime for $6/month (up to 3 add-ons); otherwise it asks you to upgrade before adding more. Nothing is silently dropped.",
+    a: "MyKavo keeps monitoring everything already configured. On Pro you can add another website anytime for $6/month (up to 3 add-ons); otherwise it asks you to upgrade before adding more. Nothing is silently dropped.",
   },
   {
     q: "Do you offer annual billing?",
@@ -65,7 +65,7 @@ export default function PricingPage() {
             Monitoring that pays for itself
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
-            One missed regression costs more than a year of Fluxen. Start free with one website,
+            One missed regression costs more than a year of MyKavo. Start free with one website,
             or go Pro for $12/month — 8 websites with 20 monitored pages each, add more anytime.
           </p>
         </div>

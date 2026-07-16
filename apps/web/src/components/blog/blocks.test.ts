@@ -76,7 +76,7 @@ describe("parsePost — segments", () => {
 });
 
 describe("parsePost — FAQ blocks", () => {
-  const faq = "{{faq}}\nQ: What is Fluxen?\nA: A monitoring tool.\nQ: Is it free?\nA: There is a free plan.\n{{/faq}}";
+  const faq = "{{faq}}\nQ: What is MyKavo?\nA: A monitoring tool.\nQ: Is it free?\nA: There is a free plan.\n{{/faq}}";
 
   it("parses Q/A pairs into a faq segment", () => {
     const { segments } = parsePost(faq);
@@ -84,7 +84,7 @@ describe("parsePost — FAQ blocks", () => {
       {
         type: "faq",
         items: [
-          { question: "What is Fluxen?", answer: "A monitoring tool." },
+          { question: "What is MyKavo?", answer: "A monitoring tool." },
           { question: "Is it free?", answer: "There is a free plan." },
         ],
       },

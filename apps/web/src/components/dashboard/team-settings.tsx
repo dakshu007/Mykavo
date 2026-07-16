@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Loader2 } from "lucide-react";
-import type { WorkspaceRole } from "@fluxen/database";
+import type { WorkspaceRole } from "@mykavo/database";
 import { Button, ButtonLink } from "@/components/ui/button";
 import {
   canChangeRoles,

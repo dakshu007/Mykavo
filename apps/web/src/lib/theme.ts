@@ -12,7 +12,7 @@
  * applyThemePreference in ~5 lines so the attribute is stamped before paint.
  */
 
-export const THEME_STORAGE_KEY = "fluxen-theme";
+export const THEME_STORAGE_KEY = "mykavo-theme";
 
 export type ThemePreference = "system" | "light" | "dark";
 export type ResolvedTheme = "light" | "dark";
@@ -56,7 +56,7 @@ export function cycleThemePreference(current: ThemePreference): ThemePreference 
 // ---------------------------------------------------------------------------
 
 /** Same-document change signal — localStorage's "storage" event only fires in OTHER tabs. */
-const THEME_CHANGE_EVENT = "fluxen-theme-change";
+const THEME_CHANGE_EVENT = "mykavo-theme-change";
 
 export function readStoredThemePreference(): ThemePreference {
   if (typeof window === "undefined") return "system";

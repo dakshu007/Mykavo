@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeNextScanAt, frequencyIntervalMs, isScanDue } from "@fluxen/shared";
+import { computeNextScanAt, frequencyIntervalMs, isScanDue } from "@mykavo/shared";
 
 describe("scheduling helpers (spec §40)", () => {
   const base = new Date("2026-07-08T06:00:00.000Z");

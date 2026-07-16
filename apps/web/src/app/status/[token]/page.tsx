@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ExternalLink } from "lucide-react";
-import { prisma, getLatestHealthCheck, getUptimeStats } from "@fluxen/database";
+import { prisma, getLatestHealthCheck, getUptimeStats } from "@mykavo/database";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import {
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const robots = { index: false, follow: false } as const;
   if (!website) return { robots };
   return {
-    title: { absolute: `${website.name} status — Fluxen` },
+    title: { absolute: `${website.name} status — MyKavo` },
     description: `Live availability and uptime history for ${website.name}.`,
     robots,
   };

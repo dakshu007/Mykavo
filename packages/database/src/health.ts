@@ -1,6 +1,6 @@
 /**
  * Site-health persistence (uptime + SSL expiry). Pure DB helpers — the worker
- * sweep does the probing and decides transitions via @fluxen/shared, then
+ * sweep does the probing and decides transitions via @mykavo/shared, then
  * calls these; the web dashboard reads uptime stats server-side. Every
  * function takes a Prisma client or transaction client, matching retention.ts.
  */

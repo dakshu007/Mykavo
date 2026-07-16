@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import type { PageToolSnapshot, SnapshotDiff } from "@/lib/tools/snapshot";
 import { diffSnapshots } from "@/lib/tools/snapshot";
 
-const STORAGE_KEY = "fluxen.tool.savedSnapshot";
+const STORAGE_KEY = "mykavo.tool.savedSnapshot";
 
 /* Saved-snapshot store backed by localStorage, exposed via useSyncExternalStore
    so server render (null) and client hydration stay consistent. */
@@ -446,10 +446,10 @@ export function ChangeDetector() {
       {(snapshot || compareResult) && (
         <div className="rounded-card bg-panel px-6 py-8 text-center">
           <h2 className="text-xl font-semibold tracking-tight text-white">
-            Monitor changes automatically with Fluxen
+            Monitor changes automatically with MyKavo
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/70">
-            Fluxen re-checks pages like this on a schedule — plus screenshots, visual diffs,
+            MyKavo re-checks pages like this on a schedule — plus screenshots, visual diffs,
             broken links, and conversion elements — and alerts you when something important
             changes.
           </p>

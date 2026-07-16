@@ -173,7 +173,7 @@ const DEFAULTS: Required<SafeFetchOptions> = {
   timeoutMs: 10_000,
   maxRedirects: 5,
   maxBytes: 2 * 1024 * 1024,
-  userAgent: "FluxenBot/0.1 (+https://fluxen.app/bot; website change detection)",
+  userAgent: "MyKavoBot/0.1 (+https://mykavo.app/bot; website change detection)",
 };
 
 /**

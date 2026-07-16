@@ -5,9 +5,9 @@ import { DashboardPreview } from "@/components/preview/dashboard-preview";
 import { ButtonLink } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Dashboard Preview — Fluxen",
+  title: "Dashboard Preview — MyKavo",
   description:
-    "Explore the Fluxen dashboard: multi-website monitoring overview, change feed, and before-and-after change details. Sample data preview.",
+    "Explore the MyKavo dashboard: multi-website monitoring overview, change feed, and before-and-after change details. Sample data preview.",
   alternates: { canonical: "/preview" },
 };
 
@@ -22,7 +22,7 @@ export default function PreviewPage() {
             Every website. One dashboard.
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
-            This is a preview with sample data. Switch between screens to see how Fluxen surfaces
+            This is a preview with sample data. Switch between screens to see how MyKavo surfaces
             what changed, where, and how much it matters.
           </p>
         </div>

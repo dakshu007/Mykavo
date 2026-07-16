@@ -11,7 +11,7 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
-import type { ChangeStatus } from "@fluxen/database";
+import type { ChangeStatus } from "@mykavo/database";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { ChangeStatusBadge } from "@/components/dashboard/change-badges";

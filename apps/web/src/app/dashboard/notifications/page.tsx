@@ -1,5 +1,5 @@
 import { BellRing, CheckCircle2, Mail, XCircle } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getEmailSettings } from "@/lib/notification-settings";
 import { getAlertChannels } from "@/lib/notification-channels";

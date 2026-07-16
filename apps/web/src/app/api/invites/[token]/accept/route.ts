@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getSession } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
 import { emailsMatch, isInviteUsable, WORKSPACE_COOKIE } from "@/lib/team";

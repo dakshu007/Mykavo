@@ -1,5 +1,5 @@
 {
-  "name": "@fluxen/scanner",
+  "name": "@mykavo/scanner",
   "version": "0.1.0",
   "private": true,
   "main": "./src/index.ts",
@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fluxen/shared": "workspace:*",
+    "@mykavo/shared": "workspace:*",
     "@netlify/blobs": "^10.7.9",
     "chrome-launcher": "^1.2.0",
     "lighthouse": "^12.8.2",

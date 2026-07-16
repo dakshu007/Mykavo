@@ -1,7 +1,7 @@
 /**
  * Plan entitlement mapping (Phase 8). Bridges the raw DB entitlement to the
  * feature/limit config in @/config/plans. Persistence mutations live in
- * @fluxen/database (the webhook applies them inside a transaction).
+ * @mykavo/database (the webhook applies them inside a transaction).
  */
 
 import {
@@ -10,7 +10,7 @@ import {
   getWorkspaceAddonWebsites,
   listActiveWebsiteAddons,
   type ActiveWebsiteAddon,
-} from "@fluxen/database";
+} from "@mykavo/database";
 import { getPlan, WEBSITE_ADDON, type Plan } from "@/config/plans";
 
 export interface WorkspaceSubscription {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@fluxen/database";
-import { WEBHOOK_CHANNEL_TYPES, validateChannelUrl } from "@fluxen/shared";
+import { prisma } from "@mykavo/database";
+import { WEBHOOK_CHANNEL_TYPES, validateChannelUrl } from "@mykavo/shared";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import {
   MAX_CHANNELS_PER_WORKSPACE,

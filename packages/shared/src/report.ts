@@ -4,7 +4,7 @@
  * and delegates ALL presentation decisions here (period label, severity
  * ordering, rounding, "all quiet" detection) so they are unit-testable
  * without a database. The output is exactly the input of the
- * `weeklyReportEmail` template in @fluxen/email.
+ * `weeklyReportEmail` template in @mykavo/email.
  */
 
 import { daysUntil, SSL_EXPIRY_THRESHOLD_DAYS } from "./health";
@@ -52,7 +52,7 @@ export interface ReportRawData {
   dashboardUrl: string;
 }
 
-/** Shaped template input — see `weeklyReportEmail` in @fluxen/email. */
+/** Shaped template input — see `weeklyReportEmail` in @mykavo/email. */
 export interface WeeklyReportModel {
   websiteName: string;
   websiteHost: string;

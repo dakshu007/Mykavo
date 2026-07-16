@@ -1,5 +1,5 @@
 {
-  "name": "fluxen",
+  "name": "mykavo",
   "private": true,
   "scripts": {
     "dev": "pnpm --filter web dev",

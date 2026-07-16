@@ -7,14 +7,14 @@
  *
  * After a successful run, the score is compared against the previous completed
  * audit of the SAME url; a fall that passes shouldAlertPerformanceDrop
- * (@fluxen/shared — ≥15 points off a baseline ≥30) sends a performance-drop
+ * (@mykavo/shared — ≥15 points off a baseline ≥30) sends a performance-drop
  * alert through the same email + channel path as the health sweep.
  */
 
-import { prisma } from "@fluxen/database";
-import { runLighthouse, LighthouseError, type LighthouseResult } from "@fluxen/scanner";
-import { assertSafeUrl, UnsafeUrlError, shouldAlertPerformanceDrop } from "@fluxen/shared";
-import { sendEmail, performanceDropEmail, type PerformanceDropSnapshot } from "@fluxen/email";
+import { prisma } from "@mykavo/database";
+import { runLighthouse, LighthouseError, type LighthouseResult } from "@mykavo/scanner";
+import { assertSafeUrl, UnsafeUrlError, shouldAlertPerformanceDrop } from "@mykavo/shared";
+import { sendEmail, performanceDropEmail, type PerformanceDropSnapshot } from "@mykavo/email";
 import { resolveEmailConfig, fanOutToChannels } from "./notify";
 import { logger } from "./logger";
 
@@ -193,7 +193,7 @@ export async function runLighthouseAuditJob(auditId: string): Promise<void> {
 
     // Performance-drop check against the previous completed audit of the SAME
     // url. First audits, missing scores, and low baselines never alert
-    // (shouldAlertPerformanceDrop, unit-tested in @fluxen/shared).
+    // (shouldAlertPerformanceDrop, unit-tested in @mykavo/shared).
     const previous = await prisma.performanceAudit.findFirst({
       where: {
         websiteId: audit.websiteId,

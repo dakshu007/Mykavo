@@ -3,7 +3,7 @@
  * replacing the Phase 0 file store behind the same interface.
  */
 
-import { prisma, Prisma } from "@fluxen/database";
+import { prisma, Prisma } from "@mykavo/database";
 
 export interface WaitlistEntry {
   email: string;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dispatchChannelMessage } from "@fluxen/shared";
+import { dispatchChannelMessage } from "@mykavo/shared";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { getOwnedAlertChannel } from "@/lib/notification-channels";
 import { rateLimit } from "@/lib/security/rate-limit";
@@ -32,7 +32,7 @@ export async function POST(_request: Request, { params }: Params) {
 
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
   const result = await dispatchChannelMessage(channel, {
-    title: "Test alert from Fluxen",
+    title: "Test alert from MyKavo",
     lines: [
       `Alert channel for "${ctx.workspace.name}" is working.`,
       "You'll receive change summaries and failure alerts here.",

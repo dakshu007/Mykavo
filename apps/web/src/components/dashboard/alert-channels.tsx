@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Hash, MessagesSquare, Plus, Send, Trash2, Webhook } from "lucide-react";
-import type { WebhookChannelType } from "@fluxen/shared";
+import type { WebhookChannelType } from "@mykavo/shared";
 import type { AlertChannelView } from "@/lib/notification-channels";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +23,8 @@ const TYPE_META: Record<
   },
   WEBHOOK: {
     label: "Webhook",
-    hint: "Any HTTPS endpoint — Fluxen POSTs JSON (optionally HMAC-signed).",
-    placeholder: "https://example.com/hooks/fluxen",
+    hint: "Any HTTPS endpoint — MyKavo POSTs JSON (optionally HMAC-signed).",
+    placeholder: "https://example.com/hooks/mykavo",
   },
 };
 
@@ -201,7 +201,7 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
                 type="text"
                 value={secret}
                 onChange={(e) => setSecret(e.target.value)}
-                placeholder="Used for the X-Fluxen-Signature HMAC header"
+                placeholder="Used for the X-MyKavo-Signature HMAC header"
                 className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
               />
             </div>

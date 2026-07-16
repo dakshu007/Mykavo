@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { Logo } from "@/components/brand/logo";
 import { ButtonLink } from "@/components/ui/button";
 import { InviteAcceptButton } from "@/components/invite-accept-button";
@@ -9,7 +9,7 @@ import { emailsMatch, isInviteUsable } from "@/lib/team";
 
 export const metadata: Metadata = {
   title: "Workspace invitation",
-  description: "Join a Fluxen workspace.",
+  description: "Join a MyKavo workspace.",
   robots: { index: false },
 };
 
@@ -55,7 +55,7 @@ export default async function InvitePage({
           This invitation link isn&apos;t valid. Ask your teammate to send a new one.
         </p>
         <ButtonLink href="/" variant="secondary">
-          Go to Fluxen
+          Go to MyKavo
         </ButtonLink>
       </>
     );
@@ -140,7 +140,7 @@ export default async function InvitePage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-5 py-12">
-      <Link href="/" aria-label="Fluxen home" className="mb-8 inline-flex">
+      <Link href="/" aria-label="MyKavo home" className="mb-8 inline-flex">
         <Logo markSize={30} className="gap-2.5" wordmarkClassName="text-xl" />
       </Link>
       <div className="w-full max-w-100 rounded-card bg-card p-8 shadow-card">{body}</div>

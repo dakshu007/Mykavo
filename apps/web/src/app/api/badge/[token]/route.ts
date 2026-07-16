@@ -1,4 +1,4 @@
-import { prisma, getLatestHealthCheck, getUptimeStats } from "@fluxen/database";
+import { prisma, getLatestHealthCheck, getUptimeStats } from "@mykavo/database";
 import { renderStatusBadge, type BadgeStatus } from "@/lib/status-badge";
 
 /**

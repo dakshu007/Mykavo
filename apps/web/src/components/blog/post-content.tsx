@@ -34,7 +34,7 @@ export function PostContent({ content }: { content: string }) {
   );
 }
 
-/** {{cta}} — inline "Try Fluxen" card. */
+/** {{cta}} — inline "Try MyKavo" card. */
 function CtaBlock() {
   return (
     <aside className="my-8 rounded-tile border border-primary/15 bg-primary-soft/50 px-6 py-8 text-center sm:px-8">
@@ -42,7 +42,7 @@ function CtaBlock() {
         Know what changed. Fix what matters.
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">
-        Fluxen watches your websites for visual, SEO, link, script, and
+        MyKavo watches your websites for visual, SEO, link, script, and
         performance changes — and alerts you before your customers notice.
       </p>
       <div className="mt-5">

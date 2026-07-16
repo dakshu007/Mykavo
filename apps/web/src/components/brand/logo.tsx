@@ -2,7 +2,7 @@ import type { SVGProps } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Fluxen logomark — two offset page frames (baseline and current scan)
+ * MyKavo logomark — two offset page frames (baseline and current scan)
  * whose intersection is rendered solid: the diff is where you look.
  *
  * Single-hue mark built from currentColor with opacity layering, so it
@@ -35,7 +35,7 @@ export function LogoMark({
 export type LogoVariant = "default" | "inverse";
 
 /**
- * Full brand lockup: logomark + "Fluxen" wordmark.
+ * Full brand lockup: logomark + "MyKavo" wordmark.
  *
  * The wordmark is real HTML text (site font stack), never SVG text.
  * Not a link by itself — wrap it in `<Link>` where navigation is wanted.
@@ -62,7 +62,7 @@ export function Logo({
           wordmarkClassName,
         )}
       >
-        Fluxen
+        MyKavo
       </span>
     </span>
   );

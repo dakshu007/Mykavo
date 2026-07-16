@@ -2,10 +2,10 @@
  * Site-level SEO comparators: robots.txt + sitemap.xml (spec §19 family,
  * "robots.txt Monitoring" / "Sitemap Monitoring" scenarios). Pure functions —
  * the worker does the fetching, these decide what changed; severity and copy
- * come from @fluxen/severity-engine like every other signal.
+ * come from @mykavo/severity-engine like every other signal.
  */
 
-import { scoreChange, type ChangeSignal, type ScoredChange } from "@fluxen/severity-engine";
+import { scoreChange, type ChangeSignal, type ScoredChange } from "@mykavo/severity-engine";
 
 /** One scan's captured robots.txt + sitemap state (SiteMetaSnapshot row). */
 export interface SiteMetaComparable {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getApiContext } from "@/lib/api-auth";
 import { changeEventWhere, parseChangeFilters } from "@/lib/change-filters";
 import { toCsv } from "@/lib/csv";
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="fluxen-changes-${date}.csv"`,
+      "content-disposition": `attachment; filename="mykavo-changes-${date}.csv"`,
     },
   });
 }

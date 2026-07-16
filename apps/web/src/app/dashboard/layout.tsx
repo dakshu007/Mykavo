@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { greetingForHour, hourInTimeZone, timezoneFromNetlifyGeo } from "@/lib/greeting";

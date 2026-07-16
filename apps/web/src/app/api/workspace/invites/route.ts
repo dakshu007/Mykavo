@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
-import { prisma } from "@fluxen/database";
-import { sendEmail, workspaceInviteEmail } from "@fluxen/email";
+import { prisma } from "@mykavo/database";
+import { sendEmail, workspaceInviteEmail } from "@mykavo/email";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { assertCanInviteMember, LimitError } from "@/lib/limits";
 import { rateLimit } from "@/lib/security/rate-limit";

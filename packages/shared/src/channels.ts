@@ -115,7 +115,7 @@ export function channelTargetUrl(type: WebhookChannelType, configuration: unknow
 export function formatSlackPayload(message: ChannelMessage): { text: string } {
   const parts = [`*${message.title}*`];
   for (const line of message.lines) parts.push(`• ${line}`);
-  if (message.url) parts.push(`<${message.url}|View in Fluxen>`);
+  if (message.url) parts.push(`<${message.url}|View in MyKavo>`);
   return { text: parts.join("\n") };
 }
 
@@ -128,7 +128,7 @@ export function formatDiscordPayload(message: ChannelMessage): { content: string
 }
 
 export interface WebhookAlertPayload {
-  event: "fluxen.alert";
+  event: "mykavo.alert";
   title: string;
   lines: string[];
   url?: string;
@@ -139,7 +139,7 @@ export interface WebhookAlertPayload {
 /** Generic webhook payload: the raw structured alert. */
 export function formatWebhookPayload(message: ChannelMessage, sentAt: Date): WebhookAlertPayload {
   return {
-    event: "fluxen.alert",
+    event: "mykavo.alert",
     title: message.title,
     lines: message.lines,
     ...(message.url !== undefined ? { url: message.url } : {}),
@@ -184,7 +184,7 @@ function prepareRequest(
   const body = JSON.stringify(formatWebhookPayload(message, new Date()));
   const secret = (configuration as WebhookChannelConfig).secret;
   if (typeof secret === "string" && secret.length > 0) {
-    headers["x-fluxen-signature"] = signWebhookBody(body, secret);
+    headers["x-mykavo-signature"] = signWebhookBody(body, secret);
   }
   return { url: target, body, headers };
 }

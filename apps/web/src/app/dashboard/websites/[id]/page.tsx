@@ -9,8 +9,8 @@ import {
   getResponseTimeSeries,
   getRecentHealthIncidents,
   type HealthIncidentKind,
-} from "@fluxen/database";
-import { daysUntil, parseSelectorList } from "@fluxen/shared";
+} from "@mykavo/database";
+import { daysUntil, parseSelectorList } from "@mykavo/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";

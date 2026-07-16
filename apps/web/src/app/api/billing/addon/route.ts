@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
-import { prisma, createCheckoutIntent, listActiveWebsiteAddons } from "@fluxen/database";
+import { prisma, createCheckoutIntent, listActiveWebsiteAddons } from "@mykavo/database";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { canManageBilling } from "@/lib/team";
 import { getWorkspacePlan } from "@/lib/limits";

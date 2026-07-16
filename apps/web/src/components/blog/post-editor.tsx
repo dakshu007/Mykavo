@@ -39,7 +39,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
   const [slugTouched, setSlugTouched] = useState(Boolean(post));
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [content, setContent] = useState(post?.content ?? "");
-  const [authorName, setAuthorName] = useState(post?.authorName ?? "Fluxen Team");
+  const [authorName, setAuthorName] = useState(post?.authorName ?? "MyKavo Team");
   const [seoTitle, setSeoTitle] = useState(post?.seoTitle ?? "");
   const [seoDescription, setSeoDescription] = useState(post?.seoDescription ?? "");
   const [savedStatus, setSavedStatus] = useState<"DRAFT" | "PUBLISHED">(

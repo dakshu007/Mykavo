@@ -60,7 +60,7 @@ export const metadata: Metadata = {
 // Absent/invalid values mean "follow the system" — CSS handles that via
 // prefers-color-scheme, so only explicit choices are stamped. Keep in sync
 // with THEME_STORAGE_KEY + applyThemePreference in src/lib/theme.ts.
-const themeBootScript = `try{var t=localStorage.getItem("fluxen-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
+const themeBootScript = `try{var t=localStorage.getItem("mykavo-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
 
 export default function RootLayout({
   children,

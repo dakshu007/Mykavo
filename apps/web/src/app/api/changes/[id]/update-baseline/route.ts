@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, updateBaselineFromSnapshot } from "@fluxen/database";
+import { prisma, updateBaselineFromSnapshot } from "@mykavo/database";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
 

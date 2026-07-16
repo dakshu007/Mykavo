@@ -7,18 +7,18 @@
  * Cost controls (spec §43/§60): internal links only, one probe per unique
  * URL, statuses of monitored pages scanned in this scan are reused for free,
  * and probes are capped per scan. Only definite outcomes are recorded — see
- * @fluxen/shared link-check for the false-positive posture.
+ * @mykavo/shared link-check for the false-positive posture.
  */
 
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import {
   MAX_LINK_CHECKS_PER_SCAN,
   mapWithConcurrency,
   normalizeUrl,
   planLinkChecks,
   probeLinkStatus,
-} from "@fluxen/shared";
-import { isBrokenLinkStatus } from "@fluxen/comparison-engine";
+} from "@mykavo/shared";
+import { isBrokenLinkStatus } from "@mykavo/comparison-engine";
 import { logger } from "./logger";
 
 const PROBE_CONCURRENCY = 4;

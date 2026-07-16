@@ -7,7 +7,7 @@ import { safeNextPath } from "@/lib/team";
 
 export const metadata: Metadata = {
   title: "Create your account",
-  description: "Create a free Fluxen account and start monitoring your first website.",
+  description: "Create a free MyKavo account and start monitoring your first website.",
   robots: { index: false },
 };
 

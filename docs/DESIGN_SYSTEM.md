@@ -1,8 +1,8 @@
-# Fluxen — Design System
+# MyKavo — Design System
 
-Fluxen must feel professional, technical, trustworthy, modern, fast, precise, developer-friendly, premium.
+MyKavo must feel professional, technical, trustworthy, modern, fast, precise, developer-friendly, premium.
 
-The visual direction is derived from the approved dashboard reference: **a soft neutral canvas holding crisp white cards with large radii, a small number of gradient accent tiles, pill-shaped controls, a persistent right rail, and strong friendly typography.** We adopt that layout language and calm mood, while keeping Fluxen's technical identity: meaningful status colors, high information density in tables/diffs, and restrained decoration (no purple-AI aesthetics, no fake social proof, no decorative charts).
+The visual direction is derived from the approved dashboard reference: **a soft neutral canvas holding crisp white cards with large radii, a small number of gradient accent tiles, pill-shaped controls, a persistent right rail, and strong friendly typography.** We adopt that layout language and calm mood, while keeping MyKavo's technical identity: meaningful status colors, high information density in tables/diffs, and restrained decoration (no purple-AI aesthetics, no fake social proof, no decorative charts).
 
 ## 1. Foundations
 

@@ -12,7 +12,7 @@ import {
   normalizeUrl,
   isSameOrigin,
   parseSelectorList,
-} from "@fluxen/shared";
+} from "@mykavo/shared";
 import {
   extractInPage,
   checkElementsInPage,
@@ -35,7 +35,7 @@ const MAX_SCREENSHOT_HEIGHT = 8000;
 // keeps masked regions byte-identical between scans regardless of content.
 const MASK_COLOR = "#0f172a";
 const USER_AGENT =
-  "Mozilla/5.0 (compatible; FluxenBot/0.1; +https://fluxen.app/bot) website change detection";
+  "Mozilla/5.0 (compatible; MyKavoBot/0.1; +https://mykavo.app/bot) website change detection";
 
 const STABILIZATION_CSS = `
   *, *::before, *::after {

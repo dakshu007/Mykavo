@@ -4,13 +4,13 @@
  * whose workspace has weekly reports enabled, gather the last 7 days —
  * scans run/failed, changes by severity, uptime, SSL expiry, latest
  * Lighthouse scores — and send ONE client-forwardable email per website.
- * All presentation shaping lives in @fluxen/shared `buildReportModel`
+ * All presentation shaping lives in @mykavo/shared `buildReportModel`
  * (pure, unit-tested); this module only does the IO.
  */
 
-import { prisma, getUptimeStats } from "@fluxen/database";
-import { sendEmail, weeklyReportEmail } from "@fluxen/email";
-import { buildReportModel, type ReportRawData, type ReportSeverity } from "@fluxen/shared";
+import { prisma, getUptimeStats } from "@mykavo/database";
+import { sendEmail, weeklyReportEmail } from "@mykavo/email";
+import { buildReportModel, type ReportRawData, type ReportSeverity } from "@mykavo/shared";
 import { resolveEmailConfig } from "./notify";
 import { logger } from "./logger";
 

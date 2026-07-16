@@ -64,7 +64,7 @@ export function DashboardSidebar({
         <LogoMark size={30} />
         <span className="min-w-0">
           <span className="block text-[15px] font-semibold tracking-tight text-ink">
-            Fluxen
+            MyKavo
           </span>
           <span className="block truncate text-[11px] text-ink-faint">{workspaceName}</span>
         </span>

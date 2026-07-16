@@ -62,7 +62,7 @@ export const BLOCK_SNIPPETS: readonly BlockSnippet[] = [
   {
     command: "cta",
     label: "CTA card",
-    description: "“Try Fluxen” call-to-action with a signup button.",
+    description: "“Try MyKavo” call-to-action with a signup button.",
     snippet: "{{cta}}",
   },
   {

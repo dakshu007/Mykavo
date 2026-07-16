@@ -7,7 +7,7 @@ const validPayload = {
   excerpt: "A short introduction to approved baselines.",
   content: "## Baselines\n\nEvery scan compares against an approved baseline.",
   status: "DRAFT" as const,
-  authorName: "Fluxen Team",
+  authorName: "MyKavo Team",
   seoTitle: "Why website baselines matter",
   seoDescription: "How approved baselines cut false positives.",
 };
@@ -67,7 +67,7 @@ describe("blogPostInputSchema", () => {
   it("defaults authorName when omitted", () => {
     const rest: Partial<typeof validPayload> = { ...validPayload };
     delete rest.authorName;
-    expect(blogPostInputSchema.parse(rest).authorName).toBe("Fluxen Team");
+    expect(blogPostInputSchema.parse(rest).authorName).toBe("MyKavo Team");
   });
 
   it("allows empty draft content", () => {

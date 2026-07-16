@@ -6,7 +6,7 @@ import {
   type Workspace,
   type WorkspaceRole,
   type MonitoredPage,
-} from "@fluxen/database";
+} from "@mykavo/database";
 import { auth } from "@/lib/auth";
 import { resolveCurrentMembership } from "@/lib/session";
 

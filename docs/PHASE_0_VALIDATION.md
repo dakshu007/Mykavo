@@ -1,4 +1,4 @@
-# Fluxen — Phase 0: Validation Assets
+# MyKavo — Phase 0: Validation Assets
 
 **Goal:** validate acquisition and interest before building expensive scanning infrastructure.
 
@@ -12,7 +12,7 @@
 6. **Free tool #1: Website Change Detector** (`/tools/website-change-detector`) —
    - Enter a URL → SSRF-guarded server fetch → deterministic snapshot (HTTP status, final URL, redirect chain, title, meta description, canonical, robots meta, H1s, internal/external link counts, third-party scripts, page weight, response time).
    - Compare **two URLs** side-by-side (e.g., staging vs production) or **save a snapshot** (browser localStorage) and re-check the same URL later to see exactly what changed.
-   - Grouped, severity-hinted diff output. CTA: "Monitor changes automatically with Fluxen."
+   - Grouped, severity-hinted diff output. CTA: "Monitor changes automatically with MyKavo."
 
 ## Definition of Done (spec §57)
 
@@ -22,13 +22,13 @@
 - [ ] Analytics wired to page views + key events
 - [ ] Functional waitlist signup
 - [ ] Free tool functional end-to-end with SSRF protection
-- [ ] Clear Fluxen branding
+- [ ] Clear MyKavo branding
 - [ ] No fake social proof
 - [ ] `lint`, `typecheck`, `build` all green
 
 ## Design Reference
 
-The dashboard visual direction follows the user-provided reference: soft neutral canvas, white cards with large radii, gradient accent stat tiles, pill controls, a persistent right rail, generous whitespace, strong friendly typography. Adapted to Fluxen's professional/technical brand per [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) — status colors carry meaning (severity), gradients are reserved for a small number of hero stat tiles, and information density stays high where it matters (tables, diffs).
+The dashboard visual direction follows the user-provided reference: soft neutral canvas, white cards with large radii, gradient accent stat tiles, pill controls, a persistent right rail, generous whitespace, strong friendly typography. Adapted to MyKavo's professional/technical brand per [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) — status colors carry meaning (severity), gradients are reserved for a small number of hero stat tiles, and information density stays high where it matters (tables, diffs).
 
 ## Success Signals to Watch
 

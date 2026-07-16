@@ -12,7 +12,7 @@
  * baseline that includes a known-broken link acknowledges it (spec §24).
  */
 
-import type { ChangeSignal } from "@fluxen/severity-engine";
+import type { ChangeSignal } from "@mykavo/severity-engine";
 
 export interface LinkObservation {
   normalizedUrl: string;

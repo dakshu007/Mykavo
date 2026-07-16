@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { getOwnedAlertChannel } from "@/lib/notification-channels";
 import { logger } from "@/lib/logger";

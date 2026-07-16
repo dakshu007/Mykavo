@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import {
@@ -181,7 +181,7 @@ export default async function BlogPostPage({ params }: Params) {
                   <div className="min-w-0">
                     <p className="text-[15px] font-semibold text-ink">{post.authorName}</p>
                     <p className="mt-0.5 text-sm leading-6 text-ink-secondary">
-                      Team Fluxen — writing about website monitoring, SEO, and catching
+                      Team MyKavo — writing about website monitoring, SEO, and catching
                       regressions before customers do.
                     </p>
                   </div>
@@ -197,7 +197,7 @@ export default async function BlogPostPage({ params }: Params) {
                   Know what changed. <span className="italic">Fix what matters.</span>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#0d0c0e]/60">
-                  Fluxen monitors your websites for visual, SEO, link, script, and performance
+                  MyKavo monitors your websites for visual, SEO, link, script, and performance
                   changes — and alerts you before small problems become expensive problems.
                 </p>
                 <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#0d0c0e]/15">

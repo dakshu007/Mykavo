@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Prisma, prisma } from "@fluxen/database";
+import { Prisma, prisma } from "@mykavo/database";
 import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { blogPostInputSchema } from "@/lib/blog-validation";
 import { logger } from "@/lib/logger";

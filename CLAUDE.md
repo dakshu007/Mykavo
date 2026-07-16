@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-# Fluxen
+# MyKavo
 
 > Know what changed. Fix what matters.
 
@@ -10,25 +10,25 @@
 
 # 1. Product Overview
 
-Fluxen is a website change detection and regression monitoring SaaS platform.
+MyKavo is a website change detection and regression monitoring SaaS platform.
 
-Fluxen continuously monitors websites, creates approved baselines, detects meaningful changes, identifies regressions, stores historical scan data, and alerts users when something important changes or breaks.
+MyKavo continuously monitors websites, creates approved baselines, detects meaningful changes, identifies regressions, stores historical scan data, and alerts users when something important changes or breaks.
 
 The core product promise is:
 
 > Know what changed. Fix what matters.
 
-Fluxen helps agencies, developers, SEO teams, freelancers, website maintenance businesses, SaaS teams, and website owners answer one important question:
+MyKavo helps agencies, developers, SEO teams, freelancers, website maintenance businesses, SaaS teams, and website owners answer one important question:
 
 > Did something important change or break on any website I manage?
 
-Fluxen creates a baseline snapshot of monitored website pages.
+MyKavo creates a baseline snapshot of monitored website pages.
 
 It then automatically re-scans those pages on a recurring schedule.
 
 Every new scan is compared against the current approved baseline.
 
-Fluxen detects meaningful:
+MyKavo detects meaningful:
 
 - Availability changes.
 - Visual changes.
@@ -39,9 +39,9 @@ Fluxen detects meaningful:
 - Performance regressions.
 - Conversion element failures.
 
-Fluxen stores those changes as structured events, assigns severity levels, displays before-and-after comparisons, and alerts users when important changes require attention.
+MyKavo stores those changes as structured events, assigns severity levels, displays before-and-after comparisons, and alerts users when important changes require attention.
 
-Fluxen is NOT:
+MyKavo is NOT:
 
 - An Ahrefs alternative.
 - A Semrush alternative.
@@ -53,9 +53,9 @@ Fluxen is NOT:
 - A full observability platform.
 - An AI-first SaaS.
 
-Fluxen must remain focused.
+MyKavo must remain focused.
 
-The primary question Fluxen answers is:
+The primary question MyKavo answers is:
 
 > What changed on my website, and does it matter?
 
@@ -97,7 +97,7 @@ AI is not required for the MVP.
 
 Product Name:
 
-Fluxen
+MyKavo
 
 Primary Tagline:
 
@@ -109,11 +109,11 @@ Product Category:
 
 Short Product Description:
 
-> Fluxen continuously monitors websites for important visual, SEO, technical, performance, script, link, and conversion changes — then alerts users before small problems become expensive problems.
+> MyKavo continuously monitors websites for important visual, SEO, technical, performance, script, link, and conversion changes — then alerts users before small problems become expensive problems.
 
 Long Product Description:
 
-> Fluxen is a website change detection and regression monitoring platform built for agencies, developers, SEO teams, and website owners managing important websites. Fluxen creates approved website baselines, automatically scans monitored pages, detects meaningful changes, shows clear before-and-after comparisons, and alerts users when important regressions require attention.
+> MyKavo is a website change detection and regression monitoring platform built for agencies, developers, SEO teams, and website owners managing important websites. MyKavo creates approved website baselines, automatically scans monitored pages, detects meaningful changes, shows clear before-and-after comparisons, and alerts users when important regressions require attention.
 
 Brand Personality:
 
@@ -129,9 +129,9 @@ Brand Personality:
 - Calm.
 - Precise.
 
-Fluxen should feel like a professional SaaS product.
+MyKavo should feel like a professional SaaS product.
 
-Fluxen should not feel like:
+MyKavo should not feel like:
 
 - A generic startup template.
 - An AI wrapper.
@@ -144,7 +144,7 @@ Fluxen should not feel like:
 
 # 3. Product Vision
 
-Fluxen should become the monitoring layer between website deployment and customer impact.
+MyKavo should become the monitoring layer between website deployment and customer impact.
 
 Website teams currently rely on multiple disconnected tools.
 
@@ -160,7 +160,7 @@ Another tool checks broken links.
 
 Another tool monitors analytics scripts.
 
-Fluxen should provide a focused monitoring experience around one core workflow:
+MyKavo should provide a focused monitoring experience around one core workflow:
 
 Website
 
@@ -264,7 +264,7 @@ Every detected change should answer:
 
 ## 4.4 Recurring Value
 
-Fluxen is a monitoring SaaS.
+MyKavo is a monitoring SaaS.
 
 The product should encourage users to:
 
@@ -284,7 +284,7 @@ Retention is more important than maximizing one-time scans.
 
 ## 4.5 Low False-Positive Rate
 
-False positives are one of the biggest threats to Fluxen.
+False positives are one of the biggest threats to MyKavo.
 
 If users repeatedly receive meaningless alerts, they will stop trusting notifications.
 
@@ -308,7 +308,7 @@ Every feature must consider:
 - Scan frequency.
 - Notification volume.
 
-Fluxen must maintain healthy margins.
+MyKavo must maintain healthy margins.
 
 ---
 
@@ -332,9 +332,9 @@ SEO positioning:
 
 Primary Value Proposition:
 
-> Fluxen automatically monitors your websites and alerts you when important visual, SEO, technical, performance, script, link, or conversion elements change.
+> MyKavo automatically monitors your websites and alerts you when important visual, SEO, technical, performance, script, link, or conversion elements change.
 
-Do not market Fluxen as a replacement for Ahrefs, Semrush, Screaming Frog, or enterprise observability platforms.
+Do not market MyKavo as a replacement for Ahrefs, Semrush, Screaming Frog, or enterprise observability platforms.
 
 ---
 
@@ -581,7 +581,7 @@ Screenshots and large artifacts must remain outside PostgreSQL.
 
 # 9. High-Level Architecture
 
-Fluxen should initially use a modular monolith with separate worker processes.
+MyKavo should initially use a modular monolith with separate worker processes.
 
 Architecture:
 
@@ -1028,7 +1028,7 @@ Fields:
 
 # 11. Website URL Security
 
-Security is critical because Fluxen fetches user-provided URLs.
+Security is critical because MyKavo fetches user-provided URLs.
 
 The scanner must protect against SSRF.
 
@@ -1149,7 +1149,7 @@ The first scan must not create change events.
 
 Modern websites contain dynamic content.
 
-Fluxen must reduce false positives.
+MyKavo must reduce false positives.
 
 Before snapshot capture:
 
@@ -1406,7 +1406,7 @@ Response time increase >50% across multiple scans:
 
 HIGH candidate.
 
-Do not market Fluxen as a replacement for dedicated performance monitoring platforms.
+Do not market MyKavo as a replacement for dedicated performance monitoring platforms.
 
 ---
 
@@ -2127,7 +2127,7 @@ Track:
 - Email delivery failures.
 - Stripe webhook failures.
 
-Fluxen itself must be monitored.
+MyKavo itself must be monitored.
 
 ---
 
@@ -2197,7 +2197,7 @@ Compare two website states.
 
 CTA:
 
-> Monitor changes automatically with Fluxen.
+> Monitor changes automatically with MyKavo.
 
 ---
 
@@ -2243,7 +2243,7 @@ Check URL status codes.
 
 CTA:
 
-> Automatically monitor these pages with Fluxen.
+> Automatically monitor these pages with MyKavo.
 
 ---
 
@@ -2270,7 +2270,7 @@ Homepage sections:
 7. Change categories.
 8. Before-and-after comparison.
 9. Agency workflow.
-10. How Fluxen works.
+10. How MyKavo works.
 11. Use cases.
 12. Free tools.
 13. Pricing.
@@ -2288,7 +2288,7 @@ Supporting Headline:
 
 Hero Copy:
 
-> Fluxen continuously monitors your websites for important visual, SEO, technical, performance, script, link, and conversion changes — then alerts you before small problems become expensive problems.
+> MyKavo continuously monitors your websites for important visual, SEO, technical, performance, script, link, and conversion changes — then alerts you before small problems become expensive problems.
 
 Primary CTA:
 
@@ -2296,13 +2296,13 @@ Primary CTA:
 
 Secondary CTA:
 
-> See How Fluxen Works
+> See How MyKavo Works
 
 ---
 
 # 51. Design Direction
 
-Fluxen must feel:
+MyKavo must feel:
 
 - Professional.
 - Technical.
@@ -2337,7 +2337,7 @@ Use:
 - High information density where appropriate.
 - Clear before-and-after comparison interfaces.
 
-Fluxen should feel like a serious professional developer tool.
+MyKavo should feel like a serious professional developer tool.
 
 ---
 
@@ -2495,7 +2495,7 @@ Do not create unnecessary microservices.
 
 # 57. Implementation Phases
 
-Claude Code must build Fluxen phase-by-phase.
+Claude Code must build MyKavo phase-by-phase.
 
 Do not attempt to implement the entire SaaS at once.
 
@@ -2503,7 +2503,7 @@ Do not attempt to implement the entire SaaS at once.
 
 Implement:
 
-- Fluxen marketing landing page.
+- MyKavo marketing landing page.
 - Pricing page.
 - Product dashboard mock states.
 - Analytics.
@@ -2526,7 +2526,7 @@ Definition of Done:
 - Analytics.
 - Functional signup or waitlist.
 - Free tool functional.
-- Clear Fluxen branding.
+- Clear MyKavo branding.
 - No fake social proof.
 
 ---
@@ -2595,7 +2595,7 @@ Implement:
 
 Definition of Done:
 
-Fluxen can asynchronously scan selected pages and persist reliable snapshots.
+MyKavo can asynchronously scan selected pages and persist reliable snapshots.
 
 ---
 
@@ -2633,7 +2633,7 @@ Implement:
 
 Definition of Done:
 
-Fluxen detects meaningful changes between approved baselines and current scans.
+MyKavo detects meaningful changes between approved baselines and current scans.
 
 ---
 
@@ -2672,7 +2672,7 @@ Implement:
 
 Definition of Done:
 
-Fluxen automatically monitors websites without user action.
+MyKavo automatically monitors websites without user action.
 
 ---
 
@@ -2695,7 +2695,7 @@ Implement:
 
 Definition of Done:
 
-Customers can pay for Fluxen and subscription limits are enforced.
+Customers can pay for MyKavo and subscription limits are enforced.
 
 ---
 
@@ -2737,7 +2737,7 @@ Implement:
 
 Definition of Done:
 
-Fluxen is reliable enough and safe enough for public paying customers.
+MyKavo is reliable enough and safe enough for public paying customers.
 
 ---
 
@@ -2756,7 +2756,7 @@ Implement:
 
 Definition of Done:
 
-Fluxen has a scalable organic acquisition system.
+MyKavo has a scalable organic acquisition system.
 
 ---
 
@@ -2897,7 +2897,7 @@ Track approximate cost per:
 - Free workspace.
 - Paying workspace.
 
-Fluxen must not offer pricing that creates structurally negative margins.
+MyKavo must not offer pricing that creates structurally negative margins.
 
 ---
 
@@ -2935,7 +2935,7 @@ Gross Margin.
 
 Critical Product Metric:
 
-> Percentage of paying customers who receive at least one genuinely valuable Fluxen alert every month.
+> Percentage of paying customers who receive at least one genuinely valuable MyKavo alert every month.
 
 If customers do not receive valuable alerts, retention will suffer.
 
@@ -2962,17 +2962,17 @@ Do not initially build:
 - Hundreds of integrations.
 - Unlimited crawling.
 
-Keep Fluxen focused.
+Keep MyKavo focused.
 
 ---
 
 # 63. Final Product Goal
 
-Fluxen should become the simplest way for agencies, developers, SEO teams, and website owners to answer:
+MyKavo should become the simplest way for agencies, developers, SEO teams, and website owners to answer:
 
 > Did something important change or break on any website I manage?
 
-Fluxen's initial competitive advantage should come from:
+MyKavo's initial competitive advantage should come from:
 
 - Extremely simple onboarding.
 - Useful deterministic monitoring.
@@ -3006,7 +3006,7 @@ Claude Code should now:
 
 For Phase 0:
 
-Build the Fluxen landing page, pricing page, dashboard preview states, authentication entry flow, analytics foundation, and the first free acquisition tool.
+Build the MyKavo landing page, pricing page, dashboard preview states, authentication entry flow, analytics foundation, and the first free acquisition tool.
 
 Do not begin building expensive full-scale scanning infrastructure before completing Phase 0 validation assets.
 
@@ -3014,7 +3014,7 @@ Do not ask for confirmation unless blocked by missing credentials or an irrevers
 
 Build incrementally.
 
-Keep Fluxen focused.
+Keep MyKavo focused.
 
 Prioritize reliability.
 

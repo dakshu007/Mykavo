@@ -198,10 +198,10 @@ describe("editor commands used by the slash menu and tab switching", () => {
     const editor = createEditor("Hello.");
     try {
       editor.commands.insertContentAt(editor.state.doc.content.size, {
-        type: "fluxenCta",
+        type: "mykavoCta",
       });
       editor.commands.insertContentAt(editor.state.doc.content.size, {
-        type: "fluxenToc",
+        type: "mykavoToc",
       });
       const markdown = getEditorMarkdown(editor);
       expect(markdown).toContain("{{cta}}");
@@ -236,7 +236,7 @@ describe("isAllowedLinkHref", () => {
   it.each([
     "https://example.com",
     "http://example.com/a?b=c",
-    "mailto:team@fluxen.dev",
+    "mailto:team@mykavo.dev",
     "/pricing",
     "#section",
     "./relative",

@@ -69,7 +69,7 @@ export default function MetaTagCheckerPage() {
           <p>
             The dangerous part about meta tags is not getting them right once — it&apos;s
             keeping them right. CMS plugins, theme updates, migrations, and redeploys overwrite
-            titles and canonicals all the time, and nobody notices until traffic drops. Fluxen
+            titles and canonicals all the time, and nobody notices until traffic drops. MyKavo
             monitors these exact tags on every page you care about and emails you the moment
             one of them changes.
           </p>

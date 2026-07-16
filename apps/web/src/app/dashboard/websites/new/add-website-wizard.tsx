@@ -137,7 +137,7 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
             {loading ? phase || "Working…" : "Add & discover pages"}
           </button>
           <p className="text-[13px] leading-5 text-ink-faint">
-            Fluxen fetches the homepage, robots.txt, and sitemaps to find your pages. Only
+            MyKavo fetches the homepage, robots.txt, and sitemaps to find your pages. Only
             public pages are read — nothing is stored until you choose what to monitor.
           </p>
         </form>

@@ -1,11 +1,11 @@
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import {
   WEBHOOK_CHANNEL_TYPES,
   channelTargetUrl,
   isWebhookChannelType,
   maskChannelUrl,
   type WebhookChannelType,
-} from "@fluxen/shared";
+} from "@mykavo/shared";
 
 /**
  * Alert channels (Slack / Discord / generic webhook) for a workspace.

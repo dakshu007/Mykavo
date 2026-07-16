@@ -2,13 +2,13 @@
  * Site-health sweep (uptime + SSL expiry). Runs on a pg-boss cron every
  * HEALTH_CRON (default 5 minutes): one plain GET per ACTIVE website — no
  * Playwright — recording the result and driving the incident state machine
- * in @fluxen/shared. Alerts go through email and the workspace's chat
+ * in @mykavo/shared. Alerts go through email and the workspace's chat
  * channels. Framed as site health inside change monitoring, not a
  * standalone uptime product (spec §1).
  */
 
 import { connect as tlsConnect } from "node:tls";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import {
   recordHealthCheck,
   getLatestHealthCheck,
@@ -16,7 +16,7 @@ import {
   openHealthIncident,
   resolveHealthIncident,
   markHealthIncidentNotified,
-} from "@fluxen/database";
+} from "@mykavo/database";
 import {
   isHttpUp,
   decideDownIncident,
@@ -24,20 +24,20 @@ import {
   daysUntil,
   shouldRenotify,
   formatDowntime,
-} from "@fluxen/shared";
+} from "@mykavo/shared";
 import {
   sendEmail,
   downAlertEmail,
   recoveryAlertEmail,
   sslExpiryAlertEmail,
-} from "@fluxen/email";
+} from "@mykavo/email";
 import { resolveEmailConfig, fanOutToChannels } from "./notify";
 import { logger } from "./logger";
 
 const PROBE_TIMEOUT_MS = 10_000;
 const SWEEP_CONCURRENCY = 5;
 const USER_AGENT =
-  "Mozilla/5.0 (compatible; FluxenBot/0.1; +https://fluxen.app/bot) site health check";
+  "Mozilla/5.0 (compatible; MyKavoBot/0.1; +https://mykavo.app/bot) site health check";
 
 const dashboardBase = process.env.APP_URL ?? "http://localhost:3000";
 

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { Bell, FileSearch, Globe, Plus, ShieldCheck } from "lucide-react";
-import { prisma, getLatestHealthChecksForWorkspace } from "@fluxen/database";
-import { WEBHOOK_CHANNEL_TYPES } from "@fluxen/shared";
+import { prisma, getLatestHealthChecksForWorkspace } from "@mykavo/database";
+import { WEBHOOK_CHANNEL_TYPES } from "@mykavo/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { deriveOnboarding, ONBOARDING_DISMISSED_COOKIE } from "@/lib/onboarding";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
@@ -110,7 +110,7 @@ export default async function DashboardOverviewPage() {
             Monitor your first website
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">
-            Fluxen discovers your pages, captures an approved baseline, then alerts you when
+            MyKavo discovers your pages, captures an approved baseline, then alerts you when
             something important changes or breaks.
           </p>
           <Link

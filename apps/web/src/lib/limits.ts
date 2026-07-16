@@ -4,7 +4,7 @@
  * from src/config/plans.ts.
  */
 
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { formatLimit, WEBSITE_ADDON, type Plan } from "@/config/plans";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
 import { hasSeatAvailable } from "@/lib/team";

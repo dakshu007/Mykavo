@@ -9,7 +9,7 @@ import {
   revokeWebsiteAddon,
   findWorkspaceByAddonSubscription,
   consumeCheckoutIntent,
-} from "@fluxen/database";
+} from "@mykavo/database";
 import { verifyDodoWebhook, DodoWebhookError } from "@/lib/billing/webhook";
 import { DODO_WEBHOOK_SECRET } from "@/lib/billing/config";
 import { logger } from "@/lib/logger";

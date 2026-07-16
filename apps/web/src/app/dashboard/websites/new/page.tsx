@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { AddWebsiteWizard } from "./add-website-wizard";

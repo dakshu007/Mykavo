@@ -11,11 +11,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fluxen/comparison-engine": "workspace:*",
-    "@fluxen/database": "workspace:*",
-    "@fluxen/email": "workspace:*",
-    "@fluxen/scanner": "workspace:*",
-    "@fluxen/shared": "workspace:*",
+    "@mykavo/comparison-engine": "workspace:*",
+    "@mykavo/database": "workspace:*",
+    "@mykavo/email": "workspace:*",
+    "@mykavo/scanner": "workspace:*",
+    "@mykavo/shared": "workspace:*",
     "@hookform/resolvers": "^5.4.0",
     "@tiptap/core": "3.27.3",
     "@tiptap/extension-image": "3.27.3",

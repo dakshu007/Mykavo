@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { prisma, type Workspace, type WorkspaceRole } from "@fluxen/database";
+import { prisma, type Workspace, type WorkspaceRole } from "@mykavo/database";
 import { auth } from "@/lib/auth";
 import { resolveWorkspaceSelection, WORKSPACE_COOKIE } from "@/lib/team";
 

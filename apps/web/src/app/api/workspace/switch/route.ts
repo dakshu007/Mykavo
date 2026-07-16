@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getSession } from "@/lib/session";
 import { WORKSPACE_COOKIE } from "@/lib/team";
 

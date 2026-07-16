@@ -5,14 +5,14 @@
  * Notification row. Never one email per change.
  */
 
-import { prisma, type ChangeSeverity } from "@fluxen/database";
+import { prisma, type ChangeSeverity } from "@mykavo/database";
 import {
   sendEmail,
   scanSummaryEmail,
   failureAlertEmail,
   type ChangeLine,
   type Severity,
-} from "@fluxen/email";
+} from "@mykavo/email";
 import {
   dispatchChannelMessage,
   channelTargetUrl,
@@ -20,7 +20,7 @@ import {
   maskChannelUrl,
   WEBHOOK_CHANNEL_TYPES,
   type ChannelMessage,
-} from "@fluxen/shared";
+} from "@mykavo/shared";
 import { logger } from "./logger";
 
 const SEVERITY_RANK: Record<Severity, number> = {

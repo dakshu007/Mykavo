@@ -194,8 +194,8 @@ export function BulkStatusChecker() {
           </Card>
 
           <ToolCta
-            heading="Automatically monitor these pages with Fluxen."
-            body="Fluxen checks your important pages on a schedule — status codes, SEO tags, screenshots, links, and scripts — and emails you when a page that worked yesterday breaks today."
+            heading="Automatically monitor these pages with MyKavo."
+            body="MyKavo checks your important pages on a schedule — status codes, SEO tags, screenshots, links, and scripts — and emails you when a page that worked yesterday breaks today."
             tool="bulk-url-status-checker"
           />
         </>

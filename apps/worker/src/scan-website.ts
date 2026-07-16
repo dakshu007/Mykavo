@@ -5,15 +5,15 @@
  * are skipped, so a retried job resumes where it stopped.
  */
 
-import { prisma, createInitialBaselinesForScan, getWorkspaceEntitlement } from "@fluxen/database";
+import { prisma, createInitialBaselinesForScan, getWorkspaceEntitlement } from "@mykavo/database";
 import {
   BrowserPool,
   ScanPageError,
   getDefaultStorage,
   scanPage,
   type ArtifactStorage,
-} from "@fluxen/scanner";
-import { computeNextScanAt, parseSelectorList } from "@fluxen/shared";
+} from "@mykavo/scanner";
+import { computeNextScanAt, parseSelectorList } from "@mykavo/shared";
 import { logger } from "./logger";
 import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";

@@ -1,4 +1,4 @@
-# Fluxen — Database Schema
+# MyKavo — Database Schema
 
 PostgreSQL via Prisma. This is the target relational model (implemented from Phase 1 onward). Large arrays / detailed scan data may use JSONB or child tables depending on query needs. Screenshots and large artifacts live in object storage — only storage keys are persisted here.
 

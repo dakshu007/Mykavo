@@ -167,7 +167,7 @@ export function RedirectChainChecker() {
 
           <ToolCta
             heading="Get alerted when redirects unexpectedly change."
-            body="Fluxen monitors the redirect behavior of every page you care about — new redirects, changed destinations, and broken chains trigger an email before your visitors notice."
+            body="MyKavo monitors the redirect behavior of every page you care about — new redirects, changed destinations, and broken chains trigger an email before your visitors notice."
             tool="redirect-chain-checker"
           />
         </>

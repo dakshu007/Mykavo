@@ -3,13 +3,13 @@
  * Never hardcode plan limits elsewhere — server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
- * Fluxen ships two plans: Free, and Pro at $12/month. Pro includes 8 websites
+ * MyKavo ships two plans: Free, and Pro at $12/month. Pro includes 8 websites
  * with 20 monitored pages each; buyers can extend capacity with $6/month
  * add-ons of one website each, up to 3 (see WEBSITE_ADDON). "Unlimited"
  * numeric limits use Infinity so `count >= limit` is never true.
  */
 
-import { PLAN_HISTORY_DAYS } from "@fluxen/shared";
+import { PLAN_HISTORY_DAYS } from "@mykavo/shared";
 
 export type PlanId = "free" | "pro";
 

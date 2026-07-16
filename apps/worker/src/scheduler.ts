@@ -6,8 +6,8 @@
  */
 
 import type { PgBoss } from "pg-boss";
-import { prisma } from "@fluxen/database";
-import { SCAN_WEBSITE_QUEUE, computeNextScanAt, type ScanFrequency } from "@fluxen/shared";
+import { prisma } from "@mykavo/database";
+import { SCAN_WEBSITE_QUEUE, computeNextScanAt, type ScanFrequency } from "@mykavo/shared";
 import { logger } from "./logger";
 
 const MAX_PER_SWEEP = 50;

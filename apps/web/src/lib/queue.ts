@@ -9,7 +9,7 @@ import {
   LIGHTHOUSE_AUDIT_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
-} from "@fluxen/shared";
+} from "@mykavo/shared";
 import { env } from "@/lib/env";
 
 const globalForBoss = globalThis as unknown as { boss?: Promise<PgBoss> };

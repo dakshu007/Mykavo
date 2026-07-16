@@ -69,7 +69,7 @@ export default function ScriptDetectorPage() {
           </p>
           <p>
             A one-time inventory tells you what&apos;s there today. The expensive failures are
-            the ones that happen next month: Fluxen snapshots the scripts on every monitored
+            the ones that happen next month: MyKavo snapshots the scripts on every monitored
             page during each scheduled scan and emails you when an important script is removed,
             replaced, or when an unfamiliar one shows up.
           </p>

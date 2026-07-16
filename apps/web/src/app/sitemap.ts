@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
 
 // Dynamic so newly published blog posts appear without a redeploy.

@@ -5,8 +5,8 @@
  */
 
 import { createHash } from "node:crypto";
-import { prisma } from "@fluxen/database";
-import { parseSitemap } from "@fluxen/comparison-engine";
+import { prisma } from "@mykavo/database";
+import { parseSitemap } from "@mykavo/comparison-engine";
 import { logger } from "./logger";
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -14,7 +14,7 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024; // sitemaps can be big; cap processing
 const MAX_ROBOTS_STORED = 64 * 1024; // robots.txt content kept for diffs
 const MAX_CHILD_SITEMAPS = 3; // for index files, sample this many children
 const USER_AGENT =
-  "Mozilla/5.0 (compatible; FluxenBot/0.1; +https://fluxen.app/bot) site meta check";
+  "Mozilla/5.0 (compatible; MyKavoBot/0.1; +https://mykavo.app/bot) site meta check";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text).digest("hex");

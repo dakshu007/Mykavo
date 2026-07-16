@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Download, GitCompareArrows } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import {
   CHANGE_CATEGORIES,

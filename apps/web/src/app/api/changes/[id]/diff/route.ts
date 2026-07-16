@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fluxen/database";
-import { getDefaultStorage } from "@fluxen/scanner/storage";
+import { prisma } from "@mykavo/database";
+import { getDefaultStorage } from "@mykavo/scanner/storage";
 import { getApiContext } from "@/lib/api-auth";
 
 type Params = { params: Promise<{ id: string }> };

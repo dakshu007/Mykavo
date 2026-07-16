@@ -18,7 +18,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import type { ChangeSeverity, ChangeStatus } from "@fluxen/database";
+import type { ChangeSeverity, ChangeStatus } from "@mykavo/database";
 import { ChangeSeverityBadge } from "@/components/dashboard/change-badges";
 import {
   filterEntries,
@@ -32,7 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /** Fired by the sidebar hint pill — the palette listens globally. */
-const OPEN_EVENT = "fluxen:command-palette-open";
+const OPEN_EVENT = "mykavo:command-palette-open";
 
 const sectionIcons: Record<PaletteSection, LucideIcon> = {
   Actions: Zap,

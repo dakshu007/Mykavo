@@ -3,7 +3,7 @@ import {
   type ChangeCategory,
   type ChangeSeverity,
   type Prisma,
-} from "@fluxen/database";
+} from "@mykavo/database";
 
 /**
  * Shared filter parsing for the changes list page and the CSV export route,

@@ -100,13 +100,13 @@ const workflow = [
   {
     step: "01",
     title: "Add your websites",
-    desc: "Point Fluxen at every site you manage. It discovers pages via sitemaps and internal links — you pick what matters.",
+    desc: "Point MyKavo at every site you manage. It discovers pages via sitemaps and internal links — you pick what matters.",
     keyword: "discovers",
   },
   {
     step: "02",
     title: "Approve a baseline",
-    desc: "Fluxen captures a full snapshot of each page: screenshots, SEO tags, links, scripts, performance. You approve it as the known-good state.",
+    desc: "MyKavo captures a full snapshot of each page: screenshots, SEO tags, links, scripts, performance. You approve it as the known-good state.",
     keyword: "known-good",
   },
   {
@@ -178,28 +178,28 @@ const freeTools = [
 
 const faqs = [
   {
-    q: "How is Fluxen different from uptime monitoring?",
-    a: "Uptime tools tell you if a page responds. Fluxen tells you what changed on it — visual layout, SEO tags, content, links, scripts, performance, and conversion elements — and whether that change matters. A page can be 'up' and still be silently broken.",
+    q: "How is MyKavo different from uptime monitoring?",
+    a: "Uptime tools tell you if a page responds. MyKavo tells you what changed on it — visual layout, SEO tags, content, links, scripts, performance, and conversion elements — and whether that change matters. A page can be 'up' and still be silently broken.",
   },
   {
     q: "Will I get flooded with alerts for tiny changes?",
-    a: "No. Low false-positive rates are a core design goal. Fluxen normalizes dynamic content, lets you ignore volatile selectors, groups related changes into one alert, and applies severity thresholds — so notifications stay meaningful.",
+    a: "No. Low false-positive rates are a core design goal. MyKavo normalizes dynamic content, lets you ignore volatile selectors, groups related changes into one alert, and applies severity thresholds — so notifications stay meaningful.",
   },
   {
-    q: "Does Fluxen use AI to detect changes?",
+    q: "Does MyKavo use AI to detect changes?",
     a: "No. Detection is fully deterministic: previous value versus current value, normalized DOM hashes, and pixel comparison. Results are consistent, reproducible, and explainable.",
   },
   {
     q: "What is a baseline?",
-    a: "A baseline is the approved known-good state of a page. Every scan compares against it. When you make an intentional change, you approve it and it becomes the new baseline — so Fluxen always knows the difference between expected and unexpected changes.",
+    a: "A baseline is the approved known-good state of a page. Every scan compares against it. When you make an intentional change, you approve it and it becomes the new baseline — so MyKavo always knows the difference between expected and unexpected changes.",
   },
   {
     q: "How many websites can I monitor?",
     a: "The free plan monitors 1 website with 5 pages. Pro is $12/month with 8 websites and 20 monitored pages per website, and you can add another website anytime for $6/month (up to 3) — ideal for freelancers and teams managing several sites.",
   },
   {
-    q: "Is it safe to point Fluxen at my site?",
-    a: "Yes. Fluxen only reads your public pages with strict limits on request counts, sizes, and frequency, respects robots.txt protections, and never stores credentials for your site.",
+    q: "Is it safe to point MyKavo at my site?",
+    a: "Yes. MyKavo only reads your public pages with strict limits on request counts, sizes, and frequency, respects robots.txt protections, and never stores credentials for your site.",
   },
 ];
 
@@ -299,7 +299,7 @@ export default function HomePage() {
         {/* Sub-copy + interactive URL input (product-led, no signup) */}
         <section className="mx-auto max-w-6xl px-5 pb-4 pt-10 lg:px-8">
           <p className="mx-auto mb-10 max-w-xl text-center text-[15px] leading-7 text-[#0d0c0e]/60 sm:text-base">
-            Fluxen watches your websites for visual, SEO, content, link, script, performance,
+            MyKavo watches your websites for visual, SEO, content, link, script, performance,
             and conversion changes — and alerts you before small problems become expensive ones.
           </p>
           <LandingUrlInput />
@@ -317,7 +317,7 @@ export default function HomePage() {
               href="/#how-it-works"
               className="rounded-full border border-[#0d0c0e]/20 px-7 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#0d0c0e]/5"
             >
-              See How Fluxen Works
+              See How MyKavo Works
             </Link>
           </div>
         </section>
@@ -360,7 +360,7 @@ export default function HomePage() {
             ))}
           </div>
           <p className="mx-auto mt-12 max-w-2xl text-center text-lg leading-8 text-[#0d0c0e]/70">
-            Fluxen answers one question, continuously:{" "}
+            MyKavo answers one question, continuously:{" "}
             <span className={`${fontDisplay} text-2xl italic text-[#0d0c0e]`}>
               &ldquo;Did something important change or break on any website I manage?&rdquo;
             </span>
@@ -369,7 +369,7 @@ export default function HomePage() {
 
         {/* What it watches — three feature cards + category chips */}
         <Dark id="categories">
-          <p className={`${eyebrow} mb-4 text-center`}>What Fluxen watches</p>
+          <p className={`${eyebrow} mb-4 text-center`}>What MyKavo watches</p>
           <SerifHeading>
             Eight kinds of change.
             <br />
@@ -571,7 +571,7 @@ export default function HomePage() {
               <span className="font-semibold" style={{ color: primary }}>
                 Critical:
               </span>{" "}
-              page changed from index to noindex — Fluxen alerts you within one scan cycle.
+              page changed from index to noindex — MyKavo alerts you within one scan cycle.
             </div>
           </div>
         </Dark>
@@ -587,7 +587,7 @@ export default function HomePage() {
                 <span className="italic">one dashboard.</span>
               </h2>
               <p className="mt-5 max-w-md text-[15px] leading-7 text-[#0d0c0e]/60">
-                Stop finding out about broken client sites from angry emails. Fluxen watches every
+                Stop finding out about broken client sites from angry emails. MyKavo watches every
                 site you maintain and tells you which one needs attention — before the client
                 notices.
               </p>
@@ -659,7 +659,7 @@ export default function HomePage() {
           </SerifHeading>
           <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#0d0c0e]/60">
             Five free tools, no account needed. Every one is powered by the same engine that runs
-            Fluxen&apos;s monitoring.
+            MyKavo&apos;s monitoring.
           </p>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {freeTools.map((tool) => (

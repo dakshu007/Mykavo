@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDefaultStorage } from "@fluxen/scanner/storage";
+import { getDefaultStorage } from "@mykavo/scanner/storage";
 
 /**
  * Public blog image serving (no auth — images are embedded in public blog

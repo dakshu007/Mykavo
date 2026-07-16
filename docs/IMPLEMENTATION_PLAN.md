@@ -1,6 +1,6 @@
-# Fluxen — Implementation Plan
+# MyKavo — Implementation Plan
 
-Fluxen is built strictly phase-by-phase. A phase begins only when the previous phase's Definition of Done is met (lint, typecheck, tests, production build all passing).
+MyKavo is built strictly phase-by-phase. A phase begins only when the previous phase's Definition of Done is met (lint, typecheck, tests, production build all passing).
 
 ## Phase Overview
 
@@ -13,7 +13,7 @@ Fluxen is built strictly phase-by-phase. A phase begins only when the previous p
 | **4 — Baselines** | Baseline scans, versions, approval, history | Every monitored page has an approved active baseline |
 | **5 — Comparison Engine** | HTTP/SEO/DOM/text/link/script/perf/screenshot/element comparison, change grouping, severity engine | Meaningful changes detected between baseline and scan |
 | **6 — Changes Interface** | Changes list + filters, change detail, before/after values + screenshots, diff visualization, review/approve/ignore, baseline update flow | Users understand and manage detected changes |
-| **7 — Scheduling & Notifications** | Central scheduler, recurring scans, retries, Resend email alerts, preferences, scan summaries, failure alerts | Fluxen monitors automatically without user action |
+| **7 — Scheduling & Notifications** | Central scheduler, recurring scans, retries, Resend email alerts, preferences, scan summaries, failure alerts | MyKavo monitors automatically without user action |
 | **8 — Billing** ✅ | Dodo Payments Checkout, idempotent webhooks, sync, portal, plan enforcement, upgrade/cancel. **Free + Pro $12/mo (50 sites) + self-serve $6/mo add-ons (+30 sites each)** | Customers pay; limits (incl. add-on capacity) enforced server-side |
 | **9 — Conversion Monitoring** ✅ | Per-page monitored elements (name/selector/importance/expected existence·visibility·text·href), Pro-gated CRUD + UI, in-page checks in the scanner, CONVERSION comparison + severity rules, capped 20/page | Users monitor business-critical CTAs and forms |
 | **10 — Production Hardening** ✅ | Retention cleanup cron (plan-based, artifact-aware, baseline-safe), per-plan scan quotas + concurrent-scan cap, per-workspace + auth rate limits, duplicate-scan advisory lock (§40), retention indexes. Deferred to ops: external error-monitoring/APM, metrics, Redis limiter (multi-instance), load tests, backups | Safe and reliable for public paying customers (code-level) |
@@ -28,7 +28,7 @@ Fluxen is built strictly phase-by-phase. A phase begins only when the previous p
 5. **Dashboard preview** — static mock states demonstrating the real product IA (overview, websites, changes, change detail) with realistic sample data clearly framed as product preview.
 6. **Waitlist** — `POST /api/waitlist` (Zod-validated, deduplicated, file-backed store with an interface that swaps to Prisma in Phase 1).
 7. **Analytics** — `lib/analytics.ts` event tracker with the spec §47 event vocabulary, provider-pluggable (console/no-op in dev, Plausible-ready).
-8. **Free tool** — Website Change Detector at `/tools/website-change-detector`: SSRF-guarded server fetch, deterministic snapshot extraction, compare two URLs or a saved snapshot vs live, grouped diff output, Fluxen CTA.
+8. **Free tool** — Website Change Detector at `/tools/website-change-detector`: SSRF-guarded server fetch, deterministic snapshot extraction, compare two URLs or a saved snapshot vs live, grouped diff output, MyKavo CTA.
 9. **Verification** — lint, typecheck, production build, manual visual review.
 
 ## What Phase 0 deliberately does NOT include

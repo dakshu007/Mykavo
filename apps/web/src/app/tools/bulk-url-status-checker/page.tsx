@@ -67,7 +67,7 @@ export default function BulkUrlStatusCheckerPage() {
           </p>
           <p>
             The catch with one-off checks is that pages break on their own schedule, not yours
-            — a deploy on Friday, an expired certificate on Sunday. Fluxen checks your
+            — a deploy on Friday, an expired certificate on Sunday. MyKavo checks your
             important pages automatically, on a schedule, and emails you the moment a page that
             returned 200 starts returning an error.
           </p>

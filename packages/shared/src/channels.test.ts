@@ -18,7 +18,7 @@ import { assertSafeUrl, UnsafeUrlError } from "./ssrf";
 const MESSAGE: ChannelMessage = {
   title: "3 changes detected on example.com — highest: HIGH",
   lines: ["1 HIGH · 2 MEDIUM", "[HIGH] Title changed — /pricing"],
-  url: "https://fluxen.app/dashboard/scans/scan_1",
+  url: "https://mykavo.app/dashboard/scans/scan_1",
   severity: "HIGH",
 };
 
@@ -61,7 +61,7 @@ describe("validateChannelUrl", () => {
   });
 
   it("accepts any https URL for generic webhooks", () => {
-    expect(validateChannelUrl("WEBHOOK", "https://ops.example.com/hooks/fluxen").ok).toBe(true);
+    expect(validateChannelUrl("WEBHOOK", "https://ops.example.com/hooks/mykavo").ok).toBe(true);
   });
 
   it("rejects non-https schemes for every type", () => {
@@ -156,7 +156,7 @@ describe("formatSlackPayload", () => {
         "*3 changes detected on example.com — highest: HIGH*",
         "• 1 HIGH · 2 MEDIUM",
         "• [HIGH] Title changed — /pricing",
-        "<https://fluxen.app/dashboard/scans/scan_1|View in Fluxen>",
+        "<https://mykavo.app/dashboard/scans/scan_1|View in MyKavo>",
       ].join("\n"),
     });
   });
@@ -175,7 +175,7 @@ describe("formatDiscordPayload", () => {
         "**3 changes detected on example.com — highest: HIGH**",
         "- 1 HIGH · 2 MEDIUM",
         "- [HIGH] Title changed — /pricing",
-        "https://fluxen.app/dashboard/scans/scan_1",
+        "https://mykavo.app/dashboard/scans/scan_1",
       ].join("\n"),
     });
   });
@@ -185,7 +185,7 @@ describe("formatWebhookPayload", () => {
   it("produces the structured alert payload", () => {
     const sentAt = new Date("2026-07-10T12:00:00.000Z");
     expect(formatWebhookPayload(MESSAGE, sentAt)).toEqual({
-      event: "fluxen.alert",
+      event: "mykavo.alert",
       title: MESSAGE.title,
       lines: MESSAGE.lines,
       url: MESSAGE.url,
@@ -196,7 +196,7 @@ describe("formatWebhookPayload", () => {
 
   it("omits url and severity keys when absent", () => {
     const payload = formatWebhookPayload({ title: "t", lines: [] }, new Date(0));
-    expect(payload).toEqual({ event: "fluxen.alert", title: "t", lines: [], sentAt: "1970-01-01T00:00:00.000Z" });
+    expect(payload).toEqual({ event: "mykavo.alert", title: "t", lines: [], sentAt: "1970-01-01T00:00:00.000Z" });
     expect("url" in payload).toBe(false);
     expect("severity" in payload).toBe(false);
   });
@@ -204,7 +204,7 @@ describe("formatWebhookPayload", () => {
 
 describe("signWebhookBody", () => {
   it("computes sha256= HMAC of the exact body", () => {
-    const body = JSON.stringify({ event: "fluxen.alert", title: "t" });
+    const body = JSON.stringify({ event: "mykavo.alert", title: "t" });
     const expected = `sha256=${createHmac("sha256", "s3cret").update(body, "utf8").digest("hex")}`;
     expect(signWebhookBody(body, "s3cret")).toBe(expected);
   });
@@ -249,10 +249,10 @@ describe("dispatchChannelMessage", () => {
     const headers = init.headers as Record<string, string>;
     expect(headers["content-type"]).toBe("application/json");
     const body = init.body as string;
-    expect(headers["x-fluxen-signature"]).toBe(signWebhookBody(body, "s3cret"));
+    expect(headers["x-mykavo-signature"]).toBe(signWebhookBody(body, "s3cret"));
 
     const parsed = JSON.parse(body) as Record<string, unknown>;
-    expect(parsed.event).toBe("fluxen.alert");
+    expect(parsed.event).toBe("mykavo.alert");
     expect(parsed.title).toBe(MESSAGE.title);
     expect(parsed.lines).toEqual(MESSAGE.lines);
     expect(parsed.severity).toBe("HIGH");
@@ -266,7 +266,7 @@ describe("dispatchChannelMessage", () => {
     );
     expect(result.ok).toBe(true);
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect((init.headers as Record<string, string>)["x-fluxen-signature"]).toBeUndefined();
+    expect((init.headers as Record<string, string>)["x-mykavo-signature"]).toBeUndefined();
   });
 
   it("treats non-2xx (including redirects) as failure", async () => {

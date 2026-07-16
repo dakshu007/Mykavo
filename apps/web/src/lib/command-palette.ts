@@ -1,4 +1,4 @@
-import type { ChangeSeverity, ChangeStatus } from "@fluxen/database";
+import type { ChangeSeverity, ChangeStatus } from "@mykavo/database";
 
 /**
  * Pure logic for the dashboard command palette (⌘K). Static entries, substring

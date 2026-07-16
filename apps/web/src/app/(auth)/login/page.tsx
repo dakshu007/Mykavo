@@ -7,7 +7,7 @@ import { safeNextPath } from "@/lib/team";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to your Fluxen dashboard.",
+  description: "Sign in to your MyKavo dashboard.",
   robots: { index: false },
 };
 
@@ -24,7 +24,7 @@ export default async function LoginPage({
   return (
     <>
       <h1 className="mb-1 text-xl font-semibold tracking-tight text-ink">Welcome back</h1>
-      <p className="mb-6 text-sm text-ink-secondary">Sign in to your Fluxen dashboard.</p>
+      <p className="mb-6 text-sm text-ink-secondary">Sign in to your MyKavo dashboard.</p>
       <AuthForm mode="login" googleEnabled={googleEnabled} redirectTo={next ?? undefined} />
     </>
   );

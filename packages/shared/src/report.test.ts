@@ -17,7 +17,7 @@ function raw(overrides: Partial<ReportRawData> = {}): ReportRawData {
     avgResponseTimeMs: 231.4,
     sslValidTo: new Date("2026-10-01T00:00:00Z"),
     lighthouse: null,
-    dashboardUrl: "https://fluxen.app/dashboard/websites/w1",
+    dashboardUrl: "https://mykavo.app/dashboard/websites/w1",
     ...overrides,
   };
 }

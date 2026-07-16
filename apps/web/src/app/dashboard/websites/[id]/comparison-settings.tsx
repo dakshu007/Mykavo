@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
-import { selectorLines, validateSelectorLines } from "@fluxen/shared/stabilization";
+import { selectorLines, validateSelectorLines } from "@mykavo/shared/stabilization";
 
 /**
  * Comparison settings (spec §25/§36 false-positive controls): per-website
@@ -99,7 +99,7 @@ export function ComparisonSettings({
   return (
     <div className="space-y-5">
       <p className="text-sm text-ink-secondary">
-        Cut false positives by telling Fluxen which parts of your pages are
+        Cut false positives by telling MyKavo which parts of your pages are
         expected to change. One CSS selector per line, up to 20 per list.
       </p>
 

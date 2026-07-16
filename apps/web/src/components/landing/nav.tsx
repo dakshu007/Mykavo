@@ -38,9 +38,9 @@ export function LandingNav() {
         <div
           className={`flex min-w-0 flex-1 items-center justify-between rounded-full bg-white py-2 pl-4 pr-2 transition-shadow lg:flex-none lg:justify-start lg:gap-1 lg:pr-4 ${shadow}`}
         >
-          <Link href="/" aria-label="Fluxen home" className="flex items-center gap-2 pr-2">
+          <Link href="/" aria-label="MyKavo home" className="flex items-center gap-2 pr-2">
             <LogoMark size={24} className="text-[#0d0c0e]" />
-            <span className="text-[16px] font-semibold tracking-tight text-[#0d0c0e]">Fluxen</span>
+            <span className="text-[16px] font-semibold tracking-tight text-[#0d0c0e]">MyKavo</span>
           </Link>
           <nav aria-label="Main" className="hidden items-center lg:flex">
             {links.map((l) => (

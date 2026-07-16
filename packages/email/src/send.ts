@@ -27,7 +27,7 @@ function resolveProvider(): "console" | "resend" | "noop" {
   return "noop";
 }
 
-const FROM = process.env.EMAIL_FROM ?? "Fluxen <onboarding@resend.dev>";
+const FROM = process.env.EMAIL_FROM ?? "MyKavo <onboarding@resend.dev>";
 
 export async function sendEmail(message: EmailMessage): Promise<SendResult> {
   const provider = resolveProvider();

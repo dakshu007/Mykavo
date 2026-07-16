@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, PenLine, Rss } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import {
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Blog",
   description:
-    "Guides and practical notes on website change detection, regression monitoring, SEO health, and keeping client websites working — from the Fluxen team.",
+    "Guides and practical notes on website change detection, regression monitoring, SEO health, and keeping client websites working — from the MyKavo team.",
   alternates: {
     canonical: "/blog",
     types: { "application/rss+xml": "/blog/feed.xml" },

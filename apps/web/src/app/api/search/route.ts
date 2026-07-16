@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { getApiContext } from "@/lib/api-auth";
 import { rateLimit } from "@/lib/security/rate-limit";
 

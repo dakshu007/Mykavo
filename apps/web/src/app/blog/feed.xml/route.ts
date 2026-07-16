@@ -1,4 +1,4 @@
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
 
 // Dynamic on purpose: publishing from the dashboard must reach the feed

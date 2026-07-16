@@ -1,5 +1,5 @@
 /**
- * CSS-only marquee listing everything a Fluxen scan checks — the honest
+ * CSS-only marquee listing everything a MyKavo scan checks — the honest
  * version of a logo strip. Pauses entirely under prefers-reduced-motion.
  */
 
@@ -39,7 +39,7 @@ function Strip() {
 
 export function SignalMarquee() {
   return (
-    <section aria-label="Everything Fluxen checks on every scan" className="py-10">
+    <section aria-label="Everything MyKavo checks on every scan" className="py-10">
       <p className="mb-5 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/50">
         Checked on every scan
       </p>

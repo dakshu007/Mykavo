@@ -1,4 +1,4 @@
-// Fluxen database schema — Phase 1 scope: auth, workspaces, waitlist.
+// MyKavo database schema — Phase 1 scope: auth, workspaces, waitlist.
 // Monitoring tables (Website, Scan, PageSnapshot, ...) arrive in Phase 2+.
 // Target model documented in docs/DATABASE_SCHEMA.md.
 
@@ -189,7 +189,7 @@ model Website {
   statusPageEnabled Boolean   @default(false)
   // Stabilization / false-positive controls (spec §25/§36). Both are JSON
   // arrays of CSS selector strings (max 20 each, ≤200 chars — enforced in
-  // the API; parsed defensively via parseSelectorList in @fluxen/shared).
+  // the API; parsed defensively via parseSelectorList in @mykavo/shared).
   // ignoredSelectors: matching elements are REMOVED from the DOM before
   // text/DOM hashing and never appear in the screenshot — excluded from
   // comparison entirely (cookie banners, ads, rotating content).
@@ -507,7 +507,7 @@ enum HealthIncidentKind {
 // One lightweight availability probe of a website's homepage (plain GET, no
 // Playwright), recorded by the worker's health sweep every few minutes.
 // Up/down rule: up = ANY HTTP response with status < 500 and != 404;
-// down = network error, timeout, 5xx, or 404 (see @fluxen/shared isHttpUp).
+// down = network error, timeout, 5xx, or 404 (see @mykavo/shared isHttpUp).
 model HealthCheck {
   id             String    @id @default(cuid())
   websiteId      String
@@ -809,7 +809,7 @@ model BlogPost {
   status         BlogPostStatus @default(DRAFT)
   // Set on first publish, preserved across unpublish/re-publish cycles.
   publishedAt    DateTime?
-  authorName     String         @default("Fluxen Team")
+  authorName     String         @default("MyKavo Team")
   seoTitle       String?
   seoDescription String?
   createdAt      DateTime       @default(now())

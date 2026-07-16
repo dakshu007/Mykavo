@@ -40,7 +40,7 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-300 px-5 py-14 lg:px-8">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <Link href="/" aria-label="Fluxen home" className="inline-flex">
+            <Link href="/" aria-label="MyKavo home" className="inline-flex">
               <Logo />
             </Link>
             <p className="mt-4 max-w-70 text-sm leading-6 text-ink-secondary">
@@ -67,7 +67,7 @@ export function MarketingFooter() {
           ))}
         </div>
         <div className="mt-12 flex flex-col justify-between gap-3 border-t border-line pt-6 text-[13px] text-ink-faint sm:flex-row">
-          <p>© {new Date().getFullYear()} Fluxen. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} MyKavo. All rights reserved.</p>
           <p>Built for people who keep websites working.</p>
         </div>
       </div>

@@ -9,7 +9,7 @@ import {
 } from "./markdown-roundtrip";
 
 /**
- * Tiptap atom nodes for the Fluxen shortcode blocks ({{cta}}, {{toc}},
+ * Tiptap atom nodes for the MyKavo shortcode blocks ({{cta}}, {{toc}},
  * {{faq}}…{{/faq}}). Each node stores the EXACT raw markdown source of its
  * region in the `raw` attribute and serializes it back verbatim, so a load →
  * save round-trip is byte-identical for shortcode regions.
@@ -78,19 +78,19 @@ function createShortcodeNode(options: {
 }
 
 export const CtaBlockNode = createShortcodeNode({
-  name: "fluxenCta",
+  name: "mykavoCta",
   type: "cta",
   defaultRaw: "{{cta}}",
 });
 
 export const TocBlockNode = createShortcodeNode({
-  name: "fluxenToc",
+  name: "mykavoToc",
   type: "toc",
   defaultRaw: "{{toc}}",
 });
 
 export const FaqBlockNode = createShortcodeNode({
-  name: "fluxenFaq",
+  name: "mykavoFaq",
   type: "faq",
   defaultRaw: DEFAULT_FAQ_RAW,
 });

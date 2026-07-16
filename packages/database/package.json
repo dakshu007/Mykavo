@@ -1,5 +1,5 @@
 {
-  "name": "@fluxen/database",
+  "name": "@mykavo/database",
   "version": "0.1.0",
   "private": true,
   "main": "./src/index.ts",

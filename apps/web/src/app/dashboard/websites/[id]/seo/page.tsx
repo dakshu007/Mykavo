@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
-import { prisma } from "@fluxen/database";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import {
@@ -13,7 +13,7 @@ import {
   type SeoSeverity,
 } from "@/lib/seo-report";
 
-export const metadata = { title: "SEO health — Fluxen" };
+export const metadata = { title: "SEO health — MyKavo" };
 
 const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -258,7 +258,7 @@ export default async function SeoHealthPage({
             </p>
             <p className="max-w-md text-sm text-ink-secondary">
               Titles, descriptions, headings, canonicals and indexability all look good.
-              Fluxen re-checks on every scan and this report updates automatically.
+              MyKavo re-checks on every scan and this report updates automatically.
             </p>
           </div>
         </Card>
@@ -289,7 +289,7 @@ export default async function SeoHealthPage({
 
       <p className="flex items-center gap-1.5 text-[13px] text-ink-faint">
         <ExternalLink className="size-3.5" aria-hidden />
-        Checks cover your monitored pages only — Fluxen reports from scan data instead of
+        Checks cover your monitored pages only — MyKavo reports from scan data instead of
         crawling your whole site.
       </p>
     </div>

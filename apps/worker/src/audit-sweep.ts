@@ -8,8 +8,8 @@
  */
 
 import type { PgBoss } from "pg-boss";
-import { prisma } from "@fluxen/database";
-import { LIGHTHOUSE_AUDIT_QUEUE, type LighthouseAuditJob } from "@fluxen/shared";
+import { prisma } from "@mykavo/database";
+import { LIGHTHOUSE_AUDIT_QUEUE, type LighthouseAuditJob } from "@mykavo/shared";
 import { logger } from "./logger";
 
 const DAY_MS = 24 * 60 * 60 * 1000;

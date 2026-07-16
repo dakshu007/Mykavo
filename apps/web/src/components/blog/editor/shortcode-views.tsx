@@ -16,7 +16,7 @@ import { joinFaqRaw, splitFaqRaw } from "@/lib/blog-editor/markdown-roundtrip";
 import { cn } from "@/lib/utils";
 
 /**
- * React node views for the Fluxen shortcode blocks inside the visual editor.
+ * React node views for the MyKavo shortcode blocks inside the visual editor.
  * The nodes themselves (schema + byte-exact markdown round-trip) live in
  * lib/blog-editor/shortcode-nodes.ts; these views only add the editor chrome.
  */
@@ -73,7 +73,7 @@ function CtaChipView({ selected, deleteNode }: ReactNodeViewProps) {
     <ChipShell
       selected={selected}
       icon={<Zap className="size-4" aria-hidden />}
-      title="Fluxen CTA"
+      title="MyKavo CTA"
       description="Start-free call to action"
       onRemove={deleteNode}
     />

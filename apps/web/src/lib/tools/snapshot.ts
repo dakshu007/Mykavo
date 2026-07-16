@@ -4,7 +4,7 @@
  * here; the production scanner (Phase 3) uses Playwright + a real DOM.
  */
 
-import { identifyScriptService } from "@fluxen/shared/script-services";
+import { identifyScriptService } from "@mykavo/shared/script-services";
 import { normalizeUrl, resolveHref, isSameOrigin } from "@/lib/url";
 import type { SafeFetchResult } from "@/lib/security/ssrf";
 import { attr, stripTags } from "./html";

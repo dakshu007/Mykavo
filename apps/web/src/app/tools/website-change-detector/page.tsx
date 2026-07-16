@@ -54,7 +54,7 @@ export default function WebsiteChangeDetectorPage() {
             What does this tool check?
           </h2>
           <p>
-            The Website Change Detector fetches a page the same way Fluxen&apos;s monitoring
+            The Website Change Detector fetches a page the same way MyKavo&apos;s monitoring
             engine does and extracts a deterministic snapshot: HTTP status and redirect chain,
             title tag, meta description, canonical URL, robots meta, H1 headings, internal and
             external link counts, third-party scripts (like Google Analytics, Tag Manager, or
@@ -67,7 +67,7 @@ export default function WebsiteChangeDetectorPage() {
             during a rebuild, or a page suddenly returning an error status.
           </p>
           <p>
-            This free tool checks one page at a time, on demand. Fluxen does this automatically
+            This free tool checks one page at a time, on demand. MyKavo does this automatically
             for every important page on every website you manage — on a schedule, with visual
             screenshot comparison, broken-link detection, and severity-ranked email alerts.
           </p>
