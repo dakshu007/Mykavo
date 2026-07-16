@@ -73,7 +73,7 @@ describe("deriveOnboarding", () => {
       monitoredPages: 5,
       completedScans: 1,
       extraChannels: 1,
-      // members still 1, no invites — optional step pending.
+      // members still 1, no invites - optional step pending.
     });
     expect(state.doneCount).toBe(4);
     expect(state.allRequiredDone).toBe(true);
@@ -86,7 +86,7 @@ describe("deriveOnboarding", () => {
       monitoredPages: 5,
       completedScans: 1,
       members: 3, // teammate done
-      // extraChannels still 0 — required step pending.
+      // extraChannels still 0 - required step pending.
     });
     expect(state.allRequiredDone).toBe(false);
   });
@@ -105,7 +105,7 @@ describe("deriveOnboarding", () => {
     expect(state.allRequiredDone).toBe(true);
   });
 
-  it("derivation is independent of dismissal — no dismissal input exists", () => {
+  it("derivation is independent of dismissal - no dismissal input exists", () => {
     // The function takes only live counts; dismissal is a cookie concern
     // handled by the page. Same counts always produce the same state.
     expect(deriveOnboarding(zero)).toEqual(deriveOnboarding({ ...zero }));

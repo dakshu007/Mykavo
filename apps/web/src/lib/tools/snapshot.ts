@@ -142,11 +142,11 @@ export interface SnapshotDiff {
 }
 
 function fmt(v: string | number | null | undefined): string {
-  if (v === null || v === undefined || v === "") return "—";
+  if (v === null || v === undefined || v === "") return "-";
   return String(v);
 }
 
-/** Deterministic, severity-hinted comparison — mirrors spec §19/§21/§22 rules. */
+/** Deterministic, severity-hinted comparison - mirrors spec §19/§21/§22 rules. */
 export function diffSnapshots(prev: PageToolSnapshot, curr: PageToolSnapshot): SnapshotDiff[] {
   const diffs: SnapshotDiff[] = [];
   const add = (
@@ -212,8 +212,8 @@ export function diffSnapshots(prev: PageToolSnapshot, curr: PageToolSnapshot): S
     add(
       "SEO",
       "H1 headings",
-      prev.h1Values.join(" · ") || "—",
-      curr.h1Values.join(" · ") || "—",
+      prev.h1Values.join(" · ") || "-",
+      curr.h1Values.join(" · ") || "-",
       curr.h1Values.length === 0 ? "HIGH" : "MEDIUM",
     );
   }
@@ -245,7 +245,7 @@ export function diffSnapshots(prev: PageToolSnapshot, curr: PageToolSnapshot): S
         "Scripts",
         s.service ? `${s.service} script removed` : "Script removed",
         s.domain,
-        "—",
+        "-",
         important ? "HIGH" : "LOW",
       );
     }
@@ -255,7 +255,7 @@ export function diffSnapshots(prev: PageToolSnapshot, curr: PageToolSnapshot): S
       add(
         "Scripts",
         s.service ? `${s.service} script added` : "Script added",
-        "—",
+        "-",
         s.domain,
         s.isThirdParty && !s.service ? "MEDIUM" : "LOW",
       );

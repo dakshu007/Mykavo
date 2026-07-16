@@ -9,7 +9,7 @@ const schema = z.object({ workspaceId: z.string().min(1).max(64) });
 
 /**
  * Switch the current workspace. Membership is verified server-side before the
- * httpOnly cookie is set — the cookie is a hint for resolution, never an
+ * httpOnly cookie is set - the cookie is a hint for resolution, never an
  * authority (resolution re-verifies membership on every request).
  */
 export async function POST(request: Request) {

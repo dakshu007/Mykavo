@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
   if (denied) return denied;
 
-  // Channel creation resolves DNS on a user-supplied URL — cap it.
+  // Channel creation resolves DNS on a user-supplied URL - cap it.
   const rl = rateLimit(`channel-create:${ctx.workspace.id}`, { limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(

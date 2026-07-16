@@ -13,7 +13,7 @@ import { LogoMark } from "@/components/brand/logo";
  * Static browser-chrome product mock (ballpark/playground-style): a fixed,
  * hand-drawn "changes feed" state of the MyKavo dashboard inside a crisp
  * ink-bordered browser frame, plus a dark terminal "scan log" rail
- * (hydradb-style). Pure server markup — the only motion is a CSS pulse on
+ * (hydradb-style). Pure server markup - the only motion is a CSS pulse on
  * the live dot, disabled under prefers-reduced-motion.
  */
 

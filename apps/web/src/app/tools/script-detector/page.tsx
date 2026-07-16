@@ -39,7 +39,7 @@ export default function ScriptDetectorPage() {
             Script Detector
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
-            List every external script loaded by a page and identify common services — Google
+            List every external script loaded by a page and identify common services - Google
             Analytics, Tag Manager, Meta Pixel, Stripe, Hotjar, Intercom, HubSpot, and more.
             Free, no account needed.
           </p>
@@ -53,7 +53,7 @@ export default function ScriptDetectorPage() {
           </h2>
           <p>
             The scripts on a page are its supply chain. Analytics, tag managers, pixels, chat
-            widgets, and payment scripts all get added by different people at different times —
+            widgets, and payment scripts all get added by different people at different times -
             and any of them can silently disappear during a rebuild or theme update. A missing
             Google Analytics script means weeks of invisible data loss; a vanished Meta Pixel
             means ad campaigns optimizing blind; an unknown third-party script appearing out of
@@ -62,8 +62,8 @@ export default function ScriptDetectorPage() {
           <p>
             This detector fetches the page&apos;s HTML and lists every{" "}
             <span className="font-mono text-[13px] text-ink">&lt;script src&gt;</span> tag it
-            finds: the full URL, the domain it loads from, whether it&apos;s third-party, and —
-            where the domain matches a known service — which product it belongs to. Note that
+            finds: the full URL, the domain it loads from, whether it&apos;s third-party, and -
+            where the domain matches a known service - which product it belongs to. Note that
             this is static analysis of the delivered HTML: scripts injected at runtime by other
             scripts (for example, tags fired through Google Tag Manager) won&apos;t appear here.
           </p>

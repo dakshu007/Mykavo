@@ -22,7 +22,7 @@ const serverEnvSchema = z.object({
   // Blog mini-CMS admins (optional). Comma-separated emails allowed to
   // write/publish blog posts from the dashboard. Unset = CMS disabled.
   BLOG_ADMIN_EMAILS: z.string().optional(),
-  // Dodo Payments (optional — billing degrades gracefully when unset).
+  // Dodo Payments (optional - billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
   // Website capacity add-on product ($6/mo per +30 websites). When unset, the
   // add-on purchase UI stays hidden.

@@ -49,7 +49,7 @@ export const BlogImage = Image.extend<
 export function buildEditorExtensions(options?: { placeholder?: string }): Extensions {
   return [
     StarterKit.configure({
-      // Markdown has no underline — keep the schema serializable.
+      // Markdown has no underline - keep the schema serializable.
       underline: false,
       // Link is added separately below with editor-specific behavior.
       link: false,

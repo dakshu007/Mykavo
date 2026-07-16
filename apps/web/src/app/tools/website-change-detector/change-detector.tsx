@@ -102,11 +102,11 @@ function SnapshotCard({ snapshot, title }: { snapshot: PageToolSnapshot; title: 
     ["Redirects", snapshot.redirectChain.length ? snapshot.redirectChain.map((r) => `${r.status}`).join(" → ") + ` → ${snapshot.httpStatus}` : "None"],
     ["Response time", `${snapshot.responseTimeMs} ms`],
     ["HTML weight", `${Math.round(snapshot.pageWeightBytes / 1024)} KB`],
-    ["Title", snapshot.title ?? "—"],
-    ["Meta description", snapshot.metaDescription ?? "—"],
-    ["Canonical", snapshot.canonicalUrl ?? "—"],
-    ["Robots meta", snapshot.robotsMeta ?? "—"],
-    ["H1 headings", snapshot.h1Values.join(" · ") || "—"],
+    ["Title", snapshot.title ?? "-"],
+    ["Meta description", snapshot.metaDescription ?? "-"],
+    ["Canonical", snapshot.canonicalUrl ?? "-"],
+    ["Robots meta", snapshot.robotsMeta ?? "-"],
+    ["H1 headings", snapshot.h1Values.join(" · ") || "-"],
     ["Internal links", String(snapshot.internalLinkCount)],
     ["External links", String(snapshot.externalLinkCount)],
     [
@@ -374,7 +374,7 @@ export function ChangeDetector() {
               {trackDiffs === null && (
                 <div className="flex items-center justify-between gap-4 rounded-card bg-primary-soft px-6 py-4">
                   <p className="text-sm text-ink">
-                    <span className="font-semibold">Save this snapshot</span> — come back later,
+                    <span className="font-semibold">Save this snapshot</span> - come back later,
                     re-check the page, and see exactly what changed.
                   </p>
                   <button
@@ -449,8 +449,8 @@ export function ChangeDetector() {
             Monitor changes automatically with MyKavo
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/70">
-            MyKavo re-checks pages like this on a schedule — plus screenshots, visual diffs,
-            broken links, and conversion elements — and alerts you when something important
+            MyKavo re-checks pages like this on a schedule - plus screenshots, visual diffs,
+            broken links, and conversion elements - and alerts you when something important
             changes.
           </p>
           <Link

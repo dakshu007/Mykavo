@@ -22,7 +22,7 @@ export async function POST() {
   }
   if (!dodoApiConfigured()) {
     return NextResponse.json(
-      { error: "Cancellation isn't available here yet — use the billing portal." },
+      { error: "Cancellation isn't available here yet - use the billing portal." },
       { status: 503 },
     );
   }

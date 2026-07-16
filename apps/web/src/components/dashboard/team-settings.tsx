@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Team card on /dashboard/settings: members, pending invites, and the invite
- * form. Every action here is re-checked server-side (spec §39) — this
+ * form. Every action here is re-checked server-side (spec §39) - this
  * component reads the same role matrix (lib/team) purely for display.
  */
 
@@ -318,7 +318,7 @@ export function TeamSettings({
             </Button>
             {!seatsLeft && (
               <p className="w-full text-[12px] text-ink-faint">
-                All seats are in use — remove a member or revoke an invite to free one up.
+                All seats are in use - remove a member or revoke an invite to free one up.
               </p>
             )}
           </form>

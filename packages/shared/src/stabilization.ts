@@ -1,13 +1,13 @@
 /**
- * Stabilization settings — per-website ignored selectors and screenshot
+ * Stabilization settings - per-website ignored selectors and screenshot
  * masks (spec §25/§36 false-positive controls).
  *
  * Semantics:
  * - Ignored selectors: matching elements are REMOVED from the DOM before
- *   text/DOM hashing and never appear in the screenshot — excluded from
+ *   text/DOM hashing and never appear in the screenshot - excluded from
  *   comparison entirely (cookie banners, ads, rotating content).
  * - Screenshot masks: matching elements are covered with a solid block in
- *   the screenshot only — their content is still compared (dates, counters).
+ *   the screenshot only - their content is still compared (dates, counters).
  *
  * Both are stored as `Json?` columns on Website (arrays of CSS selector
  * strings). These helpers are the single normalization/validation path used
@@ -24,7 +24,7 @@ export const MAX_SELECTOR_LENGTH = 200;
 /**
  * Basic CSS-selector sanity: non-empty, bounded length, and free of braces
  * and newlines (which indicate pasted CSS rules, not selectors). Full syntax
- * validation happens in the browser — invalid selectors are skipped
+ * validation happens in the browser - invalid selectors are skipped
  * per-selector at scan time and never fail a scan.
  */
 export function isPlausibleSelector(selector: string): boolean {
@@ -57,7 +57,7 @@ export function parseSelectorList(value: unknown): string[] {
 /**
  * Split textarea input ("one selector per line") into trimmed, non-empty,
  * deduplicated lines. Unlike parseSelectorList this does NOT silently drop
- * invalid or excess entries — pair it with validateSelectorLines so the UI
+ * invalid or excess entries - pair it with validateSelectorLines so the UI
  * can show the user what is wrong instead of losing their input.
  */
 export function selectorLines(text: string): string[] {
@@ -85,7 +85,7 @@ export function validateSelectorLines(selectors: string[]): string | null {
       return `Selectors must be ${MAX_SELECTOR_LENGTH} characters or fewer.`;
     }
     if (/[{}]/.test(selector)) {
-      return "Selectors can't contain { or } — enter CSS selectors, not CSS rules.";
+      return "Selectors can't contain { or } - enter CSS selectors, not CSS rules.";
     }
   }
   return null;

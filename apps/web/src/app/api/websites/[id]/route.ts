@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 // Stabilization selector lists (spec §25/§36): trimmed, non-empty CSS
-// selectors, max 20 per list × 200 chars. Braces/newlines are rejected —
+// selectors, max 20 per list × 200 chars. Braces/newlines are rejected -
 // they indicate pasted CSS rules, not selectors. Full syntax validation
 // happens in the browser at scan time (invalid selectors are skipped).
 const selectorListSchema = z
@@ -52,7 +52,7 @@ const patchSchema = z.object({
   ignoredSelectors: selectorListSchema.optional(),
   screenshotMasks: selectorListSchema.optional(),
   // Organization tags: [] clears; omitted = unchanged. Entries are
-  // re-normalized + deduped + capped server-side (parseTags) — the generous
+  // re-normalized + deduped + capped server-side (parseTags) - the generous
   // input bounds here only stop obviously abusive payloads.
   tags: z.array(z.string().max(100)).max(25).optional(),
 });
@@ -104,7 +104,7 @@ export async function PATCH(request: Request, { params }: Params) {
             : new Date(Date.now() + input.muteHours * 60 * 60 * 1000),
       badgeEnabled: input.badgeEnabled,
       statusPageEnabled: input.statusPageEnabled,
-      // The public URL identifier shared by the badge and the status page —
+      // The public URL identifier shared by the badge and the status page -
       // opaque, never the website id (spec §59). Whichever feature is
       // enabled first mints it; disabling keeps it so URLs stay stable.
       publicToken:
@@ -114,7 +114,7 @@ export async function PATCH(request: Request, { params }: Params) {
           : undefined,
       ignoredSelectors: input.ignoredSelectors,
       screenshotMasks: input.screenshotMasks,
-      // Never trust client normalization — canonical form is enforced here.
+      // Never trust client normalization - canonical form is enforced here.
       tags: input.tags === undefined ? undefined : parseTags(input.tags),
     },
   });

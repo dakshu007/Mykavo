@@ -22,7 +22,7 @@ describe("isHttpUp (the up/down rule)", () => {
     expect(isHttpUp(301)).toBe(true);
   });
 
-  it("treats auth walls and rate limits as up — the server is serving", () => {
+  it("treats auth walls and rate limits as up - the server is serving", () => {
     expect(isHttpUp(401)).toBe(true);
     expect(isHttpUp(403)).toBe(true);
     expect(isHttpUp(429)).toBe(true);

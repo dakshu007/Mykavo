@@ -8,7 +8,7 @@ import {
 /**
  * Shared filter parsing for the changes list page and the CSV export route,
  * so both interpret ?severity/&category/&status/&website identically.
- * Unknown values are treated as "no filter" (never an error) — filter links
+ * Unknown values are treated as "no filter" (never an error) - filter links
  * are user-editable URLs.
  */
 

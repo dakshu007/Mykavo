@@ -7,7 +7,7 @@ import { rateLimit } from "@/lib/security/rate-limit";
 /**
  * Workspace-scoped search backing the ⌘K command palette. Returns up to five
  * websites, monitored pages, and change events matching the query. Empty
- * queries return empty results — the palette shows static navigation/actions
+ * queries return empty results - the palette shows static navigation/actions
  * without hitting the network at all.
  */
 

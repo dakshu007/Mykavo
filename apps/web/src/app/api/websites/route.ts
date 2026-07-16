@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
   if (denied) return denied;
 
-  // Website creation resolves DNS + fetches the target — cap it per workspace.
+  // Website creation resolves DNS + fetches the target - cap it per workspace.
   const rl = rateLimit(`website-create:${ctx.workspace.id}`, { limit: 20, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(

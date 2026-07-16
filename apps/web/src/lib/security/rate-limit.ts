@@ -1,6 +1,6 @@
 /**
  * Simple in-memory sliding-window rate limiter for Phase 0 public endpoints.
- * Per-instance only — replaced by a shared store (Redis) in Phase 10 hardening.
+ * Per-instance only - replaced by a shared store (Redis) in Phase 10 hardening.
  */
 
 interface Window {

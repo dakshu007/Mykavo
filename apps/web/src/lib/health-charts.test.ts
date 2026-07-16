@@ -85,7 +85,7 @@ describe("overallUptime", () => {
 
 describe("formatPercent", () => {
   it("formats plainly with at most two decimals", () => {
-    expect(formatPercent(null)).toBe("—");
+    expect(formatPercent(null)).toBe("-");
     expect(formatPercent(100)).toBe("100%");
     expect(formatPercent(0)).toBe("0%");
     expect(formatPercent(99.5)).toBe("99.5%");

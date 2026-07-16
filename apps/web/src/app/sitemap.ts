@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
   } catch {
-    // Database unavailable (e.g. build without DB) — serve the static routes.
+    // Database unavailable (e.g. build without DB) - serve the static routes.
   }
 
   return entries;

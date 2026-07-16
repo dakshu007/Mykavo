@@ -1,5 +1,5 @@
 /**
- * Website tags — agency organization labels ("acme-corp", "retainer",
+ * Website tags - agency organization labels ("acme-corp", "retainer",
  * "team-alpha") attached to websites and used to filter the websites list.
  *
  * Canonical form: lowercase [a-z0-9-], 1–20 chars, max 5 per website.

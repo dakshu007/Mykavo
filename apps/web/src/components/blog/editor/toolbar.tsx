@@ -202,7 +202,7 @@ export function ImagePopover({ editor, onClose }: { editor: Editor; onClose: () 
       }
       insert(data.url);
     } catch {
-      setError("Network error — the image was not uploaded.");
+      setError("Network error - the image was not uploaded.");
     } finally {
       setUploading(false);
     }

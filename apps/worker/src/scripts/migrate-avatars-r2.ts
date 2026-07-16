@@ -2,7 +2,7 @@
  * One-off migration: move profile photos out of Postgres and into object
  * storage. Finds every user whose `image` is an inline data URL, uploads the
  * decoded bytes under `avatars/<random>.jpg|png`, and rewrites the row to the
- * small `/api/avatars/<name>` path. Idempotent — already-migrated rows (URL
+ * small `/api/avatars/<name>` path. Idempotent - already-migrated rows (URL
  * paths) are skipped.
  *
  * Usage:
@@ -45,7 +45,7 @@ async function main() {
     migrated += 1;
     console.log(`migrated ${user.id} → avatars/${name}`);
   }
-  console.log(`done — migrated ${migrated}/${users.length}`);
+  console.log(`done - migrated ${migrated}/${users.length}`);
   await prisma.$disconnect();
 }
 

@@ -2,7 +2,7 @@ import { prisma, getLatestHealthCheck, getUptimeStats } from "@mykavo/database";
 import { renderStatusBadge, type BadgeStatus } from "@/lib/status-badge";
 
 /**
- * Public embeddable uptime badge (no auth — the opaque publicToken is the
+ * Public embeddable uptime badge (no auth - the opaque publicToken is the
  * only identifier; website ids are never exposed). Returns a shields-style
  * SVG: green "up · 99.9%" (7-day uptime), red "down", gray "unknown".
  */

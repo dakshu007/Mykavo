@@ -41,7 +41,7 @@ export function DashboardSidebar({
 }: {
   workspaceName: string;
   isBlogAdmin?: boolean;
-  /** All workspaces the user belongs to — switcher renders when >1. */
+  /** All workspaces the user belongs to - switcher renders when >1. */
   workspaces?: WorkspaceOption[];
   currentWorkspaceId?: string;
 }) {

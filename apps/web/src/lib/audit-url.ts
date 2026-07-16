@@ -1,7 +1,7 @@
 /**
  * Resolves the target URL for an on-demand Lighthouse audit.
  *
- * Users may audit any page of a website they monitor — but ONLY that website's
+ * Users may audit any page of a website they monitor - but ONLY that website's
  * origin. The requested path is resolved against the website URL and rejected
  * unless the resolved origin exactly matches (protocol + host + port). This is
  * a hard server-side boundary: without it, the audit endpoint would let anyone
@@ -15,7 +15,7 @@ export type AuditUrlResult =
   | { ok: true; url: string }
   | { ok: false; error: string };
 
-/** Longest path we accept — anything bigger is garbage or abuse. */
+/** Longest path we accept - anything bigger is garbage or abuse. */
 export const MAX_AUDIT_PATH_LENGTH = 2048;
 
 export function resolveAuditUrl(websiteUrl: string, path?: string | null): AuditUrlResult {
@@ -44,11 +44,11 @@ export function resolveAuditUrl(websiteUrl: string, path?: string | null): Audit
     return rejection;
   }
 
-  // Only web pages — blocks "javascript:", "data:", "file:", etc. (their
+  // Only web pages - blocks "javascript:", "data:", "file:", etc. (their
   // origin is "null" anyway, but be explicit).
   if (resolved.protocol !== "http:" && resolved.protocol !== "https:") return rejection;
 
-  // URL.origin ignores embedded credentials, so check them separately —
+  // URL.origin ignores embedded credentials, so check them separately -
   // "https://user:pass@example.com/" must not reach the scanner (spec §11).
   if (resolved.username !== "" || resolved.password !== "") return rejection;
 

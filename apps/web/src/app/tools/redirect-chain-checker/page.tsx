@@ -56,7 +56,7 @@ export default function RedirectChainCheckerPage() {
             and search engines pass less authority through each extra hop. A URL that goes{" "}
             <span className="font-mono text-[13px] text-ink">http → https → www → final</span>{" "}
             is three hops where one would do. Chains longer than two hops are worth fixing;
-            loops — where a URL eventually redirects back to itself — break the page outright.
+            loops - where a URL eventually redirects back to itself - break the page outright.
           </p>
           <p>
             This checker requests your URL and follows the Location header manually, hop by

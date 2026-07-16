@@ -18,7 +18,7 @@ async function getOwnedChange(workspaceId: string, changeId: string) {
   });
 }
 
-/** List a change's notes (read-only — viewers included). */
+/** List a change's notes (read-only - viewers included). */
 export async function GET(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -35,7 +35,7 @@ export async function GET(_request: Request, { params }: Params) {
   return NextResponse.json({ notes });
 }
 
-/** Add a note to a change (mutation — viewers are read-only). */
+/** Add a note to a change (mutation - viewers are read-only). */
 export async function POST(request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

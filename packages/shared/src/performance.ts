@@ -1,14 +1,14 @@
 /**
- * Performance-drop alert decision (Lighthouse). Pure function only — the
+ * Performance-drop alert decision (Lighthouse). Pure function only - the
  * worker (apps/worker/src/lighthouse-audit.ts) does the IO and delegates the
  * "should this drop alert?" decision here so the rule is unit-testable.
  *
- * THE DROP RULE — alert when the performance score of a completed audit fell
+ * THE DROP RULE - alert when the performance score of a completed audit fell
  * by at least PERFORMANCE_DROP_THRESHOLD points versus the previous completed
  * audit of the SAME url, and the previous score was at least
  * PERFORMANCE_DROP_MIN_BASELINE. Rationale: a ≥15-point fall on a healthy or
  * middling score is a real regression worth an email; a site already scoring
- * below 30 is known-bad and bouncing around the bottom — alerting on its
+ * below 30 is known-bad and bouncing around the bottom - alerting on its
  * noise would train users to ignore us (spec §25, low false positives).
  */
 
@@ -22,9 +22,9 @@ export const PERFORMANCE_DROP_MIN_BASELINE = 30;
  * Decide whether a completed audit's performance score warrants a drop alert.
  *
  * @param previousScore performance score of the previous completed audit of
- *   the same url — null when there is no previous audit (first audit) or it
+ *   the same url - null when there is no previous audit (first audit) or it
  *   had no performance score.
- * @param currentScore performance score of the audit that just completed —
+ * @param currentScore performance score of the audit that just completed -
  *   null when Lighthouse produced no score.
  */
 export function shouldAlertPerformanceDrop(

@@ -3,7 +3,7 @@
  * and generic webhooks. Shared by the worker (scan fan-out) and the web app
  * (channel CRUD + "send test").
  *
- * SECURITY: channel URLs are user-supplied fetch targets — a classic SSRF
+ * SECURITY: channel URLs are user-supplied fetch targets - a classic SSRF
  * vector. validateChannelUrl() enforces pure shape rules (https, no
  * credentials, per-type host prefixes); dispatchChannelMessage() additionally
  * runs the full SSRF guard (assertSafeUrl) before every fetch so DNS
@@ -205,7 +205,7 @@ export async function dispatchChannelMessage(
   const prepared = prepareRequest(channel.type, channel.configuration, message);
   if ("error" in prepared) return { ok: false, error: prepared.error };
 
-  // Re-validate at send time — DNS may have changed since the channel was
+  // Re-validate at send time - DNS may have changed since the channel was
   // created (rebinding), and dispatch runs unattended in the worker.
   try {
     await assertSafeUrl(prepared.url);

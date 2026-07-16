@@ -62,14 +62,14 @@ export function BackupCodesPanel({ codes }: { codes: string[] }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard unavailable — codes remain visible to copy by hand.
+      // Clipboard unavailable - codes remain visible to copy by hand.
     }
   }
 
   return (
-    <div className="rounded-xl border border-line bg-panel p-4">
+    <div className="rounded-xl border border-line bg-card p-4">
       <p className="text-[13px] font-medium text-ink">
-        Backup codes — store these somewhere safe.
+        Backup codes - store these somewhere safe.
       </p>
       <p className="mt-1 text-[12px] leading-5 text-ink-secondary">
         Each code signs you in once if you lose access to your authenticator app. They are shown

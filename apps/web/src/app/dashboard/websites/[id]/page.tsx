@@ -12,6 +12,8 @@ import {
 } from "@mykavo/database";
 import { daysUntil, parseSelectorList } from "@mykavo/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { getWorkspacePlan } from "@/lib/limits";
+import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
 import { ScanStatusBadge } from "@/components/dashboard/scan-status";
@@ -37,7 +39,7 @@ import { ComparisonSettings } from "./comparison-settings";
 import { StatusBadgeSettings } from "./status-badge-settings";
 import { StatusPageSettings } from "./status-page-settings";
 
-/** Time windows for the health queries — one clock read per request. */
+/** Time windows for the health queries - one clock read per request. */
 function healthWindows(windowDays: number): {
   now: Date;
   since24h: Date;
@@ -129,7 +131,7 @@ export default async function WebsiteDetailPage({
     ? daysUntil(latestHealth.sslValidTo, now)
     : null;
   const formatUptime = (p: number | null) =>
-    p === null ? "—" : `${p === 100 ? "100" : p.toFixed(1)}%`;
+    p === null ? "-" : `${p === 100 ? "100" : p.toFixed(1)}%`;
 
   const auditViews: AuditView[] = website.performanceAudits.map((a) => ({
     id: a.id,
@@ -164,6 +166,14 @@ export default async function WebsiteDetailPage({
   const hasFinishedScan = website.scans.some(
     (s) => s.status === "COMPLETED" || s.status === "PARTIAL",
   );
+  // Live scan awareness: while a scan is queued/running the Run button is
+  // replaced by a progress link and the page auto-refreshes, so the button
+  // can never race an in-flight scan into a confusing 409.
+  const activeScan = website.scans.find(
+    (s) => s.status === "QUEUED" || s.status === "RUNNING",
+  );
+  const plan = await getWorkspacePlan(workspace.id);
+  const canManualScan = plan.limits.manualScans;
   const pagesWithBaseline = website.monitoredPages.filter(
     (p) => p.baselines.length > 0,
   ).length;
@@ -216,9 +226,35 @@ export default async function WebsiteDetailPage({
           </div>
           <div className="flex items-center gap-4">
             <WebsiteStatusBadge status={website.status} />
-            {website.monitoredPages.length > 0 && (
-              <RunScanButton websiteId={website.id} isFirstScan={!hasFinishedScan} />
-            )}
+            {activeScan ? (
+              <>
+                <AutoRefresh intervalMs={4000} />
+                <Link
+                  href={`/dashboard/scans/${activeScan.id}`}
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-primary-soft px-6 text-sm font-medium text-primary"
+                >
+                  <span
+                    aria-hidden
+                    className="size-2 animate-pulse rounded-full bg-primary"
+                  />
+                  {activeScan.triggerType === "BASELINE"
+                    ? "Baseline scan in progress"
+                    : "Scan in progress"}
+                </Link>
+              </>
+            ) : website.monitoredPages.length > 0 ? (
+              !hasFinishedScan || canManualScan ? (
+                <RunScanButton websiteId={website.id} isFirstScan={!hasFinishedScan} />
+              ) : (
+                <p className="max-w-55 text-right text-[12px] leading-5 text-ink-faint">
+                  Scans run automatically on your plan&apos;s schedule.{" "}
+                  <Link href="/dashboard/billing" className="font-medium text-primary hover:underline">
+                    Upgrade to Pro
+                  </Link>{" "}
+                  for on-demand scans.
+                </p>
+              )
+            ) : null}
           </div>
         </div>
       </div>
@@ -273,7 +309,7 @@ export default async function WebsiteDetailPage({
           <p className="text-3xl font-semibold tracking-tight text-ink">
             {website.lastScanAt
               ? website.lastScanAt.toLocaleDateString("en-US", { dateStyle: "medium" })
-              : "—"}
+              : "-"}
           </p>
         </Card>
       </div>
@@ -348,7 +384,7 @@ export default async function WebsiteDetailPage({
                 </>
               ) : (
                 <p className="text-xl font-semibold tracking-tight text-ink-faint">
-                  {website.url.startsWith("https:") ? "—" : "No HTTPS"}
+                  {website.url.startsWith("https:") ? "-" : "No HTTPS"}
                 </p>
               )}
             </div>
@@ -399,7 +435,7 @@ export default async function WebsiteDetailPage({
           <h3 className="text-[13px] font-semibold text-ink">Incident history</h3>
           {incidents.length === 0 ? (
             <p className="py-3 text-[13px] text-ink-secondary">
-              No incidents recorded — downtime and expiring SSL certificates will show
+              No incidents recorded - downtime and expiring SSL certificates will show
               up here.
             </p>
           ) : (
@@ -450,7 +486,7 @@ export default async function WebsiteDetailPage({
         />
       </Card>
 
-      {/* SEO health report (built from the latest scan — no extra queries here) */}
+      {/* SEO health report (built from the latest scan - no extra queries here) */}
       <Card>
         <CardHeader
           title="SEO health"

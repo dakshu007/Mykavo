@@ -1,6 +1,6 @@
 /**
  * HTTP status → human label + tone. Pure, client-safe (used to render
- * colored status badges — always color AND text, never color alone).
+ * colored status badges - always color AND text, never color alone).
  */
 
 export type StatusTone = "success" | "redirect" | "clientError" | "serverError" | "info";

@@ -1,7 +1,7 @@
 /**
  * Known third-party script services (spec §21).
  * Single source of truth for mapping a script URL to a recognizable service
- * name — used by the free tools and the comparison engine. Keep the list
+ * name - used by the free tools and the comparison engine. Keep the list
  * ordered: more specific patterns (e.g. gtag.js) before broader ones (GTM).
  */
 

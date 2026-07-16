@@ -1,7 +1,7 @@
 /**
- * Embeddable uptime status badge — a shields.io-style SVG shield rendered by
+ * Embeddable uptime status badge - a shields.io-style SVG shield rendered by
  * the public /api/badge/[token] route. Pure functions only: no I/O, no
- * user-controlled strings — the badge contains fixed words and formatted
+ * user-controlled strings - the badge contains fixed words and formatted
  * numbers exclusively (the website name never appears; tokens are shareable
  * but anonymous).
  */
@@ -37,7 +37,7 @@ export function badgeLabel(input: StatusBadgeInput): string {
   return input.status;
 }
 
-/** Approximate Verdana 11px text width — keeps the generator pure. */
+/** Approximate Verdana 11px text width - keeps the generator pure. */
 function textWidth(text: string): number {
   return Math.round(text.length * 6.5);
 }

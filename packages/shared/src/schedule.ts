@@ -1,5 +1,5 @@
 /**
- * Pure scheduling helpers (spec §40). No I/O — trivially testable and shared
+ * Pure scheduling helpers (spec §40). No I/O - trivially testable and shared
  * by the scheduler sweep (worker) and any UI that previews the next scan.
  */
 

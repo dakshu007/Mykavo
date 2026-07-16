@@ -93,14 +93,14 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
       }
       setNotice(
         nextStatus === "PUBLISHED"
-          ? "Published — live on /blog."
+          ? "Published - live on /blog."
           : isPublished
-            ? "Unpublished — back to draft."
+            ? "Unpublished - back to draft."
             : "Draft saved.",
       );
       router.refresh();
     } catch {
-      setError("Network error — your changes were not saved.");
+      setError("Network error - your changes were not saved.");
     } finally {
       setSaving(null);
     }
@@ -161,7 +161,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
               className={cn(fieldClass, "font-mono text-sm")}
             />
             <p className="mt-1.5 text-[13px] text-ink-faint">
-              /blog/{slug || "…"} — lowercase letters, numbers, and hyphens.
+              /blog/{slug || "…"} - lowercase letters, numbers, and hyphens.
             </p>
           </div>
 

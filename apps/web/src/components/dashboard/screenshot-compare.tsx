@@ -11,7 +11,7 @@ import {
 } from "@/lib/screenshot-compare";
 
 /**
- * Before/after screenshot comparison (spec §33 — "Make comparison extremely
+ * Before/after screenshot comparison (spec §33 - "Make comparison extremely
  * easy"). Three modes behind a segmented pill control: side by side, a
  * draggable slider (pointer + keyboard), and the pixel-diff overlay when the
  * comparison engine produced one. All images live in identical aspect boxes
@@ -180,7 +180,7 @@ export function ScreenshotCompare({
           <button
             type="button"
             role="slider"
-            aria-label="Comparison divider — left/right arrows move it, Home and End snap to the edges"
+            aria-label="Comparison divider - left/right arrows move it, Home and End snap to the edges"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(percent)}
@@ -212,7 +212,7 @@ export function ScreenshotCompare({
   );
 }
 
-/** Before/After pill chip — a colored dot paired with a text label. */
+/** Before/After pill chip - a colored dot paired with a text label. */
 function LabelChip({
   kind,
   label,
@@ -242,7 +242,7 @@ function LabelChip({
   );
 }
 
-/** Fixed-aspect screenshot tile — reserves space before the image loads. */
+/** Fixed-aspect screenshot tile - reserves space before the image loads. */
 function Shot({ src, alt }: { src?: string | null; alt: string }) {
   if (!src) {
     return (

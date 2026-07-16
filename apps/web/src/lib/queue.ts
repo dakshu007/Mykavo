@@ -1,5 +1,5 @@
 /**
- * Job queue producer for the web app. Enqueue only — jobs are consumed by
+ * Job queue producer for the web app. Enqueue only - jobs are consumed by
  * apps/worker. pg-boss rides on the existing PostgreSQL instance.
  */
 
@@ -18,7 +18,7 @@ async function createBoss(): Promise<PgBoss> {
   const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: "pgboss" });
   await boss.start();
   // Retry/expiry policy lives on the queue in pg-boss v12. createQueue is
-  // idempotent (the worker also ensures these) — ignore "already exists".
+  // idempotent (the worker also ensures these) - ignore "already exists".
   await boss
     .createQueue(SCAN_WEBSITE_QUEUE, {
       retryLimit: 2,
@@ -33,7 +33,16 @@ async function createBoss(): Promise<PgBoss> {
 }
 
 function getBoss(): Promise<PgBoss> {
-  if (!globalForBoss.boss) globalForBoss.boss = createBoss();
+  if (!globalForBoss.boss) {
+    globalForBoss.boss = createBoss().catch((err) => {
+      // Never memoize a FAILED connection: a transient DB hiccup on the first
+      // enqueue (e.g. cold start right after a deploy) would otherwise make
+      // every later "Run scan" fail with the same cached rejection until the
+      // process restarts.
+      globalForBoss.boss = undefined;
+      throw err;
+    });
+  }
   return globalForBoss.boss;
 }
 

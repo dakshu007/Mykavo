@@ -47,7 +47,7 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
       setWebsiteId(created.website.id);
       track("website_added");
 
-      setPhase("Discovering pages — checking sitemaps and homepage links…");
+      setPhase("Discovering pages - checking sitemaps and homepage links…");
       const discovery = await requestJson<{
         pages: SelectablePage[];
         warnings: string[];
@@ -138,7 +138,7 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
           </button>
           <p className="text-[13px] leading-5 text-ink-faint">
             MyKavo fetches the homepage, robots.txt, and sitemaps to find your pages. Only
-            public pages are read — nothing is stored until you choose what to monitor.
+            public pages are read - nothing is stored until you choose what to monitor.
           </p>
         </form>
       </Card>

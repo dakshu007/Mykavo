@@ -13,7 +13,7 @@ import {
 } from "@/lib/health-charts";
 
 /**
- * Average response time over the selected window — hand-rolled SVG area/line
+ * Average response time over the selected window - hand-rolled SVG area/line
  * chart, responsive via viewBox, server-rendered. X is time-proportional so
  * monitoring gaps show as real holes in the line (splitTimeSegments breaks
  * runs on missing buckets), never bridged. Dots appear only for sparse data;
@@ -140,7 +140,7 @@ export function ResponseTimeChart({
                 strokeLinecap="round"
               />
             ) : (
-              // A run of one bucket has no line — mark it so it stays visible.
+              // A run of one bucket has no line - mark it so it stays visible.
               <circle
                 cx={segment[0].x.toFixed(1)}
                 cy={segment[0].y.toFixed(1)}

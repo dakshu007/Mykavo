@@ -20,7 +20,7 @@ type TabId = (typeof tabs)[number]["id"];
 
 /**
  * Interactive dashboard preview (static sample data). The floating-sheet
- * composition — header, tab pills, content on a soft surface — follows the
+ * composition - header, tab pills, content on a soft surface - follows the
  * approved design reference.
  */
 export function DashboardPreview({ className }: { className?: string }) {

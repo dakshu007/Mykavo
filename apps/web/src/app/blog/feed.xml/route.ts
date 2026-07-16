@@ -14,7 +14,7 @@ function xmlEscape(text: string): string {
     .replace(/'/g, "&apos;");
 }
 
-/** RSS 2.0 feed of published posts — small SEO/distribution win. */
+/** RSS 2.0 feed of published posts - small SEO/distribution win. */
 export async function GET() {
   const posts = await prisma.blogPost.findMany({
     where: { status: "PUBLISHED" },

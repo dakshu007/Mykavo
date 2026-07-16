@@ -31,6 +31,31 @@ import {
 
 const VIEWPORT = { width: 1440, height: 900 };
 const MAX_SCREENSHOT_HEIGHT = 8000;
+/** Stored screenshot budget — keeps object storage lean (spec §60). */
+const MAX_SCREENSHOT_BYTES = 200 * 1024;
+
+/**
+ * Re-encode a screenshot down to the storage budget: descending JPEG quality
+ * first, then a width downscale as the last resort. Returns the original
+ * buffer untouched when it is already within budget, and falls back to the
+ * best-effort smallest output if even the floor stays above it.
+ */
+async function compressScreenshot(raw: Buffer): Promise<Buffer> {
+  if (raw.length <= MAX_SCREENSHOT_BYTES) return raw;
+  // sharp is ESM/worker-side only — dynamic import keeps web bundles clean.
+  const { default: sharp } = await import("sharp");
+  let smallest = raw;
+  for (const quality of [70, 60, 50, 40]) {
+    const out = await sharp(raw).jpeg({ quality, mozjpeg: true }).toBuffer();
+    if (out.length < smallest.length) smallest = out;
+    if (out.length <= MAX_SCREENSHOT_BYTES) return out;
+  }
+  const downscaled = await sharp(raw)
+    .resize({ width: 1024, withoutEnlargement: true })
+    .jpeg({ quality: 55, mozjpeg: true })
+    .toBuffer();
+  return downscaled.length < smallest.length ? downscaled : smallest;
+}
 // Solid block painted over masked elements (spec §25). A fixed opaque color
 // keeps masked regions byte-identical between scans regardless of content.
 const MASK_COLOR = "#0f172a";
@@ -243,12 +268,15 @@ export async function scanPage(
       maskLocators = validMaskSelectors.map((selector) => page.locator(selector));
     }
 
-    // Deterministic screenshot (spec §17), height-capped.
+    // Deterministic screenshot (spec §17), height-capped. Stored artifacts
+    // are compressed to ≤200 KB (storage cost control, spec §60) — the hash
+    // is computed on the FINAL stored bytes so baseline and current always
+    // compare through the identical encode pipeline.
     let screenshotStorageKey: string | null = null;
     let screenshotHash: string | null = null;
     try {
       const bodyHeight = await page.evaluate(() => document.body?.scrollHeight ?? 0);
-      const screenshot = await page.screenshot({
+      const raw = await page.screenshot({
         type: "jpeg",
         quality: 80,
         ...(maskLocators.length > 0 ? { mask: maskLocators, maskColor: MASK_COLOR } : {}),
@@ -256,6 +284,7 @@ export async function scanPage(
           ? { clip: { x: 0, y: 0, width: VIEWPORT.width, height: MAX_SCREENSHOT_HEIGHT } }
           : { fullPage: true }),
       });
+      const screenshot = await compressScreenshot(raw);
       screenshotHash = sha256(screenshot);
       screenshotStorageKey = `${options.artifactPrefix}/screenshot.jpg`;
       await storage.put(screenshotStorageKey, screenshot, "image/jpeg");

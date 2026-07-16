@@ -65,7 +65,7 @@ export async function checkUrlStatus(
 
     for (;;) {
       let response = await fetchOnce(fetchImpl, current.href, "HEAD", timeoutMs, userAgent);
-      // Some servers reject HEAD outright — retry with GET.
+      // Some servers reject HEAD outright - retry with GET.
       if (response.status === 405 || response.status === 501) {
         response = await fetchOnce(fetchImpl, current.href, "GET", timeoutMs, userAgent);
       }
@@ -81,7 +81,7 @@ export async function checkUrlStatus(
             return fail(SAFE_FETCH_USER_MESSAGES.INVALID_URL);
           }
           redirects++;
-          // Re-validate every hop — redirects are untrusted input.
+          // Re-validate every hop - redirects are untrusted input.
           current = await validateUrl(next);
           continue;
         }

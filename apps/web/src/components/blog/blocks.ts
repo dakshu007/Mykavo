@@ -10,7 +10,7 @@ import { slugify } from "@/lib/slugify";
  * The public post page and the editor live preview both render from this
  * parse, so the preview always matches what readers see.
  *
- * Unknown or malformed shortcodes are left in the markdown untouched — they
+ * Unknown or malformed shortcodes are left in the markdown untouched - they
  * render as plain text and never crash the page.
  */
 
@@ -23,7 +23,7 @@ export interface PostHeading {
   depth: 2 | 3;
   /** Plain heading text with inline markdown formatting stripped. */
   text: string;
-  /** Anchor id — slugified text, deduplicated with -2, -3… suffixes. */
+  /** Anchor id - slugified text, deduplicated with -2, -3… suffixes. */
   id: string;
 }
 
@@ -68,7 +68,7 @@ export const BLOCK_SNIPPETS: readonly BlockSnippet[] = [
   {
     command: "faq",
     label: "FAQ section",
-    description: "Q&A accordion — also emits FAQ structured data.",
+    description: "Q&A accordion - also emits FAQ structured data.",
     snippet:
       "{{faq}}\nQ: First question?\nA: First answer.\nQ: Second question?\nA: Second answer.\n{{/faq}}",
   },
@@ -248,7 +248,7 @@ export function parsePost(markdown: string): ParsedPost {
           i = close + 1;
           continue;
         }
-        // Unclosed or empty FAQ block: fall through — renders as plain text.
+        // Unclosed or empty FAQ block: fall through - renders as plain text.
       }
     }
 
@@ -282,7 +282,7 @@ export function parsePost(markdown: string): ParsedPost {
 /**
  * Line-level shortcode and fence tokens, exported so the visual editor's
  * markdown splitter matches this renderer's parsing exactly (additive export
- * — the parsing above is unchanged).
+ * - the parsing above is unchanged).
  */
 export const SHORTCODE_LINE_TOKENS = {
   cta: CTA_TOKEN,
@@ -292,7 +292,7 @@ export const SHORTCODE_LINE_TOKENS = {
   fence: FENCE,
 } as const;
 
-/** All FAQ items across segments — used for FAQPage JSON-LD. */
+/** All FAQ items across segments - used for FAQPage JSON-LD. */
 export function collectFaqItems(segments: readonly BlockSegment[]): FaqItem[] {
   return segments.flatMap((segment) => (segment.type === "faq" ? segment.items : []));
 }

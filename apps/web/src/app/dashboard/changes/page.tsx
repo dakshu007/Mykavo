@@ -74,7 +74,7 @@ export default async function ChangesPage({
       <EmptyState
         icon={GitCompareArrows}
         title="No changes detected yet"
-        description="Once a website is scanned again after its baseline, meaningful changes — visual, SEO, links, scripts, performance — appear here with severity and before-and-after views."
+        description="Once a website is scanned again after its baseline, meaningful changes - visual, SEO, links, scripts, performance - appear here with severity and before-and-after views."
       />
     );
   }
@@ -194,7 +194,7 @@ export default async function ChangesPage({
           <div className="py-10 text-center">
             <p className="text-sm font-medium text-ink">No open changes</p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-ink-secondary">
-              You&apos;re all caught up — everything detected has been approved, resolved, or
+              You&apos;re all caught up - everything detected has been approved, resolved, or
               ignored.
             </p>
             <Link

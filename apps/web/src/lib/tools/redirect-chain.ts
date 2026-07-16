@@ -99,7 +99,7 @@ export async function followRedirectChain(
       clearTimeout(timer);
     }
 
-    // Statuses only — never read response bodies.
+    // Statuses only - never read response bodies.
     void response.body?.cancel();
     steps.push({ url: current.href, status: response.status });
 
@@ -109,7 +109,7 @@ export async function followRedirectChain(
 
     const location = response.headers.get("location");
     if (!location) {
-      // 3xx without a Location header goes nowhere — treat as terminal.
+      // 3xx without a Location header goes nowhere - treat as terminal.
       return result({ completed: true, finalUrl: current.href, finalStatus: response.status });
     }
 

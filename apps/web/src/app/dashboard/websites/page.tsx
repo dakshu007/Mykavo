@@ -38,7 +38,7 @@ export default async function WebsitesPage({
   ]);
 
   const atLimit = websites.length >= websiteLimit;
-  // Maintenance window chip — a past muteAlertsUntil simply means not muted.
+  // Maintenance window chip - a past muteAlertsUntil simply means not muted.
   const now = new Date();
 
   if (websites.length === 0) {
@@ -59,7 +59,7 @@ export default async function WebsitesPage({
     );
   }
 
-  // Tag filtering happens on the already-loaded array — workspace site
+  // Tag filtering happens on the already-loaded array - workspace site
   // counts are small, and the filter bar needs every site's tags anyway.
   const tagged = websites.map((w) => ({ ...w, tags: parseTags(w.tags) }));
   const tagCounts = new Map<string, number>();
@@ -124,7 +124,7 @@ export default async function WebsitesPage({
                 href="/dashboard/billing"
                 className="rounded-full bg-surface px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:text-primary"
               >
-                {plan.id === "pro" ? "Add capacity" : `${plan.name} limit reached — upgrade`}
+                {plan.id === "pro" ? "Add capacity" : `${plan.name} limit reached - upgrade`}
               </Link>
             ) : (
               <Link

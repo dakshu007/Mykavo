@@ -16,8 +16,8 @@ import {
 import { assertSafeUrl, UnsafeUrlError } from "./ssrf";
 
 const MESSAGE: ChannelMessage = {
-  title: "3 changes detected on example.com — highest: HIGH",
-  lines: ["1 HIGH · 2 MEDIUM", "[HIGH] Title changed — /pricing"],
+  title: "3 changes detected on example.com - highest: HIGH",
+  lines: ["1 HIGH · 2 MEDIUM", "[HIGH] Title changed - /pricing"],
   url: "https://mykavo.app/dashboard/scans/scan_1",
   severity: "HIGH",
 };
@@ -153,9 +153,9 @@ describe("formatSlackPayload", () => {
   it("produces mrkdwn text with bold title, bullets, and link", () => {
     expect(formatSlackPayload(MESSAGE)).toEqual({
       text: [
-        "*3 changes detected on example.com — highest: HIGH*",
+        "*3 changes detected on example.com - highest: HIGH*",
         "• 1 HIGH · 2 MEDIUM",
-        "• [HIGH] Title changed — /pricing",
+        "• [HIGH] Title changed - /pricing",
         "<https://mykavo.app/dashboard/scans/scan_1|View in MyKavo>",
       ].join("\n"),
     });
@@ -172,9 +172,9 @@ describe("formatDiscordPayload", () => {
   it("produces markdown content with bold title, bullets, and link", () => {
     expect(formatDiscordPayload(MESSAGE)).toEqual({
       content: [
-        "**3 changes detected on example.com — highest: HIGH**",
+        "**3 changes detected on example.com - highest: HIGH**",
         "- 1 HIGH · 2 MEDIUM",
-        "- [HIGH] Title changed — /pricing",
+        "- [HIGH] Title changed - /pricing",
         "https://mykavo.app/dashboard/scans/scan_1",
       ].join("\n"),
     });

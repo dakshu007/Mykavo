@@ -32,7 +32,7 @@ describe("dayLevel", () => {
 
 describe("formatUptime", () => {
   it("shows a dash when no checks exist", () => {
-    expect(formatUptime(null)).toBe("—");
+    expect(formatUptime(null)).toBe("-");
   });
 
   it("shows exactly 100 without decimals", () => {

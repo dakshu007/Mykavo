@@ -1,6 +1,6 @@
 /**
  * Weekly report shaping (spec §37 "client-ready reports"). Pure functions
- * only — the worker sweep (apps/worker/src/report.ts) gathers the raw counts
+ * only - the worker sweep (apps/worker/src/report.ts) gathers the raw counts
  * and delegates ALL presentation decisions here (period label, severity
  * ordering, rounding, "all quiet" detection) so they are unit-testable
  * without a database. The output is exactly the input of the
@@ -11,7 +11,7 @@ import { daysUntil, SSL_EXPIRY_THRESHOLD_DAYS } from "./health";
 
 export type ReportSeverity = "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
-/** Highest first — the order the email lists the breakdown in. */
+/** Highest first - the order the email lists the breakdown in. */
 export const REPORT_SEVERITY_ORDER: readonly ReportSeverity[] = [
   "CRITICAL",
   "HIGH",
@@ -52,7 +52,7 @@ export interface ReportRawData {
   dashboardUrl: string;
 }
 
-/** Shaped template input — see `weeklyReportEmail` in @mykavo/email. */
+/** Shaped template input - see `weeklyReportEmail` in @mykavo/email. */
 export interface WeeklyReportModel {
   websiteName: string;
   websiteHost: string;
@@ -70,7 +70,7 @@ export interface WeeklyReportModel {
   /** Whole days until certificate expiry, or null when unknown. */
   sslDaysLeft: number | null;
   lighthouse: ReportLighthouseScores | null;
-  /** True when there is nothing to worry about — the reassuring variant. */
+  /** True when there is nothing to worry about - the reassuring variant. */
   allQuiet: boolean;
   dashboardUrl: string;
 }

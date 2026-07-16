@@ -118,7 +118,7 @@ export function MetaTagChecker() {
               </p>
             </div>
             <p className="mb-4 truncate font-mono text-xs text-ink-faint">
-              {report.finalUrl} — HTTP {report.httpStatus}
+              {report.finalUrl} - HTTP {report.httpStatus}
             </p>
             <ul className="divide-y divide-line">
               {checks.map((check) => (
@@ -128,8 +128,8 @@ export function MetaTagChecker() {
           </Card>
 
           <ToolCta
-            heading="Monitor these tags automatically — get alerted when they change."
-            body="MyKavo re-checks titles, descriptions, canonicals, and robots meta on every page you monitor, on a schedule — and emails you when something important changes or disappears."
+            heading="Monitor these tags automatically - get alerted when they change."
+            body="MyKavo re-checks titles, descriptions, canonicals, and robots meta on every page you monitor, on a schedule - and emails you when something important changes or disappears."
             tool="meta-tag-checker"
           />
         </>

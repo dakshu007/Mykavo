@@ -4,14 +4,8 @@
  * @mykavo/database (the webhook applies them inside a transaction).
  */
 
-import {
-  prisma,
-  getWorkspaceEntitlement,
-  getWorkspaceAddonWebsites,
-  listActiveWebsiteAddons,
-  type ActiveWebsiteAddon,
-} from "@mykavo/database";
-import { getPlan, WEBSITE_ADDON, type Plan } from "@/config/plans";
+import { prisma, getWorkspaceEntitlement } from "@mykavo/database";
+import { getPlan, type Plan } from "@/config/plans";
 
 export interface WorkspaceSubscription {
   planId: "free" | "pro";
@@ -36,25 +30,11 @@ export async function getWorkspaceSubscription(
 }
 
 /**
- * A workspace's effective website limit: the plan base plus any active
- * self-serve add-ons. Add-ons only extend paid plans (Free stays at its base)
- * and their total contribution is capped defensively at the configured
- * maximum (maxUnits × websitesPerUnit), regardless of what the billing rows
- * say. Returns Infinity only if a plan ever declares unlimited websites.
+ * A workspace's effective website limit. This is simply the plan's base limit
+ * since the self-serve website add-on was retired (2026-07-17); the helper
+ * stays so enforcement keeps one entry point if capacity math ever returns.
  */
 export async function getEffectiveWebsiteLimit(workspaceId: string): Promise<number> {
   const plan = await getWorkspacePlan(workspaceId);
-  const base = plan.limits.websites;
-  if (base === Infinity) return Infinity;
-  const extra =
-    plan.id === "pro" ? await getWorkspaceAddonWebsites(prisma, workspaceId) : 0;
-  const maxExtra = WEBSITE_ADDON.maxUnits * WEBSITE_ADDON.websitesPerUnit;
-  return base + Math.min(extra, maxExtra);
-}
-
-/** Active website add-ons for a workspace (billing display). */
-export async function getWorkspaceAddons(
-  workspaceId: string,
-): Promise<ActiveWebsiteAddon[]> {
-  return listActiveWebsiteAddons(prisma, workspaceId);
+  return plan.limits.websites;
 }

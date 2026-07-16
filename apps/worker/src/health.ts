@@ -1,7 +1,7 @@
 /**
  * Site-health sweep (uptime + SSL expiry). Runs on a pg-boss cron every
- * HEALTH_CRON (default 5 minutes): one plain GET per ACTIVE website — no
- * Playwright — recording the result and driving the incident state machine
+ * HEALTH_CRON (default 5 minutes): one plain GET per ACTIVE website - no
+ * Playwright - recording the result and driving the incident state machine
  * in @mykavo/shared. Alerts go through email and the workspace's chat
  * channels. Framed as site health inside change monitoring, not a
  * standalone uptime product (spec §1).
@@ -130,7 +130,7 @@ async function alertHealth(
   severity: string,
 ): Promise<void> {
   // Maintenance window (spec §25): incidents are still recorded by the
-  // callers — just don't send anything (no emails, channels, or rows).
+  // callers - just don't send anything (no emails, channels, or rows).
   if (website.muteAlertsUntil && website.muteAlertsUntil > new Date()) {
     logger.info("alerts muted, skipped", {
       websiteId: website.id,
@@ -232,7 +232,7 @@ async function checkWebsite(website: HealthWebsite): Promise<void> {
     );
     logger.info("down incident resolved", { websiteId: website.id, workspaceId: website.workspaceId, downFor });
   } else if (!result.up && openDown && shouldRenotify(openDown.lastNotifiedAt, now)) {
-    // Still down 24h+ after the last alert — remind once a day.
+    // Still down 24h+ after the last alert - remind once a day.
     const reason = describeFailure(result);
     const downFor = formatDowntime(now.getTime() - openDown.openedAt.getTime());
     await alertHealth(
@@ -274,7 +274,7 @@ async function checkWebsite(website: HealthWebsite): Promise<void> {
       workspaceId: website.workspaceId,
     });
   } else if (openSsl && sslValidTo && shouldRenotify(openSsl.lastNotifiedAt, now)) {
-    // Still expiring — daily reminder with the updated countdown.
+    // Still expiring - daily reminder with the updated countdown.
     const daysLeft = daysUntil(sslValidTo, now);
     const expiresOn = sslValidTo.toLocaleDateString("en-US", { dateStyle: "medium" });
     await alertHealth(

@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 /**
  * Gutenberg-style "/" block menu for the visual editor. Typing "/" at the
  * start of a paragraph opens the menu; the query after the slash filters it.
- * Rendering and keyboard state live in VisualEditor — this module provides
+ * Rendering and keyboard state live in VisualEditor - this module provides
  * the items, the Suggestion-based extension, and the popup markup.
  */
 
@@ -38,7 +38,7 @@ export function buildSlashItems(actions: { insertImage: () => void }): SlashMenu
   return [
     {
       title: "Heading 2",
-      description: "Section heading — shows in the table of contents.",
+      description: "Section heading - shows in the table of contents.",
       icon: Heading2,
       keywords: "h2 heading section",
       run: (editor, range) =>
@@ -130,7 +130,7 @@ export function buildSlashItems(actions: { insertImage: () => void }): SlashMenu
     },
     {
       title: "FAQ section",
-      description: "Q&A accordion — also emits FAQ structured data.",
+      description: "Q&A accordion - also emits FAQ structured data.",
       icon: MessageCircleQuestion,
       keywords: "faq questions answers accordion",
       run: (editor, range) =>
@@ -178,7 +178,7 @@ export function createSlashCommandExtension(
           char: "/",
           startOfLine: true,
           allowSpaces: false,
-          // Only inside plain paragraphs — never in code blocks or headings.
+          // Only inside plain paragraphs - never in code blocks or headings.
           allow: ({ state, range }) =>
             state.doc.resolve(range.from).parent.type.name === "paragraph",
           command: ({ editor, range, props }) => props.run(editor, range),

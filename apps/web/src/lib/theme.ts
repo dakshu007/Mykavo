@@ -55,7 +55,7 @@ export function cycleThemePreference(current: ThemePreference): ThemePreference 
 // Browser-only store (no-ops on the server).
 // ---------------------------------------------------------------------------
 
-/** Same-document change signal — localStorage's "storage" event only fires in OTHER tabs. */
+/** Same-document change signal - localStorage's "storage" event only fires in OTHER tabs. */
 const THEME_CHANGE_EVENT = "mykavo-theme-change";
 
 export function readStoredThemePreference(): ThemePreference {
@@ -80,7 +80,7 @@ export function setThemePreference(preference: ThemePreference): void {
   try {
     window.localStorage.setItem(THEME_STORAGE_KEY, preference);
   } catch {
-    // Persistence unavailable (private mode etc.) — still apply for this page.
+    // Persistence unavailable (private mode etc.) - still apply for this page.
   }
   applyThemePreference(preference);
   window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
@@ -91,7 +91,7 @@ export function subscribeToThemePreference(onChange: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const onStorage = (event: StorageEvent) => {
     if (event.key === null || event.key === THEME_STORAGE_KEY) {
-      // Another tab changed it — mirror the attribute here too.
+      // Another tab changed it - mirror the attribute here too.
       applyThemePreference(readStoredThemePreference());
       onChange();
     }

@@ -31,7 +31,7 @@ function useThemePreference(): ThemePreference {
 }
 
 /**
- * Three-state segmented theme control (System / Light / Dark) — dashboard
+ * Three-state segmented theme control (System / Light / Dark) - dashboard
  * sidebar bottom area. Icon-only buttons, labelled for screen readers.
  */
 export function ThemeToggle({ className }: { className?: string }) {
@@ -69,7 +69,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 }
 
 /**
- * Compact icon button for the marketing nav — cycles system → light → dark,
+ * Compact icon button for the marketing nav - cycles system → light → dark,
  * showing the current preference's icon.
  */
 export function ThemeToggleCompact({ className }: { className?: string }) {
@@ -82,7 +82,7 @@ export function ThemeToggleCompact({ className }: { className?: string }) {
     <button
       type="button"
       onClick={() => setThemePreference(next.value)}
-      aria-label={`${current.label} — switch to ${next.label.toLowerCase()}`}
+      aria-label={`${current.label} - switch to ${next.label.toLowerCase()}`}
       title={current.label}
       className={cn(
         "inline-flex size-9 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-ink/5 hover:text-ink",

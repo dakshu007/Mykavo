@@ -17,7 +17,8 @@
     "aws4fetch": "^1.0.20",
     "chrome-launcher": "^1.2.0",
     "lighthouse": "^12.8.2",
-    "playwright": "^1.58.0"
+    "playwright": "^1.58.0",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "vitest": "^4.1.10"

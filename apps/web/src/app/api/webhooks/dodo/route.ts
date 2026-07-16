@@ -5,9 +5,6 @@ import {
   upgradeWorkspaceToPro,
   downgradeWorkspaceToFree,
   findWorkspaceByDodoSubscription,
-  applyWebsiteAddon,
-  revokeWebsiteAddon,
-  findWorkspaceByAddonSubscription,
   consumeCheckoutIntent,
 } from "@mykavo/database";
 import {
@@ -18,7 +15,7 @@ import {
 import { DODO_WEBHOOK_SECRET } from "@/lib/billing/config";
 import { logger } from "@/lib/logger";
 
-// The raw body is required for signature verification — never parse it first.
+// The raw body is required for signature verification - never parse it first.
 export const dynamic = "force-dynamic";
 
 interface DodoData {
@@ -101,7 +98,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // Idempotency (spec §38) — inside the tx so a crash rolls back BOTH the
+      // Idempotency (spec §38) - inside the tx so a crash rolls back BOTH the
       // dedupe record and the entitlement change (durability fix).
       try {
         await tx.processedWebhookEvent.create({
@@ -114,58 +111,19 @@ export async function POST(request: Request) {
         throw err;
       }
 
-      // Resolve workspace AND route (base plan vs website add-on). An existing
-      // subscription binding wins; otherwise the server-issued checkout intent
-      // supplies both the workspace and the trusted purchase `kind` (never the
-      // client-editable metadata).
+      // Resolve the workspace. An existing subscription binding wins;
+      // otherwise the server-issued checkout intent supplies it (never the
+      // client-editable metadata). Only the Pro plan exists - the former
+      // website add-on route was removed with the feature.
       let workspaceId: string | null = null;
-      let route: "pro" | "website_addon" = "pro";
       if (subscriptionId) {
-        const baseWs = await findWorkspaceByDodoSubscription(tx, subscriptionId);
-        if (baseWs) {
-          workspaceId = baseWs;
-          route = "pro";
-        } else {
-          const addonWs = await findWorkspaceByAddonSubscription(tx, subscriptionId);
-          if (addonWs) {
-            workspaceId = addonWs;
-            route = "website_addon";
-          }
-        }
+        workspaceId = await findWorkspaceByDodoSubscription(tx, subscriptionId);
       }
       if (!workspaceId && token) {
         const intent = await consumeCheckoutIntent(tx, token);
-        if (intent) {
-          workspaceId = intent.workspaceId;
-          route = intent.kind === "website_addon" ? "website_addon" : "pro";
-        }
+        if (intent) workspaceId = intent.workspaceId;
       }
       if (!workspaceId) return "unattributed" as const;
-
-      // --- Website add-on subscriptions (each active row = +30 websites) ---
-      if (route === "website_addon") {
-        if (grants && subscriptionId) {
-          await applyWebsiteAddon(tx, {
-            workspaceId,
-            dodoSubscriptionId: subscriptionId,
-            dodoCustomerId: data.customer?.customer_id ?? null,
-            status: "active",
-            currentPeriodEnd: parseDate(data.next_billing_date),
-            cancelAtPeriodEnd: data.cancel_at_next_billing_date ?? false,
-            eventAt,
-          });
-          return "addon_activated" as const;
-        }
-        if (revokes && subscriptionId) {
-          await revokeWebsiteAddon(tx, {
-            dodoSubscriptionId: subscriptionId,
-            status: status || "cancelled",
-            eventAt,
-          });
-          return "addon_revoked" as const;
-        }
-        return "noop" as const;
-      }
 
       // --- Base Pro plan ---
       if (grants) {

@@ -11,7 +11,7 @@ import { PROFILE_NAME_MAX_LENGTH, profileUpdateSchema } from "./schema";
  *
  * Better Auth 1.6 ships authClient.updateUser, but its /update-user endpoint
  * types the body as a loose record and applies no image size/format checks
- * server-side — so this route validates strictly with zod (schema.ts) and
+ * server-side - so this route validates strictly with zod (schema.ts) and
  * writes via prisma instead. Never trust the client's canvas resizing.
  *
  * Avatars live in OBJECT STORAGE (R2), never in Postgres: the client still

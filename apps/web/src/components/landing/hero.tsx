@@ -8,7 +8,7 @@ import { fontDisplay } from "./style";
  * Bright hero (playground/ballpark-style): badge pill, huge Poppins headline
  * with a gold highlighter sweep, honest sub-copy, the product-led URL input,
  * CTA pair, and the browser-chrome dashboard mock as the centerpiece.
- * Fully static server markup — fast, no scroll hijacking.
+ * Fully static server markup - fast, no scroll hijacking.
  */
 export function LandingHero() {
   return (
@@ -44,14 +44,14 @@ export function LandingHero() {
 
         <p className="mx-auto mt-6 max-w-xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg">
           MyKavo watches your websites for visual, SEO, content, link, script, performance, and
-          conversion changes — and alerts you before small problems become expensive ones.
+          conversion changes - and alerts you before small problems become expensive ones.
         </p>
 
-        {/* Product-led URL input — instant value, no signup */}
+        {/* Product-led URL input - instant value, no signup */}
         <div className="mt-9">
           <LandingUrlInput />
           <p className="mt-3 text-center text-[13px] text-[#6B6B60]">
-            Free instant inspection — status, SEO tags, links &amp; scripts. No signup needed.
+            Free instant inspection - status, SEO tags, links &amp; scripts. No signup needed.
           </p>
         </div>
 

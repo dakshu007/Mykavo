@@ -67,7 +67,7 @@ export default async function NotificationsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{n.subject}</p>
                   <p className="truncate text-xs text-ink-faint">
-                    {n.website?.name ?? "—"} · {n.recipient}
+                    {n.website?.name ?? "-"} · {n.recipient}
                     {n.errorMessage ? ` · ${n.errorMessage}` : ""}
                   </p>
                 </div>

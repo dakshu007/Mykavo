@@ -14,7 +14,7 @@ export const WORKSPACE_COOKIE = "mykavo-workspace";
 /** Invites expire this many days after (re-)issue. */
 export const INVITE_TTL_DAYS = 7;
 
-/** Roles an invite may carry — a workspace has exactly one OWNER, ever. */
+/** Roles an invite may carry - a workspace has exactly one OWNER, ever. */
 export const INVITABLE_ROLES = ["ADMIN", "MEMBER", "VIEWER"] as const;
 export type InvitableRole = (typeof INVITABLE_ROLES)[number];
 
@@ -93,7 +93,7 @@ export function emailsMatch(a: string, b: string): boolean {
 
 /**
  * Picks the membership matching the workspace cookie, falling back to the
- * first membership. The cookie is a hint only — it is NEVER trusted without
+ * first membership. The cookie is a hint only - it is NEVER trusted without
  * a verified membership row (spec §59: no client-provided authorization).
  */
 export function resolveWorkspaceSelection<T extends { workspaceId: string }>(
@@ -112,7 +112,7 @@ export function resolveWorkspaceSelection<T extends { workspaceId: string }>(
 
 /**
  * Validates a `?next=` value used to return users to the invite page after
- * sign-in. Only same-origin relative paths are allowed — never absolute URLs,
+ * sign-in. Only same-origin relative paths are allowed - never absolute URLs,
  * protocol-relative ("//evil.com"), backslash tricks, or auth-scheme paths.
  */
 export function safeNextPath(raw: string | null | undefined): string | null {

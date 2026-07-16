@@ -5,7 +5,7 @@ import { getApiContext } from "@/lib/api-auth";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** Serve a change event's visual diff PNG — authorized via workspace ownership. */
+/** Serve a change event's visual diff PNG - authorized via workspace ownership. */
 export async function GET(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

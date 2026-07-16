@@ -10,7 +10,7 @@ export interface WorkspaceOption {
 }
 
 /**
- * Compact workspace selector for the sidebar — rendered only when the user
+ * Compact workspace selector for the sidebar - rendered only when the user
  * belongs to more than one workspace. Switching POSTs to /api/workspace/switch
  * (membership re-verified server-side, httpOnly cookie set there) and
  * refreshes the tree so every page re-resolves against the new workspace.

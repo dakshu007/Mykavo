@@ -98,7 +98,7 @@ describe("resolveAuditUrl", () => {
     });
 
     it("rejects the backslash variant of protocol-relative URLs", () => {
-      // WHATWG parsing treats "\" like "/" — "/\evil.com" is "//evil.com".
+      // WHATWG parsing treats "\" like "/" - "/\evil.com" is "//evil.com".
       expect(resolveAuditUrl(SITE, "/\\evil.com").ok).toBe(false);
     });
 

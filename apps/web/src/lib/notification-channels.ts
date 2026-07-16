@@ -15,7 +15,7 @@ import {
 
 export const MAX_CHANNELS_PER_WORKSPACE = 5;
 
-/** Client-safe view of a channel — never exposes the full URL or secret. */
+/** Client-safe view of a channel - never exposes the full URL or secret. */
 export interface AlertChannelView {
   id: string;
   type: WebhookChannelType;

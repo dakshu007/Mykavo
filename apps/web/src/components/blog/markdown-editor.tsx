@@ -153,7 +153,7 @@ export function MarkdownEditor({
                 >
                   <span className="text-sm font-medium text-ink">
                     <span className="font-mono text-primary">/{option.command}</span>
-                    {" — "}
+                    {" - "}
                     {option.label}
                   </span>
                   <span className="text-[12px] text-ink-faint">{option.description}</span>

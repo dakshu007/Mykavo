@@ -8,7 +8,7 @@ import {
   readingTimeMinutes,
 } from "./blocks";
 
-describe("parsePost — segments", () => {
+describe("parsePost - segments", () => {
   it("returns a post without shortcodes as a single untouched markdown segment", () => {
     const markdown = "## Hello\n\nSome **bold** text.\n";
     const { segments } = parsePost(markdown);
@@ -75,7 +75,7 @@ describe("parsePost — segments", () => {
   });
 });
 
-describe("parsePost — FAQ blocks", () => {
+describe("parsePost - FAQ blocks", () => {
   const faq = "{{faq}}\nQ: What is MyKavo?\nA: A monitoring tool.\nQ: Is it free?\nA: There is a free plan.\n{{/faq}}";
 
   it("parses Q/A pairs into a faq segment", () => {
@@ -145,7 +145,7 @@ describe("parseFaqItems", () => {
   });
 });
 
-describe("parsePost — headings", () => {
+describe("parsePost - headings", () => {
   it("extracts h2/h3 headings with depth, text, and slug ids", () => {
     const { headings } = parsePost("## First section\n\ntext\n\n### Sub section\n\n## Second");
     expect(headings).toEqual([

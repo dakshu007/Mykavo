@@ -69,7 +69,7 @@ export default async function ScanDetailPage({
       value:
         scan.startedAt && scan.completedAt
           ? `${Math.round((scan.completedAt.getTime() - scan.startedAt.getTime()) / 1000)}s`
-          : "—",
+          : "-",
     },
   ];
 

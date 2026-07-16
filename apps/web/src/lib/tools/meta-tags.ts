@@ -100,7 +100,7 @@ export function evaluateTitle(title: string | null): MetaCheck {
     return {
       ...base,
       status: "fail",
-      detail: "Missing — every page needs a unique, descriptive title tag.",
+      detail: "Missing - every page needs a unique, descriptive title tag.",
     };
   }
   const len = title.length;
@@ -108,20 +108,20 @@ export function evaluateTitle(title: string | null): MetaCheck {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters — shorter than the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}. You may be leaving descriptive keywords on the table.`,
+      detail: `${len} characters - shorter than the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}. You may be leaving descriptive keywords on the table.`,
     };
   }
   if (len > TITLE_LENGTH.max) {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters — longer than the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}. Search engines may truncate it.`,
+      detail: `${len} characters - longer than the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}. Search engines may truncate it.`,
     };
   }
   return {
     ...base,
     status: "pass",
-    detail: `${len} characters — within the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}.`,
+    detail: `${len} characters - within the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}.`,
   };
 }
 
@@ -131,7 +131,7 @@ export function evaluateMetaDescription(description: string | null): MetaCheck {
     return {
       ...base,
       status: "fail",
-      detail: "Missing — search engines will improvise a snippet from page content.",
+      detail: "Missing - search engines will improvise a snippet from page content.",
     };
   }
   const len = description.length;
@@ -139,20 +139,20 @@ export function evaluateMetaDescription(description: string | null): MetaCheck {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters — shorter than the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}. There's room for a fuller, more clickable snippet.`,
+      detail: `${len} characters - shorter than the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}. There's room for a fuller, more clickable snippet.`,
     };
   }
   if (len > DESCRIPTION_LENGTH.max) {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters — longer than the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}. Search engines may truncate it.`,
+      detail: `${len} characters - longer than the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}. Search engines may truncate it.`,
     };
   }
   return {
     ...base,
     status: "pass",
-    detail: `${len} characters — within the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}.`,
+    detail: `${len} characters - within the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}.`,
   };
 }
 
@@ -162,7 +162,7 @@ export function evaluateCanonical(canonicalUrl: string | null): MetaCheck {
     return {
       ...base,
       status: "warn",
-      detail: "No canonical URL — add one to protect against duplicate-content issues.",
+      detail: "No canonical URL - add one to protect against duplicate-content issues.",
     };
   }
   return { ...base, status: "pass", detail: "Canonical URL is set." };
@@ -174,7 +174,7 @@ export function evaluateRobotsMeta(robotsMeta: string | null): MetaCheck {
     return {
       ...base,
       status: "pass",
-      detail: "No robots meta tag — search engines default to index, follow.",
+      detail: "No robots meta tag - search engines default to index, follow.",
     };
   }
   if (/noindex/i.test(robotsMeta)) {
@@ -182,14 +182,14 @@ export function evaluateRobotsMeta(robotsMeta: string | null): MetaCheck {
       ...base,
       status: "fail",
       detail:
-        "Contains noindex — this page will be dropped from search results. Make absolutely sure that's intentional.",
+        "Contains noindex - this page will be dropped from search results. Make absolutely sure that's intentional.",
     };
   }
   if (/nofollow/i.test(robotsMeta)) {
     return {
       ...base,
       status: "warn",
-      detail: "Contains nofollow — links on this page won't pass authority.",
+      detail: "Contains nofollow - links on this page won't pass authority.",
     };
   }
   return { ...base, status: "pass", detail: "Page is indexable." };
@@ -205,14 +205,14 @@ export function evaluateH1(h1Count: number, h1Values: string[]): MetaCheck {
     return {
       ...base,
       status: "fail",
-      detail: "No H1 heading found — every page should have one clear main heading.",
+      detail: "No H1 heading found - every page should have one clear main heading.",
     };
   }
   if (h1Count > 1) {
     return {
       ...base,
       status: "warn",
-      detail: `${h1Count} H1 headings found — most pages should have exactly one.`,
+      detail: `${h1Count} H1 headings found - most pages should have exactly one.`,
     };
   }
   return { ...base, status: "pass", detail: "Exactly one H1 heading." };
@@ -220,7 +220,7 @@ export function evaluateH1(h1Count: number, h1Values: string[]): MetaCheck {
 
 function evaluateOg(id: string, label: string, value: string | null, why: string): MetaCheck {
   if (!value) {
-    return { id, label, status: "warn", value: null, detail: `Missing — ${why}` };
+    return { id, label, status: "warn", value: null, detail: `Missing - ${why}` };
   }
   return { id, label, status: "pass", value, detail: "Present." };
 }

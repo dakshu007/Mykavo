@@ -71,7 +71,7 @@ export function isBlockedIpv6(ip: string): boolean {
   const lower = ip.toLowerCase();
   // Unspecified and loopback
   if (lower === "::" || lower === "::1") return true;
-  // IPv4-mapped / IPv4-compatible — extract and check the v4 part
+  // IPv4-mapped / IPv4-compatible - extract and check the v4 part
   const v4Match = lower.match(/(?:^|:)((?:\d{1,3}\.){3}\d{1,3})$/);
   if (v4Match) return isBlockedIpv4(v4Match[1]);
   // Unique local fc00::/7
@@ -88,7 +88,7 @@ export function isBlockedIp(ip: string): boolean {
   const version = isIP(ip);
   if (version === 4) return isBlockedIpv4(ip);
   if (version === 6) return isBlockedIpv6(ip);
-  return true; // not an IP — caller error, block
+  return true; // not an IP - caller error, block
 }
 
 /**
@@ -114,7 +114,7 @@ export async function assertSafeUrl(rawUrl: string | URL): Promise<URL> {
 
   const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
 
-  // Literal IP in the URL (including bracketed IPv6) — classify before the
+  // Literal IP in the URL (including bracketed IPv6) - classify before the
   // hostname heuristics so IPv6 literals aren't misreported as blocked hosts.
   const literal = hostname.startsWith("[") ? hostname.slice(1, -1) : hostname;
   if (isIP(literal)) {
@@ -227,12 +227,12 @@ export async function safeFetch(
       } catch {
         throw new UnsafeUrlError("INVALID_URL", "Redirect target could not be parsed.");
       }
-      // Re-validate every hop — redirects are untrusted input.
+      // Re-validate every hop - redirects are untrusted input.
       current = await assertSafeUrl(next);
       continue;
     }
 
-    // Terminal response — stream body with a hard size cap.
+    // Terminal response - stream body with a hard size cap.
     try {
       const reader = response.body?.getReader();
       const chunks: Uint8Array[] = [];

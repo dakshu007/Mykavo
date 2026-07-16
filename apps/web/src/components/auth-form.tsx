@@ -177,7 +177,7 @@ export function AuthForm({
     track("account_created");
     const enable = await authClient.twoFactor.enable({ password });
     if (enable.error || !enable.data) {
-      // Account exists and is signed in — don't strand the user on an
+      // Account exists and is signed in - don't strand the user on an
       // enrollment error; they can enable 2FA from Settings.
       finish();
       return;
@@ -223,7 +223,7 @@ export function AuthForm({
   if (step === "totp") {
     return (
       <form onSubmit={submitLoginCode} className="space-y-4">
-        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-panel px-4 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-card px-4 py-3">
           <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
           <p className="text-[13px] leading-5 text-ink-secondary">
             Two-factor authentication is on for this account. Enter the code from your
@@ -277,7 +277,7 @@ export function AuthForm({
   if (step === "enroll") {
     return (
       <form onSubmit={submitEnrollCode} className="space-y-4">
-        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-panel px-4 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-card px-4 py-3">
           <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
           <p className="text-[13px] leading-5 text-ink-secondary">
             Secure your account: scan this QR code with Google Authenticator (or any TOTP app),
@@ -320,10 +320,10 @@ export function AuthForm({
   if (step === "backup") {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-panel px-4 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-card px-4 py-3">
           <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
           <p className="text-[13px] leading-5 text-ink-secondary">
-            Two-factor authentication is on. One last thing — save your backup codes.
+            Two-factor authentication is on. One last thing - save your backup codes.
           </p>
         </div>
         <BackupCodesPanel codes={backupCodes} />
@@ -332,7 +332,7 @@ export function AuthForm({
           onClick={finish}
           className="inline-flex h-12 w-full items-center justify-center rounded-full bg-primary text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
         >
-          I saved my codes — continue
+          I saved my codes - continue
         </button>
       </div>
     );

@@ -1,9 +1,9 @@
 /**
  * Weekly report sweep (spec §37 "client-ready reports"). Runs on a pg-boss
  * cron every REPORT_CRON (default Monday 08:00 UTC): for every ACTIVE website
- * whose workspace has weekly reports enabled, gather the last 7 days —
+ * whose workspace has weekly reports enabled, gather the last 7 days -
  * scans run/failed, changes by severity, uptime, SSL expiry, latest
- * Lighthouse scores — and send ONE client-forwardable email per website.
+ * Lighthouse scores - and send ONE client-forwardable email per website.
  * All presentation shaping lives in @mykavo/shared `buildReportModel`
  * (pure, unit-tested); this module only does the IO.
  */
@@ -34,7 +34,7 @@ interface WorkspaceReportConfig {
 /**
  * Resolve recipients (via the shared email-channel resolution in ./notify)
  * plus the weekly-report preference. `weeklyReports` defaults to TRUE when
- * absent from the channel configuration — existing workspaces opt out, not in.
+ * absent from the channel configuration - existing workspaces opt out, not in.
  */
 async function resolveReportConfig(workspaceId: string): Promise<WorkspaceReportConfig | null> {
   const emailConfig = await resolveEmailConfig(workspaceId);
@@ -136,7 +136,7 @@ async function reportWebsite(
     html: email.html,
     text: email.text,
   });
-  // Mirror ./notify bookkeeping — one Notification row per send, scanId null
+  // Mirror ./notify bookkeeping - one Notification row per send, scanId null
   // (a report summarizes a period, not a single scan).
   await prisma.notification.create({
     data: {
@@ -162,7 +162,7 @@ async function reportWebsite(
 
 /**
  * Send weekly reports for every eligible ACTIVE website. One website failing
- * never aborts the sweep. Websites created less than 24h ago are skipped —
+ * never aborts the sweep. Websites created less than 24h ago are skipped -
  * a report covering a few hours of data reads as broken, not reassuring.
  */
 export async function runReportSweep(now: Date = new Date()): Promise<void> {

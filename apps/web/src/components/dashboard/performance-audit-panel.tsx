@@ -46,12 +46,12 @@ function scoreClasses(score: number | null): string {
 }
 
 function fmtMs(v: number | null): string {
-  if (v === null) return "—";
+  if (v === null) return "-";
   return v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`;
 }
 
 function fmtCls(v: number | null): string {
-  return v === null ? "—" : v.toFixed(3);
+  return v === null ? "-" : v.toFixed(3);
 }
 
 /** Path + query of an audited URL, for compact display. */
@@ -68,7 +68,7 @@ function isPending(status: AuditView["status"]): boolean {
   return status === "QUEUED" || status === "RUNNING";
 }
 
-/** Line + legend-dot colour per score — theme vars (globals.css --fx-*) so the
+/** Line + legend-dot colour per score - theme vars (globals.css --fx-*) so the
  * chart follows light/dark; always paired with a text label. */
 const TREND_COLORS: Record<TrendScoreKey, string> = {
   performanceScore: "var(--fx-primary)",
@@ -77,14 +77,14 @@ const TREND_COLORS: Record<TrendScoreKey, string> = {
   seoScore: "var(--fx-chart-violet)",
 };
 
-// Sparkline geometry — viewBox units; the SVG scales to the card width.
+// Sparkline geometry - viewBox units; the SVG scales to the card width.
 const CHART_W = 640;
 const CHART_H = 120;
 const CHART_TOP = 8;
 const CHART_BOTTOM = CHART_H - 8;
 const CHART_LEFT = 30;
 const CHART_RIGHT = CHART_W - 8;
-/** Gridline scores: 0/50/100 plus 90 — Lighthouse's "good" threshold. */
+/** Gridline scores: 0/50/100 plus 90 - Lighthouse's "good" threshold. */
 const GRID_SCORES = [100, 90, 50, 0];
 
 function chartY(score: number): number {
@@ -176,7 +176,7 @@ function TrendSection({ trend }: { trend: AuditTrend }) {
                   r={3}
                   style={{ fill: color }}
                 >
-                  <title>{`${category.label} ${d.score} — ${fmtDateTime(d.point.createdAt)}`}</title>
+                  <title>{`${category.label} ${d.score} - ${fmtDateTime(d.point.createdAt)}`}</title>
                 </circle>
               ))}
             </g>
@@ -197,7 +197,7 @@ function TrendSection({ trend }: { trend: AuditTrend }) {
             />
             {category.label}{" "}
             <span className="font-medium text-ink tabular-nums">
-              {category.latest ?? "—"}
+              {category.latest ?? "-"}
             </span>
           </li>
         ))}
@@ -209,7 +209,7 @@ function TrendSection({ trend }: { trend: AuditTrend }) {
             {i > 0 && <span className="text-ink-faint"> · </span>}
             {category.label}{" "}
             <span className={cn("font-medium tabular-nums", deltaClasses(category.delta))}>
-              {category.delta === null ? "—" : formatSignedDelta(category.delta)}
+              {category.delta === null ? "-" : formatSignedDelta(category.delta)}
             </span>
           </span>
         ))}{" "}
@@ -223,7 +223,7 @@ const POLL_INTERVAL_MS = 3000;
 /** A pending audit polled longer than this is treated as dead (worker crashed). */
 const STALE_AFTER_MS = 5 * 60 * 1000;
 
-/** Select value meaning "audit the homepage" — no path is sent to the API. */
+/** Select value meaning "audit the homepage" - no path is sent to the API. */
 const HOMEPAGE = "";
 /** Select value that reveals the custom-path input. */
 const CUSTOM = "__custom__";
@@ -247,7 +247,7 @@ export function PerformanceAuditPanel({
   const [starting, setStarting] = useState(false);
   const [selected, setSelected] = useState<string>(HOMEPAGE);
   const [customPath, setCustomPath] = useState("");
-  // The audit id we've given up polling — keyed so a new audit re-enables
+  // The audit id we've given up polling - keyed so a new audit re-enables
   // automatically, with no reset effect. Render stays pure (no Date.now()).
   const [gaveUpFor, setGaveUpFor] = useState<string | null>(null);
   const pollWindow = useRef<{ id: string; start: number } | null>(null);
@@ -283,7 +283,7 @@ export function PerformanceAuditPanel({
       const data = (await res.json()) as { audits: AuditView[] };
       setAudits(data.audits);
     } catch {
-      /* transient — next poll retries */
+      /* transient - next poll retries */
     }
   }, [websiteId]);
 
@@ -311,7 +311,7 @@ export function PerformanceAuditPanel({
     if (selected === CUSTOM) {
       const trimmed = customPath.trim();
       if (!trimmed.startsWith("/")) {
-        setError('Enter a path starting with "/" — for example /pricing.');
+        setError('Enter a path starting with "/" - for example /pricing.');
         return;
       }
       path = trimmed;
@@ -344,7 +344,7 @@ export function PerformanceAuditPanel({
           <Gauge className="size-4.5 text-ink-secondary" aria-hidden /> Performance
         </h2>
         <p className="mt-0.5 text-[13px] text-ink-secondary">
-          Lighthouse scores and Core Web Vitals. Audits run automatically every week — or run
+          Lighthouse scores and Core Web Vitals. Audits run automatically every week - or run
           one now for any page of this site.
         </p>
       </div>
@@ -421,7 +421,7 @@ export function PerformanceAuditPanel({
 
       {pending && latest && (
         <p className="mt-4 text-[13px] text-ink-secondary">
-          Auditing <span className="font-mono text-ink">{pathOf(latest.url)}</span> —{" "}
+          Auditing <span className="font-mono text-ink">{pathOf(latest.url)}</span> -{" "}
           {latest.status === "RUNNING" ? "in progress" : "queued"}, this usually takes 20–40
           seconds.
         </p>
@@ -463,7 +463,7 @@ export function PerformanceAuditPanel({
                     scoreClasses(score),
                   )}
                 >
-                  <p className="text-2xl font-semibold tabular-nums">{score ?? "—"}</p>
+                  <p className="text-2xl font-semibold tabular-nums">{score ?? "-"}</p>
                   <p className="text-[11px] font-medium">{c.label}</p>
                 </div>
               );

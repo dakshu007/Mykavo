@@ -52,7 +52,7 @@ export function ChangeNoteForm({ changeId }: { changeId: string }) {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         maxLength={2000}
-        placeholder="Leave a note for your team — context, root cause, next steps…"
+        placeholder="Leave a note for your team - context, root cause, next steps…"
         className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
       />
       <div className="flex items-center gap-3">

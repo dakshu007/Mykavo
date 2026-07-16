@@ -15,7 +15,7 @@ export default async function EditPagesPage({
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
   const { id } = await params;
 
-  // Both queries only need the route param and workspace — run in parallel.
+  // Both queries only need the route param and workspace - run in parallel.
   const [website, plan] = await Promise.all([
     prisma.website.findFirst({
       where: { id, workspaceId: workspace.id },
@@ -24,7 +24,7 @@ export default async function EditPagesPage({
     getWorkspacePlan(workspace.id),
   ]);
   if (!website) notFound();
-  // Page limits are per website — the budget doesn't depend on other websites.
+  // Page limits are per website - the budget doesn't depend on other websites.
   const pageBudget = plan.limits.pagesPerWebsite;
 
   return (

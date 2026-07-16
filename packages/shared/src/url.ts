@@ -1,6 +1,6 @@
 /**
  * Centralized URL normalization (spec §12).
- * This module migrates to packages/shared in Phase 2 — keep it dependency-free.
+ * This module migrates to packages/shared in Phase 2 - keep it dependency-free.
  */
 
 const TRACKING_PARAMS = new Set([
@@ -26,7 +26,7 @@ export interface NormalizeOptions {
 
 /**
  * Parse user input into a URL, tolerating a missing scheme ("example.com").
- * Returns null for unparseable input. Does NOT validate safety — see ssrf.ts.
+ * Returns null for unparseable input. Does NOT validate safety - see ssrf.ts.
  */
 export function parseUrlInput(input: string): URL | null {
   const trimmed = input.trim();
@@ -45,7 +45,7 @@ export function parseUrlInput(input: string): URL | null {
  * Normalize a URL for deduplication and comparison:
  * lowercase host, drop fragment, drop default port, sort query params,
  * strip tracking params, collapse trailing slash on non-root paths.
- * Canonical URLs from page metadata are NOT applied here — they are metadata.
+ * Canonical URLs from page metadata are NOT applied here - they are metadata.
  */
 export function normalizeUrl(url: URL | string, opts: NormalizeOptions = {}): string {
   const { stripTrackingParams = true, stripAllParams = false } = opts;

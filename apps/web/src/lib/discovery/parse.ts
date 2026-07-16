@@ -68,7 +68,7 @@ export function extractInternalLinks(html: string, baseUrl: string): string[] {
 
 /**
  * Filter candidate URLs (e.g. sitemap <loc> values) to same-origin pages,
- * normalized and deduplicated. Candidates must be absolute URLs — relative
+ * normalized and deduplicated. Candidates must be absolute URLs - relative
  * or malformed values are dropped rather than resolved.
  */
 export function toSameOriginPages(candidates: string[], baseUrl: string): string[] {

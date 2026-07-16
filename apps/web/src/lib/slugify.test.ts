@@ -8,7 +8,7 @@ describe("slugify", () => {
   });
 
   it("collapses punctuation and consecutive separators into one hyphen", () => {
-    expect(slugify("SEO — change   monitoring!!!")).toBe("seo-change-monitoring");
+    expect(slugify("SEO - change   monitoring!!!")).toBe("seo-change-monitoring");
   });
 
   it("trims leading and trailing separators", () => {

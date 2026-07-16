@@ -32,7 +32,7 @@ const BULK_LIMIT = 100;
 /**
  * Selection layer over the changes list: checkbox per row, header select-all,
  * and a sticky action bar (mark reviewed / approve / ignore) once anything is
- * selected. Rows render exactly as the previous server list did — same badges,
+ * selected. Rows render exactly as the previous server list did - same badges,
  * links, and per-row actions.
  */
 export function ChangesBulkList({ changes }: { changes: ChangeListRow[] }) {

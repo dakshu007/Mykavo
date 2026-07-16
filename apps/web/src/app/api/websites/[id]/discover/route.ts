@@ -14,14 +14,14 @@ export async function POST(_request: Request, { params }: Params) {
   const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
   if (denied) return denied;
 
-  // Discovery makes several outbound requests — bound it per workspace.
+  // Discovery makes several outbound requests - bound it per workspace.
   const limit = rateLimit(`discover:${ctx.workspace.id}`, {
     limit: 10,
     windowMs: 10 * 60_000,
   });
   if (!limit.allowed) {
     return NextResponse.json(
-      { error: "Too many discovery runs — please wait a few minutes." },
+      { error: "Too many discovery runs - please wait a few minutes." },
       { status: 429, headers: { "retry-after": String(limit.retryAfterSeconds) } },
     );
   }
@@ -52,7 +52,7 @@ export async function POST(_request: Request, { params }: Params) {
       await prisma.website.update({ where: { id: website.id }, data });
     } catch {
       // Unique conflict on normalizedUrl (same site added twice under
-      // different aliases) — keep the original URL rather than failing.
+      // different aliases) - keep the original URL rather than failing.
       await prisma.website.update({
         where: { id: website.id },
         data: { status: "PENDING" },

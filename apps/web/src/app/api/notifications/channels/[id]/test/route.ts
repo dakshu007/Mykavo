@@ -17,7 +17,7 @@ export async function POST(_request: Request, { params }: Params) {
   const denied = requireRole(ctx, "OWNER", "ADMIN", "MEMBER");
   if (denied) return denied;
 
-  // Tests hit a user-supplied URL — cap the rate.
+  // Tests hit a user-supplied URL - cap the rate.
   const rl = rateLimit(`channel-test:${ctx.workspace.id}`, { limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(

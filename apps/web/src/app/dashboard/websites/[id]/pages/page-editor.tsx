@@ -86,7 +86,7 @@ export function PageEditor({
       {discovering && !discovered && (
         <p className="flex items-center gap-2 text-sm text-ink-secondary" role="status">
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Discovering pages — checking sitemaps and homepage links…
+          Discovering pages - checking sitemaps and homepage links…
         </p>
       )}
 

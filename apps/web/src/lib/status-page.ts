@@ -1,5 +1,5 @@
 /**
- * Public status page helpers — pure functions used by /status/[token].
+ * Public status page helpers - pure functions used by /status/[token].
  * No I/O here: the page resolves the opaque token to a website id
  * server-side, runs one grouped rollup query over health_check, and renders
  * through these. Kept pure so thresholds and formatting are unit-testable.
@@ -36,10 +36,10 @@ export function dayLevel(uptimePercent: number | null): DayLevel {
 
 /**
  * "100%" when the value rounds there, otherwise two decimals ("99.98%").
- * "—" when no checks exist in the window.
+ * "-" when no checks exist in the window.
  */
 export function formatUptime(percent: number | null): string {
-  if (percent === null) return "—";
+  if (percent === null) return "-";
   const fixed = percent.toFixed(2);
   return fixed === "100.00" ? "100%" : `${fixed}%`;
 }

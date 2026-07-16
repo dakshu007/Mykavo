@@ -51,7 +51,7 @@ describe("profileUpdateSchema", () => {
     if (result.success) expect(result.data.image).toBeNull();
   });
 
-  it("rejects remote URLs — only inline data URLs are allowed", () => {
+  it("rejects remote URLs - only inline data URLs are allowed", () => {
     for (const image of [
       "https://example.com/avatar.jpg",
       "http://example.com/a.png",

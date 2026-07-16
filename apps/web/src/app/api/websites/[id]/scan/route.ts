@@ -77,7 +77,7 @@ export async function POST(_request: Request, { params }: Params) {
 
   // Authoritative no-duplicate-scan guard (spec §40: use database locking).
   // A per-website advisory lock serializes concurrent triggers so the recheck +
-  // create is atomic — the earlier findFirst is only a fast-path. Works across
+  // create is atomic - the earlier findFirst is only a fast-path. Works across
   // processes too, unlike the in-memory rate limiter.
   const created = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${website.id})::int8)`;

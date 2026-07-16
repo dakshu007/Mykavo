@@ -1,7 +1,7 @@
 /**
  * Thin Dodo Payments REST client for the few server-side calls we make
  * (cancel a subscription, open the customer portal). Bearer-authed against
- * the mode-specific base URL. No SDK — plain fetch (research §5).
+ * the mode-specific base URL. No SDK - plain fetch (research §5).
  */
 
 import { dodoApiBase, DODO_API_KEY } from "./config";

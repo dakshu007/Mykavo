@@ -5,7 +5,7 @@ import Link from "next/link";
 
 /**
  * Sticky split-pill CTA that floats at the bottom center once the visitor
- * scrolls past the hero — gold "Start free" segment + ink "How it works"
+ * scrolls past the hero - gold "Start free" segment + ink "How it works"
  * segment sharing one crisp ink-bordered capsule.
  */
 export function StickyCta() {

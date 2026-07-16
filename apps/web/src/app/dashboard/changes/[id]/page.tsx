@@ -87,7 +87,7 @@ export default async function ChangeDetailPage({
   });
   if (!change) notFound();
 
-  // Notes are mutations — viewers read the thread but cannot write to it.
+  // Notes are mutations - viewers read the thread but cannot write to it.
   const canWriteNotes = role === "OWNER" || role === "ADMIN" || role === "MEMBER";
   const canModerateNotes = role === "OWNER" || role === "ADMIN";
 
@@ -147,7 +147,7 @@ export default async function ChangeDetailPage({
         {change.notes.length === 0 ? (
           <p className="text-sm text-ink-secondary">
             No notes yet.
-            {canWriteNotes ? " Leave context for your team — root cause, next steps, who's on it." : ""}
+            {canWriteNotes ? " Leave context for your team - root cause, next steps, who's on it." : ""}
           </p>
         ) : (
           <ul className="divide-y divide-line">
@@ -186,13 +186,13 @@ export default async function ChangeDetailPage({
             <div>
               <p className="label-micro mb-2">Baseline</p>
               <div className="rounded-tile bg-success-soft px-4 py-3 font-mono text-[13px] break-words text-success-strong">
-                {change.previousValue ?? "—"}
+                {change.previousValue ?? "-"}
               </div>
             </div>
             <div>
               <p className="label-micro mb-2">Current</p>
               <div className="rounded-tile bg-critical-soft px-4 py-3 font-mono text-[13px] break-words text-critical-strong">
-                {change.currentValue ?? "—"}
+                {change.currentValue ?? "-"}
               </div>
             </div>
           </div>

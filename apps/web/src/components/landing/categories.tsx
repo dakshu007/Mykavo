@@ -17,7 +17,7 @@ import { fontDisplay } from "./style";
 /**
  * Playground-style category tabs: eight pills, one for every change category
  * MyKavo watches. The active tab swaps a demo panel showing a real example
- * alert for that category — baseline value, current value, and the severity
+ * alert for that category - baseline value, current value, and the severity
  * MyKavo would assign. Static data, instant switching, no network.
  */
 
@@ -46,7 +46,7 @@ const CATEGORIES: Category[] = [
     field: "HTTP status · /checkout",
     before: "200 OK",
     after: "500 Internal Server Error",
-    footnote: "Detected on the next scan — before your customers pile up in support.",
+    footnote: "Detected on the next scan - before your customers pile up in support.",
   },
   {
     key: "visual",
@@ -67,7 +67,7 @@ const CATEGORIES: Category[] = [
     icon: Search,
     headline: "Rankings quietly at risk",
     blurb:
-      "Titles, meta descriptions, canonicals, robots meta, H1s, and indexability signals — deterministic previous-vs-current comparison on the tags that decide whether you rank.",
+      "Titles, meta descriptions, canonicals, robots meta, H1s, and indexability signals - deterministic previous-vs-current comparison on the tags that decide whether you rank.",
     severity: "CRITICAL",
     field: "robots meta · /tents",
     before: "index, follow",
@@ -80,7 +80,7 @@ const CATEGORIES: Category[] = [
     icon: FileSearch,
     headline: "Words change without warning",
     blurb:
-      "Normalized text comparison catches meaningful copy changes — prices, headlines, legal text — while ignoring volatile fragments like timestamps.",
+      "Normalized text comparison catches meaningful copy changes - prices, headlines, legal text - while ignoring volatile fragments like timestamps.",
     severity: "MEDIUM",
     field: "H1 · /pricing",
     before: "Simple pricing for every team",
@@ -93,7 +93,7 @@ const CATEGORIES: Category[] = [
     icon: Link2Off,
     headline: "Internal links start 404ing",
     blurb:
-      "Every internal link extracted and checked on every scan. Breakages are grouped into one alert — never one email per dead link.",
+      "Every internal link extracted and checked on every scan. Breakages are grouped into one alert - never one email per dead link.",
     severity: "HIGH",
     field: "Internal links · site-wide",
     before: "142 links · all resolving",
@@ -106,7 +106,7 @@ const CATEGORIES: Category[] = [
     icon: Code2,
     headline: "A tracking script vanishes",
     blurb:
-      "External scripts are extracted and identified — Analytics, Tag Manager, Meta Pixel, Stripe, and more. Removals and unknown additions get flagged.",
+      "External scripts are extracted and identified - Analytics, Tag Manager, Meta Pixel, Stripe, and more. Removals and unknown additions get flagged.",
     severity: "HIGH",
     field: "Scripts · site-wide",
     before: "googletagmanager.com present",
@@ -132,12 +132,12 @@ const CATEGORIES: Category[] = [
     icon: MousePointerClick,
     headline: "Your signup button disappears",
     blurb:
-      "Define the elements your business depends on — CTAs, forms, checkout buttons. MyKavo checks existence, visibility, text, and destination on every scan.",
+      "Define the elements your business depends on - CTAs, forms, checkout buttons. MyKavo checks existence, visibility, text, and destination on every scan.",
     severity: "CRITICAL",
     field: "“Start Free Trial” button · /pricing",
     before: "present · visible",
     after: "missing from the page",
-    footnote: "The most expensive kind of silent breakage — and the easiest to miss by eye.",
+    footnote: "The most expensive kind of silent breakage - and the easiest to miss by eye.",
   },
 ];
 

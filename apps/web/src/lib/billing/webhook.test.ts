@@ -98,14 +98,14 @@ describe("classifyDodoEvent", () => {
 
   it("grants on payment.succeeded regardless of the PAYMENT status field (prod regression)", () => {
     // payment.succeeded carries the payment's own status, not the
-    // subscription's — "succeeded" must never read as a revoke.
+    // subscription's - "succeeded" must never read as a revoke.
     expect(classifyDodoEvent("payment.succeeded", "succeeded")).toBe("grant");
     expect(classifyDodoEvent("payment.succeeded", "")).toBe("grant");
   });
 
   it("ignores non-subscription/payment event families (prod regression)", () => {
     // A license key's "Delivered" status downgraded a paying workspace
-    // seconds after checkout — these families must never touch entitlements.
+    // seconds after checkout - these families must never touch entitlements.
     expect(classifyDodoEvent("license_key.created", "Delivered")).toBe("ignored");
     expect(classifyDodoEvent("entitlement_grant.created", "Delivered")).toBe("ignored");
     expect(classifyDodoEvent("dispute.opened", "open")).toBe("ignored");

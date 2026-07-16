@@ -61,7 +61,7 @@ function ResultRow({ result }: { result: UrlStatusResult }) {
         )}
       </td>
       <td className="whitespace-nowrap py-3 text-right font-mono text-[13px] text-ink-secondary">
-        {result.responseTimeMs !== null ? `${result.responseTimeMs} ms` : "—"}
+        {result.responseTimeMs !== null ? `${result.responseTimeMs} ms` : "-"}
       </td>
     </tr>
   );
@@ -83,7 +83,7 @@ export function BulkStatusChecker() {
       return;
     }
     if (urls.length > MAX_URLS) {
-      setError(`Please enter at most ${MAX_URLS} URLs — you have ${urls.length}.`);
+      setError(`Please enter at most ${MAX_URLS} URLs - you have ${urls.length}.`);
       return;
     }
     setLoading(true);
@@ -114,7 +114,7 @@ export function BulkStatusChecker() {
         <form onSubmit={run} className="space-y-3">
           <div>
             <label htmlFor="bulk-urls" className="label-micro mb-1.5 block">
-              URLs — one per line, up to {MAX_URLS}
+              URLs - one per line, up to {MAX_URLS}
             </label>
             <textarea
               id="bulk-urls"
@@ -195,7 +195,7 @@ export function BulkStatusChecker() {
 
           <ToolCta
             heading="Automatically monitor these pages with MyKavo."
-            body="MyKavo checks your important pages on a schedule — status codes, SEO tags, screenshots, links, and scripts — and emails you when a page that worked yesterday breaks today."
+            body="MyKavo checks your important pages on a schedule - status codes, SEO tags, screenshots, links, and scripts - and emails you when a page that worked yesterday breaks today."
             tool="bulk-url-status-checker"
           />
         </>

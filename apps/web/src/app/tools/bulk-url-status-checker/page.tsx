@@ -7,7 +7,7 @@ import { site } from "@/config/site";
 export const metadata: Metadata = {
   title: "Free Bulk URL Status Checker",
   description:
-    "Free bulk URL status checker: paste up to 20 URLs and check their HTTP status codes and response times in one go — spot 404s, 500s, and slow pages instantly.",
+    "Free bulk URL status checker: paste up to 20 URLs and check their HTTP status codes and response times in one go - spot 404s, 500s, and slow pages instantly.",
   alternates: { canonical: "/tools/bulk-url-status-checker" },
 };
 
@@ -53,13 +53,13 @@ export default function BulkUrlStatusCheckerPage() {
           <p>
             A page that returns <span className="font-mono text-[13px] text-ink">404</span> or{" "}
             <span className="font-mono text-[13px] text-ink">500</span> isn&apos;t just broken
-            for visitors — search engines drop it from results, ads pointing at it burn budget,
+            for visitors - search engines drop it from results, ads pointing at it burn budget,
             and internal links to it leak authority. Checking pages one at a time in a browser
             doesn&apos;t scale past a handful, and a browser&apos;s cache can hide problems that
             a fresh request would reveal.
           </p>
           <p>
-            This tool requests each URL fresh — up to 20 at a time — and reports the status
+            This tool requests each URL fresh - up to 20 at a time - and reports the status
             code and response time for every one. Redirects are followed to the final
             destination, so a URL that 301s to a working page shows the status the visitor
             actually receives. Each row succeeds or fails independently: one dead server
@@ -67,7 +67,7 @@ export default function BulkUrlStatusCheckerPage() {
           </p>
           <p>
             The catch with one-off checks is that pages break on their own schedule, not yours
-            — a deploy on Friday, an expired certificate on Sunday. MyKavo checks your
+            - a deploy on Friday, an expired certificate on Sunday. MyKavo checks your
             important pages automatically, on a schedule, and emails you the moment a page that
             returned 200 starts returning an error.
           </p>

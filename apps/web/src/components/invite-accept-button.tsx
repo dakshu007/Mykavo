@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/** "Join workspace" button on the invite page — accepts, then opens the dashboard. */
+/** "Join workspace" button on the invite page - accepts, then opens the dashboard. */
 export function InviteAcceptButton({
   token,
   workspaceName,

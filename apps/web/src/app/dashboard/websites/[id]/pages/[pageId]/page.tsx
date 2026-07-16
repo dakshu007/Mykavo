@@ -147,13 +147,13 @@ export default async function MonitoredPageDetail({
             )}
             <dl className="divide-y divide-line self-start">
               {[
-                ["Title", active.pageSnapshot.title ?? "—"],
-                ["HTTP status", String(active.pageSnapshot.httpStatus ?? "—")],
-                ["Canonical", active.pageSnapshot.canonicalUrl ?? "—"],
-                ["Robots", active.pageSnapshot.robotsMeta ?? "—"],
+                ["Title", active.pageSnapshot.title ?? "-"],
+                ["HTTP status", String(active.pageSnapshot.httpStatus ?? "-")],
+                ["Canonical", active.pageSnapshot.canonicalUrl ?? "-"],
+                ["Robots", active.pageSnapshot.robotsMeta ?? "-"],
                 [
                   "Approved",
-                  `${active.approvedAt?.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) ?? "—"}${
+                  `${active.approvedAt?.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) ?? "-"}${
                     active.approvedByUser ? ` by ${active.approvedByUser.name}` : " (initial baseline)"
                   }`,
                 ],
@@ -221,7 +221,7 @@ export default async function MonitoredPageDetail({
                   Conversion elements
                 </h2>
                 <p className="mt-0.5 text-[13px] text-ink-secondary">
-                  Monitor critical buttons, forms, and CTAs — get alerted the moment one goes
+                  Monitor critical buttons, forms, and CTAs - get alerted the moment one goes
                   missing, hidden, or changes.
                 </p>
               </div>

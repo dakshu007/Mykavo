@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
 
 /**
- * Public status page settings. Shares the badge's opaque publicToken —
+ * Public status page settings. Shares the badge's opaque publicToken -
  * enabling mints it server-side if absent (the URL never contains the
  * website id); disabling keeps the token so re-enabling restores the same
  * public URL.
@@ -51,7 +51,7 @@ export function StatusPageSettings({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard unavailable (e.g. insecure context) — nothing to surface.
+      // Clipboard unavailable (e.g. insecure context) - nothing to surface.
     }
   }
 
@@ -59,7 +59,7 @@ export function StatusPageSettings({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-secondary">
-          Share a live status page with your clients — current status, 90-day
+          Share a live status page with your clients - current status, 90-day
           uptime history, and incidents at an anonymous public URL.
         </p>
         <button

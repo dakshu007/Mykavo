@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   CreditCard,
   Globe,
-  Plus,
   Sparkles,
 } from "lucide-react";
 import { prisma } from "@mykavo/database";
@@ -14,37 +13,31 @@ import { getWorkspacePlan } from "@/lib/limits";
 import {
   getWorkspaceSubscription,
   getEffectiveWebsiteLimit,
-  getWorkspaceAddons,
 } from "@/lib/billing/subscription";
-import { billingEnabled, websiteAddonEnabled } from "@/lib/billing/config";
+import { billingEnabled } from "@/lib/billing/config";
 import { dodoApiConfigured } from "@/lib/billing/dodo-api";
-import { getPlan, formatLimit, WEBSITE_ADDON } from "@/config/plans";
+import { getPlan, formatLimit } from "@/config/plans";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
 import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscription-button";
 
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string; addon?: string }>;
+  searchParams: Promise<{ checkout?: string }>;
 }) {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
   const sp = await searchParams;
 
-  const [plan, subscription, websiteLimit, addons, websiteCount] = await Promise.all([
+  const [plan, subscription, websiteLimit, websiteCount] = await Promise.all([
     getWorkspacePlan(workspace.id),
     getWorkspaceSubscription(workspace.id),
     getEffectiveWebsiteLimit(workspace.id),
-    getWorkspaceAddons(workspace.id),
     prisma.website.count({ where: { workspaceId: workspace.id } }),
   ]);
   const isPro = plan.id === "pro";
   const pro = getPlan("pro");
   const justCheckedOut = sp.checkout === "success";
-  const needsPro = sp.addon === "needs-pro";
-  const addonLimitReached = sp.addon === "limit";
-  const addonUnits = addons.length;
-  const atAddonCap = addonUnits >= WEBSITE_ADDON.maxUnits;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -52,29 +45,8 @@ export default async function BillingPage({
         <div className="flex items-start gap-3 rounded-card bg-primary-soft px-5 py-4">
           <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
           <p className="text-sm text-ink">
-            Thanks for your payment! It&apos;s being confirmed — the change activates the moment
+            Thanks for your payment! It&apos;s being confirmed - the change activates the moment
             Dodo confirms the charge (usually seconds). Refresh this page shortly.
-          </p>
-        </div>
-      )}
-
-      {needsPro && (
-        <div className="flex items-start gap-3 rounded-card bg-warning-soft px-5 py-4">
-          <Sparkles className="mt-0.5 size-5 shrink-0 text-warning-strong" aria-hidden />
-          <p className="text-sm text-ink">
-            Website add-ons extend the Pro plan. Upgrade to Pro first, then you can add
-            {" "}{WEBSITE_ADDON.websitesPerUnit} more website anytime for ${WEBSITE_ADDON.priceMonthlyUsd}/mo
-            (up to {WEBSITE_ADDON.maxUnits}).
-          </p>
-        </div>
-      )}
-
-      {addonLimitReached && (
-        <div className="flex items-start gap-3 rounded-card bg-warning-soft px-5 py-4">
-          <Sparkles className="mt-0.5 size-5 shrink-0 text-warning-strong" aria-hidden />
-          <p className="text-sm text-ink">
-            You already have the maximum of {WEBSITE_ADDON.maxUnits} website add-ons on this
-            workspace.
           </p>
         </div>
       )}
@@ -132,12 +104,12 @@ export default async function BillingPage({
           )
         ) : (
           <p className="mt-6 text-sm text-ink-secondary">
-            You&apos;re on the Free plan — 1 website and 5 monitored pages.
+            You&apos;re on the Free plan - 1 website and 5 monitored pages.
           </p>
         )}
       </Card>
 
-      {/* Website capacity + self-serve add-ons (Pro only) */}
+      {/* Website capacity (Pro only) */}
       {isPro && (
         <Card>
           <CardHeader
@@ -156,59 +128,9 @@ export default async function BillingPage({
             <p className="text-sm text-ink-secondary">websites in use</p>
           </div>
           <p className="mt-1 text-[13px] text-ink-faint">
-            {pro.limits.websites} included
-            {addonUnits > 0 &&
-              ` + ${addonUnits} add-on website${addonUnits === 1 ? "" : "s"} (max ${WEBSITE_ADDON.maxUnits})`}
+            Pro includes {pro.limits.websites} websites with {pro.limits.pagesPerWebsite} monitored
+            pages each.
           </p>
-
-          {addonUnits > 0 && (
-            <ul className="mt-4 divide-y divide-line rounded-field border border-line">
-              {addons.map((a, i) => (
-                <li
-                  key={a.dodoSubscriptionId}
-                  className="flex items-center justify-between px-4 py-3 text-sm"
-                >
-                  <span className="text-ink">
-                    Add-on {i + 1} · +{a.websitesGranted} website{a.websitesGranted === 1 ? "" : "s"}
-                  </span>
-                  <span className="text-[13px] text-ink-faint">
-                    {a.cancelAtPeriodEnd
-                      ? "Cancels at period end"
-                      : a.currentPeriodEnd
-                        ? `Renews ${a.currentPeriodEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-                        : "Active"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {websiteAddonEnabled ? (
-            atAddonCap ? (
-              <p className="mt-5 text-[13px] text-ink-faint">
-                You&apos;ve reached the maximum of {WEBSITE_ADDON.maxUnits} website add-ons.
-              </p>
-            ) : (
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <a
-                  href="/api/billing/addon"
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
-                >
-                  <Plus className="size-4" aria-hidden />
-                  Add {WEBSITE_ADDON.websitesPerUnit} more website — ${WEBSITE_ADDON.priceMonthlyUsd}/mo
-                </a>
-                <p className="text-[13px] text-ink-faint">
-                  Billed as a separate subscription. Cancel add-ons anytime
-                  {dodoApiConfigured() ? " from Manage billing." : " in your Dodo account."}
-                </p>
-              </div>
-            )
-          ) : (
-            <p className="mt-5 text-[13px] text-ink-faint">
-              Need more than {formatLimit(websiteLimit)} websites? Website add-ons aren&apos;t
-              enabled on this deployment yet.
-            </p>
-          )}
         </Card>
       )}
 
@@ -221,10 +143,11 @@ export default async function BillingPage({
                 <Sparkles className="size-5 text-primary" aria-hidden />
               </span>
               <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
-                Upgrade to Pro — ${pro.priceMonthlyUsd}/month
+                Upgrade to Pro - ${pro.priceMonthlyUsd}/month
               </h2>
               <p className="mt-1 text-sm text-ink-secondary">
-                8 websites with 20 monitored pages each, daily scans, and every advanced feature — add more websites anytime.
+                8 websites with {pro.limits.pagesPerWebsite} monitored pages each, daily scans,
+                and every advanced feature.
               </p>
             </div>
           </div>

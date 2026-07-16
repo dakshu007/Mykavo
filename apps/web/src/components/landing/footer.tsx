@@ -36,7 +36,7 @@ const columns = [
 
 /**
  * Light footer with link columns, closing on a giant half-clipped gold
- * wordmark (ballpark/branch-style) — the brand as the final beat of the page.
+ * wordmark (ballpark/branch-style) - the brand as the final beat of the page.
  */
 export function LandingFooter() {
   return (
@@ -76,7 +76,7 @@ export function LandingFooter() {
           <p>Built for people who keep websites working.</p>
         </div>
 
-        {/* Giant clipped wordmark — the final beat */}
+        {/* Giant clipped wordmark - the final beat */}
         <div aria-hidden className="pointer-events-none mt-10 h-[13vw] min-h-20 select-none overflow-hidden">
           <p
             className="text-center font-semibold leading-none tracking-[-0.04em] text-[#FFD400]"

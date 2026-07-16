@@ -52,7 +52,7 @@ export function HealthStatus({ health, className }: { health: Health; className?
   );
 }
 
-/** White pill chip with icon + value — reference's profile stat chips. */
+/** White pill chip with icon + value - reference's profile stat chips. */
 export function Pill({
   className,
   children,

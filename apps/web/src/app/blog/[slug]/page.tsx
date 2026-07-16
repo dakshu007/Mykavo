@@ -22,7 +22,7 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-/** Only published posts are visible publicly — drafts 404. */
+/** Only published posts are visible publicly - drafts 404. */
 async function getPublishedPost(slug: string) {
   return prisma.blogPost.findFirst({
     where: { slug, status: "PUBLISHED" },
@@ -31,7 +31,7 @@ async function getPublishedPost(slug: string) {
 
 /**
  * Escape "<" so post-authored text (e.g. "</script>") can't terminate the
- * script element — JSON.stringify alone does not prevent this.
+ * script element - JSON.stringify alone does not prevent this.
  */
 function jsonLdScript(payload: object): string {
   return JSON.stringify(payload).replace(/</g, "\\u003c");
@@ -176,21 +176,21 @@ export default async function BlogPostPage({ params }: Params) {
                   <div className="min-w-0">
                     <p className="text-[15px] font-semibold text-ink">{post.authorName}</p>
                     <p className="mt-0.5 text-sm leading-6 text-ink-secondary">
-                      Team MyKavo — writing about website monitoring, SEO, and catching
+                      Team MyKavo - writing about website monitoring, SEO, and catching
                       regressions before customers do.
                     </p>
                   </div>
                 </div>
               </aside>
 
-              {/* End-of-post product CTA — ink band with the gold spark */}
+              {/* End-of-post product CTA - ink band with the gold spark */}
               <aside className="mt-8 rounded-[28px] border border-[#151515] bg-[#151515] px-7 py-12 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515] sm:px-10">
                 <h2 className={`${fontDisplay} text-3xl leading-tight text-[#E9EBDF] sm:text-4xl`}>
                   Know what changed. <span className="text-[#FFD400]">Fix what matters.</span>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#9C9E93]">
                   MyKavo monitors your websites for visual, SEO, link, script, and performance
-                  changes — and alerts you before small problems become expensive problems.
+                  changes - and alerts you before small problems become expensive problems.
                 </p>
                 <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
                   <Link

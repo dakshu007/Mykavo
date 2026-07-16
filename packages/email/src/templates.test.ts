@@ -76,7 +76,7 @@ describe("weeklyReportEmail", () => {
 
   it("builds a changes + uptime subject", () => {
     expect(weeklyReportEmail(base).subject).toBe(
-      "Weekly report for aurora-outdoor.com — 3 changes, 99.9% uptime",
+      "Weekly report for aurora-outdoor.com - 3 changes, 99.9% uptime",
     );
   });
 
@@ -87,7 +87,7 @@ describe("weeklyReportEmail", () => {
       changesBySeverity: [{ severity: "HIGH", count: 1 }],
       uptimePercent: null,
     });
-    expect(subject).toBe("Weekly report for aurora-outdoor.com — 1 change");
+    expect(subject).toBe("Weekly report for aurora-outdoor.com - 1 change");
   });
 
   it("includes stats, severity breakdown, SSL, Lighthouse, and the CTA", () => {
@@ -116,10 +116,10 @@ describe("weeklyReportEmail", () => {
       allQuiet: true,
     });
     expect(quiet.subject).toBe(
-      "Weekly report for aurora-outdoor.com — no changes, 100% uptime",
+      "Weekly report for aurora-outdoor.com - no changes, 100% uptime",
     );
-    expect(quiet.html).toContain("No unexpected changes — everything looks healthy.");
-    expect(quiet.text).toContain("No unexpected changes — everything looks healthy.");
+    expect(quiet.html).toContain("No unexpected changes - everything looks healthy.");
+    expect(quiet.text).toContain("No unexpected changes - everything looks healthy.");
   });
 
   it("provides a plain-text alternative with every section", () => {
@@ -179,15 +179,15 @@ describe("performanceDropEmail", () => {
     expect(text).toContain("Dashboard: https://mykavo.app/dashboard/websites/w1");
   });
 
-  it("renders '—' for scores missing on either side", () => {
+  it("renders '-' for scores missing on either side", () => {
     const { text } = performanceDropEmail({
       ...base,
       previous: { ...base.previous, accessibility: null, lcpMs: null },
       current: { ...base.current, seo: null },
     });
-    expect(text).toContain("- Accessibility: —");
-    expect(text).toContain("- SEO: —");
-    expect(text).toContain("- LCP: — → 3.4 s");
+    expect(text).toContain("- Accessibility: -");
+    expect(text).toContain("- SEO: -");
+    expect(text).toContain("- LCP: - → 3.4 s");
   });
 
   it("HTML-escapes the website name", () => {

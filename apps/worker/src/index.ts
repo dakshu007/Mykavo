@@ -1,6 +1,6 @@
 /**
  * MyKavo scan worker. Consumes SCAN_WEBSITE jobs from pg-boss (PostgreSQL-
- * backed queue — zero extra infrastructure) and executes them with a
+ * backed queue - zero extra infrastructure) and executes them with a
  * bounded Playwright browser pool. Scales horizontally: run more processes.
  */
 
@@ -35,7 +35,7 @@ const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  logger.error("DATABASE_URL is not set — worker cannot start");
+  logger.error("DATABASE_URL is not set - worker cannot start");
   process.exit(1);
 }
 
@@ -54,7 +54,7 @@ async function main() {
       expireInSeconds: 15 * 60,
     })
     .catch(() => {
-      // Queue already created by the web app — fine.
+      // Queue already created by the web app - fine.
     });
 
   const pool = new BrowserPool({ maxConcurrentPages: 3, restartAfterPages: 50 });
@@ -91,7 +91,7 @@ async function main() {
   await boss.schedule(HEALTH_SWEEP_QUEUE, HEALTH_CRON);
 
   // Weekly client-ready reports (spec §37): one summary email per ACTIVE
-  // website every Monday morning — the agency forward-to-client selling point.
+  // website every Monday morning - the agency forward-to-client selling point.
   await boss.createQueue(REPORT_SWEEP_QUEUE).catch(() => {});
   await boss.work(REPORT_SWEEP_QUEUE, { batchSize: 1 }, async () => {
     await runReportSweep();
@@ -99,7 +99,7 @@ async function main() {
   await boss.schedule(REPORT_SWEEP_QUEUE, REPORT_CRON);
 
   // Weekly Lighthouse audit sweep: enqueues one homepage audit per ACTIVE
-  // website (Tuesdays by default — offset from the Monday report sweep) so
+  // website (Tuesdays by default - offset from the Monday report sweep) so
   // scores stay fresh and performance-drop alerts fire without user action.
   await boss.createQueue(AUDIT_SWEEP_QUEUE).catch(() => {});
   await boss.work(AUDIT_SWEEP_QUEUE, { batchSize: 1 }, async () => {

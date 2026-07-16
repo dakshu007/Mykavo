@@ -16,7 +16,7 @@ export default async function SignupPage({
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  // Only same-origin relative paths — never an open redirect.
+  // Only same-origin relative paths - never an open redirect.
   const next = safeNextPath((await searchParams).next);
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) redirect(next ?? "/dashboard");
@@ -27,7 +27,7 @@ export default async function SignupPage({
         Create your account
       </h1>
       <p className="mb-6 text-sm text-ink-secondary">
-        Free plan included — no credit card required.
+        Free plan included - no credit card required.
       </p>
       <AuthForm mode="signup" googleEnabled={googleEnabled} redirectTo={next ?? undefined} />
     </>

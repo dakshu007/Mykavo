@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPlan, plans, formatLimit, WEBSITE_ADDON } from "./plans";
+import { getPlan, plans, formatLimit } from "./plans";
 
 describe("plans config", () => {
   it("contains exactly two plans: free and pro ($20)", () => {
@@ -18,10 +18,10 @@ describe("plans config", () => {
     });
   });
 
-  it("pro plan includes 8 base websites with 20 pages each", () => {
+  it("pro plan includes 8 websites with 15 pages each", () => {
     const pro = getPlan("pro");
     expect(pro.limits.websites).toBe(8);
-    expect(pro.limits.pagesPerWebsite).toBe(20);
+    expect(pro.limits.pagesPerWebsite).toBe(15);
     expect(pro.limits.scanFrequency).toBe("DAILY");
     expect(pro.limits.manualScans).toBe(true);
     expect(pro.limits.conversionElementMonitoring).toBe(true);
@@ -31,19 +31,6 @@ describe("plans config", () => {
     expect(getPlan("free").limits.maxMembers).toBe(1);
     expect(getPlan("pro").limits.maxMembers).toBe(5);
     expect(getPlan("pro").features).toContain("Up to 5 team members");
-  });
-
-  it("website add-on grants 1 site for $6/mo, capped at 3 units", () => {
-    expect(WEBSITE_ADDON.websitesPerUnit).toBe(1);
-    expect(WEBSITE_ADDON.maxUnits).toBe(3);
-    expect(WEBSITE_ADDON.priceMonthlyUsd).toBe(6);
-  });
-
-  it("pro can never exceed base + capped add-on capacity (11 websites)", () => {
-    const pro = getPlan("pro");
-    expect(
-      pro.limits.websites + WEBSITE_ADDON.maxUnits * WEBSITE_ADDON.websitesPerUnit,
-    ).toBe(11);
   });
 
   it("pro limits are at least free limits (never a downgrade)", () => {

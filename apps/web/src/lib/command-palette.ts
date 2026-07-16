@@ -18,14 +18,14 @@ export const SECTION_ORDER = [
 export type PaletteSection = (typeof SECTION_ORDER)[number];
 
 export interface PaletteEntry {
-  /** Stable unique id — also used for aria-activedescendant option ids. */
+  /** Stable unique id - also used for aria-activedescendant option ids. */
   id: string;
   section: PaletteSection;
   label: string;
-  /** Secondary line — URL for websites/pages, owning website for pages. */
+  /** Secondary line - URL for websites/pages, owning website for pages. */
   hint?: string;
   href: string;
-  /** Only present on Changes entries — rendered as a severity chip. */
+  /** Only present on Changes entries - rendered as a severity chip. */
   severity?: ChangeSeverity;
   status?: ChangeStatus;
 }
@@ -37,7 +37,7 @@ export interface PaletteGroup {
 
 /**
  * Client-side entries available without any network round-trip. Navigation
- * mirrors the sidebar (Blog only for allowlisted admins — same flag the
+ * mirrors the sidebar (Blog only for allowlisted admins - same flag the
  * layout already computes; pages/APIs enforce it server-side).
  */
 export function staticEntries(isBlogAdmin: boolean): PaletteEntry[] {
@@ -110,7 +110,7 @@ export function groupEntries(entries: PaletteEntry[]): PaletteGroup[] {
   })).filter((group) => group.entries.length > 0);
 }
 
-/** Flat list backing keyboard navigation — index order matches render order. */
+/** Flat list backing keyboard navigation - index order matches render order. */
 export function flattenGroups(groups: PaletteGroup[]): PaletteEntry[] {
   return groups.flatMap((group) => group.entries);
 }

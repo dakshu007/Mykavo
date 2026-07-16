@@ -1,6 +1,6 @@
 /**
  * Queue contract shared by the web app (producers) and workers (consumers).
- * Backed by pg-boss on the existing PostgreSQL instance — chosen over
+ * Backed by pg-boss on the existing PostgreSQL instance - chosen over
  * BullMQ+Redis to keep infrastructure at zero cost (see docs/ARCHITECTURE.md).
  */
 

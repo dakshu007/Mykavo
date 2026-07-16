@@ -4,8 +4,8 @@ import { parseFaqItems, SHORTCODE_LINE_TOKENS } from "@/components/blog/blocks";
  * Pure string helpers for the visual blog editor's markdown round-trip.
  *
  * The visual editor (Tiptap) stores posts as markdown, exactly like the
- * textarea editor. MyKavo shortcode blocks — `{{cta}}`, `{{toc}}`, and
- * `{{faq}}…{{/faq}}` — must survive a load → save cycle byte-identically, so
+ * textarea editor. MyKavo shortcode blocks - `{{cta}}`, `{{toc}}`, and
+ * `{{faq}}…{{/faq}}` - must survive a load → save cycle byte-identically, so
  * before markdown is handed to the Tiptap markdown parser we replace each
  * shortcode region with an HTML placeholder element that carries the exact
  * raw source text in an attribute. Custom atom nodes pick the placeholder up
@@ -103,7 +103,7 @@ export function splitShortcodeSegments(markdown: string): ShortcodeSegment[] {
           i = close + 1;
           continue;
         }
-        // Unclosed or empty FAQ — falls through as plain markdown, exactly
+        // Unclosed or empty FAQ - falls through as plain markdown, exactly
         // like the public renderer.
       }
     }

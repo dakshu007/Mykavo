@@ -1,6 +1,6 @@
 /**
  * Compare a completed scan against each page's approved baseline and persist
- * ChangeEvents (spec §24). Runs for SCHEDULED/MANUAL scans only — a BASELINE
+ * ChangeEvents (spec §24). Runs for SCHEDULED/MANUAL scans only - a BASELINE
  * scan establishes the baseline and must not create change events (spec §14).
  *
  * Idempotent: re-running deletes this scan's existing change events first, so
@@ -69,7 +69,7 @@ async function toComparable(
       select: { domain: true, isThirdParty: true, src: true },
     }),
     // Conversion-element observations (Phase 9). Orphaned results (config
-    // deleted) are dropped — they can't be matched against the baseline.
+    // deleted) are dropped - they can't be matched against the baseline.
     prisma.monitoredElementResult.findMany({
       where: { pageSnapshotId: snapshot.id, monitoredElementId: { not: null } },
       select: {
@@ -182,7 +182,7 @@ export async function runComparisonForScan(
 
   // Per-page link observations feed one grouped site-wide broken-links
   // comparison after the loop (spec §20). Monitored pages' own URLs are
-  // excluded there — a broken page already raises an AVAILABILITY event.
+  // excluded there - a broken page already raises an AVAILABILITY event.
   const baselineLinkPages: PageLinkObservations[] = [];
   const currentLinkPages: PageLinkObservations[] = [];
   const monitoredPageUrls = new Set<string>();
@@ -192,7 +192,7 @@ export async function runComparisonForScan(
       try {
         monitoredPageUrls.add(normalizeUrl(raw));
       } catch {
-        // unparseable URL — nothing to exclude
+        // unparseable URL - nothing to exclude
       }
     }
   }
@@ -224,7 +224,7 @@ export async function runComparisonForScan(
         },
       },
     });
-    // No baseline yet (e.g. page added after the baseline scan) — nothing to
+    // No baseline yet (e.g. page added after the baseline scan) - nothing to
     // compare against. Establish one so the next scan can compare.
     if (!baseline) continue;
 
@@ -236,7 +236,7 @@ export async function runComparisonForScan(
     const changes: Array<ScoredChange & { metadata?: Record<string, unknown> }> =
       compareSnapshots(base.comparable, curr.comparable);
 
-    // Visual diff (skipped when the page is broken — screenshot is unreliable).
+    // Visual diff (skipped when the page is broken - screenshot is unreliable).
     const currentBroken = (snapshot.httpStatus ?? 0) >= 400;
     if (!currentBroken && baselineSnap.screenshotStorageKey && snapshot.screenshotStorageKey) {
       try {
@@ -295,7 +295,7 @@ export async function runComparisonForScan(
     }
   }
 
-  // Broken internal links (spec §20): one grouped site-wide event per scan —
+  // Broken internal links (spec §20): one grouped site-wide event per scan -
   // the same dead link often appears on many pages, and per-page events would
   // flood the changes feed.
   try {
@@ -330,7 +330,7 @@ export async function runComparisonForScan(
     logger.error("broken link comparison failed", { scanId }, err);
   }
 
-  // Site-level robots.txt / sitemap regressions (website-wide — no page).
+  // Site-level robots.txt / sitemap regressions (website-wide - no page).
   // Compared against the most recent previous capture: site meta has no
   // user-approved baseline concept. First capture produces no events.
   try {

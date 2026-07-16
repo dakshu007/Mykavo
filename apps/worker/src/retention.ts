@@ -2,7 +2,7 @@
  * Retention sweep (Phase 10, spec §60 / §91). A daily cron that deletes scan
  * history older than each workspace's plan window, reclaiming DB rows AND
  * object-storage artifacts (the real cost driver). Baseline-referenced
- * snapshots are protected inside `findExpiredSnapshots` — see its safety note.
+ * snapshots are protected inside `findExpiredSnapshots` - see its safety note.
  *
  * Idempotent and resumable: it pages through expired snapshots in batches, so a
  * crash mid-sweep just resumes on the next run.
@@ -60,7 +60,7 @@ export async function runRetentionSweep(
       cutoff,
     });
 
-    // Health checks accumulate ~288 rows/site/day — prune with the same
+    // Health checks accumulate ~288 rows/site/day - prune with the same
     // window. Incidents are kept forever (tiny, long-term value).
     healthChecksDeleted += await deleteExpiredHealthChecks(prisma, {
       websiteId: website.id,

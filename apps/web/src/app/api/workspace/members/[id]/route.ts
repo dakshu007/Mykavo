@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
 type Params = { params: Promise<{ id: string }> };
 
 const roleSchema = z.object({
-  // The OWNER role is never assignable — one owner per workspace.
+  // The OWNER role is never assignable - one owner per workspace.
   role: z.enum(["ADMIN", "MEMBER", "VIEWER"]),
 });
 
@@ -56,7 +56,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
 /**
  * Remove a member (OWNER/ADMIN). Nobody can remove the OWNER, and an ADMIN
- * cannot remove a fellow ADMIN — only the owner can (see canRemoveMember).
+ * cannot remove a fellow ADMIN - only the owner can (see canRemoveMember).
  */
 export async function DELETE(_request: Request, { params }: Params) {
   const ctx = await getApiContext();

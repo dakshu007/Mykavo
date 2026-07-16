@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { ScanStatusBadge } from "@/components/dashboard/scan-status";
 
 function duration(start: Date | null, end: Date | null): string {
-  if (!start || !end) return "—";
+  if (!start || !end) return "-";
   const seconds = Math.round((end.getTime() - start.getTime()) / 1000);
   return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 }
@@ -28,7 +28,7 @@ export default async function ScansPage() {
       <EmptyState
         icon={History}
         title="No scans yet"
-        description="Run a baseline scan from a website's page to capture its first snapshot. Scan history — status, duration, pages, and failures — appears here."
+        description="Run a baseline scan from a website's page to capture its first snapshot. Scan history - status, duration, pages, and failures - appears here."
         action={
           <Link
             href="/dashboard/websites"

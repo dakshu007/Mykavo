@@ -9,7 +9,7 @@ const subscribe = () => () => {};
 /**
  * Renders the dashboard greeting. The server provides a geo-based guess (used
  * verbatim for the SSR snapshot, so most visitors never see a flash); the
- * client snapshot derives from the browser's own clock — the only source
+ * client snapshot derives from the browser's own clock - the only source
  * that is always right for the person looking.
  */
 export function Greeting({

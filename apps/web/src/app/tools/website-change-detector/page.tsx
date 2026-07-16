@@ -8,7 +8,7 @@ import { site } from "@/config/site";
 export const metadata: Metadata = {
   title: "Free Website Change Detector",
   description:
-    "Free website change detector: snapshot any page's HTTP status, SEO tags, links, and scripts — then compare two URLs or re-check later to see exactly what changed.",
+    "Free website change detector: snapshot any page's HTTP status, SEO tags, links, and scripts - then compare two URLs or re-check later to see exactly what changed.",
   alternates: { canonical: "/tools/website-change-detector" },
 };
 
@@ -41,7 +41,7 @@ export default function WebsiteChangeDetectorPage() {
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
             Snapshot any page&apos;s HTTP status, SEO tags, links, and scripts. Save it, come back
-            later, and see exactly what changed — or compare two URLs side-by-side. Free, no
+            later, and see exactly what changed - or compare two URLs side-by-side. Free, no
             account needed.
           </p>
         </div>
@@ -68,7 +68,7 @@ export default function WebsiteChangeDetectorPage() {
           </p>
           <p>
             This free tool checks one page at a time, on demand. MyKavo does this automatically
-            for every important page on every website you manage — on a schedule, with visual
+            for every important page on every website you manage - on a schedule, with visual
             screenshot comparison, broken-link detection, and severity-ranked email alerts.
           </p>
         </section>

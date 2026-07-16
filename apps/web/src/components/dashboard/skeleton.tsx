@@ -36,7 +36,7 @@ export function SkeletonStat() {
   );
 }
 
-/** Divided list rows — websites, changes, notifications, snapshots. */
+/** Divided list rows - websites, changes, notifications, snapshots. */
 export function SkeletonListRows({ rows = 5 }: { rows?: number }) {
   return (
     <ul className="divide-y divide-line">

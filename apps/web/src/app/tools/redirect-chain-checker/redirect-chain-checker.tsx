@@ -108,21 +108,21 @@ export function RedirectChainChecker() {
             <div className="space-y-3">
               {chain.loopDetected && (
                 <WarningBanner tone="error">
-                  Redirect loop detected — the chain routes back to{" "}
+                  Redirect loop detected - the chain routes back to{" "}
                   <span className="break-all font-mono text-xs">{chain.loopUrl}</span>. Browsers
                   will show an error instead of the page.
                 </WarningBanner>
               )}
               {chain.exceededMaxHops && (
                 <WarningBanner tone="error">
-                  More than 10 redirects — we stopped following. Browsers give up on chains
+                  More than 10 redirects - we stopped following. Browsers give up on chains
                   this long too.
                 </WarningBanner>
               )}
               {!chain.loopDetected && !chain.exceededMaxHops && chain.redirectCount > 2 && (
                 <WarningBanner tone="warn">
                   {chain.redirectCount} hops is more than the recommended maximum of 2. Each hop
-                  adds latency and dilutes SEO signals — point the first URL directly at the
+                  adds latency and dilutes SEO signals - point the first URL directly at the
                   final destination.
                 </WarningBanner>
               )}
@@ -167,7 +167,7 @@ export function RedirectChainChecker() {
 
           <ToolCta
             heading="Get alerted when redirects unexpectedly change."
-            body="MyKavo monitors the redirect behavior of every page you care about — new redirects, changed destinations, and broken chains trigger an email before your visitors notice."
+            body="MyKavo monitors the redirect behavior of every page you care about - new redirects, changed destinations, and broken chains trigger an email before your visitors notice."
             tool="redirect-chain-checker"
           />
         </>

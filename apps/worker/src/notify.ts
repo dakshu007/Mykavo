@@ -57,7 +57,7 @@ export async function resolveEmailConfig(workspaceId: string): Promise<ChannelCo
     };
   }
 
-  // No channel configured yet — default to the workspace owner's email.
+  // No channel configured yet - default to the workspace owner's email.
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
     include: { owner: { select: { email: true } } },
@@ -163,7 +163,7 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
   const { website } = scan;
 
   // Maintenance window (spec §25): change events are already recorded by the
-  // compare step — just don't send anything (no emails, channels, or rows).
+  // compare step - just don't send anything (no emails, channels, or rows).
   if (website.muteAlertsUntil && website.muteAlertsUntil > new Date()) {
     logger.info("alerts muted, skipped", {
       scanId,
@@ -184,7 +184,7 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
     timeStyle: "short",
   });
 
-  // Email config may be absent/disabled — chat channels still fire.
+  // Email config may be absent/disabled - chat channels still fire.
   const config = await resolveEmailConfig(website.workspaceId);
 
   // Failure alert (spec §27 failure alerts).
@@ -217,7 +217,7 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
     return ok;
   }
 
-  // Change summary — only NEW changes at or above the threshold.
+  // Change summary - only NEW changes at or above the threshold.
   const minRank = SEVERITY_RANK[config?.minSeverity ?? DEFAULT_MIN_SEVERITY];
   const changes = await prisma.changeEvent.findMany({
     where: { scanId, status: "NEW" },
@@ -270,9 +270,9 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
   }
 
   await fanOutToChannels(website.workspaceId, website.id, scan.id, {
-    title: `${eligible.length} change${eligible.length === 1 ? "" : "s"} detected on ${host} — highest: ${highest}`,
+    title: `${eligible.length} change${eligible.length === 1 ? "" : "s"} detected on ${host} - highest: ${highest}`,
     lines: [
-      ...lines.slice(0, 6).map((l) => `${l.severity} · ${l.title} — ${l.pagePath}`),
+      ...lines.slice(0, 6).map((l) => `${l.severity} · ${l.title} - ${l.pagePath}`),
       ...(eligible.length > 6 ? [`…and ${eligible.length - 6} more`] : []),
     ],
     url: dashboardUrl,

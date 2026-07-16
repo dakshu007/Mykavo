@@ -5,7 +5,7 @@ import { diffSnapshots, extractSnapshot, type PageToolSnapshot } from "./snapsho
 const HTML = `<!doctype html>
 <html>
 <head>
-  <title>Aurora Outdoor — Tents &amp; Gear</title>
+  <title>Aurora Outdoor - Tents &amp; Gear</title>
   <meta name="description" content="Quality tents and camping gear.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://aurora-outdoor.com/">
@@ -39,7 +39,7 @@ describe("extractSnapshot", () => {
   const snap = extractSnapshot(fetched(), "https://aurora-outdoor.com/");
 
   it("extracts SEO metadata with entity decoding and tag stripping", () => {
-    expect(snap.title).toBe("Aurora Outdoor — Tents & Gear");
+    expect(snap.title).toBe("Aurora Outdoor - Tents & Gear");
     expect(snap.metaDescription).toBe("Quality tents and camping gear.");
     expect(snap.canonicalUrl).toBe("https://aurora-outdoor.com/");
     expect(snap.robotsMeta).toBe("index, follow");

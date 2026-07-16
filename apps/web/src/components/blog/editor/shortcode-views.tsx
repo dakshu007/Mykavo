@@ -51,7 +51,7 @@ function ChipShell({
         </span>
         <span className="min-w-0 flex-1 text-sm">
           <span className="font-medium text-ink">{title}</span>
-          <span className="text-ink-secondary"> — {description}</span>
+          <span className="text-ink-secondary"> - {description}</span>
         </span>
         <button
           type="button"
@@ -93,7 +93,7 @@ function TocChipView({ selected, deleteNode }: ReactNodeViewProps) {
 }
 
 /**
- * FAQ region — the exact raw source is kept on the node; only the inner
+ * FAQ region - the exact raw source is kept on the node; only the inner
  * Q:/A: lines are exposed for editing so the delimiters (and an untouched
  * region as a whole) stay byte-identical.
  */

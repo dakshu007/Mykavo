@@ -90,7 +90,7 @@ export function TagEditor({
               }
             }}
             disabled={busy}
-            placeholder={tags.length === 0 ? "Add tag — e.g. acme-corp" : "Add tag"}
+            placeholder={tags.length === 0 ? "Add tag - e.g. acme-corp" : "Add tag"}
             maxLength={40}
             aria-label="Add tag"
             className="h-7 w-44 rounded-full border border-line bg-card px-3 text-[12px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none disabled:opacity-60"
@@ -105,7 +105,7 @@ export function TagEditor({
       ) : (
         <p className="text-[13px] text-ink-faint">
           Label this site by client or team, then filter the websites list.
-          Press Enter to add — up to {MAX_TAGS_PER_WEBSITE} lowercase tags.
+          Press Enter to add - up to {MAX_TAGS_PER_WEBSITE} lowercase tags.
         </p>
       )}
     </div>

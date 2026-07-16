@@ -1,17 +1,17 @@
 /**
  * SEO health report derived from the latest completed scan's PageSnapshot
- * rows. Pure module — no Prisma imports — so every check is unit-testable.
+ * rows. Pure module - no Prisma imports - so every check is unit-testable.
  *
  * Length guidance (title 50–60, description 120–160) is shared with the free
  * Meta Tag Checker via `@/lib/tools/meta-tags`; the thresholds live there.
  *
  * Broken-link checks read the statuses the worker's per-scan link check
  * records on PageLink rows (apps/worker/src/check-links.ts). Links the check
- * never probed (null status) are silently skipped — never assumed broken.
+ * never probed (null status) are silently skipped - never assumed broken.
  *
  * Health score formula (documented, clamped to 0–100):
  *   score = 100 − 25 × critical − 5 × warning − 1 × info
- * Every issue deducts individually — e.g. two noindex pages cost 50 points.
+ * Every issue deducts individually - e.g. two noindex pages cost 50 points.
  */
 
 import { isBrokenLinkStatus } from "@mykavo/comparison-engine";
@@ -38,7 +38,7 @@ export type SeoCheckId =
   | "multiple-h1"
   | "missing-canonical";
 
-/** The PageSnapshot columns the report reads — matches the Prisma select. */
+/** The PageSnapshot columns the report reads - matches the Prisma select. */
 export interface SeoSnapshotInput {
   monitoredPageId: string;
   url: string;
@@ -48,7 +48,7 @@ export interface SeoSnapshotInput {
   metaDescription: string | null;
   canonicalUrl: string | null;
   robotsMeta: string | null;
-  /** Prisma Json column — expected string[], but never trusted to be one. */
+  /** Prisma Json column - expected string[], but never trusted to be one. */
   h1Values: unknown;
   /**
    * Internal PageLink rows for the page. `statusCode` comes from the worker's
@@ -105,11 +105,11 @@ export const SEO_CHECK_META: Record<SeoCheckId, { title: string; why: string }> 
   },
   noindex: {
     title: "Pages blocked from indexing",
-    why: "A noindex robots meta removes the page from search results entirely — make sure it's intentional.",
+    why: "A noindex robots meta removes the page from search results entirely - make sure it's intentional.",
   },
   "broken-link": {
     title: "Broken internal links",
-    why: "Links that lead to errors dead-end visitors and waste crawl budget — search engines read them as a poorly maintained site.",
+    why: "Links that lead to errors dead-end visitors and waste crawl budget - search engines read them as a poorly maintained site.",
   },
   "missing-title": {
     title: "Missing title tags",
@@ -129,7 +129,7 @@ export const SEO_CHECK_META: Record<SeoCheckId, { title: string; why: string }> 
   },
   "description-length": {
     title: "Description length outside 120–160 characters",
-    why: "The description is your pitch under the headline — too short undersells, too long gets cut off.",
+    why: "The description is your pitch under the headline - too short undersells, too long gets cut off.",
   },
   "missing-h1": {
     title: "Missing H1 headings",
@@ -247,7 +247,7 @@ function contentIssues(snapshot: SeoSnapshotInput): SeoIssue[] {
 }
 
 /**
- * One issue per unique broken internal link (deduped across pages — the same
+ * One issue per unique broken internal link (deduped across pages - the same
  * dead footer link on 20 pages is one problem, not 20). Attached to the first
  * page that references it; the message carries the page reach.
  */
@@ -329,7 +329,7 @@ export interface SeoScoreBand {
   tone: "success" | "warning" | "critical";
 }
 
-/** Colour band for the big score number — always paired with a text label. */
+/** Colour band for the big score number - always paired with a text label. */
 export function seoScoreBand(score: number): SeoScoreBand {
   if (score >= 90) return { label: "Healthy", tone: "success" };
   if (score >= 70) return { label: "Needs attention", tone: "warning" };

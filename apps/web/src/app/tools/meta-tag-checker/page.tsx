@@ -7,7 +7,7 @@ import { site } from "@/config/site";
 export const metadata: Metadata = {
   title: "Free Meta Tag Checker",
   description:
-    "Free meta tag checker: analyze any page's title tag, meta description, canonical URL, robots meta, Open Graph tags, and H1 headings — with clear pass/warn guidance.",
+    "Free meta tag checker: analyze any page's title tag, meta description, canonical URL, robots meta, Open Graph tags, and H1 headings - with clear pass/warn guidance.",
   alternates: { canonical: "/tools/meta-tag-checker" },
 };
 
@@ -40,7 +40,7 @@ export default function MetaTagCheckerPage() {
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
             Check any page&apos;s title tag, meta description, canonical URL, robots meta, Open
-            Graph tags, and H1 headings — with clear pass/warn guidance. Free, no account
+            Graph tags, and H1 headings - with clear pass/warn guidance. Free, no account
             needed.
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function MetaTagCheckerPage() {
             comes with a plain-English explanation, not just a score.
           </p>
           <p>
-            The dangerous part about meta tags is not getting them right once — it&apos;s
+            The dangerous part about meta tags is not getting them right once - it&apos;s
             keeping them right. CMS plugins, theme updates, migrations, and redeploys overwrite
             titles and canonicals all the time, and nobody notices until traffic drops. MyKavo
             monitors these exact tags on every page you care about and emails you the moment

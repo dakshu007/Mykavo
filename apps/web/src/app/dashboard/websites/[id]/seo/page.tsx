@@ -13,7 +13,7 @@ import {
   type SeoSeverity,
 } from "@/lib/seo-report";
 
-export const metadata = { title: "SEO health — MyKavo" };
+export const metadata = { title: "SEO health - MyKavo" };
 
 const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -22,7 +22,7 @@ function isStaleScan(scanDate: Date): boolean {
   return Date.now() - scanDate.getTime() > STALE_AFTER_MS;
 }
 
-/** Score number colour per band — the label text always rides along. */
+/** Score number colour per band - the label text always rides along. */
 const BAND_TEXT: Record<ReturnType<typeof seoScoreBand>["tone"], string> = {
   success: "text-success-strong",
   warning: "text-warning-strong",
@@ -142,7 +142,7 @@ export default async function SeoHealthPage({
       <h1 className="text-2xl font-semibold tracking-tight text-ink">SEO health</h1>
       <p className="mt-1 text-sm text-ink-secondary">
         Title, description, H1, canonical and indexability checks across your monitored
-        pages — from your latest scan, no extra crawling.
+        pages - from your latest scan, no extra crawling.
       </p>
     </div>
   );
@@ -153,7 +153,7 @@ export default async function SeoHealthPage({
         {header}
         <Card>
           <p className="py-4 text-sm text-ink-secondary">
-            No finished scan yet — the report is built from scan data.{" "}
+            No finished scan yet - the report is built from scan data.{" "}
             <Link
               href={`/dashboard/websites/${website.id}`}
               className="font-medium text-primary hover:underline"
@@ -225,7 +225,7 @@ export default async function SeoHealthPage({
         <Card className="border border-warning-soft">
           <p className="text-sm text-ink-secondary">
             <span className="font-semibold text-warning-strong">This report may be stale</span>{" "}
-            — the latest finished scan is from {scanDateLabel}, more than 7 days ago.{" "}
+            - the latest finished scan is from {scanDateLabel}, more than 7 days ago.{" "}
             <Link
               href={`/dashboard/websites/${website.id}`}
               className="font-medium text-primary hover:underline"
@@ -289,7 +289,7 @@ export default async function SeoHealthPage({
 
       <p className="flex items-center gap-1.5 text-[13px] text-ink-faint">
         <ExternalLink className="size-3.5" aria-hidden />
-        Checks cover your monitored pages only — MyKavo reports from scan data instead of
+        Checks cover your monitored pages only - MyKavo reports from scan data instead of
         crawling your whole site.
       </p>
     </div>

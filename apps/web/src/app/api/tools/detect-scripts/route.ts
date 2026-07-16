@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   });
   if (!limit.allowed) {
     return NextResponse.json(
-      { error: "Too many requests — please wait a moment and try again." },
+      { error: "Too many requests - please wait a moment and try again." },
       { status: 429, headers: { "retry-after": String(limit.retryAfterSeconds) } },
     );
   }

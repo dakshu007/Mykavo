@@ -14,7 +14,7 @@ const postSchema = z.object({
   path: z.string().max(MAX_AUDIT_PATH_LENGTH).optional(),
 });
 
-/** Lighthouse audits are expensive — a tight per-workspace cap (spec §43/§60). */
+/** Lighthouse audits are expensive - a tight per-workspace cap (spec §43/§60). */
 const AUDITS_PER_HOUR = 5;
 
 /** Recent performance audits for a website (for the dashboard + polling). */

@@ -69,7 +69,7 @@ describe("toEditorMarkdown", () => {
   });
 });
 
-describe("roundTripMarkdown — shortcode regions are byte-identical", () => {
+describe("roundTripMarkdown - shortcode regions are byte-identical", () => {
   it.each([
     ["cta", "{{cta}}"],
     ["toc", "{{toc}}"],
@@ -111,7 +111,7 @@ describe("roundTripMarkdown — shortcode regions are byte-identical", () => {
   });
 });
 
-describe("roundTripMarkdown — plain markdown", () => {
+describe("roundTripMarkdown - plain markdown", () => {
   it("is byte-identical for markdown already in serialized form", () => {
     const input = [
       "# Heading 1",

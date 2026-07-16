@@ -4,7 +4,7 @@
  * HTTP status on the scan's PageLink rows; the comparison engine then reports
  * links that newly became broken.
  *
- * False-positive posture: only definite outcomes are recorded — an actual
+ * False-positive posture: only definite outcomes are recorded - an actual
  * HTTP response, or a hard network failure (DNS NXDOMAIN, connection refused,
  * TLS certificate failure) recorded as status 0. Indeterminate outcomes
  * (timeouts, SSRF-blocked targets, redirect loops) record NO status, so a
@@ -13,7 +13,7 @@
 
 import { assertSafeUrl, UnsafeUrlError } from "./ssrf";
 
-/** Per-scan cap on network probes — link checking must stay cheap (spec §43). */
+/** Per-scan cap on network probes - link checking must stay cheap (spec §43). */
 export const MAX_LINK_CHECKS_PER_SCAN = 150;
 
 export interface LinkCheckPlan {
@@ -96,7 +96,7 @@ function causeCode(err: unknown): string | null {
 /**
  * Probe a link's HTTP status without downloading its body: HEAD first (GET
  * fallback for servers that reject HEAD), manual redirects with SSRF
- * revalidation on every hop — links come from scanned HTML and are untrusted
+ * revalidation on every hop - links come from scanned HTML and are untrusted
  * input (spec §11).
  */
 export async function probeLinkStatus(
@@ -110,7 +110,7 @@ export async function probeLinkStatus(
     current = await assertSafeUrl(rawUrl);
   } catch (err) {
     if (err instanceof UnsafeUrlError && err.code === "DNS_FAILURE") {
-      return { status: 0, errorCode: err.code }; // host doesn't resolve — broken for visitors too
+      return { status: 0, errorCode: err.code }; // host doesn't resolve - broken for visitors too
     }
     return { status: null, errorCode: err instanceof UnsafeUrlError ? err.code : "INVALID_URL" };
   }
@@ -134,7 +134,7 @@ export async function probeLinkStatus(
     let response: Response;
     try {
       response = await request(current, "HEAD");
-      // Some servers reject HEAD outright — retry those with GET.
+      // Some servers reject HEAD outright - retry those with GET.
       if (response.status === 405 || response.status === 501) {
         response.body?.cancel();
         response = await request(current, "GET");
@@ -161,7 +161,7 @@ export async function probeLinkStatus(
         return { status: null, errorCode: "INVALID_URL" };
       }
       try {
-        // Re-validate every hop — redirects are untrusted input.
+        // Re-validate every hop - redirects are untrusted input.
         current = await assertSafeUrl(next);
       } catch (err) {
         if (err instanceof UnsafeUrlError && err.code === "DNS_FAILURE") {

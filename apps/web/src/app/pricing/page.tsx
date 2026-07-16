@@ -1,17 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, CheckCircle2, Minus, Plus } from "lucide-react";
+import { Check, CheckCircle2, Minus } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
-import { plans, formatLimit, WEBSITE_ADDON } from "@/config/plans";
+import { plans, formatLimit } from "@/config/plans";
 
 export const metadata: Metadata = {
-  title: "Pricing",
+  title: "Pricing - Website Monitoring Plans from $0",
   description:
-    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $20/month for 8 websites with 20 monitored pages each — add more anytime.",
+    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $20/month for 8 websites with 15 monitored pages each, daily scans and alerts.",
+  keywords: [
+    "website monitoring pricing",
+    "site monitoring tools pricing",
+    "website change detection pricing",
+    "affordable website monitoring",
+  ],
   alternates: { canonical: "/pricing" },
+  openGraph: {
+    title: "MyKavo Pricing - Website Monitoring from $0",
+    description:
+      "Free plan for one website. Pro at $20/month for 8 websites with 15 monitored pages each, daily scans and severity-ranked alerts.",
+    url: "/pricing",
+    type: "website",
+  },
 };
 
 const comparisonRows: Array<{
@@ -21,7 +34,7 @@ const comparisonRows: Array<{
   {
     label: "Websites",
     value: (p) =>
-      p.id === "pro" ? `${p.limits.websites} + add-ons` : formatLimit(p.limits.websites),
+      formatLimit(p.limits.websites),
   },
   {
     label: "Monitored pages",
@@ -41,11 +54,11 @@ const pricingFaqs = [
   },
   {
     q: "What counts as a monitored page?",
-    a: "Each specific URL MyKavo scans on a schedule. You choose exactly which pages to monitor per website — home, pricing, checkout, key landing pages.",
+    a: "Each specific URL MyKavo scans on a schedule. You choose exactly which pages to monitor per website - home, pricing, checkout, key landing pages.",
   },
   {
     q: "What happens if I hit my plan limits?",
-    a: "MyKavo keeps monitoring everything already configured. On Pro you can add another website anytime for $6/month (up to 3 add-ons); otherwise it asks you to upgrade before adding more. Nothing is silently dropped.",
+    a: "MyKavo keeps monitoring everything already configured. It simply asks you to upgrade before adding more websites or pages - nothing is silently dropped.",
   },
   {
     q: "Do you offer annual billing?",
@@ -74,7 +87,7 @@ export default function PricingPage() {
           </h1>
           <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
             One missed regression costs more than a year of MyKavo. Start free with one website,
-            or go Pro for $20/month — 8 websites with 20 monitored pages each, add more anytime.
+            or go Pro for $20/month - 8 websites with 15 monitored pages each.
           </p>
         </div>
 
@@ -121,25 +134,6 @@ export default function PricingPage() {
               </div>
             );
           })}
-        </div>
-
-        {/* Website add-on callout */}
-        <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-black/10 bg-white p-6 sm:flex-row">
-          <div className="flex items-start gap-3.5">
-            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-black/15 bg-[#FFD400]">
-              <Plus className="size-4.5 text-[#151515]" aria-hidden />
-            </span>
-            <div>
-              <p className="text-[15px] font-semibold text-[#151515]">Need another website on Pro?</p>
-              <p className="mt-1 text-sm leading-6 text-[#6B6B60]">
-                Add one anytime for ${WEBSITE_ADDON.priceMonthlyUsd}/month — up to{" "}
-                {WEBSITE_ADDON.maxUnits} add-ons per workspace.
-              </p>
-            </div>
-          </div>
-          <span className="shrink-0 rounded-full border border-black/15 bg-[#F3F1E6] px-4 py-2 font-mono text-[12px] font-semibold text-[#151515]">
-            +${WEBSITE_ADDON.priceMonthlyUsd}/mo per website
-          </span>
         </div>
 
         {/* Comparison table */}
@@ -225,7 +219,7 @@ export default function PricingPage() {
               Ready when <span className="text-[#FFD400]">you are.</span>
             </h2>
             <p className="mx-auto mb-8 mt-3 max-w-md text-[15px] leading-7 text-[#9C9E93]">
-              Start on the free plan — upgrade whenever your websites need more.
+              Start on the free plan - upgrade whenever your websites need more.
             </p>
             <Link
               href="/signup"

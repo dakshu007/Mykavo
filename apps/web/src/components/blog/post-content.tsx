@@ -34,7 +34,7 @@ export function PostContent({ content }: { content: string }) {
   );
 }
 
-/** {{cta}} — inline "Try MyKavo" card. */
+/** {{cta}} - inline "Try MyKavo" card. */
 function CtaBlock() {
   return (
     <aside className="my-8 rounded-tile border border-primary/15 bg-primary-soft/50 px-6 py-8 text-center sm:px-8">
@@ -43,7 +43,7 @@ function CtaBlock() {
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">
         MyKavo watches your websites for visual, SEO, link, script, and
-        performance changes — and alerts you before your customers notice.
+        performance changes - and alerts you before your customers notice.
       </p>
       <div className="mt-5">
         <ButtonLink href="/signup">Start Monitoring Free</ButtonLink>
@@ -53,7 +53,7 @@ function CtaBlock() {
   );
 }
 
-/** {{faq}} — accessible accordion; the page also emits FAQPage JSON-LD. */
+/** {{faq}} - accessible accordion; the page also emits FAQPage JSON-LD. */
 function FaqBlock({ items }: { items: FaqItem[] }) {
   return (
     <section className="my-8">
@@ -85,7 +85,7 @@ function FaqBlock({ items }: { items: FaqItem[] }) {
   );
 }
 
-/** {{toc}} — inline table-of-contents card, placed where the author put it. */
+/** {{toc}} - inline table-of-contents card, placed where the author put it. */
 function TocBlock({ headings }: { headings: PostHeading[] }) {
   if (headings.length === 0) return null;
   return (

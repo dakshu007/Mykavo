@@ -7,7 +7,7 @@ import { resolveWorkspaceSelection, WORKSPACE_COOKIE } from "@/lib/team";
 
 /**
  * Server-side session helpers. All dashboard pages and APIs resolve
- * authorization here — never from client-provided state (spec §59).
+ * authorization here - never from client-provided state (spec §59).
  */
 
 export const getSession = cache(async () => {

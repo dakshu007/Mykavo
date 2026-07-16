@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Blog",
   description:
-    "Guides and practical notes on website change detection, regression monitoring, SEO health, and keeping client websites working — from the MyKavo team.",
+    "Guides and practical notes on website change detection, regression monitoring, SEO health, and keeping client websites working - from the MyKavo team.",
   alternates: {
     canonical: "/blog",
     types: { "application/rss+xml": "/blog/feed.xml" },
@@ -54,7 +54,7 @@ export default async function BlogIndexPage() {
           </h1>
           <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
             Change detection, regression monitoring, SEO health, and lessons from watching
-            websites break — and fixing them before anyone notices.
+            websites break - and fixing them before anyone notices.
           </p>
           <Link
             href="/blog/feed.xml"
@@ -69,7 +69,7 @@ export default async function BlogIndexPage() {
             <PenLine className="mb-4 size-7 text-[#151515]" aria-hidden />
             <h2 className={`${fontDisplay} text-2xl text-[#151515]`}>No posts yet.</h2>
             <p className="mt-2 max-w-sm text-sm leading-6 text-[#6B6B60]">
-              We&apos;re writing our first guides on website change monitoring. Check back soon —
+              We&apos;re writing our first guides on website change monitoring. Check back soon -
               or start monitoring in the meantime.
             </p>
             <Link

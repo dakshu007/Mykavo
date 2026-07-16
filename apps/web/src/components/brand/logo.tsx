@@ -2,11 +2,11 @@ import type { SVGProps } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * MyKavo logomark — the spark leaving the page: a gold document panel on the
+ * MyKavo logomark - the spark leaving the page: a gold document panel on the
  * left with a chevron notch cut into it, and a five-ray spark bursting out
  * to the right. It reads as the instant a change is caught on a page.
  *
- * Single-color mark built from currentColor — defaults to brand gold; set the
+ * Single-color mark built from currentColor - defaults to brand gold; set the
  * color via `className` (e.g. "text-[#151515]" on gold surfaces). The gaps
  * between page and spark are transparent so the mark sits on any background.
  */
@@ -34,7 +34,7 @@ export function LogoMark({
         strokeWidth="0.8"
         strokeLinejoin="round"
       />
-      {/* Spark — chevron apex with five tapered rays fanning right */}
+      {/* Spark - chevron apex with five tapered rays fanning right */}
       <path
         d="M10.35 16 L19.45 3.4 L15.85 12 L23.7 8.2 L16.55 14.5 L29.1 16 L16.55 17.5 L23.7 23.8 L15.85 20 L19.45 28.6 Z"
         fill="currentColor"
@@ -52,7 +52,7 @@ export type LogoVariant = "default" | "inverse";
  * Full brand lockup: spark logomark + "MyKavo" wordmark.
  *
  * The wordmark is real HTML text (site font stack), never SVG text.
- * Not a link by itself — wrap it in `<Link>` where navigation is wanted.
+ * Not a link by itself - wrap it in `<Link>` where navigation is wanted.
  */
 export function Logo({
   markSize = 26,

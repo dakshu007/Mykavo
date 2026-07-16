@@ -18,7 +18,7 @@ const ACTION_FOR_STATUS: Record<z.infer<typeof bodySchema>["action"], ChangeActi
 
 /**
  * Bulk triage: apply one action to up to 100 change events at once. The ids
- * are never trusted — the update is scoped to the caller's workspace, and the
+ * are never trusted - the update is scoped to the caller's workspace, and the
  * status/timestamp transition is the exact `changeActionData` payload the
  * single-change PATCH uses.
  */

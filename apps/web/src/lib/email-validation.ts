@@ -4,9 +4,9 @@ import { resolveMx } from "node:dns/promises";
  * Signup email validation (spec §59: validate external input server-side).
  * Three layers, cheapest first:
  *
- *  1. Structural check — one @, sane local part and domain shape.
- *  2. Disposable-domain blocklist — the common throwaway providers.
- *  3. DNS MX lookup — the domain must actually accept mail. DNS
+ *  1. Structural check - one @, sane local part and domain shape.
+ *  2. Disposable-domain blocklist - the common throwaway providers.
+ *  3. DNS MX lookup - the domain must actually accept mail. DNS
  *     *infrastructure* failures (timeout/SERVFAIL) fail OPEN so a resolver
  *     hiccup never blocks signups; a definitive NXDOMAIN/NODATA fails closed.
  */
@@ -49,7 +49,7 @@ export function isDisposableDomain(domain: string): boolean {
   return DISPOSABLE_DOMAINS.has(domain);
 }
 
-/** MX resolver signature — injectable for tests. */
+/** MX resolver signature - injectable for tests. */
 export type MxResolver = (domain: string) => Promise<Array<{ exchange: string }>>;
 
 async function domainAcceptsMail(domain: string, resolver: MxResolver): Promise<boolean> {
@@ -89,6 +89,6 @@ export const EMAIL_VALIDATION_MESSAGES: Record<
   string
 > = {
   format: "Enter a valid email address.",
-  disposable: "Disposable email addresses can't be used — please use a real inbox.",
+  disposable: "Disposable email addresses can't be used - please use a real inbox.",
   undeliverable: "That email domain can't receive mail. Double-check the address.",
 };

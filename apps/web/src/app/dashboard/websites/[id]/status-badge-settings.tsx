@@ -19,7 +19,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard unavailable (e.g. insecure context) — nothing to surface.
+      // Clipboard unavailable (e.g. insecure context) - nothing to surface.
     }
   }
 
@@ -102,7 +102,7 @@ export function StatusBadgeSettings({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-secondary">
           Embed a live uptime badge in your README or site footer. The badge URL
-          uses an anonymous token — it never reveals your site name or dashboard.
+          uses an anonymous token - it never reveals your site name or dashboard.
         </p>
         <button
           onClick={toggle}

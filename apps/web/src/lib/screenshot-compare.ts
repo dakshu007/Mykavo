@@ -1,5 +1,5 @@
 /**
- * Pure logic for the before/after screenshot comparison widget (spec §33 —
+ * Pure logic for the before/after screenshot comparison widget (spec §33 -
  * "Make comparison extremely easy"). Kept free of React so it can be unit
  * tested in the node vitest environment and shared by the server page (to
  * pick the initial mode) and the client component.

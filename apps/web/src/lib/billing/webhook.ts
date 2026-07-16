@@ -1,5 +1,5 @@
 /**
- * Dodo Payments webhook signature verification — Standard Webhooks spec
+ * Dodo Payments webhook signature verification - Standard Webhooks spec
  * (Svix-compatible), implemented with Node crypto (no SDK). See research spec.
  *
  * Contract:
@@ -82,7 +82,7 @@ export function verifyDodoWebhook(
     .update(signedContent, "utf8")
     .digest("base64");
 
-  // webhook-signature: space-delimited "<version>,<base64sig>" — accept any v1.
+  // webhook-signature: space-delimited "<version>,<base64sig>" - accept any v1.
   const matched = webhookSignature.split(" ").some((token) => {
     const comma = token.indexOf(",");
     if (comma === -1) return false;
@@ -124,15 +124,15 @@ export type DodoEventAction = "ignored" | "noop" | "grant" | "revoke";
 
 /**
  * Decide what a verified Dodo event means for entitlements. Pure and
- * unit-tested — this logic once had two production bugs:
+ * unit-tested - this logic once had two production bugs:
  *
  *  - Only subscription.* / payment.* lifecycle events may touch entitlements.
  *    Dodo emits other families (license_key.*, entitlement_grant.*,
- *    dispute.*) whose `status` describes THAT object — a license key's
+ *    dispute.*) whose `status` describes THAT object - a license key's
  *    "Delivered" status was read as a revoke and downgraded a paying
  *    workspace seconds after checkout.
  *  - payment.* events carry the PAYMENT's status ("succeeded"), not the
- *    subscription's — payment.succeeded must grant regardless of it, and the
+ *    subscription's - payment.succeeded must grant regardless of it, and the
  *    subscription-status revoke heuristic must never fire on payment events.
  *
  * "noop" events (e.g. subscription.updated while active) must return before

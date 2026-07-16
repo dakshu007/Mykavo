@@ -1,11 +1,11 @@
 /**
  * Server-side plan limit enforcement (spec §39). Frontend checks are UX
- * only — every mutating operation re-checks here. Reads limits exclusively
+ * only - every mutating operation re-checks here. Reads limits exclusively
  * from src/config/plans.ts.
  */
 
 import { prisma } from "@mykavo/database";
-import { formatLimit, WEBSITE_ADDON, type Plan } from "@/config/plans";
+import { formatLimit, type Plan } from "@/config/plans";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
 import { hasSeatAvailable } from "@/lib/team";
 
@@ -35,7 +35,7 @@ function startOfUtcDay(now: Date = new Date()): Date {
 
 /**
  * Guards a scan trigger (spec §43): the workspace must be under the concurrent-
- * scan cap, and — for MANUAL re-scans — under its plan's daily manual quota.
+ * scan cap, and - for MANUAL re-scans - under its plan's daily manual quota.
  * Throws LimitError (callers map to HTTP 429).
  */
 export async function assertScanAllowed(
@@ -81,7 +81,7 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
   if (count >= limit) {
     const hint =
       plan.id === "pro"
-        ? `Add ${WEBSITE_ADDON.websitesPerUnit} more for $${WEBSITE_ADDON.priceMonthlyUsd}/mo from Billing (up to ${WEBSITE_ADDON.maxUnits} add-ons).`
+        ? "Remove a website you no longer monitor to free up a slot."
         : "Upgrade to Pro to monitor more websites.";
     throw new LimitError(
       "WEBSITE_LIMIT",
@@ -94,7 +94,7 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
  * Throws LimitError when the workspace has no free seat for another member.
  * Seats = active members + pending (unaccepted, unexpired) invites, so a
  * standing invite can never overshoot the plan when accepted. Teams are a
- * Pro feature — Free is single-seat, which yields the upgrade message.
+ * Pro feature - Free is single-seat, which yields the upgrade message.
  */
 export async function assertCanInviteMember(workspaceId: string): Promise<void> {
   const plan = await getWorkspacePlan(workspaceId);
@@ -116,7 +116,7 @@ export async function assertCanInviteMember(workspaceId: string): Promise<void> 
 /**
  * Throws LimitError when setting `requestedCount` monitored pages on a
  * website would exceed the plan's per-website page limit. Only gates new
- * selections — websites that already exceed the limit keep their pages.
+ * selections - websites that already exceed the limit keep their pages.
  */
 export async function assertPageLimit(
   workspaceId: string,

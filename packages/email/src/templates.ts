@@ -1,6 +1,6 @@
 /**
  * Email templates (spec §27). Grouped scan summary and failure alert.
- * Plain HTML strings (no React Email dependency) — email clients need inline
+ * Plain HTML strings (no React Email dependency) - email clients need inline
  * styles anyway. All interpolated values are HTML-escaped.
  */
 
@@ -127,7 +127,7 @@ export interface RecoveryAlertData {
 export interface SslExpiryAlertData {
   websiteName: string;
   websiteHost: string;
-  /** Whole days until expiry — zero or negative means already expired. */
+  /** Whole days until expiry - zero or negative means already expired. */
   daysLeft: number;
   /** Formatted expiry date, e.g. "Jul 24, 2026". */
   expiresOn: string;
@@ -135,23 +135,23 @@ export interface SslExpiryAlertData {
 }
 
 export function downAlertEmail(data: DownAlertData): { subject: string; html: string; text: string } {
-  const subject = `\u{1F534} ${data.websiteHost} appears DOWN — ${data.reason} for ${data.downFor}`;
+  const subject = `\u{1F534} ${data.websiteHost} appears DOWN - ${data.reason} for ${data.downFor}`;
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#e5484d">Website down</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)} appears to be down</h1>
     <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · down for ${esc(data.downFor)}</p>
-    <div style="background:#fdeaeb;border-radius:12px;padding:14px 16px;font-size:14px;color:#b42318;margin-bottom:24px">${esc(data.reason)} — confirmed by two consecutive checks. We'll email you again when it recovers.</div>
+    <div style="background:#fdeaeb;border-radius:12px;padding:14px 16px;font-size:14px;color:#b42318;margin-bottom:24px">${esc(data.reason)} - confirmed by two consecutive checks. We'll email you again when it recovers.</div>
     ${button(data.dashboardUrl, "Open dashboard")}
   `;
   const text =
-    `${data.websiteHost} appears DOWN — ${data.reason} for ${data.downFor}\n\n` +
+    `${data.websiteHost} appears DOWN - ${data.reason} for ${data.downFor}\n\n` +
     `Confirmed by two consecutive checks. We'll email you again when it recovers.\n\n` +
     `Dashboard: ${data.dashboardUrl}`;
   return { subject, html: shell(inner), text };
 }
 
 export function recoveryAlertEmail(data: RecoveryAlertData): { subject: string; html: string; text: string } {
-  const subject = `\u{2705} ${data.websiteHost} recovered — down for ${data.downFor}`;
+  const subject = `\u{2705} ${data.websiteHost} recovered - down for ${data.downFor}`;
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a">Recovered</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)} is back up</h1>
@@ -159,7 +159,7 @@ export function recoveryAlertEmail(data: RecoveryAlertData): { subject: string; 
     ${button(data.dashboardUrl, "Open dashboard")}
   `;
   const text =
-    `${data.websiteHost} recovered — down for ${data.downFor}\n\nDashboard: ${data.dashboardUrl}`;
+    `${data.websiteHost} recovered - down for ${data.downFor}\n\nDashboard: ${data.dashboardUrl}`;
   return { subject, html: shell(inner), text };
 }
 
@@ -204,16 +204,16 @@ export interface PerformanceDropData {
   dashboardUrl: string;
 }
 
-/** "90 → 60 (-30)"; "—" when either side is unknown. */
+/** "90 → 60 (-30)"; "-" when either side is unknown. */
 function scoreDelta(prev: number | null, curr: number | null): string {
-  if (prev === null || curr === null) return "—";
+  if (prev === null || curr === null) return "-";
   const d = curr - prev;
   const signed = d === 0 ? "±0" : d > 0 ? `+${d}` : String(d);
   return `${prev} → ${curr} (${signed})`;
 }
 
 function fmtLcp(v: number | null): string {
-  if (v === null) return "—";
+  if (v === null) return "-";
   return v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v} ms`;
 }
 
@@ -300,7 +300,7 @@ export interface WeeklyReportData {
   /** Whole days until certificate expiry, or null when unknown. */
   sslDaysLeft: number | null;
   lighthouse: WeeklyLighthouseScores | null;
-  /** True when there is nothing to worry about — reassuring variant. */
+  /** True when there is nothing to worry about - reassuring variant. */
   allQuiet: boolean;
   dashboardUrl: string;
 }
@@ -320,7 +320,7 @@ function statCell(value: string, caption: string): string {
 export function weeklyReportEmail(data: WeeklyReportData): { subject: string; html: string; text: string } {
   const changesWord = data.totalChanges === 0 ? "no changes" : `${data.totalChanges} change${data.totalChanges === 1 ? "" : "s"}`;
   const subject =
-    `Weekly report for ${data.websiteHost} — ${changesWord}` +
+    `Weekly report for ${data.websiteHost} - ${changesWord}` +
     (data.uptimePercent !== null ? `, ${data.uptimePercent}% uptime` : "");
 
   const severityRows = data.changesBySeverity
@@ -338,9 +338,9 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
     data.sslDaysLeft === null
       ? ""
       : data.sslDaysLeft <= 0
-        ? `<p style="margin:0 0 8px;font-size:14px;color:#b42318">SSL certificate has expired — renew it now.</p>`
+        ? `<p style="margin:0 0 8px;font-size:14px;color:#b42318">SSL certificate has expired - renew it now.</p>`
         : data.sslDaysLeft <= 14
-          ? `<p style="margin:0 0 8px;font-size:14px;color:#92600a">SSL certificate expires in ${data.sslDaysLeft} day${data.sslDaysLeft === 1 ? "" : "s"} — renewal recommended.</p>`
+          ? `<p style="margin:0 0 8px;font-size:14px;color:#92600a">SSL certificate expires in ${data.sslDaysLeft} day${data.sslDaysLeft === 1 ? "" : "s"} - renewal recommended.</p>`
           : `<p style="margin:0 0 8px;font-size:14px;color:#5c6270">SSL certificate valid for another ${data.sslDaysLeft} days.</p>`;
 
   const lighthouseParts = data.lighthouse
@@ -359,7 +359,7 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
       : "";
 
   const quietBox = data.allQuiet
-    ? `<div style="background:#e8f7ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#166534;margin-bottom:20px">No unexpected changes — everything looks healthy.</div>`
+    ? `<div style="background:#e8f7ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#166534;margin-bottom:20px">No unexpected changes - everything looks healthy.</div>`
     : "";
 
   const scansCaption = data.scansFailed > 0 ? `scans (${data.scansFailed} failed)` : "scans run";
@@ -370,7 +370,7 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
     <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · ${esc(data.periodLabel)}</p>
     ${quietBox}
     <table style="width:100%;border-collapse:separate;border-spacing:6px 0;margin:0 -6px 20px"><tr>
-      ${statCell(data.uptimePercent !== null ? `${data.uptimePercent}%` : "—", "uptime")}
+      ${statCell(data.uptimePercent !== null ? `${data.uptimePercent}%` : "-", "uptime")}
       ${statCell(String(data.scansRun), scansCaption)}
       ${statCell(String(data.totalChanges), data.totalChanges === 1 ? "change detected" : "changes detected")}
     </tr></table>
@@ -384,7 +384,7 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
   const textLines = [
     `Weekly report for ${data.websiteHost} (${data.periodLabel})`,
     "",
-    ...(data.allQuiet ? ["No unexpected changes — everything looks healthy.", ""] : []),
+    ...(data.allQuiet ? ["No unexpected changes - everything looks healthy.", ""] : []),
     `Uptime: ${data.uptimePercent !== null ? `${data.uptimePercent}%` : "n/a"}`,
     `Scans: ${data.scansRun} run${data.scansFailed > 0 ? `, ${data.scansFailed} failed` : ""}`,
     `Changes: ${data.totalChanges}`,
@@ -428,7 +428,7 @@ export function workspaceInviteEmail(data: WorkspaceInviteData): {
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Workspace invitation</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.inviterName)} invited you to ${esc(data.workspaceName)}</h1>
-    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">You've been invited as a ${esc(data.roleLabel)}. MyKavo monitors websites for important changes and regressions — accept to see what this workspace is watching.</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">You've been invited as a ${esc(data.roleLabel)}. MyKavo monitors websites for important changes and regressions - accept to see what this workspace is watching.</p>
     ${button(data.acceptUrl, "Accept invitation")}
     <p style="margin:20px 0 0;font-size:12px;color:#9aa1b1">This invitation expires in ${data.expiresInDays} day${data.expiresInDays === 1 ? "" : "s"}. If you weren't expecting it, you can safely ignore this email.</p>
   `;

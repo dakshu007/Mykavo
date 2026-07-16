@@ -8,7 +8,7 @@ import {
 
 /**
  * Dismisses the getting-started checklist for the CURRENT workspace by
- * setting a 90-day cookie (value = workspaceId). Purely a UI preference —
+ * setting a 90-day cookie (value = workspaceId). Purely a UI preference -
  * no database state; the checklist also auto-hides once the required steps
  * are complete regardless of this cookie.
  */

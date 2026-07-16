@@ -2,7 +2,7 @@
  * Pluggable email sender (spec §8: Resend). Zero-budget: the "console"
  * provider logs emails in development so the whole notification pipeline
  * works with no account. Set RESEND_API_KEY to send real email via Resend's
- * free tier — no SDK, just their REST API.
+ * free tier - no SDK, just their REST API.
  */
 
 export interface EmailMessage {

@@ -40,7 +40,7 @@ export default async function DashboardBlogPage() {
       <EmptyState
         icon={PenLine}
         title="No posts yet"
-        description="Write your first post in Markdown and publish it straight to /blog — no redeploy needed. Drafts stay private until you publish."
+        description="Write your first post in Markdown and publish it straight to /blog - no redeploy needed. Drafts stay private until you publish."
         action={<ButtonLink href="/dashboard/blog/new">Write your first post</ButtonLink>}
       />
     );
@@ -90,7 +90,7 @@ export default async function DashboardBlogPage() {
                   {dateFormat.format(post.updatedAt)}
                 </td>
                 <td className="px-4 py-3.5 text-sm text-ink-secondary">
-                  {post.publishedAt ? dateFormat.format(post.publishedAt) : "—"}
+                  {post.publishedAt ? dateFormat.format(post.publishedAt) : "-"}
                 </td>
                 <td className="py-3.5 pl-4">
                   <div className="flex items-center justify-end gap-1">

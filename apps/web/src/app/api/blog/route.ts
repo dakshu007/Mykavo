@@ -8,7 +8,7 @@ function isSlugConflict(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
-/** List every post (drafts included) — CMS admins only. */
+/** List every post (drafts included) - CMS admins only. */
 export async function GET() {
   const gate = await getBlogAdminGate();
   if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });

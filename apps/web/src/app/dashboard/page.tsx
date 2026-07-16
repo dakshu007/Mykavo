@@ -18,7 +18,7 @@ export default async function DashboardOverviewPage() {
   const checklistDismissed =
     cookieStore.get(ONBOARDING_DISMISSED_COOKIE)?.value === workspace.id;
 
-  // Checklist-only counts are skipped entirely once the card is dismissed —
+  // Checklist-only counts are skipped entirely once the card is dismissed -
   // websites/pages/baselines below already cover the first three steps.
   const skip = Promise.resolve(0);
   const [
@@ -100,7 +100,7 @@ export default async function DashboardOverviewPage() {
       )}
 
       {websites.length === 0 ? (
-        // Zero websites: a grid of zeros says nothing — lead with the one
+        // Zero websites: a grid of zeros says nothing - lead with the one
         // action that matters instead.
         <div className="rounded-card bg-card px-8 py-14 text-center shadow-card">
           <span className="mb-5 inline-flex size-14 items-center justify-center rounded-2xl bg-primary-soft">

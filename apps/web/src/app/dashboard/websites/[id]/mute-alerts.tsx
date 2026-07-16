@@ -7,7 +7,7 @@ import { BellOff, Loader2 } from "lucide-react";
 /**
  * Maintenance windows (spec §25): mute a website's alerts for a fixed
  * duration. Change events and health incidents are still recorded while
- * muted — the worker just skips sending emails and channel messages.
+ * muted - the worker just skips sending emails and channel messages.
  */
 
 type MuteHours = 1 | 8 | 24;
@@ -102,7 +102,7 @@ export function MuteAlertsControl({
     <div>
       <p className="text-sm text-ink-secondary">
         Pause email and channel alerts during planned maintenance. Changes and
-        incidents are still recorded — nothing gets sent until the window ends.
+        incidents are still recorded - nothing gets sent until the window ends.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {DURATIONS.map((d) => (

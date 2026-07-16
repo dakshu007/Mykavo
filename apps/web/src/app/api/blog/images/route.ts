@@ -5,10 +5,10 @@ import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { logger } from "@/lib/logger";
 
 /**
- * Blog image upload — CMS admins only. Accepts multipart form data (field
+ * Blog image upload - CMS admins only. Accepts multipart form data (field
  * "file") or a raw image body, stores the bytes in the artifact store under
  * `blog-images/<id>.<ext>`, and returns the public serving URL
- * (`/api/blog-images/<name>`, no auth — blog images are public).
+ * (`/api/blog-images/<name>`, no auth - blog images are public).
  */
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;

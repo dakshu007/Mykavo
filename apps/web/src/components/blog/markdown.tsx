@@ -4,13 +4,13 @@ import { cn } from "@/lib/utils";
 
 /**
  * Shared markdown renderer for the public blog and the CMS live preview.
- * Raw HTML in the source stays escaped (react-markdown default) — scanned
+ * Raw HTML in the source stays escaped (react-markdown default) - scanned
  * or authored HTML is never injected into the page (spec §59).
  *
  * When `headingIds` is provided (by PostContent, keyed by 1-based source
  * line), h2/h3 elements get matching `id` attributes so table-of-contents
  * anchors work. Lookup is by remark's position info, which is idempotent
- * across re-renders — no shared mutable counters.
+ * across re-renders - no shared mutable counters.
  */
 export function BlogMarkdown({
   content,

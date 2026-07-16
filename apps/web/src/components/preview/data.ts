@@ -1,6 +1,6 @@
 /**
  * Sample data for the Phase 0 dashboard preview. Clearly presented in the UI
- * as a product preview — realistic shapes, no fabricated customer identities.
+ * as a product preview - realistic shapes, no fabricated customer identities.
  */
 
 import type { Severity, Health } from "@/components/ui/badge";
@@ -72,5 +72,5 @@ export const changeDetail = {
   scan: "Scheduled scan #482",
   element: "a.btn-primary[href='/signup']",
   previous: { existence: "Present", visibility: "Visible", text: "Start Free Trial", href: "/signup" },
-  current: { existence: "Missing", visibility: "—", text: "—", href: "—" },
+  current: { existence: "Missing", visibility: "-", text: "-", href: "-" },
 };

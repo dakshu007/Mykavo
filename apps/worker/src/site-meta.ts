@@ -1,7 +1,7 @@
 /**
  * Per-scan robots.txt + sitemap capture. One plain fetch each (no Playwright),
  * persisted as a SiteMetaSnapshot for the comparison step. Every failure is
- * recorded as a status/null — capture must never fail the scan.
+ * recorded as a status/null - capture must never fail the scan.
  */
 
 import { createHash } from "node:crypto";
@@ -57,7 +57,7 @@ export function sitemapsFromRobots(robotsContent: string, origin: string): strin
     try {
       urls.push(new URL(match[1], origin).href);
     } catch {
-      // Malformed declaration — skip.
+      // Malformed declaration - skip.
     }
   }
   return urls;
@@ -81,7 +81,7 @@ async function captureSitemap(sitemapUrl: string): Promise<SitemapCapture> {
   if (parsed.kind === "urlset") {
     count = parsed.count;
   } else if (parsed.kind === "index") {
-    // Sample up to MAX_CHILD_SITEMAPS children and extrapolate nothing —
+    // Sample up to MAX_CHILD_SITEMAPS children and extrapolate nothing -
     // report the sampled sum plus one per unfetched child as a floor. Kept
     // simple: sum what we sample; large index churn still shows via the hash.
     count = 0;
@@ -99,7 +99,7 @@ async function captureSitemap(sitemapUrl: string): Promise<SitemapCapture> {
 
 /**
  * Capture robots.txt + sitemap for a website and persist the SiteMetaSnapshot
- * for this scan (idempotent — keyed by scanId). Never throws.
+ * for this scan (idempotent - keyed by scanId). Never throws.
  */
 export async function captureSiteMeta(params: {
   scanId: string;

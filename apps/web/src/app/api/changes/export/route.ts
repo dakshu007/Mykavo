@@ -17,7 +17,7 @@ function pathOf(url: string): string {
 
 /**
  * CSV export of change events, honoring the same ?severity/&category/&status/
- * &website filters as the changes list page. A read — any signed-in member of
+ * &website filters as the changes list page. A read - any signed-in member of
  * the workspace (viewers included) may export.
  */
 export async function GET(request: Request) {

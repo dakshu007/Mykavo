@@ -44,7 +44,7 @@ export default async function SettingsPage() {
       where: { id: session.user.id },
       select: {
         twoFactorEnabled: true,
-        // 2FA enable/disable requires a password — Google-only accounts
+        // 2FA enable/disable requires a password - Google-only accounts
         // manage 2FA through Google itself.
         accounts: { where: { providerId: "credential" }, select: { id: true } },
       },
@@ -69,7 +69,7 @@ export default async function SettingsPage() {
     ...(manager ? { acceptUrl: `${appBaseUrl()}/invite/${inv.token}` } : {}),
   }));
 
-  // Key limits straight from the plan config — never hardcoded (spec §37).
+  // Key limits straight from the plan config - never hardcoded (spec §37).
   const planLimits: Array<[string, string]> = [
     ["Websites", formatLimit(plan.limits.websites)],
     ["Pages per website", formatLimit(plan.limits.pagesPerWebsite)],

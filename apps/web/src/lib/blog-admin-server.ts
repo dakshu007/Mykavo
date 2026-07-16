@@ -4,7 +4,7 @@ import { isBlogAdmin } from "@/lib/blog-admin";
 
 /**
  * Server-side gate for the blog mini-CMS. Session and allowlist are always
- * checked here — never from client state (spec §59). Split from blog-admin.ts
+ * checked here - never from client state (spec §59). Split from blog-admin.ts
  * so the pure allowlist logic stays unit-testable without server imports.
  */
 

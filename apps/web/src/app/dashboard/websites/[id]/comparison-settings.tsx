@@ -9,8 +9,8 @@ import { selectorLines, validateSelectorLines } from "@mykavo/shared/stabilizati
  * Comparison settings (spec §25/§36 false-positive controls): per-website
  * ignored selectors and screenshot masks, one CSS selector per line.
  * - Ignored: elements removed from the DOM before hashing and absent from
- *   the screenshot — excluded from change detection entirely.
- * - Masks: elements covered with a solid block in the screenshot only —
+ *   the screenshot - excluded from change detection entirely.
+ * - Masks: elements covered with a solid block in the screenshot only -
  *   their content is still compared.
  * Saved through the website PATCH route; validation mirrors its zod schema
  * so problems surface inline instead of as an opaque 400.
@@ -106,7 +106,7 @@ export function ComparisonSettings({
       <SelectorField
         id="ignored-selectors"
         label="Ignored selectors"
-        help="Elements to exclude from change detection entirely — cookie banners, ads, rotating content. One CSS selector per line."
+        help="Elements to exclude from change detection entirely - cookie banners, ads, rotating content. One CSS selector per line."
         placeholder={".cookie-banner\n#promo-carousel"}
         value={ignoredText}
         onChange={(v) => {
@@ -118,7 +118,7 @@ export function ComparisonSettings({
       <SelectorField
         id="screenshot-masks"
         label="Screenshot masks"
-        help="Areas to hide in screenshots but still compare — e.g. user counts, dates."
+        help="Areas to hide in screenshots but still compare - e.g. user counts, dates."
         placeholder={".user-count\n[data-testid=\"last-updated\"]"}
         value={masksText}
         onChange={(v) => {

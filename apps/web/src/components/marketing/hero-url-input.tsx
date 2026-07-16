@@ -6,7 +6,7 @@ import { ArrowRight, Globe } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 /**
- * Interactive URL input in the hero — routes into the free
+ * Interactive URL input in the hero - routes into the free
  * Website Change Detector so visitors get instant value.
  */
 export function HeroUrlInput() {

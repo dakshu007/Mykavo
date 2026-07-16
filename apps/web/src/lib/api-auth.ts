@@ -12,7 +12,7 @@ import { resolveCurrentMembership } from "@/lib/session";
 
 /**
  * Authorization helpers for API route handlers. Workspace scope AND role are
- * always derived from the session + verified membership rows — never from
+ * always derived from the session + verified membership rows - never from
  * client input (spec §59).
  */
 
@@ -20,7 +20,7 @@ export interface ApiContext {
   userId: string;
   userEmail: string;
   workspace: Workspace;
-  /** The caller's role in the current workspace — drives requireRole. */
+  /** The caller's role in the current workspace - drives requireRole. */
   role: WorkspaceRole;
 }
 

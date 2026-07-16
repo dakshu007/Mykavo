@@ -5,7 +5,7 @@ import { DashboardPreview } from "@/components/preview/dashboard-preview";
 import { ButtonLink } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Dashboard Preview — MyKavo",
+  title: "Dashboard Preview - MyKavo",
   description:
     "Explore the MyKavo dashboard: multi-website monitoring overview, change feed, and before-and-after change details. Sample data preview.",
   alternates: { canonical: "/preview" },
@@ -32,7 +32,7 @@ export default function PreviewPage() {
             Want this for your websites?
           </h2>
           <p className="mb-6 mt-2 text-[15px] text-ink-secondary">
-            Create a free account — no credit card required.
+            Create a free account - no credit card required.
           </p>
           <ButtonLink href="/signup" size="lg">
             Start Monitoring Free

@@ -87,7 +87,7 @@ const TEXT_PAIRS: [string, string, number][] = [
   ["info", "card", 4.5],
 ];
 
-/** Non-text UI (status dots, chart lines) — WCAG 1.4.11 needs 3:1. In light
+/** Non-text UI (status dots, chart lines) - WCAG 1.4.11 needs 3:1. In light
  * mode the amber/orange dots are brand colors that predate this audit and are
  * always paired with a text label, so they get a documented lower floor. */
 const GRAPHIC_PAIRS_DARK: [string, string, number][] = [

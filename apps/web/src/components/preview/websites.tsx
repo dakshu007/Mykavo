@@ -47,7 +47,7 @@ export function PreviewWebsites() {
                       <SeverityBadge severity={w.highestSeverity} />
                     </span>
                   ) : (
-                    <span className="text-sm text-ink-faint">—</span>
+                    <span className="text-sm text-ink-faint">-</span>
                   )}
                 </td>
                 <td className="py-4 pr-4 text-sm text-ink-secondary">{w.lastScan}</td>

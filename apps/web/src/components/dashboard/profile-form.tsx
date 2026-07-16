@@ -74,7 +74,7 @@ export function ProfileForm({
     setStatus("saving");
     setError("");
     try {
-      // Only send `image` when it changed — OAuth avatars can be remote URLs,
+      // Only send `image` when it changed - OAuth avatars can be remote URLs,
       // which the API (correctly) refuses to accept back.
       const body: { name: string; image?: string | null } = { name: trimmed };
       if (imageChanged) body.image = image;
@@ -199,7 +199,7 @@ async function fileToAvatarDataUrl(file: File): Promise<string> {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas 2D context unavailable");
 
-  // JPEG has no alpha channel — flatten transparent PNGs onto white.
+  // JPEG has no alpha channel - flatten transparent PNGs onto white.
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, AVATAR_SIZE, AVATAR_SIZE);
   context.imageSmoothingQuality = "high";

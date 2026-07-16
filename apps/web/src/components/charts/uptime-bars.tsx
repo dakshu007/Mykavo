@@ -10,13 +10,13 @@ import {
 
 /**
  * Status-page uptime strip: one rounded bar per UTC day, coloured by that
- * day's uptime band. Pure presentational server component — hand-rolled SVG,
+ * day's uptime band. Pure presentational server component - hand-rolled SVG,
  * responsive via viewBox. Colour is never the only signal: the legend names
  * each band's threshold and every bar carries a text label (`<title>` on
  * hover, aria-label on keyboard focus).
  */
 
-/** Band colors — success/warning/critical/line tokens, so they follow the theme. */
+/** Band colors - success/warning/critical/line tokens, so they follow the theme. */
 const BAND_CLASSES: Record<UptimeBand, { bar: string; dot: string }> = {
   good: { bar: "fill-success", dot: "bg-success" },
   degraded: { bar: "fill-warning", dot: "bg-warning" },

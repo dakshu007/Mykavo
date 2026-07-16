@@ -7,7 +7,7 @@ import type { OnboardingStep } from "@/lib/onboarding";
 
 /**
  * "Get set up" checklist card. Step states arrive fully derived from the
- * server (live database counts) — this component only renders them and
+ * server (live database counts) - this component only renders them and
  * handles dismissal: hide immediately, then persist via a cookie so the
  * card stays hidden on future visits.
  */
@@ -24,7 +24,7 @@ export function OnboardingChecklist({
   function dismiss() {
     setHidden(true);
     void fetch("/api/onboarding/dismiss", { method: "POST" }).catch(() => {
-      // Cookie write failed — the card simply reappears on the next visit.
+      // Cookie write failed - the card simply reappears on the next visit.
     });
   }
 

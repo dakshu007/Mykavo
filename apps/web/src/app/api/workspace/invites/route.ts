@@ -12,7 +12,7 @@ import { logger } from "@/lib/logger";
 
 const createSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
-  // OWNER is never invitable — a workspace has exactly one owner.
+  // OWNER is never invitable - a workspace has exactly one owner.
   role: z.enum(["ADMIN", "MEMBER", "VIEWER"]),
 });
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const denied = requireRole(ctx, "OWNER", "ADMIN");
   if (denied) return denied;
 
-  // Invites send email — cap per workspace to prevent spam.
+  // Invites send email - cap per workspace to prevent spam.
   const rl = rateLimit(`invite:${ctx.workspace.id}`, { limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
         role: invite.role,
         expiresAt: invite.expiresAt,
       },
-      // Managers get the link too — useful when email delivery is unavailable.
+      // Managers get the link too - useful when email delivery is unavailable.
       acceptUrl,
       emailSent: sent.ok,
     },

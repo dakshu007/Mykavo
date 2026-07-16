@@ -10,7 +10,7 @@ import { BackupCodesPanel, TotpQr, totpSecretFromUri } from "@/components/two-fa
  * Settings → Security: enable or disable TOTP two-factor authentication.
  * Enabling walks through QR scan → code confirmation → one-time backup
  * codes. Both directions require the account password (server-enforced by
- * Better Auth). Only meaningful for email/password accounts — Google users
+ * Better Auth). Only meaningful for email/password accounts - Google users
  * carry their own 2FA.
  */
 export function TwoFactorCard({
@@ -91,7 +91,7 @@ export function TwoFactorCard({
   if (!hasPassword) {
     return (
       <p className="text-sm leading-6 text-ink-secondary">
-        You sign in with Google — two-factor authentication is managed by your Google account.
+        You sign in with Google - two-factor authentication is managed by your Google account.
       </p>
     );
   }
@@ -179,7 +179,7 @@ export function TwoFactorCard({
           }}
           className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
         >
-          I saved my codes — done
+          I saved my codes - done
         </button>
       </div>
     );

@@ -23,7 +23,7 @@ const TYPE_META: Record<
   },
   WEBHOOK: {
     label: "Webhook",
-    hint: "Any HTTPS endpoint — MyKavo POSTs JSON (optionally HMAC-signed).",
+    hint: "Any HTTPS endpoint - MyKavo POSTs JSON (optionally HMAC-signed).",
     placeholder: "https://example.com/hooks/mykavo",
   },
 };
@@ -86,7 +86,7 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
     <div className="space-y-4">
       {initial.length === 0 && !adding && (
         <p className="text-sm text-ink-secondary">
-          Get change summaries and failure alerts in Slack, Discord, or any webhook —
+          Get change summaries and failure alerts in Slack, Discord, or any webhook -
           instantly, alongside email.
         </p>
       )}

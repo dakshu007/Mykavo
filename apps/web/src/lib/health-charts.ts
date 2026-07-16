@@ -1,7 +1,7 @@
 /**
  * Pure math and formatting for the uptime/response-time charts on the website
  * detail page (components/charts/*). Scales, SVG path building, colour-band
- * thresholds, tick generation, formatting — no React, no DOM, fully
+ * thresholds, tick generation, formatting - no React, no DOM, fully
  * unit-testable, mirroring the audit-trend.ts pattern.
  */
 
@@ -24,7 +24,7 @@ export function parseHealthWindow(value: string | string[] | undefined): HealthW
 }
 
 /**
- * Bucket width for the response-time series: ~170–180 buckets per window —
+ * Bucket width for the response-time series: ~170–180 buckets per window -
  * dense enough to show shape, small enough to render + hover cheaply.
  */
 export function bucketMinutesForWindow(days: HealthWindowDays): number {
@@ -66,11 +66,11 @@ export function overallUptime(days: readonly UptimeDay[]): number | null {
 }
 
 /**
- * "100%", "99.98%", "97.5%", "0%" — at most two decimals, trailing zeros
+ * "100%", "99.98%", "97.5%", "0%" - at most two decimals, trailing zeros
  * dropped. A window with any downtime never rounds up to "100%".
  */
 export function formatPercent(p: number | null): string {
-  if (p === null) return "—";
+  if (p === null) return "-";
   if (p === 100) return "100%";
   let rounded = Math.round(p * 100) / 100;
   if (rounded === 100) rounded = 99.99;
@@ -100,7 +100,7 @@ export function uptimeStripSummary(days: readonly UptimeDay[], windowDays: numbe
 
 // ---------- Duration + milliseconds formatting ----------
 
-/** "< 1m", "42m", "3h 5m", "2d 4h" — compact incident-duration text. */
+/** "< 1m", "42m", "3h 5m", "2d 4h" - compact incident-duration text. */
 export function formatDuration(ms: number): string {
   if (ms < 60_000) return "< 1m";
   const totalMinutes = Math.floor(ms / 60_000);
@@ -112,7 +112,7 @@ export function formatDuration(ms: number): string {
   return `${minutes}m`;
 }
 
-/** "412 ms", "2.1 s", "2 s" — response-time label. */
+/** "412 ms", "2.1 s", "2 s" - response-time label. */
 export function formatMs(v: number): string {
   if (v >= 1000) {
     const s = (v / 1000).toFixed(1);
@@ -164,7 +164,7 @@ export interface XY {
 
 /**
  * Split a time series into contiguous runs of scaled points. A run breaks on
- * null values AND on time gaps wider than maxGapMs (missing buckets — the
+ * null values AND on time gaps wider than maxGapMs (missing buckets - the
  * site was down or unmonitored, so the line must not bridge the hole).
  */
 export function splitTimeSegments(
@@ -247,7 +247,7 @@ export function responseTimeSummary(
   return `Average response time ${formatMs(stats.avgMs)} over the last ${windowDays} days, peak ${formatMs(stats.peakMs)}.`;
 }
 
-/** Hover label for one bucket: "Jul 9, 2:00 PM — 412 ms". */
+/** Hover label for one bucket: "Jul 9, 2:00 PM - 412 ms". */
 export function formatBucketLabel(isoOrMs: string | number, avgMs: number | null): string {
   const when = new Date(isoOrMs).toLocaleString("en-US", {
     month: "short",
@@ -255,7 +255,7 @@ export function formatBucketLabel(isoOrMs: string | number, avgMs: number | null
     hour: "numeric",
     minute: "2-digit",
   });
-  return `${when} — ${avgMs === null ? "no successful checks" : formatMs(avgMs)}`;
+  return `${when} - ${avgMs === null ? "no successful checks" : formatMs(avgMs)}`;
 }
 
 /** Axis label for a timestamp: with time for short windows, date-only beyond. */

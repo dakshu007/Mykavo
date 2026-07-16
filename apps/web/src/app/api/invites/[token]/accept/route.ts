@@ -10,7 +10,7 @@ type Params = { params: Promise<{ token: string }> };
 
 /**
  * Accept a workspace invitation. The signed-in account's email must match the
- * invited email (case-insensitive) — the token alone is not enough, so a
+ * invited email (case-insensitive) - the token alone is not enough, so a
  * forwarded invite can't be claimed by someone else. On success the caller
  * becomes a member with the invite's role and is switched to that workspace.
  */

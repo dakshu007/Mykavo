@@ -1,13 +1,13 @@
 /**
  * LIGHTHOUSE_AUDIT job: runs a Lighthouse performance audit (on-demand or from
  * the weekly sweep) for one PerformanceAudit row and persists the scores.
- * Idempotent — a row already in a terminal state is skipped. The URL is
+ * Idempotent - a row already in a terminal state is skipped. The URL is
  * re-validated through the SSRF guard immediately before auditing (spec §11)
  * since Chrome will fetch it directly.
  *
  * After a successful run, the score is compared against the previous completed
  * audit of the SAME url; a fall that passes shouldAlertPerformanceDrop
- * (@mykavo/shared — ≥15 points off a baseline ≥30) sends a performance-drop
+ * (@mykavo/shared - ≥15 points off a baseline ≥30) sends a performance-drop
  * alert through the same email + channel path as the health sweep.
  */
 
@@ -30,7 +30,7 @@ interface PreviousAudit {
 }
 
 function fmtScoreLine(name: string, prev: number | null, curr: number | null): string {
-  if (prev === null || curr === null) return `${name}: —`;
+  if (prev === null || curr === null) return `${name}: -`;
   const d = curr - prev;
   const signed = d === 0 ? "±0" : d > 0 ? `+${d}` : String(d);
   return `${name}: ${prev} → ${curr} (${signed})`;
@@ -53,7 +53,7 @@ async function alertPerformanceDrop(
   });
   if (!website) return;
 
-  // Maintenance window (spec §25): scores are already persisted — just don't
+  // Maintenance window (spec §25): scores are already persisted - just don't
   // send anything (no emails, channels, or rows).
   if (website.muteAlertsUntil && website.muteAlertsUntil > new Date()) {
     logger.info("alerts muted, skipped", {
@@ -153,11 +153,11 @@ async function alertPerformanceDrop(
 export async function runLighthouseAuditJob(auditId: string): Promise<void> {
   const audit = await prisma.performanceAudit.findUnique({ where: { id: auditId } });
   if (!audit) {
-    logger.warn("audit not found — dropping job", { auditId });
+    logger.warn("audit not found - dropping job", { auditId });
     return;
   }
   if (audit.status === "COMPLETED" || audit.status === "FAILED") {
-    logger.info("audit already finished — skipping", { auditId, status: audit.status });
+    logger.info("audit already finished - skipping", { auditId, status: audit.status });
     return;
   }
 
@@ -224,7 +224,7 @@ export async function runLighthouseAuditJob(auditId: string): Promise<void> {
           { ...result, performanceScore: result.performanceScore },
         );
       } catch (alertErr) {
-        // The audit itself succeeded — a notification failure must never fail
+        // The audit itself succeeded - a notification failure must never fail
         // the job (a retry would just skip the terminal row anyway).
         logger.error("performance drop alert failed", log, alertErr as Error);
       }

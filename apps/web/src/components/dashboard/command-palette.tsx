@@ -31,7 +31,7 @@ import {
 } from "@/lib/command-palette";
 import { cn } from "@/lib/utils";
 
-/** Fired by the sidebar hint pill — the palette listens globally. */
+/** Fired by the sidebar hint pill - the palette listens globally. */
 const OPEN_EVENT = "mykavo:command-palette-open";
 
 const sectionIcons: Record<PaletteSection, LucideIcon> = {
@@ -104,7 +104,7 @@ export function CommandPalette({ isBlogAdmin }: { isBlogAdmin: boolean }) {
     };
   }, []);
 
-  // Nothing mounts until first open — zero layout cost on dashboard pages.
+  // Nothing mounts until first open - zero layout cost on dashboard pages.
   if (!open) return null;
   return <PaletteDialog isBlogAdmin={isBlogAdmin} onClose={() => setOpen(false)} />;
 }
@@ -147,7 +147,7 @@ function PaletteDialog({
         // New result set: highlight follows the top result again.
         setActiveIndex(0);
       } catch {
-        // Aborted (typing continued) or network failure — keep prior results.
+        // Aborted (typing continued) or network failure - keep prior results.
       }
     }, 150);
     return () => {
@@ -200,7 +200,7 @@ function PaletteDialog({
       event.preventDefault();
       onClose();
     } else if (event.key === "Tab") {
-      // The search input is the only focusable control — keep focus on it
+      // The search input is the only focusable control - keep focus on it
       // rather than letting Tab escape to the page behind the backdrop.
       event.preventDefault();
     }

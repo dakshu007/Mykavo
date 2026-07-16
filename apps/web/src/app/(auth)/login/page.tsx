@@ -16,7 +16,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  // Only same-origin relative paths — never an open redirect.
+  // Only same-origin relative paths - never an open redirect.
   const next = safeNextPath((await searchParams).next);
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) redirect(next ?? "/dashboard");

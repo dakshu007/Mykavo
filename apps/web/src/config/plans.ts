@@ -1,29 +1,18 @@
 /**
  * Single source of truth for pricing and plan limits (spec §37).
- * Never hardcode plan limits elsewhere — server-side enforcement (limits.ts)
+ * Never hardcode plan limits elsewhere - server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
  * MyKavo ships two plans: Free, and Pro at $20/month. Pro includes 8 websites
- * with 20 monitored pages each; buyers can extend capacity with $6/month
- * add-ons of one website each, up to 3 (see WEBSITE_ADDON). "Unlimited"
- * numeric limits use Infinity so `count >= limit` is never true.
+ * with 15 monitored pages each. "Unlimited" numeric limits use Infinity so
+ * `count >= limit` is never true. (The former $6/mo website add-on was
+ * removed 2026-07-17 - the WebsiteAddon table remains for historical rows
+ * but nothing reads or grants it anymore.)
  */
 
 import { PLAN_HISTORY_DAYS } from "@mykavo/shared";
 
 export type PlanId = "free" | "pro";
-
-/**
- * Self-serve website-capacity add-on. Each purchased unit is its own recurring
- * charge and grants `websitesPerUnit` extra websites on top of the Pro base,
- * capped at `maxUnits` active units per workspace. A workspace's effective
- * website limit = Pro base + min(active units, maxUnits) × websitesPerUnit.
- */
-export const WEBSITE_ADDON = {
-  websitesPerUnit: 1,
-  maxUnits: 3,
-  priceMonthlyUsd: 6,
-} as const;
 
 export type ScanFrequency = "WEEKLY" | "DAILY";
 
@@ -45,7 +34,7 @@ export interface Plan {
     conversionElementMonitoring: boolean;
     /**
      * Workspace seats: active members + pending invites. Teams are a Pro
-     * feature — Free is single-seat (the owner).
+     * feature - Free is single-seat (the owner).
      */
     maxMembers: number;
   };
@@ -81,14 +70,11 @@ export const plans: Plan[] = [
     id: "pro",
     name: "Pro",
     priceMonthlyUsd: 20,
-    headline: "8 websites, 20 pages each — add more anytime.",
+    headline: "8 websites with 15 monitored pages each.",
     highlighted: true,
     limits: {
-      // Base capacity. Effective limit = 8 + capped add-on units, computed
-      // server-side in lib/billing/subscription.ts — never read this number
-      // alone for enforcement.
       websites: 8,
-      pagesPerWebsite: 20,
+      pagesPerWebsite: 15,
       scanFrequency: "DAILY",
       historyDays: PLAN_HISTORY_DAYS.pro,
       manualScans: true,
@@ -97,9 +83,8 @@ export const plans: Plan[] = [
       maxMembers: 5,
     },
     features: [
-      "8 websites included",
-      `Add ${WEBSITE_ADDON.websitesPerUnit} more anytime for $${WEBSITE_ADDON.priceMonthlyUsd}/mo (up to ${WEBSITE_ADDON.maxUnits})`,
-      "20 monitored pages per website",
+      "8 websites",
+      "15 monitored pages per website",
       "Daily scans",
       "1-year history",
       "Manual scans",

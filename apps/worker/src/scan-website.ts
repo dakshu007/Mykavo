@@ -1,7 +1,7 @@
 /**
  * SCAN_WEBSITE job (spec §41): loads the scan's monitored pages, scans each
  * through the browser pool, persists snapshots, and rolls up the scan
- * status. Idempotent — pages that already have a snapshot for this scan
+ * status. Idempotent - pages that already have a snapshot for this scan
  * are skipped, so a retried job resumes where it stopped.
  */
 
@@ -44,11 +44,11 @@ export async function runScanWebsiteJob(
   });
 
   if (!scan) {
-    logger.warn("scan not found — dropping job", { scanId });
+    logger.warn("scan not found - dropping job", { scanId });
     return;
   }
   if (scan.status === "COMPLETED" || scan.status === "PARTIAL" || scan.status === "FAILED") {
-    logger.info("scan already finished — skipping", { scanId, status: scan.status });
+    logger.info("scan already finished - skipping", { scanId, status: scan.status });
     return;
   }
 
@@ -62,7 +62,7 @@ export async function runScanWebsiteJob(
 
   // Stabilization settings (spec §25/§36): website-level ignored selectors
   // and screenshot masks apply to every page scan. The Json? columns are
-  // parsed defensively — anything that isn't a clean selector array degrades
+  // parsed defensively - anything that isn't a clean selector array degrades
   // to no selectors rather than failing the scan.
   const ignoredSelectors = parseSelectorList(website.ignoredSelectors);
   const screenshotMasks = parseSelectorList(website.screenshotMasks);
@@ -242,12 +242,12 @@ export async function runScanWebsiteJob(
     },
   });
 
-  // Site-level SEO capture (robots.txt + sitemap) — once per scan, before
+  // Site-level SEO capture (robots.txt + sitemap) - once per scan, before
   // comparison reads it. Never fails the scan.
   if (scanned > 0) {
     await captureSiteMeta({ scanId, websiteId: website.id, websiteUrl: website.url });
 
-    // Internal link status check (spec §20) — records PageLink.statusCode so
+    // Internal link status check (spec §20) - records PageLink.statusCode so
     // comparison can report newly broken links. Never fails the scan.
     try {
       await checkLinksForScan(scanId);
@@ -276,7 +276,7 @@ export async function runScanWebsiteJob(
     }
   }
 
-  // Notify — grouped summary for change-bearing scans, alert for failures
+  // Notify - grouped summary for change-bearing scans, alert for failures
   // (spec §27). Baseline scans never notify (they create no change events).
   if (scan.triggerType !== "BASELINE") {
     try {

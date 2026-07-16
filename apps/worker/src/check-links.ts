@@ -6,7 +6,7 @@
  *
  * Cost controls (spec §43/§60): internal links only, one probe per unique
  * URL, statuses of monitored pages scanned in this scan are reused for free,
- * and probes are capped per scan. Only definite outcomes are recorded — see
+ * and probes are capped per scan. Only definite outcomes are recorded - see
  * @mykavo/shared link-check for the false-positive posture.
  */
 
@@ -47,7 +47,7 @@ export async function checkLinksForScan(scanId: string): Promise<void> {
   });
   if (links.length === 0) return;
 
-  // Monitored pages scanned in this scan already have an observed status —
+  // Monitored pages scanned in this scan already have an observed status -
   // links pointing at them never need a probe.
   const known = new Map<string, number>();
   for (const s of snapshots) {
@@ -69,7 +69,7 @@ export async function checkLinksForScan(scanId: string): Promise<void> {
   });
 
   // Persist every definite status onto this scan's PageLink rows (reused page
-  // statuses included). Indeterminate probes stay null — never assumed broken.
+  // statuses included). Indeterminate probes stay null - never assumed broken.
   const statuses = new Map<string, number>(plan.reused);
   for (const { url, status } of probed) {
     if (status !== null) statuses.set(url, status);

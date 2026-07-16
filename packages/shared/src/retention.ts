@@ -1,5 +1,5 @@
 /**
- * Plan-based history retention windows (days) — the single source of truth,
+ * Plan-based history retention windows (days) - the single source of truth,
  * shared by the web plan config (apps/web/src/config/plans.ts) and the worker's
  * retention sweep. It lives in @mykavo/shared because the worker cannot import
  * web modules, yet both must agree on the window. Spec §37 (centralized limits),

@@ -53,7 +53,7 @@ export async function discoverPages(websiteUrl: string): Promise<DiscoveryResult
   const pages = new Map<string, PageSource>();
   const log = logger.child({ module: "discovery" });
 
-  // 1. Homepage — must be reachable for discovery to proceed.
+  // 1. Homepage - must be reachable for discovery to proceed.
   let homepage;
   try {
     homepage = await safeFetch(websiteUrl);
@@ -81,7 +81,7 @@ export async function discoverPages(websiteUrl: string): Promise<DiscoveryResult
       sitemapCandidates = parseRobotsSitemaps(robots.body, base);
     }
   } catch {
-    // robots.txt unreachable — fine, fall back to the default location.
+    // robots.txt unreachable - fine, fall back to the default location.
   }
   if (sitemapCandidates.length === 0) {
     sitemapCandidates = [`${origin}/sitemap.xml`];
@@ -130,7 +130,7 @@ export async function discoverPages(websiteUrl: string): Promise<DiscoveryResult
     if (pages.size >= MAX_DISCOVERED_URLS) break;
   }
 
-  // 7. Homepage internal links — fills gaps for sites without sitemaps.
+  // 7. Homepage internal links - fills gaps for sites without sitemaps.
   if (pages.size < MAX_DISCOVERED_URLS) {
     for (const url of extractInternalLinks(homepage.body, base)) {
       if (pages.size >= MAX_DISCOVERED_URLS) break;
@@ -139,7 +139,7 @@ export async function discoverPages(websiteUrl: string): Promise<DiscoveryResult
   }
 
   if (!sitemapFound) {
-    warnings.push("No sitemap found — pages were discovered from homepage links.");
+    warnings.push("No sitemap found - pages were discovered from homepage links.");
   }
 
   const truncated = pages.size >= MAX_DISCOVERED_URLS;

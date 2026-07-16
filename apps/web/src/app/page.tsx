@@ -27,9 +27,33 @@ import { plans } from "@/config/plans";
 import { site } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: `${site.name} — Website Change Detection & Regression Monitoring`,
-  description: site.description,
+  // Absolute title (not the layout template) so the homepage leads with the
+  // primary keywords: site monitoring tool / website change monitoring.
+  title: {
+    absolute: "MyKavo - Site Monitoring Tool for Website Change Detection",
+  },
+  description:
+    "One of the best site monitoring tools for agencies and developers. MyKavo watches your websites for SEO, visual, link, script and performance changes - and alerts you before small problems become expensive ones.",
+  keywords: [
+    "site monitoring tools",
+    "best site monitoring tools",
+    "website monitoring tool",
+    "website change detection",
+    "website change monitoring",
+    "monitor website changes",
+    "website regression monitoring",
+    "visual website monitoring",
+    "SEO change monitoring",
+    "broken link monitoring",
+  ],
   alternates: { canonical: "/" },
+  openGraph: {
+    title: "MyKavo - Site Monitoring Tool for Website Change Detection",
+    description:
+      "Know what changed on every website you manage. Visual, SEO, link, script, performance and uptime monitoring with severity-ranked alerts.",
+    url: "/",
+    type: "website",
+  },
 };
 
 const jsonLd = {
@@ -49,22 +73,22 @@ const problems = [
   {
     time: "Mon 14:09",
     source: "deploy #212",
-    text: "A deploy silently breaks the signup button — nobody notices for a week.",
+    text: "A deploy silently breaks the signup button - nobody notices for a week.",
   },
   {
     time: "Tue 03:41",
     source: "plugin update",
-    text: "A plugin update flips key pages to noindex — rankings quietly fall.",
+    text: "A plugin update flips key pages to noindex - rankings quietly fall.",
   },
   {
     time: "Wed 11:26",
     source: "site rebuild",
-    text: "Google Analytics disappears during a rebuild — a month of data lost.",
+    text: "Google Analytics disappears during a rebuild - a month of data lost.",
   },
   {
     time: "Fri 17:58",
     source: "client edit",
-    text: "A client edits the homepage — and blames your agency when it breaks.",
+    text: "A client edits the homepage - and blames your agency when it breaks.",
   },
 ];
 
@@ -90,7 +114,7 @@ const workflow = [
   {
     step: "01",
     title: "Add your websites",
-    desc: "Point MyKavo at every site you manage. It discovers pages via sitemaps and internal links — you pick what matters.",
+    desc: "Point MyKavo at every site you manage. It discovers pages via sitemaps and internal links - you pick what matters.",
     keyword: "discovers",
   },
   {
@@ -102,7 +126,7 @@ const workflow = [
   {
     step: "03",
     title: "Monitor automatically",
-    desc: "Recurring scans compare every page against its approved baseline using deterministic checks — consistent and reproducible.",
+    desc: "Recurring scans compare every page against its approved baseline using deterministic checks - consistent and reproducible.",
     keyword: "deterministic",
   },
   {
@@ -118,7 +142,7 @@ const useCases = [
   { icon: Code2, title: "Developers", desc: "Catch regressions after deploys before users report them. Your post-deploy safety net." },
   { icon: Search, title: "SEO teams", desc: "Know the moment titles, canonicals, robots meta, or indexability signals change unexpectedly." },
   { icon: Wrench, title: "Maintenance businesses", desc: "Prove your maintenance value with monitoring history and clear change reports." },
-  { icon: Store, title: "E-commerce", desc: "Checkout buttons, payment scripts, and product pages — watched on every scan." },
+  { icon: Store, title: "E-commerce", desc: "Checkout buttons, payment scripts, and product pages - watched on every scan." },
   { icon: Globe, title: "Website owners", desc: "Sleep well knowing someone is watching your most important pages every day." },
 ];
 
@@ -128,7 +152,7 @@ const freeTools = [
     href: "/tools/website-change-detector",
     title: "Website Change Detector",
     word: "Compare",
-    desc: "Snapshot a page's status, SEO tags, links, and scripts — then re-check later to see what changed.",
+    desc: "Snapshot a page's status, SEO tags, links, and scripts - then re-check later to see what changed.",
     featured: true,
   },
   {
@@ -168,11 +192,11 @@ const freeTools = [
 const faqs = [
   {
     q: "How is MyKavo different from uptime monitoring?",
-    a: "Uptime tools tell you if a page responds. MyKavo tells you what changed on it — visual layout, SEO tags, content, links, scripts, performance, and conversion elements — and whether that change matters. A page can be 'up' and still be silently broken.",
+    a: "Uptime tools tell you if a page responds. MyKavo tells you what changed on it - visual layout, SEO tags, content, links, scripts, performance, and conversion elements - and whether that change matters. A page can be 'up' and still be silently broken.",
   },
   {
     q: "Will I get flooded with alerts for tiny changes?",
-    a: "No. Low false-positive rates are a core design goal. MyKavo normalizes dynamic content, lets you ignore volatile selectors, groups related changes into one alert, and applies severity thresholds — so notifications stay meaningful.",
+    a: "No. Low false-positive rates are a core design goal. MyKavo normalizes dynamic content, lets you ignore volatile selectors, groups related changes into one alert, and applies severity thresholds - so notifications stay meaningful.",
   },
   {
     q: "Does MyKavo use AI to detect changes?",
@@ -180,11 +204,11 @@ const faqs = [
   },
   {
     q: "What is a baseline?",
-    a: "A baseline is the approved known-good state of a page. Every scan compares against it. When you make an intentional change, you approve it and it becomes the new baseline — so MyKavo always knows the difference between expected and unexpected changes.",
+    a: "A baseline is the approved known-good state of a page. Every scan compares against it. When you make an intentional change, you approve it and it becomes the new baseline - so MyKavo always knows the difference between expected and unexpected changes.",
   },
   {
     q: "How many websites can I monitor?",
-    a: "The free plan monitors 1 website with 5 pages. Pro is $20/month with 8 websites and 20 monitored pages per website, and you can add another website anytime for $6/month (up to 3) — ideal for freelancers and teams managing several sites.",
+    a: "The free plan monitors 1 website with 5 pages. Pro is $20/month with 8 websites and 15 monitored pages per website - ideal for freelancers and teams managing several sites.",
   },
   {
     q: "Is it safe to point MyKavo at my site?",
@@ -255,13 +279,13 @@ export default function HomePage() {
       <StickyCta />
 
       <main>
-        {/* Hero — badge, headline, URL input, browser-frame dashboard mock */}
+        {/* Hero - badge, headline, URL input, browser-frame dashboard mock */}
         <LandingHero />
 
-        {/* Gold ticker — everything a scan checks */}
+        {/* Gold ticker - everything a scan checks */}
         <SignalMarquee />
 
-        {/* The problem — dark ink band with incident-log cards */}
+        {/* The problem - dark ink band with incident-log cards */}
         <section className="mt-16 border-y border-[#151515] bg-[#151515]">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
             <p className={`${eyebrowOnDark} mb-4 text-center`}>{"// the problem //"}</p>
@@ -270,7 +294,7 @@ export default function HomePage() {
             </DisplayHeading>
             <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#9C9E93]">
               Nobody re-checks every page after every deploy, plugin update, or client edit. Small
-              changes slip through — and turn into lost rankings, lost conversions, and awkward
+              changes slip through - and turn into lost rankings, lost conversions, and awkward
               client calls.
             </p>
 
@@ -297,7 +321,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* What it watches — interactive category tabs */}
+        {/* What it watches - interactive category tabs */}
         <Section id="categories">
           <p className={`${eyebrow} mb-4 text-center`}>{"// what mykavo watches //"}</p>
           <DisplayHeading>
@@ -307,13 +331,13 @@ export default function HomePage() {
           </DisplayHeading>
           <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#6B6B60]">
             Every scan checks each monitored page across all eight categories and scores what it
-            finds by severity — so you see what matters first. Pick a category to see a real
+            finds by severity - so you see what matters first. Pick a category to see a real
             example.
           </p>
           <CategoryTabs />
         </Section>
 
-        {/* Before / after MyKavo — v7-style stat pairs */}
+        {/* Before / after MyKavo - v7-style stat pairs */}
         <section className="border-y border-black/10 bg-[#F3F1E6]">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
             <p className={`${eyebrow} mb-4 text-center`}>{"// before & after //"}</p>
@@ -347,14 +371,14 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Evidence card — the before/after diff every change stores */}
+            {/* Evidence card - the before/after diff every change stores */}
             <div className="mx-auto mt-14 max-w-3xl overflow-hidden rounded-2xl border border-black/10 bg-white">
               <div className="grid divide-y divide-black/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
                 <div className="p-7">
                   <p className={`${eyebrow} mb-4`}>Baseline · approved</p>
                   <dl className="space-y-3 font-mono text-[13px]">
                     {[
-                      ["title", "Aurora Outdoor — Tents & Camping Gear"],
+                      ["title", "Aurora Outdoor - Tents & Camping Gear"],
                       ["robots", "index, follow"],
                       ["status", "200 OK"],
                     ].map(([k, v]) => (
@@ -392,13 +416,13 @@ export default function HomePage() {
               </div>
               <div className="border-t border-black/10 bg-[#151515] px-7 py-4 text-sm text-[#9C9E93]">
                 <span className="font-semibold text-[#FFD400]">Critical:</span> page changed from
-                index to noindex — MyKavo alerts you within one scan cycle.
+                index to noindex - MyKavo alerts you within one scan cycle.
               </div>
             </div>
           </div>
         </section>
 
-        {/* How it works — numbered rail */}
+        {/* How it works - numbered rail */}
         <Section id="how-it-works">
           <p className={`${eyebrow} mb-4 text-center`}>{"// how it works //"}</p>
           <DisplayHeading>
@@ -434,7 +458,7 @@ export default function HomePage() {
           <SplitPill />
         </Section>
 
-        {/* Agencies — split with client health board */}
+        {/* Agencies - split with client health board */}
         <section className="border-y border-black/10 bg-white">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
             <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -447,7 +471,7 @@ export default function HomePage() {
                 </h2>
                 <p className="mt-5 max-w-md text-[15px] leading-7 text-[#6B6B60]">
                   Stop finding out about broken client sites from angry emails. MyKavo watches every
-                  site you maintain and tells you which one needs attention — before the client
+                  site you maintain and tells you which one needs attention - before the client
                   notices.
                 </p>
                 <ul className="mt-8 space-y-3.5">
@@ -646,7 +670,7 @@ export default function HomePage() {
           </div>
         </Section>
 
-        {/* Final CTA — the ink band with the gold spark */}
+        {/* Final CTA - the ink band with the gold spark */}
         <section className="px-5 pb-20 lg:px-8">
           <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-[#151515] bg-[#151515] px-6 py-20 text-center shadow-[10px_10px_0_#FFD400,10px_10px_0_1px_#151515] lg:py-28">
             <LogoMark
@@ -658,7 +682,7 @@ export default function HomePage() {
               <span className="text-[#FFD400]">from your users.</span>
             </h2>
             <p className="relative mx-auto mt-6 max-w-xl text-[15px] leading-7 text-[#9C9E93]">
-              Create a free account — monitor your first website in minutes. No credit card
+              Create a free account - monitor your first website in minutes. No credit card
               required.
             </p>
             <div className="relative mx-auto mt-10 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">

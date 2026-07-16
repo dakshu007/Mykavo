@@ -2,7 +2,7 @@
  * Weekly Lighthouse audit sweep. Runs on a pg-boss cron every AUDIT_CRON
  * (default Tuesday 06:00 UTC): for every ACTIVE website, create one QUEUED
  * PerformanceAudit row for the homepage and enqueue the existing
- * LIGHTHOUSE_AUDIT job — hands-off performance monitoring so the drop alert
+ * LIGHTHOUSE_AUDIT job - hands-off performance monitoring so the drop alert
  * (lighthouse-audit.ts) has a fresh score to compare every week. No Lighthouse
  * logic lives here; this module only creates rows and enqueues jobs.
  */
@@ -15,7 +15,7 @@ import { logger } from "./logger";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Skip websites audited (or queued) within this window — keeps the sweep
+ * Skip websites audited (or queued) within this window - keeps the sweep
  * idempotent across restarts and avoids doubling up with a manual audit the
  * user ran days earlier.
  */
@@ -47,8 +47,8 @@ export async function runAuditSweep(boss: PgBoss): Promise<void> {
 
   for (const website of websites) {
     try {
-      // Any audit created in the window — manual, scheduled, even a failed
-      // one — counts. Re-running a failed audit right away would likely fail
+      // Any audit created in the window - manual, scheduled, even a failed
+      // one - counts. Re-running a failed audit right away would likely fail
       // again; the next weekly sweep retries naturally.
       const recent = await prisma.performanceAudit.findFirst({
         where: { websiteId: website.id, createdAt: { gte: freshSince } },

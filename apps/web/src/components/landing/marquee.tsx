@@ -1,5 +1,5 @@
 /**
- * CSS-only marquee listing everything a MyKavo scan checks — the honest
+ * CSS-only marquee listing everything a MyKavo scan checks - the honest
  * version of a logo strip, now as a loud full-width gold band with ink text.
  * Pauses entirely under prefers-reduced-motion.
  */
@@ -52,7 +52,7 @@ export function SignalMarquee() {
       <p className="mt-5 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6B6B60]">
         Checked on every scan
       </p>
-      {/* Scoped keyframes — motion-safe only */}
+      {/* Scoped keyframes - motion-safe only */}
       <style>{`
         @media (prefers-reduced-motion: no-preference) {
           .landing-marquee-track { animation: landing-marquee-scroll 45s linear infinite; }

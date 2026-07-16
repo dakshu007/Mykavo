@@ -3,7 +3,7 @@
  *
  * Takes the raw audit list (any order, any status), groups COMPLETED audits
  * by audited URL, and produces an oldest → newest series for one URL plus
- * latest-vs-previous deltas. No React, no DOM — unit-testable in isolation.
+ * latest-vs-previous deltas. No React, no DOM - unit-testable in isolation.
  */
 
 export type TrendScoreKey =
@@ -19,7 +19,7 @@ export const TREND_CATEGORIES: readonly { key: TrendScoreKey; label: string }[] 
   { key: "seoScore", label: "SEO" },
 ];
 
-/** Structural subset of the panel's AuditView — anything with these fields works. */
+/** Structural subset of the panel's AuditView - anything with these fields works. */
 export interface TrendAuditInput {
   status: string;
   url: string;
@@ -55,9 +55,9 @@ export interface AuditTrend {
   points: TrendPoint[];
   /** In TREND_CATEGORIES order. */
   categories: TrendCategory[];
-  /** createdAt of the second-newest audit — the "since" of the delta line. */
+  /** createdAt of the second-newest audit - the "since" of the delta line. */
   previousAt: string;
-  /** createdAt of the oldest audit — the "since" of the trend summary. */
+  /** createdAt of the oldest audit - the "since" of the trend summary. */
   firstAt: string;
 }
 
@@ -143,14 +143,14 @@ export function buildAuditTrend(
   };
 }
 
-/** "+14", "−3" (U+2212 minus), or "0" — the sign is always in the text. */
+/** "+14", "−3" (U+2212 minus), or "0" - the sign is always in the text. */
 export function formatSignedDelta(delta: number): string {
   if (delta > 0) return `+${delta}`;
   if (delta < 0) return `−${-delta}`;
   return "0";
 }
 
-/** "Jul 9" — short date used by the delta line and the accessible summary. */
+/** "Jul 9" - short date used by the delta line and the accessible summary. */
 export function formatTrendDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
@@ -166,7 +166,7 @@ export function formatTrendDate(iso: string): string {
 export function auditTrendSummary(trend: AuditTrend): string {
   const parts = trend.categories
     .filter((c) => c.first !== null || c.latest !== null)
-    .map((c) => `${c.label} ${c.first ?? "—"} → ${c.latest ?? "—"}`);
+    .map((c) => `${c.label} ${c.first ?? "-"} → ${c.latest ?? "-"}`);
   const movements = parts.length > 0 ? parts.join(", ") : "No scores recorded";
   return `${movements} across ${trend.points.length} audits since ${formatTrendDate(trend.firstAt)}.`;
 }

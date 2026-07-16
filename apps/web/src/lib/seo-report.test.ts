@@ -26,7 +26,7 @@ function healthyPage(overrides: Partial<SeoSnapshotInput> = {}): SeoSnapshotInpu
   };
 }
 
-describe("buildSeoReport — perfect input", () => {
+describe("buildSeoReport - perfect input", () => {
   it("returns no issues and a score of 100", () => {
     const report = buildSeoReport([
       healthyPage(),
@@ -237,7 +237,7 @@ describe("page errors", () => {
 });
 
 describe("duplicate titles", () => {
-  const title = "Aurora Outdoor — Tents & Camping Gear for Serious Hikers";
+  const title = "Aurora Outdoor - Tents & Camping Gear for Serious Hikers";
 
   it("emits one warning per page in a duplicate group, carrying the title", () => {
     const report = buildSeoReport([

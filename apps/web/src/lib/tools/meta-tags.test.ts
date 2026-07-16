@@ -11,7 +11,7 @@ import {
 const HTML = `<!doctype html>
 <html>
 <head>
-  <title>Aurora Outdoor — Tents &amp; Camping Gear for Serious Hikers</title>
+  <title>Aurora Outdoor - Tents &amp; Camping Gear for Serious Hikers</title>
   <meta name="description" content="Quality tents and camping gear.">
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="Aurora Outdoor">
@@ -27,7 +27,7 @@ describe("extractMetaTags", () => {
   const tags = extractMetaTags(HTML);
 
   it("extracts core SEO tags with entity decoding", () => {
-    expect(tags.title).toBe("Aurora Outdoor — Tents & Camping Gear for Serious Hikers");
+    expect(tags.title).toBe("Aurora Outdoor - Tents & Camping Gear for Serious Hikers");
     expect(tags.metaDescription).toBe("Quality tents and camping gear.");
     expect(tags.canonicalUrl).toBe("https://aurora-outdoor.com/");
     expect(tags.robotsMeta).toBe("index, follow");

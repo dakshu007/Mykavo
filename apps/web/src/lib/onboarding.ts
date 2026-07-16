@@ -2,7 +2,7 @@
  * Getting-started checklist derivation (spec §61: Activation Rate and Time to
  * First Value are the metrics that matter).
  *
- * Step state is derived LIVE from database counts — there is no persisted
+ * Step state is derived LIVE from database counts - there is no persisted
  * checklist state. The only stored bit is the dismissal cookie, which is
  * handled entirely outside this module so derivation stays pure and testable.
  */
@@ -51,11 +51,11 @@ export interface OnboardingState {
   steps: OnboardingStep[];
   /** Steps done, out of steps.length (optional step included). */
   doneCount: number;
-  /** True once every required (non-optional) step is done — hides the card. */
+  /** True once every required (non-optional) step is done - hides the card. */
   allRequiredDone: boolean;
 }
 
-/** Derives checklist step states from live counts. Pure — no I/O. */
+/** Derives checklist step states from live counts. Pure - no I/O. */
 export function deriveOnboarding(counts: OnboardingCounts): OnboardingState {
   const steps: OnboardingStep[] = [
     {
@@ -69,7 +69,7 @@ export function deriveOnboarding(counts: OnboardingCounts): OnboardingState {
     {
       id: "select-pages",
       title: "Select pages to monitor",
-      description: "Pick the pages that matter — homepage, pricing, checkout.",
+      description: "Pick the pages that matter - homepage, pricing, checkout.",
       href: "/dashboard/websites",
       done: counts.monitoredPages > 0,
       optional: false,

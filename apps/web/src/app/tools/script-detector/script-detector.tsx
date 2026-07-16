@@ -116,7 +116,7 @@ export function ScriptDetector() {
                           )}
                         </td>
                         <td className="py-3 text-[13px] font-medium text-ink">
-                          {s.service ?? "—"}
+                          {s.service ?? "-"}
                         </td>
                       </tr>
                     ))}
@@ -128,7 +128,7 @@ export function ScriptDetector() {
             <div className="mt-5 flex items-start gap-2.5 rounded-tile bg-surface px-4 py-3">
               <Info className="mt-0.5 size-4 shrink-0 text-ink-faint" aria-hidden />
               <p className="text-[13px] leading-6 text-ink-secondary">
-                Static HTML analysis — only scripts present in the delivered HTML are listed.
+                Static HTML analysis - only scripts present in the delivered HTML are listed.
                 Scripts injected at runtime (e.g. tags fired through Google Tag Manager) are not
                 detected by this free tool.
               </p>
@@ -137,7 +137,7 @@ export function ScriptDetector() {
 
           <ToolCta
             heading="Get alerted when important scripts are added or removed."
-            body="MyKavo tracks the scripts on every monitored page across scheduled scans — a vanished analytics tag, a missing payment script, or an unknown third-party addition triggers an email alert."
+            body="MyKavo tracks the scripts on every monitored page across scheduled scans - a vanished analytics tag, a missing payment script, or an unknown third-party addition triggers an email alert."
             tool="script-detector"
           />
         </>

@@ -18,7 +18,7 @@ import {
 
 /**
  * Public status page (no auth). The opaque publicToken is the ONLY
- * identifier — website ids are never exposed — and statusPageEnabled gates
+ * identifier - website ids are never exposed - and statusPageEnabled gates
  * access independently of the badge. Health data changes every 5 minutes
  * (worker sweep), so the page is fully dynamic; an open tab self-refreshes
  * via meta refresh.
@@ -45,13 +45,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const robots = { index: false, follow: false } as const;
   if (!website) return { robots };
   return {
-    title: { absolute: `${website.name} status — MyKavo` },
+    title: { absolute: `${website.name} status - MyKavo` },
     description: `Live availability and uptime history for ${website.name}.`,
     robots,
   };
 }
 
-/** Bar fill per day level — always paired with the text legend below. */
+/** Bar fill per day level - always paired with the text legend below. */
 const DAY_BAR_CLASS: Record<DayLevel, string> = {
   operational: "bg-success",
   degraded: "bg-warning",
@@ -88,7 +88,7 @@ export default async function PublicStatusPage({ params }: Params) {
   const since90d = new Date(now.getTime() - WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
   // The day rollup is ONE grouped aggregate over the (websiteId, checkedAt)
-  // index. Parameterized tagged template — no user input reaches the SQL
+  // index. Parameterized tagged template - no user input reaches the SQL
   // (the token was resolved to a website id above).
   const [latest, uptime24h, uptime7d, uptime90d, rollup, incidents] =
     await Promise.all([
@@ -166,7 +166,7 @@ export default async function PublicStatusPage({ params }: Params) {
       label: "Avg response · 7d",
       value:
         uptime7d.avgResponseTimeMs === null
-          ? "—"
+          ? "-"
           : `${Math.round(uptime7d.avgResponseTimeMs)} ms`,
     },
   ];
@@ -208,7 +208,7 @@ export default async function PublicStatusPage({ params }: Params) {
       <section className="rounded-card bg-card p-6 shadow-card">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-[15px] font-semibold text-ink">
-            Uptime — last {WINDOW_DAYS} days
+            Uptime - last {WINDOW_DAYS} days
           </h2>
           <p className="text-sm font-semibold text-ink">
             {formatUptime(uptime90d.uptimePercent)}
@@ -268,7 +268,7 @@ export default async function PublicStatusPage({ params }: Params) {
 
       <section className="rounded-card bg-card p-6 shadow-card">
         <h2 className="mb-4 text-[15px] font-semibold text-ink">
-          Incidents — last {WINDOW_DAYS} days
+          Incidents - last {WINDOW_DAYS} days
         </h2>
         {incidentGroups.length === 0 ? (
           <p className="py-2 text-sm text-ink-secondary">

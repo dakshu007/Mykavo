@@ -1,6 +1,6 @@
 import type { UnsafeUrlError } from "@/lib/security/ssrf";
 
-/** User-safe messages for every SSRF-guard error code — never leak internals. */
+/** User-safe messages for every SSRF-guard error code - never leak internals. */
 export const SAFE_FETCH_USER_MESSAGES: Record<UnsafeUrlError["code"], string> = {
   INVALID_URL: "That doesn't look like a valid URL.",
   SCHEME_NOT_ALLOWED: "Only http:// and https:// URLs can be checked.",

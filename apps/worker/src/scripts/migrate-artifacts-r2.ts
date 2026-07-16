@@ -1,6 +1,6 @@
 /**
  * One-off migration: copy every artifact from the legacy Netlify Blobs store
- * (`fluxen-artifacts`) into Cloudflare R2. Idempotent — objects already in R2
+ * (`fluxen-artifacts`) into Cloudflare R2. Idempotent - objects already in R2
  * with the same key are overwritten with identical content, so it's safe to
  * re-run to catch stragglers written during the cutover window.
  *
@@ -74,7 +74,7 @@ async function main() {
       }
     }),
   );
-  console.log(`done — copied ${copied}, failed ${failed}, total ${keys.length}`);
+  console.log(`done - copied ${copied}, failed ${failed}, total ${keys.length}`);
   if (failed > 0) process.exit(1);
 }
 

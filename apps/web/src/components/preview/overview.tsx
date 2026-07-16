@@ -14,14 +14,14 @@ import { SeverityBadge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { categoryBreakdown, changes, upcomingScans } from "./data";
 
-/** Overview screen — composition mirrors the approved dashboard reference. */
+/** Overview screen - composition mirrors the approved dashboard reference. */
 export function PreviewOverview() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
       {/* Main column */}
       <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-3">
-          {/* Monitoring summary — white card (reference: profile card) */}
+          {/* Monitoring summary - white card (reference: profile card) */}
           <Card className="md:col-span-1">
             <CardHeader
               title="Monitoring"

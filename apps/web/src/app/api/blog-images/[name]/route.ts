@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getDefaultStorage } from "@mykavo/scanner/storage";
 
 /**
- * Public blog image serving (no auth — images are embedded in public blog
+ * Public blog image serving (no auth - images are embedded in public blog
  * posts). Names are strictly validated against the upload route's format, so
  * no path traversal or arbitrary artifact reads are possible.
  */

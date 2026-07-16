@@ -1,6 +1,6 @@
 /**
  * Time-of-day greeting that follows the VISITOR's clock, not the server's.
- * Netlify functions run in UTC — using the server clock greets an Indian
+ * Netlify functions run in UTC - using the server clock greets an Indian
  * user with "Good morning" at 9 PM. Server render makes a best guess from
  * Netlify's geo header; the client corrects from the real local clock.
  */
@@ -29,7 +29,7 @@ export function hourInTimeZone(timeZone: string, now: Date = new Date()): number
 }
 
 /**
- * Netlify forwards request geolocation as the `x-nf-geo` header — base64
+ * Netlify forwards request geolocation as the `x-nf-geo` header - base64
  * JSON including an IANA `timezone`. Returns null on any malformed input.
  */
 export function timezoneFromNetlifyGeo(headerValue: string | null): string | null {
