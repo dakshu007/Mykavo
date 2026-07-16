@@ -5,11 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
-import {
-  fontSans,
-  fontDisplay,
-  primary,
-} from "@/components/landing/style";
+import { fontSans, fontDisplay, gold } from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
 import { PostContent, PostTocRail } from "@/components/blog/post-content";
 import { site } from "@/config/site";
@@ -100,7 +96,7 @@ export default async function BlogPostPage({ params }: Params) {
       : null;
 
   return (
-    <div className={`${fontSans} min-h-svh bg-[#ecf0ff] text-[#0d0c0e] antialiased`}>
+    <div className={`${fontSans} min-h-svh bg-[#151515] text-[#E9EBDF] antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd) }}
@@ -117,24 +113,24 @@ export default async function BlogPostPage({ params }: Params) {
         <section className="mx-auto w-full max-w-6xl px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
           <Link
             href="/blog"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0d0c0e]/60 transition-colors hover:text-[#0d0c0e]"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#9C9E93] transition-colors hover:text-[#E9EBDF]"
           >
             <ArrowLeft className="size-4" aria-hidden /> All posts
           </Link>
           <div className="mx-auto mt-10 max-w-3xl text-center">
             <span
-              style={{ backgroundColor: primary }}
-              className="inline-flex items-center rounded-full px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white"
+              style={{ backgroundColor: gold }}
+              className="inline-flex items-center rounded-full px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#151515]"
             >
               Blog
             </span>
             <h1
-              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-[#0d0c0e] sm:text-5xl lg:text-6xl`}
+              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-[#E9EBDF] sm:text-5xl lg:text-6xl`}
             >
               {post.title}
             </h1>
-            <p className="mt-6 text-sm text-[#0d0c0e]/60">
-              By <span className="font-medium text-[#0d0c0e]">{post.authorName}</span>
+            <p className="mt-6 text-sm text-[#9C9E93]">
+              By <span className="font-medium text-[#E9EBDF]">{post.authorName}</span>
               {post.publishedAt && (
                 <>
                   <span aria-hidden> · </span>
@@ -149,12 +145,12 @@ export default async function BlogPostPage({ params }: Params) {
             <div className="mt-8">
               <Link
                 href="/signup"
-                className="rounded-full bg-[#0d0c0e] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#3556f4]"
+                className="rounded-full bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
               >
                 Start free
               </Link>
             </div>
-            <p className="mt-3 text-[12px] text-[#0d0c0e]/45">* No credit card required</p>
+            <p className="mt-3 text-[12px] text-[#9C9E93]">* No credit card required</p>
           </div>
         </section>
 
@@ -190,26 +186,26 @@ export default async function BlogPostPage({ params }: Params) {
 
               {/* End-of-post product CTA — landing style on the dark canvas */}
               <aside
-                style={{ borderColor: primary }}
+                style={{ borderColor: gold }}
                 className="mt-8 rounded-[28px] border-[3px] px-7 py-12 text-center sm:px-10"
               >
-                <h2 className={`${fontDisplay} text-3xl leading-tight text-[#0d0c0e] sm:text-4xl`}>
+                <h2 className={`${fontDisplay} text-3xl leading-tight text-[#E9EBDF] sm:text-4xl`}>
                   Know what changed. <span className="italic">Fix what matters.</span>
                 </h2>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#0d0c0e]/60">
+                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#9C9E93]">
                   MyKavo monitors your websites for visual, SEO, link, script, and performance
                   changes — and alerts you before small problems become expensive problems.
                 </p>
-                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#0d0c0e]/15">
+                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-white/15">
                   <Link
                     href="/signup"
-                    className="bg-white px-6 py-3.5 text-sm font-semibold text-[#0d0c0e] transition-colors hover:bg-[#3556f4] hover:text-white"
+                    className="bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
                   >
                     Start monitoring free
                   </Link>
                   <Link
                     href="/blog"
-                    className="bg-[#0d0c0e] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2830]"
+                    className="bg-[#242424] px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-[#2e2e2e]"
                   >
                     More posts
                   </Link>

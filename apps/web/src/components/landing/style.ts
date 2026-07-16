@@ -1,6 +1,7 @@
 /**
- * Landing-page design system (stamped.io-inspired editorial style on a light
- * canvas).
+ * Landing-page design system v3 — retool.com-inspired: near-black canvas,
+ * warm bone panels, hairline-bordered bento cards, and the MyKavo gold spark
+ * as the single accent.
  *
  * The landing page deliberately runs on a FIXED palette — identical in light
  * and dark app themes — so it never routes through the `--fx-*` theme tokens
@@ -18,22 +19,28 @@
 export const fontSans =
   "[font-family:'Google_Sans',var(--font-app-sans),ui-sans-serif,system-ui,sans-serif]";
 
-/** Display utility (Poppins) for the big editorial headlines. */
+/**
+ * Display utility (Poppins) for the big headlines — regular weight with tight
+ * tracking for the retool-style light editorial look.
+ */
 export const fontDisplay =
-  "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] font-semibold";
+  "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] font-normal tracking-[-0.02em]";
 
-/** Fixed landing palette (never theme-dependent). */
-export const canvas = "#ecf0ff"; // soft periwinkle-white page background
-export const ink = "#0d0c0e"; // near-black text + black pill surfaces
-export const primary = "#3556f4"; // dashboard royal blue — surfaces w/ WHITE text
-export const primarySoft = "#8fa2ff"; // light tint for glyphs on DARK surfaces (e.g. black pricing card)
-export const lavender = "#e5d4f5";
-export const periwinkle = "#c9d8f0";
-export const cream = "#fbf3dd";
+/** Fixed landing palette (never theme-dependent). Contrast-checked pairs only:
+ *  bone/dim on canvas+elevated; ink on bone/gold; gold carries INK text. */
+export const canvas = "#151515"; // near-black page background
+export const elevated = "#242424"; // raised dark cards
+export const bone = "#F7F8F4"; // warm off-white panels — ink text on top
+export const boneSoft = "#E9EBDF"; // primary text on dark, softer bone fills
+export const ink = "#151515"; // text on bone/gold surfaces
+export const gold = "#FFD400"; // the spark — sole accent, ALWAYS with ink text
+export const dim = "#9C9E93"; // secondary text on dark (≥4.5:1 on canvas)
 
-/** Letterspaced uppercase eyebrow label on the light canvas. */
-export const eyebrow = "text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/50";
+/** Letterspaced uppercase eyebrow label on the dark canvas. */
+export const eyebrow = "text-[12px] font-medium uppercase tracking-[0.22em] text-[#9C9E93]";
 
-/** White card treatment used across the page (tiles, FAQ, feature cards). */
-export const card =
-  "rounded-3xl border border-[#0d0c0e]/[0.06] bg-white shadow-[0_16px_40px_rgba(38,54,115,0.10)]";
+/** Hairline-bordered dark card — the bento cell treatment. */
+export const card = "rounded-2xl border border-white/10 bg-[#242424]";
+
+/** Hairline border color used for grid dividers. */
+export const hairline = "border-white/10";

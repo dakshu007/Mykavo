@@ -29,8 +29,8 @@ function Strip() {
     <div className="flex shrink-0 items-center" aria-hidden>
       {SIGNALS.map((s) => (
         <span key={s} className="flex items-center whitespace-nowrap">
-          <span className="px-5 text-[14px] font-medium text-[#0d0c0e]/60">{s}</span>
-          <span className="size-1 rounded-full bg-[#3556f4]/80" />
+          <span className="px-5 text-[14px] font-medium text-[#9C9E93]">{s}</span>
+          <span className="size-1 rounded-full bg-[#FFD400]" />
         </span>
       ))}
     </div>
@@ -40,10 +40,10 @@ function Strip() {
 export function SignalMarquee() {
   return (
     <section aria-label="Everything MyKavo checks on every scan" className="py-10">
-      <p className="mb-5 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#0d0c0e]/50">
+      <p className="mb-5 text-center text-[12px] font-medium uppercase tracking-[0.22em] text-[#9C9E93]">
         Checked on every scan
       </p>
-      <div className="landing-marquee relative flex overflow-hidden border-y border-[#0d0c0e]/10 py-4 [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
+      <div className="landing-marquee relative flex overflow-hidden border-y border-white/10 py-4 [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
         <div className="landing-marquee-track flex">
           <Strip />
           <Strip />

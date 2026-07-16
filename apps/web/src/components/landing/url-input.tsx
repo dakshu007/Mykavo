@@ -6,9 +6,9 @@ import { ArrowRight, Globe } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 /**
- * Landing variant of the hero URL input — same behavior as the marketing
- * HeroUrlInput (routes into the free Website Change Detector), restyled as a
- * white pill on the dark canvas.
+ * Landing hero URL input, styled like a prompt card: warm bone surface on the
+ * dark canvas with the gold action button. Routes into the free Website
+ * Change Detector so visitors get instant value.
  */
 export function LandingUrlInput() {
   const [url, setUrl] = useState("");
@@ -25,9 +25,9 @@ export function LandingUrlInput() {
   return (
     <form
       onSubmit={submit}
-      className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-full border border-[#0d0c0e]/[0.06] bg-white p-2 shadow-[0_16px_44px_rgba(38,54,115,0.16)]"
+      className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-2xl border border-black/10 bg-[#F7F8F4] p-2 shadow-[0_24px_60px_rgba(0,0,0,0.45)]"
     >
-      <span className="ml-3 text-[#0d0c0e]/40">
+      <span className="ml-3 text-[#151515]/40">
         <Globe className="size-5" aria-hidden />
       </span>
       <label className="sr-only" htmlFor="landing-url">
@@ -40,11 +40,11 @@ export function LandingUrlInput() {
         placeholder="Enter a website URL to inspect it free"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-[#0d0c0e] placeholder:text-[#0d0c0e]/40 focus:outline-none"
+        className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-[#151515] placeholder:text-[#151515]/45 focus:outline-none"
       />
       <button
         type="submit"
-        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-[#0d0c0e] px-5 text-sm font-medium text-white transition-colors hover:bg-[#2a2830]"
+        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-[#FFD400] px-5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
       >
         Inspect
         <ArrowRight className="size-4" aria-hidden />

@@ -9,7 +9,7 @@ import {
   eyebrow,
   fontSans,
   fontDisplay,
-  primary,
+  gold,
 } from "@/components/landing/style";
 import { readingTimeMinutes } from "@/components/blog/blocks";
 
@@ -48,7 +48,7 @@ export default async function BlogIndexPage() {
   });
 
   return (
-    <div className={`${fontSans} min-h-svh bg-[#ecf0ff] text-[#0d0c0e] antialiased`}>
+    <div className={`${fontSans} min-h-svh bg-[#151515] text-[#E9EBDF] antialiased`}>
       <LandingNav />
       <main className="mx-auto w-full max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
         <div className="mx-auto mb-14 max-w-2xl text-center">
@@ -58,13 +58,13 @@ export default async function BlogIndexPage() {
             <br />
             <span className="italic">websites working.</span>
           </h1>
-          <p className="mt-6 text-[15px] leading-7 text-[#0d0c0e]/60">
+          <p className="mt-6 text-[15px] leading-7 text-[#9C9E93]">
             Change detection, regression monitoring, SEO health, and lessons from watching
             websites break — and fixing them before anyone notices.
           </p>
           <Link
             href="/blog/feed.xml"
-            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#0d0c0e]/50 transition-colors hover:text-[#0d0c0e]"
+            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#9C9E93] transition-colors hover:text-[#E9EBDF]"
           >
             <Rss className="size-3.5" aria-hidden /> RSS feed
           </Link>
@@ -72,15 +72,15 @@ export default async function BlogIndexPage() {
 
         {posts.length === 0 ? (
           <div className={`${card} mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center`}>
-            <PenLine className="mb-4 size-7" style={{ color: primary }} aria-hidden />
-            <h2 className={`${fontDisplay} text-2xl text-[#0d0c0e]`}>No posts yet.</h2>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-[#0d0c0e]/60">
+            <PenLine className="mb-4 size-7" style={{ color: gold }} aria-hidden />
+            <h2 className={`${fontDisplay} text-2xl text-[#E9EBDF]`}>No posts yet.</h2>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-[#9C9E93]">
               We&apos;re writing our first guides on website change monitoring. Check back soon —
               or start monitoring in the meantime.
             </p>
             <Link
               href="/signup"
-              className="mt-7 rounded-full bg-[#0d0c0e] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#3556f4]"
+              className="mt-7 rounded-full bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
             >
               Start Monitoring Free
             </Link>
@@ -90,9 +90,9 @@ export default async function BlogIndexPage() {
             {posts.map((post) => (
               <article
                 key={post.slug}
-                className={`${card} group p-7 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_56px_rgba(38,54,115,0.16)] sm:p-8`}
+                className={`${card} group p-7 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.07] sm:p-8`}
               >
-                <p className="text-[13px] text-[#0d0c0e]/50">
+                <p className="text-[13px] text-[#9C9E93]">
                   {post.publishedAt && (
                     <time dateTime={post.publishedAt.toISOString()}>
                       {dateFormat.format(post.publishedAt)}
@@ -103,21 +103,21 @@ export default async function BlogIndexPage() {
                   <span aria-hidden> · </span>
                   {readingTimeMinutes(post.content)} min read
                 </p>
-                <h2 className={`${fontDisplay} mt-3 text-[28px] leading-tight text-[#0d0c0e]`}>
+                <h2 className={`${fontDisplay} mt-3 text-[28px] leading-tight text-[#E9EBDF]`}>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="transition-colors group-hover:text-[#3556f4]"
+                    className="transition-colors group-hover:text-[#FFD400]"
                   >
                     {post.title}
                   </Link>
                 </h2>
                 {post.excerpt && (
-                  <p className="mt-3 text-sm leading-7 text-[#0d0c0e]/60">{post.excerpt}</p>
+                  <p className="mt-3 text-sm leading-7 text-[#9C9E93]">{post.excerpt}</p>
                 )}
                 <Link
                   href={`/blog/${post.slug}`}
-                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-[#0d0c0e]"
-                  style={{ color: primary }}
+                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-[#E9EBDF]"
+                  style={{ color: gold }}
                 >
                   Read post{" "}
                   <ArrowRight
