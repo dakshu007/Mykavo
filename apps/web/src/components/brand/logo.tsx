@@ -2,11 +2,13 @@ import type { SVGProps } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * MyKavo logomark — the gold spark: a burst of tapered rays radiating from a
- * left-of-center core. It reads as the instant a change is caught.
+ * MyKavo logomark — the spark leaving the page: a gold document panel on the
+ * left with a chevron notch cut into it, and a five-ray spark bursting out
+ * to the right. It reads as the instant a change is caught on a page.
  *
  * Single-color mark built from currentColor — defaults to brand gold; set the
- * color via `className` (e.g. "text-[#151515]" on gold surfaces).
+ * color via `className` (e.g. "text-[#151515]" on gold surfaces). The gaps
+ * between page and spark are transparent so the mark sits on any background.
  */
 export function LogoMark({
   size = 28,
@@ -24,22 +26,22 @@ export function LogoMark({
       className={cn("shrink-0 text-[#FFD400]", className)}
       {...props}
     >
-      {/* Core */}
-      <circle cx="10" cy="16" r="3.6" fill="currentColor" />
-      {/* Left comet wedge */}
+      {/* Page panel with the chevron notch cut from its right side */}
       <path
-        d="M10 12.6 L2.6 15.1 a1 1 0 0 0 0 1.8 L10 19.4 Z"
+        d="M5.4 3.3 L13.9 3.3 Q15.6 3.3 14.6 4.45 L3.8 15.45 Q3.25 16 3.8 16.55 L14.6 27.55 Q15.6 28.7 13.9 28.7 L5.4 28.7 Q3.2 28.7 3.2 26.5 L3.2 5.5 Q3.2 3.3 5.4 3.3 Z"
         fill="currentColor"
         stroke="currentColor"
-        strokeWidth="1.4"
+        strokeWidth="0.8"
         strokeLinejoin="round"
       />
-      {/* Rays — thick at the core, needle tips outward */}
-      <path d="M11 14.9 L29.2 15.5 a0.9 0.9 0 0 1 0 1.8 L11 17.1 Z" fill="currentColor" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round" />
-      <path d="M11.2 13.6 L24.6 5.2 a0.9 0.9 0 0 1 1.2 1.3 L12.8 15 Z" fill="currentColor" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round" />
-      <path d="M9.6 12.2 L13.6 2.9 a0.85 0.85 0 0 1 1.6 0.55 L12 13.2 Z" fill="currentColor" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round" />
-      <path d="M11.2 18.4 L24.6 26.8 a0.9 0.9 0 0 0 1.2 -1.3 L12.8 17 Z" fill="currentColor" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round" />
-      <path d="M9.6 19.8 L13.6 29.1 a0.85 0.85 0 0 0 1.6 -0.55 L12 18.8 Z" fill="currentColor" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round" />
+      {/* Spark — chevron apex with five tapered rays fanning right */}
+      <path
+        d="M10.35 16 L19.45 3.4 L15.85 12 L23.7 8.2 L16.55 14.5 L29.1 16 L16.55 17.5 L23.7 23.8 L15.85 20 L19.45 28.6 Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="0.7"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

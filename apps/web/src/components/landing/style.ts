@@ -1,7 +1,12 @@
 /**
- * Landing-page design system v3 — retool.com-inspired: near-black canvas,
- * warm bone panels, hairline-bordered bento cards, and the MyKavo gold spark
- * as the single accent.
+ * Landing-page design system v4 — "bright gold" edition.
+ *
+ * A mash-up of the best patterns from ballpark.ing (island nav, browser-chrome
+ * product mock, giant footer wordmark), tryplayground.com (warm paper canvas,
+ * huge headlines, category tab pills), v7labs.com (before/after stat pairs),
+ * hydradb.com (monospace eyebrows + terminal scan logs), neon.com (numbered
+ * workflow, feature trios) and retool.com (hairline bento cards) — rebuilt
+ * around the MyKavo gold spark as the loud, single accent.
  *
  * The landing page deliberately runs on a FIXED palette — identical in light
  * and dark app themes — so it never routes through the `--fx-*` theme tokens
@@ -20,27 +25,42 @@ export const fontSans =
   "[font-family:'Google_Sans',var(--font-app-sans),ui-sans-serif,system-ui,sans-serif]";
 
 /**
- * Display utility (Poppins) for the big headlines — regular weight with tight
- * tracking for the retool-style light editorial look.
+ * Display utility (Poppins) for the big headlines — medium weight with tight
+ * tracking for the bright, confident look.
  */
 export const fontDisplay =
-  "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] font-normal tracking-[-0.02em]";
+  "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] font-medium tracking-[-0.02em]";
 
 /** Fixed landing palette (never theme-dependent). Contrast-checked pairs only:
- *  bone/dim on canvas+elevated; ink on bone/gold; gold carries INK text. */
-export const canvas = "#151515"; // near-black page background
-export const elevated = "#242424"; // raised dark cards
-export const bone = "#F7F8F4"; // warm off-white panels — ink text on top
-export const boneSoft = "#E9EBDF"; // primary text on dark, softer bone fills
-export const ink = "#151515"; // text on bone/gold surfaces
+ *  ink/dim on canvas+paper+white; ink on gold; boneSoft/faint on ink bands. */
+export const canvas = "#FBFAF3"; // warm bright paper — the page background
+export const paper = "#F3F1E6"; // deeper paper for alternate panels
+export const elevated = "#FFFFFF"; // white cards on the paper canvas
+export const ink = "#151515"; // primary text + the dark drama bands
+export const inkBand = "#151515"; // full-width dark section background
 export const gold = "#FFD400"; // the spark — sole accent, ALWAYS with ink text
-export const dim = "#9C9E93"; // secondary text on dark (≥4.5:1 on canvas)
+export const goldSoft = "#FFF3B0"; // pale gold tint for highlights/hover fills
+export const dim = "#6B6B60"; // secondary text on light surfaces (≥4.5:1)
+export const boneSoft = "#E9EBDF"; // primary text on ink bands
+export const dimOnDark = "#9C9E93"; // secondary text on ink bands
 
-/** Letterspaced uppercase eyebrow label on the dark canvas. */
-export const eyebrow = "text-[12px] font-medium uppercase tracking-[0.22em] text-[#9C9E93]";
+/** Legacy alias kept for older imports — same value as `paper`. */
+export const bone = "#F3F1E6";
 
-/** Hairline-bordered dark card — the bento cell treatment. */
-export const card = "rounded-2xl border border-white/10 bg-[#242424]";
+/** Monospace hydradb-style eyebrow label on light surfaces. */
+export const eyebrow =
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]";
 
-/** Hairline border color used for grid dividers. */
-export const hairline = "border-white/10";
+/** Eyebrow variant for the dark ink bands. */
+export const eyebrowOnDark =
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#9C9E93]";
+
+/** Hairline-bordered white card — the standard bento cell on the paper canvas. */
+export const card = "rounded-2xl border border-black/10 bg-white";
+
+/** Card with the crisp offset ink shadow — for hero-level objects only. */
+export const cardPop =
+  "rounded-2xl border border-[#151515] bg-white shadow-[6px_6px_0_#151515]";
+
+/** Hairline border color used for grid dividers on light surfaces. */
+export const hairline = "border-black/10";

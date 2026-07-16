@@ -96,7 +96,7 @@ export default async function BlogPostPage({ params }: Params) {
       : null;
 
   return (
-    <div className={`${fontSans} min-h-svh bg-[#151515] text-[#E9EBDF] antialiased`}>
+    <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd) }}
@@ -109,28 +109,28 @@ export default async function BlogPostPage({ params }: Params) {
       )}
       <LandingNav />
       <main>
-        {/* Hero band on the dark canvas */}
+        {/* Hero band on the warm paper canvas */}
         <section className="mx-auto w-full max-w-6xl px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
           <Link
             href="/blog"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#9C9E93] transition-colors hover:text-[#E9EBDF]"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6B6B60] transition-colors hover:text-[#151515]"
           >
             <ArrowLeft className="size-4" aria-hidden /> All posts
           </Link>
           <div className="mx-auto mt-10 max-w-3xl text-center">
             <span
               style={{ backgroundColor: gold }}
-              className="inline-flex items-center rounded-full px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#151515]"
+              className="inline-flex items-center rounded-full border border-black/15 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#151515]"
             >
               Blog
             </span>
             <h1
-              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-[#E9EBDF] sm:text-5xl lg:text-6xl`}
+              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-[#151515] sm:text-5xl lg:text-6xl`}
             >
               {post.title}
             </h1>
-            <p className="mt-6 text-sm text-[#9C9E93]">
-              By <span className="font-medium text-[#E9EBDF]">{post.authorName}</span>
+            <p className="mt-6 text-sm text-[#6B6B60]">
+              By <span className="font-medium text-[#151515]">{post.authorName}</span>
               {post.publishedAt && (
                 <>
                   <span aria-hidden> · </span>
@@ -145,19 +145,18 @@ export default async function BlogPostPage({ params }: Params) {
             <div className="mt-8">
               <Link
                 href="/signup"
-                className="rounded-full bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
+                className="rounded-full border border-[#151515] bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-colors hover:bg-[#ffe14d]"
               >
                 Start free
               </Link>
             </div>
-            <p className="mt-3 text-[12px] text-[#9C9E93]">* No credit card required</p>
+            <p className="mt-3 text-[12px] text-[#6B6B60]">* No credit card required</p>
           </div>
         </section>
 
         {/* Body: article + optional sticky ToC rail. The article and ToC keep
             theme-token cards (bg-card & friends) so the markdown typography
-            stays readable in the visitor's light OR dark app theme — white
-            panels on the dark canvas in light mode, stamped-style. */}
+            stays readable in the visitor's light OR dark app theme. */}
         <section className="mx-auto w-full max-w-6xl px-5 pb-20 lg:px-8">
           <div className="flex justify-center gap-10">
             <article className="w-full min-w-0 max-w-3xl">
@@ -184,19 +183,16 @@ export default async function BlogPostPage({ params }: Params) {
                 </div>
               </aside>
 
-              {/* End-of-post product CTA — landing style on the dark canvas */}
-              <aside
-                style={{ borderColor: gold }}
-                className="mt-8 rounded-[28px] border-[3px] px-7 py-12 text-center sm:px-10"
-              >
+              {/* End-of-post product CTA — ink band with the gold spark */}
+              <aside className="mt-8 rounded-[28px] border border-[#151515] bg-[#151515] px-7 py-12 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515] sm:px-10">
                 <h2 className={`${fontDisplay} text-3xl leading-tight text-[#E9EBDF] sm:text-4xl`}>
-                  Know what changed. <span className="italic">Fix what matters.</span>
+                  Know what changed. <span className="text-[#FFD400]">Fix what matters.</span>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#9C9E93]">
                   MyKavo monitors your websites for visual, SEO, link, script, and performance
                   changes — and alerts you before small problems become expensive problems.
                 </p>
-                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-white/15">
+                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
                   <Link
                     href="/signup"
                     className="bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
@@ -205,7 +201,7 @@ export default async function BlogPostPage({ params }: Params) {
                   </Link>
                   <Link
                     href="/blog"
-                    className="bg-[#242424] px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-[#2e2e2e]"
+                    className="bg-white/[0.06] px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-white/[0.12]"
                   >
                     More posts
                   </Link>

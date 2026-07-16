@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Check, Minus } from "lucide-react";
-import { MarketingNav } from "@/components/marketing/nav";
-import { MarketingFooter } from "@/components/marketing/footer";
-import { PlanCards } from "@/components/marketing/plan-cards";
-import { ButtonLink } from "@/components/ui/button";
+import Link from "next/link";
+import { Check, CheckCircle2, Minus, Plus } from "lucide-react";
+import { LandingNav } from "@/components/landing/nav";
+import { LandingFooter } from "@/components/landing/footer";
+import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
-import { plans, formatLimit } from "@/config/plans";
+import { plans, formatLimit, WEBSITE_ADDON } from "@/config/plans";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -55,56 +55,131 @@ const pricingFaqs = [
 
 export default function PricingPage() {
   return (
-    <>
+    <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
       <TrackOnView event="pricing_viewed" />
-      <MarketingNav />
-      <main className="mx-auto max-w-300 px-5 py-16 lg:px-8">
-        <div className="mx-auto mb-12 max-w-2xl text-center">
-          <p className="label-micro mb-3">Pricing</p>
-          <h1 className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-            Monitoring that pays for itself
+      <LandingNav />
+      <main className="mx-auto max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
+        <div className="mx-auto mb-14 max-w-2xl text-center">
+          <p className={`${eyebrow} mb-4`}>{"// pricing //"}</p>
+          <h1 className={`${fontDisplay} text-4xl leading-[1.05] text-[#151515] sm:text-6xl`}>
+            Monitoring that
+            <br />
+            <span className="relative inline-block whitespace-nowrap">
+              <span
+                aria-hidden
+                className="absolute inset-x-[-4px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]"
+              />
+              <span className="relative">pays for itself.</span>
+            </span>
           </h1>
-          <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
+          <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
             One missed regression costs more than a year of MyKavo. Start free with one website,
             or go Pro for $12/month — 8 websites with 20 monitored pages each, add more anytime.
           </p>
         </div>
 
-        <PlanCards />
+        {/* Plan cards */}
+        <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
+          {plans.map((plan) => {
+            const pro = plan.highlighted;
+            return (
+              <div
+                key={plan.id}
+                className={`flex flex-col rounded-2xl border p-8 text-[#151515] ${
+                  pro
+                    ? "border-[#151515] bg-[#FFD400] shadow-[7px_7px_0_#151515]"
+                    : "border-black/10 bg-white"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className={`${fontDisplay} text-3xl`}>{plan.name}</h2>
+                  {pro && (
+                    <span className="rounded-full bg-[#151515] px-3 py-1 text-xs font-semibold text-[#FFD400]">
+                      Most popular
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm leading-6 text-[#151515]/65">{plan.headline}</p>
+                <p className="mt-6">
+                  <span className={`${fontDisplay} text-5xl`}>${plan.priceMonthlyUsd}</span>
+                  <span className="text-sm text-[#151515]/55"> / month</span>
+                </p>
+                <ul className="mt-7 flex-1 space-y-3">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-[14px] leading-6">
+                      <CheckCircle2 className="mt-1 size-4 shrink-0 text-[#151515]" aria-hidden />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/signup"
+                  className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
+                >
+                  {pro ? "Start with Pro" : "Start free"}
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Website add-on callout */}
+        <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-black/10 bg-white p-6 sm:flex-row">
+          <div className="flex items-start gap-3.5">
+            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-black/15 bg-[#FFD400]">
+              <Plus className="size-4.5 text-[#151515]" aria-hidden />
+            </span>
+            <div>
+              <p className="text-[15px] font-semibold text-[#151515]">Need another website on Pro?</p>
+              <p className="mt-1 text-sm leading-6 text-[#6B6B60]">
+                Add one anytime for ${WEBSITE_ADDON.priceMonthlyUsd}/month — up to{" "}
+                {WEBSITE_ADDON.maxUnits} add-ons per workspace.
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 rounded-full border border-black/15 bg-[#F3F1E6] px-4 py-2 font-mono text-[12px] font-semibold text-[#151515]">
+            +${WEBSITE_ADDON.priceMonthlyUsd}/mo per website
+          </span>
+        </div>
 
         {/* Comparison table */}
-        <section className="mt-20">
-          <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-ink">
-            Compare plans
+        <section className="mt-24">
+          <p className={`${eyebrow} mb-4 text-center`}>{"// compare //"}</p>
+          <h2 className={`${fontDisplay} mb-8 text-center text-3xl text-[#151515] sm:text-4xl`}>
+            Every plan, side by side.
           </h2>
-          <div className="overflow-x-auto rounded-card bg-card p-6 shadow-card">
-            <table className="w-full min-w-160 text-left">
+          <div className="mx-auto max-w-3xl overflow-x-auto rounded-2xl border border-[#151515] bg-white p-6 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
+            <table className="w-full min-w-130 text-left">
               <thead>
-                <tr className="border-b border-line">
-                  <th className="label-micro py-3 pr-4 font-semibold">Feature</th>
+                <tr className="border-b border-black/10">
+                  <th className="py-3 pr-4 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]">
+                    Feature
+                  </th>
                   {plans.map((p) => (
-                    <th key={p.id} className="px-4 py-3 text-sm font-semibold text-ink">
+                    <th key={p.id} className="px-4 py-3 text-sm font-semibold text-[#151515]">
                       {p.name}
-                      <span className="block text-xs font-normal text-ink-faint">
+                      <span className="block font-mono text-xs font-normal text-[#6B6B60]">
                         ${p.priceMonthlyUsd}/mo
                       </span>
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <tbody className="divide-y divide-black/10">
                 {comparisonRows.map((row) => (
                   <tr key={row.label}>
-                    <td className="py-3.5 pr-4 text-sm font-medium text-ink">{row.label}</td>
+                    <td className="py-3.5 pr-4 text-sm font-medium text-[#151515]">{row.label}</td>
                     {plans.map((p) => {
                       const v = row.value(p);
                       return (
-                        <td key={p.id} className="px-4 py-3.5 text-sm text-ink-secondary">
+                        <td key={p.id} className="px-4 py-3.5 text-sm text-[#6B6B60]">
                           {typeof v === "boolean" ? (
                             v ? (
-                              <Check className="size-4.5 text-primary" aria-label="Included" />
+                              <span className="inline-flex size-5 items-center justify-center rounded-full bg-[#FFD400]">
+                                <Check className="size-3.5 text-[#151515]" aria-label="Included" />
+                              </span>
                             ) : (
-                              <Minus className="size-4.5 text-ink-faint" aria-label="Not included" />
+                              <Minus className="size-4.5 text-[#151515]/30" aria-label="Not included" />
                             )
                           ) : (
                             v
@@ -120,40 +195,48 @@ export default function PricingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto mt-20 max-w-2xl">
-          <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight text-ink">
-            Pricing questions
+        <section className="mx-auto mt-24 max-w-2xl">
+          <p className={`${eyebrow} mb-4 text-center`}>{"// faq //"}</p>
+          <h2 className={`${fontDisplay} mb-8 text-center text-3xl text-[#151515] sm:text-4xl`}>
+            Pricing questions.
           </h2>
           <div className="space-y-3">
             {pricingFaqs.map((f) => (
               <details
                 key={f.q}
-                className="group rounded-card bg-card px-6 py-5 shadow-card open:pb-6"
+                className="group rounded-2xl border border-black/10 bg-white px-6 py-5 transition-colors open:border-[#151515] open:pb-6 open:shadow-[4px_4px_0_#FFD400]"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-[#151515] [&::-webkit-details-marker]:hidden">
                   {f.q}
-                  <span className="text-ink-faint transition-transform group-open:rotate-45">+</span>
+                  <span className="text-xl leading-none text-[#6B6B60] transition-transform group-open:rotate-45" aria-hidden>
+                    +
+                  </span>
                 </summary>
-                <p className="mt-3 text-sm leading-7 text-ink-secondary">{f.a}</p>
+                <p className="mt-3 text-sm leading-7 text-[#6B6B60]">{f.a}</p>
               </details>
             ))}
           </div>
         </section>
 
         {/* CTA */}
-        <section className="mx-auto mt-20 max-w-xl text-center">
-          <h2 className="text-2xl font-semibold tracking-tight text-ink">
-            Ready when you are
-          </h2>
-          <p className="mb-6 mt-2 text-[15px] text-ink-secondary">
-            Start on the free plan — upgrade whenever your websites need more.
-          </p>
-          <ButtonLink href="/signup" size="lg">
-            Start Monitoring Free
-          </ButtonLink>
+        <section className="mt-24">
+          <div className="relative mx-auto max-w-4xl overflow-hidden rounded-[28px] border border-[#151515] bg-[#151515] px-6 py-16 text-center shadow-[8px_8px_0_#FFD400,8px_8px_0_1px_#151515]">
+            <h2 className={`${fontDisplay} mx-auto max-w-xl text-3xl leading-tight text-[#E9EBDF] sm:text-4xl`}>
+              Ready when <span className="text-[#FFD400]">you are.</span>
+            </h2>
+            <p className="mx-auto mb-8 mt-3 max-w-md text-[15px] leading-7 text-[#9C9E93]">
+              Start on the free plan — upgrade whenever your websites need more.
+            </p>
+            <Link
+              href="/signup"
+              className="inline-flex rounded-full bg-[#FFD400] px-7 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
+            >
+              Start Monitoring Free
+            </Link>
+          </div>
         </section>
       </main>
-      <MarketingFooter />
-    </>
+      <LandingFooter />
+    </div>
   );
 }
