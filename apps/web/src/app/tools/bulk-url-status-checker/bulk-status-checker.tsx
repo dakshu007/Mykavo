@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ListChecks, Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { ToolError } from "@/components/tools/tool-error";
 import { ToolCta } from "@/components/tools/tool-cta";
 import { track } from "@/lib/analytics";
@@ -12,12 +11,13 @@ import { statusLabel, type StatusTone } from "@/lib/tools/status-labels";
 
 const MAX_URLS = 20;
 
+/** v4 fixed-palette status chip tones (always paired with a text label). */
 const TONE_CLASS: Record<StatusTone, string> = {
-  success: "bg-success-soft text-success-strong",
-  redirect: "bg-warning-soft text-warning-strong",
-  clientError: "bg-critical-soft text-critical-strong",
-  serverError: "bg-critical-soft text-critical-strong",
-  info: "bg-info-soft text-info",
+  success: "bg-[#e6f4ea] text-[#1a7f37]",
+  redirect: "bg-[#fdf3e0] text-[#92600a]",
+  clientError: "bg-[#fdeaeb] text-[#b91c1c]",
+  serverError: "bg-[#fdeaeb] text-[#b91c1c]",
+  info: "border border-black/15 bg-white text-[#151515]",
 };
 
 function parseUrls(raw: string): string[] {
@@ -34,13 +34,13 @@ function parseUrls(raw: string): string[] {
 
 function ResultRow({ result }: { result: UrlStatusResult }) {
   return (
-    <tr className="border-t border-line">
+    <tr className="border-t border-black/10">
       <td className="max-w-0 py-3 pr-4">
-        <p className="truncate font-mono text-[13px] text-ink" title={result.url}>
+        <p className="truncate font-mono text-[13px] text-[#151515]" title={result.url}>
           {result.url}
         </p>
         {result.redirectCount > 0 && result.finalUrl && (
-          <p className="mt-0.5 truncate text-xs text-ink-faint" title={result.finalUrl}>
+          <p className="mt-0.5 truncate text-xs text-[#6B6B60]" title={result.finalUrl}>
             → {result.finalUrl} ({result.redirectCount} redirect
             {result.redirectCount === 1 ? "" : "s"})
           </p>
@@ -57,10 +57,10 @@ function ResultRow({ result }: { result: UrlStatusResult }) {
             {statusLabel(result.status).text}
           </span>
         ) : (
-          <span className="text-[13px] font-medium text-critical-strong">{result.error}</span>
+          <span className="text-[13px] font-medium text-[#b91c1c]">{result.error}</span>
         )}
       </td>
-      <td className="whitespace-nowrap py-3 text-right font-mono text-[13px] text-ink-secondary">
+      <td className="whitespace-nowrap py-3 text-right font-mono text-[13px] text-[#6B6B60]">
         {result.responseTimeMs !== null ? `${result.responseTimeMs} ms` : "-"}
       </td>
     </tr>
@@ -110,10 +110,13 @@ export function BulkStatusChecker() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <div className="rounded-2xl border border-[#151515] bg-white p-6 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
         <form onSubmit={run} className="space-y-3">
           <div>
-            <label htmlFor="bulk-urls" className="label-micro mb-1.5 block">
+            <label
+              htmlFor="bulk-urls"
+              className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]"
+            >
               URLs - one per line, up to {MAX_URLS}
             </label>
             <textarea
@@ -122,14 +125,14 @@ export function BulkStatusChecker() {
               onChange={(e) => setRaw(e.target.value)}
               rows={7}
               placeholder={"example.com\nexample.com/pricing\nexample.com/blog"}
-              className="w-full rounded-field border border-line bg-card px-4 py-3 font-mono text-[14px] leading-6 text-ink placeholder:font-sans placeholder:text-ink-faint focus:border-primary focus:outline-none"
+              className="w-full rounded-xl border border-[#151515]/25 bg-white px-4 py-3 font-mono text-[14px] leading-6 text-[#151515] placeholder:font-sans placeholder:text-[#151515]/35 focus:border-[#151515] focus:outline-none focus:ring-2 focus:ring-[#FFD400]"
             />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p
               className={cn(
                 "text-[13px]",
-                urlCount > MAX_URLS ? "font-medium text-critical-strong" : "text-ink-faint",
+                urlCount > MAX_URLS ? "font-medium text-[#b91c1c]" : "text-[#6B6B60]",
               )}
             >
               {urlCount} / {MAX_URLS} URLs
@@ -137,7 +140,7 @@ export function BulkStatusChecker() {
             <button
               type="submit"
               disabled={loading || urlCount === 0}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-6 text-sm font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-all hover:bg-[#ffe14d] disabled:opacity-60 disabled:shadow-none"
             >
               {loading ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -148,22 +151,22 @@ export function BulkStatusChecker() {
             </button>
           </div>
         </form>
-      </Card>
+      </div>
 
       {error && <ToolError message={error} />}
 
       {results && (
         <>
-          <Card>
+          <div className="rounded-2xl border border-[#151515] bg-white p-6 shadow-[5px_5px_0_#151515]">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-[15px] font-semibold text-ink">
+              <h2 className="text-[15px] font-semibold text-[#151515]">
                 {results.length} URL{results.length === 1 ? "" : "s"} checked
               </h2>
-              <p className="text-[13px] text-ink-secondary">
+              <p className="text-[13px] text-[#6B6B60]">
                 {broken === 0 ? (
-                  <span className="font-semibold text-success-strong">All reachable</span>
+                  <span className="font-semibold text-[#1a7f37]">All reachable</span>
                 ) : (
-                  <span className="font-semibold text-critical-strong">
+                  <span className="font-semibold text-[#b91c1c]">
                     {broken} problem{broken === 1 ? "" : "s"} found
                   </span>
                 )}
@@ -173,13 +176,13 @@ export function BulkStatusChecker() {
               <table className="w-full min-w-130 table-fixed border-collapse text-left">
                 <thead>
                   <tr>
-                    <th className="w-1/2 pb-2 pr-4 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+                    <th className="w-1/2 pb-2 pr-4 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]">
                       URL
                     </th>
-                    <th className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+                    <th className="pb-2 pr-4 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]">
                       Status
                     </th>
-                    <th className="w-24 pb-2 text-right text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+                    <th className="w-24 pb-2 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]">
                       Time
                     </th>
                   </tr>
@@ -191,7 +194,7 @@ export function BulkStatusChecker() {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </div>
 
           <ToolCta
             heading="Automatically monitor these pages with MyKavo."

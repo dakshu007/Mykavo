@@ -44,7 +44,7 @@ export default async function BlogIndexPage() {
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
       <LandingNav />
-      <main className="mx-auto w-full max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
+      <main className="mx-auto w-full max-w-[1440px] px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <p className={`${eyebrow} mb-4`}>{"// blog //"}</p>
           <h1 className={`${fontDisplay} text-4xl leading-[1.05] tracking-[-0.01em] sm:text-6xl`}>

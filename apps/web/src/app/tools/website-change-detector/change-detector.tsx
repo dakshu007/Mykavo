@@ -12,11 +12,11 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { SeverityBadge, type Severity } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { fontDisplay } from "@/components/landing/style";
+import { ToolError } from "@/components/tools/tool-error";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import type { PageToolSnapshot, SnapshotDiff } from "@/lib/tools/snapshot";
+import type { DiffSeverity, PageToolSnapshot, SnapshotDiff } from "@/lib/tools/snapshot";
 import { diffSnapshots } from "@/lib/tools/snapshot";
 
 const STORAGE_KEY = "mykavo.tool.savedSnapshot";
@@ -64,6 +64,29 @@ async function inspect(url: string): Promise<PageToolSnapshot> {
   return data.snapshot;
 }
 
+/* v4 fixed-palette severity chips - always color + text label, never color alone. */
+const severityChips: Record<DiffSeverity, { chip: string; label: string }> = {
+  CRITICAL: { chip: "bg-[#151515] text-[#FFD400]", label: "Critical" },
+  HIGH: { chip: "border border-[#b91c1c]/30 bg-[#fdeaeb] text-[#b91c1c]", label: "High" },
+  MEDIUM: { chip: "border border-[#92600a]/30 bg-[#fdf3e0] text-[#92600a]", label: "Medium" },
+  LOW: { chip: "border border-[#151515]/15 bg-[#FFF3B0] text-[#151515]", label: "Low" },
+  INFO: { chip: "border border-black/15 bg-white text-[#6B6B60]", label: "Info" },
+};
+
+function SeverityChip({ severity }: { severity: DiffSeverity }) {
+  const s = severityChips[severity];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+        s.chip,
+      )}
+    >
+      {s.label}
+    </span>
+  );
+}
+
 function UrlField({
   id,
   label,
@@ -79,7 +102,10 @@ function UrlField({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor={id} className="label-micro mb-1.5 block">
+      <label
+        htmlFor={id}
+        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]"
+      >
         {label}
       </label>
       <input
@@ -89,7 +115,7 @@ function UrlField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-12 w-full rounded-field border border-line bg-card px-4 font-mono text-[14px] text-ink placeholder:font-sans placeholder:text-ink-faint focus:border-primary focus:outline-none"
+        className="h-12 w-full rounded-xl border border-[#151515]/25 bg-white px-4 font-mono text-[14px] text-[#151515] placeholder:font-sans placeholder:text-[#151515]/35 focus:border-[#151515] focus:outline-none focus:ring-2 focus:ring-[#FFD400]"
       />
     </div>
   );
@@ -116,63 +142,65 @@ function SnapshotCard({ snapshot, title }: { snapshot: PageToolSnapshot; title: 
   ];
 
   return (
-    <Card>
-      <h3 className="mb-1 text-[15px] font-semibold text-ink">{title}</h3>
-      <p className="mb-4 truncate font-mono text-xs text-ink-faint">{snapshot.url}</p>
-      <dl className="divide-y divide-line">
+    <div className="rounded-2xl border border-black/10 bg-white p-6">
+      <h3 className="mb-1 text-[15px] font-semibold text-[#151515]">{title}</h3>
+      <p className="mb-4 truncate font-mono text-xs text-[#6B6B60]">{snapshot.url}</p>
+      <dl className="divide-y divide-black/10">
         {rows.map(([k, v]) => (
           <div key={k} className="flex gap-4 py-2.5">
-            <dt className="w-36 shrink-0 text-[13px] font-medium text-ink-secondary">{k}</dt>
-            <dd className="min-w-0 break-words font-mono text-[13px] text-ink">{v}</dd>
+            <dt className="w-36 shrink-0 pt-0.5 font-mono text-[11px] uppercase tracking-[0.14em] text-[#6B6B60]">
+              {k}
+            </dt>
+            <dd className="min-w-0 break-words font-mono text-[13px] text-[#151515]">{v}</dd>
           </div>
         ))}
       </dl>
-    </Card>
+    </div>
   );
 }
 
 function DiffResults({ diffs }: { diffs: SnapshotDiff[] }) {
   if (diffs.length === 0) {
     return (
-      <Card className="flex items-center gap-3">
-        <CheckCircle2 className="size-6 shrink-0 text-success" aria-hidden />
+      <div className="flex items-center gap-3 rounded-2xl border border-[#1a7f37]/25 bg-[#e6f4ea] px-6 py-5">
+        <CheckCircle2 className="size-6 shrink-0 text-[#1a7f37]" aria-hidden />
         <div>
-          <p className="text-[15px] font-semibold text-ink">No meaningful changes detected</p>
-          <p className="text-sm text-ink-secondary">
+          <p className="text-[15px] font-semibold text-[#151515]">No meaningful changes detected</p>
+          <p className="text-sm text-[#3d3d38]">
             Status, SEO tags, links, scripts, and page weight all match.
           </p>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <h3 className="mb-4 text-[15px] font-semibold text-ink">
+    <div className="rounded-2xl border border-[#151515] bg-white p-6 shadow-[5px_5px_0_#151515]">
+      <h3 className="mb-4 text-[15px] font-semibold text-[#151515]">
         {diffs.length} change{diffs.length === 1 ? "" : "s"} detected
       </h3>
-      <ul className="divide-y divide-line">
+      <ul className="divide-y divide-black/10">
         {diffs.map((d, i) => (
           <li key={i} className="py-4">
-            <div className="mb-2 flex items-center gap-2.5">
-              <SeverityBadge severity={d.severity as Severity} />
-              <span className="text-sm font-semibold text-ink">{d.label}</span>
-              <span className="rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-semibold text-ink-secondary">
+            <div className="mb-2 flex flex-wrap items-center gap-2.5">
+              <SeverityChip severity={d.severity} />
+              <span className="text-sm font-semibold text-[#151515]">{d.label}</span>
+              <span className="rounded-full border border-black/15 bg-white px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6B6B60]">
                 {d.category}
               </span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
-              <div className="rounded-md bg-success-soft px-3 py-2 font-mono text-[13px] text-success-strong break-words">
+              <div className="break-words rounded-lg bg-[#e6f4ea] px-3 py-2 font-mono text-[13px] text-[#1a7f37]">
                 {d.previous}
               </div>
-              <div className="rounded-md bg-critical-soft px-3 py-2 font-mono text-[13px] text-critical-strong break-words">
+              <div className="break-words rounded-lg bg-[#fdeaeb] px-3 py-2 font-mono text-[13px] text-[#b91c1c]">
                 {d.current}
               </div>
             </div>
           </li>
         ))}
       </ul>
-    </Card>
+    </div>
   );
 }
 
@@ -287,10 +315,10 @@ export function ChangeDetector() {
               setError("");
             }}
             className={cn(
-              "rounded-full px-4 py-2 text-[13px] font-medium transition-colors",
+              "rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors",
               mode === t.id
-                ? "bg-ink text-ink-inverse"
-                : "bg-card text-ink-secondary shadow-card hover:text-ink",
+                ? "border-[#151515] bg-[#151515] text-[#FFD400]"
+                : "border-black/15 bg-white text-[#6B6B60] hover:border-[#151515]/40 hover:text-[#151515]",
             )}
           >
             {t.label}
@@ -300,7 +328,7 @@ export function ChangeDetector() {
 
       {mode === "track" ? (
         <>
-          <Card>
+          <div className="rounded-2xl border border-[#151515] bg-white p-6 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -318,7 +346,7 @@ export function ChangeDetector() {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-6 text-sm font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-all hover:bg-[#ffe14d] disabled:opacity-60 disabled:shadow-none"
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -330,12 +358,12 @@ export function ChangeDetector() {
             </form>
 
             {saved && (
-              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-tile bg-surface px-4 py-3">
-                <Bookmark className="size-4 shrink-0 text-primary" aria-hidden />
-                <p className="min-w-0 flex-1 text-[13px] text-ink-secondary">
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-black/10 bg-[#F3F1E6] px-4 py-3">
+                <Bookmark className="size-4 shrink-0 text-[#151515]" aria-hidden />
+                <p className="min-w-0 flex-1 text-[13px] text-[#3d3d38]">
                   Saved snapshot:{" "}
-                  <span className="font-mono text-ink">{saved.url}</span>{" "}
-                  <span className="text-ink-faint">
+                  <span className="font-mono text-[#151515]">{saved.url}</span>{" "}
+                  <span className="text-[#6B6B60]">
                     ({new Date(saved.fetchedAt).toLocaleString()})
                   </span>
                 </p>
@@ -343,13 +371,13 @@ export function ChangeDetector() {
                   <button
                     onClick={() => void recheck()}
                     disabled={loading}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-medium text-ink-inverse hover:bg-ink-hover disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#151515] bg-[#151515] px-4 py-2 text-xs font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a] disabled:opacity-60"
                   >
                     <RefreshCw className="size-3.5" aria-hidden /> Re-check for changes
                   </button>
                   <button
                     onClick={clearBaseline}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-xs font-medium text-ink-secondary hover:text-ink"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#151515]/25 bg-white px-4 py-2 text-xs font-medium text-[#6B6B60] transition-colors hover:border-[#151515] hover:text-[#151515]"
                     aria-label="Delete saved snapshot"
                   >
                     <Trash2 className="size-3.5" aria-hidden />
@@ -357,29 +385,23 @@ export function ChangeDetector() {
                 </div>
               </div>
             )}
-          </Card>
+          </div>
 
-          {error && (
-            <Card className="border border-critical/20 bg-critical-soft">
-              <p className="text-sm font-medium text-critical-strong" role="alert">
-                {error}
-              </p>
-            </Card>
-          )}
+          {error && <ToolError message={error} />}
 
           {trackDiffs !== null && <DiffResults diffs={trackDiffs} />}
 
           {snapshot && (
             <>
               {trackDiffs === null && (
-                <div className="flex items-center justify-between gap-4 rounded-card bg-primary-soft px-6 py-4">
-                  <p className="text-sm text-ink">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#151515]/15 bg-[#FFF3B0] px-6 py-4">
+                  <p className="text-sm text-[#151515]">
                     <span className="font-semibold">Save this snapshot</span> - come back later,
                     re-check the page, and see exactly what changed.
                   </p>
                   <button
                     onClick={saveBaseline}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[13px] font-medium text-primary-contrast hover:bg-primary-hover"
+                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#151515] bg-[#151515] px-5 py-2.5 text-[13px] font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                   >
                     <Bookmark className="size-4" aria-hidden /> Save snapshot
                   </button>
@@ -391,7 +413,7 @@ export function ChangeDetector() {
         </>
       ) : (
         <>
-          <Card>
+          <div className="rounded-2xl border border-[#151515] bg-white p-6 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
             <form onSubmit={runCompare} className="flex flex-col gap-3 lg:flex-row lg:items-end">
               <UrlField
                 id="compare-a"
@@ -410,7 +432,7 @@ export function ChangeDetector() {
               <button
                 type="submit"
                 disabled={loading || !urlA.trim() || !urlB.trim()}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-6 text-sm font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-all hover:bg-[#ffe14d] disabled:opacity-60 disabled:shadow-none"
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -420,15 +442,9 @@ export function ChangeDetector() {
                 Compare
               </button>
             </form>
-          </Card>
+          </div>
 
-          {error && (
-            <Card className="border border-critical/20 bg-critical-soft">
-              <p className="text-sm font-medium text-critical-strong" role="alert">
-                {error}
-              </p>
-            </Card>
-          )}
+          {error && <ToolError message={error} />}
 
           {compareResult && (
             <>
@@ -444,18 +460,18 @@ export function ChangeDetector() {
 
       {/* Product CTA */}
       {(snapshot || compareResult) && (
-        <div className="rounded-card bg-panel px-6 py-8 text-center">
-          <h2 className="text-xl font-semibold tracking-tight text-white">
+        <div className="rounded-2xl border border-[#151515] bg-[#151515] px-6 py-10 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
+          <h2 className={`${fontDisplay} text-2xl leading-tight text-[#F5F5F0] sm:text-3xl`}>
             Monitor changes automatically with MyKavo
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/70">
+          <p className="mx-auto mt-2.5 max-w-md text-sm leading-6 text-[#9C9E93]">
             MyKavo re-checks pages like this on a schedule - plus screenshots, visual diffs,
             broken links, and conversion elements - and alerts you when something important
             changes.
           </p>
           <Link
             href="/signup"
-            className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-panel transition-colors hover:bg-white/90"
+            className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[#FFD400] px-6 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
             onClick={() => track("cta_clicked", { cta: "tool_to_waitlist" })}
           >
             Start Monitoring Free <ArrowRight className="size-4" aria-hidden />

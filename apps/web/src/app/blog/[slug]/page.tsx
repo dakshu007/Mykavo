@@ -110,7 +110,7 @@ export default async function BlogPostPage({ params }: Params) {
       <LandingNav />
       <main>
         {/* Hero band on the warm paper canvas */}
-        <section className="mx-auto w-full max-w-6xl px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
+        <section className="mx-auto w-full max-w-[1440px] px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
           <Link
             href="/blog"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6B6B60] transition-colors hover:text-[#151515]"
@@ -157,9 +157,9 @@ export default async function BlogPostPage({ params }: Params) {
         {/* Body: article + optional sticky ToC rail. The article and ToC keep
             theme-token cards (bg-card & friends) so the markdown typography
             stays readable in the visitor's light OR dark app theme. */}
-        <section className="mx-auto w-full max-w-6xl px-5 pb-20 lg:px-8">
+        <section className="mx-auto w-full max-w-[1440px] px-5 pb-20 lg:px-8">
           <div className="flex justify-center gap-10">
-            <article className="w-full min-w-0 max-w-3xl">
+            <article className="w-full min-w-0 max-w-4xl">
               <div className="rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-10">
                 <PostContent content={post.content} />
               </div>

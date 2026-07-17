@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { CornerDownRight, Route, TriangleAlert } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { ToolUrlForm } from "@/components/tools/url-form";
 import { ToolError } from "@/components/tools/tool-error";
 import { ToolCta } from "@/components/tools/tool-cta";
@@ -12,11 +11,11 @@ import type { RedirectChainResult } from "@/lib/tools/redirect-chain";
 import { redirectTypeLabel, statusLabel, type StatusTone } from "@/lib/tools/status-labels";
 
 const TONE_CLASS: Record<StatusTone, string> = {
-  success: "bg-success-soft text-success-strong",
-  redirect: "bg-warning-soft text-warning-strong",
-  clientError: "bg-critical-soft text-critical-strong",
-  serverError: "bg-critical-soft text-critical-strong",
-  info: "bg-info-soft text-info",
+  success: "bg-[#e6f4ea] text-[#1a7f37]",
+  redirect: "bg-[#fdf3e0] text-[#92600a]",
+  clientError: "bg-[#fdeaeb] text-[#b91c1c]",
+  serverError: "bg-[#fdeaeb] text-[#b91c1c]",
+  info: "border border-black/15 bg-white text-[#151515]",
 };
 
 function StatusBadge({ status }: { status: number }) {
@@ -37,16 +36,18 @@ function WarningBanner({ tone, children }: { tone: "warn" | "error"; children: R
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-tile px-4 py-3",
-        tone === "error" ? "bg-critical-soft" : "bg-warning-soft",
+        "flex items-start gap-3 rounded-xl border px-4 py-3",
+        tone === "error"
+          ? "border-[#b91c1c]/35 bg-[#fdeaeb]"
+          : "border-[#92600a]/35 bg-[#fdf3e0]",
       )}
       role="alert"
     >
       <TriangleAlert
-        className={cn("mt-0.5 size-4 shrink-0", tone === "error" ? "text-critical" : "text-warning")}
+        className={cn("mt-0.5 size-4 shrink-0", tone === "error" ? "text-[#b91c1c]" : "text-[#92600a]")}
         aria-hidden
       />
-      <p className={cn("text-[13px] leading-6", tone === "error" ? "text-critical-strong" : "text-warning-strong")}>
+      <p className={cn("text-[13px] leading-6", tone === "error" ? "text-[#b91c1c]" : "text-[#92600a]")}>
         {children}
       </p>
     </div>
@@ -93,14 +94,14 @@ export function RedirectChainChecker() {
 
       {chain && (
         <>
-          <Card>
+          <div className="rounded-2xl border border-[#151515] bg-white p-6 shadow-[5px_5px_0_#151515]">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-[15px] font-semibold text-ink">
+              <h2 className="text-[15px] font-semibold text-[#151515]">
                 {chain.redirectCount === 0
                   ? "No redirects"
                   : `${chain.redirectCount} redirect${chain.redirectCount === 1 ? "" : "s"}`}
               </h2>
-              <p className="text-[13px] text-ink-secondary">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#6B6B60]">
                 {chain.totalTimeMs} ms total
               </p>
             </div>
@@ -132,16 +133,16 @@ export function RedirectChainChecker() {
               {chain.steps.map((step, i) => (
                 <li key={`${step.url}-${i}`}>
                   {i > 0 && (
-                    <div className="flex items-center gap-2 py-1 pl-1 text-ink-faint">
+                    <div className="flex items-center gap-2 py-1 pl-1 text-[#6B6B60]">
                       <CornerDownRight className="size-4" aria-hidden />
-                      <span className="text-[11px] font-medium uppercase tracking-wide">
+                      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
                         {redirectTypeLabel(chain.steps[i - 1].status)}
                       </span>
                     </div>
                   )}
-                  <div className="flex flex-wrap items-center gap-3 rounded-tile bg-surface px-4 py-3">
-                    <span className="text-xs font-semibold text-ink-faint">{i + 1}</span>
-                    <span className="min-w-0 flex-1 break-all font-mono text-[13px] text-ink">
+                  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-black/10 bg-[#F3F1E6] px-4 py-3">
+                    <span className="font-mono text-xs font-semibold text-[#6B6B60]">{i + 1}</span>
+                    <span className="min-w-0 flex-1 break-all font-mono text-[13px] text-[#151515]">
                       {step.url}
                     </span>
                     <StatusBadge status={step.status} />
@@ -151,9 +152,9 @@ export function RedirectChainChecker() {
             </ol>
 
             {chain.completed && chain.finalStatus !== null && (
-              <p className="mt-4 text-[13px] text-ink-secondary">
+              <p className="mt-4 text-[13px] text-[#6B6B60]">
                 Final destination responded with{" "}
-                <span className="font-mono font-semibold text-ink">{chain.finalStatus}</span>
+                <span className="font-mono font-semibold text-[#151515]">{chain.finalStatus}</span>
                 {chain.redirectCount > 0 && (
                   <>
                     {" "}
@@ -163,7 +164,7 @@ export function RedirectChainChecker() {
                 .
               </p>
             )}
-          </Card>
+          </div>
 
           <ToolCta
             heading="Get alerted when redirects unexpectedly change."

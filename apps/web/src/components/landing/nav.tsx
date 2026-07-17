@@ -1,26 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 
 const links = [
-  { href: "/#categories", label: "What it watches" },
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#free-tools", label: "Free tools" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/blog", label: "Blog" },
+  { href: "/support", label: "Support" },
+];
+
+const tools = [
+  { href: "/tools/website-change-detector", label: "Website Change Detector" },
+  { href: "/tools/meta-tag-checker", label: "Meta Tag Checker" },
+  { href: "/tools/redirect-chain-checker", label: "Redirect Chain Checker" },
+  { href: "/tools/bulk-url-status-checker", label: "Bulk URL Status Checker" },
+  { href: "/tools/script-detector", label: "Script Detector" },
 ];
 
 /**
  * Floating "island" navigation (ballpark.ing-style): a centered white pill
  * with an ink hairline and crisp offset shadow, hovering over the warm paper
- * canvas. Spark + wordmark left, links center, gold CTA right. Collapses to
- * a hamburger card on small screens.
+ * canvas. Spark + wordmark left, links + Tools dropdown center, gold CTA
+ * right. Collapses to a hamburger card on small screens.
  */
 export function LandingNav() {
   const [open, setOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+
+  // Close the Tools dropdown on outside click or Escape.
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!toolsRef.current?.contains(e.target as Node)) setToolsOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setToolsOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [toolsOpen]);
 
   return (
     <header className="fixed inset-x-0 top-4 z-50 px-4 sm:top-5">
@@ -40,6 +65,55 @@ export function LandingNav() {
               {l.label}
             </Link>
           ))}
+
+          {/* Tools dropdown - opens on hover or click */}
+          <div
+            ref={toolsRef}
+            className="relative"
+            onMouseEnter={() => setToolsOpen(true)}
+            onMouseLeave={() => setToolsOpen(false)}
+          >
+            <button
+              type="button"
+              // Open-only: hover already opens the menu, so a toggling click
+              // would immediately close it for mouse users. Touch devices get
+              // open-on-tap; closing is outside-tap, Escape, or mouse-leave.
+              onClick={() => setToolsOpen(true)}
+              aria-expanded={toolsOpen}
+              aria-haspopup="menu"
+              className="flex items-center gap-1 rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
+            >
+              Tools
+              <ChevronDown
+                className={`size-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </button>
+            {toolsOpen && (
+              <div
+                role="menu"
+                aria-label="Free tools"
+                className="absolute left-1/2 top-full w-64 -translate-x-1/2 pt-2"
+              >
+                <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white p-1.5 shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
+                  <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
+                    Free tools
+                  </p>
+                  {tools.map((t) => (
+                    <Link
+                      key={t.href}
+                      href={t.href}
+                      role="menuitem"
+                      onClick={() => setToolsOpen(false)}
+                      className="block rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
+                    >
+                      {t.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="hidden items-center gap-1.5 lg:flex">
@@ -85,6 +159,19 @@ export function LandingNav() {
                 className="rounded-xl px-3 py-3 text-[15px] font-medium text-[#151515]/85 transition-colors hover:bg-[#151515]/[0.04]"
               >
                 {l.label}
+              </Link>
+            ))}
+            <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
+              Free tools
+            </p>
+            {tools.map((t) => (
+              <Link
+                key={t.href}
+                href={t.href}
+                onClick={() => setOpen(false)}
+                className="rounded-xl px-3 py-2.5 text-[14px] font-medium text-[#151515]/75 transition-colors hover:bg-[#151515]/[0.04]"
+              >
+                {t.label}
               </Link>
             ))}
           </nav>

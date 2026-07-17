@@ -1,12 +1,10 @@
-import { Card } from "@/components/ui/card";
-
-/** Error card shared by the free tools. */
+/** Error card shared by the free tools (v4 fixed palette). */
 export function ToolError({ message }: { message: string }) {
   return (
-    <Card className="border border-critical/20 bg-critical-soft">
-      <p className="text-sm font-medium text-critical-strong" role="alert">
+    <div className="rounded-2xl border border-[#b91c1c]/35 bg-[#fdeaeb] px-5 py-4">
+      <p className="text-sm font-medium text-[#b91c1c]" role="alert">
         {message}
       </p>
-    </Card>
+    </div>
   );
 }

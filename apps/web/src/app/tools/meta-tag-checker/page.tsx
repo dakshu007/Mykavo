@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { MarketingNav } from "@/components/marketing/nav";
-import { MarketingFooter } from "@/components/marketing/footer";
+import { LandingNav } from "@/components/landing/nav";
+import { LandingFooter } from "@/components/landing/footer";
+import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { MetaTagChecker } from "./meta-tag-checker";
 import { site } from "@/config/site";
 
@@ -26,19 +27,26 @@ const jsonLd = {
 
 export default function MetaTagCheckerPage() {
   return (
-    <>
+    <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <MarketingNav />
-      <main className="mx-auto max-w-225 px-5 py-14 lg:px-8">
+      <LandingNav />
+      <main className="mx-auto max-w-225 px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
         <div className="mx-auto mb-10 max-w-2xl text-center">
-          <p className="label-micro mb-3">Free tool</p>
-          <h1 className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-            Meta Tag Checker
+          <p className={`${eyebrow} mb-4`}>{"// free tool //"}</p>
+          <h1 className={`${fontDisplay} text-4xl leading-[1.08] text-[#151515] sm:text-5xl`}>
+            Meta Tag{" "}
+            <span className="relative inline-block whitespace-nowrap">
+              <span
+                aria-hidden
+                className="absolute inset-x-[-4px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]"
+              />
+              <span className="relative">Checker</span>
+            </span>
           </h1>
-          <p className="mt-4 text-[15px] leading-7 text-ink-secondary">
+          <p className="mt-5 text-[15px] leading-7 text-[#6B6B60]">
             Check any page&apos;s title tag, meta description, canonical URL, robots meta, Open
             Graph tags, and H1 headings - with clear pass/warn guidance. Free, no account
             needed.
@@ -47,17 +55,23 @@ export default function MetaTagCheckerPage() {
 
         <MetaTagChecker />
 
-        <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-ink-secondary">
-          <h2 className="text-2xl font-semibold tracking-tight text-ink">
-            Why meta tags matter
-          </h2>
+        <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
+          <div>
+            <p className={`${eyebrow} mb-3`}>{"// why it matters //"}</p>
+            <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>
+              Why meta tags matter
+            </h2>
+          </div>
           <p>
             Meta tags are the handful of HTML elements that decide how a page appears in search
-            results and social shares. The title tag (ideally 50–60 characters) is the headline
-            searchers click; the meta description (120–160 characters) is the pitch underneath
+            results and social shares. The title tag (ideally 50-60 characters) is the headline
+            searchers click; the meta description (120-160 characters) is the pitch underneath
             it. The canonical URL tells search engines which version of a page to rank, and a
-            single stray <span className="font-mono text-[13px] text-ink">noindex</span> in the
-            robots meta can silently remove the page from Google entirely.
+            single stray{" "}
+            <span className="rounded bg-[#F3F1E6] px-1.5 py-0.5 font-mono text-[13px] text-[#151515]">
+              noindex
+            </span>{" "}
+            in the robots meta can silently remove the page from Google entirely.
           </p>
           <p>
             This checker fetches the page&apos;s raw HTML and grades each tag: whether it
@@ -75,7 +89,7 @@ export default function MetaTagCheckerPage() {
           </p>
         </section>
       </main>
-      <MarketingFooter />
-    </>
+      <LandingFooter />
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Code2,
   Eye,
@@ -147,12 +147,37 @@ const SEVERITY_CHIP: Record<Category["severity"], string> = {
   MEDIUM: "bg-white text-[#151515] border border-black/15",
 };
 
+const ROTATE_MS = 7000;
+
 export function CategoryTabs() {
   const [activeKey, setActiveKey] = useState("seo");
+  const [paused, setPaused] = useState(false);
   const active = CATEGORIES.find((c) => c.key === activeKey) ?? CATEGORIES[2];
 
+  // Auto-advance to the next category every 7s. Hovering (or keyboard focus
+  // inside) pauses the tour; any switch - manual or automatic - restarts the
+  // full interval because activeKey is a dependency. Users who prefer
+  // reduced motion get a static panel.
+  useEffect(() => {
+    if (paused) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setTimeout(() => {
+      const index = CATEGORIES.findIndex((c) => c.key === activeKey);
+      setActiveKey(CATEGORIES[(index + 1) % CATEGORIES.length].key);
+    }, ROTATE_MS);
+    return () => clearTimeout(timer);
+  }, [activeKey, paused]);
+
   return (
-    <div className="mt-12">
+    <div
+      className="mt-12"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setPaused(false);
+      }}
+    >
       {/* Tab pills */}
       <div role="tablist" aria-label="Change categories" className="flex flex-wrap justify-center gap-2">
         {CATEGORIES.map((c) => {
