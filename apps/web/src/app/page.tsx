@@ -21,6 +21,7 @@ import { Price } from "@/components/region";
 import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
 import { CategoryTabs } from "@/components/landing/categories";
+import { AlertChannelsSection } from "@/components/landing/alert-channels";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
@@ -508,6 +509,9 @@ export default function HomePage() {
           </div>
           <SplitPill />
         </Section>
+
+        {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
+        <AlertChannelsSection />
 
         {/* Agencies - split with client health board */}
         <section className="border-y border-black/10 bg-white">
