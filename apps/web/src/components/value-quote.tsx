@@ -1,34 +1,13 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useIsIndia } from "@/components/region";
 
 /**
  * Region-aware value quote (user-directed copy): the US line is the default
  * (primary market) and swaps to the INR line for visitors whose browser
- * timezone is India. SSR always renders the US version so marketing pages
- * stay fully static; the client corrects after hydration - same pattern as
- * the dashboard greeting.
+ * timezone is India. Region detection lives in @/components/region - the
+ * same hook drives every localized price on the site.
  */
-
-const INDIA_TIMEZONES = new Set(["Asia/Calcutta", "Asia/Kolkata"]);
-
-function subscribe(): () => void {
-  return () => {};
-}
-
-function isIndiaClient(): boolean {
-  try {
-    return INDIA_TIMEZONES.has(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  } catch {
-    return false;
-  }
-}
-
-export function useIsIndia(): boolean {
-  // useSyncExternalStore keeps SSR + first client render consistent (false),
-  // then snaps to the real value without a hydration mismatch.
-  return useSyncExternalStore(subscribe, isIndiaClient, () => false);
-}
 
 export const VALUE_QUOTE = {
   us: {
