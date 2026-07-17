@@ -9,10 +9,11 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 export const metadata: Metadata = {
   title: "About - The Story Behind MyKavo",
   description:
-    "Why MyKavo exists, where the name comes from, and the belief behind it: every website deserves a shield. Built by an independent founder for agencies and developers.",
+    "MyKavo comes from the Tamil word Kaval - protection, vigilance, standing guard. The story behind the name, the reason the product exists, and the developer building it.",
   keywords: [
     "about MyKavo",
     "MyKavo story",
+    "MyKavo meaning",
     "website monitoring company",
     "website change detection tool",
   ],
@@ -57,7 +58,7 @@ export default function AboutPage() {
                 aria-hidden
                 className="absolute inset-x-[-4px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]"
               />
-              <span className="relative">a shield.</span>
+              <span className="relative">a guardian.</span>
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-[15px] leading-7 text-[#6B6B60]">
@@ -76,21 +77,37 @@ export default function AboutPage() {
               </h2>
             </div>
             <p className="mt-5 text-[15px] leading-7 text-[#3d3d38]">
-              <span className="font-semibold">Kavo</span> comes from{" "}
-              <span className="font-semibold">Kavach</span> (कवच) - the Sanskrit word for armor,
-              the shield a warrior trusts before walking into battle. Websites fight quiet battles
-              every day: deploys that break buttons, plugins that flip pages to noindex, scripts
-              that vanish without a trace. Most of those hits land silently and hurt for weeks.
+              Every great product starts with a simple idea, and every name should have a
+              meaning. <span className="font-semibold">MyKavo is inspired by the Tamil language.</span>
             </p>
-            <p className="mt-4 text-[15px] leading-7 text-[#3d3d38]">
-              <span className="font-semibold">MyKavo means exactly what it says: my armor.</span>{" "}
-              Point it at the sites you care about and it stands guard - snapshotting every
-              important page, comparing every scan against the baseline you approved, and speaking
-              up the moment something that matters changes.
-            </p>
-            <p className="mt-4 text-[15px] leading-7 text-[#3d3d38]">
-              Even the logo tells the story: a page with a spark bursting out of it - the exact
-              instant a change is caught.
+            <ul className="mt-4 space-y-3 text-[15px] leading-7 text-[#3d3d38]">
+              <li className="flex gap-3">
+                <span aria-hidden className="mt-2.5 size-2 shrink-0 rounded-full bg-[#FFD400] ring-1 ring-[#151515]" />
+                <span>
+                  <span className="font-semibold">&ldquo;My&rdquo;</span> carries the Tamil{" "}
+                  <span className="font-semibold">&ldquo;En&rdquo;</span> - mine, my own. Personal
+                  ownership and control.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span aria-hidden className="mt-2.5 size-2 shrink-0 rounded-full bg-[#FFD400] ring-1 ring-[#151515]" />
+                <span>
+                  <span className="font-semibold">&ldquo;Kavo&rdquo;</span> is derived from{" "}
+                  <span className="font-semibold">&ldquo;Kāval&rdquo; (காவல்)</span> - protection,
+                  monitoring, vigilance, safeguarding. The word for standing guard.
+                </span>
+              </li>
+            </ul>
+            <blockquote className="mt-6 rounded-xl bg-[#F3F1E6] px-6 py-5">
+              <p className={`${fontDisplay} text-xl leading-snug text-[#151515] sm:text-[22px]`}>
+                Your digital guardian. Watching over what matters, so you don&apos;t have to.
+              </p>
+            </blockquote>
+            <p className="mt-5 text-[15px] leading-7 text-[#3d3d38]">
+              MyKavo isn&apos;t just another monitoring tool. It&apos;s built to be the silent
+              guardian of your website - keeping watch 24/7 so your business stays online,
+              secure, and reliable, even when you&apos;re away. Even the logo tells the story: a
+              page with a spark bursting out of it, the exact instant a change is caught.
             </p>
           </div>
         </section>
@@ -120,7 +137,9 @@ export default function AboutPage() {
             </p>
             <p>
               MyKavo was built to be that tool - simple enough to set up in minutes, careful
-              enough to stay quiet until something genuinely deserves your attention.
+              enough to stay quiet until something genuinely deserves your attention. Instead of
+              constantly checking your website, MyKavo does the watching for you, so you can
+              focus on building your business.
             </p>
           </div>
         </section>
@@ -144,31 +163,36 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Founder */}
+        {/* Developer */}
         <section className="mx-auto mt-20 max-w-3xl px-5 lg:px-8">
-          <p className={`${eyebrow} mb-4`}>{"// who builds it //"}</p>
+          <p className={`${eyebrow} mb-4`}>{"// about the developer //"}</p>
           <h2 className={`${fontDisplay} text-3xl text-[#151515] sm:text-4xl`}>
-            Founder-built, deliberately small.
+            Hi, I&apos;m Dakshesh B.
           </h2>
           <div className="mt-6 space-y-4 text-[15px] leading-7 text-[#3d3d38]">
             <p>
-              MyKavo is founded and built by{" "}
-              <span className="font-semibold text-[#151515]">Dakshesh Babu</span>, an independent
-              product engineer who has spent years around websites that real businesses depend
-              on - and around the quiet ways they break.
+              I&apos;m a <span className="font-semibold text-[#151515]">frontend engineer,
+              designer, and independent SaaS builder from India</span>. I&apos;m passionate about
+              creating products that solve real-world problems through thoughtful design, clean
+              engineering, and exceptional user experience - tools that are fast, intuitive, and
+              genuinely useful for developers, businesses, and creators.
             </p>
             <p>
-              Being small is a choice, not a stage. A small team means every alert format, every
-              severity rule, and every pixel of the comparison view gets the founder&apos;s
-              attention. It also means support emails are answered by someone who can actually fix
-              the thing.
+              Over the years I&apos;ve built developer tools, Chrome extensions, AI-powered
+              utilities, and SaaS products with one simple philosophy:
             </p>
+            <blockquote className="rounded-xl border-l-4 border-[#FFD400] bg-white px-6 py-4">
+              <p className="font-semibold text-[#151515]">
+                Technology should save time, reduce complexity, and help people focus on what
+                truly matters.
+              </p>
+            </blockquote>
             <p>
-              The roadmap is driven by one metric:{" "}
-              <span className="font-semibold text-[#151515]">
-                does every paying customer get at least one genuinely valuable alert every month?
-              </span>{" "}
-              If an idea does not serve that, it does not ship.
+              That philosophy is what led to MyKavo - a platform built to keep websites
+              monitored, protected, and reliable without adding unnecessary complexity. When
+              I&apos;m not building products, you&apos;ll find me exploring new ideas, designing
+              better user experiences, and shipping tools that make the web a little smarter
+              every day.
             </p>
           </div>
         </section>
@@ -177,7 +201,7 @@ export default function AboutPage() {
         <section className="mx-auto mt-20 max-w-3xl px-5 text-center lg:px-8">
           <div className="rounded-2xl bg-[#151515] px-8 py-12">
             <h2 className={`${fontDisplay} text-3xl text-[#F5F5F0] sm:text-4xl`}>
-              Put a shield on your websites.
+              Put a guardian on your websites.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#F5F5F0]/70">
               Free for your first website - monitoring in minutes, no credit card required.

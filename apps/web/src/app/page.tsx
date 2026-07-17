@@ -70,7 +70,7 @@ const jsonLd = {
       name: site.name,
       url: site.url,
       logo: `${site.url}/icon.png`,
-      founder: { "@type": "Person", name: "Dakshesh Babu" },
+      founder: { "@type": "Person", name: "Dakshesh B" },
     },
     {
       "@type": "WebSite",
