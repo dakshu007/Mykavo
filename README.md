@@ -4,53 +4,73 @@
 
 MyKavo is a **website change detection & regression monitoring SaaS** for agencies, developers, SEO teams, and website owners. It baselines your pages, re-scans on a schedule, detects meaningful visual / SEO / content / link / script / performance / availability changes, scores them by severity, and alerts you before customers notice.
 
-This file is the single source of truth for picking the project back up in a fresh session. Read it top to bottom. Deeper operational history lives in the Claude memory dir (`~/.claude/projects/-Users-dakshu-Desktop-Fluxen/memory/` — start with `mykavo-rename.md` then `fluxen-deployment.md`). Note: the product was renamed **Fluxen → MyKavo** on 2026-07-16, but the repo folder (`~/Desktop/Fluxen`), memory dir path, and some infra identifiers deliberately keep the old name — see Gotchas.
+**LIVE IN PRODUCTION: https://mykavo.app** - with live billing and real customers.
 
 ---
 
-## Status — ALL spec phases (0–11) complete, plus a lot more
+## 🧭 New session? Fresh AI assistant? Start here
 
-**LIVE IN PRODUCTION: https://mykavo.app** — real domain on Cloudflare DNS (DNS-only CNAMEs, apex + www → `mykavo.netlify.app` origin), Netlify-issued TLS, Google Analytics + Search Console wired.
+This README is the **complete, self-contained handoff** for the project. It assumes NOTHING carried over - no prior chat history, no Claude memory files, possibly a different Claude/AI account. Everything needed to understand, run, and continue the project is in this repo:
 
-Everything in the original CLAUDE.md spec is built, plus:
+1. **Read this README top to bottom** - current state, architecture, runbooks, gotchas.
+2. **Read `CLAUDE.md`** - the original product spec (vision, principles, phases). All phases 0-11 are COMPLETE; the spec still governs product philosophy (deterministic detection, low false positives, cost control, no fake social proof).
+3. **Skim `docs/`** - ARCHITECTURE, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM.
+4. Git: **`main` is the branch of record and always equals what is deployed.** Remote: `git@github.com:dakshu007/Mykavo.git`. Work on a branch, verify, fast-forward main, deploy, push.
+5. Secrets are NEVER in this repo. They live in **Netlify env** (web) and **`~/.fluxen/app/apps/worker/.env.production`** on the owner's Mac (worker). Ask the owner (Dakshesh B, GitHub `dakshu007`) for anything missing.
+
+Hard conventions the owner enforces:
+- **No em-dashes anywhere** in user-facing text or meta - plain hyphens `-` only.
+- **Plan limits live ONLY in `apps/web/src/config/plans.ts`**; severity rules ONLY in `packages/severity-engine`.
+- **No fake testimonials, logos, or statistics.** Ever.
+- Two separate design systems (see Design language below) - never mix them.
+- After every change: lint + typecheck + tests + production build + real-browser verification, THEN deploy, THEN verify on production.
+
+Product naming: the product was renamed **Fluxen → MyKavo** (2026-07-16). The repo folder on the owner's Mac (`~/Desktop/Fluxen`), local DB `fluxen_dev`, launchd agent `com.fluxen.worker-prod`, `~/.fluxen/*`, and the legacy Netlify Blobs store keep the old name **intentionally** - do not rename them.
+
+---
+
+## Status - all spec phases (0-11) complete + live business
 
 | Area | What exists |
 |---|---|
-| **Brand** | **MyKavo** + the **gold spark logomark** (`components/brand/logo.tsx`, currentColor SVG, default `#FFD400`); app icons generated from `app/icon.svg` (icon.png 512, apple-icon 180; favicon.ico intentionally removed) |
+| **Brand** | MyKavo + the **page-spark logomark** (gold page panel + five-ray spark, `apps/web/src/components/brand/logo.tsx`, single-currentColor SVG; app icons in `app/icon.svg` → icon.png 512 / apple-icon.png 180). Name story: "My" = Tamil "En" (mine), "Kavo" from Tamil "Kāval" (காவல்) = protection/guarding - "your digital guardian" (told on /about) |
 | **Core monitoring** | Add website → SSRF-guarded validation → robots/sitemap/link discovery → page selection → Playwright baseline scan → scheduled re-scans → deterministic comparison (HTTP/SEO/DOM/text/links/scripts/perf/visual/elements) → severity-scored ChangeEvents |
-| **Site health** | Uptime probe every 5 min + SSL expiry tracking, DOWN/SSL incidents (2-strike open, recovery + 24h renotify), Health card + **Uptime & performance analytics** (7/30/90d day-bars, response-time chart, incident history) |
-| **robots/sitemap** | Per-scan `SiteMetaSnapshot`; `Disallow: /` = CRITICAL, sitemap vanished/shrank >50% = HIGH; site-wide events render "Site-wide" |
-| **Lighthouse** | On-demand per ANY page of a site (dropdown/custom path, same-origin enforced) + **weekly scheduled audits** (Tue 06:00 UTC) + score trend sparkline + **performance-drop alerts** (prev ≥30, drop ≥15) |
-| **SEO health report** | `/dashboard/websites/[id]/seo` — score + grouped issues (titles/descriptions/H1/noindex/canonical/errors/**broken internal links**) from the latest scan, no extra crawling |
-| **Broken link monitoring** | Per-scan internal-link status check in the worker (`check-links.ts`: HEAD probes w/ GET fallback, SSRF-guarded per hop, 150-link cap, monitored-page statuses reused free, only definite failures recorded — 0/404/410/5xx; 401/403/429/timeouts never flag). Newly-broken links vs baseline → ONE grouped site-wide LINKS event (≥5 HIGH, else MEDIUM) with per-link list on the change detail page |
-| **Changes UX** | Filters, bulk select/actions, notes thread, filtered CSV export, before/after **slider + pixel-diff modes**, approve/ignore/resolve, update-baseline, approve-entire-scan, broken-links list card on site-wide LINKS events |
-| **Alerts** | Email + **Slack/Discord/webhook channels** (SSRF-guarded, generic webhooks signed `X-MyKavo-Signature`, payload event `mykavo.alert`, send-test), grouped per scan, severity threshold prefs, **weekly client-ready report emails** (Mon 08:00 UTC), **mute windows** (1h/8h/24h) |
-| **Public** | **Status pages** `/status/[token]` (90-day uptime bars, incidents, "Monitored by MyKavo" growth loop) + **SVG uptime badge** `/api/badge/[token]` — both share `Website.publicToken`, separate enable flags |
-| **Teams** | Invites by email (Pro = 5 seats), roles OWNER/ADMIN/MEMBER/VIEWER enforced on EVERY mutating route (viewer read-only, billing owner-only), workspace switcher (cookie `mykavo-workspace`, membership-verified) |
-| **Dashboard polish** | ⌘K command palette (search sites/pages/changes + actions), onboarding checklist (live-derived), website **tags** + filtering, loading skeletons everywhere, router cache, **dark mode** (System/Light/Dark, WCAG-AA-tested tokens, localStorage `mykavo-theme`) |
-| **Blog CMS** | `/dashboard/blog` (admin allowlist env `BLOG_ADMIN_EMAILS`) with **Gutenberg-style Tiptap visual editor** (Visual/Markdown tabs, H1–H6, tables, image upload→Blobs, `/cta` `/faq` `/toc` blocks, byte-identical shortcode round-trip), public `/blog` + RSS `/blog/feed.xml`; public blog pages share the landing v3 shell (article body stays on `--fx-*` token cards so it reads in both app themes) |
-| **Free SEO tools** | `/tools/*`: website-change-detector, meta-tag-checker, redirect-chain-checker (per-hop SSRF revalidation), bulk-url-status-checker, script-detector — all rate-limited + SSRF-guarded, product CTAs |
-| **Landing page (v3)** | **retool.com-inspired** (2026-07-16, user-directed): `#151515` canvas, warm bone `#F7F8F4` bands, hairline-bordered dark bento cards, **gold `#FFD400` as the sole accent (always ink text on gold)**, two-tone light Poppins display headlines, slim dark nav, prompt-card URL input, scroll-pinned + **mouse-draggable Day 1→30 hero timeline** (role=slider), gold Pro pricing card, gold CTA band with watermark spark. All in `apps/web/src/components/landing/` — `style.ts` is its design system (deliberately NOT `--fx-*` tokens). Design history (v1 stamped-dark → v2 light/blue → v3) in memory `fluxen-landing-design.md`. Other marketing pages (/tools, /pricing, /preview) still use the old `components/marketing/*` shell |
-| **Analytics & SEO ops** | **GA4** `G-DQMWRHWFK8` via next/script in the root layout (production-only); `lib/analytics.ts` `track()` forwards the spec §47 product events to GA4 as custom events. **Search Console** verification file served at `/googled23738155d4d0020.html` — verify + submit `https://mykavo.app/sitemap.xml` in GSC |
-| **Billing** | Dodo Payments: Free (1 site, 5 pages) / **Pro $12** (8 sites, 20 pages/site, 5 seats, daily scans) / add-ons **$6 = +1 site, max 3**. Config in `apps/web/src/config/plans.ts` ONLY |
-| **Settings** | Plan card, profile (photo upload → validated data-URL, name), Team management |
+| **Site health** | Uptime probe every 5 min + SSL expiry tracking, DOWN/SSL incidents, uptime/response-time analytics (7/30/90d), incident history |
+| **Lighthouse** | On-demand per any page + weekly scheduled audits (Tue 06:00 UTC) + trend sparkline + performance-drop alerts |
+| **SEO report** | `/dashboard/websites/[id]/seo` - scored checks incl. broken internal links |
+| **Broken links** | Per-scan internal-link probing (SSRF-guarded, only definite failures flag), grouped into ONE site-wide event |
+| **Changes UX** | Filters, bulk actions, notes, CSV export, before/after slider + pixel-diff, approve/ignore/resolve, baseline updates |
+| **Scan UX** | Live "scan in progress" state with auto-refresh on the website page (no phantom 409 errors); Free users see an upgrade hint instead of a post-click error |
+| **Alerts** | Email + Slack/Discord/webhook channels (signed `X-MyKavo-Signature`), grouped per scan, severity prefs, weekly client-ready reports (Mon 08:00 UTC), mute windows |
+| **Public** | Status pages `/status/[token]`, SVG uptime badge `/api/badge/[token]` |
+| **Teams** | Email invites (Pro = 5 seats), roles OWNER/ADMIN/MEMBER/VIEWER enforced on every mutating route |
+| **Auth & security** | Better Auth email+password (+optional Google), **TOTP 2FA** (Google Authenticator: QR enroll at signup + Settings Security card, code challenge at login, trust-device 30d, backup codes), **signup email vetting** (format + disposable blocklist + DNS MX check), strict rate limits, SSRF protection everywhere, **Supabase RLS enabled on all tables** |
+| **Billing (LIVE)** | Dodo Payments **live mode**: Free (1 site, 5 pages, weekly) / **Pro $20/mo (8 sites, 15 pages each, daily, 5 seats)**. No add-ons (removed). Auto-activation via verified webhook, renewal date on Billing page, daily renewal-reminder emails, in-app cancel + Dodo portal (`DODO_API_KEY`), **refund.succeeded auto-revokes Pro**. Region display: US sees $, India-timezone sees ₹ (anchor $20 = ₹1,700) with a "billed as $20 USD" note |
+| **Growth** | New-signup emails append to a private Google Sheet (Apps Script webhook, `SIGNUP_SHEET_WEBHOOK_URL`) for future email marketing; value quote ("$0.67/day" / "~₹57/day") on landing, /pricing, and Billing |
+| **Marketing site (v4)** | Bright-gold design (see Design language): homepage, /pricing, /about (name story + founder bio), /support, /privacy, /terms, /cookies, blog + RSS, 5 free SEO tools under /tools/*, staged-reveal **404 page** ("My-Kaa-vo. Means guardian. This page? Clearly escaped.") |
+| **SEO / AI search** | Keyword-loaded metadata (site monitoring tools, website change detection, ...), OG image (`app/opengraph-image.png`), JSON-LD graph (Organization/WebSite/SoftwareApplication/FAQPage), **/llms.txt** product summary, robots.txt explicitly welcomes AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, ...), sitemap.xml, GA4 `G-DQMWRHWFK8`, GSC verification file. Primary market: US |
+| **Blog CMS** | `/dashboard/blog` (Tiptap visual editor, `BLOG_ADMIN_EMAILS` allowlist), public `/blog` + `/blog/feed.xml` |
 
-**Tests: 559 web · 99 shared · 51 comparison · 32 severity · 19 email · 4 scanner · 43 DB integration.** Run `pnpm --filter web test` etc.
+**Tests: 573 web · 99 shared · 51 comparison · 32 severity · 19 email · 4 scanner · 43 DB integration.** Run per package: `pnpm --filter web test`, etc.
 
 ---
 
-## 🚀 Production architecture (all zero-budget)
+## 🚀 Production architecture (zero-budget)
 
-- **Domain**: **mykavo.app** — registered by the user, DNS on **Cloudflare** (account daksheshbabu@gmail.com). Records: apex `CNAME mykavo.netlify.app` (Cloudflare flattens) + `www CNAME mykavo.netlify.app`, both **DNS-only (grey cloud — NEVER enable the orange proxy; it breaks Netlify's Let's Encrypt renewals)**. www 301s to apex. `mykavo.netlify.app` may still serve directly (Netlify's primary-domain redirect lags) — harmless, canonicals point to mykavo.app.
-- **Web**: Netlify site `mykavo` (id `3c4a3c88-f933-4430-9455-e2d693941f67`), serverless in US-East. Deploy = rsync worktree → clean dir → `netlify deploy --build --prod --filter web` (see runbook below).
-- **Database**: **Supabase** project `mdjpcdwqwyufjbzguzfr` (**us-east-1** — MUST be in the functions' region, not near the user; a Mumbai project caused timeouts and was migrated + deleted). Direct host is IPv6-only → always use the pooler `aws-0-us-east-1.pooler.supabase.com`, username `postgres.mdjpcdwqwyufjbzguzfr`. Web uses **transaction pooler :6543** (`?pgbouncer=true&connection_limit=1`); worker + `prisma migrate deploy` use **session pooler :5432** (only ~15 session slots — a busy worker can transiently exhaust them; retry). Neon and Supabase-Mumbai are retired/deleted.
-- **Worker**: runs on this Mac as launchd agent **`com.fluxen.worker-prod`** from **`~/.fluxen/app`** (a code copy — launchd can't execute from `~/Desktop` due to TCC; the legacy names are intentional). Env: `~/.fluxen/app/apps/worker/.env.production` (`APP_URL=https://mykavo.app`, `EMAIL_FROM="MyKavo <onboarding@resend.dev>"`). Logs: `~/.fluxen/logs/worker-prod.log`. Restart: `launchctl kickstart -k gui/501/com.fluxen.worker-prod`. Crons: scheduler + health (*/5), retention (daily 03:00), reports (Mon 08:00), audits (Tue 06:00) — all UTC.
-- **Artifacts** (screenshots/diffs): **Netlify Blobs** store `fluxen-artifacts` (**legacy name kept on purpose** — all prod screenshots live there; `BLOB_STORE_NAME` in packages/scanner/src/storage.ts). Worker writes with `NETLIFY_SITE_ID`+`NETLIFY_AUTH_TOKEN`; web reads with `NETLIFY_BLOBS_SITE_ID`/`NETLIFY_BLOBS_TOKEN` site env vars. Blog images live at `blog-images/*` in the same store.
-- **Payments**: Dodo (test mode). **Email**: Resend key present but NO verified domain → mail only reaches the account owner. Now that mykavo.app is owned, verifying it in Resend (DNS records in Cloudflare) + setting `EMAIL_FROM` unlocks all outbound email.
+- **Domain**: `mykavo.app` - DNS on **Cloudflare** (daksheshbabu@gmail.com). Apex + `www` are **DNS-only (grey-cloud) CNAMEs → `mykavo.netlify.app`** - never enable the orange proxy (it breaks Netlify TLS renewal). `support@mykavo.app` forwards via Cloudflare Email Routing.
+- **Web**: Netlify site **`mykavo`** (id `3c4a3c88-f933-4430-9455-e2d693941f67`), Next.js 16 serverless, US-East. CLI authed as daksheshbabu@gmail.com.
+- **Database**: **Supabase** project `mdjpcdwqwyufjbzguzfr` (us-east-1 - MUST be in the functions' region, not near the user). Direct host is IPv6-only → always the pooler `aws-0-us-east-1.pooler.supabase.com`, user `postgres.mdjpcdwqwyufjbzguzfr`. Web = **transaction pooler :6543** (`?pgbouncer=true&connection_limit=1`); worker + migrations = **session pooler :5432** (~15 session slots - one-off scripts should append `?connection_limit=1`). **RLS is ENABLED on all public tables** (safe: Prisma connects as the table owner; it closes the PostgREST anon-API surface). Re-run `apps/worker/src/scripts/enable-rls.ts` after any migration that creates tables.
+- **Worker**: launchd agent **`com.fluxen.worker-prod`** on the owner's Mac, code copy at **`~/.fluxen/app`** (launchd cannot execute from ~/Desktop - macOS TCC). Env: `~/.fluxen/app/apps/worker/.env.production`. Logs: `~/.fluxen/logs/worker-prod.log`. Restart: `launchctl kickstart -k gui/501/com.fluxen.worker-prod`. Crons (UTC): scheduler + health */5, retention 03:00 daily, reports Mon 08:00, audits Tue 06:00, **billing renewal reminders 09:00 daily**. Worker only runs while the Mac is awake; queued jobs survive 14 days.
+- **Artifacts**: **Cloudflare R2**, bucket **`mykavo`** (us-east/ENAM hint), S3 API via aws4fetch (`packages/scanner/src/storage.ts`, `ARTIFACT_STORE=r2`). Screenshots (worker-compressed to ≤200KB), visual diffs, blog images, and **avatars** all live there - Postgres stores only keys/paths. The bucket stays PRIVATE; all reads go through authorized app routes. Legacy Netlify Blobs store `fluxen-artifacts` still holds a pre-migration copy (safe to ignore/delete later).
+- **Payments**: **Dodo Payments LIVE** - Pro product `pdt_0NjKwQ1pTRkSQhk6cmVzo` ($20/mo), `DODO_MODE=live`, live webhook registered at `https://mykavo.app/api/webhooks/dodo`, `DODO_API_KEY` set (in-app cancel + billing portal). Dodo product rule: **subscription pricing ONLY - no License Key entitlements, no credits** (a license-key entitlement once caused instant post-purchase downgrades; the webhook now ignores those event families, but keep products clean).
+- **Email**: Resend (key in worker env). ⚠️ Domain still UNVERIFIED in Resend → outbound mail only reaches the account owner. Fix: verify mykavo.app in Resend (add its DNS records in Cloudflare), set `EMAIL_FROM=alerts@mykavo.app`.
+- **Analytics**: GA4 `G-DQMWRHWFK8` (production only, root layout), Search Console verified (`/googled23738155d4d0020.html`).
 
-### Deploy runbook (web)
+## Deploy runbooks
+
+**Web** (from a clean copy OUTSIDE any parent git repo - Next file-tracing bundles a stale parent Prisma client otherwise):
 ```bash
-cd <this repo>   # main == deployed; session branches fast-forward main after verifying
+export PATH="$HOME/.hermes/node/bin:$PATH"   # pnpm/node/netlify live here on the owner's Mac
 rm -rf /tmp/mykavo-deploy
 rsync -a --exclude node_modules --exclude .next --exclude .git --exclude '.env*' \
   --exclude .data --exclude .netlify --exclude .claude ./ /tmp/mykavo-deploy/
@@ -58,82 +78,101 @@ mkdir -p /tmp/mykavo-deploy/.netlify
 echo '{ "siteId": "3c4a3c88-f933-4430-9455-e2d693941f67" }' > /tmp/mykavo-deploy/.netlify/state.json
 cd /tmp/mykavo-deploy && pnpm install && netlify deploy --build --prod --filter web
 ```
-Migrations first (session pooler URL): `cd packages/database && DATABASE_URL=<session-pooler-url> pnpm exec prisma migrate deploy`.
-Worker update: rsync the same excludes to `~/.fluxen/app`, `pnpm install`, `prisma generate` in packages/database, then `launchctl kickstart -k gui/501/com.fluxen.worker-prod`.
+`--filter web` is REQUIRED; `netlify.toml` must NOT set base/publish. Confirm `netlify status` says project `mykavo` first.
 
----
+**Migrations** (BEFORE the web deploy when schema changed): `cd packages/database && DATABASE_URL=<session-pooler-url> pnpm exec prisma migrate deploy` - then re-run `enable-rls.ts` if tables were created.
 
-## ⚠️ Gotchas (each one cost real debugging time)
+**Worker** (whenever worker or packages code changed): rsync the same excludes to `~/.fluxen/app`, `pnpm install`, `pnpm exec prisma generate` in packages/database, then `launchctl kickstart -k gui/501/com.fluxen.worker-prod` and tail the log.
 
-- **pnpm/node are NOT on PATH**: `export PATH="/Users/dakshu/.hermes/node/bin:$PATH"` first. Local dev DB: `postgresql://dakshu@localhost:5432/fluxen_dev`.
-- **Legacy "fluxen" identifiers are INTENTIONAL — do not rename**: blob store `fluxen-artifacts` (prod screenshots live there), local DB `fluxen_dev`, launchd `com.fluxen.worker-prod` + `~/.fluxen/*`, repo folder `~/Desktop/Fluxen`, memory dir `-Users-dakshu-Desktop-Fluxen`. Everything user-facing is MyKavo (`@mykavo/*` packages, `mykavo.alert` webhook event, `X-MyKavo-Signature`, `MyKavoBot` UA, `mykavo-*` storage keys/cookies).
-- **After Prisma schema changes, restart the Next dev server AND `rm -rf apps/web/.next`** — stale generated client throws `Cannot read properties of undefined`; stale compiled CSS makes theme tokens compute empty. (Also `rm -rf apps/web/.next` before `pnpm dev` if a production build ran in the same tree — the dev server wedges on prod build output.)
-- **Only ONE worker per database.** Kill prod worker via launchctl (above); `pkill -f "Fluxen/apps/worker"` does NOT match it.
-- **Client components must NOT import the `@mykavo/shared` barrel** — it re-exports `ssrf.ts` (`node:dns`) and breaks client chunks. Use subpaths: `@mykavo/shared/stabilization`, `/channels`, `/url`, `/script-services`.
-- **Netlify CLI targets whatever `.netlify/state.json` (or a stale global link) says** — ALWAYS confirm `netlify status` shows `mykavo` before env/deploy commands; a wrong cwd once pointed it at another site (`rank-tracker-hub`). `netlify env:get/list` need `--context production` (secret vars exist).
-- **Netlify deploys can fail at "Uploading blobs to deploy store" with a 403 "internal error"** — transient platform issue; retry the same deploy before debugging (two in a row failed once, third succeeded unchanged).
-- **Agent-tool worktrees branch from `main`**, not the session branch — fast-forward main before launching implementation agents.
-- Interrupting `prisma migrate deploy` mid-run leaves a "failed" migration record — if the DDL actually applied, fix with `prisma migrate resolve --applied <name>`.
-- pg-boss v12: named import `{ PgBoss }`; new `page.evaluate` in the scanner needs the `__name` shim (see scan-page.ts).
-- Local test login: `alex@example.com` / `correct-horse-battery` (Pro, has data). Prod owner: `daksheshbabu@gmail.com` (also the only `BLOG_ADMIN_EMAILS` entry in prod).
+**Netlify env changes**: the CLI's `env:set/get/list` can PROMPT INTERACTIVELY and silently no-op in scripts - use the REST API (`api.netlify.com/api/v1/accounts/dakshu007/env?site_id=...`; secret vars need per-context values - "all" is rejected; non-secret vars need all four scopes on the free plan). **Env changes only reach functions after a redeploy.**
+
+## Environment variables (names only - values live in Netlify env / the worker env file)
+
+**Web (Netlify)**: `DATABASE_URL` (transaction pooler), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` + `APP_URL` (both `https://mykavo.app`), `ARTIFACT_STORE=r2`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=mykavo`, `DODO_PRODUCT_ID`, `DODO_MODE=live`, `DODO_WEBHOOK_SECRET` (live-mode whsec), `DODO_API_KEY`, `SIGNUP_SHEET_WEBHOOK_URL` (Apps Script /exec), `BLOG_ADMIN_EMAILS`, legacy `NETLIFY_BLOBS_SITE_ID`/`NETLIFY_BLOBS_TOKEN`, optional `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (OAuth - not configured yet).
+
+**Worker (`~/.fluxen/app/apps/worker/.env.production`)**: `DATABASE_URL` (session pooler), `APP_URL`, `ARTIFACT_STORE=r2` + the four `R2_*` vars, `RESEND_API_KEY`, `EMAIL_FROM`, optional cron overrides (`SCHEDULER_CRON`, `HEALTH_CRON`, `RETENTION_CRON`, `REPORT_CRON`, `AUDIT_CRON`, `BILLING_CRON`, `RENEWAL_REMINDER_DAYS`).
+
+See `apps/web/.env.example` and `apps/worker/.env.example` for the annotated list.
+
+## Billing internals (do not regress)
+
+- Checkout: `/api/billing/checkout` creates a server-issued `CheckoutIntent` token → Dodo hosted checkout with `metadata_checkoutToken`. **Attribution NEVER trusts client-editable metadata**: stored subscription-id binding first, else consume the token.
+- Webhook `/api/webhooks/dodo`: Standard-Webhooks signature verification → `classifyDodoEvent` (`apps/web/src/lib/billing/webhook.ts`, unit-tested): only `subscription.*`/`payment.*` families may touch entitlements; `payment.succeeded` grants regardless of its payment-status field; `refund.succeeded` revokes; ignored/noop events return BEFORE attribution so they can never burn the checkout token. Dedupe + entitlement mutation run in one transaction; `lastEventAt` guards stale/out-of-order events.
+- Renewals: `Subscription.currentPeriodEnd` shows on the Billing page; the worker `billing-sweep` emails one reminder per period (dedupe via `renewalReminderSentAt`).
+- Region display: `components/region.tsx` - `<Price usd={20}/>` renders $ by default, ₹ for India browser timezones (fixed anchor 85:1 so $20 = ₹1,700), plus `BilledInUsdNote` at purchase points. The actual charge is always USD.
 
 ## Running it locally
 
 ```bash
-export PATH="/Users/dakshu/.hermes/node/bin:$PATH"
+export PATH="$HOME/.hermes/node/bin:$PATH"   # owner's Mac; otherwise any Node 20+ with pnpm 10
 pnpm install
-pnpm dev        # web → http://localhost:3000 (Claude sessions use launch.json → port 3010)
-pnpm worker     # scan worker, 2nd terminal (apps/worker/.env → local DB)
-pnpm test       # all package tests
+pnpm dev        # web → http://localhost:3000 (Claude sessions: launch.json "web" → port 3010)
+pnpm worker     # scan worker, 2nd terminal (apps/worker/.env → local postgres fluxen_dev)
+pnpm test       # per package: pnpm --filter web test, etc.
 pnpm --filter web lint && pnpm --filter web typecheck && pnpm --filter web build
 ```
-Migrations: `cd packages/database && pnpm exec prisma migrate dev` (23 migrations).
+Local migrations: `cd packages/database && pnpm exec prisma migrate deploy` (26 migrations). Note: `migrate dev` may demand a destructive reset due to drift - the repo's established pattern is to hand-write migration SQL and apply with `migrate deploy`. Local test login: `alex@example.com` / `correct-horse-battery` (Pro, has data).
 
-## Repository layout (pnpm workspace)
+## Repository layout (pnpm workspace + turborepo)
 
 ```
-apps/web        Next.js 16 App Router — marketing, dashboard, blog, tools, all APIs
-apps/worker     pg-boss consumer: scans, comparison, link checks, health, reports, audits, retention, notifications
+apps/web        Next.js 16 App Router - marketing site, dashboard, blog, tools, all API routes
+apps/worker     pg-boss consumer: scans, comparison, link checks, health, reports, audits,
+                retention, notifications, billing reminders (+ scripts/: enable-rls,
+                migrate-artifacts-r2, migrate-avatars-r2, rerun-compare)
 packages/       (@mykavo/* scope)
   database          Prisma schema/client + DB helpers (+ live-DB integration tests)
-  scanner           Playwright pool, page scan, stabilization, lighthouse, artifact storage (disk/Blobs)
-  comparison-engine deterministic diff + pixelmatch visual diff + site-meta + broken-link comparator
+  scanner           Playwright pool, page scan, stabilization, lighthouse, artifact storage
+                    (LocalDisk / R2 / legacy NetlifyBlobs; screenshots compressed to <=200KB)
+  comparison-engine deterministic diff + pixelmatch visual diff + site-meta + broken links
   severity-engine   the ONLY place severity rules live
-  email             console/Resend sender + all templates
-  shared            url/ssrf/link-check/queues/schedule/retention/channels/stabilization/health/report/performance/script-services
+  email             console/Resend sender + all templates (incl. renewal reminder)
+  shared            url/ssrf/link-check/queues/schedule/retention/channels/stabilization/
+                    health/report/performance/script-services
 docs/           ARCHITECTURE, IMPLEMENTATION_PLAN, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM
+CLAUDE.md       the original product spec - still the product constitution
 ```
 
-## Design language (two systems — keep them separate)
+## Design language (two systems - keep them separate)
 
-- **Fonts (site-wide):** body = `"Google Sans"` → **DM Sans** fallback (`--font-sans` in globals.css; Google Sans is proprietary, renders only if locally installed). **Every h1/h2 renders in Poppins** via a globals.css base rule (`--font-poppins`, loaded in app/layout.tsx). Geist Mono remains for mono.
-- **Dashboard (app):** soft cool-gray canvas, white cards (24px radius, soft shadows), royal-blue primary `#3556f4`, pill buttons/chips, severity colors ALWAYS paired with text labels. **All colors flow through `--fx-*` CSS variables in `apps/web/src/app/globals.css`** (light + dark palettes; `lib/theme-contrast.test.ts` enforces WCAG AA on every pairing — never hardcode Tailwind palette classes like `text-red-600`). Charts are hand-rolled SVG (`components/charts/`, `lib/health-charts.ts`) — no chart libraries.
-- **Landing + public blog (v3, retool-inspired):** fixed palette in `components/landing/style.ts` (NOT theme tokens): canvas `#151515`, elevated `#242424` + white/10 hairlines, bone `#F7F8F4` bands, dim `#9C9E93` secondary text, **gold `#FFD400` = the only accent and always carries ink `#151515` text**. Logo = the gold spark (`components/brand/logo.tsx`). Blog article bodies stay on `--fx-*` token cards so markdown reads in both app themes.
+- **Fonts site-wide**: body `"Google Sans"` → DM Sans fallback (`--font-sans`); every h1/h2 renders Poppins (globals.css base rule); Geist Mono for mono.
+- **Dashboard (app)**: all colors flow through `--fx-*` CSS variables in `apps/web/src/app/globals.css` (light + dark palettes; `lib/theme-contrast.test.ts` enforces WCAG AA on every pairing). Never hardcode Tailwind palette classes like `text-red-600`. Charts are hand-rolled SVG (`components/charts/`) - no chart libraries.
+- **Marketing site (v4 "bright gold")**: FIXED palette in `components/landing/style.ts` (deliberately NOT `--fx-*` tokens): warm paper `#FBFAF3` canvas, alt band `#F3F1E6`, ink `#151515`, **gold `#FFD400` (always ink text on gold)**, dim `#6B6B60`. Signature moves: crisp ink offset shadows (`shadow-[4px_4px_0_#151515]`, gold+ink doubles), mono `// eyebrow //` labels, gold highlighter sweeps behind headline words, floating island pill nav, browser-frame dashboard mock, tilted gold marquee, giant clipped gold footer wordmark. Standalone pages (legal/support/about) use `components/landing/page-shell.tsx`. Blog article bodies stay on `--fx-*` token cards so markdown reads in both app themes.
+- **No em-dashes anywhere. Hyphens only.**
 
-## Environment variables
+## ⚠️ Gotchas (each one cost real debugging time)
 
-**Web** (`apps/web/.env.local` locally; Netlify env in prod): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL=https://mykavo.app`, `APP_URL=https://mykavo.app`, `BLOG_ADMIN_EMAILS`, `ARTIFACT_STORE=netlify-blobs` (+ `NETLIFY_BLOBS_SITE_ID`/`NETLIFY_BLOBS_TOKEN` in prod), `DODO_*` (webhook secret pending), optional `GOOGLE_CLIENT_ID/SECRET`.
-**Worker** (`apps/worker/.env` local, `~/.fluxen/app/apps/worker/.env.production` prod): `DATABASE_URL`, `APP_URL=https://mykavo.app`, `ARTIFACT_STORE`/`ARTIFACT_DIR`, `NETLIFY_SITE_ID`+`NETLIFY_AUTH_TOKEN`, `RESEND_API_KEY`/`EMAIL_FROM`, cron overrides (`SCHEDULER_CRON`, `HEALTH_CRON`, `RETENTION_CRON`, `REPORT_CRON`, `AUDIT_CRON`).
+- **pnpm/node are NOT on PATH** on the owner's Mac: `export PATH="$HOME/.hermes/node/bin:$PATH"` first. Local dev DB: `postgresql://dakshu@localhost:5432/fluxen_dev`.
+- **Legacy "fluxen" identifiers are INTENTIONAL - do not rename**: blob store `fluxen-artifacts`, local DB `fluxen_dev`, launchd `com.fluxen.worker-prod` + `~/.fluxen/*`, repo folder `~/Desktop/Fluxen`. Everything user-facing is MyKavo (`@mykavo/*` packages, `mykavo.alert` webhook event, `X-MyKavo-Signature`, `mykavo-*` storage keys/cookies).
+- **After Prisma schema changes**: restart the dev server AND `rm -rf apps/web/.next` (stale client throws; stale CSS empties theme tokens). Also clear `.next` after deleting routes (stale `.next/types` break typecheck).
+- **Only ONE worker per database** (pg-boss). Kill prod via launchctl; `pkill` does not match it.
+- **Client components must NOT import the `@mykavo/shared` barrel** - it re-exports `ssrf.ts` (`node:dns`) and breaks client chunks. Use subpaths: `@mykavo/shared/stabilization`, `/channels`, `/url`, `/script-services`.
+- **Netlify CLI targets whatever `.netlify/state.json` says** - ALWAYS confirm `netlify status` shows `mykavo` first; a stale link once pointed at an unrelated site. `env:get/list` need `--context production`.
+- **Netlify env via CLI is unreliable non-interactively** (prompts + silently no-ops) - use the REST API; and env changes only reach functions after a redeploy.
+- Netlify deploys can transiently fail at "Uploading blobs ... 403 internal error" - retry unchanged before debugging.
+- **Supabase session pooler has ~15 slots** - one-off scripts alongside the worker can hit EMAXCONNSESSION; append `?connection_limit=1` to script DATABASE_URLs.
+- **Dodo**: keep products entitlement-free (no license keys/credits); test products only resolve on `test.checkout.dodopayments.com` (checkout host derives from `DODO_MODE`); each mode needs its own webhook + `DODO_WEBHOOK_SECRET`.
+- Google Apps Script webhooks 401 unless deployed "Execute as: Me" + access "**Anyone**" (not "Anyone with Google account"); curl `-X POST -L` fakes a 405 on the 302 echo redirect - node fetch works correctly.
+- Interrupting `prisma migrate deploy` mid-run leaves a "failed" record - if the DDL applied, fix with `prisma migrate resolve --applied <name>`.
+- **Agent-tool worktrees branch from `main`** - fast-forward main before launching implementation agents.
+- pg-boss v12: named import `{ PgBoss }`; never memoize a REJECTED boss-connection promise (`apps/web/src/lib/queue.ts` clears it on failure); scanner `page.evaluate` needs the `__name` shim (see scan-page.ts).
+- Prod owner login: `daksheshbabu@gmail.com` (Pro, the `BLOG_ADMIN_EMAILS` entry). 2FA can be enrolled from Settings → Security.
 
-## Pending / known limitations
+## Pending / next up
 
-1. **Resend domain unverified** → all outbound email (alerts, weekly reports, team invites) only delivers to the Resend account owner. **mykavo.app is now owned — verify it in Resend (add its DNS records in Cloudflare), set `EMAIL_FROM=alerts@mykavo.app`, done.** (Invite "Copy link" is the workaround meanwhile.)
-2. **Worker lives on this Mac** — must be on/awake; queued jobs survive 14 days. Proper fix: a ~$5/mo host (Railway/Render) with the same env.
-3. `DODO_WEBHOOK_SECRET` not set in prod (payment attribution incomplete); Dodo still in test mode.
-4. Google OAuth configured in code but no credentials set.
-5. Search Console: verification file is live — click Verify in GSC and submit `https://mykavo.app/sitemap.xml`.
-6. `mykavo.netlify.app` serves the site directly (no redirect to the apex yet — Netlify lag; canonicals already point to mykavo.app).
-
-## Feature ideas shortlist (user-vetted, zero-cost — pick up next)
-
-1. **Post-deploy checks** (top pick): per-website secret deploy-hook URL; CI/Netlify/Vercel/WordPress pings it after deploy → immediate scan + "deploy verified / regressions found" alert. Uses the existing scan queue.
-2. **Domain expiry monitoring** via free RDAP lookups — pairs with existing SSL expiry alerts; a few hours of work.
-3. **Competitor page watching** — monitor pages you don't own (pricing/features), get diffs. Same engine, new audience.
-4. **New-page auto-detection** — alert when sitemap gains URLs, offer to monitor them.
-5. **Shareable change links** — tokenized public page for a single change event (before/after) for agency→client sharing.
+1. **Resend domain verification** (top priority) - until mykavo.app is verified in Resend, alerts/reports/invites only reach the account owner. Add Resend's DNS records in Cloudflare, set `EMAIL_FROM=alerts@mykavo.app`.
+2. **Tier-2/3 keyword landing pages** (visual regression testing, website monitoring for WordPress/Shopify/Webflow/agencies/freelancers/developers/ecommerce, SEO/meta-tag/canonical/robots.txt/sitemap monitoring, ...) - each needs genuinely unique content (spec forbids thin programmatic pages). Pairs with the owner's blog + link-exchange push.
+3. **Worker off the Mac** (~$5/mo Railway/Render/Fly with the same env) when budget allows.
+4. Google OAuth credentials (code ready, env unset).
+5. Owner-vetted feature shortlist: post-deploy check hook, domain-expiry (RDAP) alerts, competitor page watching, new-page auto-detection, shareable change links.
 
 ## Working conventions for future sessions
 
-- Feature rounds run as parallel subagents in isolated worktrees (branched from `main` — keep main current!), merged + verified by the orchestrator: lint, typecheck, full tests, production build, real-browser verification, then deploy web + worker + migrations, live smoke, memory update.
-- Hand-write migration SQL in agent worktrees (never connect agents to databases); apply with `migrate deploy` locally + on Supabase at integration.
-- Verify everything on production after deploying — screenshots, curl smoke tests, worker logs.
+- Verify → deploy → verify on production. Never claim done on a red build.
+- Hand-write migration SQL; apply with `migrate deploy` locally + on Supabase; re-run `enable-rls.ts` after new tables.
+- Fast-forward `main` after verifying, deploy from it, and **push to GitHub** (`git push origin main`) so the repo always mirrors production.
+- **Update this README whenever architecture, pricing, or runbooks change - it is the project's portable memory across machines and AI accounts.**
+
+---
+
+Built by **Dakshesh B** ([github.com/dakshu007](https://github.com/dakshu007)) with Claude Code.
