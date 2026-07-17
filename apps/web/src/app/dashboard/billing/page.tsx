@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  CalendarClock,
   Check,
   CheckCircle2,
   CreditCard,
@@ -18,6 +19,7 @@ import { billingEnabled } from "@/lib/billing/config";
 import { dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getPlan, formatLimit } from "@/config/plans";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
+import { ValueQuoteCard } from "@/components/value-quote";
 import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscription-button";
 
 export default async function BillingPage({
@@ -38,6 +40,16 @@ export default async function BillingPage({
   const isPro = plan.id === "pro";
   const pro = getPlan("pro");
   const justCheckedOut = sp.checkout === "success";
+  // Server component: one clock read per request (also keeps the React
+  // Compiler purity lint happy - Date.now() inline in render is flagged).
+  const requestedAt = new Date();
+  const periodEnd = subscription?.currentPeriodEnd ?? null;
+  const renewalLabel = periodEnd
+    ? periodEnd.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : null;
+  const daysToRenewal = periodEnd
+    ? Math.max(0, Math.ceil((periodEnd.getTime() - requestedAt.getTime()) / 86_400_000))
+    : null;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -74,6 +86,31 @@ export default async function BillingPage({
             </span>
           )}
         </div>
+
+        {isPro && renewalLabel && (
+          <div className="mt-4 flex items-start gap-2.5 rounded-field bg-surface px-4 py-3">
+            <CalendarClock className="mt-0.5 size-4.5 shrink-0 text-ink-secondary" aria-hidden />
+            <p className="text-sm text-ink">
+              {subscription?.cancelAtPeriodEnd ? (
+                <>
+                  Pro access ends on <span className="font-semibold">{renewalLabel}</span>
+                  {daysToRenewal !== null && (
+                    <span className="text-ink-secondary"> ({daysToRenewal} day{daysToRenewal === 1 ? "" : "s"} left)</span>
+                  )}
+                  . You keep every feature until then.
+                </>
+              ) : (
+                <>
+                  Next renewal on <span className="font-semibold">{renewalLabel}</span>
+                  {daysToRenewal !== null && (
+                    <span className="text-ink-secondary"> (in {daysToRenewal} day{daysToRenewal === 1 ? "" : "s"})</span>
+                  )}{" "}
+                  - ${plan.priceMonthlyUsd} billed monthly via Dodo Payments.
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         <ul className="mt-5 space-y-2.5">
           {plan.features.map((f) => (
@@ -178,6 +215,8 @@ export default async function BillingPage({
           </p>
         </Card>
       )}
+
+      <ValueQuoteCard />
 
       <p className="text-center text-[13px] text-ink-faint">
         Compare plans on the{" "}

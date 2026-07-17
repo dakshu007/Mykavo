@@ -32,6 +32,16 @@ const columns = [
       { href: "/#categories", label: "Script monitoring" },
     ],
   },
+  {
+    title: "Company",
+    links: [
+      { href: "/about", label: "About" },
+      { href: "/support", label: "Support" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+      { href: "/cookies", label: "Cookie Policy" },
+    ],
+  },
 ];
 
 /**
@@ -42,7 +52,7 @@ export function LandingFooter() {
   return (
     <footer className="overflow-hidden border-t border-black/10 bg-[#F3F1E6]">
       <div className="mx-auto max-w-6xl px-5 pt-16 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1fr]">
           <div>
             <Link href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
               <LogoMark size={28} />

@@ -109,8 +109,12 @@ describe("classifyDodoEvent", () => {
     expect(classifyDodoEvent("license_key.created", "Delivered")).toBe("ignored");
     expect(classifyDodoEvent("entitlement_grant.created", "Delivered")).toBe("ignored");
     expect(classifyDodoEvent("dispute.opened", "open")).toBe("ignored");
-    expect(classifyDodoEvent("refund.succeeded", "succeeded")).toBe("ignored");
+    expect(classifyDodoEvent("refund.failed", "failed")).toBe("ignored");
     expect(classifyDodoEvent("", "")).toBe("ignored");
+  });
+
+  it("revokes on a completed refund (money returned = access ends)", () => {
+    expect(classifyDodoEvent("refund.succeeded", "succeeded")).toBe("revoke");
   });
 
   it("revokes on explicit revoke events", () => {

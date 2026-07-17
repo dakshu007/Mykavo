@@ -16,6 +16,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
+import { ValueQuoteBanner } from "@/components/value-quote";
 import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
 import { CategoryTabs } from "@/components/landing/categories";
@@ -56,15 +57,50 @@ export const metadata: Metadata = {
   },
 };
 
+// Structured data for search engines AND AI answer engines (AI Overviews,
+// ChatGPT, Perplexity): organization, website, the app with real prices, and
+// the homepage FAQ. faqJsonLd is built below from the same `faqs` array the
+// page renders, so the markup can never drift from the visible answers.
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: site.name,
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  description: site.description,
-  url: site.url,
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${site.url}/#organization`,
+      name: site.name,
+      url: site.url,
+      logo: `${site.url}/icon.png`,
+      founder: { "@type": "Person", name: "Dakshesh Babu" },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${site.url}/#website`,
+      name: site.name,
+      url: site.url,
+      publisher: { "@id": `${site.url}/#organization` },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: site.name,
+      applicationCategory: "BusinessApplication",
+      applicationSubCategory: "Website Monitoring Tool",
+      operatingSystem: "Web",
+      description: site.description,
+      url: site.url,
+      offers: [
+        { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+        {
+          "@type": "Offer",
+          name: "Pro",
+          price: "20",
+          priceCurrency: "USD",
+          description: "8 websites with 15 monitored pages each, daily scans and alerts.",
+        },
+      ],
+      featureList:
+        "Website change detection, visual website monitoring, SEO change monitoring, broken link monitoring, script monitoring, performance regression monitoring, uptime and SSL monitoring, conversion element monitoring",
+    },
+  ],
 };
 
 /* ---------------------------------- data --------------------------------- */
@@ -268,12 +304,26 @@ function SplitPill() {
 
 /* ---------------------------------- page --------------------------------- */
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+
 export default function HomePage() {
   return (
     <div className={`${fontSans} bg-[#FBFAF3] text-[#151515] antialiased`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <LandingNav />
       <StickyCta />
@@ -593,6 +643,9 @@ export default function HomePage() {
               <br />
               <span className="text-[#6B6B60]">with your websites.</span>
             </DisplayHeading>
+            <div className="mt-14">
+              <ValueQuoteBanner />
+            </div>
             <div className="mx-auto mt-14 grid max-w-3xl gap-6 sm:grid-cols-2">
               {plans.map((plan) => {
                 const pro = plan.highlighted;

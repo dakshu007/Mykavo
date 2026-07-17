@@ -746,6 +746,9 @@ model Subscription {
   dodoSubscriptionId String?   @unique
   currentPeriodEnd   DateTime?
   cancelAtPeriodEnd  Boolean   @default(false)
+  // When the "renews soon" reminder for the CURRENT period was sent - reset
+  // implicitly each period because the sweep compares it to currentPeriodEnd.
+  renewalReminderSentAt DateTime?
   // Logical time of the last applied webhook event — guards against
   // out-of-order/retried delivery re-applying a stale transition.
   lastEventAt        DateTime?

@@ -8,6 +8,8 @@ export {
   weeklyReportEmail,
   workspaceInviteEmail,
   performanceDropEmail,
+  renewalReminderEmail,
+  type RenewalReminderData,
   type Severity,
   type ChangeLine,
   type ScanSummaryData,

@@ -140,6 +140,10 @@ export type DodoEventAction = "ignored" | "noop" | "grant" | "revoke";
  * grant event right behind it as unattributed.
  */
 export function classifyDodoEvent(type: string, status: string): DodoEventAction {
+  // A completed refund ends access: when the merchant accepts a refund in
+  // Dodo the money goes back, so the workspace must drop to Free even if the
+  // subscription-cancelled event is delayed or never arrives.
+  if (type === "refund.succeeded") return "revoke";
   if (!type.startsWith("subscription.") && !type.startsWith("payment.")) {
     return "ignored";
   }

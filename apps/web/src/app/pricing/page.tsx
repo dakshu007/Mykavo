@@ -5,6 +5,7 @@ import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
+import { ValueQuoteBanner } from "@/components/value-quote";
 import { plans, formatLimit } from "@/config/plans";
 
 export const metadata: Metadata = {
@@ -89,6 +90,11 @@ export default function PricingPage() {
             One missed regression costs more than a year of MyKavo. Start free with one website,
             or go Pro for $20/month - 8 websites with 15 monitored pages each.
           </p>
+        </div>
+
+        {/* Region-aware value quote */}
+        <div className="mb-14">
+          <ValueQuoteBanner />
         </div>
 
         {/* Plan cards */}
