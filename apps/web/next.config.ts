@@ -19,6 +19,25 @@ const nextConfig: NextConfig = {
       static: 180,
     },
   },
+  // Dev-only CORS so the Expo WEB dev preview (http://localhost:8081) can call
+  // the local Next dev server with credentials. No-op in production builds.
+  async headers() {
+    if (process.env.NODE_ENV === "production") return [];
+    return [
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "http://localhost:8081" },
+          { key: "Access-Control-Allow-Credentials", value: "true" },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET,POST,PATCH,PUT,DELETE,OPTIONS",
+          },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type,Accept" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

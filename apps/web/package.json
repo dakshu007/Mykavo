@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@better-auth/expo": "1.6.23",
     "@hookform/resolvers": "^5.4.0",
     "@mykavo/comparison-engine": "workspace:*",
     "@mykavo/database": "workspace:*",

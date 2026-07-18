@@ -50,6 +50,7 @@ Product naming: the product was renamed **Fluxen → MyKavo** (2026-07-16). The 
 | **Marketing site (v4)** | Bright-gold design (see Design language): homepage, /pricing, /about (name story + founder bio), /support, /privacy, /terms, /cookies, blog + RSS, 5 free SEO tools under /tools/*, staged-reveal **404 page** ("My-Kaa-vo. Means guardian. This page? Clearly escaped.") |
 | **SEO / AI search** | Keyword-loaded metadata (site monitoring tools, website change detection, ...), OG image (`app/opengraph-image.png`), JSON-LD graph (Organization/WebSite/SoftwareApplication/FAQPage), **/llms.txt** product summary, robots.txt explicitly welcomes AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, ...), sitemap.xml, GA4 `G-DQMWRHWFK8`, GSC verification file. Primary market: US |
 | **Blog CMS** | `/dashboard/blog` (Tiptap visual editor, `BLOG_ADMIN_EMAILS` allowlist), public `/blog` + `/blog/feed.xml` |
+| **Android app** | `apps/mobile` - Expo SDK 57 / React Native / expo-router, OUTSIDE the pnpm workspace (own npm lockfile; Metro wants hoisted deps). Same accounts/sessions as the web (Better Auth `expo()` plugin + `mykavo://`/`exp://` trustedOrigins in `apps/web/src/lib/auth.ts`), TOTP 2FA + trust-device in the login screen. Reads via `/api/mobile/*` JSON endpoints (me/overview/changes/scans/websites - contract mirrored in `apps/mobile/src/lib/types.ts`), mutates via the SAME routes as the web dashboard. Live sync = focus refetch + 3-20s polling (`src/lib/live.ts`), matching the web's auto-refresh cadence. Design: `--fx-*` tokens ported 1:1 (light+dark) in `src/lib/theme.ts`, gold v4 login screen, brand icons from the page-spark mark. APK: `.github/workflows/android-apk.yml` builds on every push to main touching apps/mobile and publishes to the rolling `mobile-latest` GitHub release (debug-keystore signed - fine for sideload, replace keystore before Play Store) |
 
 **Tests: 573 web · 99 shared · 51 comparison · 32 severity · 19 email · 4 scanner · 43 DB integration.** Run per package: `pnpm --filter web test`, etc.
 
@@ -117,6 +118,9 @@ Local migrations: `cd packages/database && pnpm exec prisma migrate deploy` (26 
 
 ```
 apps/web        Next.js 16 App Router - marketing site, dashboard, blog, tools, all API routes
+                (incl. /api/mobile/* read endpoints for the Android app)
+apps/mobile     Expo (React Native) Android/iOS app - NOT in the pnpm workspace, npm-managed;
+                see apps/mobile/README.md for run + APK build instructions
 apps/worker     pg-boss consumer: scans, comparison, link checks, health, reports, audits,
                 retention, notifications, billing reminders (+ scripts/: enable-rls,
                 migrate-artifacts-r2, migrate-avatars-r2, rerun-compare)

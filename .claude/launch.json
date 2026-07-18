@@ -6,6 +6,15 @@
       "runtimeExecutable": "/Users/dakshu/.hermes/node/bin/pnpm",
       "runtimeArgs": ["--filter", "web", "exec", "next", "dev", "-p", "3010"],
       "port": 3010
+    },
+    {
+      "name": "mobile-web",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd apps/mobile && CI=1 EXPO_PUBLIC_API_URL=http://localhost:3010 /Users/dakshu/.hermes/node/bin/npx expo start --web --port 8081"
+      ],
+      "port": 8081
     }
   ]
 }

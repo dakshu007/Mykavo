@@ -1,0 +1,75 @@
+# Builds the MyKavo Android APK and publishes it to the rolling
+# "mobile-latest" GitHub release, so the newest APK is always at:
+#   https://github.com/dakshu007/Mykavo/releases/tag/mobile-latest
+#
+# Runs on every push to main that touches apps/mobile (or this file),
+# and can be started manually from the Actions tab (workflow_dispatch).
+# Release builds are signed with the Expo-generated debug keystore, which
+# is fine for direct installs (sideloading); switch to a real keystore
+# before any Play Store submission.
+
+name: android-apk
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mykavo-android-apk
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      - name: Publish rolling release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk mykavo.apk
+          gh release delete mobile-latest --cleanup-tag --yes || true
+          gh release create mobile-latest mykavo.apk \
+            --title "MyKavo Android (latest)" \
+            --notes "Auto-built from $GITHUB_SHA. Download mykavo.apk, open it on your Android phone, and allow installing from this source. Signs into your normal MyKavo account at mykavo.app." \
+            --latest=false

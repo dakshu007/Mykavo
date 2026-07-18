@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { twoFactor } from "better-auth/plugins";
+import { expo } from "@better-auth/expo";
 import { createAuthMiddleware, APIError } from "better-auth/api";
 import { prisma } from "@mykavo/database";
 import { env } from "@/lib/env";
@@ -28,6 +29,15 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
+  // Mobile app origins (Expo). Scheme-only origins cannot be forged by
+  // browsers, so this does not weaken web CSRF protection. exp:// lets the
+  // owner run Expo Go against production; localhost:8081 is the Expo web
+  // dev preview and is trusted only outside production.
+  trustedOrigins: [
+    "mykavo://",
+    "exp://",
+    ...(process.env.NODE_ENV !== "production" ? ["http://localhost:8081"] : []),
+  ],
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
@@ -52,7 +62,7 @@ export const auth = betterAuth({
   // Google Authenticator-style TOTP two-factor auth. Enrollment happens at
   // signup (and from Settings); verification is required on every login for
   // enrolled users. Issuer is what shows up in the authenticator app.
-  plugins: [twoFactor({ issuer: "MyKavo" })],
+  plugins: [expo(), twoFactor({ issuer: "MyKavo" })],
   hooks: {
     // Server-side signup email vetting: structure, disposable domains, and a
     // DNS MX check - the address must belong to a domain that accepts mail.

@@ -1,0 +1,35 @@
+/**
+ * Better Auth client for the MyKavo app.
+ *
+ * Talks to the SAME backend as mykavo.app - same accounts, same sessions,
+ * same TOTP 2FA. The Expo plugin persists the session cookie in SecureStore
+ * on device and replays it (plus the two_factor challenge and trust_device
+ * cookies) automatically. On web (react-native-web dev preview) it falls back
+ * to normal browser cookies.
+ */
+
+import { expoClient } from "@better-auth/expo/client";
+import { twoFactorClient } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
+import * as SecureStore from "expo-secure-store";
+
+/**
+ * Backend base URL. Production talks to mykavo.app; local development points
+ * at the Next dev server via EXPO_PUBLIC_API_URL (use your Mac's LAN IP, not
+ * localhost, when running on a physical phone).
+ */
+export const API_BASE = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") || "https://mykavo.app";
+
+export const authClient = createAuthClient({
+  baseURL: API_BASE,
+  plugins: [
+    expoClient({
+      scheme: "mykavo",
+      storagePrefix: "mykavo",
+      storage: SecureStore,
+    }),
+    twoFactorClient(),
+  ],
+});
+
+export const { useSession } = authClient;

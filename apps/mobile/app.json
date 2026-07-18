@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "MyKavo",
+    "slug": "mykavo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "mykavo",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "app.mykavo.mobile",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "app.mykavo.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#151515",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#151515",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 96
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

@@ -1,5 +1,6 @@
 packages:
   - apps/*
+  - '!apps/mobile' # Expo app manages its own npm node_modules (Metro prefers hoisted layout)
   - packages/*
 
 ignoredBuiltDependencies:
