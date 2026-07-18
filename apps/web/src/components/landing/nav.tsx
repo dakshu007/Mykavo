@@ -7,6 +7,7 @@ import { LogoMark } from "@/components/brand/logo";
 
 const links = [
   { href: "/pricing", label: "Pricing" },
+  { href: "/#android-app", label: "Android app" },
   { href: "/blog", label: "Blog" },
   { href: "/support", label: "Support" },
 ];

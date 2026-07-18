@@ -22,6 +22,7 @@ import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
 import { CategoryTabs } from "@/components/landing/categories";
 import { AlertChannelsSection } from "@/components/landing/alert-channels";
+import { AppDownloadSection } from "@/components/landing/app-download";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
@@ -512,6 +513,9 @@ export default function HomePage() {
 
         {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
         <AlertChannelsSection />
+
+        {/* Android app - web + mobile sync story with the APK download */}
+        <AppDownloadSection />
 
         {/* Agencies - split with client health board */}
         <section className="border-y border-black/10 bg-white">
