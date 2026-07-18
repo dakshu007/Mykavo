@@ -95,7 +95,6 @@ export default function TabsLayout() {
             tabBar={(props) => <FloatingTabBar {...props} />}
             screenOptions={{
               headerShown: false,
-              animation: "shift",
               sceneStyle: { backgroundColor: palette.canvas },
             }}
           >

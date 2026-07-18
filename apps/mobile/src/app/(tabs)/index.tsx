@@ -85,6 +85,9 @@ export default function OverviewScreen() {
 
   // Android: home is the app's root - first back press warns, a second one
   // within 2s exits (covers both the back button and the back gesture).
+  // The second press returns false so ANDROID performs the default, clean
+  // activity finish - BackHandler.exitApp() is a known source of corrupted
+  // React hosts and crash-on-reopen, so it is deliberately not used.
   const lastBackPressRef = useRef(0);
   useFocusEffect(
     useCallback(() => {
@@ -92,8 +95,7 @@ export default function OverviewScreen() {
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
         const now = Date.now();
         if (now - lastBackPressRef.current < 2000) {
-          BackHandler.exitApp();
-          return true;
+          return false;
         }
         lastBackPressRef.current = now;
         ToastAndroid.show("Press back again to exit MyKavo", ToastAndroid.SHORT);

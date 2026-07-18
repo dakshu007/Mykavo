@@ -4,6 +4,7 @@
  * member management stay on the web dashboard at mykavo.app.
  */
 
+import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
@@ -270,7 +271,7 @@ export default function SettingsScreen() {
           }}
         >
           <Small>Version</Small>
-          <Mono>1.0.0</Mono>
+          <Mono>{Constants.expoConfig?.version ?? "unknown"}</Mono>
         </View>
       </Card>
 

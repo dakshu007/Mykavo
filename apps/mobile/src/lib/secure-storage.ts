@@ -69,7 +69,17 @@ export const WORKSPACE_KEY = "mykavo-active-workspace";
 /** Wipe everything this app persists in SecureStore (recovery path). */
 export async function wipeSecureStorage(): Promise<void> {
   // The Better Auth expo client stores under `${storagePrefix}_cookie` and
-  // `${storagePrefix}_session_data`; we prefix with "mykavo".
-  const keys = ["mykavo_cookie", "mykavo_session_data", WORKSPACE_KEY];
+  // `${storagePrefix}_session_data` (+ possible ".N" chunks); we prefix with
+  // "mykavo". Crash-guard keys are included so a reset is truly clean.
+  const keys = [
+    "mykavo_cookie",
+    "mykavo_session_data",
+    WORKSPACE_KEY,
+    "mykavo-last-crash",
+    "mykavo-boot-state",
+  ];
+  for (let i = 0; i < 8; i++) {
+    keys.push(`mykavo_cookie.${i}`, `mykavo_session_data.${i}`);
+  }
   await Promise.all(keys.map((k) => safeSecureStorage.deleteItemAsync(k)));
 }

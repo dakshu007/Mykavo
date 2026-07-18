@@ -29,6 +29,12 @@ export const authClient = createAuthClient({
       scheme: "mykavo",
       storagePrefix: "mykavo",
       storage: safeSecureStorage,
+      // No session-object cache: cold boots always fetch the session fresh
+      // over the network (the cookie jar still persists, so logins survive
+      // restarts). Removes the entire hydrate-cached-session-at-bundle-eval
+      // path, which only ever runs on relaunch-after-login - exactly where
+      // the reported crash lives.
+      disableCache: true,
     }),
     twoFactorClient(),
   ],
