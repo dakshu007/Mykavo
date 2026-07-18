@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "app.mykavo.mobile",
+      "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#151515",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

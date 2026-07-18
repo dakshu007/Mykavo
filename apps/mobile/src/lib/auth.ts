@@ -2,16 +2,18 @@
  * Better Auth client for the MyKavo app.
  *
  * Talks to the SAME backend as mykavo.app - same accounts, same sessions,
- * same TOTP 2FA. The Expo plugin persists the session cookie in SecureStore
- * on device and replays it (plus the two_factor challenge and trust_device
- * cookies) automatically. On web (react-native-web dev preview) it falls back
- * to normal browser cookies.
+ * same TOTP 2FA. The Expo plugin persists the session cookie on device and
+ * replays it (plus the two_factor challenge and trust_device cookies)
+ * automatically. Storage goes through the crash-proof SecureStore adapter -
+ * a corrupt keystore entry must never take the whole app down at boot. On
+ * web (react-native-web dev preview) it falls back to browser cookies.
  */
 
 import { expoClient } from "@better-auth/expo/client";
 import { twoFactorClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
-import * as SecureStore from "expo-secure-store";
+
+import { safeSecureStorage } from "./secure-storage";
 
 /**
  * Backend base URL. Production talks to mykavo.app; local development points
@@ -26,7 +28,7 @@ export const authClient = createAuthClient({
     expoClient({
       scheme: "mykavo",
       storagePrefix: "mykavo",
-      storage: SecureStore,
+      storage: safeSecureStorage,
     }),
     twoFactorClient(),
   ],

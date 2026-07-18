@@ -1,15 +1,22 @@
 /**
  * Typed API client for the MyKavo backend.
  *
- * Native: attaches the Better Auth session cookie (from SecureStore) as a
- * Cookie header on every request - the backend authenticates exactly as it
- * does for the web dashboard. Web (dev preview): browsers forbid manual
- * Cookie headers, so requests rely on real browser cookies instead.
+ * Native: attaches the Better Auth session cookie (from SecureStore) plus
+ * the app-managed workspace-selection cookie on every request - the backend
+ * authenticates exactly as it does for the web dashboard. Web (dev preview):
+ * browsers forbid manual Cookie headers, so requests rely on real browser
+ * cookies instead.
+ *
+ * Session-expiry recovery: when an authenticated endpoint answers 401 the
+ * client notifies subscribers (the tab shell signs out and returns to the
+ * login screen) instead of leaving the user stranded on error states.
  */
 
 import { Platform } from "react-native";
 
 import { API_BASE, authClient } from "./auth";
+import { buildQuery } from "./query";
+import { safeSecureStorage, WORKSPACE_KEY } from "./secure-storage";
 import type {
   ApiErrorBody,
   ChangeAction,
@@ -38,10 +45,40 @@ export class ApiError extends Error {
   }
 }
 
+/* ------------------------- session-expiry signal -------------------------- */
+
+type UnauthorizedListener = () => void;
+const unauthorizedListeners = new Set<UnauthorizedListener>();
+
+/** Subscribe to "the backend no longer accepts our session" events. */
+export function onUnauthorized(listener: UnauthorizedListener): () => void {
+  unauthorizedListeners.add(listener);
+  return () => unauthorizedListeners.delete(listener);
+}
+
+function notifyUnauthorized(): void {
+  for (const listener of unauthorizedListeners) {
+    try {
+      listener();
+    } catch {
+      // A listener must never break the API client.
+    }
+  }
+}
+
+/* --------------------------------- fetch ---------------------------------- */
+
 function authHeaders(): Record<string, string> {
   if (Platform.OS === "web") return {};
-  const cookie = authClient.getCookie();
-  return cookie ? { Cookie: cookie } : {};
+  const parts: string[] = [];
+  const sessionCookie = authClient.getCookie();
+  if (sessionCookie) parts.push(sessionCookie);
+  // The active-workspace cookie is set by the server via Set-Cookie, which
+  // plain fetch does not persist on native - we mirror the selection locally
+  // and replay it so every workspace-scoped endpoint sees it.
+  const workspaceId = safeSecureStorage.getItem(WORKSPACE_KEY);
+  if (workspaceId) parts.push(`mykavo-workspace=${workspaceId}`);
+  return parts.length > 0 ? { Cookie: parts.join("; ") } : {};
 }
 
 async function request<T>(
@@ -66,18 +103,11 @@ async function request<T>(
     } catch {
       // Non-JSON error body (e.g. HTML error page) - fall through.
     }
+    if (res.status === 401) notifyUnauthorized();
     throw new ApiError(res.status, body);
   }
 
   return (await res.json()) as T;
-}
-
-function query(params: Record<string, string | undefined>): string {
-  const pairs = Object.entries(params).filter(
-    (pair): pair is [string, string] => Boolean(pair[1]),
-  );
-  if (pairs.length === 0) return "";
-  return `?${new URLSearchParams(pairs).toString()}`;
 }
 
 /* --------------------------------- reads --------------------------------- */
@@ -99,7 +129,7 @@ export const api = {
     websiteId?: string;
   }) =>
     request<ChangesListResponse>(
-      `/api/mobile/changes${query({
+      `/api/mobile/changes${buildQuery({
         status: filters?.status,
         severity: filters?.severity,
         category: filters?.category,
@@ -111,7 +141,7 @@ export const api = {
     request<ChangeDetailResponse>(`/api/mobile/changes/${id}`),
 
   scans: (websiteId?: string) =>
-    request<ScansListResponse>(`/api/mobile/scans${query({ websiteId })}`),
+    request<ScansListResponse>(`/api/mobile/scans${buildQuery({ websiteId })}`),
 
   scanDetail: (id: string) =>
     request<ScanDetailResponse>(`/api/mobile/scans/${id}`),
@@ -140,11 +170,15 @@ export const api = {
       { method: "POST" },
     ),
 
-  switchWorkspace: (workspaceId: string) =>
-    request<{ ok: true }>("/api/workspace/switch", {
+  switchWorkspace: async (workspaceId: string) => {
+    const result = await request<{ ok: true }>("/api/workspace/switch", {
       method: "POST",
       body: { workspaceId },
-    }),
+    });
+    // Mirror the server's httpOnly cookie locally so native requests carry it.
+    safeSecureStorage.setItem(WORKSPACE_KEY, workspaceId);
+    return result;
+  },
 
   pauseWebsite: (id: string, paused: boolean) =>
     request<{ website: unknown }>(`/api/websites/${id}`, {

@@ -48,8 +48,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npx expo lint
+
+      - name: Unit tests
+        run: npm test
+
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
+
+      # Sign every build with the SAME stable key (stored as a repo secret,
+      # standard debug-keystore alias/passwords) so installed apps can update
+      # in place - a fresh prebuild keystore would change the signature every
+      # run and force uninstall/reinstall.
+      - name: Install stable signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android/app/debug.keystore
+            echo "Stable keystore installed"
+          else
+            echo "WARNING: ANDROID_DEBUG_KEYSTORE_B64 secret missing - APK will use a throwaway key"
+          fi
 
       - name: Build release APK
         working-directory: apps/mobile/android

@@ -5,12 +5,14 @@
  */
 
 import { Redirect, Tabs, usePathname, useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { Directions, Gesture, GestureDetector } from "react-native-gesture-handler";
-import { runOnJS } from "react-native-reanimated";
 
 import { FloatingTabBar, TabBarProvider } from "@/components/tab-bar";
-import { useSession } from "@/lib/auth";
+import { onUnauthorized } from "@/lib/api";
+import { authClient, useSession } from "@/lib/auth";
+import { wipeSecureStorage } from "@/lib/secure-storage";
 import { useTheme } from "@/lib/theme-context";
 
 /** Tab order for swipe navigation - must match the Tabs.Screen order. */
@@ -22,6 +24,25 @@ export default function TabsLayout() {
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
 
+  // Session-expiry recovery: when the backend stops accepting our session
+  // (expired/revoked cookie -> 401s), sign out locally and land on /login
+  // instead of stranding the user on error screens.
+  const handlingExpiryRef = useRef(false);
+  useEffect(() => {
+    return onUnauthorized(() => {
+      if (handlingExpiryRef.current) return;
+      handlingExpiryRef.current = true;
+      void (async () => {
+        try {
+          await authClient.signOut();
+        } catch {
+          await wipeSecureStorage();
+        }
+        router.replace("/login");
+      })();
+    });
+  }, [router]);
+
   const tabIndex = TAB_ROUTES.indexOf(pathname as (typeof TAB_ROUTES)[number]);
 
   const swipeTo = (direction: 1 | -1) => {
@@ -30,16 +51,20 @@ export default function TabsLayout() {
     if (next) router.navigate(next);
   };
 
-  // Swipe left -> next tab, swipe right -> previous tab.
+  // Swipe left -> next tab, swipe right -> previous tab. runOnJS(true) runs
+  // the callbacks as plain functions on the JS thread - no worklet machinery
+  // involved, so release builds cannot hit UI-thread/worklet crashes here.
   const flingLeft = Gesture.Fling()
     .direction(Directions.LEFT)
+    .runOnJS(true)
     .onStart(() => {
-      runOnJS(swipeTo)(1);
+      swipeTo(1);
     });
   const flingRight = Gesture.Fling()
     .direction(Directions.RIGHT)
+    .runOnJS(true)
     .onStart(() => {
-      runOnJS(swipeTo)(-1);
+      swipeTo(-1);
     });
   const swipeGesture = Gesture.Race(flingLeft, flingRight);
 
