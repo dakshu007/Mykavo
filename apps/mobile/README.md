@@ -43,6 +43,20 @@ npx expo run:android --variant release
 
 `app.json` already carries the Android package id (`app.mykavo.mobile`), the `mykavo://` scheme, and brand icons (generated from the page-spark mark).
 
+## Reliability hardening (do not regress)
+
+- `src/lib/secure-storage.ts` - EVERY SecureStore access goes through this crash-proof adapter. The Better Auth client reads the session cache synchronously at bundle evaluation; a raw read that throws (Android Keystore invalidation) is a PERMANENT crash-on-open loop. The adapter returns null and self-heals instead.
+- `android.allowBackup: false` in app.json - Android auto-backup restores SecureStore ciphertext without its Keystore key, which is the main trigger for the above.
+- Root `ErrorBoundary` in `src/app/_layout.tsx` - render crashes become a branded recovery screen with "Reset app data", never a dead app.
+- 401 recovery in `src/app/(tabs)/_layout.tsx` - expired/revoked sessions sign out locally and return to /login instead of stranding the user.
+- Tab-swipe gestures use `.runOnJS(true)` - plain JS thread, no release-build worklet risk.
+- `src/lib/query.ts` instead of URLSearchParams (React Native's polyfill is partial).
+- CI signs every APK with ONE stable key (repo secret `ANDROID_DEBUG_KEYSTORE_B64`, backup copy at `~/.fluxen/mykavo-android-debug.keystore` on the owner's Mac) so installed apps update in place. Replace with a proper keystore before any Play Store release.
+
+## Tests
+
+`npm test` - vitest over the pure logic in `src/lib` (formatters, theme mappings, query builder, poll cadence, storage failure modes). CI runs typecheck + lint + tests before every APK build; a red check means no APK ships.
+
 ## Backend coupling
 
 The server side lives in `apps/web`: the `expo()` Better Auth plugin + `mykavo://` / `exp://` trusted origins in `src/lib/auth.ts`, and the read endpoints under `src/app/api/mobile/*`. If you change one of those response shapes, update `src/lib/types.ts` here to match.
