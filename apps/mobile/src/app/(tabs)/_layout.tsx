@@ -1,20 +1,47 @@
 /**
- * Authenticated tab shell - the mobile counterpart of the web dashboard
- * sidebar. Same Lucide icons, fx card surface, ink active state.
+ * Authenticated tab shell: floating island tab bar (auto-hides on scroll),
+ * swipe left/right anywhere on a tab screen to move between tabs.
  * Guards the whole group: no session -> /login.
  */
 
-import { Redirect, Tabs } from "expo-router";
-import { Globe, GitCompareArrows, History, LayoutDashboard, Settings } from "lucide-react-native";
+import { Redirect, Tabs, usePathname, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
+import { Directions, Gesture, GestureDetector } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-reanimated";
 
+import { FloatingTabBar, TabBarProvider } from "@/components/tab-bar";
 import { useSession } from "@/lib/auth";
 import { useTheme } from "@/lib/theme-context";
-import { fonts } from "@/lib/theme";
+
+/** Tab order for swipe navigation - must match the Tabs.Screen order. */
+const TAB_ROUTES = ["/", "/websites", "/changes", "/scans", "/settings"] as const;
 
 export default function TabsLayout() {
   const { palette } = useTheme();
+  const router = useRouter();
+  const pathname = usePathname();
   const { data: session, isPending } = useSession();
+
+  const tabIndex = TAB_ROUTES.indexOf(pathname as (typeof TAB_ROUTES)[number]);
+
+  const swipeTo = (direction: 1 | -1) => {
+    if (tabIndex === -1) return;
+    const next = TAB_ROUTES[tabIndex + direction];
+    if (next) router.navigate(next);
+  };
+
+  // Swipe left -> next tab, swipe right -> previous tab.
+  const flingLeft = Gesture.Fling()
+    .direction(Directions.LEFT)
+    .onStart(() => {
+      runOnJS(swipeTo)(1);
+    });
+  const flingRight = Gesture.Fling()
+    .direction(Directions.RIGHT)
+    .onStart(() => {
+      runOnJS(swipeTo)(-1);
+    });
+  const swipeGesture = Gesture.Race(flingLeft, flingRight);
 
   if (isPending) {
     return (
@@ -36,57 +63,25 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: palette.ink,
-        tabBarInactiveTintColor: palette.inkFaint,
-        tabBarStyle: {
-          backgroundColor: palette.card,
-          borderTopColor: palette.line,
-        },
-        tabBarLabelStyle: {
-          fontFamily: fonts.bodyMedium,
-          fontSize: 11,
-        },
-        sceneStyle: { backgroundColor: palette.canvas },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Overview",
-          tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size - 2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="websites"
-        options={{
-          title: "Websites",
-          tabBarIcon: ({ color, size }) => <Globe color={color} size={size - 2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="changes"
-        options={{
-          title: "Changes",
-          tabBarIcon: ({ color, size }) => <GitCompareArrows color={color} size={size - 2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="scans"
-        options={{
-          title: "Scans",
-          tabBarIcon: ({ color, size }) => <History color={color} size={size - 2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => <Settings color={color} size={size - 2} />,
-        }}
-      />
-    </Tabs>
+    <TabBarProvider>
+      <GestureDetector gesture={swipeGesture}>
+        <View style={{ flex: 1 }}>
+          <Tabs
+            tabBar={(props) => <FloatingTabBar {...props} />}
+            screenOptions={{
+              headerShown: false,
+              animation: "shift",
+              sceneStyle: { backgroundColor: palette.canvas },
+            }}
+          >
+            <Tabs.Screen name="index" options={{ title: "Overview" }} />
+            <Tabs.Screen name="websites" options={{ title: "Websites" }} />
+            <Tabs.Screen name="changes" options={{ title: "Changes" }} />
+            <Tabs.Screen name="scans" options={{ title: "Scans" }} />
+            <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+          </Tabs>
+        </View>
+      </GestureDetector>
+    </TabBarProvider>
   );
 }

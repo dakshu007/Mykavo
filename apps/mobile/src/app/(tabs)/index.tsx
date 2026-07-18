@@ -5,9 +5,10 @@
  * matching the web dashboard's live cadence.
  */
 
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
-import { Linking, Pressable, Text, View } from "react-native";
+import { useCallback, useRef } from "react";
+import { BackHandler, Linking, Platform, Pressable, Text, ToastAndroid, View } from "react-native";
 
 import { HealthDot, SeverityBadge, WebsiteStatusBadge } from "@/components/badges";
 import { Screen } from "@/components/screen";
@@ -81,6 +82,26 @@ function CardHeader({ title, onViewAll }: { title: string; onViewAll?: () => voi
 export default function OverviewScreen() {
   const router = useRouter();
   const { palette } = useTheme();
+
+  // Android: home is the app's root - first back press warns, a second one
+  // within 2s exits (covers both the back button and the back gesture).
+  const lastBackPressRef = useRef(0);
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== "android") return;
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        const now = Date.now();
+        if (now - lastBackPressRef.current < 2000) {
+          BackHandler.exitApp();
+          return true;
+        }
+        lastBackPressRef.current = now;
+        ToastAndroid.show("Press back again to exit MyKavo", ToastAndroid.SHORT);
+        return true;
+      });
+      return () => sub.remove();
+    }, []),
+  );
 
   const { data, error, loading, refreshing, refresh, reload } = useLive(api.overview, [], {
     interval: (d) => activeInterval(Boolean(d?.websites.some((w) => w.scanInProgress)), 15000),

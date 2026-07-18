@@ -2,12 +2,25 @@
  * Screen scaffold: safe-area padded scroll surface on the fx canvas, with the
  * dashboard's header pattern (Poppins title + 13px secondary subtitle) and
  * built-in pull-to-refresh wiring for useLive.
+ *
+ * Inside the tab group it also feeds scroll offsets to the floating tab bar
+ * (hide on scroll down, return on scroll up) and reserves clearance so
+ * content is never trapped behind the pill.
  */
 
 import { type ReactNode } from "react";
-import { RefreshControl, ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { TAB_BAR_CLEARANCE, useTabBar } from "@/components/tab-bar";
 import { Heading, Small } from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
 
@@ -32,6 +45,15 @@ export function Screen({
 }) {
   const { palette } = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBar = useTabBar();
+
+  const bottomPadding = tabBar ? TAB_BAR_CLEARANCE + insets.bottom : 32;
+
+  const handleScroll = tabBar
+    ? (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        tabBar.onScroll(event.nativeEvent.contentOffset.y);
+      }
+    : undefined;
 
   const header =
     title !== undefined ? (
@@ -61,6 +83,7 @@ export function Screen({
             backgroundColor: palette.canvas,
             paddingTop: insets.top + 12,
             paddingHorizontal: 16,
+            paddingBottom: bottomPadding,
           },
           contentStyle,
         ]}
@@ -78,11 +101,13 @@ export function Screen({
         {
           paddingTop: insets.top + 12,
           paddingHorizontal: 16,
-          paddingBottom: 32,
+          paddingBottom: bottomPadding,
           gap: 16,
         },
         contentStyle,
       ]}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
       refreshControl={
         onRefresh ? (
           <RefreshControl
