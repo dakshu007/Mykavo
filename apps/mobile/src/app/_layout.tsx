@@ -169,7 +169,6 @@ function Root() {
 }
 
 type SafeModeState =
-  | { kind: "checking" }
   | { kind: "safe-mode"; crash: CrashRecord | null; interrupted: boolean }
   | { kind: "normal" };
 
@@ -185,22 +184,22 @@ export default function RootLayout() {
     GeistMono_500Medium,
   });
 
-  const [safeMode, setSafeMode] = useState<SafeModeState>({ kind: "checking" });
-
-  // Boot-health check: if the previous launch crashed (recorded error) or
-  // died before stabilizing (sentinel still pending), show safe mode with
-  // the details instead of walking straight back into the same crash.
-  useEffect(() => {
+  // Boot-health check runs once, synchronously, in the state initializer:
+  // if the previous launch crashed (recorded error) or died before
+  // stabilizing (sentinel still pending), open in safe mode showing the
+  // details instead of walking straight back into the same crash.
+  const [safeMode, setSafeMode] = useState<SafeModeState>(() => {
     const crash = readLastCrash();
     const interrupted = wasLastBootInterrupted();
-    if (crash || interrupted) {
-      setSafeMode({ kind: "safe-mode", crash, interrupted });
-      return;
-    }
-    setSafeMode({ kind: "normal" });
+    return crash || interrupted ? { kind: "safe-mode", crash, interrupted } : { kind: "normal" };
+  });
+
+  // While running normally, keep the boot sentinel: pending at start,
+  // cleared once the app survives a few seconds in the foreground or is
+  // backgrounded normally.
+  useEffect(() => {
+    if (safeMode.kind !== "normal") return;
     markBootPending();
-    // Consider the boot stable after it survives a few seconds in the
-    // foreground, or when the user backgrounds the app normally.
     const timer = setTimeout(markBootStable, 6000);
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "background" || state === "inactive") markBootStable();
@@ -210,13 +209,13 @@ export default function RootLayout() {
       sub.remove();
       markBootStable();
     };
-  }, []);
+  }, [safeMode.kind]);
 
   useEffect(() => {
-    if (fontsLoaded && safeMode.kind !== "checking") void SplashScreen.hideAsync();
-  }, [fontsLoaded, safeMode.kind]);
+    if (fontsLoaded) void SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
-  if (!fontsLoaded || safeMode.kind === "checking") return null;
+  if (!fontsLoaded) return null;
 
   if (safeMode.kind === "safe-mode") {
     const proceed = () => {
