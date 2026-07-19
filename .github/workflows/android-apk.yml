@@ -1,6 +1,11 @@
 # Builds the MyKavo Android APK and publishes it to the rolling
-# "mobile-latest" GitHub release, so the newest APK is always at:
-#   https://github.com/dakshu007/Mykavo/releases/tag/mobile-latest
+# "mobile-latest" release on the PUBLIC download repo (this repo is
+# private), so the newest APK is always at:
+#   https://github.com/dakshu007/Mykavo-app-download/releases/latest/download/mykavo.apk
+#
+# Cross-repo publishing needs the RELEASE_TOKEN secret (a token with
+# write access to dakshu007/Mykavo-app-download) - the default
+# github.token only reaches this repo.
 #
 # Runs on every push to main that touches apps/mobile (or this file),
 # and can be started manually from the Actions tab (workflow_dispatch).
@@ -86,14 +91,16 @@ jobs:
           path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
-      - name: Publish rolling release
+      - name: Publish rolling release to the public download repo
         if: github.ref == 'refs/heads/main'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          DOWNLOAD_REPO: dakshu007/Mykavo-app-download
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk mykavo.apk
-          gh release delete mobile-latest --cleanup-tag --yes || true
+          gh release delete mobile-latest --repo "$DOWNLOAD_REPO" --cleanup-tag --yes || true
           gh release create mobile-latest mykavo.apk \
+            --repo "$DOWNLOAD_REPO" \
             --title "MyKavo Android (latest)" \
-            --notes "Auto-built from $GITHUB_SHA. Download mykavo.apk, open it on your Android phone, and allow installing from this source. Signs into your normal MyKavo account at mykavo.app." \
-            --latest=false
+            --notes "Auto-built from Mykavo@$GITHUB_SHA. Download mykavo.apk, open it on your Android phone, and allow installing from this source. Signs into your normal MyKavo account at https://mykavo.app." \
+            --latest

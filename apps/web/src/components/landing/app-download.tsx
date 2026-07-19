@@ -9,12 +9,13 @@ import { eyebrowOnDark, fontDisplay } from "./style";
  * screens at the same moment (identical keyframe timing = the sync story
  * told visually). Pure CSS animation, fully paused for reduced-motion users.
  *
- * The download button points at the rolling GitHub release, which always
+ * The download button points at the rolling release on the PUBLIC
+ * Mykavo-app-download repo (the main repo is private), which always
  * serves the newest APK built by CI - the link never goes stale.
  */
 
 export const APK_URL =
-  "https://github.com/dakshu007/Mykavo/releases/download/mobile-latest/mykavo.apk";
+  "https://github.com/dakshu007/Mykavo-app-download/releases/latest/download/mykavo.apk";
 
 /** Gold chip that pops into both mock screens at the same moment. */
 function SyncedChip({ className = "" }: { className?: string }) {
