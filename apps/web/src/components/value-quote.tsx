@@ -36,7 +36,7 @@ export function ValueQuoteBanner() {
         </span>
         <p className="[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] text-2xl font-medium leading-snug tracking-[-0.01em] text-[#151515] sm:text-[32px] sm:leading-[1.3]">
           {quote.lead} -{" "}
-          <span className="relative inline-block whitespace-nowrap">
+          <span className="relative inline-block">
             <span
               aria-hidden
               className="absolute inset-x-[-3px] bottom-[8%] top-[12%] -rotate-1 rounded bg-[#FFD400]"

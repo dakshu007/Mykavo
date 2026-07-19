@@ -120,7 +120,7 @@ export function AlertChannelsSection() {
         >
           One alert,
           <br />
-          <span className="relative inline-block whitespace-nowrap">
+          <span className="relative inline-block">
             <span
               aria-hidden
               className="absolute inset-x-[-6px] bottom-[6%] top-[12%] -rotate-1 rounded-md bg-[#FFD400]"
