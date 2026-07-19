@@ -11,8 +11,9 @@ function isSlugConflict(err: unknown): boolean {
 }
 
 /**
- * Update a post. publishedAt is set on first publish and preserved on
- * re-publish and unpublish (only ever set while null).
+ * Update a post. An explicit editor-supplied publishedAt always wins;
+ * otherwise it is set on first publish and preserved on re-publish and
+ * unpublish (only ever set while null).
  */
 export async function PATCH(request: Request, { params }: Params) {
   const gate = await getBlogAdminGate();
@@ -56,10 +57,14 @@ export async function PATCH(request: Request, { params }: Params) {
         authorName: input.authorName,
         seoTitle: input.seoTitle,
         seoDescription: input.seoDescription,
+        primaryKeyword: input.primaryKeyword,
+        secondaryKeyword: input.secondaryKeyword,
+        tags: input.tags,
         publishedAt:
-          input.status === "PUBLISHED" && !existing.publishedAt
+          input.publishedAt ??
+          (input.status === "PUBLISHED" && !existing.publishedAt
             ? new Date()
-            : existing.publishedAt,
+            : existing.publishedAt),
       },
     });
     logger.info("blog post updated", {

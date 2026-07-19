@@ -28,7 +28,10 @@ export async function GET() {
   return NextResponse.json({ posts });
 }
 
-/** Create a post. publishedAt is stamped when created directly as PUBLISHED. */
+/**
+ * Create a post. publishedAt honors an explicit editor value, otherwise it
+ * is stamped when created directly as PUBLISHED.
+ */
 export async function POST(request: Request) {
   const gate = await getBlogAdminGate();
   if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
@@ -63,7 +66,11 @@ export async function POST(request: Request) {
         authorName: input.authorName,
         seoTitle: input.seoTitle,
         seoDescription: input.seoDescription,
-        publishedAt: input.status === "PUBLISHED" ? new Date() : null,
+        primaryKeyword: input.primaryKeyword,
+        secondaryKeyword: input.secondaryKeyword,
+        tags: input.tags,
+        publishedAt:
+          input.publishedAt ?? (input.status === "PUBLISHED" ? new Date() : null),
       },
     });
     logger.info("blog post created", {

@@ -28,9 +28,17 @@ export default async function EditBlogPostPage({
       authorName: true,
       seoTitle: true,
       seoDescription: true,
+      primaryKeyword: true,
+      secondaryKeyword: true,
+      tags: true,
+      publishedAt: true,
     },
   });
   if (!post) notFound();
 
-  return <BlogPostEditor post={post} />;
+  return (
+    <BlogPostEditor
+      post={{ ...post, publishedAt: post.publishedAt?.toISOString() ?? null }}
+    />
+  );
 }

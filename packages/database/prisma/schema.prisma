@@ -834,6 +834,10 @@ model BlogPost {
   authorName     String         @default("MyKavo Team")
   seoTitle       String?
   seoDescription String?
+  // SEO focus keywords surfaced in <meta keywords> and Article JSON-LD.
+  primaryKeyword   String?
+  secondaryKeyword String?
+  tags             String[]     @default([])
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, X } from "lucide-react";
 import { ContentEditor } from "@/components/blog/content-editor";
 import { PostStatusBadge } from "@/components/blog/status-badge";
 import { slugify } from "@/lib/slugify";
@@ -19,10 +19,22 @@ export interface EditorPost {
   authorName: string;
   seoTitle: string | null;
   seoDescription: string | null;
+  primaryKeyword: string | null;
+  secondaryKeyword: string | null;
+  tags: string[];
+  /** ISO string (serialized server-side) or null when never published. */
+  publishedAt: string | null;
+}
+
+const MAX_TAGS = 12;
+
+/** UTC calendar day of an ISO timestamp, as the value for <input type="date">. */
+function isoToDateInput(iso: string | null): string {
+  return iso ? iso.slice(0, 10) : "";
 }
 
 type SaveResponse = {
-  post?: { id: string; status: "DRAFT" | "PUBLISHED" };
+  post?: { id: string; status: "DRAFT" | "PUBLISHED"; publishedAt?: string | null };
   error?: string;
   issues?: string[];
 };
@@ -42,6 +54,13 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
   const [authorName, setAuthorName] = useState(post?.authorName ?? "MyKavo Team");
   const [seoTitle, setSeoTitle] = useState(post?.seoTitle ?? "");
   const [seoDescription, setSeoDescription] = useState(post?.seoDescription ?? "");
+  const [primaryKeyword, setPrimaryKeyword] = useState(post?.primaryKeyword ?? "");
+  const [secondaryKeyword, setSecondaryKeyword] = useState(post?.secondaryKeyword ?? "");
+  const [tags, setTags] = useState<string[]>(post?.tags ?? []);
+  const [tagDraft, setTagDraft] = useState("");
+  // Canonical stored timestamp; the date input edits only its calendar day.
+  const [publishedAtIso, setPublishedAtIso] = useState(post?.publishedAt ?? null);
+  const [publishedDate, setPublishedDate] = useState(isoToDateInput(post?.publishedAt ?? null));
   const [savedStatus, setSavedStatus] = useState<"DRAFT" | "PUBLISHED">(
     post?.status ?? "DRAFT",
   );
@@ -56,6 +75,43 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
   function handleTitleChange(value: string) {
     setTitle(value);
     if (!slugTouched) setSlug(slugify(value));
+  }
+
+  /** Add the draft tag(s) - comma-separated input adds several at once. */
+  function addTags(raw: string) {
+    const incoming = raw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (incoming.length === 0) return;
+    setTags((current) => {
+      const next = [...current];
+      const seen = new Set(current.map((t) => t.toLowerCase()));
+      for (const tag of incoming) {
+        const key = tag.toLowerCase();
+        if (seen.has(key) || next.length >= MAX_TAGS) continue;
+        seen.add(key);
+        next.push(tag.slice(0, 40));
+      }
+      return next;
+    });
+    setTagDraft("");
+  }
+
+  function removeTag(tag: string) {
+    setTags((current) => current.filter((t) => t !== tag));
+  }
+
+  /**
+   * The value PATCH/POST receives. Untouched date sends the original ISO
+   * (preserving the stored time of day); a changed date sends the plain
+   * date, which the server parses as midnight UTC. Empty means automatic
+   * (stamped on first publish).
+   */
+  function publishedAtPayload(): string | null {
+    if (!publishedDate) return null;
+    if (publishedAtIso && isoToDateInput(publishedAtIso) === publishedDate) return publishedAtIso;
+    return publishedDate;
   }
 
   async function save(nextStatus: "DRAFT" | "PUBLISHED") {
@@ -75,6 +131,10 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
           authorName,
           seoTitle,
           seoDescription,
+          primaryKeyword,
+          secondaryKeyword,
+          tags,
+          publishedAt: publishedAtPayload(),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as SaveResponse;
@@ -86,6 +146,10 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
       }
 
       setSavedStatus(data.post.status);
+      if (data.post.publishedAt !== undefined) {
+        setPublishedAtIso(data.post.publishedAt);
+        setPublishedDate(isoToDateInput(data.post.publishedAt));
+      }
       if (!post) {
         router.replace(`/dashboard/blog/${data.post.id}/edit`);
         router.refresh();
@@ -179,6 +243,23 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
             />
           </div>
 
+          <div>
+            <label htmlFor="post-published-date" className="mb-1.5 block text-sm font-medium text-ink">
+              Published date
+            </label>
+            <input
+              id="post-published-date"
+              type="date"
+              value={publishedDate}
+              onChange={(e) => setPublishedDate(e.target.value)}
+              className={cn(fieldClass, "max-w-56")}
+            />
+            <p className="mt-1.5 text-[13px] text-ink-faint">
+              Shown on the post and used for ordering. Leave empty to stamp it automatically on
+              first publish.
+            </p>
+          </div>
+
           <details className="group rounded-tile border border-line px-4 py-3">
             <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-ink [&::-webkit-details-marker]:hidden">
               SEO &amp; author
@@ -199,6 +280,40 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
                   onChange={(e) => setSeoTitle(e.target.value)}
                   className={fieldClass}
                 />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="post-primary-keyword"
+                    className="mb-1.5 block text-sm font-medium text-ink"
+                  >
+                    Primary keyword
+                  </label>
+                  <input
+                    id="post-primary-keyword"
+                    type="text"
+                    value={primaryKeyword}
+                    onChange={(e) => setPrimaryKeyword(e.target.value)}
+                    placeholder="website change monitoring"
+                    className={fieldClass}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="post-secondary-keyword"
+                    className="mb-1.5 block text-sm font-medium text-ink"
+                  >
+                    Secondary keyword
+                  </label>
+                  <input
+                    id="post-secondary-keyword"
+                    type="text"
+                    value={secondaryKeyword}
+                    onChange={(e) => setSecondaryKeyword(e.target.value)}
+                    placeholder="visual regression testing"
+                    className={fieldClass}
+                  />
+                </div>
               </div>
               <div>
                 <label
@@ -233,6 +348,61 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
               </div>
             </div>
           </details>
+        </div>
+      </div>
+
+      <div className="rounded-card bg-card p-6 shadow-card">
+        <label htmlFor="post-tag-input" className="block text-sm font-medium text-ink">
+          Tags
+        </label>
+        <p className="mt-1 text-[13px] text-ink-faint">
+          Shown on the blog and searchable by readers. Press Enter or comma to add - up to{" "}
+          {MAX_TAGS}.
+        </p>
+        {tags.length > 0 && (
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <li
+                key={tag}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-ink"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  aria-label={`Remove tag ${tag}`}
+                  className="text-ink-faint transition-colors hover:text-ink"
+                >
+                  <X className="size-3.5" aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-3 flex gap-2">
+          <input
+            id="post-tag-input"
+            type="text"
+            value={tagDraft}
+            onChange={(e) => setTagDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === ",") {
+                e.preventDefault();
+                addTags(tagDraft);
+              }
+            }}
+            placeholder="seo, monitoring, changelog…"
+            disabled={tags.length >= MAX_TAGS}
+            className={cn(fieldClass, "flex-1")}
+          />
+          <button
+            type="button"
+            onClick={() => addTags(tagDraft)}
+            disabled={!tagDraft.trim() || tags.length >= MAX_TAGS}
+            className="inline-flex h-[50px] items-center rounded-field border border-line bg-card px-5 text-sm font-medium text-ink transition-colors hover:border-ink-faint disabled:opacity-60"
+          >
+            Add
+          </button>
         </div>
       </div>
 

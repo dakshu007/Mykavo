@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, PenLine, Rss } from "lucide-react";
+import { PenLine, Rss } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { card, eyebrow, fontSans, fontDisplay } from "@/components/landing/style";
 import { readingTimeMinutes } from "@/components/blog/blocks";
+import { BlogIndexList } from "@/components/blog/blog-index-list";
 
 // Dynamic on purpose: a post published from the dashboard must be visible
 // immediately, without a redeploy. ISR + revalidatePath is a future optimization.
@@ -38,8 +39,22 @@ export default async function BlogIndexPage() {
       authorName: true,
       publishedAt: true,
       content: true,
+      tags: true,
     },
   });
+
+  // Serialized for the client list - dates preformatted so SSR and the
+  // visitor's browser render the same label regardless of timezone.
+  const indexPosts = posts.map((post) => ({
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    authorName: post.authorName,
+    publishedAtIso: post.publishedAt?.toISOString() ?? null,
+    publishedAtLabel: post.publishedAt ? dateFormat.format(post.publishedAt) : null,
+    readMinutes: readingTimeMinutes(post.content),
+    tags: post.tags,
+  }));
 
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
@@ -80,42 +95,7 @@ export default async function BlogIndexPage() {
             </Link>
           </div>
         ) : (
-          <div className="mx-auto grid max-w-3xl gap-4">
-            {posts.map((post) => (
-              <article
-                key={post.slug}
-                className={`${card} group p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[5px_5px_0_#151515] sm:p-8`}
-              >
-                <p className="text-[13px] text-[#6B6B60]">
-                  {post.publishedAt && (
-                    <time dateTime={post.publishedAt.toISOString()}>
-                      {dateFormat.format(post.publishedAt)}
-                    </time>
-                  )}
-                  <span aria-hidden> · </span>
-                  {post.authorName}
-                  <span aria-hidden> · </span>
-                  {readingTimeMinutes(post.content)} min read
-                </p>
-                <h2 className={`${fontDisplay} mt-3 text-[28px] leading-tight text-[#151515]`}>
-                  <Link href={`/blog/${post.slug}`}>{post.title}</Link>
-                </h2>
-                {post.excerpt && (
-                  <p className="mt-3 text-sm leading-7 text-[#6B6B60]">{post.excerpt}</p>
-                )}
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
-                >
-                  Read post{" "}
-                  <ArrowRight
-                    className="size-4 transition-transform group-hover:translate-x-1"
-                    aria-hidden
-                  />
-                </Link>
-              </article>
-            ))}
-          </div>
+          <BlogIndexList posts={indexPosts} />
         )}
       </main>
       <LandingFooter />

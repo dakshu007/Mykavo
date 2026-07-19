@@ -75,4 +75,59 @@ describe("blogPostInputSchema", () => {
       blogPostInputSchema.safeParse({ ...validPayload, content: "" }).success,
     ).toBe(true);
   });
+
+  it("defaults tags to empty and keywords to null when omitted", () => {
+    const parsed = blogPostInputSchema.parse(validPayload);
+    expect(parsed.tags).toEqual([]);
+    expect(parsed.primaryKeyword).toBeNull();
+    expect(parsed.secondaryKeyword).toBeNull();
+    expect(parsed.publishedAt).toBeNull();
+  });
+
+  it("trims tags and dedupes them case-insensitively, keeping first casing", () => {
+    const parsed = blogPostInputSchema.parse({
+      ...validPayload,
+      tags: [" SEO ", "seo", "Monitoring", "monitoring", "changelog"],
+    });
+    expect(parsed.tags).toEqual(["SEO", "Monitoring", "changelog"]);
+  });
+
+  it("rejects empty tags and more than 12 tags", () => {
+    expect(blogPostInputSchema.safeParse({ ...validPayload, tags: ["  "] }).success).toBe(false);
+    expect(
+      blogPostInputSchema.safeParse({
+        ...validPayload,
+        tags: Array.from({ length: 13 }, (_, i) => `tag-${i}`),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("normalizes empty keywords to null", () => {
+    const parsed = blogPostInputSchema.parse({
+      ...validPayload,
+      primaryKeyword: "  ",
+      secondaryKeyword: "visual regression testing",
+    });
+    expect(parsed.primaryKeyword).toBeNull();
+    expect(parsed.secondaryKeyword).toBe("visual regression testing");
+  });
+
+  it("parses publishedAt date strings as midnight UTC and full ISO timestamps", () => {
+    const dateOnly = blogPostInputSchema.parse({ ...validPayload, publishedAt: "2026-07-01" });
+    expect(dateOnly.publishedAt?.toISOString()).toBe("2026-07-01T00:00:00.000Z");
+
+    const fullIso = blogPostInputSchema.parse({
+      ...validPayload,
+      publishedAt: "2026-07-01T09:30:00.000Z",
+    });
+    expect(fullIso.publishedAt?.toISOString()).toBe("2026-07-01T09:30:00.000Z");
+  });
+
+  it("treats empty publishedAt as automatic and rejects garbage dates", () => {
+    expect(blogPostInputSchema.parse({ ...validPayload, publishedAt: "" }).publishedAt).toBeNull();
+    expect(blogPostInputSchema.parse({ ...validPayload, publishedAt: null }).publishedAt).toBeNull();
+    expect(
+      blogPostInputSchema.safeParse({ ...validPayload, publishedAt: "not-a-date" }).success,
+    ).toBe(false);
+  });
 });

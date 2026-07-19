@@ -44,9 +44,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const title = post.seoTitle ?? post.title;
   const description = post.seoDescription ?? post.excerpt ?? undefined;
+  const keywords = [post.primaryKeyword, post.secondaryKeyword, ...post.tags].filter(
+    (keyword): keyword is string => Boolean(keyword),
+  );
   return {
     title,
     description,
+    keywords: keywords.length > 0 ? keywords : undefined,
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       type: "article",
@@ -70,6 +74,9 @@ export default async function BlogPostPage({ params }: Params) {
   const showTocRail = headings.length >= 2;
   const authorInitial = post.authorName.trim().charAt(0).toUpperCase() || "F";
 
+  const jsonLdKeywords = [post.primaryKeyword, post.secondaryKeyword, ...post.tags]
+    .filter((keyword): keyword is string => Boolean(keyword))
+    .join(", ");
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -80,6 +87,7 @@ export default async function BlogPostPage({ params }: Params) {
     author: { "@type": "Person", name: post.authorName },
     publisher: { "@type": "Organization", name: site.name, url: site.url },
     mainEntityOfPage: `${site.url}/blog/${post.slug}`,
+    ...(jsonLdKeywords ? { keywords: jsonLdKeywords } : {}),
   };
 
   const faqJsonLd =
@@ -142,6 +150,18 @@ export default async function BlogPostPage({ params }: Params) {
               <span aria-hidden> · </span>
               {readMinutes} min read
             </p>
+            {post.tags.length > 0 && (
+              <ul className="mt-4 flex flex-wrap justify-center gap-1.5">
+                {post.tags.map((tag) => (
+                  <li
+                    key={tag}
+                    className="rounded-full border border-[#151515]/15 bg-[#FFD400]/25 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#151515]"
+                  >
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="mt-8">
               <Link
                 href="/signup"
