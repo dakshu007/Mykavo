@@ -4,8 +4,9 @@
     {
       "name": "web",
       "runtimeExecutable": "/Users/dakshu/.hermes/node/bin/pnpm",
-      "runtimeArgs": ["--filter", "web", "exec", "next", "dev", "-p", "3010"],
-      "port": 3010
+      "runtimeArgs": ["--filter", "web", "exec", "next", "dev"],
+      "port": 3010,
+      "autoPort": true
     },
     {
       "name": "mobile-web",
