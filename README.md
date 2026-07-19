@@ -10,7 +10,7 @@ MyKavo is a **website change detection & regression monitoring SaaS** for agenci
 
 ## 🧭 New session? Fresh AI assistant? Start here
 
-This README is the **complete, self-contained handoff** for the project. It assumes NOTHING carried over - no prior chat history, no Claude memory files, possibly a different Claude/AI account. Everything needed to understand, run, and continue the project is in this repo:
+This README is the **complete, self-contained handoff** for the project. It assumes NOTHING carried over - no prior chat history, no Claude memory files, possibly a different Claude/AI account. Everything needed to understand, run, and continue the project is in this repo. **Last synced: 2026-07-19** (blog CMS keywords/tags/editable publish date + public blog search/load-more live; mobile v1.0.1; landing mobile-overflow fix).
 
 1. **Read this README top to bottom** - current state, architecture, runbooks, gotchas.
 2. **Read `CLAUDE.md`** - the original product spec (vision, principles, phases). All phases 0-11 are COMPLETE; the spec still governs product philosophy (deterministic detection, low false positives, cost control, no fake social proof).
@@ -47,12 +47,12 @@ Product naming: the product was renamed **Fluxen → MyKavo** (2026-07-16). The 
 | **Auth & security** | Better Auth email+password (+optional Google), **TOTP 2FA** (Google Authenticator: QR enroll at signup + Settings Security card, code challenge at login, trust-device 30d, backup codes), **signup email vetting** (format + disposable blocklist + DNS MX check), strict rate limits, SSRF protection everywhere, **Supabase RLS enabled on all tables** |
 | **Billing (LIVE)** | Dodo Payments **live mode**: Free (1 site, 5 pages, weekly) / **Pro $20/mo (8 sites, 15 pages each, daily, 5 seats)**. No add-ons (removed). Auto-activation via verified webhook, renewal date on Billing page, daily renewal-reminder emails, in-app cancel + Dodo portal (`DODO_API_KEY`), **refund.succeeded auto-revokes Pro**. Region display: US sees $, India-timezone sees ₹ (anchor $20 = ₹1,700) with a "billed as $20 USD" note |
 | **Growth** | New-signup emails append to a private Google Sheet (Apps Script webhook, `SIGNUP_SHEET_WEBHOOK_URL`) for future email marketing; value quote ("$0.67/day" / "~₹57/day") on landing, /pricing, and Billing |
-| **Marketing site (v4)** | Bright-gold design (see Design language): homepage, /pricing, /about (name story + founder bio), /support, /privacy, /terms, /cookies, blog + RSS, 5 free SEO tools under /tools/*, staged-reveal **404 page** ("My-Kaa-vo. Means guardian. This page? Clearly escaped.") |
+| **Marketing site (v4)** | Bright-gold design (see Design language): homepage (incl. **alert-channels hub** + **Android app** sections with CSS animations), /pricing, /about (name story + founder bio), /support, /privacy, /terms, /cookies, blog + RSS, 5 free SEO tools under /tools/*, staged-reveal **404 page** ("My-Kaa-vo. Means guardian. This page? Clearly escaped."). Mobile-safe at 375/360px (see gotcha on highlight spans) |
 | **SEO / AI search** | Keyword-loaded metadata (site monitoring tools, website change detection, ...), OG image (`app/opengraph-image.png`), JSON-LD graph (Organization/WebSite/SoftwareApplication/FAQPage), **/llms.txt** product summary, robots.txt explicitly welcomes AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, ...), sitemap.xml, GA4 `G-DQMWRHWFK8`, GSC verification file. Primary market: US |
-| **Blog CMS** | `/dashboard/blog` (Tiptap visual editor, `BLOG_ADMIN_EMAILS` allowlist), public `/blog` + `/blog/feed.xml` |
-| **Android app** | `apps/mobile` - Expo SDK 57 / React Native / expo-router, OUTSIDE the pnpm workspace (own npm lockfile; Metro wants hoisted deps). Same accounts/sessions as the web (Better Auth `expo()` plugin + `mykavo://`/`exp://` trustedOrigins in `apps/web/src/lib/auth.ts`), TOTP 2FA + trust-device in the login screen. Reads via `/api/mobile/*` JSON endpoints (me/overview/changes/scans/websites - contract mirrored in `apps/mobile/src/lib/types.ts`), mutates via the SAME routes as the web dashboard. Live sync = focus refetch + 3-20s polling (`src/lib/live.ts`), matching the web's auto-refresh cadence. Design: `--fx-*` tokens ported 1:1 (light+dark) in `src/lib/theme.ts`, gold v4 login screen, brand icons from the page-spark mark. APK: `.github/workflows/android-apk.yml` builds on every push to main touching apps/mobile and publishes to the rolling `mobile-latest` GitHub release (debug-keystore signed - fine for sideload, replace keystore before Play Store) |
+| **Blog CMS** | `/dashboard/blog` (Tiptap visual editor, `BLOG_ADMIN_EMAILS` allowlist), public `/blog` + `/blog/feed.xml`. Editor has an **editable Published date** (empty = stamped on first publish; editing it backdates the post and reorders the index; an untouched date preserves the stored time of day), **primary + secondary SEO keyword** fields (emitted as `<meta name="keywords">` + Article JSON-LD `keywords`), and a **Tags card** (chip input, Enter/comma adds, 12 max, case-insensitive dedupe; chips shown on the post + index cards). Public `/blog` has a **search box** (title/excerpt/author/tag) and renders **6 posts at a time** behind a "Read more posts (N more)" button (`components/blog/blog-index-list.tsx`); index tags are click-to-search. Fields live on `blog_post` (`primaryKeyword`, `secondaryKeyword`, `tags`; migration `20260719000000_blog_keywords_tags`) |
+| **Android app** | `apps/mobile` - Expo SDK 57 / React Native / expo-router, OUTSIDE the pnpm workspace (own npm lockfile; Metro wants hoisted deps). Same accounts/sessions as the web (Better Auth `expo()` plugin + `mykavo://`/`exp://` trustedOrigins in `apps/web/src/lib/auth.ts`), TOTP 2FA + trust-device in the login screen. Reads via `/api/mobile/*` JSON endpoints (me/overview/changes/scans/websites - contract mirrored in `apps/mobile/src/lib/types.ts`), mutates via the SAME routes as the web dashboard. Live sync = focus refetch + 3-20s polling (`src/lib/live.ts`), matching the web's auto-refresh cadence. Design: `--fx-*` tokens ported 1:1 (light+dark) in `src/lib/theme.ts`, gold v4 login screen, brand icons from the page-spark mark, floating island tab bar (auto-hide on scroll) + swipe between tabs + double-back exit toast. **v1.0.1 reliability hardening**: safe SecureStore adapter, root ErrorBoundary + crash-guard safe mode (records errors, shows them next launch), 401 session recovery, workspace cookie replay, no session-cache boot hydration (fixed relaunch-after-login crash), clean activity finish instead of exitApp, allowBackup off, stable CI signing key, 32-test vitest suite. APK: `.github/workflows/android-apk.yml` builds on every push to main touching apps/mobile and publishes to the rolling `mobile-latest` GitHub release (debug-keystore signed - fine for sideload, replace keystore before Play Store) |
 
-**Tests: 573 web · 99 shared · 51 comparison · 32 severity · 19 email · 4 scanner · 43 DB integration.** Run per package: `pnpm --filter web test`, etc.
+**Tests: 607 web · 99 shared · 51 comparison · 32 severity · 19 email · 4 scanner · 43 DB integration · 32 mobile.** Run per package: `pnpm --filter web test`, etc. (mobile: `cd apps/mobile && npm test`).
 
 ---
 
@@ -107,12 +107,14 @@ See `apps/web/.env.example` and `apps/worker/.env.example` for the annotated lis
 ```bash
 export PATH="$HOME/.hermes/node/bin:$PATH"   # owner's Mac; otherwise any Node 20+ with pnpm 10
 pnpm install
-pnpm dev        # web → http://localhost:3000 (Claude sessions: launch.json "web" → port 3010)
+pnpm dev        # web → http://localhost:3000 (Claude sessions: launch.json "web" → 3010, autoPort
+                #   assigns another port if 3010 is busy - then update BETTER_AUTH_URL/APP_URL in
+                #   the worktree's apps/web/.env.local to that port or login fails "Invalid origin")
 pnpm worker     # scan worker, 2nd terminal (apps/worker/.env → local postgres fluxen_dev)
 pnpm test       # per package: pnpm --filter web test, etc.
 pnpm --filter web lint && pnpm --filter web typecheck && pnpm --filter web build
 ```
-Local migrations: `cd packages/database && pnpm exec prisma migrate deploy` (26 migrations). Note: `migrate dev` may demand a destructive reset due to drift - the repo's established pattern is to hand-write migration SQL and apply with `migrate deploy`. Local test login: `alex@example.com` / `correct-horse-battery` (Pro, has data).
+Local migrations: `cd packages/database && pnpm exec prisma migrate deploy` (24 migrations). Note: `migrate dev` may demand a destructive reset due to drift - the repo's established pattern is to hand-write migration SQL and apply with `migrate deploy`. Local test login: `alex@example.com` / `correct-horse-battery` (Pro, has data; add `BLOG_ADMIN_EMAILS="alex@example.com"` to `apps/web/.env.local` to use the blog editor locally).
 
 ## Repository layout (pnpm workspace + turborepo)
 
@@ -160,6 +162,8 @@ CLAUDE.md       the original product spec - still the product constitution
 - Interrupting `prisma migrate deploy` mid-run leaves a "failed" record - if the DDL applied, fix with `prisma migrate resolve --applied <name>`.
 - **Agent-tool worktrees branch from `main`** - fast-forward main before launching implementation agents.
 - pg-boss v12: named import `{ PgBoss }`; never memoize a REJECTED boss-connection promise (`apps/web/src/lib/queue.ts` clears it on failure); scanner `page.evaluate` needs the `__name` shim (see scan-page.ts).
+- **Landing gold-highlight spans must NOT use `whitespace-nowrap`**: they are `inline-block`, which already refuses to wrap mid-phrase whenever the text fits - nowrap only ever forced horizontal overflow on mobile (28px at 375px via the pricing value quote; fixed by removing it in value-quote/alert-channels/app-download). When a highlighted phrase wraps on a narrow screen, the gold block behind two lines is the intended graceful fallback.
+- **Browser-pane verification quirks**: programmatic `scrollIntoView` can yield blank/stale screenshots; on DASHBOARD pages the JS-exec context can detach into a phantom unhydrated DOM (viewport 0x0, synthetic events never reach React, clicks silently no-op). Verify dashboard flows with trusted `computer` clicks/typing on screenshot coordinates, or curl the API with a session cookie (`/api/auth/sign-in/email` → cookie jar) - and confirm effects in the DB/server logs, not just the UI.
 - Prod owner login: `daksheshbabu@gmail.com` (Pro, the `BLOG_ADMIN_EMAILS` entry). 2FA can be enrolled from Settings → Security.
 
 ## Pending / next up
@@ -169,6 +173,7 @@ CLAUDE.md       the original product spec - still the product constitution
 3. **Worker off the Mac** (~$5/mo Railway/Render/Fly with the same env) when budget allows.
 4. Google OAuth credentials (code ready, env unset).
 5. Owner-vetted feature shortlist: post-deploy check hook, domain-expiry (RDAP) alerts, competitor page watching, new-page auto-detection, shareable change links.
+6. Minor: landing page still overflows ~15px at 320px viewports only (agency dashboard mock card cannot shrink below its content width; 360px+ is clean). Fix with `min-w-0` + truncation inside the mock rows.
 
 ## Working conventions for future sessions
 
