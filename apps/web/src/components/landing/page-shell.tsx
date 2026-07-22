@@ -43,7 +43,7 @@ export function MarketingPageShell({
             [&_h3]:mt-6 [&_h3]:text-[17px] [&_h3]:font-semibold [&_h3]:text-[#151515]
             [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-6
             [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-6
-            [&_a]:font-medium [&_a]:text-[#151515] [&_a]:underline [&_a]:decoration-[#FFD400] [&_a]:decoration-2 [&_a]:underline-offset-4
+            [&_a:not(.not-prose_*)]:font-medium [&_a:not(.not-prose_*)]:text-[#151515] [&_a:not(.not-prose_*)]:underline [&_a:not(.not-prose_*)]:decoration-[#FFD400] [&_a:not(.not-prose_*)]:decoration-2 [&_a:not(.not-prose_*)]:underline-offset-4
             [&_strong]:text-[#151515]
             [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-black/10 [&_th]:bg-[#F3F1E6] [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-[13px] [&_td]:border [&_td]:border-black/10 [&_td]:px-3 [&_td]:py-2 [&_td]:text-[13px]"
         >

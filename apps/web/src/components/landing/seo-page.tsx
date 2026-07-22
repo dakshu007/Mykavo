@@ -64,7 +64,7 @@ export function SeoPageCta({ heading }: { heading?: string }) {
         </Link>
         <Link
           href="/preview"
-          className="bg-white/[0.06] px-6 py-3 text-sm font-semibold text-[#E9EBDF] no-underline transition-colors hover:bg-white/[0.12]"
+          className="border-l border-[#FFD400]/40 bg-black px-6 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#2a2a2a]"
         >
           See the dashboard
         </Link>
