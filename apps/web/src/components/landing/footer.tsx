@@ -25,12 +25,23 @@ const columns = [
     ],
   },
   {
-    title: "Monitoring",
+    title: "Solutions",
     links: [
-      { href: "/#categories", label: "Visual monitoring" },
-      { href: "/#categories", label: "SEO change monitoring" },
-      { href: "/#categories", label: "Broken link monitoring" },
-      { href: "/#categories", label: "Script monitoring" },
+      { href: "/visual-regression-testing", label: "Visual regression testing" },
+      { href: "/seo-monitoring", label: "SEO monitoring" },
+      { href: "/website-content-monitoring", label: "Content monitoring" },
+      { href: "/website-monitoring-for-wordpress", label: "For WordPress" },
+      { href: "/website-monitoring-for-shopify", label: "For Shopify" },
+      { href: "/website-monitoring-for-webflow", label: "For Webflow" },
+    ],
+  },
+  {
+    title: "Guides",
+    links: [
+      { href: "/guides/how-to-monitor-website-changes", label: "Monitor website changes" },
+      { href: "/guides/website-monitoring-checklist", label: "Monitoring checklist" },
+      { href: "/guides/website-maintenance-checklist", label: "Maintenance checklist" },
+      { href: "/guides/website-deployment-checklist", label: "Deployment checklist" },
     ],
   },
   {
@@ -53,7 +64,7 @@ export function LandingFooter() {
   return (
     <footer className="overflow-hidden border-t border-black/10 bg-[#F3F1E6]">
       <div className="mx-auto max-w-6xl px-5 pt-16 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr]">
           <div>
             <Link href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
               <LogoMark size={28} />

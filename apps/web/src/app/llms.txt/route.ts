@@ -46,6 +46,22 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Bulk URL Status Checker: ${site.url}/tools/bulk-url-status-checker
 - Script Detector: ${site.url}/tools/script-detector
 
+## Solutions
+
+- [Visual Regression Testing](${site.url}/visual-regression-testing): automated screenshot comparison against approved baselines - no test code or CI required
+- [SEO Monitoring](${site.url}/seo-monitoring): alerts when titles, canonicals, robots meta, redirects, or indexability change, with before-and-after values
+- [Website Content Monitoring](${site.url}/website-content-monitoring): normalized text and DOM change tracking with an evidence trail
+- [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, no plugin installed
+- [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs, no app installed
+- [Website Monitoring for Webflow](${site.url}/website-monitoring-for-webflow): see what every publish and Editor session changed
+
+## Guides
+
+- [How to Monitor Website Changes](${site.url}/guides/how-to-monitor-website-changes): five methods compared, from free diff tools to automated baseline monitoring
+- [Website Monitoring Checklist](${site.url}/guides/website-monitoring-checklist): what to watch, how often, and the best practices that keep alerts trustworthy
+- [Website Maintenance Checklist](${site.url}/guides/website-maintenance-checklist): weekly, monthly, and quarterly tasks, and what to automate
+- [Website Deployment Checklist](${site.url}/guides/website-deployment-checklist): pre-deploy, launch, and the post-deploy verification most teams skip
+
 ## Key pages
 
 - [Home](${site.url}/): product overview

@@ -32,22 +32,25 @@ import { site } from "@/config/site";
 
 export const metadata: Metadata = {
   // Absolute title (not the layout template) so the homepage leads with the
-  // primary keywords: site monitoring tool / website change monitoring.
+  // primary keywords: website monitoring tool / website change detection.
   title: {
-    absolute: "MyKavo - Site Monitoring Tool for Website Change Detection",
+    absolute: "MyKavo - Website Monitoring & Change Detection Tool",
   },
   description:
-    "One of the best site monitoring tools for agencies and developers. MyKavo watches your websites for SEO, visual, link, script and performance changes - and alerts you before small problems become expensive ones.",
+    "The best website monitoring software shows you what changed, not just that the site is up. MyKavo monitors your websites for visual, SEO, content, link, script and performance changes - and alerts you before small problems become expensive ones.",
   keywords: [
-    "site monitoring tools",
-    "best site monitoring tools",
+    "website monitoring tools",
+    "best website monitoring software",
     "website monitoring tool",
+    "website change detection tools",
     "website change detection",
-    "website change monitoring",
+    "monitor website for changes",
     "monitor website changes",
+    "website content monitoring",
     "website regression monitoring",
-    "visual website monitoring",
-    "SEO change monitoring",
+    "visual regression testing",
+    "SEO monitoring tools",
+    "site monitoring tools",
     "broken link monitoring",
   ],
   alternates: { canonical: "/" },
@@ -252,6 +255,18 @@ const faqs = [
   {
     q: "Is it safe to point MyKavo at my site?",
     a: "Yes. MyKavo only reads your public pages with strict limits on request counts, sizes, and frequency, respects robots.txt protections, and never stores credentials for your site.",
+  },
+  {
+    q: "How do I monitor a website for changes?",
+    a: "Pick the pages that matter, capture an approved baseline of each, and re-scan them on a schedule against that baseline. MyKavo automates all three steps: paste a URL, select pages, approve the baseline, and severity-ranked alerts with before-and-after evidence arrive whenever something meaningful changes.",
+  },
+  {
+    q: "What is visual regression testing?",
+    a: "Visual regression testing compares screenshots of a page against an approved baseline and flags pixel differences - broken layouts, missing sections, font failures. MyKavo runs it automatically on any live website with masks and thresholds to suppress noise, no test code or CI pipeline required.",
+  },
+  {
+    q: "What makes the best website monitoring software?",
+    a: "Four things: it should detect meaningful change (not just uptime), keep false positives near zero, show before-and-after evidence for every alert, and cover the full surface - visual, SEO, content, links, scripts, performance, and availability - in one place. That checklist is exactly what MyKavo is built around.",
   },
 ];
 
@@ -733,6 +748,65 @@ export default function HomePage() {
             ))}
           </div>
         </Section>
+
+        {/* Guides & solutions - internal links to the keyword landing pages */}
+        <section className="border-y border-black/10 bg-[#F3F1E6]">
+          <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8">
+            <p className={`${eyebrow} mb-4 text-center`}>{"// go deeper //"}</p>
+            <DisplayHeading>
+              Guides &amp; solutions<span className="text-[#6B6B60]">.</span>
+            </DisplayHeading>
+            <div className="mx-auto mt-12 grid max-w-4xl gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-black/10 bg-white p-6">
+                <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
+                  Monitoring solutions
+                </h3>
+                <ul className="mt-4 space-y-2.5">
+                  {[
+                    { href: "/visual-regression-testing", label: "Visual regression testing" },
+                    { href: "/seo-monitoring", label: "SEO monitoring" },
+                    { href: "/website-content-monitoring", label: "Website content monitoring" },
+                    { href: "/website-monitoring-for-wordpress", label: "Website monitoring for WordPress" },
+                    { href: "/website-monitoring-for-shopify", label: "Website monitoring for Shopify" },
+                    { href: "/website-monitoring-for-webflow", label: "Website monitoring for Webflow" },
+                  ].map((l) => (
+                    <li key={l.href}>
+                      <Link
+                        href={l.href}
+                        className="text-[14.5px] font-medium text-[#151515]/80 underline decoration-[#FFD400] decoration-2 underline-offset-4 transition-colors hover:text-[#151515]"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-black/10 bg-white p-6">
+                <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
+                  Guides &amp; checklists
+                </h3>
+                <ul className="mt-4 space-y-2.5">
+                  {[
+                    { href: "/guides/how-to-monitor-website-changes", label: "How to monitor website changes" },
+                    { href: "/guides/website-monitoring-checklist", label: "Website monitoring checklist" },
+                    { href: "/guides/website-maintenance-checklist", label: "Website maintenance checklist" },
+                    { href: "/guides/website-deployment-checklist", label: "Website deployment checklist" },
+                    { href: "/blog", label: "The MyKavo blog" },
+                  ].map((l) => (
+                    <li key={l.href}>
+                      <Link
+                        href={l.href}
+                        className="text-[14.5px] font-medium text-[#151515]/80 underline decoration-[#FFD400] decoration-2 underline-offset-4 transition-colors hover:text-[#151515]"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Final CTA - the ink band with the gold spark */}
         <section className="px-5 pb-20 lg:px-8">

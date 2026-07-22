@@ -20,6 +20,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/tools/redirect-chain-checker",
     "/tools/bulk-url-status-checker",
     "/tools/script-detector",
+    "/visual-regression-testing",
+    "/seo-monitoring",
+    "/website-content-monitoring",
+    "/website-monitoring-for-wordpress",
+    "/website-monitoring-for-shopify",
+    "/website-monitoring-for-webflow",
+    "/guides/how-to-monitor-website-changes",
+    "/guides/website-monitoring-checklist",
+    "/guides/website-maintenance-checklist",
+    "/guides/website-deployment-checklist",
     "/blog",
   ];
   const entries: MetadataRoute.Sitemap = routes.map((route) => ({
