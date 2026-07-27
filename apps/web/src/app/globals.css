@@ -261,6 +261,36 @@
 
 /* Hand-rolled typography for blog markdown (react-markdown output). */
 @layer components {
+  /* Public blog reading surface - always LIGHT for readability, regardless
+     of the visitor's app theme. Re-pins the fx variables for this subtree
+     (nearest declaration wins over :root), so the article card, ToC rail,
+     and author bio render white-card/dark-text even in dark mode. The CMS
+     editor preview does NOT use this class and stays theme-aware. */
+  .blog-reader {
+    color-scheme: light;
+    --fx-canvas: #eceef4;
+    --fx-surface: #f6f7fb;
+    --fx-card: #ffffff;
+    --fx-ink: #16181d;
+    /* Darker than the app default for long-form body contrast. */
+    --fx-ink-secondary: #454b58;
+    --fx-ink-faint: #9aa1b1;
+    --fx-ink-inverse: #ffffff;
+    --fx-ink-hover: #000000;
+    --fx-line: #e4e7ee;
+    --fx-panel: #16181d;
+    --fx-primary: #3556f4;
+    --fx-primary-hover: #2a46d6;
+    --fx-primary-soft: #e8ecfe;
+    --fx-primary-contrast: #ffffff;
+    --fx-shadow-card: 0 1px 2px rgb(22 24 29 / 4%), 0 8px 24px rgb(22 24 29 / 6%);
+  }
+  /* Bigger reading type on the public post page only. */
+  .blog-reader .blog-prose {
+    font-size: 17px;
+    line-height: 1.85;
+  }
+
   .blog-prose {
     font-size: 15px;
     line-height: 1.8;

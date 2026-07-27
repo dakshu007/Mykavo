@@ -1,4 +1,4 @@
-import { ButtonLink } from "@/components/ui/button";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { parsePost, type FaqItem, type PostHeading } from "./blocks";
 import { BlogMarkdown } from "./markdown";
@@ -34,10 +34,14 @@ export function PostContent({ content }: { content: string }) {
   );
 }
 
-/** {{cta}} - inline "Try MyKavo" card. */
+/**
+ * {{cta}} - inline "Try MyKavo" card. The button is fixed brand gold (ink
+ * text) so it reads the same on the light public page and in the editor
+ * preview's dark theme; the surrounding text stays theme-tokened.
+ */
 function CtaBlock() {
   return (
-    <aside className="my-8 rounded-tile border border-primary/15 bg-primary-soft/50 px-6 py-8 text-center sm:px-8">
+    <aside className="my-8 rounded-tile border border-[#FFD400]/60 bg-[#FFD400]/10 px-6 py-8 text-center sm:px-8">
       <p className="text-xl font-semibold tracking-tight text-ink">
         Know what changed. Fix what matters.
       </p>
@@ -46,7 +50,12 @@ function CtaBlock() {
         performance changes - and alerts you before your customers notice.
       </p>
       <div className="mt-5">
-        <ButtonLink href="/signup">Start Monitoring Free</ButtonLink>
+        <Link
+          href="/signup"
+          className="inline-flex items-center rounded-full bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] ring-1 ring-inset ring-black/15 transition-colors hover:bg-[#ffe14d]"
+        >
+          Start Monitoring Free
+        </Link>
       </div>
       <p className="mt-3 text-[12px] text-ink-faint">No credit card required</p>
     </aside>
