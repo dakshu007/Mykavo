@@ -1,4 +1,4 @@
-import { Apple, Download, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
+import { Apple, BellRing, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrowOnDark, fontDisplay } from "./style";
 
@@ -9,9 +9,11 @@ import { eyebrowOnDark, fontDisplay } from "./style";
  * screens at the same moment (identical keyframe timing = the sync story
  * told visually). Pure CSS animation, fully paused for reduced-motion users.
  *
- * The download button points at the rolling release on the PUBLIC
- * Mykavo-app-download repo (the main repo is private), which always
- * serves the newest APK built by CI - the link never goes stale.
+ * The public APK download is temporarily paused (bandwidth budget) - the
+ * CTA shows "coming soon" instead of the download link. To re-enable,
+ * restore the anchor around APK_URL in the CTA block below; the rolling
+ * release on the PUBLIC Mykavo-app-download repo keeps building, so the
+ * URL stays valid the whole time.
  */
 
 export const APK_URL =
@@ -130,7 +132,7 @@ const trust = [
   {
     icon: RefreshCw,
     title: "Always the latest",
-    desc: "The link serves the newest build straight from our release pipeline. No stale versions.",
+    desc: "Built and signed by our release pipeline, so launch day ships the newest version. No stale builds.",
   },
   {
     icon: Smartphone,
@@ -228,23 +230,20 @@ export function AppDownloadSection() {
           one account · live in both directions · 3s refresh while scans run
         </p>
 
-        {/* Download CTA */}
+        {/* Coming-soon CTA (public APK download paused - see file comment) */}
         <div className="mt-10 flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-3 sm:flex-row">
-            <a
-              href={APK_URL}
-              className="inline-flex items-center gap-2.5 rounded-full border border-black/25 bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)] transition-colors hover:bg-[#ffe14d]"
-            >
-              <Download className="size-4.5" aria-hidden />
-              Download for Android
-            </a>
+            <span className="inline-flex items-center gap-2.5 rounded-full border border-black/25 bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)]">
+              <BellRing className="size-4.5" aria-hidden />
+              Android app coming soon
+            </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#E9EBDF]/25 px-5 py-3 text-[13px] font-medium text-[#9C9E93]">
               <Apple className="size-4" aria-hidden />
               iOS coming soon
             </span>
           </div>
           <p className="font-mono text-[11px] text-[#9C9E93]">
-            mykavo.apk · direct download · free on every plan
+            free on every plan · launching shortly - watch this space
           </p>
         </div>
 

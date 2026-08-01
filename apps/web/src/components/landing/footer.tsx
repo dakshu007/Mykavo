@@ -9,7 +9,7 @@ const columns = [
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#categories", label: "What it watches" },
       { href: "/preview", label: "Dashboard preview" },
-      { href: "/#android-app", label: "Download for Android" },
+      { href: "/#android-app", label: "Android app (coming soon)" },
       { href: "/pricing", label: "Pricing" },
       { href: "/blog", label: "Blog" },
     ],

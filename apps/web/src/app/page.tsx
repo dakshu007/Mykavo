@@ -529,7 +529,7 @@ export default function HomePage() {
         {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
         <AlertChannelsSection />
 
-        {/* Android app - web + mobile sync story with the APK download */}
+        {/* Android app - web + mobile sync story (download paused: coming soon) */}
         <AppDownloadSection />
 
         {/* Agencies - split with client health board */}
