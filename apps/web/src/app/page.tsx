@@ -552,6 +552,7 @@ export default function HomePage() {
                   {[
                     "Severity-ranked change feed across all clients",
                     "Before-and-after evidence for every change",
+                    "Post-deploy checks - “Deploy verified” after every release",
                     "White-label client reports with your logo and colors",
                     "Shareable report links that prove your retainer's value",
                     "Public status pages and uptime badges",

@@ -217,6 +217,12 @@ model Website {
   // breaks the badge/status URLs. Regenerating revokes the old link.
   reportEnabled Boolean       @default(false)
   reportToken   String?       @unique
+  // Post-deploy verification hook (POST /api/hooks/deploy/[token]): CI or a
+  // deploy notification hits it after a release and MyKavo scans + compares
+  // against the baseline immediately. Own secret token, same lifecycle as
+  // reportToken (mint on enable, keep on disable, rotate on regenerate).
+  deployHookEnabled Boolean   @default(false)
+  deployToken   String?       @unique
   // Stabilization / false-positive controls (spec §25/§36). Both are JSON
   // arrays of CSS selector strings (max 20 each, ≤200 chars — enforced in
   // the API; parsed defensively via parseSelectorList in @mykavo/shared).
@@ -286,6 +292,10 @@ enum ScanTriggerType {
   BASELINE
   SCHEDULED
   MANUAL
+  // Triggered by the public deploy hook (post-deploy verification). Flows
+  // through comparison + notification like MANUAL, but always gets a verdict
+  // notification - even when clean.
+  DEPLOY
 }
 
 enum LinkType {
@@ -308,6 +318,9 @@ model Scan {
   highestSeverity String?
   errorCode       String?
   errorMessage    String?
+  // Optional caller-supplied label, e.g. the release tag a deploy hook sends
+  // ({"note": "v2.4.1"}). Shown in scan history and the verdict email.
+  note            String?
   createdAt       DateTime        @default(now())
 
   snapshots        PageSnapshot[]

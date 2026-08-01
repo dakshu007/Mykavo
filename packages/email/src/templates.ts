@@ -104,6 +104,75 @@ export function scanSummaryEmail(data: ScanSummaryData): { subject: string; html
   return { subject, html: shell(inner), text };
 }
 
+// ---------- Deploy check verdict ----------
+
+export interface DeployVerdictData {
+  websiteName: string;
+  websiteHost: string;
+  scanTime: string;
+  /** Caller-supplied release label from the hook body, e.g. "v2.4.1". */
+  note: string | null;
+  totalChanges: number;
+  /** null when the deploy is clean. */
+  highestSeverity: Severity | null;
+  changes: ChangeLine[];
+  dashboardUrl: string;
+}
+
+/**
+ * Post-deploy verification verdict. Unlike scan summaries this ALWAYS sends -
+ * "deploy verified" is the product moment, so a clean result gets its own
+ * celebratory email rather than silence.
+ */
+export function deployVerdictEmail(data: DeployVerdictData): { subject: string; html: string; text: string } {
+  const releaseTag = data.note ? ` (${data.note})` : "";
+  const clean = data.totalChanges === 0 || data.highestSeverity === null;
+
+  if (clean) {
+    const subject = `✅ Deploy verified${releaseTag} - ${data.websiteHost} matches its baseline`;
+    const inner = `
+      <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#18794e">Deploy verified</p>
+      <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">No unexpected changes on ${esc(data.websiteName)}</h1>
+      <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)}${esc(releaseTag)} · checked ${esc(data.scanTime)}</p>
+      <div style="background:#e6f6ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#18794e;margin-bottom:24px">Every monitored page matches the approved baseline - availability, SEO tags, content, scripts, links, and visuals.</div>
+      ${button(data.dashboardUrl, "Open dashboard")}
+    `;
+    const text =
+      `Deploy verified${releaseTag} - ${data.websiteHost} matches its baseline\n\n` +
+      `No unexpected changes on ${data.websiteName} (checked ${data.scanTime}).\n\n` +
+      `Dashboard: ${data.dashboardUrl}`;
+    return { subject, html: shell(inner), text };
+  }
+
+  const severityWord = label(data.highestSeverity ?? "INFO");
+  const subject = `Deploy check${releaseTag}: ${data.totalChanges} change${data.totalChanges === 1 ? "" : "s"} on ${data.websiteHost} - highest ${severityWord}`;
+  const rows = data.changes
+    .map(
+      (c) => `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #eef0f3;vertical-align:top;width:84px">
+          <span style="display:inline-block;font-size:11px;font-weight:700;color:${SEVERITY_COLOR[c.severity]}">${label(c.severity)}</span>
+        </td>
+        <td style="padding:10px 0;border-bottom:1px solid #eef0f3">
+          <div style="font-size:14px;font-weight:500;color:#16181d">${esc(c.title)}</div>
+          <div style="font-size:12px;color:#9aa1b1;font-family:ui-monospace,Menlo,monospace">${esc(data.websiteHost + c.pagePath)}</div>
+        </td>
+      </tr>`,
+    )
+    .join("");
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${SEVERITY_COLOR[data.highestSeverity ?? "INFO"]}">Deploy check</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${data.totalChanges} change${data.totalChanges === 1 ? "" : "s"} after deploying ${esc(data.websiteName)}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)}${esc(releaseTag)} · checked ${esc(data.scanTime)}</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">${rows}</table>
+    ${button(data.dashboardUrl, "Review changes")}
+  `;
+  const text =
+    `Deploy check${releaseTag}: ${data.totalChanges} change(s) on ${data.websiteHost} - highest ${severityWord}\n\n` +
+    data.changes.map((c) => `- [${label(c.severity)}] ${c.title} (${c.pagePath})`).join("\n") +
+    `\n\nReview: ${data.dashboardUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
 // ---------- Site health alerts (uptime + SSL expiry) ----------
 
 export interface DownAlertData {

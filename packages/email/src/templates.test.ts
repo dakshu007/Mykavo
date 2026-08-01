@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   scanSummaryEmail,
   failureAlertEmail,
+  deployVerdictEmail,
   weeklyReportEmail,
   workspaceInviteEmail,
   performanceDropEmail,
+  type DeployVerdictData,
   type WeeklyReportData,
   type PerformanceDropData,
 } from "./templates";
@@ -245,5 +247,60 @@ describe("workspaceInviteEmail", () => {
     expect(evil.html).not.toContain("<script>x</script>");
     expect(evil.html).toContain("&lt;script&gt;");
     expect(evil.html).toContain("A &amp; B &lt;Co&gt;");
+  });
+});
+
+describe("deployVerdictEmail", () => {
+  const base: DeployVerdictData = {
+    websiteName: "Aurora Outdoor",
+    websiteHost: "aurora-outdoor.com",
+    scanTime: "Aug 2, 2026, 10:15 AM",
+    note: "v2.4.1",
+    totalChanges: 0,
+    highestSeverity: null,
+    changes: [],
+    dashboardUrl: "https://mykavo.app/dashboard/websites/w1",
+  };
+
+  it("celebrates a clean deploy with the release tag in the subject", () => {
+    const { subject, html, text } = deployVerdictEmail(base);
+    expect(subject).toBe("✅ Deploy verified (v2.4.1) - aurora-outdoor.com matches its baseline");
+    expect(html).toContain("No unexpected changes");
+    expect(html).toContain("approved baseline");
+    expect(text).toContain("Deploy verified (v2.4.1)");
+  });
+
+  it("omits the release tag when no note was sent", () => {
+    const { subject } = deployVerdictEmail({ ...base, note: null });
+    expect(subject).toBe("✅ Deploy verified - aurora-outdoor.com matches its baseline");
+  });
+
+  it("lists changes with the highest severity when the deploy is not clean", () => {
+    const { subject, html } = deployVerdictEmail({
+      ...base,
+      totalChanges: 2,
+      highestSeverity: "HIGH",
+      changes: [
+        { severity: "HIGH", title: "Title changed", pagePath: "/pricing" },
+        { severity: "LOW", title: "Script added", pagePath: "/" },
+      ],
+    });
+    expect(subject).toBe(
+      "Deploy check (v2.4.1): 2 changes on aurora-outdoor.com - highest High",
+    );
+    expect(html).toContain("Title changed");
+    expect(html).toContain("aurora-outdoor.com/pricing");
+    expect(html).toContain("Review changes");
+  });
+
+  it("HTML-escapes the note and website name", () => {
+    const evil = deployVerdictEmail({
+      ...base,
+      note: "<img src=x>",
+      websiteName: "A & B",
+    });
+    expect(evil.html).not.toContain("<img src=x>");
+    expect(evil.html).toContain("&lt;img src=x&gt;");
+    expect(evil.html).toContain("A &amp; B");
   });
 });

@@ -86,7 +86,11 @@ export default async function ScanDetailPage({
         </Link>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">
-            {scan.triggerType === "BASELINE" ? "Baseline scan" : "Scan"}
+            {scan.triggerType === "BASELINE"
+              ? "Baseline scan"
+              : scan.triggerType === "DEPLOY"
+                ? `Deploy check${scan.note ? ` · ${scan.note}` : ""}`
+                : "Scan"}
           </h1>
           <ScanStatusBadge status={scan.status} />
           {inFlight && (

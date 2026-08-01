@@ -77,7 +77,14 @@ export default async function ScansPage() {
                     ? "Baseline"
                     : scan.triggerType === "MANUAL"
                       ? "Manual"
-                      : "Scheduled"}
+                      : scan.triggerType === "DEPLOY"
+                        ? "Deploy check"
+                        : "Scheduled"}
+                  {scan.note && (
+                    <span className="ml-1.5 font-mono text-xs text-ink-faint">
+                      {scan.note}
+                    </span>
+                  )}
                 </td>
                 <td className="py-4 pr-4">
                   <ScanStatusBadge status={scan.status} />

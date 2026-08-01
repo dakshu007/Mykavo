@@ -10,6 +10,7 @@ import {
   sendEmail,
   scanSummaryEmail,
   failureAlertEmail,
+  deployVerdictEmail,
   type ChangeLine,
   type Severity,
 } from "@mykavo/email";
@@ -164,7 +165,13 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
 
   // Maintenance window (spec §25): change events are already recorded by the
   // compare step - just don't send anything (no emails, channels, or rows).
-  if (website.muteAlertsUntil && website.muteAlertsUntil > new Date()) {
+  // DEPLOY is exempt: the caller explicitly asked for this check (deploys
+  // often happen DURING maintenance windows), so the verdict always ships.
+  if (
+    scan.triggerType !== "DEPLOY" &&
+    website.muteAlertsUntil &&
+    website.muteAlertsUntil > new Date()
+  ) {
     logger.info("alerts muted, skipped", {
       scanId,
       websiteId: website.id,
@@ -213,6 +220,75 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
       lines: [reason, `Scanned ${scanTime}`],
       url: dashboardUrl,
       severity: "CRITICAL",
+    });
+    return ok;
+  }
+
+  // Deploy checks ALWAYS get a verdict - a clean result is the product
+  // moment ("deploy verified"), and an explicitly requested check ignores
+  // the routine-alert severity threshold: the caller asked, so they hear
+  // back about every change.
+  if (scan.triggerType === "DEPLOY") {
+    const changes = await prisma.changeEvent.findMany({
+      where: { scanId, status: "NEW" },
+      include: { monitoredPage: { select: { url: true } } },
+      orderBy: { detectedAt: "desc" },
+    });
+    const highest =
+      changes.length === 0
+        ? null
+        : changes.reduce<Severity>(
+            (top, c) =>
+              SEVERITY_RANK[c.severity as Severity] > SEVERITY_RANK[top]
+                ? (c.severity as Severity)
+                : top,
+            "INFO",
+          );
+    const lines: ChangeLine[] = changes.slice(0, 20).map((c) => ({
+      severity: c.severity as Severity,
+      title: c.title,
+      pagePath: c.monitoredPage ? pagePath(c.monitoredPage.url) : "Site-wide",
+    }));
+    const dashboardUrl =
+      changes.length > 0
+        ? `${dashboardBase}/dashboard/changes?website=${website.id}`
+        : `${dashboardBase}/dashboard/websites/${website.id}`;
+
+    let ok = false;
+    if (config) {
+      const email = deployVerdictEmail({
+        websiteName: website.name,
+        websiteHost: host,
+        scanTime,
+        note: scan.note,
+        totalChanges: changes.length,
+        highestSeverity: highest,
+        changes: lines,
+        dashboardUrl,
+      });
+      const result = await sendEmail({ to: config.recipients, subject: email.subject, html: email.html, text: email.text });
+      await record(website.workspaceId, website.id, scan.id, config.recipients, email.subject, result);
+      logger.info("deploy verdict sent", {
+        scanId,
+        changes: changes.length,
+        highest: highest ?? "clean",
+        ok: result.ok,
+        provider: result.provider,
+      });
+      ok = result.ok;
+    }
+    const releaseTag = scan.note ? ` (${scan.note})` : "";
+    await fanOutToChannels(website.workspaceId, website.id, scan.id, {
+      title:
+        changes.length === 0
+          ? `✅ Deploy verified${releaseTag} - ${host} matches its baseline`
+          : `Deploy check${releaseTag}: ${changes.length} change${changes.length === 1 ? "" : "s"} on ${host} - highest ${highest}`,
+      lines: [
+        ...lines.slice(0, 6).map((l) => `${l.severity} · ${l.title} - ${l.pagePath}`),
+        ...(changes.length > 6 ? [`…and ${changes.length - 6} more`] : []),
+      ],
+      url: dashboardUrl,
+      severity: highest ?? "INFO",
     });
     return ok;
   }

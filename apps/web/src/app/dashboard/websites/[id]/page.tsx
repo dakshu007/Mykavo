@@ -39,6 +39,7 @@ import { ComparisonSettings } from "./comparison-settings";
 import { StatusBadgeSettings } from "./status-badge-settings";
 import { StatusPageSettings } from "./status-page-settings";
 import { ClientReportSettings } from "./client-report-settings";
+import { DeployHookSettings } from "./deploy-hook-settings";
 
 /** Time windows for the health queries - one clock read per request. */
 function healthWindows(windowDays: number): {
@@ -192,6 +193,9 @@ export default async function WebsiteDetailPage({
     ? `${appBase}/status/${website.publicToken}`
     : null;
   const reportUrl = website.reportToken ? `${appBase}/r/${website.reportToken}` : null;
+  const deployHookUrl = website.deployToken
+    ? `${appBase}/api/hooks/deploy/${website.deployToken}`
+    : null;
   const workspaceBrand = await prisma.workspace.findUnique({
     where: { id: workspace.id },
     select: { brandName: true },
@@ -588,7 +592,11 @@ export default async function WebsiteDetailPage({
                   className="group flex items-center gap-4 py-3"
                 >
                   <span className="flex-1 text-sm text-ink group-hover:text-primary">
-                    {scan.triggerType === "BASELINE" ? "Baseline scan" : "Scan"}
+                    {scan.triggerType === "BASELINE"
+                      ? "Baseline scan"
+                      : scan.triggerType === "DEPLOY"
+                        ? "Deploy check"
+                        : "Scan"}
                     <span className="ml-2 text-xs text-ink-faint">
                       {scan.createdAt.toLocaleString("en-US", {
                         dateStyle: "medium",
@@ -636,6 +644,16 @@ export default async function WebsiteDetailPage({
           siteUrl={website.url}
           badgeUrl={badgeUrl}
           enabled={website.badgeEnabled}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="Deploy checks" />
+        <DeployHookSettings
+          websiteId={website.id}
+          hookUrl={website.deployHookEnabled ? deployHookUrl : null}
+          enabled={website.deployHookEnabled}
+          isPro={plan.limits.deployChecks}
         />
       </Card>
 

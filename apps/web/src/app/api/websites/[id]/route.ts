@@ -52,6 +52,9 @@ const patchSchema = z.object({
   reportEnabled: z.boolean().optional(),
   // Rotates the report token - the old link stops working immediately.
   regenerateReportToken: z.boolean().optional(),
+  // Post-deploy verification hook; same token lifecycle as the report link.
+  deployHookEnabled: z.boolean().optional(),
+  regenerateDeployToken: z.boolean().optional(),
   // Comparison settings (spec §25/§36): [] clears a list; omitted = unchanged.
   ignoredSelectors: selectorListSchema.optional(),
   screenshotMasks: selectorListSchema.optional(),
@@ -123,6 +126,13 @@ export async function PATCH(request: Request, { params }: Params) {
       reportToken:
         input.regenerateReportToken === true ||
         (input.reportEnabled === true && !website.reportToken)
+          ? randomBytes(18).toString("base64url")
+          : undefined,
+      deployHookEnabled: input.deployHookEnabled,
+      // Regenerating revokes every pipeline configured with the old URL.
+      deployToken:
+        input.regenerateDeployToken === true ||
+        (input.deployHookEnabled === true && !website.deployToken)
           ? randomBytes(18).toString("base64url")
           : undefined,
       ignoredSelectors: input.ignoredSelectors,

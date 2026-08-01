@@ -2,6 +2,8 @@ export { sendEmail, type EmailMessage, type SendResult } from "./send";
 export {
   scanSummaryEmail,
   failureAlertEmail,
+  deployVerdictEmail,
+  type DeployVerdictData,
   downAlertEmail,
   recoveryAlertEmail,
   sslExpiryAlertEmail,

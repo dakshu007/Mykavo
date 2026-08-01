@@ -44,6 +44,12 @@ export interface Plan {
      * branding, which is the growth loop.
      */
     whiteLabelReports: boolean;
+    /**
+     * Post-deploy verification hook: a secret URL CI hits after a release;
+     * MyKavo scans immediately and sends a verdict. Effectively on-demand
+     * scanning, so it follows manual scans: Pro only, shared daily quota.
+     */
+    deployChecks: boolean;
   };
   features: string[];
   highlighted?: boolean;
@@ -65,6 +71,7 @@ export const plans: Plan[] = [
       conversionElementMonitoring: false,
       maxMembers: 1,
       whiteLabelReports: false,
+      deployChecks: false,
     },
     features: [
       "1 website",
@@ -91,15 +98,17 @@ export const plans: Plan[] = [
       conversionElementMonitoring: true,
       maxMembers: 5,
       whiteLabelReports: true,
+      deployChecks: true,
     },
     features: [
       "8 websites",
       "15 monitored pages per website",
       "Daily scans",
-      "1-year history",
       "Manual scans",
+      "Post-deploy checks",
       "Conversion element monitoring",
       "White-label client reports",
+      "1-year history",
       "Up to 5 team members",
       "Email alerts",
     ],
