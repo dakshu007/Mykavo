@@ -37,6 +37,13 @@ export interface Plan {
      * feature - Free is single-seat (the owner).
      */
     maxMembers: number;
+    /**
+     * White-label client reports: agency branding (name, logo, accent color)
+     * replaces MyKavo branding on the public /r/[token] report. The report
+     * link itself is available on every plan - Free reports carry MyKavo
+     * branding, which is the growth loop.
+     */
+    whiteLabelReports: boolean;
   };
   features: string[];
   highlighted?: boolean;
@@ -57,6 +64,7 @@ export const plans: Plan[] = [
       manualScansPerDay: 0,
       conversionElementMonitoring: false,
       maxMembers: 1,
+      whiteLabelReports: false,
     },
     features: [
       "1 website",
@@ -64,6 +72,7 @@ export const plans: Plan[] = [
       "Weekly scans",
       "30-day history",
       "Email alerts",
+      "Shareable client reports",
     ],
   },
   {
@@ -81,6 +90,7 @@ export const plans: Plan[] = [
       manualScansPerDay: 20,
       conversionElementMonitoring: true,
       maxMembers: 5,
+      whiteLabelReports: true,
     },
     features: [
       "8 websites",
@@ -89,6 +99,7 @@ export const plans: Plan[] = [
       "1-year history",
       "Manual scans",
       "Conversion element monitoring",
+      "White-label client reports",
       "Up to 5 team members",
       "Email alerts",
     ],

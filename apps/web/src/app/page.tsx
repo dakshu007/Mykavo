@@ -552,7 +552,8 @@ export default function HomePage() {
                   {[
                     "Severity-ranked change feed across all clients",
                     "Before-and-after evidence for every change",
-                    "Weekly client-ready report emails",
+                    "White-label client reports with your logo and colors",
+                    "Shareable report links that prove your retainer's value",
                     "Public status pages and uptime badges",
                   ].map((t) => (
                     <li key={t} className="flex items-start gap-3 text-[15px] text-[#151515]/90">

@@ -48,6 +48,10 @@ const patchSchema = z.object({
   badgeEnabled: z.boolean().optional(),
   // Public status page; shares the badge token under the same minting rule.
   statusPageEnabled: z.boolean().optional(),
+  // Client report link; enabling mints its OWN token (not publicToken).
+  reportEnabled: z.boolean().optional(),
+  // Rotates the report token - the old link stops working immediately.
+  regenerateReportToken: z.boolean().optional(),
   // Comparison settings (spec §25/§36): [] clears a list; omitted = unchanged.
   ignoredSelectors: selectorListSchema.optional(),
   screenshotMasks: selectorListSchema.optional(),
@@ -110,6 +114,15 @@ export async function PATCH(request: Request, { params }: Params) {
       publicToken:
         (input.badgeEnabled === true || input.statusPageEnabled === true) &&
         !website.publicToken
+          ? randomBytes(18).toString("base64url")
+          : undefined,
+      reportEnabled: input.reportEnabled,
+      // The report link's own opaque identifier: minted on first enable,
+      // kept on disable (stable URLs), replaced on explicit regenerate
+      // (revokes every previously shared link).
+      reportToken:
+        input.regenerateReportToken === true ||
+        (input.reportEnabled === true && !website.reportToken)
           ? randomBytes(18).toString("base64url")
           : undefined,
       ignoredSelectors: input.ignoredSelectors,

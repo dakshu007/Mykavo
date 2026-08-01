@@ -116,6 +116,12 @@ model Workspace {
   name      String
   ownerId   String
   owner     User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  // Agency branding for white-label client reports (Pro). The logo lives in
+  // object storage - only the served /api/brand-logos/<name> path is stored.
+  // brandColor is a validated #rrggbb accent.
+  brandName    String?
+  brandLogoUrl String?
+  brandColor   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -206,6 +212,11 @@ model Website {
   // Public status page at /status/[token] — shares publicToken with the
   // badge (whichever feature is enabled first mints it). Gated separately.
   statusPageEnabled Boolean   @default(false)
+  // White-label client report at /r/[token] (agency retainer proof). Its own
+  // token, independent of publicToken, so regenerating a report link never
+  // breaks the badge/status URLs. Regenerating revokes the old link.
+  reportEnabled Boolean       @default(false)
+  reportToken   String?       @unique
   // Stabilization / false-positive controls (spec §25/§36). Both are JSON
   // arrays of CSS selector strings (max 20 each, ≤200 chars — enforced in
   // the API; parsed defensively via parseSelectorList in @mykavo/shared).

@@ -38,6 +38,7 @@ import { MutedAlertsBanner, MuteAlertsControl } from "./mute-alerts";
 import { ComparisonSettings } from "./comparison-settings";
 import { StatusBadgeSettings } from "./status-badge-settings";
 import { StatusPageSettings } from "./status-page-settings";
+import { ClientReportSettings } from "./client-report-settings";
 
 /** Time windows for the health queries - one clock read per request. */
 function healthWindows(windowDays: number): {
@@ -190,6 +191,11 @@ export default async function WebsiteDetailPage({
   const statusPageUrl = website.publicToken
     ? `${appBase}/status/${website.publicToken}`
     : null;
+  const reportUrl = website.reportToken ? `${appBase}/r/${website.reportToken}` : null;
+  const workspaceBrand = await prisma.workspace.findUnique({
+    where: { id: workspace.id },
+    select: { brandName: true },
+  });
 
   const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 } as const;
   const highestSeverity =
@@ -630,6 +636,17 @@ export default async function WebsiteDetailPage({
           siteUrl={website.url}
           badgeUrl={badgeUrl}
           enabled={website.badgeEnabled}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="Client report" />
+        <ClientReportSettings
+          websiteId={website.id}
+          reportUrl={website.reportEnabled ? reportUrl : null}
+          enabled={website.reportEnabled}
+          brandingConfigured={Boolean(workspaceBrand?.brandName)}
+          isPro={plan.limits.whiteLabelReports}
         />
       </Card>
 

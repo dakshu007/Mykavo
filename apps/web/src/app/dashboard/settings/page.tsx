@@ -2,6 +2,7 @@ import { prisma } from "@mykavo/database";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ProfileForm } from "@/components/dashboard/profile-form";
+import { BrandingForm } from "@/components/dashboard/branding-form";
 import { TwoFactorCard } from "@/components/dashboard/two-factor-card";
 import {
   TeamSettings,
@@ -30,7 +31,7 @@ export default async function SettingsPage() {
   );
   const plan = await getWorkspacePlan(workspace.id);
 
-  const [memberRows, inviteRows, account] = await Promise.all([
+  const [memberRows, inviteRows, account, branding] = await Promise.all([
     prisma.workspaceMember.findMany({
       where: { workspaceId: workspace.id },
       include: { user: { select: { id: true, name: true, email: true } } },
@@ -48,6 +49,10 @@ export default async function SettingsPage() {
         // manage 2FA through Google itself.
         accounts: { where: { providerId: "credential" }, select: { id: true } },
       },
+    }),
+    prisma.workspace.findUnique({
+      where: { id: workspace.id },
+      select: { brandName: true, brandLogoUrl: true, brandColor: true },
     }),
   ]);
 
@@ -119,6 +124,17 @@ export default async function SettingsPage() {
           currentRole={role}
           maxMembers={plan.limits.maxMembers}
           isFreePlan={plan.id === "free"}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="Agency branding" />
+        <BrandingForm
+          initialName={branding?.brandName ?? null}
+          initialLogoUrl={branding?.brandLogoUrl ?? null}
+          initialColor={branding?.brandColor ?? null}
+          isPro={plan.limits.whiteLabelReports}
+          canEdit={manager}
         />
       </Card>
 
