@@ -6,7 +6,7 @@
  */
 
 import type { PgBoss } from "pg-boss";
-import { prisma } from "@mykavo/database";
+import { prisma, failStuckScans } from "@mykavo/database";
 import { SCAN_WEBSITE_QUEUE, computeNextScanAt, type ScanFrequency } from "@mykavo/shared";
 import { logger } from "./logger";
 
@@ -14,6 +14,19 @@ const MAX_PER_SWEEP = 50;
 
 export async function runSchedulerSweep(boss: PgBoss): Promise<number> {
   const now = new Date();
+
+  // Recovery first (spec §40: recover safely from failures): scans stuck in
+  // QUEUED/RUNNING - e.g. after a worker outage outlived the job's retries -
+  // otherwise pin "scan in progress" in the dashboard, 409 the manual-scan
+  // API, and make the no-double-scan guard below skip the website forever.
+  try {
+    const recovered = await failStuckScans(prisma, { queueName: SCAN_WEBSITE_QUEUE, now });
+    for (const scan of recovered) {
+      logger.warn("stuck scan failed by recovery sweep", { ...scan });
+    }
+  } catch (err) {
+    logger.error("stuck-scan recovery failed", {}, err);
+  }
 
   const due = await prisma.website.findMany({
     where: {

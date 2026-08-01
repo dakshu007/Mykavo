@@ -28,6 +28,7 @@ import { runHealthSweep } from "./health";
 import { runReportSweep } from "./report";
 import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
+import { startWatchdog } from "./watchdog";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
@@ -132,6 +133,10 @@ async function main() {
     },
   );
 
+  // Self-healing: if the DB becomes unreachable through pg-boss's pool (it
+  // wedges permanently after network drops), exit and let launchd restart us.
+  startWatchdog(boss, SCAN_WEBSITE_QUEUE);
+
   logger.info("worker started", {
     queue: SCAN_WEBSITE_QUEUE,
     schedulerCron: SWEEP_CRON,
@@ -139,6 +144,7 @@ async function main() {
     healthCron: HEALTH_CRON,
     reportCron: REPORT_CRON,
     auditCron: AUDIT_CRON,
+    watchdog: true,
   });
 
   async function shutdown(signal: string) {

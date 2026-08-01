@@ -35,6 +35,11 @@ export {
   type ExpiredSnapshot,
 } from "./retention";
 export {
+  failStuckScans,
+  STUCK_SCAN_MINUTES,
+  type StuckScanRecovery,
+} from "./stuck-scans";
+export {
   recordHealthCheck,
   getLatestHealthCheck,
   getLatestHealthChecksForWorkspace,
