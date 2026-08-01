@@ -64,6 +64,23 @@ function shell(inner: string): string {
   </div></body></html>`;
 }
 
+/** White-label shell: the agency's name heads the email; MyKavo remains as
+ *  a small transparency line in the footer (third-party mail must say who
+ *  actually sent it - and the From domain is ours either way). */
+function shellBranded(inner: string, brandName: string | null): string {
+  if (!brandName) return shell(inner);
+  return `<!doctype html><html><body style="margin:0;background:#eceef4;padding:24px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#16181d">
+  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden">
+    <div style="padding:24px 28px;border-bottom:1px solid #e4e7ee">
+      <span style="display:inline-block;font-size:17px;font-weight:600;letter-spacing:-0.01em">${esc(brandName)}</span>
+    </div>
+    <div style="padding:28px">${inner}</div>
+    <div style="padding:20px 28px;border-top:1px solid #e4e7ee;font-size:12px;color:#9aa1b1">
+      Sent via MyKavo website monitoring
+    </div>
+  </div></body></html>`;
+}
+
 function button(url: string, text: string): string {
   return `<a href="${esc(url)}" style="display:inline-block;background:#3556f4;color:#ffffff;text-decoration:none;font-weight:500;font-size:14px;padding:11px 22px;border-radius:9999px">${esc(text)}</a>`;
 }
@@ -102,6 +119,74 @@ export function scanSummaryEmail(data: ScanSummaryData): { subject: string; html
     `\n\nReview: ${data.dashboardUrl}`;
 
   return { subject, html: shell(inner), text };
+}
+
+// ---------- Scheduled client report delivery ----------
+
+export interface ClientReportDeliveryData {
+  websiteName: string;
+  websiteHost: string;
+  /** e.g. "Jul 3 – Aug 2, 2026". */
+  periodLabel: string;
+  /** Agency name for white-label framing; null falls back to MyKavo voice. */
+  brandName: string | null;
+  scansRun: number;
+  totalChanges: number;
+  /** Rounded percentage (0–100), or null when no checks ran. */
+  uptimePercent: number | null;
+  /** Average response time in ms, or null when unknown. */
+  avgResponseMs: number | null;
+  /** Public /r/[token] report URL - the CTA target. */
+  reportUrl: string;
+}
+
+/**
+ * The client-facing scheduled report email (Pro). Sent TO THE AGENCY'S
+ * CLIENT, so the voice is the agency's: "prepared by {brand}" leads and
+ * MyKavo appears only as a small transparency line (required for third-party
+ * mail; the From address is MyKavo's domain either way).
+ */
+export function clientReportDeliveryEmail(
+  data: ClientReportDeliveryData,
+): { subject: string; html: string; text: string } {
+  const from = data.brandName ?? "MyKavo";
+  const subject = `${data.websiteHost} website report - ${data.periodLabel}`;
+
+  const statRow = (label: string, value: string) => `<tr>
+    <td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:13px;color:#5c6270">${esc(label)}</td>
+    <td style="padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px;font-weight:600;text-align:right;color:#16181d">${esc(value)}</td>
+  </tr>`;
+
+  const uptime = data.uptimePercent === null ? "-" : `${data.uptimePercent}%`;
+  const response = data.avgResponseMs === null ? "-" : `${data.avgResponseMs} ms`;
+  const changes =
+    data.totalChanges === 0
+      ? "None - all clear"
+      : `${data.totalChanges} caught and reviewed`;
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#5c6270">Prepared by ${esc(from)}</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Website report for ${esc(data.websiteName)}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · ${esc(data.periodLabel)}</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+      ${statRow("Uptime", uptime)}
+      ${statRow("Average response time", response)}
+      ${statRow("Unexpected changes", changes)}
+      ${statRow("Monitoring scans run", String(data.scansRun))}
+    </table>
+    ${button(data.reportUrl, "View the full report")}
+  `;
+
+  const text =
+    `Website report for ${data.websiteName} (${data.periodLabel})\n` +
+    `Prepared by ${from}\n\n` +
+    `Uptime: ${uptime}\n` +
+    `Average response time: ${response}\n` +
+    `Unexpected changes: ${changes}\n` +
+    `Monitoring scans run: ${data.scansRun}\n\n` +
+    `Full report: ${data.reportUrl}`;
+
+  return { subject, html: shellBranded(inner, data.brandName), text };
 }
 
 // ---------- Deploy check verdict ----------

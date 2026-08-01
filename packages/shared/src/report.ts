@@ -132,3 +132,35 @@ export function buildReportModel(raw: ReportRawData, now: Date = raw.periodEnd):
     dashboardUrl: raw.dashboardUrl,
   };
 }
+
+// ---------- Scheduled client report delivery ----------
+
+export type ClientReportCadence = "OFF" | "WEEKLY" | "MONTHLY";
+
+/** Report window per cadence - what "last N days" the client email covers. */
+export const CLIENT_REPORT_WINDOW_DAYS: Record<
+  Exclude<ClientReportCadence, "OFF">,
+  number
+> = {
+  WEEKLY: 7,
+  MONTHLY: 30,
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether a website's scheduled client report is due. The daily sweep calls
+ * this; the margins sit slightly under the nominal period (6.5 / 27 days) so
+ * a sweep that runs a few hours earlier than yesterday's never skips a whole
+ * extra day. A never-sent report is due immediately.
+ */
+export function isClientReportDue(
+  cadence: ClientReportCadence,
+  lastSentAt: Date | null,
+  now: Date,
+): boolean {
+  if (cadence === "OFF") return false;
+  if (lastSentAt === null) return true;
+  const elapsedDays = (now.getTime() - lastSentAt.getTime()) / DAY_MS;
+  return cadence === "WEEKLY" ? elapsedDays >= 6.5 : elapsedDays >= 27;
+}

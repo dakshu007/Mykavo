@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReportModel, formatPeriodLabel, type ReportRawData } from "./report";
+import { buildReportModel, formatPeriodLabel, isClientReportDue, type ReportRawData } from "./report";
 
 const PERIOD_START = new Date("2026-07-03T08:00:00Z");
 const PERIOD_END = new Date("2026-07-10T08:00:00Z");
@@ -97,5 +97,34 @@ describe("buildReportModel", () => {
   it("keeps lighthouse scores intact for the template", () => {
     const lighthouse = { performance: 92, accessibility: 98, bestPractices: 100, seo: 100 };
     expect(buildReportModel(raw({ lighthouse })).lighthouse).toEqual(lighthouse);
+  });
+});
+
+describe("isClientReportDue", () => {
+  const now = new Date("2026-08-02T08:30:00Z");
+  const daysAgo = (d: number) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
+
+  it("is never due when OFF, even if never sent", () => {
+    expect(isClientReportDue("OFF", null, now)).toBe(false);
+    expect(isClientReportDue("OFF", daysAgo(400), now)).toBe(false);
+  });
+
+  it("is due immediately when never sent", () => {
+    expect(isClientReportDue("WEEKLY", null, now)).toBe(true);
+    expect(isClientReportDue("MONTHLY", null, now)).toBe(true);
+  });
+
+  it("weekly: due at ~7 days with drift margin, not day after day", () => {
+    expect(isClientReportDue("WEEKLY", daysAgo(1), now)).toBe(false);
+    expect(isClientReportDue("WEEKLY", daysAgo(6), now)).toBe(false);
+    expect(isClientReportDue("WEEKLY", daysAgo(6.6), now)).toBe(true);
+    expect(isClientReportDue("WEEKLY", daysAgo(7), now)).toBe(true);
+  });
+
+  it("monthly: due at ~28 days with drift margin", () => {
+    expect(isClientReportDue("MONTHLY", daysAgo(20), now)).toBe(false);
+    expect(isClientReportDue("MONTHLY", daysAgo(26), now)).toBe(false);
+    expect(isClientReportDue("MONTHLY", daysAgo(27), now)).toBe(true);
+    expect(isClientReportDue("MONTHLY", daysAgo(31), now)).toBe(true);
   });
 });

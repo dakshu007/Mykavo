@@ -7,6 +7,8 @@ import {
   workspaceInviteEmail,
   performanceDropEmail,
   type DeployVerdictData,
+  clientReportDeliveryEmail,
+  type ClientReportDeliveryData,
   type WeeklyReportData,
   type PerformanceDropData,
 } from "./templates";
@@ -301,6 +303,59 @@ describe("deployVerdictEmail", () => {
     });
     expect(evil.html).not.toContain("<img src=x>");
     expect(evil.html).toContain("&lt;img src=x&gt;");
+    expect(evil.html).toContain("A &amp; B");
+  });
+});
+
+describe("clientReportDeliveryEmail", () => {
+  const base: ClientReportDeliveryData = {
+    websiteName: "Aurora Outdoor",
+    websiteHost: "aurora-outdoor.com",
+    periodLabel: "Jul 3 – Aug 2, 2026",
+    brandName: "Northwind Digital",
+    scansRun: 30,
+    totalChanges: 3,
+    uptimePercent: 99.9,
+    avgResponseMs: 231,
+    reportUrl: "https://mykavo.app/r/token123",
+  };
+
+  it("leads with the agency brand, not MyKavo", () => {
+    const { subject, html } = clientReportDeliveryEmail(base);
+    expect(subject).toBe("aurora-outdoor.com website report - Jul 3 – Aug 2, 2026");
+    expect(html).toContain("Prepared by Northwind Digital");
+    // Brand heads the shell; MyKavo only appears as the transparency line.
+    expect(html).toContain(">Northwind Digital</span>");
+    expect(html).toContain("Sent via MyKavo website monitoring");
+    expect(html).toContain("View the full report");
+    expect(html).toContain(base.reportUrl);
+  });
+
+  it("falls back to MyKavo voice without a brand", () => {
+    const { html, text } = clientReportDeliveryEmail({ ...base, brandName: null });
+    expect(html).toContain("Prepared by MyKavo");
+    expect(text).toContain("Prepared by MyKavo");
+  });
+
+  it("renders all-clear and unknown stats gracefully", () => {
+    const { html, text } = clientReportDeliveryEmail({
+      ...base,
+      totalChanges: 0,
+      uptimePercent: null,
+      avgResponseMs: null,
+    });
+    expect(html).toContain("None - all clear");
+    expect(text).toContain("Uptime: -");
+  });
+
+  it("HTML-escapes the brand and website names", () => {
+    const evil = clientReportDeliveryEmail({
+      ...base,
+      brandName: "<b>Evil</b> & Co",
+      websiteName: "A & B",
+    });
+    expect(evil.html).not.toContain("<b>Evil</b>");
+    expect(evil.html).toContain("&lt;b&gt;Evil&lt;/b&gt; &amp; Co");
     expect(evil.html).toContain("A &amp; B");
   });
 });

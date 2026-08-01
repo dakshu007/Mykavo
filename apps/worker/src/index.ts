@@ -16,6 +16,7 @@ import {
   REPORT_SWEEP_QUEUE,
   AUDIT_SWEEP_QUEUE,
   BILLING_SWEEP_QUEUE,
+  CLIENT_REPORT_SWEEP_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
 } from "@mykavo/shared";
@@ -28,6 +29,7 @@ import { runHealthSweep } from "./health";
 import { runReportSweep } from "./report";
 import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
+import { runClientReportSweep } from "./client-report";
 import { startWatchdog } from "./watchdog";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
@@ -36,6 +38,7 @@ const HEALTH_CRON = process.env.HEALTH_CRON ?? "*/5 * * * *"; // every 5 minutes
 const REPORT_CRON = process.env.REPORT_CRON ?? "0 8 * * 1"; // Mondays 08:00 UTC
 const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 const BILLING_CRON = process.env.BILLING_CRON ?? "0 9 * * *"; // daily 09:00 UTC
+const CLIENT_REPORT_CRON = process.env.CLIENT_REPORT_CRON ?? "30 8 * * *"; // daily 08:30 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -110,6 +113,14 @@ async function main() {
     await runAuditSweep(boss);
   });
   await boss.schedule(AUDIT_SWEEP_QUEUE, AUDIT_CRON);
+
+  // Daily client-report delivery sweep (Pro): emails each website's branded
+  // report to configured client recipients on its weekly/monthly cadence.
+  await boss.createQueue(CLIENT_REPORT_SWEEP_QUEUE).catch(() => {});
+  await boss.work(CLIENT_REPORT_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runClientReportSweep();
+  });
+  await boss.schedule(CLIENT_REPORT_SWEEP_QUEUE, CLIENT_REPORT_CRON);
 
   // Daily billing sweep: "Pro renews soon / about to expire" reminder emails,
   // one per billing period (dedupe via Subscription.renewalReminderSentAt).

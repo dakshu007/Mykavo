@@ -55,6 +55,9 @@ const patchSchema = z.object({
   // Post-deploy verification hook; same token lifecycle as the report link.
   deployHookEnabled: z.boolean().optional(),
   regenerateDeployToken: z.boolean().optional(),
+  // Scheduled client report delivery (Pro): [] clears recipients.
+  reportRecipients: z.array(z.string().trim().toLowerCase().email()).max(5).optional(),
+  reportCadence: z.enum(["OFF", "WEEKLY", "MONTHLY"]).optional(),
   // Comparison settings (spec §25/§36): [] clears a list; omitted = unchanged.
   ignoredSelectors: selectorListSchema.optional(),
   screenshotMasks: selectorListSchema.optional(),
@@ -87,6 +90,21 @@ export async function PATCH(request: Request, { params }: Params) {
     if (plan.limits.scanFrequency !== "DAILY") {
       return NextResponse.json(
         { error: `Daily scans require a paid plan. Your ${plan.name} plan scans weekly.` },
+        { status: 403 },
+      );
+    }
+  }
+
+  // Scheduled client report delivery is part of white-label reports (Pro).
+  // Clearing (cadence OFF / recipients []) is always allowed.
+  if (
+    (input.reportCadence && input.reportCadence !== "OFF") ||
+    (input.reportRecipients && input.reportRecipients.length > 0)
+  ) {
+    const plan = await getWorkspacePlan(ctx.workspace.id);
+    if (!plan.limits.whiteLabelReports) {
+      return NextResponse.json(
+        { error: "Automatic client report emails are a Pro feature." },
         { status: 403 },
       );
     }
@@ -135,6 +153,12 @@ export async function PATCH(request: Request, { params }: Params) {
         (input.deployHookEnabled === true && !website.deployToken)
           ? randomBytes(18).toString("base64url")
           : undefined,
+      // Deduped client recipients; [] clears the list (stored as []).
+      reportRecipients:
+        input.reportRecipients === undefined
+          ? undefined
+          : Array.from(new Set(input.reportRecipients)),
+      reportCadence: input.reportCadence,
       ignoredSelectors: input.ignoredSelectors,
       screenshotMasks: input.screenshotMasks,
       // Never trust client normalization - canonical form is enforced here.

@@ -17,6 +17,9 @@ export function ClientReportSettings({
   enabled,
   brandingConfigured,
   isPro,
+  initialRecipients,
+  initialCadence,
+  lastSentLabel,
 }: {
   websiteId: string;
   /** Full public report URL, null until a token has been minted. */
@@ -24,11 +27,57 @@ export function ClientReportSettings({
   enabled: boolean;
   brandingConfigured: boolean;
   isPro: boolean;
+  /** Configured client emails for scheduled delivery. */
+  initialRecipients: string[];
+  initialCadence: "OFF" | "WEEKLY" | "MONTHLY";
+  /** Human "Jul 26, 2026" label of the last automatic send, null if never. */
+  lastSentLabel: string | null;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<"toggle" | "rotate" | null>(null);
+  const [busy, setBusy] = useState<"toggle" | "rotate" | "delivery" | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [recipientsText, setRecipientsText] = useState(initialRecipients.join(", "));
+  const [cadence, setCadence] = useState<"OFF" | "WEEKLY" | "MONTHLY">(initialCadence);
+  const [deliverySaved, setDeliverySaved] = useState(false);
+
+  async function saveDelivery() {
+    const recipients = recipientsText
+      .split(/[,\n;]+/)
+      .map((r) => r.trim().toLowerCase())
+      .filter(Boolean);
+    if (recipients.length > 5) {
+      setError("Up to 5 client emails per website.");
+      return;
+    }
+    if (recipients.some((r) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r))) {
+      setError("One of the emails doesn't look valid.");
+      return;
+    }
+    if (cadence !== "OFF" && recipients.length === 0) {
+      setError("Add at least one client email, or set delivery to Off.");
+      return;
+    }
+    setBusy("delivery");
+    setError("");
+    setDeliverySaved(false);
+    try {
+      const res = await fetch(`/api/websites/${websiteId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reportRecipients: recipients, reportCadence: cadence }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Could not save delivery settings.");
+      setDeliverySaved(true);
+      router.refresh();
+      setTimeout(() => setDeliverySaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save delivery settings.");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function patch(body: Record<string, boolean>, action: "toggle" | "rotate") {
     setBusy(action);
@@ -135,6 +184,61 @@ export function ClientReportSettings({
                 : "Add your agency name, logo, and color in Settings to white-label this report."
               : "Free reports include MyKavo branding. Upgrade to Pro to white-label them with your agency's name, logo, and color."}
           </p>
+
+          {isPro ? (
+            <div className="mt-5 border-t border-line pt-4">
+              <p className="text-sm font-medium text-ink">Email it to your client automatically</p>
+              <p className="mt-1 text-[12px] text-ink-faint">
+                MyKavo sends this report to your client on schedule - branded as
+                your agency, with the live report link.
+                {lastSentLabel && ` Last sent ${lastSentLabel}.`}
+              </p>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
+                <div className="min-w-0 flex-1">
+                  <label htmlFor={`report-recipients-${websiteId}`} className="label-micro mb-1.5 block">
+                    Client emails (up to 5, comma-separated)
+                  </label>
+                  <input
+                    id={`report-recipients-${websiteId}`}
+                    type="text"
+                    value={recipientsText}
+                    onChange={(e) => setRecipientsText(e.target.value)}
+                    placeholder="client@company.com"
+                    className="h-10 w-full rounded-field border border-line bg-card px-3.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div className="shrink-0">
+                  <label htmlFor={`report-cadence-${websiteId}`} className="label-micro mb-1.5 block">
+                    Frequency
+                  </label>
+                  <select
+                    id={`report-cadence-${websiteId}`}
+                    value={cadence}
+                    onChange={(e) => setCadence(e.target.value as "OFF" | "WEEKLY" | "MONTHLY")}
+                    className="h-10 rounded-field border border-line bg-card px-3 text-[14px] text-ink focus:border-primary focus:outline-none"
+                  >
+                    <option value="OFF">Off</option>
+                    <option value="WEEKLY">Weekly</option>
+                    <option value="MONTHLY">Monthly</option>
+                  </select>
+                </div>
+                <button
+                  onClick={saveDelivery}
+                  disabled={busy !== null}
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 self-end rounded-full bg-primary px-5 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+                >
+                  {busy === "delivery" && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
+                  {deliverySaved && <Check className="size-3.5" aria-hidden />}
+                  {deliverySaved ? "Saved" : "Save delivery"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 border-t border-line pt-3 text-[12px] text-ink-faint">
+              Pro also emails this report to your clients automatically, weekly
+              or monthly.
+            </p>
+          )}
         </div>
       )}
 

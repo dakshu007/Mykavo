@@ -4,6 +4,8 @@ export {
   failureAlertEmail,
   deployVerdictEmail,
   type DeployVerdictData,
+  clientReportDeliveryEmail,
+  type ClientReportDeliveryData,
   downAlertEmail,
   recoveryAlertEmail,
   sslExpiryAlertEmail,

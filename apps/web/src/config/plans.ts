@@ -108,6 +108,7 @@ export const plans: Plan[] = [
       "Post-deploy checks",
       "Conversion element monitoring",
       "White-label client reports",
+      "Automatic client report emails",
       "1-year history",
       "Up to 5 team members",
       "Email alerts",

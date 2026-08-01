@@ -12,6 +12,7 @@ export const HEALTH_SWEEP_QUEUE = "health-sweep";
 export const REPORT_SWEEP_QUEUE = "report-sweep";
 export const AUDIT_SWEEP_QUEUE = "audit-sweep";
 export const BILLING_SWEEP_QUEUE = "billing-sweep";
+export const CLIENT_REPORT_SWEEP_QUEUE = "client-report-sweep";
 
 export interface ScanWebsiteJob {
   scanId: string;

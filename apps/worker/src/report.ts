@@ -19,7 +19,7 @@ const REPORT_WINDOW_DAYS = 7;
 
 const dashboardBase = process.env.APP_URL ?? "http://localhost:3000";
 
-interface ReportWebsite {
+export interface ReportWebsite {
   id: string;
   name: string;
   url: string;
@@ -51,8 +51,9 @@ async function resolveReportConfig(workspaceId: string): Promise<WorkspaceReport
   };
 }
 
-/** Gather the raw 7-day numbers for one website. */
-async function gatherRawData(
+/** Gather the raw report numbers for one website over a window. Shared with
+ *  the client-report delivery sweep (./client-report.ts). */
+export async function gatherRawData(
   website: ReportWebsite,
   since: Date,
   now: Date,

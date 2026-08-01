@@ -665,6 +665,19 @@ export default async function WebsiteDetailPage({
           enabled={website.reportEnabled}
           brandingConfigured={Boolean(workspaceBrand?.brandName)}
           isPro={plan.limits.whiteLabelReports}
+          initialRecipients={
+            Array.isArray(website.reportRecipients)
+              ? website.reportRecipients.filter((r): r is string => typeof r === "string")
+              : []
+          }
+          initialCadence={website.reportCadence}
+          lastSentLabel={
+            website.clientReportLastSentAt
+              ? website.clientReportLastSentAt.toLocaleDateString("en-US", {
+                  dateStyle: "medium",
+                })
+              : null
+          }
         />
       </Card>
 
