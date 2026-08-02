@@ -258,6 +258,9 @@ model Website {
   healthChecks      HealthCheck[]
   healthIncidents   HealthIncident[]
   siteMetaSnapshots SiteMetaSnapshot[]
+  gscConnection     GscConnection?
+  gscDaily          GscDaily[]
+  gscDimensionRows  GscDimensionRow[]
   siteAudits        SiteAudit[]
 
   @@unique([workspaceId, normalizedUrl])
@@ -930,4 +933,73 @@ model SiteAudit {
 
   @@index([websiteId, createdAt(sort: Desc)])
   @@map("site_audit")
+}
+
+// ---------- Google Search Console integration ----------
+
+enum GscDimension {
+  QUERY
+  PAGE
+  COUNTRY
+  DEVICE
+  APPEARANCE
+}
+
+enum GscPeriod {
+  CURRENT
+  PREVIOUS
+}
+
+/// One GSC connection per website. OAuth tokens are AES-256-GCM encrypted
+/// with GSC_TOKEN_KEY before storage - plaintext never touches the DB.
+model GscConnection {
+  id              String    @id @default(cuid())
+  websiteId       String    @unique
+  website         Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  connectedById   String
+  googleEmail     String?
+  property        String?
+  accessTokenEnc  String
+  refreshTokenEnc String
+  expiresAt       DateTime
+  lastSyncAt      DateTime?
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("gsc_connection")
+}
+
+/// Daily totals for the performance chart (90 days kept per website).
+model GscDaily {
+  id          String   @id @default(cuid())
+  websiteId   String
+  website     Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+
+  @@unique([websiteId, date])
+  @@map("gsc_daily")
+}
+
+/// Top rows per dimension (query/page/country/device/appearance), stored for
+/// the CURRENT 28-day window and the PREVIOUS one so the UI shows change.
+model GscDimensionRow {
+  id          String       @id @default(cuid())
+  websiteId   String
+  website     Website      @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  dimension   GscDimension
+  period      GscPeriod
+  key         String
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+
+  @@unique([websiteId, dimension, period, key])
+  @@index([websiteId, dimension, period])
+  @@map("gsc_dimension_row")
 }

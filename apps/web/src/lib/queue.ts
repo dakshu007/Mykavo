@@ -8,8 +8,10 @@ import {
   SCAN_WEBSITE_QUEUE,
   LIGHTHOUSE_AUDIT_QUEUE,
   SITE_AUDIT_QUEUE,
+  GSC_SYNC_QUEUE,
   type ScanWebsiteJob,
   type SiteAuditJob,
+  type GscSyncJob,
   type LighthouseAuditJob,
 } from "@mykavo/shared";
 import { env } from "@/lib/env";
@@ -64,4 +66,10 @@ export async function enqueueLighthouseAudit(job: LighthouseAuditJob): Promise<s
 export async function enqueueSiteAudit(job: SiteAuditJob): Promise<string | null> {
   const boss = await getBoss();
   return boss.send(SITE_AUDIT_QUEUE, { ...job });
+}
+
+/** Enqueue a Search Console sync. Returns the pg-boss job id. */
+export async function enqueueGscSync(job: GscSyncJob): Promise<string | null> {
+  const boss = await getBoss();
+  return boss.send(GSC_SYNC_QUEUE, { ...job });
 }

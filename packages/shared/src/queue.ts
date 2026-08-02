@@ -13,6 +13,8 @@ export const REPORT_SWEEP_QUEUE = "report-sweep";
 export const AUDIT_SWEEP_QUEUE = "audit-sweep";
 export const BILLING_SWEEP_QUEUE = "billing-sweep";
 export const CLIENT_REPORT_SWEEP_QUEUE = "client-report-sweep";
+export const GSC_SYNC_QUEUE = "gsc-sync";
+export const GSC_SYNC_SWEEP_QUEUE = "gsc-sync-sweep";
 export const SITE_AUDIT_QUEUE = "site-audit";
 
 export interface ScanWebsiteJob {
@@ -27,4 +29,8 @@ export interface SiteAuditJob {
   siteAuditId: string;
   /** Plan-resolved crawl cap, decided by the web app at enqueue time. */
   maxPages: number;
+}
+
+export interface GscSyncJob {
+  websiteId: string;
 }

@@ -18,9 +18,12 @@ import {
   BILLING_SWEEP_QUEUE,
   CLIENT_REPORT_SWEEP_QUEUE,
   SITE_AUDIT_QUEUE,
+  GSC_SYNC_QUEUE,
+  GSC_SYNC_SWEEP_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
   type SiteAuditJob,
+  type GscSyncJob,
 } from "@mykavo/shared";
 import { logger } from "./logger";
 import { runScanWebsiteJob } from "./scan-website";
@@ -33,6 +36,7 @@ import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
 import { runClientReportSweep } from "./client-report";
 import { runSiteAuditJob } from "./site-audit";
+import { runGscSync, runGscSweep } from "./gsc-sync";
 import { startWatchdog } from "./watchdog";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
@@ -42,6 +46,7 @@ const REPORT_CRON = process.env.REPORT_CRON ?? "0 8 * * 1"; // Mondays 08:00 UTC
 const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 const BILLING_CRON = process.env.BILLING_CRON ?? "0 9 * * *"; // daily 09:00 UTC
 const CLIENT_REPORT_CRON = process.env.CLIENT_REPORT_CRON ?? "30 8 * * *"; // daily 08:30 UTC
+const GSC_CRON = process.env.GSC_CRON ?? "0 7 * * *"; // daily 07:00 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -132,6 +137,17 @@ async function main() {
     await runBillingSweep();
   });
   await boss.schedule(BILLING_SWEEP_QUEUE, BILLING_CRON);
+
+  // Google Search Console: on-demand syncs + a daily sweep.
+  await boss.createQueue(GSC_SYNC_QUEUE, { retryLimit: 1, expireInSeconds: 10 * 60 }).catch(() => {});
+  await boss.work<GscSyncJob>(GSC_SYNC_QUEUE, { batchSize: 1 }, async ([job]) => {
+    await runGscSync(job.data);
+  });
+  await boss.createQueue(GSC_SYNC_SWEEP_QUEUE).catch(() => {});
+  await boss.work(GSC_SYNC_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runGscSweep();
+  });
+  await boss.schedule(GSC_SYNC_SWEEP_QUEUE, GSC_CRON);
 
   // Site audits (technical SEO crawl): up to ~10 min of polite fetching per
   // run, so strictly one at a time with a single retry on expiry.

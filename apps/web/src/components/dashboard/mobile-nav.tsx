@@ -13,6 +13,7 @@ const nav = [
   { href: "/dashboard/changes", label: "Changes" },
   { href: "/dashboard/scans", label: "Scans" },
   { href: "/dashboard/site-audit", label: "Audit" },
+  { href: "/dashboard/search-console", label: "GSC" },
   { href: "/dashboard/notifications", label: "Notifications" },
   { href: "/dashboard/billing", label: "Billing" },
   { href: "/dashboard/settings", label: "Settings" },
