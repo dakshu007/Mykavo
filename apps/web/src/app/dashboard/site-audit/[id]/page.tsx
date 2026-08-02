@@ -6,9 +6,10 @@ import { prisma } from "@mykavo/database";
 import { AUDIT_CHECKS, type AuditCategory, type AuditIssueGroup } from "@mykavo/seo-audit";
 import { Card } from "@/components/ui/card";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
 import { RunAuditButton } from "../run-audit-button";
 import { FixTip } from "../fix-tip";
-import { HealthGauge, SEVERITY_CHIP, healthTone } from "../report-ui";
+import { HealthGauge, SEVERITY_CHIP, healthTone, isAuditRunning } from "../report-ui";
 
 export const metadata: Metadata = { title: "Audit report - MyKavo" };
 
@@ -30,7 +31,8 @@ export default async function SiteAuditReportPage({ params }: Params) {
   });
   if (!audit) notFound();
 
-  const running = ["QUEUED", "RUNNING"].includes(audit.status);
+  const running = isAuditRunning(audit);
+  const timedOut = !running && ["QUEUED", "RUNNING"].includes(audit.status);
   const issues = (Array.isArray(audit.issues) ? audit.issues : []) as unknown as AuditIssueGroup[];
 
   // Group by category, keeping the stored worst-first ordering inside each.
@@ -55,7 +57,9 @@ export default async function SiteAuditReportPage({ params }: Params) {
 
   return (
     <div className="space-y-6">
-      {running && <meta httpEquiv="refresh" content="6" />}
+      {/* router.refresh polling - never meta refresh (Chrome fires scheduled
+          refreshes even after client-side navigation away from this page). */}
+      {running && <AutoRefresh intervalMs={6000} />}
       <div>
         <Link
           href="/dashboard/site-audit"
@@ -96,10 +100,12 @@ export default async function SiteAuditReportPage({ params }: Params) {
             Crawling and checking pages - this page refreshes automatically.
           </p>
         </Card>
-      ) : audit.status === "FAILED" ? (
+      ) : audit.status === "FAILED" || timedOut ? (
         <Card>
           <p className="py-2 text-sm text-critical-strong">
-            The audit failed{audit.errorMessage ? `: ${audit.errorMessage}` : "."} Try running it again.
+            {timedOut
+              ? "The audit timed out before finishing. Try running it again."
+              : `The audit failed${audit.errorMessage ? `: ${audit.errorMessage}` : "."} Try running it again.`}
           </p>
         </Card>
       ) : (

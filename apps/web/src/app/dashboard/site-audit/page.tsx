@@ -7,8 +7,9 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { formatLimit } from "@/config/plans";
 import { getWorkspacePlan } from "@/lib/limits";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
 import { RunAuditButton } from "./run-audit-button";
-import { healthTone } from "./report-ui";
+import { healthTone, isAuditRunning } from "./report-ui";
 
 export const metadata: Metadata = { title: "Site Audit - MyKavo" };
 
@@ -43,13 +44,14 @@ export default async function SiteAuditPage() {
     );
   }
 
-  const anyRunning = websites.some((w) =>
-    w.siteAudits[0] && ["QUEUED", "RUNNING"].includes(w.siteAudits[0].status),
-  );
+  const anyRunning = websites.some((w) => w.siteAudits[0] && isAuditRunning(w.siteAudits[0]));
 
   return (
     <div className="space-y-6">
-      {anyRunning && <meta httpEquiv="refresh" content="6" />}
+      {/* router.refresh polling - NEVER meta refresh: Chrome fires a scheduled
+          meta refresh even after client-side navigation, yanking the user
+          back to this page from anywhere in the dashboard. */}
+      {anyRunning && <AutoRefresh intervalMs={6000} />}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Site Audit</h1>
@@ -63,7 +65,9 @@ export default async function SiteAuditPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {websites.map((website) => {
           const audit = website.siteAudits[0];
-          const running = audit && ["QUEUED", "RUNNING"].includes(audit.status);
+          const running = audit && isAuditRunning(audit);
+          const timedOut =
+            audit && !running && ["QUEUED", "RUNNING"].includes(audit.status);
           const hostname = (() => {
             try {
               return new URL(website.url).hostname;
@@ -92,9 +96,11 @@ export default async function SiteAuditPage() {
                     <span aria-hidden className="size-2 animate-pulse rounded-full bg-primary" />
                     Audit in progress - crawling up to {formatLimit(plan.limits.siteAuditPages)} pages…
                   </p>
-                ) : audit.status === "FAILED" ? (
+                ) : audit.status === "FAILED" || timedOut ? (
                   <p className="mt-4 text-sm text-critical-strong">
-                    Last audit failed{audit.errorMessage ? `: ${audit.errorMessage}` : "."}
+                    {timedOut
+                      ? "Last audit timed out - run it again."
+                      : `Last audit failed${audit.errorMessage ? `: ${audit.errorMessage}` : "."}`}
                   </p>
                 ) : (
                   <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px]">

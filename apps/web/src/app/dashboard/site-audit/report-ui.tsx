@@ -1,5 +1,15 @@
 /** Shared server-safe presentation helpers for the Site Audit UI. */
 
+/** Past this age a QUEUED/RUNNING audit is presumed dead (job lifetime is
+ *  ~35 min worst case: 15-min expiry × 2 attempts + retry delay). The worker
+ *  janitor fails such rows; the UI stops calling them "in progress" either way. */
+export const AUDIT_STALE_MINUTES = 45;
+
+export function isAuditRunning(audit: { status: string; createdAt: Date }): boolean {
+  if (audit.status !== "QUEUED" && audit.status !== "RUNNING") return false;
+  return Date.now() - audit.createdAt.getTime() < AUDIT_STALE_MINUTES * 60 * 1000;
+}
+
 export function healthTone(score: number): string {
   if (score >= 90) return "text-success-strong";
   if (score >= 70) return "text-warning-strong";

@@ -28,6 +28,26 @@ export async function runSchedulerSweep(boss: PgBoss): Promise<number> {
     logger.error("stuck-scan recovery failed", {}, err);
   }
 
+  // Same recovery for site audits: a QUEUED/RUNNING audit older than 45 min
+  // is dead (job lifetime is ~35 min worst case) - fail it so the dashboard
+  // card and the run button unstick. A zombie job firing later is a no-op
+  // (runSiteAuditJob skips finished audits).
+  try {
+    const cutoff = new Date(now.getTime() - 45 * 60 * 1000);
+    const stuckAudits = await prisma.siteAudit.updateMany({
+      where: { status: { in: ["QUEUED", "RUNNING"] }, createdAt: { lt: cutoff } },
+      data: {
+        status: "FAILED",
+        completedAt: now,
+        errorMessage: "The audit worker was unavailable. Run the audit again.",
+      },
+    });
+    if (stuckAudits.count > 0)
+      logger.warn("stuck site audits failed by recovery sweep", { count: stuckAudits.count });
+  } catch (err) {
+    logger.error("stuck-audit recovery failed", {}, err);
+  }
+
   const due = await prisma.website.findMany({
     where: {
       status: "ACTIVE",
