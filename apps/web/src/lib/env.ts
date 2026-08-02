@@ -18,7 +18,10 @@ const serverEnvSchema = z.object({
   // https://console.cloud.google.com → APIs & Services → Credentials.
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GSC_TOKEN_KEY: z.string().length(64).optional(),
+  // Optional integration secret. No length constraint here: Netlify masks
+  // secret values during builds, and a masked value must not fail the whole
+  // env schema - gscConfigured()/gscKey() validate the real length at use.
+  GSC_TOKEN_KEY: z.string().optional(),
   APP_URL: z.string().url().optional(),
   // Blog mini-CMS admins (optional). Comma-separated emails allowed to
   // write/publish blog posts from the dashboard. Unset = CMS disabled.

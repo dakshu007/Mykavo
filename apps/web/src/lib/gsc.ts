@@ -9,11 +9,13 @@ import { decryptToken, encryptToken, refreshAccessToken } from "@mykavo/shared";
 import { env } from "@/lib/env";
 
 export function gscConfigured(): boolean {
-  return Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GSC_TOKEN_KEY);
+  return Boolean(
+    env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GSC_TOKEN_KEY?.length === 64,
+  );
 }
 
 export function gscKey(): string {
-  if (!env.GSC_TOKEN_KEY) throw new Error("GSC_TOKEN_KEY not configured");
+  if (env.GSC_TOKEN_KEY?.length !== 64) throw new Error("GSC_TOKEN_KEY not configured");
   return env.GSC_TOKEN_KEY;
 }
 
