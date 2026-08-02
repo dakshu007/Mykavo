@@ -32,8 +32,10 @@ export const DEFAULT_LIMITS: CrawlLimits = {
 export interface AuditIssueGroup {
   checkId: string;
   count: number;
-  /** Sampled affected URLs with optional details (capped for DB size). */
-  urls: { url: string; detail?: string }[];
+  /** Sampled affected URLs with optional details (capped for DB size).
+   *  foundOn = pages that link to the URL (or the sitemap) - where the user
+   *  actually goes to fix a 3XX/4XX/5XX. */
+  urls: { url: string; detail?: string; foundOn?: string[] }[];
 }
 
 export interface AuditResult {
@@ -49,6 +51,16 @@ export interface AuditResult {
 }
 
 const URL_SAMPLE_CAP = 100;
+/** Checks whose affected URL is a DESTINATION - the fix lives on the pages
+ *  linking to it, so those get surfaced as "found on". */
+const FOUND_ON_CHECKS = new Set([
+  "http-redirect",
+  "http-4xx",
+  "http-5xx",
+  "http-fetch-error",
+  "sitemap-broken-url",
+  "sitemap-redirect-url",
+]);
 const USER_AGENT = "Mozilla/5.0 (compatible; MyKavoAudit/1.0; +https://mykavo.app)";
 const GENERIC_DIRECTIVE_BLOCK = /^user-agent:\s*\*/im;
 
@@ -228,6 +240,52 @@ async function fetchSitemapUrls(origin: string, robotsSitemaps: string[]): Promi
   return [...urls];
 }
 
+/**
+ * Group raw issue instances for storage/display. Counts are DISTINCT affected
+ * URLs (Ahrefs semantics): a page linking to the same broken target from nav
+ * + footer is ONE affected page, and a busted global nav cannot explode into
+ * tens of thousands of "issues". Destination-type issues (3XX/4XX/5XX,
+ * sitemap problems) carry `foundOn` - the pages linking to the URL (or the
+ * sitemap) - so users know WHERE to fix each one.
+ */
+export function aggregateIssues(
+  issues: PageIssue[],
+  ctx: {
+    linkSources: Map<string, string[]>;
+    sitemapUrlSet: Set<string>;
+    sitemapLocation: string;
+  },
+): AuditIssueGroup[] {
+  const grouped = new Map<string, AuditIssueGroup>();
+  const seenPairs = new Set<string>();
+  for (const issue of issues) {
+    if (!AUDIT_CHECKS[issue.checkId]) continue;
+    const pairKey = `${issue.checkId}|${issue.url}`;
+    if (seenPairs.has(pairKey)) continue;
+    seenPairs.add(pairKey);
+    let group = grouped.get(issue.checkId);
+    if (!group) {
+      group = { checkId: issue.checkId, count: 0, urls: [] };
+      grouped.set(issue.checkId, group);
+    }
+    group.count++;
+    if (group.urls.length < URL_SAMPLE_CAP) {
+      const entry: AuditIssueGroup["urls"][number] = { url: issue.url, detail: issue.detail };
+      if (FOUND_ON_CHECKS.has(issue.checkId)) {
+        const sources = ctx.linkSources.get(issue.url);
+        if (sources && sources.length > 0) entry.foundOn = sources.slice(0, 3);
+        else if (ctx.sitemapUrlSet.has(issue.url)) entry.foundOn = [ctx.sitemapLocation];
+      }
+      group.urls.push(entry);
+    }
+  }
+  return [...grouped.values()].sort((a, b) => {
+    const sevDiff =
+      SEVERITY_ORDER[AUDIT_CHECKS[b.checkId].severity] - SEVERITY_ORDER[AUDIT_CHECKS[a.checkId].severity];
+    return sevDiff !== 0 ? sevDiff : b.count - a.count;
+  });
+}
+
 export async function runSiteAudit(
   startUrl: string,
   limits: CrawlLimits = DEFAULT_LIMITS,
@@ -259,6 +317,8 @@ export async function runSiteAudit(
   const issues: PageIssue[] = [];
   const statusByUrl = new Map<string, number>();
   const inboundLinks = new Map<string, number>();
+  // First few pages linking to each URL - the "found on" fix locations.
+  const linkSources = new Map<string, string[]>();
   const depthByUrl = new Map<string, number>();
   const redirectHops = new Map<string, number>();
   let stoppedReason: AuditResult["stoppedReason"] = "completed";
@@ -305,6 +365,9 @@ export async function runSiteAudit(
         const normalized = normalizeForQueue(link);
         if (!normalized) continue;
         inboundLinks.set(normalized, (inboundLinks.get(normalized) ?? 0) + 1);
+        const sources = linkSources.get(normalized);
+        if (!sources) linkSources.set(normalized, [facts.url]);
+        else if (sources.length < 3 && !sources.includes(facts.url)) sources.push(facts.url);
         enqueue(normalized, depth + 1);
       }
     }
@@ -397,36 +460,16 @@ export async function runSiteAudit(
   if (!hasPath(/contact/)) issues.push({ checkId: "trust-no-contact", url: origin });
   if (!hasPath(/privacy/)) issues.push({ checkId: "trust-no-privacy", url: origin });
 
+  const sitemapUrlSet = new Set(sitemapUrls);
+  const sitemapLocation = robots.sitemaps[0] ?? `${origin}/sitemap.xml`;
+
   // Bot-protection heuristic: when a third of fetches come back 403/429,
   // the numbers describe the firewall, not the site - say so in the UI.
   const blockedResponses = [...statusByUrl.values()].filter((s) => s === 403 || s === 429).length;
   if (statusByUrl.size >= 20 && blockedResponses / statusByUrl.size >= 0.3) stoppedReason = "blocked";
 
   // ---- Aggregate ----
-  // Counts are DISTINCT affected URLs (Ahrefs semantics): a page linking to
-  // the same broken target from nav + footer is ONE affected page, and a
-  // busted global nav cannot explode into tens of thousands of "issues".
-  const grouped = new Map<string, AuditIssueGroup>();
-  const seenPairs = new Set<string>();
-  for (const issue of issues) {
-    if (!AUDIT_CHECKS[issue.checkId]) continue;
-    const pairKey = `${issue.checkId}|${issue.url}`;
-    if (seenPairs.has(pairKey)) continue;
-    seenPairs.add(pairKey);
-    let group = grouped.get(issue.checkId);
-    if (!group) {
-      group = { checkId: issue.checkId, count: 0, urls: [] };
-      grouped.set(issue.checkId, group);
-    }
-    group.count++;
-    if (group.urls.length < URL_SAMPLE_CAP)
-      group.urls.push({ url: issue.url, detail: issue.detail });
-  }
-  const groupedList = [...grouped.values()].sort((a, b) => {
-    const sevDiff =
-      SEVERITY_ORDER[AUDIT_CHECKS[b.checkId].severity] - SEVERITY_ORDER[AUDIT_CHECKS[a.checkId].severity];
-    return sevDiff !== 0 ? sevDiff : b.count - a.count;
-  });
+  const groupedList = aggregateIssues(issues, { linkSources, sitemapUrlSet, sitemapLocation });
 
   const countBySeverity = (severity: AuditSeverity) =>
     groupedList

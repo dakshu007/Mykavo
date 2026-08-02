@@ -8,6 +8,7 @@ export {
 export { extractFacts, pageIssues, type PageFacts, type PageIssue } from "./page";
 export {
   runSiteAudit,
+  aggregateIssues,
   DEFAULT_LIMITS,
   type CrawlLimits,
   type AuditResult,

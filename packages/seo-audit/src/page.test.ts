@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { extractFacts, pageIssues } from "./page";
 import { AUDIT_CHECKS } from "./registry";
+import { aggregateIssues } from "./crawl";
 
 function facts(html: string, overrides: Partial<Parameters<typeof extractFacts>[0]> = {}) {
   return extractFacts({
@@ -122,5 +123,55 @@ describe("registry integrity", () => {
       expect(def.explain.length, id).toBeGreaterThan(20);
       expect(def.fix.length, id).toBeGreaterThan(20);
     }
+  });
+});
+
+describe("aggregateIssues foundOn", () => {
+  const ctx = {
+    linkSources: new Map([
+      ["https://ex.com/old-page", ["https://ex.com/", "https://ex.com/blog", "https://ex.com/about", "https://ex.com/extra"]],
+    ]),
+    sitemapUrlSet: new Set(["https://ex.com/sitemap-only"]),
+    sitemapLocation: "https://ex.com/sitemap.xml",
+  };
+
+  it("attaches up to 3 linking pages to redirect/4xx issues", () => {
+    const groups = aggregateIssues(
+      [
+        { checkId: "http-redirect", url: "https://ex.com/old-page", detail: "→ /new" },
+        { checkId: "http-4xx", url: "https://ex.com/sitemap-only", detail: "HTTP 404" },
+      ],
+      ctx,
+    );
+    const redirect = groups.find((g) => g.checkId === "http-redirect")!;
+    expect(redirect.urls[0].foundOn).toEqual([
+      "https://ex.com/",
+      "https://ex.com/blog",
+      "https://ex.com/about",
+    ]);
+    const notFound = groups.find((g) => g.checkId === "http-4xx")!;
+    expect(notFound.urls[0].foundOn).toEqual(["https://ex.com/sitemap.xml"]);
+  });
+
+  it("does NOT attach foundOn to page-level issues, and dedupes counting", () => {
+    const groups = aggregateIssues(
+      [
+        { checkId: "title-missing", url: "https://ex.com/old-page" },
+        { checkId: "title-missing", url: "https://ex.com/old-page" },
+        { checkId: "title-missing", url: "https://ex.com/other" },
+      ],
+      ctx,
+    );
+    const titles = groups.find((g) => g.checkId === "title-missing")!;
+    expect(titles.count).toBe(2);
+    expect(titles.urls[0].foundOn).toBeUndefined();
+  });
+
+  it("omits foundOn when the destination has no known source", () => {
+    const groups = aggregateIssues(
+      [{ checkId: "http-5xx", url: "https://ex.com/mystery", detail: "HTTP 500" }],
+      ctx,
+    );
+    expect(groups[0].urls[0].foundOn).toBeUndefined();
   });
 });

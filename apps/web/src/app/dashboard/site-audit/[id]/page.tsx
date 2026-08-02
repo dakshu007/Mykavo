@@ -15,6 +15,17 @@ export const metadata: Metadata = { title: "Audit report - MyKavo" };
 
 type Params = { params: Promise<{ id: string }> };
 
+/** Compact display for a "found on" source: path only, sitemap called out. */
+function pagePathLabel(source: string): string {
+  try {
+    const url = new URL(source);
+    if (/sitemap.*\.xml$/i.test(url.pathname)) return "the sitemap";
+    return url.pathname + url.search || "/";
+  } catch {
+    return source;
+  }
+}
+
 /**
  * The audit report: health gauge + issue browser. Issues are grouped by
  * category, ordered worst-first, each row carrying a severity chip, the
@@ -203,8 +214,8 @@ export default async function SiteAuditReportPage({ params }: Params) {
                               </span>
                               <span className="hidden group-open:inline">Hide URLs</span>
                             </summary>
-                            <ul className="mt-2 max-h-72 space-y-1 overflow-y-auto rounded-tile bg-surface px-3 py-2.5">
-                              {group.urls.map((entry: { url: string; detail?: string }) => (
+                            <ul className="mt-2 max-h-72 space-y-1.5 overflow-y-auto rounded-tile bg-surface px-3 py-2.5">
+                              {group.urls.map((entry: { url: string; detail?: string; foundOn?: string[] }) => (
                                 <li key={entry.url + (entry.detail ?? "")} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                                   <a
                                     href={entry.url}
@@ -216,6 +227,24 @@ export default async function SiteAuditReportPage({ params }: Params) {
                                   </a>
                                   {entry.detail && (
                                     <span className="font-mono text-[11px] text-ink-faint">{entry.detail}</span>
+                                  )}
+                                  {entry.foundOn && entry.foundOn.length > 0 && (
+                                    <span className="flex basis-full flex-wrap items-baseline gap-x-2 pl-3">
+                                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
+                                        found on
+                                      </span>
+                                      {entry.foundOn.map((source) => (
+                                        <a
+                                          key={source}
+                                          href={source}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="break-all font-mono text-[11px] text-ink-secondary underline decoration-line underline-offset-2 hover:text-primary"
+                                        >
+                                          {pagePathLabel(source)}
+                                        </a>
+                                      ))}
+                                    </span>
                                   )}
                                 </li>
                               ))}
