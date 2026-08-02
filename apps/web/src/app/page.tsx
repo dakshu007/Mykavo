@@ -24,6 +24,7 @@ import { CategoryTabs } from "@/components/landing/categories";
 import { AlertChannelsSection } from "@/components/landing/alert-channels";
 import { AppDownloadSection } from "@/components/landing/app-download";
 import { SiteAuditSection } from "@/components/landing/site-audit";
+import { SearchConsoleSection } from "@/components/landing/search-console";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
@@ -621,6 +622,9 @@ export default function HomePage() {
 
         {/* Site Audit - the Ahrefs-style crawl, priced for freelancers */}
         <SiteAuditSection />
+
+        {/* Search Console correlation - dark band, animated merge diagram */}
+        <SearchConsoleSection />
 
         {/* Free tools */}
         <Section id="free-tools">
