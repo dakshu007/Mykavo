@@ -258,6 +258,7 @@ model Website {
   healthChecks      HealthCheck[]
   healthIncidents   HealthIncident[]
   siteMetaSnapshots SiteMetaSnapshot[]
+  siteAudits        SiteAudit[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -892,4 +893,41 @@ model WaitlistEntry {
   createdAt DateTime @default(now())
 
   @@map("waitlist_entry")
+}
+
+// ---------- Site Audit (Ahrefs-style technical SEO crawl) ----------
+
+enum SiteAuditStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// One crawl-and-check run per row. Issue groups are stored as compact JSONB
+// ({checkId, count, urls: [{url, detail}] } with URL samples capped at 100)
+// so a 1,500-page audit stays a few hundred KB - free-tier friendly. The
+// check definitions (severity, explain, fix copy) live in @mykavo/seo-audit,
+// keyed by checkId, so stored audits stay small and copy edits are free.
+model SiteAudit {
+  id              String          @id @default(cuid())
+  websiteId       String
+  website         Website         @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  status          SiteAuditStatus @default(QUEUED)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  pagesCrawled    Int             @default(0)
+  urlsDiscovered  Int             @default(0)
+  healthScore     Int?
+  errorCount      Int             @default(0)
+  warningCount    Int             @default(0)
+  noticeCount     Int             @default(0)
+  pagesWithErrors Int             @default(0)
+  stoppedReason   String?
+  issues          Json?
+  errorMessage    String?
+  createdAt       DateTime        @default(now())
+
+  @@index([websiteId, createdAt(sort: Desc)])
+  @@map("site_audit")
 }

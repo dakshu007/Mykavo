@@ -50,6 +50,10 @@ export interface Plan {
      * scanning, so it follows manual scans: Pro only, shared daily quota.
      */
     deployChecks: boolean;
+    /** Max pages crawled per technical SEO site audit. */
+    siteAuditPages: number;
+    /** Site audits per workspace per UTC day. */
+    siteAuditsPerDay: number;
   };
   features: string[];
   highlighted?: boolean;
@@ -72,6 +76,8 @@ export const plans: Plan[] = [
       maxMembers: 1,
       whiteLabelReports: false,
       deployChecks: false,
+      siteAuditPages: 150,
+      siteAuditsPerDay: 1,
     },
     features: [
       "1 website",
@@ -80,6 +86,7 @@ export const plans: Plan[] = [
       "30-day history",
       "Email alerts",
       "Shareable client reports",
+      "Site audits - 150 pages per crawl",
     ],
   },
   {
@@ -99,6 +106,8 @@ export const plans: Plan[] = [
       maxMembers: 5,
       whiteLabelReports: true,
       deployChecks: true,
+      siteAuditPages: 1500,
+      siteAuditsPerDay: 10,
     },
     features: [
       "8 websites",
@@ -110,6 +119,7 @@ export const plans: Plan[] = [
       "White-label client reports",
       "Automatic client report emails",
       "1-year history",
+      "Site audits - 1,500 pages per crawl",
       "Up to 5 team members",
       "Email alerts",
     ],

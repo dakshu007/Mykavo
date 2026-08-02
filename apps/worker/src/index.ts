@@ -17,8 +17,10 @@ import {
   AUDIT_SWEEP_QUEUE,
   BILLING_SWEEP_QUEUE,
   CLIENT_REPORT_SWEEP_QUEUE,
+  SITE_AUDIT_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
+  type SiteAuditJob,
 } from "@mykavo/shared";
 import { logger } from "./logger";
 import { runScanWebsiteJob } from "./scan-website";
@@ -30,6 +32,7 @@ import { runReportSweep } from "./report";
 import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
 import { runClientReportSweep } from "./client-report";
+import { runSiteAuditJob } from "./site-audit";
 import { startWatchdog } from "./watchdog";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
@@ -129,6 +132,20 @@ async function main() {
     await runBillingSweep();
   });
   await boss.schedule(BILLING_SWEEP_QUEUE, BILLING_CRON);
+
+  // Site audits (technical SEO crawl): up to ~10 min of polite fetching per
+  // run, so strictly one at a time with a single retry on expiry.
+  await boss
+    .createQueue(SITE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 15 * 60 })
+    .catch(() => {});
+  await boss.work<SiteAuditJob>(
+    SITE_AUDIT_QUEUE,
+    { batchSize: 1, pollingIntervalSeconds: 2 },
+    async ([job]) => {
+      logger.info("site audit job received", { jobId: job.id, siteAuditId: job.data.siteAuditId });
+      await runSiteAuditJob(job.data);
+    },
+  );
 
   // Lighthouse audits (on-demand + weekly sweep). Heavyweight (~10–40s,
   // CPU-bound), so one at a time (batchSize 1) with a single retry.

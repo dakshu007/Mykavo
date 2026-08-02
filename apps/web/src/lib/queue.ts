@@ -7,7 +7,9 @@ import { PgBoss } from "pg-boss";
 import {
   SCAN_WEBSITE_QUEUE,
   LIGHTHOUSE_AUDIT_QUEUE,
+  SITE_AUDIT_QUEUE,
   type ScanWebsiteJob,
+  type SiteAuditJob,
   type LighthouseAuditJob,
 } from "@mykavo/shared";
 import { env } from "@/lib/env";
@@ -56,4 +58,10 @@ export async function enqueueScanWebsite(job: ScanWebsiteJob): Promise<string | 
 export async function enqueueLighthouseAudit(job: LighthouseAuditJob): Promise<string | null> {
   const boss = await getBoss();
   return boss.send(LIGHTHOUSE_AUDIT_QUEUE, { ...job });
+}
+
+/** Enqueue a technical SEO site audit. Returns the pg-boss job id. */
+export async function enqueueSiteAudit(job: SiteAuditJob): Promise<string | null> {
+  const boss = await getBoss();
+  return boss.send(SITE_AUDIT_QUEUE, { ...job });
 }
