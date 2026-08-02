@@ -41,6 +41,8 @@ export interface PageFacts {
 
   internalLinks: string[];
   externalLinks: string[];
+  nofollowInternal: number;
+  metaRefresh: boolean;
   totalAnchors: number;
   emptyAnchors: number;
   genericAnchors: number;
@@ -155,8 +157,10 @@ export function extractFacts(input: {
   let genericAnchors = 0;
   let jsOnlyLinks = 0;
   let externalHttpLinks = 0;
+  let nofollowInternal = 0;
   for (const a of anchors) {
     const href = attr(a, "href");
+    const rel = attr(a, "rel").toLowerCase();
     const text = a.text.replace(/\s+/g, " ").trim().toLowerCase();
     const hasLabel = Boolean(text || attr(a, "aria-label") || a.querySelector("img[alt]"));
     if (href && !hasLabel) emptyAnchors++;
@@ -167,8 +171,10 @@ export function extractFacts(input: {
     }
     const resolved = resolveHref(href, base);
     if (!resolved) continue;
-    if (resolved.host === base.host) internalLinks.push(resolved.href);
-    else {
+    if (resolved.host === base.host) {
+      internalLinks.push(resolved.href);
+      if (/\bnofollow\b/.test(rel)) nofollowInternal++;
+    } else {
       externalLinks.push(resolved.href);
       if (resolved.protocol === "http:") externalHttpLinks++;
     }
@@ -271,6 +277,8 @@ export function extractFacts(input: {
     imageUrls: imageUrls.slice(0, 50),
     internalLinks,
     externalLinks,
+    nofollowInternal,
+    metaRefresh: Boolean(root.querySelector('meta[http-equiv="refresh" i]')),
     totalAnchors: anchors.length,
     emptyAnchors,
     genericAnchors,
@@ -351,6 +359,7 @@ export function pageIssues(f: PageFacts): PageIssue[] {
     }
   }
   if (f.noindex) add("noindex-page");
+  if (f.metaRefresh) add("meta-refresh");
 
   // Headings
   if (f.h1s.length === 0) add("h1-missing");
@@ -376,6 +385,7 @@ export function pageIssues(f: PageFacts): PageIssue[] {
   if (f.emptyAnchors > 0) add("link-empty-anchor", `${f.emptyAnchors} links`);
   if (f.genericAnchors > 2) add("link-generic-anchor", `${f.genericAnchors} links`);
   if (f.jsOnlyLinks > 0) add("link-js-only", `${f.jsOnlyLinks} links`);
+  if (f.nofollowInternal > 0) add("link-internal-nofollow", `${f.nofollowInternal} links`);
   if (f.totalAnchors > 300) add("link-too-many", `${f.totalAnchors} links`);
   if (f.externalHttpLinks > 0) add("link-external-http", `${f.externalHttpLinks} links`);
 

@@ -1,0 +1,54 @@
+/* MyKavo gold/ink language, compact popup edition. */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 360px;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #FBFAF3;
+  color: #151515;
+}
+.head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid rgba(0,0,0,.1); background: #fff;
+}
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+.tag {
+  font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .14em; color: #6B6B60;
+}
+.url {
+  padding: 10px 14px 0; font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px; color: #6B6B60; word-break: break-all;
+}
+.score-band { display: flex; align-items: center; gap: 14px; padding: 12px 14px; }
+.ring-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.ring { width: 72px; height: 72px; }
+.score {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
+}
+.verdict { font-size: 15px; font-weight: 700; }
+.counts { margin-top: 3px; font-size: 12px; color: #6B6B60; }
+.error { margin: 12px 14px; padding: 10px 12px; background: #FDE5E5; color: #b42318;
+  border-radius: 10px; font-size: 12.5px; line-height: 1.45; }
+.checks { list-style: none; max-height: 320px; overflow-y: auto; border-top: 1px solid rgba(0,0,0,.08); }
+.check { display: flex; gap: 9px; padding: 8px 14px; border-bottom: 1px solid rgba(0,0,0,.05); background: #fff; }
+.check .dot { width: 8px; height: 8px; border-radius: 999px; margin-top: 5px; flex-shrink: 0; }
+.dot.pass { background: #1f9d55; }
+.dot.warn { background: #f59e0b; }
+.dot.fail { background: #e5484d; }
+.check .body { min-width: 0; flex: 1; }
+.check .name { font-size: 12.5px; font-weight: 600; }
+.check .why { margin-top: 1px; font-size: 11px; line-height: 1.45; color: #6B6B60; }
+.check .val {
+  margin-top: 2px; font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+  color: #6B6B60; word-break: break-all;
+}
+.foot { display: grid; gap: 8px; padding: 12px 14px; background: #fff; border-top: 1px solid rgba(0,0,0,.1); }
+.btn {
+  display: block; text-align: center; padding: 10px 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.btn-gold { background: #FFD400; color: #151515; border: 1px solid rgba(0,0,0,.25); }
+.btn-gold:hover { background: #ffe14d; }
+.btn-ghost { color: #151515; border: 1px solid rgba(0,0,0,.2); }
+.btn-ghost:hover { background: #F3F1E6; }

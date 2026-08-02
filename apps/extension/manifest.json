@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "MyKavo SEO Checker",
+  "version": "1.0.0",
+  "description": "Instant on-page SEO check for the page you're on - titles, canonicals, schema, social tags, and 18 more checks with fixes.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Check this page's SEO"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

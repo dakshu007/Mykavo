@@ -60,6 +60,8 @@ const FOUND_ON_CHECKS = new Set([
   "http-fetch-error",
   "sitemap-broken-url",
   "sitemap-redirect-url",
+  "redirect-chain",
+  "redirect-loop",
 ]);
 const USER_AGENT = "Mozilla/5.0 (compatible; MyKavoAudit/1.0; +https://mykavo.app)";
 const GENERIC_DIRECTIVE_BLOCK = /^user-agent:\s*\*/im;
@@ -138,6 +140,42 @@ async function fetchPage(url: string, limits: CrawlLimits): Promise<Fetched> {
       error: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+/** Walk a redirecting URL hop by hop (SSRF-checked each hop). Returns the
+ *  hop count and whether a loop was seen; both capped at 6 hops. */
+async function walkRedirects(
+  startUrl: string,
+): Promise<{ hops: number; loop: boolean; finalUrl: string }> {
+  const seen = new Set<string>([startUrl]);
+  let current = startUrl;
+  for (let hop = 0; hop < 6; hop++) {
+    try {
+      await assertSafeUrl(current);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10_000);
+      try {
+        const res = await fetch(current, {
+          redirect: "manual",
+          signal: controller.signal,
+          headers: { "user-agent": USER_AGENT },
+        });
+        await res.body?.cancel().catch(() => {});
+        if (res.status < 300 || res.status >= 400) return { hops: hop, loop: false, finalUrl: current };
+        const location = res.headers.get("location");
+        if (!location) return { hops: hop, loop: false, finalUrl: current };
+        const next = new URL(location, current).href;
+        if (seen.has(next)) return { hops: hop + 1, loop: true, finalUrl: next };
+        seen.add(next);
+        current = next;
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch {
+      return { hops: 0, loop: false, finalUrl: current };
+    }
+  }
+  return { hops: 6, loop: false, finalUrl: current };
 }
 
 /** HEAD-ish liveness probe (GET with immediate cancel - HEAD is often 405'd). */
@@ -319,6 +357,8 @@ export async function runSiteAudit(
   const inboundLinks = new Map<string, number>();
   // First few pages linking to each URL - the "found on" fix locations.
   const linkSources = new Map<string, string[]>();
+  // Sampled image URL → first page using it (broken-image probing).
+  const imageSources = new Map<string, string>();
   const depthByUrl = new Map<string, number>();
   const redirectHops = new Map<string, number>();
   let stoppedReason: AuditResult["stoppedReason"] = "completed";
@@ -360,6 +400,10 @@ export async function runSiteAudit(
       });
       pages.push(facts);
       issues.push(...pageIssues(facts));
+      for (const imageUrl of facts.imageUrls) {
+        if (imageSources.size >= 60) break;
+        if (!imageSources.has(imageUrl)) imageSources.set(imageUrl, facts.url);
+      }
       if (depth >= 5) issues.push({ checkId: "crawl-depth", url: facts.url, detail: `depth ${depth}` });
       for (const link of facts.internalLinks) {
         const normalized = normalizeForQueue(link);
@@ -452,6 +496,47 @@ export async function runSiteAudit(
     if (crawledNoindex.has(url)) issues.push({ checkId: "sitemap-noindex-url", url });
     if (statusByUrl.has(url) && !inboundLinks.has(url) && url !== normalizeForQueue(start.href))
       issues.push({ checkId: "link-orphan", url });
+  }
+
+  // Canonical target health: a canonical pointing at a redirect or a broken
+  // URL undermines the annotation (statuses come from the crawl itself).
+  for (const p of pages) {
+    const canonical = p.canonicals.length === 1 ? p.canonicals[0] : null;
+    if (!canonical || !/^https?:\/\//i.test(canonical)) continue;
+    const normalized = normalizeForQueue(canonical);
+    if (!normalized || !normalized.startsWith(origin)) continue;
+    const status = statusByUrl.get(normalized);
+    if (status !== undefined && (status >= 400 || status === 0))
+      issues.push({ checkId: "canonical-broken", url: p.url, detail: `${normalized.slice(0, 100)} (HTTP ${status})` });
+    else if (redirectHops.has(normalized))
+      issues.push({ checkId: "canonical-redirect", url: p.url, detail: normalized.slice(0, 120) });
+  }
+
+  // Redirect chains and loops: walk a sample of redirecting URLs hop by hop.
+  const redirecting = [...redirectHops.keys()].slice(0, 25);
+  for (let i = 0; i < redirecting.length; i += limits.concurrency) {
+    if (Date.now() > deadline) break;
+    const slice = redirecting.slice(i, i + limits.concurrency);
+    const walks = await Promise.all(slice.map((u) => walkRedirects(u)));
+    walks.forEach((walk, j) => {
+      const url = slice[j];
+      if (walk.loop) issues.push({ checkId: "redirect-loop", url, detail: `${walk.hops} hops` });
+      else if (walk.hops >= 2)
+        issues.push({ checkId: "redirect-chain", url, detail: `${walk.hops} hops → ${walk.finalUrl.slice(0, 80)}` });
+    });
+  }
+
+  // Broken images: probe the sampled image URLs; report on the using page.
+  const imageEntries = [...imageSources.entries()];
+  for (let i = 0; i < imageEntries.length; i += limits.concurrency) {
+    if (Date.now() > deadline) break;
+    const slice = imageEntries.slice(i, i + limits.concurrency);
+    const statuses = await Promise.all(slice.map(([imageUrl]) => probeStatus(imageUrl)));
+    statuses.forEach((status, j) => {
+      const [imageUrl, fromPage] = slice[j];
+      if (status >= 400 || status === 0)
+        issues.push({ checkId: "img-broken", url: fromPage, detail: imageUrl.slice(0, 120) });
+    });
   }
 
   // Trust pages (site-level, judged from crawled URL set).

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { AUDIT_CHECKS, type AuditCategory, type AuditIssueGroup } from "@mykavo/seo-audit";
 import { Card } from "@/components/ui/card";
@@ -99,6 +99,16 @@ export default async function SiteAuditReportPage({ params }: Params) {
                 ? `Audited ${audit.completedAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}`
                 : "Audit in progress…"}
             </p>
+            {audit.status === "COMPLETED" && issues.length > 0 && (
+              <a
+                href={`/api/site-audits/${audit.id}/export`}
+                download
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[13px] font-medium text-ink-secondary transition-colors hover:text-ink"
+              >
+                <Download className="size-3.5" aria-hidden />
+                Export CSV
+              </a>
+            )}
             {!running && <RunAuditButton websiteId={audit.website.id} small />}
           </div>
         </div>

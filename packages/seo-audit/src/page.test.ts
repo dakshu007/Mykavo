@@ -75,6 +75,16 @@ describe("pageIssues detections", () => {
     expect(ids).toContain("sec-no-hsts");
   });
 
+  it("flags meta refresh and nofollowed internal links", () => {
+    const html = GOOD_PAGE
+      .replace("</head>", '<meta http-equiv="refresh" content="0;url=/new"></head>')
+      .replace("</body>", '<a href="/promo" rel="nofollow">internal promo</a></body>');
+    const issues = pageIssues(facts(html));
+    const ids = issues.map((i) => i.checkId);
+    expect(ids).toContain("meta-refresh");
+    expect(issues.find((i) => i.checkId === "link-internal-nofollow")?.detail).toBe("1 links");
+  });
+
   it("flags lorem ipsum as an error and counts words", () => {
     const html = GOOD_PAGE.replace("real words", "Lorem ipsum dolor ");
     const ids = pageIssues(facts(html)).map((i) => i.checkId);

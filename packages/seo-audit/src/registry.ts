@@ -110,6 +110,21 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
     explain: "The canonical points elsewhere, telling search engines to index a different URL instead of this one.",
     fix: "Confirm this is intended. If this page should rank on its own, make the canonical self-referencing.",
   },
+  "canonical-redirect": {
+    category: "Indexability", severity: "WARNING", title: "Canonical points to redirect",
+    explain: "The canonical URL itself redirects, sending search engines through a hop to reach the preferred page.",
+    fix: "Point the canonical directly at the final 200 URL.",
+  },
+  "canonical-broken": {
+    category: "Indexability", severity: "ERROR", title: "Canonical points to broken page",
+    explain: "The canonical target returns an error, so search engines may ignore the annotation or drop the page.",
+    fix: "Point the canonical at a live page that returns 200.",
+  },
+  "meta-refresh": {
+    category: "Indexability", severity: "WARNING", title: "Meta refresh redirect",
+    explain: "The page redirects with <meta http-equiv=\"refresh\">, which is slower than a real redirect and passes weaker signals.",
+    fix: "Replace the meta refresh with a server-side 301 redirect.",
+  },
   "canonical-relative": {
     category: "Indexability", severity: "WARNING", title: "Canonical is not absolute",
     explain: "Relative canonical URLs are ambiguous and can resolve to the wrong address.",
@@ -286,6 +301,11 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
     category: "Internal links", severity: "NOTICE", title: "JavaScript-only link",
     explain: "Links using href=\"#\" or javascript: are invisible to crawlers and break open-in-new-tab.",
     fix: "Use a real <a href> for navigation; reserve buttons for actions.",
+  },
+  "link-internal-nofollow": {
+    category: "Internal links", severity: "NOTICE", title: "Nofollowed internal link",
+    explain: "Internal links marked rel=\"nofollow\" tell search engines not to pass signals within your own site.",
+    fix: "Remove rel=\"nofollow\" from internal links - it is meant for untrusted external destinations.",
   },
   "link-too-many": {
     category: "Internal links", severity: "NOTICE", title: "Too many on-page links",
