@@ -198,12 +198,21 @@ export default async function SiteAuditReportPage({ params }: Params) {
                           <span className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${chip.className}`}>
                             {chip.label}
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+                          <Link
+                            href={`/dashboard/site-audit/${audit.id}/issue/${group.checkId}`}
+                            className="group/issue min-w-0 flex-1 truncate text-sm font-medium text-ink hover:text-primary"
+                          >
                             {def.title}
-                          </span>
-                          <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">
+                            <span className="ml-1.5 hidden text-[12px] font-normal text-primary group-hover/issue:inline">
+                              view all →
+                            </span>
+                          </Link>
+                          <Link
+                            href={`/dashboard/site-audit/${audit.id}/issue/${group.checkId}`}
+                            className="shrink-0 text-sm font-semibold tabular-nums text-ink hover:text-primary"
+                          >
                             {group.count.toLocaleString("en-US")}
-                          </span>
+                          </Link>
                           <FixTip title={def.title} explain={def.explain} fix={def.fix} />
                         </div>
                         {group.urls.length > 0 && (
