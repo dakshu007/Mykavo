@@ -23,6 +23,7 @@ import { SignalMarquee } from "@/components/landing/marquee";
 import { CategoryTabs } from "@/components/landing/categories";
 import { AlertChannelsSection } from "@/components/landing/alert-channels";
 import { AppDownloadSection } from "@/components/landing/app-download";
+import { SiteAuditSection } from "@/components/landing/site-audit";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
@@ -617,6 +618,9 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Site Audit - the Ahrefs-style crawl, priced for freelancers */}
+        <SiteAuditSection />
 
         {/* Free tools */}
         <Section id="free-tools">
