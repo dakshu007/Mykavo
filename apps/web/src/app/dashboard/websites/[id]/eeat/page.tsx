@@ -8,7 +8,7 @@ import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { runEeatAnalysis } from "@/lib/tools/eeat-server";
 import type { EeatPillar, EeatReport } from "@/lib/tools/eeat";
 
-export const metadata: Metadata = { title: "E-E-A-T - MyKavo" };
+export const metadata: Metadata = { title: "MyKavo Analyser - MyKavo" };
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -64,7 +64,7 @@ export default async function WebsiteEeatPage({ params }: Params) {
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">E-E-A-T signals</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">MyKavo Analyser</h1>
             <a
               href={website.url}
               target="_blank"
@@ -90,7 +90,7 @@ export default async function WebsiteEeatPage({ params }: Params) {
         <>
           <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
             <Card className="flex flex-col items-center justify-center px-12">
-              <p className="label-micro mb-2">E-E-A-T score</p>
+              <p className="label-micro mb-2">Analyser score</p>
               <p className={`text-6xl font-semibold tabular-nums tracking-tight ${tone(report.overall)}`}>
                 {report.overall}
               </p>

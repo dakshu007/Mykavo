@@ -517,7 +517,7 @@ export default async function WebsiteDetailPage({
       {/* E-E-A-T signal report (live analysis of the homepage) */}
       <Card>
         <CardHeader
-          title="E-E-A-T signals"
+          title="MyKavo Analyser"
           action={
             <Link
               href={`/dashboard/websites/${website.id}/eeat`}

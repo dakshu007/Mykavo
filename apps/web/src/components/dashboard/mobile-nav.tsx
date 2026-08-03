@@ -14,6 +14,7 @@ const nav = [
   { href: "/dashboard/scans", label: "Scans" },
   { href: "/dashboard/site-audit", label: "Audit" },
   { href: "/dashboard/search-console", label: "GSC" },
+  { href: "/dashboard/analyser", label: "Analyser" },
   { href: "/dashboard/notifications", label: "Notifications" },
   { href: "/dashboard/billing", label: "Billing" },
   { href: "/dashboard/settings", label: "Settings" },
