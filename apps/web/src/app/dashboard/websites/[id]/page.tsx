@@ -514,6 +514,25 @@ export default async function WebsiteDetailPage({
         </p>
       </Card>
 
+      {/* E-E-A-T signal report (live analysis of the homepage) */}
+      <Card>
+        <CardHeader
+          title="E-E-A-T signals"
+          action={
+            <Link
+              href={`/dashboard/websites/${website.id}/eeat`}
+              className="text-[13px] font-medium text-primary hover:underline"
+            >
+              View report →
+            </Link>
+          }
+        />
+        <p className="text-sm text-ink-secondary">
+          Experience, Expertise, Authoritativeness, and Trust signals scored against
+          Google&apos;s quality-rater framework - bylines, policies, schema, citations.
+        </p>
+      </Card>
+
       <Card>
         <CardHeader
           title="Monitored pages"

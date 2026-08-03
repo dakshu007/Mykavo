@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/tools/redirect-chain-checker",
     "/tools/bulk-url-status-checker",
     "/tools/script-detector",
+    "/tools/eeat-analyzer",
     "/visual-regression-testing",
     "/seo-monitoring",
     "/website-content-monitoring",

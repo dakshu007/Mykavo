@@ -10,6 +10,7 @@ import {
   ListChecks,
   Route,
   Search,
+  ShieldCheck,
   Store,
   Tags,
   Users,
@@ -198,6 +199,13 @@ const freeTools = [
     word: "Compare",
     desc: "Snapshot a page's status, SEO tags, links, and scripts - then re-check later to see what changed.",
     featured: true,
+  },
+  {
+    icon: ShieldCheck,
+    href: "/tools/eeat-analyzer",
+    title: "E-E-A-T Analyzer",
+    word: "Score",
+    desc: "Score any page against Google's Experience, Expertise, Authoritativeness, and Trust framework - with fixes.",
   },
   {
     icon: Tags,
