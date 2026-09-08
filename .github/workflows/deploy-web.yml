@@ -1,0 +1,133 @@
+# Builds and deploys the MyKavo web app (apps/web) to the Netlify project
+# "mykavo" (https://mykavo.app).
+#
+# WHY THIS EXISTS
+# ---------------
+# The Netlify project was never connected to this repository - every deploy
+# used to be a manual CLI upload from the owner's Mac (the Aug 2026 live
+# deploy carried commit_ref: null, branch: null, deploy_source: "cli").
+# Production and `main` drifted apart as a result: a full week of work
+# (Site Audit, Search Console, MyKavo Analyser, client reports) shipped to
+# production while `main` sat five weeks behind, and a deploy made by another
+# tool had to be rolled back by hand with no commit to trace it to.
+#
+# `main` was fast-forwarded to the production build on 2026-09-08, and this
+# workflow now deploys every push to it. Git is the source of truth: if it is
+# not on `main`, it is not in production.
+#
+# Deploy by pushing to `main`. Do NOT deploy by hand from a laptop - a manual
+# CLI upload is exactly what caused the drift, and nothing here can detect it.
+#
+# REQUIRED REPOSITORY SECRETS
+#   NETLIFY_AUTH_TOKEN  Netlify personal access token (User settings ->
+#                       Applications -> Personal access tokens). Needs deploy
+#                       rights on the "mykavo" project.
+#   NETLIFY_SITE_ID     3c4a3c88-f933-4430-9455-e2d693941f67
+#
+# Build-time environment variables (DATABASE_URL, BETTER_AUTH_SECRET, the four
+# R2_* vars, the Dodo keys, ...) are NOT stored here. The Netlify CLI pulls
+# them from the linked project during `netlify deploy --build`, which is the
+# same way the manual Mac deploy gets them. Secrets never enter this repo.
+
+name: deploy-web
+
+on:
+  # Normal path: every push to main that touches the deployed app.
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "netlify.toml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-web.yml"
+
+  # Escape hatch: redeploy an arbitrary ref by hand (e.g. to re-publish after
+  # an infrastructure blip). Requires typing "deploy" to confirm.
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm a PRODUCTION deploy of this ref'
+        required: true
+        default: ""
+
+permissions:
+  contents: read
+
+# Never let two production deploys race. Unlike the APK build this does NOT
+# cancel in progress - killing a half-finished deploy is worse than queueing.
+concurrency:
+  group: deploy-web-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check confirmation
+        if: github.event_name == 'workflow_dispatch' && inputs.confirm != 'deploy'
+        run: |
+          echo "::error::Confirmation failed - type 'deploy' to run a production deploy."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      # Node 20 matches netlify.toml's build.environment NODE_VERSION so the
+      # CLI build here behaves like a Netlify-run build.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Reads the pnpm version from the root package.json "packageManager".
+      - uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The Prisma client must exist before typecheck/build - the same step
+      # netlify.toml runs in its build command.
+      - name: Generate Prisma client
+        run: pnpm --filter @mykavo/database exec prisma generate
+
+      # Verification gate, matching the project convention: never deploy on a
+      # red build. Package tests that need a live database are excluded - the
+      # @mykavo/database suite is a live-DB integration suite and has no
+      # Postgres here.
+      - name: Lint
+        run: pnpm --filter web lint
+
+      - name: Typecheck
+        run: pnpm --filter web typecheck
+
+      - name: Unit tests
+        run: |
+          pnpm --filter web test
+          pnpm --filter @mykavo/shared test
+          pnpm --filter @mykavo/comparison-engine test
+          pnpm --filter @mykavo/severity-engine test
+          pnpm --filter @mykavo/email test
+          pnpm --filter @mykavo/scanner test
+
+      # `--filter web` is REQUIRED: it lets Netlify manage base/publish for the
+      # monorepo. netlify.toml must not set base/publish itself, or the publish
+      # directory resolves to the repo root and every route 404s.
+      #
+      # This checkout is standalone (not nested inside another repository), so
+      # Next's file tracing bundles the correct Prisma query engine - the
+      # failure mode the manual runbook avoids with an rsync to /tmp.
+      - name: Deploy to Netlify (production)
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "::error::NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID repository secrets are required."
+            exit 1
+          fi
+          npx --yes netlify-cli@latest deploy \
+            --build \
+            --prod \
+            --filter web \
+            --site "$NETLIFY_SITE_ID" \
+            --message "GitHub Actions: ${GITHUB_SHA}"

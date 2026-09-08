@@ -74,7 +74,28 @@ Product naming: the product was renamed **Fluxen → MyKavo** (2026-07-16). The 
 
 ## Deploy runbooks
 
-**Web** (from a clean copy OUTSIDE any parent git repo - Next file-tracing bundles a stale parent Prisma client otherwise):
+**Web - push to `main`. That is the whole runbook.**
+
+`.github/workflows/deploy-web.yml` runs `pnpm install` → `prisma generate` → lint →
+typecheck → the full unit suite → `netlify deploy --build --prod --filter web` on every
+push to `main` that touches `apps/web/**`, `packages/**`, `netlify.toml`, or the lockfile.
+Watch it in the Actions tab. Needs two repository secrets: `NETLIFY_AUTH_TOKEN` and
+`NETLIFY_SITE_ID` (`3c4a3c88-f933-4430-9455-e2d693941f67`). Build-time env still comes from
+the Netlify project, so no secrets live in this repo. To re-publish a ref by hand, run the
+workflow from the Actions tab and type `deploy` to confirm.
+
+> **Do NOT deploy from a laptop.** Manual `netlify deploy` uploads carry no commit ref, and
+> that is exactly how production silently drifted five weeks ahead of `main` (2026-08-03 →
+> 2026-09-08): Site Audit, Search Console, MyKavo Analyser and client reports were live with
+> their source stranded on an unpushed branch, and a bad deploy from another tool had to be
+> rolled back with nothing to trace it to. If it is not on `main`, it must not be in
+> production. The old manual path is kept below only for a genuine CI outage.
+
+<details>
+<summary>Emergency manual deploy (CI down only)</summary>
+
+From a clean copy OUTSIDE any parent git repo - Next file-tracing bundles a stale parent
+Prisma client otherwise:
 ```bash
 export PATH="$HOME/.hermes/node/bin:$PATH"   # pnpm/node/netlify live here on the owner's Mac
 rm -rf /tmp/mykavo-deploy
@@ -84,7 +105,10 @@ mkdir -p /tmp/mykavo-deploy/.netlify
 echo '{ "siteId": "3c4a3c88-f933-4430-9455-e2d693941f67" }' > /tmp/mykavo-deploy/.netlify/state.json
 cd /tmp/mykavo-deploy && pnpm install && netlify deploy --build --prod --filter web
 ```
-`--filter web` is REQUIRED; `netlify.toml` must NOT set base/publish. Confirm `netlify status` says project `mykavo` first.
+`--filter web` is REQUIRED; `netlify.toml` must NOT set base/publish. Confirm `netlify status`
+says project `mykavo` first. Afterwards, push the exact commit you deployed to `main` so git
+and production match again.
+</details>
 
 **Migrations** (BEFORE the web deploy when schema changed): `cd packages/database && DATABASE_URL=<session-pooler-url> pnpm exec prisma migrate deploy` - then re-run `enable-rls.ts` if tables were created.
 
@@ -196,7 +220,8 @@ CLAUDE.md       the original product spec - still the product constitution
 
 - Verify → deploy → verify on production. Never claim done on a red build.
 - Hand-write migration SQL; apply with `migrate deploy` locally + on Supabase; re-run `enable-rls.ts` after new tables.
-- Fast-forward `main` after verifying, deploy from it, and **push to GitHub** (`git push origin main`) so the repo always mirrors production.
+- **Pushing to `main` IS deploying.** Fast-forward `main` after verifying, push, and watch the Actions run. Never deploy by hand from a laptop (see the deploy runbook for why) and never leave work on an unpushed branch - production must always be reproducible from `main`.
+- Migrations run BEFORE the push that ships the code needing them - CI deploys the web app but does not touch the database.
 - **Update this README whenever architecture, pricing, or runbooks change - it is the project's portable memory across machines and AI accounts.**
 
 ---
