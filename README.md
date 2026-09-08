@@ -10,12 +10,26 @@ MyKavo is a **website change detection & regression monitoring SaaS** for agenci
 
 ## 🧭 New session? Fresh AI assistant? Start here
 
-This README is the **complete, self-contained handoff** for the project. It assumes NOTHING carried over - no prior chat history, no Claude memory files, possibly a different Claude/AI account. Everything needed to understand, run, and continue the project is in this repo. **Last synced: 2026-08-03.** Since 2026-07-19 this branch added, verified, and deployed: worker self-healing (watchdog + stuck-scan/audit recovery), white-label client reports + scheduled delivery, post-deploy checks, **Site Audit** (own crawler + ~81 checks), **Google Search Console integration with Priority Opportunities**, the **MyKavo Analyser** (E-E-A-T), a Chrome extension, three landing sections, and the new app icon. ⚠️ **All of it lives on branch `claude/dashboard-baseline-scan-stuck-2971c0` (20 commits ahead of `main`) - production runs this code, but `main` does NOT. Fast-forward main before any deploy from main.**
+This README is the **complete, self-contained handoff** for the project. It assumes NOTHING carried over - no prior chat history, no Claude memory files, possibly a different Claude/AI account. Everything needed to understand, run, and continue the project is in this repo. **Last synced: 2026-09-08.**
+
+The 2026-08-01→03 work - worker self-healing (watchdog + stuck-scan/audit recovery), white-label client reports + scheduled delivery, post-deploy checks, **Site Audit** (own crawler + ~81 checks), **Google Search Console integration with Priority Opportunities**, the **MyKavo Analyser** (E-E-A-T), a Chrome extension, three landing sections, and the new app icon - is now **on `main` and deployed**.
+
+✅ **`main` == production, and CI keeps it that way.** Pushing to `main` deploys (`.github/workflows/deploy-web.yml`). No more manual `netlify deploy` from a laptop.
+
+<details>
+<summary>How that guarantee was won (2026-09-08) - read this before you ever deploy by hand</summary>
+
+Netlify was never connected to this repo, so every deploy was a manual CLI upload with `commit_ref: null`. Production silently drifted **five weeks ahead of `main`**: those 22 commits were live on mykavo.app while their only copy sat on an unpushed local branch (`claude/dashboard-baseline-scan-stuck-2971c0`). Nothing in git described what was running. On 2026-08-15 a deploy made with another AI tool shipped the wrong build and had to be rolled back by hand to the 2026-08-03 deploy - with no commit to trace either one to.
+
+Recovery: the branch was found, verified green (lint, typecheck, 852 tests, production build), and `main` was fast-forwarded to it. CI now owns deploys.
+
+The lesson, which is why the manual runbook is buried in a collapsed block below: **a deploy that carries no commit ref is a deploy nobody can reason about later.** If it is not on `main`, it must not be in production.
+</details>
 
 1. **Read this README top to bottom** - current state, architecture, runbooks, gotchas.
 2. **Read `CLAUDE.md`** - the original product spec (vision, principles, phases). All phases 0-11 are COMPLETE; the spec still governs product philosophy (deterministic detection, low false positives, cost control, no fake social proof).
 3. **Skim `docs/`** - ARCHITECTURE, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM.
-4. Git: **`main` is the branch of record and always equals what is deployed.** Remote: `git@github.com:dakshu007/Mykavo.git` - a **PRIVATE** repo. The only public repo is **`dakshu007/Mykavo-app-download`** (Android APK releases + download page; the site's download button points at its `releases/latest`). Work on a branch, verify, fast-forward main, deploy, push.
+4. Git: **`main` is the branch of record and always equals what is deployed** - enforced by CI, not by discipline. Remote: `git@github.com:dakshu007/Mykavo.git` - a **PRIVATE** repo. The only public repo is **`dakshu007/Mykavo-app-download`** (Android APK releases + download page; the site's download button points at its `releases/latest`). Work on a branch, verify, fast-forward `main`, then **push - the push is the deploy**. Never leave finished work on an unpushed branch: that is exactly how five weeks of shipped features ended up with no copy in git.
 5. Secrets are NEVER in this repo. They live in **Netlify env** (web) and **`~/.fluxen/app/apps/worker/.env.production`** on the owner's Mac (worker). Ask the owner (Dakshesh B, GitHub `dakshu007`) for anything missing.
 
 Hard conventions the owner enforces:
@@ -202,7 +216,7 @@ CLAUDE.md       the original product spec - still the product constitution
 
 ## Pending / next up
 
-1. **Merge `claude/dashboard-baseline-scan-stuck-2971c0` into `main`** (top priority, 20 commits). Production already serves every commit on it; `main` is stale, so a deploy from `main` would ROLL BACK a week of features. Verify, fast-forward, push.
+1. ~~Merge `claude/dashboard-baseline-scan-stuck-2971c0` into `main`~~ **DONE 2026-09-08** - `main` fast-forwarded to it, CI deploys now own production. Follow-ups from that work: **rotate `NETLIFY_AUTH_TOKEN`** (the one in use was pasted into a chat transcript - reissue in Netlify → User settings → Applications and update the repo secret), and bump the deploy workflow's actions (`checkout@v4`, `setup-node@v4`, `pnpm/action-setup@v4`) once GitHub finishes deprecating the Node 20 action runtime.
 2. **Resend domain verification** - until mykavo.app is verified, alerts/reports/invites only reach the account owner. Domain is already **registered in Resend** (id `b94edd21-997a-46c4-9745-70f7238b4821`); remaining: add the 3 DNS records in Cloudflare (DNS-only) - DKIM TXT `resend._domainkey`, MX `send` → `feedback-smtp.us-east-1.amazonses.com` prio 10, TXT `send` → `v=spf1 include:amazonses.com ~all` - then `POST https://api.resend.com/domains/<id>/verify` and set `EMAIL_FROM="MyKavo <alerts@mykavo.app>"` in the worker env + restart.
 3. **Google OAuth client needs a second redirect URI**: setting `GOOGLE_CLIENT_ID/SECRET` (done 2026-08-03, both Netlify + worker env) also switched ON "Continue with Google" sign-in, which uses `https://mykavo.app/api/auth/callback/google`. Add that URI alongside the GSC one (`/api/gsc/callback`) in Google Cloud Console or Google sign-in throws redirect_uri_mismatch. Also: while the consent screen is in "Testing", only listed test users can connect GSC.
 4. **The Mac sleeps at 1 minute** (`pmset -g` shows `sleep 1`, only prevented while an app holds a lock). This has taken production down three times (stuck baseline scan, wedged worker pool, dead site audit). Set sleep to Never while this Mac hosts the prod worker: System Settings → Energy, or `sudo pmset -a sleep 0`. The watchdog now recovers wedges automatically, but nothing runs while the machine is asleep.
@@ -213,8 +227,52 @@ CLAUDE.md       the original product spec - still the product constitution
 9. **More keyword landing pages** - first 10 shipped 2026-07-19. Remaining candidates: monitoring for agencies/freelancers/developers/ecommerce, meta-tag/canonical/robots.txt/sitemap monitoring, website screenshot comparison, deployment monitoring. Each needs genuinely unique content (spec forbids thin programmatic pages). Rankings also need off-page work; new-domain rankings take months.
 10. **Worker off the Mac** (~$5/mo Railway/Render/Fly with the same env) when budget allows - this permanently fixes item 4.
 11. Minor: landing page still overflows ~15px at 320px viewports only (agency dashboard mock card cannot shrink below its content width; 360px+ is clean). Fix with `min-w-0` + truncation inside the mock rows.
-12. Security tidy-up: the `RELEASE_TOKEN` Actions secret (cross-repo APK publish) currently holds the owner's gh CLI OAuth token (repo-wide scope). Replace with a fine-grained PAT scoped to contents:write on `Mykavo-app-download` only. Note: with the repo private, Actions minutes are metered (free plan 2000 min/month; the Android build takes ~10-15 min per run, only on pushes touching apps/mobile).
+12. Security tidy-up: the `RELEASE_TOKEN` Actions secret (cross-repo APK publish) currently holds the owner's gh CLI OAuth token (repo-wide scope). Replace with a fine-grained PAT scoped to contents:write on `Mykavo-app-download` only. Note: with the repo private, Actions minutes are metered (free plan 2000 min/month). Measured 2026-09-08: the Android build takes **~20 min** per run (the Gradle `assembleRelease` step alone was 19.5), and it fires on any push touching `apps/mobile` - including one that only swapped the icon PNGs. While the APK download stays paused (item 6), consider making that workflow `workflow_dispatch`-only so the minutes go to web deploys (~3.5 min each) instead.
 13. Owner-vetted feature shortlist (not yet built): domain-expiry (RDAP) alerts, competitor page watching, new-page auto-detection, shareable change links.
+
+## Known code-level findings (full read of the codebase, 2026-09-08)
+
+Verified against `main`, none fixed yet. Listed worst-first. The codebase is otherwise in
+unusually good shape: **1 `any` in ~53k lines** of non-test code, zero TODO/FIXME, severity
+rules genuinely confined to `packages/severity-engine`, plan limits genuinely confined to
+`config/plans.ts`, and every mutating API route workspace-scoped through `getApiContext()`
+with no bypass.
+
+1. **Visual diff has no shift detection - the biggest false-positive risk.**
+   `packages/comparison-engine/src/visual.ts` pads both screenshots onto a common canvas and
+   runs pixelmatch. Insert a paragraph near the top of a page and everything below shifts,
+   so nearly every pixel differs → ≥15% → a **HIGH alert for a routine content edit**. Spec
+   §4.5 makes low false positives a core feature and §61 makes "customers who get a genuinely
+   valuable alert" the critical metric, so this is the most likely thing to erode alert trust.
+2. **Dead severity branch**, `packages/severity-engine/src/index.ts:409`:
+   `p >= 30 ? "HIGH" : p >= 15 ? "HIGH"` - both arms return HIGH, so the spec's
+   "30%+ CRITICAL candidate" tier can never fire.
+3. **`redirect_appeared` can never fire.** `apps/worker/src/compare-scan.ts:94` hardcodes
+   `redirectCount: 0`, and `compare.ts` gates the signal on `current.redirectCount > 0`. The
+   severity rule exists and is unit-tested, but no data ever reaches it - spec §19's
+   "New redirect: MEDIUM" is effectively unimplemented (`final_url` catches the loud cases).
+4. **`pageWeightBytes` is racy.** `packages/scanner/src/scan-page.ts:130` accumulates via
+   `response.body().then(...)` - fire-and-forget, never awaited - so the total is read with
+   promises still pending and varies between scans. `page_weight` fires at >20% (MEDIUM) /
+   >50% (HIGH), making this another false-positive source.
+5. **Rate limiting is per-instance on serverless.** `apps/web/src/lib/security/rate-limit.ts`
+   is an in-memory `Map`; Netlify runs many Lambda instances, so the effective limit is
+   limit x N. Same for Better Auth's in-memory store guarding `/sign-in/email` at 5/min -
+   brute-force protection is softer than it reads. A shared store is the fix.
+6. **Em-dashes in user-facing strings**, against the no-em-dash convention: ~8 in
+   `packages/severity-engine/src/index.ts` change descriptions, which render in the dashboard
+   AND in alert emails (title changed, unknown script added, robots.txt, element missing),
+   plus the `-` empty-value placeholder.
+7. **`docs/` contradicts reality** (this README does not). ARCHITECTURE/IMPLEMENTATION_PLAN/
+   DATABASE_SCHEMA still describe Stripe, Trigger.dev, `ProcessedStripeEvent`, and
+   "Starter $12 / Pro $29 / Agency $79" with $6 add-ons. Actual: Dodo, pg-boss,
+   `ProcessedWebhookEvent`, Free + Pro $20. IMPLEMENTATION_PLAN still marks Phase 0 "current".
+8. **Retired add-on feature left behind**: `WebsiteAddon` model, `DODO_ADDON_PRODUCT_ID` in
+   `env.ts`, and ~15 tests in `subscription.test.ts` exercising capacity nothing grants.
+9. Minor: `dashboard/billing/page.tsx` hardcodes `"8 websites"` in the upgrade CTA instead of
+   reading `pro.limits.websites` (the card above it does it correctly).
+10. Known limitation, not cheaply fixable: DNS-rebinding TOCTOU - `assertSafeUrl` resolves,
+    then `fetch`/Playwright resolves again independently.
 
 ## Working conventions for future sessions
 
