@@ -13,7 +13,12 @@ import {
   scanPage,
   type ArtifactStorage,
 } from "@mykavo/scanner";
-import { computeNextScanAt, parseSelectorList } from "@mykavo/shared";
+import {
+  computeNextScanAt,
+  parseSelectorList,
+  resolveScanOutcome,
+  type StageFailure,
+} from "@mykavo/shared";
 import { logger } from "./logger";
 import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";
@@ -216,19 +221,86 @@ export async function runScanWebsiteJob(
   });
   await Promise.all(runners);
 
-  const status = failed === 0 ? "COMPLETED" : scanned > failed ? "PARTIAL" : "FAILED";
+  // Counts land immediately so the dashboard shows real progress, but the
+  // TERMINAL status is deliberately withheld until the verdict stages below
+  // have run. A scan stored as COMPLETED the moment its pages were captured
+  // was reporting success for work it had not done yet - and if the process
+  // died mid-comparison, that COMPLETED row permanently blocked the retry.
+  // Left as RUNNING it stays retryable, and the stuck-scan sweep reclaims it.
+  await prisma.scan.update({
+    where: { id: scanId },
+    data: { pagesScanned: scanned, pagesFailed: failed },
+  });
+
+  const stageFailures: StageFailure[] = [];
+
+  if (scanned > 0) {
+    // Site-level SEO capture (robots.txt + sitemap) - once per scan, before
+    // comparison reads it. Degrades the scan; never fails it.
+    try {
+      await captureSiteMeta({ scanId, websiteId: website.id, websiteUrl: website.url });
+    } catch (err) {
+      stageFailures.push({ stage: "SITE_META", code: "SITE_META_FAILED" });
+      logger.error("site meta capture failed", log, err);
+    }
+
+    // Internal link status check (spec §20) - records PageLink.statusCode so
+    // comparison can report newly broken links.
+    try {
+      await checkLinksForScan(scanId);
+    } catch (err) {
+      stageFailures.push({ stage: "LINK_CHECK", code: "LINK_CHECK_FAILED" });
+      logger.error("link check failed", log, err);
+    }
+  }
+
+  if (scan.triggerType === "BASELINE" && scanned > 0) {
+    // The first successful scan establishes baselines (spec §14): every
+    // successfully-scanned page without an existing baseline gets version 1.
+    // If this fails the website has no reference state, so every later scan
+    // would find nothing to compare and report a clean bill of health.
+    try {
+      const baselines = await createInitialBaselinesForScan(prisma, scanId);
+      logger.info("baselines created", { ...log, baselines });
+    } catch (err) {
+      stageFailures.push({ stage: "BASELINE", code: "BASELINE_FAILED" });
+      logger.error("baseline creation failed", log, err);
+    }
+  } else if (scanned > 0) {
+    // SCHEDULED / MANUAL scans compare against the approved baseline and
+    // create change events (spec §24).
+    try {
+      const result = await runComparisonForScan(scanId);
+      logger.info("changes detected", { ...log, ...result });
+      if (result.pagesFailed > 0) {
+        stageFailures.push({
+          stage: "COMPARISON",
+          code: result.pagesCompared === 0 ? "COMPARISON_FAILED" : "COMPARISON_INCOMPLETE",
+        });
+      }
+    } catch (err) {
+      stageFailures.push({ stage: "COMPARISON", code: "COMPARISON_FAILED" });
+      logger.error("comparison failed", log, err);
+    }
+  }
+
+  const outcome = resolveScanOutcome({
+    pagesScanned: scanned,
+    pagesFailed: failed,
+    failures: stageFailures,
+  });
+  const finishedAt = new Date();
   await prisma.scan.update({
     where: { id: scanId },
     data: {
-      status,
-      completedAt: new Date(),
-      pagesScanned: scanned,
-      pagesFailed: failed,
-      errorCode: status === "FAILED" ? "ALL_PAGES_FAILED" : null,
+      status: outcome.status,
+      completedAt: finishedAt,
+      errorCode: outcome.errorCode,
+      errorMessage: outcome.errorMessage,
     },
   });
-  const finishedAt = new Date();
-  const nowActive = status !== "FAILED";
+
+  const nowActive = outcome.status !== "FAILED";
   await prisma.website.update({
     where: { id: website.id },
     data: {
@@ -242,43 +314,11 @@ export async function runScanWebsiteJob(
     },
   });
 
-  // Site-level SEO capture (robots.txt + sitemap) - once per scan, before
-  // comparison reads it. Never fails the scan.
-  if (scanned > 0) {
-    await captureSiteMeta({ scanId, websiteId: website.id, websiteUrl: website.url });
-
-    // Internal link status check (spec §20) - records PageLink.statusCode so
-    // comparison can report newly broken links. Never fails the scan.
-    try {
-      await checkLinksForScan(scanId);
-    } catch (err) {
-      logger.error("link check failed", log, err);
-    }
-  }
-
-  if (scan.triggerType === "BASELINE" && scanned > 0) {
-    // The first successful scan establishes baselines (spec §14): every
-    // successfully-scanned page without an existing baseline gets version 1.
-    try {
-      const baselines = await createInitialBaselinesForScan(prisma, scanId);
-      logger.info("baselines created", { ...log, baselines });
-    } catch (err) {
-      logger.error("baseline creation failed", log, err);
-    }
-  } else if (scanned > 0) {
-    // SCHEDULED / MANUAL scans compare against the approved baseline and
-    // create change events (spec §24).
-    try {
-      const { changes, highest } = await runComparisonForScan(scanId);
-      logger.info("changes detected", { ...log, changes, highest });
-    } catch (err) {
-      logger.error("comparison failed", log, err);
-    }
-  }
-
   // Notify - grouped summary for change-bearing scans, alert for failures
-  // (spec §27). Baseline scans never notify (they create no change events).
-  if (scan.triggerType !== "BASELINE") {
+  // (spec §27). Baseline scans never notify (they create no change events),
+  // but a baseline that failed to save still has to be told, because nothing
+  // downstream will ever surface it.
+  if (scan.triggerType !== "BASELINE" || outcome.verdictMissing) {
     try {
       await notifyForScan(scanId);
     } catch (err) {
@@ -286,5 +326,11 @@ export async function runScanWebsiteJob(
     }
   }
 
-  logger.info("scan finished", { ...log, status, scanned, failed });
+  logger.info("scan finished", {
+    ...log,
+    status: outcome.status,
+    scanned,
+    failed,
+    errorCode: outcome.errorCode,
+  });
 }

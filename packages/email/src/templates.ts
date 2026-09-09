@@ -28,6 +28,15 @@ export interface FailureAlertData {
   scanTime: string;
   reason: string;
   dashboardUrl: string;
+  /**
+   * "failed" - the site could not be scanned at all.
+   * "incomplete" - the pages were captured, but MyKavo could not compare them
+   *   against the baseline, so this scan is not evidence that nothing changed.
+   *   Worth its own wording: telling someone their scan "failed" when their
+   *   site is fine sends them looking in the wrong place.
+   * Defaults to "failed".
+   */
+  kind?: "failed" | "incomplete";
 }
 
 const SEVERITY_COLOR: Record<Severity, string> = {
@@ -596,15 +605,25 @@ export function workspaceInviteEmail(data: WorkspaceInviteData): {
 }
 
 export function failureAlertEmail(data: FailureAlertData): { subject: string; html: string; text: string } {
-  const subject = `Scan failed for ${data.websiteHost}`;
+  const incomplete = data.kind === "incomplete";
+  const subject = incomplete
+    ? `Scan incomplete for ${data.websiteHost} - changes were not checked`
+    : `Scan failed for ${data.websiteHost}`;
+  const eyebrow = incomplete ? "Scan incomplete" : "Scan failed";
+  const heading = incomplete
+    ? `Couldn't check ${esc(data.websiteName)} for changes`
+    : `Couldn't scan ${esc(data.websiteName)}`;
+  const accent = incomplete ? "#f97316" : "#e5484d";
+  const panelBg = incomplete ? "#fff2e5" : "#fdeaeb";
+  const panelInk = incomplete ? "#9a3412" : "#b42318";
   const inner = `
-    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#e5484d">Scan failed</p>
-    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Couldn't scan ${esc(data.websiteName)}</h1>
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${accent}">${eyebrow}</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${heading}</h1>
     <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · ${esc(data.scanTime)}</p>
-    <div style="background:#fdeaeb;border-radius:12px;padding:14px 16px;font-size:14px;color:#b42318;margin-bottom:24px">${esc(data.reason)}</div>
+    <div style="background:${panelBg};border-radius:12px;padding:14px 16px;font-size:14px;color:${panelInk};margin-bottom:24px">${esc(data.reason)}</div>
     ${button(data.dashboardUrl, "Open dashboard")}
   `;
-  const text = `Scan failed for ${data.websiteHost}\n${data.reason}\n\nDashboard: ${data.dashboardUrl}`;
+  const text = `${subject}\n${data.reason}\n\nDashboard: ${data.dashboardUrl}`;
   return { subject, html: shell(inner), text };
 }
 

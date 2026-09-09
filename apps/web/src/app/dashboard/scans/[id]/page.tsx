@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -59,6 +59,12 @@ export default async function ScanDetailPage({
   ).length;
 
   const inFlight = scan.status === "QUEUED" || scan.status === "RUNNING";
+  // Codes from resolveScanOutcome (@mykavo/shared) that mean the comparison
+  // never produced a trustworthy answer for this scan.
+  const verdictMissing =
+    scan.errorCode === "COMPARISON_FAILED" ||
+    scan.errorCode === "COMPARISON_INCOMPLETE" ||
+    scan.errorCode === "BASELINE_FAILED";
 
   const summary = [
     { label: "Pages requested", value: scan.pagesRequested },
@@ -113,6 +119,24 @@ export default async function ScanDetailPage({
           </Card>
         ))}
       </div>
+
+      {/* A scan that captured pages but could not compare them is NOT evidence
+          that nothing changed, and an empty changes list would say exactly
+          that. Say so before the results, not after. */}
+      {scan.errorCode && scan.errorMessage && !inFlight && (
+        <Card>
+          <div className="flex gap-3">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning-strong" aria-hidden />
+            <div>
+              <p className="text-sm font-semibold text-ink">
+                {verdictMissing ? "This scan did not check for changes" : "This scan was incomplete"}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-ink-secondary">{scan.errorMessage}</p>
+              <p className="mt-2 font-mono text-xs text-ink-faint">{scan.errorCode}</p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {changes.length > 0 && (
         <Card>

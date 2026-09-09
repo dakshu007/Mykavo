@@ -141,15 +141,28 @@ function detectService(src: string): string | null {
   return KNOWN_SERVICES.find(([re]) => re.test(src))?.[1] ?? null;
 }
 
+/**
+ * Outcome of a comparison run. `pagesFailed` is the number of pages whose
+ * comparison threw: those pages contribute no change events, so a caller that
+ * ignored this count would report a clean scan for a page nobody checked.
+ */
+export interface ComparisonResult {
+  changes: number;
+  highest: ChangeSeverity | null;
+  pagesCompared: number;
+  pagesFailed: number;
+}
+
 export async function runComparisonForScan(
   scanId: string,
   storage: ArtifactStorage = getDefaultStorage(),
-): Promise<{ changes: number; highest: ChangeSeverity | null }> {
+): Promise<ComparisonResult> {
   const scan = await prisma.scan.findUnique({
     where: { id: scanId },
     select: { id: true, websiteId: true, triggerType: true },
   });
-  if (!scan || scan.triggerType === "BASELINE") return { changes: 0, highest: null };
+  if (!scan || scan.triggerType === "BASELINE")
+    return { changes: 0, highest: null, pagesCompared: 0, pagesFailed: 0 };
 
   // Idempotency: clear any prior change events for this scan.
   await prisma.changeEvent.deleteMany({ where: { scanId } });
@@ -179,6 +192,8 @@ export async function runComparisonForScan(
 
   const severities: Severity[] = [];
   let totalChanges = 0;
+  let pagesCompared = 0;
+  let pagesFailed = 0;
 
   // Per-page link observations feed one grouped site-wide broken-links
   // comparison after the loop (spec §20). Monitored pages' own URLs are
@@ -198,111 +213,129 @@ export async function runComparisonForScan(
   }
 
   for (const snapshot of snapshots) {
-    const baseline = await prisma.baseline.findFirst({
-      where: { monitoredPageId: snapshot.monitoredPageId, status: "ACTIVE" },
-      include: {
-        pageSnapshot: {
-          select: {
-            id: true,
-            monitoredPageId: true,
-            url: true,
-            httpStatus: true,
-            finalUrl: true,
-            domHash: true,
-            textHash: true,
-            title: true,
-            metaDescription: true,
-            canonicalUrl: true,
-            robotsMeta: true,
-            h1Values: true,
-            pageWeightBytes: true,
-            requestCount: true,
-            responseTimeMs: true,
-            screenshotStorageKey: true,
-            errorCode: true,
+    // One page failing to compare must not discard the whole scan's
+    // verdict. Losing a database connection mid-loop used to throw all
+    // the way out, after the prior change events had already been
+    // deleted - so every page silently reported no changes.
+    try {
+      const baseline = await prisma.baseline.findFirst({
+        where: { monitoredPageId: snapshot.monitoredPageId, status: "ACTIVE" },
+        include: {
+          pageSnapshot: {
+            select: {
+              id: true,
+              monitoredPageId: true,
+              url: true,
+              httpStatus: true,
+              finalUrl: true,
+              domHash: true,
+              textHash: true,
+              title: true,
+              metaDescription: true,
+              canonicalUrl: true,
+              robotsMeta: true,
+              h1Values: true,
+              pageWeightBytes: true,
+              requestCount: true,
+              responseTimeMs: true,
+              screenshotStorageKey: true,
+              errorCode: true,
+            },
           },
         },
-      },
-    });
-    // No baseline yet (e.g. page added after the baseline scan) - nothing to
-    // compare against. Establish one so the next scan can compare.
-    if (!baseline) continue;
+      });
+      // No baseline yet (e.g. page added after the baseline scan) - nothing to
+      // compare against. Establish one so the next scan can compare.
+      if (!baseline) continue;
 
-    const baselineSnap = baseline.pageSnapshot as SnapshotRow;
-    const [base, curr] = await Promise.all([toComparable(baselineSnap), toComparable(snapshot)]);
-    baselineLinkPages.push({ pageUrl: snapshot.url, links: base.links });
-    currentLinkPages.push({ pageUrl: snapshot.url, links: curr.links });
+      const baselineSnap = baseline.pageSnapshot as SnapshotRow;
+      // Sequential, not Promise.all: each call opens three queries, and
+      // running both at once doubled the peak connection count against a
+      // pooler with a hard session cap.
+      const base = await toComparable(baselineSnap);
+      const curr = await toComparable(snapshot);
+      baselineLinkPages.push({ pageUrl: snapshot.url, links: base.links });
+      currentLinkPages.push({ pageUrl: snapshot.url, links: curr.links });
 
-    const changes: Array<ScoredChange & { metadata?: Record<string, unknown> }> =
-      compareSnapshots(base.comparable, curr.comparable);
+      const changes: Array<ScoredChange & { metadata?: Record<string, unknown> }> =
+        compareSnapshots(base.comparable, curr.comparable);
 
-    // Visual diff (skipped when the page is broken - screenshot is unreliable).
-    const currentBroken = (snapshot.httpStatus ?? 0) >= 400;
-    if (!currentBroken && baselineSnap.screenshotStorageKey && snapshot.screenshotStorageKey) {
-      try {
-        const [baseImg, currImg] = await Promise.all([
-          storage.get(baselineSnap.screenshotStorageKey),
-          storage.get(snapshot.screenshotStorageKey),
-        ]);
-        if (baseImg && currImg) {
-          const visual = compareScreenshots(baseImg, currImg);
-          if (visual) {
-            await prisma.pageSnapshot.update({
-              where: { id: snapshot.id },
-              data: { visualDifferencePercentage: visual.differencePercentage },
-            });
-            // Severity scores on the CONTENT difference, not the raw pixel
-            // count: inserting one paragraph shifts every row below it, which
-            // a positional pixel diff reports as most of the page changing.
-            // The raw number is still stored and shown next to the diff image.
-            const scored = scoreChange({
-              kind: "visual_diff",
-              percentage: visual.contentDifferencePercentage,
-            });
-            if (scored) {
-              const diffKey = `${snapshot.screenshotStorageKey.replace(/screenshot\.jpg$/, "")}diff.png`;
-              await storage.put(diffKey, visual.diffPng, "image/png");
-              changes.push({
-                ...scored,
-                metadata: {
-                  diffStorageKey: diffKey,
-                  pixelDifferencePercentage: visual.differencePercentage,
-                  contentDifferencePercentage: visual.contentDifferencePercentage,
-                },
+      // Visual diff (skipped when the page is broken - screenshot is unreliable).
+      const currentBroken = (snapshot.httpStatus ?? 0) >= 400;
+      if (!currentBroken && baselineSnap.screenshotStorageKey && snapshot.screenshotStorageKey) {
+        try {
+          const [baseImg, currImg] = await Promise.all([
+            storage.get(baselineSnap.screenshotStorageKey),
+            storage.get(snapshot.screenshotStorageKey),
+          ]);
+          if (baseImg && currImg) {
+            const visual = compareScreenshots(baseImg, currImg);
+            if (visual) {
+              await prisma.pageSnapshot.update({
+                where: { id: snapshot.id },
+                data: { visualDifferencePercentage: visual.differencePercentage },
               });
+              // Severity scores on the CONTENT difference, not the raw pixel
+              // count: inserting one paragraph shifts every row below it, which
+              // a positional pixel diff reports as most of the page changing.
+              // The raw number is still stored and shown next to the diff image.
+              const scored = scoreChange({
+                kind: "visual_diff",
+                percentage: visual.contentDifferencePercentage,
+              });
+              if (scored) {
+                const diffKey = `${snapshot.screenshotStorageKey.replace(/screenshot\.jpg$/, "")}diff.png`;
+                await storage.put(diffKey, visual.diffPng, "image/png");
+                changes.push({
+                  ...scored,
+                  metadata: {
+                    diffStorageKey: diffKey,
+                    pixelDifferencePercentage: visual.differencePercentage,
+                    contentDifferencePercentage: visual.contentDifferencePercentage,
+                  },
+                });
+              }
             }
           }
+        } catch (err) {
+          logger.warn("visual diff failed", {
+            scanId,
+            snapshotId: snapshot.id,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
-      } catch (err) {
-        logger.warn("visual diff failed", {
-          scanId,
-          snapshotId: snapshot.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
       }
-    }
 
-    for (const change of changes) {
-      await prisma.changeEvent.create({
-        data: {
-          websiteId: scan.websiteId,
-          monitoredPageId: snapshot.monitoredPageId,
-          previousSnapshotId: baselineSnap.id,
-          currentSnapshotId: snapshot.id,
-          scanId,
-          category: CATEGORY_TO_ENUM[change.category],
-          changeType: change.changeType,
-          severity: change.severity as ChangeSeverity,
-          title: change.title,
-          description: change.description,
-          previousValue: change.previousValue,
-          currentValue: change.currentValue,
-          metadata: (change.metadata ?? undefined) as never,
-          status: "NEW",
-        },
-      });
-      severities.push(change.severity);
-      totalChanges++;
+      for (const change of changes) {
+        await prisma.changeEvent.create({
+          data: {
+            websiteId: scan.websiteId,
+            monitoredPageId: snapshot.monitoredPageId,
+            previousSnapshotId: baselineSnap.id,
+            currentSnapshotId: snapshot.id,
+            scanId,
+            category: CATEGORY_TO_ENUM[change.category],
+            changeType: change.changeType,
+            severity: change.severity as ChangeSeverity,
+            title: change.title,
+            description: change.description,
+            previousValue: change.previousValue,
+            currentValue: change.currentValue,
+            metadata: (change.metadata ?? undefined) as never,
+            status: "NEW",
+          },
+        });
+        severities.push(change.severity);
+        totalChanges++;
+      }
+      pagesCompared++;
+    } catch (err) {
+      pagesFailed++;
+      logger.error(
+        "page comparison failed",
+        { scanId, snapshotId: snapshot.id, monitoredPageId: snapshot.monitoredPageId },
+        err,
+      );
     }
   }
 
@@ -385,6 +418,12 @@ export async function runComparisonForScan(
     data: { changesDetected: totalChanges, highestSeverity: highest },
   });
 
-  logger.info("comparison completed", { scanId, changes: totalChanges, highest });
-  return { changes: totalChanges, highest };
+  logger.info("comparison completed", {
+    scanId,
+    changes: totalChanges,
+    highest,
+    pagesCompared,
+    pagesFailed,
+  });
+  return { changes: totalChanges, highest, pagesCompared, pagesFailed };
 }

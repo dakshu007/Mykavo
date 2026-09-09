@@ -195,11 +195,25 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
   const config = await resolveEmailConfig(website.workspaceId);
 
   // Failure alert (spec §27 failure alerts).
-  if (scan.status === "FAILED") {
+  //
+  // A scan that captured every page but could not produce a verdict -
+  // comparison or baseline creation fell over - alerts here too. It is not a
+  // FAILED scan and its snapshots are real, but staying quiet about it would
+  // be read as "nothing changed", which is exactly the reassurance MyKavo has
+  // no basis to give.
+  const verdictMissing =
+    scan.errorCode === "COMPARISON_FAILED" ||
+    scan.errorCode === "COMPARISON_INCOMPLETE" ||
+    scan.errorCode === "BASELINE_FAILED";
+
+  if (scan.status === "FAILED" || verdictMissing) {
     const reason =
       scan.errorMessage ??
       "Every monitored page failed to scan. The site may be down or blocking requests.";
     const dashboardUrl = `${dashboardBase}/dashboard/websites/${website.id}`;
+    const title = verdictMissing
+      ? `Scan incomplete on ${host} - changes were not checked`
+      : `Scan failed on ${host}`;
 
     let ok = false;
     if (config?.failureAlerts) {
@@ -209,17 +223,23 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
         scanTime,
         reason,
         dashboardUrl,
+        kind: verdictMissing ? "incomplete" : "failed",
       });
       const result = await sendEmail({ to: config.recipients, subject: email.subject, html: email.html, text: email.text });
       await record(website.workspaceId, website.id, scan.id, config.recipients, email.subject, result);
-      logger.info("failure alert sent", { scanId, ok: result.ok, provider: result.provider });
+      logger.info("failure alert sent", {
+        scanId,
+        ok: result.ok,
+        provider: result.provider,
+        errorCode: scan.errorCode,
+      });
       ok = result.ok;
     }
     await fanOutToChannels(website.workspaceId, website.id, scan.id, {
-      title: `Scan failed on ${host}`,
+      title,
       lines: [reason, `Scanned ${scanTime}`],
       url: dashboardUrl,
-      severity: "CRITICAL",
+      severity: verdictMissing ? "HIGH" : "CRITICAL",
     });
     return ok;
   }

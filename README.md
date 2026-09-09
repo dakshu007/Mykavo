@@ -12,7 +12,7 @@ MyKavo is a **website change detection & regression monitoring SaaS** for agenci
 
 This README is the **complete, self-contained handoff** for the project. It assumes NOTHING carried over - no prior chat history, no Claude memory files, possibly a different Claude/AI account. Everything needed to understand, run, and continue the project is in this repo. **Last synced: 2026-09-08.**
 
-The 2026-08-01→03 work - worker self-healing (watchdog + stuck-scan/audit recovery), white-label client reports + scheduled delivery, post-deploy checks, **Site Audit** (own crawler + ~81 checks), **Google Search Console integration with Priority Opportunities**, the **MyKavo Analyser** (E-E-A-T), a Chrome extension, three landing sections, and the new app icon - is now **on `main` and deployed**.
+The 2026-08-01→03 work - worker self-healing (watchdog + stuck-scan/audit recovery), white-label client reports + scheduled delivery, post-deploy checks, **Site Audit** (own crawler + 86 checks), **Google Search Console integration with Priority Opportunities**, the **MyKavo Analyser** (E-E-A-T), a Chrome extension, three landing sections, and the new app icon - is now **on `main` and deployed**.
 
 ✅ **`main` == production, and CI keeps it that way.** Pushing to `main` deploys (`.github/workflows/deploy-web.yml`). No more manual `netlify deploy` from a laptop.
 

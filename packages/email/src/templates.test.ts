@@ -213,6 +213,36 @@ describe("failureAlertEmail", () => {
     expect(subject).toBe("Scan failed for aurora-outdoor.com");
     expect(html).toContain("The homepage returned HTTP 500.");
   });
+
+  // A scan whose pages captured fine but whose comparison fell over must not
+  // tell the reader their site failed to scan - it sends them debugging a
+  // site that is working, and buries the thing that actually went wrong.
+  it("says the scan was incomplete, not failed, when only the verdict is missing", () => {
+    const { subject, html, text } = failureAlertEmail({
+      websiteName: "Aurora Outdoor",
+      websiteHost: "aurora-outdoor.com",
+      scanTime: "Jul 8, 2026",
+      reason: "The comparison against the approved baseline did not finish.",
+      dashboardUrl: "https://mykavo.app/dashboard",
+      kind: "incomplete",
+    });
+    expect(subject).toBe("Scan incomplete for aurora-outdoor.com - changes were not checked");
+    expect(subject).not.toContain("failed");
+    expect(html).toContain("Couldn't check Aurora Outdoor for changes");
+    expect(text).toContain("did not finish");
+  });
+
+  it("defaults to the failure wording when no kind is given", () => {
+    expect(
+      failureAlertEmail({
+        websiteName: "Aurora Outdoor",
+        websiteHost: "aurora-outdoor.com",
+        scanTime: "Jul 8, 2026",
+        reason: "DNS lookup failed.",
+        dashboardUrl: "https://mykavo.app/dashboard",
+      }).subject,
+    ).toBe("Scan failed for aurora-outdoor.com");
+  });
 });
 
 describe("workspaceInviteEmail", () => {
