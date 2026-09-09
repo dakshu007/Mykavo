@@ -6,6 +6,7 @@ import {
   listSitemaps,
   submitSitemap,
   inspectUrl,
+  isGscReauthMessage,
 } from "@mykavo/shared";
 import { getApiContext, getOwnedWebsite, requireRole, type ApiContext } from "@/lib/api-auth";
 import { getGscConnection, gscAccessToken, gscConfigured } from "@/lib/gsc";
@@ -115,6 +116,18 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ ok: true });
     }
     case "sync": {
+      // A dead grant cannot be fixed by syncing again - queueing here would
+      // just re-fail in the worker and report success to the user meanwhile.
+      if (isGscReauthMessage(connection.lastError)) {
+        return NextResponse.json(
+          {
+            error:
+              "Google has revoked this connection. Reconnect Google Search Console to resume syncing.",
+            reauthRequired: true,
+          },
+          { status: 409 },
+        );
+      }
       await enqueueGscSync({ websiteId: website.id });
       return NextResponse.json({ ok: true });
     }

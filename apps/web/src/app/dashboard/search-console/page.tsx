@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import { prisma } from "@mykavo/database";
+import { isGscReauthMessage } from "@mykavo/shared";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { gscConfigured } from "@/lib/gsc";
@@ -72,9 +73,12 @@ export default async function SearchConsolePage({
                   <p className="truncate text-[15px] font-semibold text-ink">{website.name}</p>
                   <p className="truncate font-mono text-xs text-ink-faint">{hostname}</p>
                 </div>
-                {connection?.property && (
-                  <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-success-strong">Connected</span>
-                )}
+                {connection?.property &&
+                  (isGscReauthMessage(connection.lastError) ? (
+                    <span className="shrink-0 rounded-full bg-warning-soft px-2.5 py-0.5 text-[11px] font-semibold text-warning-strong">Reconnect needed</span>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-success-strong">Connected</span>
+                  ))}
               </div>
               <p className="mt-3 text-sm text-ink-secondary">
                 {connection?.property
@@ -83,14 +87,32 @@ export default async function SearchConsolePage({
                     ? "Google connected - pick a property to finish setup."
                     : "Not connected."}
               </p>
-              {connection?.lastError && (
-                <p className="mt-1 text-[12px] text-critical-strong">Last sync error: {connection.lastError}</p>
-              )}
-              <div className="mt-4 border-t border-line pt-4">
+              {connection?.lastError &&
+                (isGscReauthMessage(connection.lastError) ? (
+                  <p className="mt-1 text-[12px] text-warning-strong">
+                    Google revoked this connection - reconnect to resume syncing.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[12px] text-critical-strong">Last sync error: {connection.lastError}</p>
+                ))}
+              <div className="mt-4 flex items-center gap-4 border-t border-line pt-4">
                 {connection ? (
-                  <Link href={`/dashboard/search-console/${website.id}`} className="text-[13px] font-medium text-primary hover:underline">
-                    Open dashboard →
-                  </Link>
+                  <>
+                    <Link href={`/dashboard/search-console/${website.id}`} className="text-[13px] font-medium text-primary hover:underline">
+                      Open dashboard →
+                    </Link>
+                    {/* Without this, a revoked connection is a dead end: the
+                        connect button below only renders when there is no
+                        connection row at all. */}
+                    {isGscReauthMessage(connection.lastError) && gscConfigured() && (
+                      <a
+                        href={`/api/gsc/connect?website=${website.id}`}
+                        className="inline-flex h-9 items-center rounded-full bg-primary px-4 text-[13px] font-medium text-primary-contrast hover:bg-primary-hover"
+                      >
+                        Reconnect
+                      </a>
+                    )}
+                  </>
                 ) : gscConfigured() ? (
                   <a
                     href={`/api/gsc/connect?website=${website.id}`}

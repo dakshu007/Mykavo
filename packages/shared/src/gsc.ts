@@ -14,6 +14,50 @@
 
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
 
+// ---------- Dead-grant detection ----------
+
+/**
+ * OAuth token-endpoint errors that mean the stored grant is permanently dead:
+ * retrying, and re-running the sync, can never succeed - the user has to
+ * consent again. `invalid_grant` is overwhelmingly the one seen in practice.
+ *
+ * The most common cause is NOT a bug: while the Google OAuth consent screen is
+ * in "Testing" publishing status, Google expires every refresh token after
+ * SEVEN DAYS. Connections then die on a weekly rhythm no matter what this code
+ * does. Publishing the consent screen (which needs Google verification for the
+ * sensitive webmasters.readonly scope) is the only real fix. Others: the user
+ * revoked access, the password changed, or the OAuth client was rotated.
+ */
+const REAUTH_ERRORS = new Set(["invalid_grant", "unauthorized_client", "invalid_client"]);
+
+/** Marker phrase persisted in GscConnection.lastError so the UI can classify it. */
+export const GSC_REAUTH_MARKER = "Reconnect Google Search Console";
+
+/** Thrown when Google rejects the saved grant. Never worth retrying. */
+export class GscAuthError extends Error {
+  readonly reauthRequired = true;
+  constructor(public readonly googleError: string) {
+    super(
+      `Google rejected the saved authorization (${googleError}). ${GSC_REAUTH_MARKER} to resume syncing.`,
+    );
+    this.name = "GscAuthError";
+  }
+}
+
+/**
+ * Does this stored `lastError` mean the connection needs re-consent? Matches
+ * both the marker above and the raw `invalid_grant` text written by earlier
+ * builds, so connections already broken in the database classify correctly
+ * without a migration or a backfill.
+ */
+export function isGscReauthMessage(message: string | null | undefined): boolean {
+  if (typeof message !== "string") return false;
+  return (
+    message.includes(GSC_REAUTH_MARKER) ||
+    [...REAUTH_ERRORS].some((e) => message.includes(e))
+  );
+}
+
 // ---------- Token crypto ----------
 
 function keyBytes(hexKey: string): Buffer {
@@ -84,7 +128,11 @@ async function tokenRequest(body: URLSearchParams): Promise<GoogleTokens> {
     access_token?: string; refresh_token?: string; expires_in?: number; error?: string;
   };
   if (!res.ok || !data.access_token) {
-    throw new Error(`Google token endpoint: ${data.error ?? res.status}`);
+    const googleError = String(data.error ?? res.status);
+    // A dead grant cannot be retried - only re-consent fixes it. Raise it as
+    // its own error type so callers stop retrying and prompt a reconnect.
+    if (REAUTH_ERRORS.has(googleError)) throw new GscAuthError(googleError);
+    throw new Error(`Google token endpoint: ${googleError}`);
   }
   return {
     accessToken: data.access_token,

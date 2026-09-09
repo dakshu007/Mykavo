@@ -73,29 +73,48 @@ export function SyncButton({ websiteId }: { websiteId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   async function sync() {
     setBusy(true);
+    setError(null);
     try {
-      await fetch("/api/gsc/sync", {
+      // The response decides the outcome. Reporting "Sync queued" regardless
+      // of status is what made a revoked connection look like it was working.
+      const res = await fetch("/api/gsc/sync", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ websiteId }),
       });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(body?.error ?? "Could not start the sync. Try again.");
+        router.refresh();
+        return;
+      }
       setDone(true);
       setTimeout(() => { setDone(false); router.refresh(); }, 4000);
+    } catch {
+      setError("Could not reach the server. Check your connection and try again.");
     } finally {
       setBusy(false);
     }
   }
   return (
-    <button
-      onClick={sync}
-      disabled={busy}
-      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[13px] font-medium text-ink-secondary hover:text-ink disabled:opacity-60"
-    >
-      {busy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : done ? <Check className="size-3.5 text-success-strong" aria-hidden /> : <RefreshCw className="size-3.5" aria-hidden />}
-      {done ? "Sync queued" : "Sync now"}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={sync}
+        disabled={busy}
+        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[13px] font-medium text-ink-secondary hover:text-ink disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : done ? <Check className="size-3.5 text-success-strong" aria-hidden /> : <RefreshCw className="size-3.5" aria-hidden />}
+        {done ? "Sync queued" : "Sync now"}
+      </button>
+      {error && (
+        <p role="status" className="max-w-72 text-right text-[12px] text-critical-strong">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 

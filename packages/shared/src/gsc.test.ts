@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   encryptToken, decryptToken, signOauthState, verifyOauthState,
   mergePeriods, buildOpportunities, gscDate,
+  GscAuthError, isGscReauthMessage,
 } from "./gsc";
 
 const KEY = "a".repeat(64);
@@ -70,5 +71,33 @@ describe("buildOpportunities", () => {
 describe("gscDate", () => {
   it("formats UTC dates offset by days", () => {
     expect(gscDate(2, new Date("2026-08-03T05:00:00Z"))).toBe("2026-08-01");
+  });
+});
+
+describe("dead-grant detection (GSC reconnect flow)", () => {
+  it("classifies the canonical GscAuthError message as needing reconnect", () => {
+    const err = new GscAuthError("invalid_grant");
+    expect(err.reauthRequired).toBe(true);
+    expect(err.googleError).toBe("invalid_grant");
+    expect(isGscReauthMessage(err.message)).toBe(true);
+  });
+
+  it("still classifies raw errors written by earlier builds", () => {
+    // Rows already in production carry this exact text - they must classify
+    // without a migration or backfill.
+    expect(isGscReauthMessage("Google token endpoint: invalid_grant")).toBe(true);
+    expect(isGscReauthMessage("Google token endpoint: unauthorized_client")).toBe(true);
+  });
+
+  it("does not treat transient or unrelated failures as reconnect-worthy", () => {
+    expect(isGscReauthMessage("Google token endpoint: 503")).toBe(false);
+    expect(isGscReauthMessage("fetch failed")).toBe(false);
+    expect(isGscReauthMessage("Search Console API: 429")).toBe(false);
+  });
+
+  it("handles a missing lastError", () => {
+    expect(isGscReauthMessage(null)).toBe(false);
+    expect(isGscReauthMessage(undefined)).toBe(false);
+    expect(isGscReauthMessage("")).toBe(false);
   });
 });

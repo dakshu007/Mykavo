@@ -5,6 +5,7 @@ import { ArrowLeft, Download, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import {
   buildOpportunities,
+  isGscReauthMessage,
   mergePeriods,
   type DimensionMetrics,
   type PageAuditFacts,
@@ -174,9 +175,23 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
             <SyncButton websiteId={website.id} />
           </div>
         </div>
-        {connection.lastError && (
-          <p className="mt-2 rounded-tile bg-critical-soft px-4 py-2.5 text-[12.5px] text-critical-strong">Last sync failed: {connection.lastError}</p>
-        )}
+        {connection.lastError &&
+          (isGscReauthMessage(connection.lastError) ? (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-tile bg-warning-soft px-4 py-3">
+              <p className="text-[12.5px] text-warning-strong">
+                Google revoked this connection, so syncing has stopped. Reconnect to resume - your
+                stored history is kept.
+              </p>
+              <a
+                href={`/api/gsc/connect?website=${website.id}`}
+                className="inline-flex h-9 shrink-0 items-center rounded-full bg-primary px-4 text-[13px] font-medium text-primary-contrast hover:bg-primary-hover"
+              >
+                Reconnect
+              </a>
+            </div>
+          ) : (
+            <p className="mt-2 rounded-tile bg-critical-soft px-4 py-2.5 text-[12.5px] text-critical-strong">Last sync failed: {connection.lastError}</p>
+          ))}
       </div>
 
       {syncPending || daily.length === 0 ? (
