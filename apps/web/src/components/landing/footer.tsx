@@ -28,7 +28,7 @@ const columns = [
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#categories", label: "What it watches" },
       { href: "/preview", label: "Dashboard preview" },
-      { href: "/#android-app", label: "Android app (coming soon)" },
+      { href: "/#android-app", label: "Android app (soon)" },
       { href: "/pricing", label: "Pricing" },
       { href: "/blog", label: "Blog" },
     ],
@@ -83,8 +83,8 @@ const columns = [
 export function LandingFooter() {
   return (
     <footer className="overflow-hidden border-t border-black/10 bg-[#F3F1E6]">
-      <div className="mx-auto max-w-6xl px-5 pt-16 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr]">
+      <div className="mx-auto max-w-7xl px-5 pt-16 lg:px-8">
+        <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[0.95fr_0.95fr_1.25fr_1.05fr_1.1fr_0.9fr]">
           <div>
             <Link href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
               <LogoMark size={28} />
@@ -127,12 +127,12 @@ export function LandingFooter() {
               <h3 className="mb-4 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
                 {col.title}
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="space-y-3">
                 {col.links.map((l) => (
                   <li key={l.label}>
                     <Link
                       href={l.href}
-                      className="text-sm text-[#151515]/75 transition-colors hover:text-[#151515]"
+                      className="block text-sm leading-snug text-pretty text-[#151515]/75 transition-colors hover:text-[#151515]"
                     >
                       {l.label}
                     </Link>
