@@ -17,3 +17,6 @@ coverage/
 
 # Netlify link state
 .netlify/
+
+# Worker server secrets - lives only on the server (spec §59).
+infra/worker/worker.env

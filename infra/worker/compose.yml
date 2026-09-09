@@ -1,0 +1,52 @@
+# MyKavo scan worker - one long-running container.
+#
+# Usage on the server (see README.md in this directory):
+#   cd ~/mykavo && docker compose -f infra/worker/compose.yml up -d --build
+
+services:
+  worker:
+    build:
+      context: ../..                 # repo root - the image needs the workspace
+      dockerfile: infra/worker/Dockerfile
+    image: mykavo-worker:latest
+    container_name: mykavo-worker
+
+    # Survives crashes AND server reboots. This is the whole point of moving
+    # off the Mac: nothing about monitoring should depend on someone being
+    # there to restart it.
+    restart: unless-stopped
+
+    # Secrets live only on the server, never in this repo (spec §59).
+    # Copy the Mac's apps/worker/.env.production to infra/worker/worker.env.
+    env_file:
+      - worker.env
+
+    # SECURITY: Playwright's profile permits the syscalls Chromium's sandbox
+    # needs to build user namespaces, so the sandbox stays ON without running
+    # as root. Removing this line means Chromium fails to start - the correct
+    # failure. Do NOT "fix" it with --no-sandbox: the scanned pages are
+    # untrusted and this container holds database and R2 credentials.
+    security_opt:
+      - seccomp=./seccomp.json
+    cap_drop:
+      - ALL
+
+    # browser-pool.ts passes --disable-dev-shm-usage, so Chromium writes to
+    # /tmp rather than /dev/shm. This is headroom for the cases that don't.
+    shm_size: 1gb
+
+    # The pool runs 3 concurrent pages and Lighthouse launches its own
+    # Chromium beside them. Comfortable inside Oracle's free 12GB; the cap
+    # keeps a runaway page from taking the whole box down with it.
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+
+    # Without rotation the worker's own logs eventually fill the disk and
+    # everything stops - a slow, confusing outage. 3 x 20MB is plenty.
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
