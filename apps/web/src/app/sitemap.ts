@@ -32,6 +32,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/guides/website-maintenance-checklist",
     "/guides/website-deployment-checklist",
     "/blog",
+    "/compare",
+    "/compare/uptime-monitoring",
+    "/compare/visual-change-detection",
+    "/compare/seo-crawlers",
   ];
   const entries: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${site.url}${route}`,
