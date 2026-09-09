@@ -58,6 +58,17 @@ async function main() {
   const boss = new PgBoss({
     connectionString: DATABASE_URL,
     schema: "pgboss",
+    // pg-boss opens its OWN pool, entirely separate from Prisma's, and it
+    // does NOT read the `connection_limit` query parameter - that one is
+    // Prisma-only. Left at pg-boss's default of 10, a single worker could
+    // hold 10 queue connections plus Prisma's, which alone reaches the ~15
+    // slots a Supabase session pooler allows. Two workers made it certain:
+    //   (EMAXCONNSESSION) max clients reached in session mode
+    // That is what silently killed comparisons on 2026-09-08 - the scan
+    // reported success while the comparison never ran - and what stopped a
+    // second worker from starting at all during the move to a real server.
+    // Four is ample: the queue does short polls, not sustained parallel work.
+    max: Number(process.env.PGBOSS_POOL_MAX ?? 4),
   });
   boss.on("error", (err) => logger.error("pg-boss error", {}, err));
 

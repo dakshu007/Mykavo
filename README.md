@@ -199,7 +199,7 @@ CLAUDE.md       the original product spec - still the product constitution
 - **Netlify CLI targets whatever `.netlify/state.json` says** - ALWAYS confirm `netlify status` shows `mykavo` first; a stale link once pointed at an unrelated site. `env:get/list` need `--context production`.
 - **Netlify env via CLI is unreliable non-interactively** (prompts + silently no-ops) - use the REST API; and env changes only reach functions after a redeploy.
 - Netlify deploys can transiently fail at "Uploading blobs ... 403 internal error" - retry unchanged before debugging.
-- **Supabase session pooler has ~15 slots** - one-off scripts alongside the worker can hit EMAXCONNSESSION; append `?connection_limit=1` to script DATABASE_URLs.
+- **Supabase session pooler has ~15 slots** - one-off scripts alongside the worker can hit EMAXCONNSESSION; append `?connection_limit=1` to script DATABASE_URLs. **`connection_limit` is Prisma-only** - pg-boss keeps a separate pool that ignores it (bounded instead by `PGBOSS_POOL_MAX`, default 4). Budget both when running more than one worker.
 - **Dodo**: keep products entitlement-free (no license keys/credits); test products only resolve on `test.checkout.dodopayments.com` (checkout host derives from `DODO_MODE`); each mode needs its own webhook + `DODO_WEBHOOK_SECRET`.
 - Google Apps Script webhooks 401 unless deployed "Execute as: Me" + access "**Anyone**" (not "Anyone with Google account"); curl `-X POST -L` fakes a 405 on the 302 echo redirect - node fetch works correctly.
 - Interrupting `prisma migrate deploy` mid-run leaves a "failed" record - if the DDL applied, fix with `prisma migrate resolve --applied <name>`.
