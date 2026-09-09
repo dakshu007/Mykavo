@@ -73,7 +73,7 @@ export default function ComparePage() {
         rival&apos;s price from memory is usually stale within months. Category differences do
         not rot: an uptime monitor asks whether the server responded, and that is true this year
         and next. Every MyKavo figure quoted across these pages is checkable in the product -
-        86 audit checks across 21 categories, 1,500 pages per audit on Pro, five monitored pages
+        86 audit checks across 22 categories, 1,500 pages per audit on Pro, five monitored pages
         on the free plan.
       </p>
 

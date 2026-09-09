@@ -1,5 +1,7 @@
 export {
   AUDIT_CHECKS,
+  AUDIT_CHECK_COUNT,
+  AUDIT_CATEGORY_COUNT,
   SEVERITY_ORDER,
   type AuditCheckDef,
   type AuditCategory,
@@ -14,3 +16,10 @@ export {
   type AuditResult,
   type AuditIssueGroup,
 } from "./crawl";
+export {
+  pickLeadFinding,
+  auditIsTrustworthy,
+  LEAD_WITH,
+  NEVER_LEAD,
+  type LeadFinding,
+} from "./lead";

@@ -108,6 +108,10 @@ jobs:
           pnpm --filter @mykavo/severity-engine test
           pnpm --filter @mykavo/email test
           pnpm --filter @mykavo/scanner test
+          # 89 audit checks and the outreach lead-picker, previously
+          # ungated: this package has always had tests, it was just
+          # never in the list.
+          pnpm --filter @mykavo/seo-audit test
           # @mykavo/database is a live-DB integration suite with no Postgres
           # here, but this ONE file needs no database and guards the rule that
           # decides whether a shared screenshot is safe to delete. Getting it

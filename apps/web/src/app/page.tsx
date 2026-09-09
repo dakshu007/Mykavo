@@ -269,7 +269,7 @@ const faqs = [
   },
   {
     q: "What should I look for in an SEO monitoring tool?",
-    a: "Rank trackers tell you that traffic moved; an SEO monitoring tool tells you what changed on the page to move it. Look for alerts on title, meta description, canonical, robots meta and H1 changes, indexability flips like index to noindex, broken internal links, redirect changes, and sitemap or robots.txt regressions - each with the previous and current value. MyKavo covers all of those, adds a technical site audit of 86 checks across 21 categories, and correlates them with your Google Search Console data.",
+    a: "Rank trackers tell you that traffic moved; an SEO monitoring tool tells you what changed on the page to move it. Look for alerts on title, meta description, canonical, robots meta and H1 changes, indexability flips like index to noindex, broken internal links, redirect changes, and sitemap or robots.txt regressions - each with the previous and current value. MyKavo covers all of those, adds a technical site audit of 89 checks across 22 categories, and correlates them with your Google Search Console data.",
   },
   {
     q: "Is there a free website monitoring tool?",

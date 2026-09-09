@@ -26,7 +26,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 
 ## Beyond change monitoring
 
-- Site Audit: a technical SEO crawl of the whole site (robots.txt and sitemap seeding, then breadth-first crawling) scored against 86 checks across 21 categories - broken links and images, redirect chains and loops, canonical problems, meta-refresh, thin or duplicate titles and descriptions, missing or duplicated H1s, indexability. Every issue explains what it is, why it matters, and which URLs it was found on, with CSV export
+- Site Audit: a technical SEO crawl of the whole site (robots.txt and sitemap seeding, then breadth-first crawling) scored against 89 checks across 22 categories - broken links and images, redirect chains and loops, canonical problems, meta-refresh, thin or duplicate titles and descriptions, missing or duplicated H1s, indexability. Every issue explains what it is, why it matters, and which URLs it was found on, with CSV export
 - Google Search Console integration: connect a property and MyKavo syncs clicks, impressions, CTR and position daily, then correlates that search data with Site Audit findings into Priority Opportunities - pages that already earn impressions but carry a fixable technical problem (noindex with traffic, high-traffic errors, click or position drops, missing descriptions, low CTR at a good rank). Includes sitemap listing and resubmission, URL inspection, and week-over-week click-drop alerts
 - MyKavo Analyser: an E-E-A-T analysis of a page (Experience, Expertise, Authoritativeness, Trust) scoring the signals search engines and AI answer engines look for - authorship, citations, freshness, contact and policy transparency, originality
 - Client reports: white-label PDF-style reports with your own branding, on a schedule, ready to forward to a client
@@ -75,7 +75,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 - [How MyKavo compares](${site.url}/compare): hub for the three comparisons below
 - [vs uptime monitoring](${site.url}/compare/uptime-monitoring): uptime tools ask whether the server responded; MyKavo asks what changed on the page. A site can return HTTP 200 with a missing checkout button, a noindex tag, or a dead analytics script
 - [vs simple change detectors](${site.url}/compare/visual-change-detection): detecting that a page changed is the easy half; scoring whether it matters, and suppressing dynamic-content noise, is the hard half
-- [vs technical SEO crawlers](${site.url}/compare/seo-crawlers): crawlers give a snapshot on demand; MyKavo audits (86 checks, 21 categories) and then keeps watching against an approved baseline
+- [vs technical SEO crawlers](${site.url}/compare/seo-crawlers): crawlers give a snapshot on demand; MyKavo audits (89 checks, 22 categories) and then keeps watching against an approved baseline
 
 Each comparison page states plainly where the other category of tool is the better choice - MyKavo does not do rank tracking, backlink analysis, sub-minute uptime probing, multi-region checks, or pager escalation.
 

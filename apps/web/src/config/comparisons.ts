@@ -13,8 +13,8 @@
  * what changed on the page") are definitional: true today, true next year, and
  * checkable by anyone.
  *
- * Every MyKavo figure here is verifiable from the codebase: 86 checks across
- * 21 categories (packages/seo-audit registry), plan limits (config/plans),
+ * Every MyKavo figure here is verifiable from the codebase: 89 checks across
+ * 22 categories (packages/seo-audit registry), plan limits (config/plans),
  * severity bands (packages/severity-engine).
  *
  * To add a named-vendor page later, source the competitor's facts from their
@@ -221,13 +221,13 @@ export const COMPARISONS: Comparison[] = [
       "continuous SEO monitoring",
     ],
     capsule:
-      "A technical SEO crawler gives you a thorough snapshot when you run it. MyKavo runs a comparable crawl - 86 checks across 21 categories - and then keeps watching, comparing each scan against an approved baseline. The difference is not depth on day one; it is whether anyone notices the regression introduced six weeks later.",
+      "A technical SEO crawler gives you a thorough snapshot when you run it. MyKavo runs a comparable crawl - 89 checks across 22 categories - and then keeps watching, comparing each scan against an approved baseline. The difference is not depth on day one; it is whether anyone notices the regression introduced six weeks later.",
     themLabel: "SEO crawlers",
     rows: [
       {
         capability: "Full technical crawl",
         them: "Yes - typically deeper, with more checks",
-        us: "Yes - 86 checks across 21 categories, up to 1,500 pages per audit",
+        us: "Yes - 89 checks across 22 categories, up to 1,500 pages per audit",
       },
       {
         capability: "Runs continuously without you starting it",
@@ -276,7 +276,7 @@ export const COMPARISONS: Comparison[] = [
       },
       {
         q: "How many checks does the MyKavo site audit run?",
-        a: "86 checks across 21 categories: crawlability, indexability, HTTP status, titles, meta descriptions, headings, internal and external links, images, URLs, structured data, social tags, security, performance, sitemaps, international, accessibility, mobile, content, HTML hygiene and trust signals. Every issue explains what it means, why it matters and which URLs it was found on.",
+        a: "89 checks across 22 categories: crawlability, indexability, HTTP status, titles, meta descriptions, headings, internal and external links, images, URLs, structured data, social tags, security, performance, sitemaps, international, accessibility, mobile, content, HTML hygiene and trust signals. Every issue explains what it means, why it matters and which URLs it was found on.",
       },
       {
         q: "What is the difference between a site audit and change monitoring?",

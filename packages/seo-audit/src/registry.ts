@@ -535,6 +535,20 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
   },
 };
 
+/**
+ * Authoritative counts, derived from the registry rather than written down.
+ *
+ * These numbers appear in marketing copy, the comparison pages and llms.txt,
+ * where a wrong figure is a public claim that does not survive a reader
+ * checking it. They drifted once already - the pages said 86/21 while the
+ * registry held 89/22 - so the copy now imports these and a test asserts the
+ * published strings match.
+ */
+export const AUDIT_CHECK_COUNT = Object.keys(AUDIT_CHECKS).length;
+export const AUDIT_CATEGORY_COUNT = new Set(
+  Object.values(AUDIT_CHECKS).map((c) => c.category),
+).size;
+
 export type AuditCheckId = keyof typeof AUDIT_CHECKS;
 
 export const SEVERITY_ORDER: Record<AuditSeverity, number> = {
