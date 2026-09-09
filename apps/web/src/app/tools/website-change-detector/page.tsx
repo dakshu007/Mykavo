@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
+import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { CHANGE_DETECTOR_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { ChangeDetector } from "./change-detector";
 import { site } from "@/config/site";
@@ -82,6 +84,12 @@ export default function WebsiteChangeDetectorPage() {
             screenshot comparison, broken-link detection, and severity-ranked email alerts.
           </p>
         </section>
+      
+        <ToolFaqSection
+          faqs={CHANGE_DETECTOR_FAQS}
+          toolName="Website Change Detector"
+          toolPath="/tools/website-change-detector"
+        />
       </main>
       <LandingFooter />
     </div>

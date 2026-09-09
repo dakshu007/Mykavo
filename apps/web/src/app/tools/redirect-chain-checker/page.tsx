@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
+import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { REDIRECT_CHAIN_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { RedirectChainChecker } from "./redirect-chain-checker";
 import { site } from "@/config/site";
@@ -82,6 +84,12 @@ export default function RedirectChainCheckerPage() {
             schedule and alerts you when a destination or status unexpectedly changes.
           </p>
         </section>
+      
+        <ToolFaqSection
+          faqs={REDIRECT_CHAIN_FAQS}
+          toolName="Redirect Chain Checker"
+          toolPath="/tools/redirect-chain-checker"
+        />
       </main>
       <LandingFooter />
     </div>

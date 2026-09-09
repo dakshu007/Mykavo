@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
+import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { EEAT_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { EeatAnalyzer } from "./eeat-analyzer";
 import { site } from "@/config/site";
@@ -69,6 +71,12 @@ export default function EeatAnalyzerPage() {
             Use the failed checks as a to-do list: every one is something you can actually fix today.
           </p>
         </section>
+      
+        <ToolFaqSection
+          faqs={EEAT_FAQS}
+          toolName="E-E-A-T Analyzer"
+          toolPath="/tools/eeat-analyzer"
+        />
       </main>
       <LandingFooter />
     </div>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
+import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { SCRIPT_DETECTOR_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { ScriptDetector } from "./script-detector";
 import { site } from "@/config/site";
@@ -82,6 +84,12 @@ export default function ScriptDetectorPage() {
             replaced, or when an unfamiliar one shows up.
           </p>
         </section>
+      
+        <ToolFaqSection
+          faqs={SCRIPT_DETECTOR_FAQS}
+          toolName="Script Detector"
+          toolPath="/tools/script-detector"
+        />
       </main>
       <LandingFooter />
     </div>

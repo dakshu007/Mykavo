@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
+import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { BULK_STATUS_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { BulkStatusChecker } from "./bulk-status-checker";
 import { site } from "@/config/site";
@@ -81,6 +83,12 @@ export default function BulkUrlStatusCheckerPage() {
             returned 200 starts returning an error.
           </p>
         </section>
+      
+        <ToolFaqSection
+          faqs={BULK_STATUS_FAQS}
+          toolName="Bulk URL Status Checker"
+          toolPath="/tools/bulk-url-status-checker"
+        />
       </main>
       <LandingFooter />
     </div>

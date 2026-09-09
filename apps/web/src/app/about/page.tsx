@@ -5,6 +5,12 @@ import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
+import { site } from "@/config/site";
+import {
+  breadcrumbList,
+  jsonLdScript,
+  organizationNode,
+} from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "About - The Story Behind MyKavo",
@@ -43,9 +49,40 @@ const principles = [
   },
 ];
 
+/**
+ * The about page carried NO structured data at all, which matters more here
+ * than on most pages: this is where a model looks to answer "who is behind
+ * MyKavo" - the founder and organisation identity that E-E-A-T and entity
+ * resolution both rest on. AboutPage points at the Organization node so the
+ * two are linked rather than free-floating.
+ */
+const aboutJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    organizationNode(),
+    {
+      "@type": "AboutPage",
+      "@id": `${site.url}/about#aboutpage`,
+      name: "About MyKavo",
+      url: `${site.url}/about`,
+      mainEntity: { "@id": `${site.url}/#organization` },
+    },
+  ],
+};
+
 export default function AboutPage() {
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(aboutJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript(breadcrumbList([{ name: "About", path: "/about" }])),
+        }}
+      />
       <LandingNav />
       <main className="pb-24 pt-32 sm:pt-36">
         {/* Hero */}

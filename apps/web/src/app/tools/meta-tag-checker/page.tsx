@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
+import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { META_TAG_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { MetaTagChecker } from "./meta-tag-checker";
 import { site } from "@/config/site";
@@ -88,6 +90,12 @@ export default function MetaTagCheckerPage() {
             one of them changes.
           </p>
         </section>
+      
+        <ToolFaqSection
+          faqs={META_TAG_FAQS}
+          toolName="Meta Tag Checker"
+          toolPath="/tools/meta-tag-checker"
+        />
       </main>
       <LandingFooter />
     </div>
