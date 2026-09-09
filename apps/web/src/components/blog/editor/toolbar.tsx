@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
+import { compressImage } from "@/lib/blog-editor/compress-image";
 import {
   Bold,
   Code,
@@ -188,16 +189,21 @@ export function ImagePopover({ editor, onClose }: { editor: Editor; onClose: () 
     insert(value);
   }
 
-  async function upload(file: File) {
+  async function upload(original: File) {
     setUploading(true);
     setError(null);
     try {
+      // Shrink before uploading: keeps big photos under the route's limit and
+      // off the wire entirely (see lib/blog-editor/compress-image).
+      const { file } = await compressImage(original);
       const body = new FormData();
       body.append("file", file);
       const res = await fetch("/api/blog/images", { method: "POST", body });
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        setError(data.error ?? "Upload failed.");
+        // Include the status when the server sent no JSON, so a failure is
+        // never just "Upload failed." with nothing to go on.
+        setError(data.error ?? `Upload failed (HTTP ${res.status}).`);
         return;
       }
       insert(data.url);

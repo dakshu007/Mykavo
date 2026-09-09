@@ -6,10 +6,38 @@ import { Check, Loader2 } from "lucide-react";
 import type { EmailSettings } from "@/lib/notification-settings";
 import { cn } from "@/lib/utils";
 
+/**
+ * The three thresholds carry the same colour language as change severity
+ * elsewhere in the dashboard - amber for medium, orange for high, red for
+ * critical - so the choice reads as "how loud do you want this" at a glance
+ * rather than three identical grey tiles. Colour is never the only signal:
+ * each tile keeps its label, its hint, and a selected ring.
+ */
 const SEVERITIES = [
-  { value: "MEDIUM", label: "Medium and above", hint: "More alerts" },
-  { value: "HIGH", label: "High and above", hint: "Recommended" },
-  { value: "CRITICAL", label: "Critical only", hint: "Fewest alerts" },
+  {
+    value: "MEDIUM",
+    label: "Medium and above",
+    hint: "More alerts",
+    dot: "bg-warning",
+    idle: "border-warning/35 bg-warning-soft/40",
+    active: "border-warning-strong bg-warning-soft ring-1 ring-warning-strong",
+  },
+  {
+    value: "HIGH",
+    label: "High and above",
+    hint: "Recommended",
+    dot: "bg-orange",
+    idle: "border-orange/35 bg-orange-soft/40",
+    active: "border-orange-strong bg-orange-soft ring-1 ring-orange-strong",
+  },
+  {
+    value: "CRITICAL",
+    label: "Critical only",
+    hint: "Fewest alerts",
+    dot: "bg-critical",
+    idle: "border-critical/35 bg-critical-soft/40",
+    active: "border-critical-strong bg-critical-soft ring-1 ring-critical-strong",
+  },
 ] as const;
 
 export function NotificationSettingsForm({ initial }: { initial: EmailSettings }) {
@@ -99,15 +127,17 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
               key={s.value}
               type="button"
               onClick={() => setMinSeverity(s.value)}
+              aria-pressed={minSeverity === s.value}
               className={cn(
-                "rounded-tile border px-4 py-3 text-left transition-colors",
-                minSeverity === s.value
-                  ? "border-primary bg-primary-soft"
-                  : "border-line bg-card hover:border-ink-faint",
+                "rounded-tile border px-4 py-3 text-left transition-all",
+                minSeverity === s.value ? s.active : cn(s.idle, "hover:brightness-95"),
               )}
             >
-              <span className="block text-sm font-medium text-ink">{s.label}</span>
-              <span className="block text-[13px] text-ink-faint">{s.hint}</span>
+              <span className="flex items-center gap-2">
+                <span className={cn("size-2 shrink-0 rounded-full", s.dot)} aria-hidden />
+                <span className="text-sm font-medium text-ink">{s.label}</span>
+              </span>
+              <span className="mt-0.5 block text-[13px] text-ink-secondary">{s.hint}</span>
             </button>
           ))}
         </div>

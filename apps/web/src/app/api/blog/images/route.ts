@@ -64,7 +64,18 @@ export async function POST(request: Request) {
   }
 
   const name = `${randomBytes(16).toString("hex")}.${extension}`;
-  await getDefaultStorage().put(`blog-images/${name}`, data, mime);
+  try {
+    await getDefaultStorage().put(`blog-images/${name}`, data, mime);
+  } catch (err) {
+    // The R2 backend throws on a failed PUT. Unhandled, that became a generic
+    // HTML 500, the client's res.json() threw, and the editor showed a bare
+    // "Upload failed." with nothing to debug from. Always answer with JSON.
+    logger.error("blog image upload failed", { userId: gate.userId, name, mime }, err);
+    return NextResponse.json(
+      { error: "Could not save the image to storage. Try again in a moment." },
+      { status: 502 },
+    );
+  }
 
   logger.info("blog image uploaded", {
     userId: gate.userId,
