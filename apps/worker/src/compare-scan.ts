@@ -251,14 +251,25 @@ export async function runComparisonForScan(
               where: { id: snapshot.id },
               data: { visualDifferencePercentage: visual.differencePercentage },
             });
+            // Severity scores on the CONTENT difference, not the raw pixel
+            // count: inserting one paragraph shifts every row below it, which
+            // a positional pixel diff reports as most of the page changing.
+            // The raw number is still stored and shown next to the diff image.
             const scored = scoreChange({
               kind: "visual_diff",
-              percentage: visual.differencePercentage,
+              percentage: visual.contentDifferencePercentage,
             });
             if (scored) {
               const diffKey = `${snapshot.screenshotStorageKey.replace(/screenshot\.jpg$/, "")}diff.png`;
               await storage.put(diffKey, visual.diffPng, "image/png");
-              changes.push({ ...scored, metadata: { diffStorageKey: diffKey } });
+              changes.push({
+                ...scored,
+                metadata: {
+                  diffStorageKey: diffKey,
+                  pixelDifferencePercentage: visual.differencePercentage,
+                  contentDifferencePercentage: visual.contentDifferencePercentage,
+                },
+              });
             }
           }
         }

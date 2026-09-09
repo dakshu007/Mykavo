@@ -405,8 +405,10 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
     case "visual_diff": {
       const p = signal.percentage;
       if (p < 1) return null; // 0–1% ignored (spec §18)
+      // Spec §18 bands. 30%+ is the CRITICAL candidate tier - it previously
+      // returned HIGH from both arms of the ternary, so it could never fire.
       const severity: Severity =
-        p >= 30 ? "HIGH" : p >= 15 ? "HIGH" : p >= 5 ? "MEDIUM" : "LOW";
+        p >= 30 ? "CRITICAL" : p >= 15 ? "HIGH" : p >= 5 ? "MEDIUM" : "LOW";
       return finalize({
         category: "VISUAL",
         changeType: "visual_difference",

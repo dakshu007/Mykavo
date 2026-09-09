@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "Support - Get Help with MyKavo Website Monitoring",
@@ -16,6 +17,36 @@ export const metadata: Metadata = {
   alternates: { canonical: "/support" },
 };
 
+/**
+ * Plain-text mirrors of the five answers rendered below. They must stay in
+ * step with the prose: schema that says something the page does not is spam,
+ * and it is the fastest way to lose rich results. These are the questions AI
+ * answer engines get asked about a monitoring tool, so each answer is written
+ * to stand alone as a citable unit.
+ */
+const supportFaqs = [
+  {
+    q: "How do I add a website to MyKavo?",
+    a: "From your dashboard, click Add Website and enter the URL. MyKavo validates the site, discovers its pages, and lets you pick exactly which ones to monitor. The first scan creates your baseline - the approved known-good state that every future scan is compared against. You should only monitor websites you own or are authorized to monitor.",
+  },
+  {
+    q: "Why did my scan show a change I did not make?",
+    a: "Modern pages contain content that changes on every load - rotating banners, dates, cookie widgets, ads, or animation frames caught mid-motion. MyKavo filters this noise, but some dynamic areas need a hint. In your website settings you can add ignored selectors (CSS selectors MyKavo skips during comparison) and screenshot masks (regions blanked out before visual comparison). Add one for the noisy element, re-run a scan, and the false alarms stop.",
+  },
+  {
+    q: "How do MyKavo alerts work?",
+    a: "Every detected change gets a severity level: Info, Low, Medium, High, or Critical. Critical and High changes - a page returning 404, a noindex tag appearing, an analytics script disappearing - trigger email alerts. Rather than one email per change, MyKavo groups everything found in a scan into a single summary email per website, so a deploy touching twenty pages produces one readable alert instead of twenty.",
+  },
+  {
+    q: "How do I cancel my MyKavo subscription?",
+    a: "Open Billing in your dashboard and click cancel. Your Pro features stay active until the end of the period you have already paid for, then your account moves to the Free plan. Your account and monitoring history are not deleted when you cancel.",
+  },
+  {
+    q: "Is my data safe with MyKavo?",
+    a: "Yes. MyKavo only scans public pages of the websites you choose, respects robots.txt, and never sells your data. Payments are handled entirely by Dodo Payments, so card numbers never touch MyKavo servers. The privacy policy covers what is collected, where it is stored, and how to request deletion.",
+  },
+];
+
 export default function SupportPage() {
   return (
     <MarketingPageShell
@@ -24,6 +55,17 @@ export default function SupportPage() {
       intro="Real answers from the person who builds MyKavo. Most emails get a reply within one business day, and nothing you send disappears into a ticket queue."
       updated="July 17, 2026"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(faqPage(supportFaqs)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript(breadcrumbList([{ name: "Support", path: "/support" }])),
+        }}
+      />
+
       <h2>Contact us</h2>
       <p>
         The fastest way to reach us is email:{" "}

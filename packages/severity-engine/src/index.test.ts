@@ -152,11 +152,15 @@ describe("visual rules (spec §18)", () => {
   it("<1% is ignored", () => {
     expect(score({ kind: "visual_diff", percentage: 0.4 })).toBeNull();
   });
-  it("1–5% is LOW, 5–15% MEDIUM, 15%+ HIGH", () => {
+  it("1-5% LOW, 5-15% MEDIUM, 15-30% HIGH, 30%+ CRITICAL", () => {
     expect(score({ kind: "visual_diff", percentage: 3 })!.severity).toBe("LOW");
     expect(score({ kind: "visual_diff", percentage: 9 })!.severity).toBe("MEDIUM");
     expect(score({ kind: "visual_diff", percentage: 22 })!.severity).toBe("HIGH");
-    expect(score({ kind: "visual_diff", percentage: 40 })!.severity).toBe("HIGH");
+    // Was asserted as HIGH, which codified a bug: both arms of the ternary
+    // returned HIGH, so spec §18's 30%+ CRITICAL tier could never fire.
+    expect(score({ kind: "visual_diff", percentage: 40 })!.severity).toBe("CRITICAL");
+    expect(score({ kind: "visual_diff", percentage: 30 })!.severity).toBe("CRITICAL");
+    expect(score({ kind: "visual_diff", percentage: 29.9 })!.severity).toBe("HIGH");
   });
 });
 
