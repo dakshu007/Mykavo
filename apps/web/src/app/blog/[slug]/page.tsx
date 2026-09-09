@@ -9,6 +9,7 @@ import { fontSans, fontDisplay, gold } from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
 import { PostContent, PostTocRail } from "@/components/blog/post-content";
 import { site } from "@/config/site";
+import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
 // Dynamic on purpose: publishing from the dashboard must be visible
 // immediately, without a redeploy. ISR + revalidatePath is a future optimization.
@@ -33,9 +34,7 @@ async function getPublishedPost(slug: string) {
  * Escape "<" so post-authored text (e.g. "</script>") can't terminate the
  * script element - JSON.stringify alone does not prevent this.
  */
-function jsonLdScript(payload: object): string {
-  return JSON.stringify(payload).replace(/</g, "\\u003c");
-}
+// Escaping now lives in lib/seo/structured-data alongside the schema builders.
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
@@ -77,18 +76,43 @@ export default async function BlogPostPage({ params }: Params) {
   const jsonLdKeywords = [post.primaryKeyword, post.secondaryKeyword, ...post.tags]
     .filter((keyword): keyword is string => Boolean(keyword))
     .join(", ");
+  // Every published post gets the full treatment automatically - nothing here
+  // is per-post configuration. wordCount and timeRequired tell answer engines
+  // this is substantive rather than thin content; `image` is required for
+  // Google's article rich results and falls back to the site OG image so a
+  // post is never disqualified for lacking one; articleSection carries the
+  // post's own tags; isAccessibleForFree tells crawlers there is no paywall.
+  const wordCount = post.content.trim().split(/\s+/).filter(Boolean).length;
   const articleJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
     description: post.seoDescription ?? post.excerpt ?? undefined,
     datePublished: post.publishedAt?.toISOString(),
     dateModified: post.updatedAt.toISOString(),
     author: { "@type": "Person", name: post.authorName },
-    publisher: { "@type": "Organization", name: site.name, url: site.url },
-    mainEntityOfPage: `${site.url}/blog/${post.slug}`,
+    publisher: {
+      "@type": "Organization",
+      name: site.name,
+      url: site.url,
+      logo: { "@type": "ImageObject", url: `${site.url}/icon.png` },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${site.url}/blog/${post.slug}` },
+    url: `${site.url}/blog/${post.slug}`,
+    image: [`${site.url}/opengraph-image.png`],
+    inLanguage: "en",
+    isAccessibleForFree: true,
+    wordCount,
+    timeRequired: `PT${Math.max(1, readMinutes)}M`,
+    isPartOf: { "@type": "Blog", "@id": `${site.url}/blog#blog` },
+    ...(post.tags.length > 0 ? { articleSection: post.tags } : {}),
     ...(jsonLdKeywords ? { keywords: jsonLdKeywords } : {}),
   };
+
+  const breadcrumbJsonLd = breadcrumbList([
+    { name: "Blog", path: "/blog" },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
 
   const faqJsonLd =
     faqItems.length > 0
@@ -115,6 +139,10 @@ export default async function BlogPostPage({ params }: Params) {
           dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }}
         />
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd) }}
+      />
       <LandingNav />
       <main>
         {/* Hero band on the warm paper canvas */}

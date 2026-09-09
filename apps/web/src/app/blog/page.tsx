@@ -7,6 +7,7 @@ import { LandingFooter } from "@/components/landing/footer";
 import { card, eyebrow, fontSans, fontDisplay } from "@/components/landing/style";
 import { readingTimeMinutes } from "@/components/blog/blocks";
 import { BlogIndexList } from "@/components/blog/blog-index-list";
+import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
 // Dynamic on purpose: a post published from the dashboard must be visible
 // immediately, without a redeploy. ISR + revalidatePath is a future optimization.
@@ -58,6 +59,18 @@ export default async function BlogIndexPage() {
 
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
+      {/* Blog + ItemList: answer engines get the whole post inventory from one
+          fetch instead of having to crawl every card to discover it. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(blogIndexGraph(posts)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript(breadcrumbList([{ name: "Blog", path: "/blog" }])),
+        }}
+      />
       <LandingNav />
       <main className="mx-auto w-full max-w-[1440px] px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
         <div className="mx-auto mb-14 max-w-2xl text-center">

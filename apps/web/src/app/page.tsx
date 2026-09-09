@@ -32,6 +32,7 @@ import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { plans } from "@/config/plans";
 import { site } from "@/config/site";
+import { FEATURE_LIST } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   // Absolute title (not the layout template) so the homepage leads with the
@@ -106,8 +107,9 @@ const jsonLd = {
           description: "8 websites with 15 monitored pages each, daily scans and alerts.",
         },
       ],
-      featureList:
-        "Website change detection, visual website monitoring, SEO change monitoring, broken link monitoring, script monitoring, performance regression monitoring, uptime and SSL monitoring, conversion element monitoring",
+      // Single source (lib/seo/structured-data) so this cannot fall behind
+      // what MyKavo actually does - it did once, for five weeks.
+      featureList: FEATURE_LIST,
     },
   ],
 };

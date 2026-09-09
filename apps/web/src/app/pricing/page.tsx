@@ -8,6 +8,14 @@ import { TrackOnView } from "@/components/track-on-view";
 import { ValueQuoteBanner } from "@/components/value-quote";
 import { Price, BilledInUsdNote } from "@/components/region";
 import { plans, formatLimit } from "@/config/plans";
+import {
+  FEATURE_LIST,
+  breadcrumbList,
+  faqPage,
+  jsonLdScript,
+  organizationNode,
+  softwareApplicationNode,
+} from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "Pricing - Website Monitoring Plans from $0",
@@ -68,9 +76,43 @@ const pricingFaqs = [
   },
 ];
 
+/**
+ * Structured data for the page. Offers are built from plans.ts, and the FAQ
+ * from the same array the page renders below, so the markup can never claim a
+ * price or an answer the visitor does not see.
+ */
+const pricingJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    organizationNode(),
+    softwareApplicationNode({
+      offers: plans.map((plan) => ({
+        name: plan.name,
+        priceUsd: plan.priceMonthlyUsd,
+        description: plan.headline,
+      })),
+      featureList: FEATURE_LIST,
+    }),
+  ],
+};
+
 export default function PricingPage() {
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(pricingJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(faqPage(pricingFaqs)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript(breadcrumbList([{ name: "Pricing", path: "/pricing" }])),
+        }}
+      />
       <TrackOnView event="pricing_viewed" />
       <LandingNav />
       <main className="mx-auto max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">

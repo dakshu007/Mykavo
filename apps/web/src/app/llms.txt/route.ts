@@ -24,6 +24,13 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Uptime and SSL: five-minute health checks, downtime incidents, certificate expiry warnings
 - Conversion elements: user-defined CSS selectors (signup buttons, checkout CTAs) checked for existence, visibility, text, and destination
 
+## Beyond change monitoring
+
+- Site Audit: a technical SEO crawl of the whole site (robots.txt and sitemap seeding, then breadth-first crawling) scored against roughly 81 checks - broken links and images, redirect chains and loops, canonical problems, meta-refresh, thin or duplicate titles and descriptions, missing or duplicated H1s, indexability. Every issue explains what it is, why it matters, and which URLs it was found on, with CSV export
+- Google Search Console integration: connect a property and MyKavo syncs clicks, impressions, CTR and position daily, then correlates that search data with Site Audit findings into Priority Opportunities - pages that already earn impressions but carry a fixable technical problem (noindex with traffic, high-traffic errors, click or position drops, missing descriptions, low CTR at a good rank). Includes sitemap listing and resubmission, URL inspection, and week-over-week click-drop alerts
+- MyKavo Analyser: an E-E-A-T analysis of a page (Experience, Expertise, Authoritativeness, Trust) scoring the signals search engines and AI answer engines look for - authorship, citations, freshness, contact and policy transparency, originality
+- Client reports: white-label PDF-style reports with your own branding, on a schedule, ready to forward to a client
+
 ## How it works
 
 1. Add a website; MyKavo discovers pages via sitemaps and internal links
@@ -45,6 +52,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Redirect Chain Checker: ${site.url}/tools/redirect-chain-checker
 - Bulk URL Status Checker: ${site.url}/tools/bulk-url-status-checker
 - Script Detector: ${site.url}/tools/script-detector
+- E-E-A-T Analyzer: ${site.url}/tools/eeat-analyzer
 
 ## Solutions
 
