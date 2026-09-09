@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import { securityHeaders } from "./src/lib/security-headers";
 
 const nextConfig: NextConfig = {
   // Monorepo: trace files from the repo root so workspace packages and the
@@ -22,8 +23,14 @@ const nextConfig: NextConfig = {
   // Dev-only CORS so the Expo WEB dev preview (http://localhost:8081) can call
   // the local Next dev server with credentials. No-op in production builds.
   async headers() {
-    if (process.env.NODE_ENV === "production") return [];
+    // Security headers on every production response. This used to return an
+    // empty array in production - the early return below short-circuited the
+    // whole function - so the live site shipped with no HSTS, no CSP and no
+    // clickjacking protection while dev had CORS. See src/lib/security-headers.
+    const secure = [{ source: "/:path*", headers: securityHeaders }];
+    if (process.env.NODE_ENV === "production") return secure;
     return [
+      ...secure,
       {
         source: "/api/:path*",
         headers: [
