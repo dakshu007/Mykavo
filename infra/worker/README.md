@@ -117,6 +117,30 @@ alerts — the single fastest way to lose trust in a monitoring product
 Non-visual checks — SEO tags, links, scripts, availability, performance,
 conversion elements — are unaffected: they compare values, not pixels.
 
+## Hardening
+
+Port 22 is reachable from the internet, which is normal for a cloud VM and
+means the login prompt is under constant automated attack. Run once:
+
+```bash
+bash ~/mykavo/infra/worker/harden.sh
+```
+
+It installs fail2ban (jailing repeat offenders, with escalating bans),
+pins sshd to keys-only with no root login, and enables unattended security
+updates. **Keep your existing session open and confirm a new `ssh` login
+works before closing it** - that is the safety net against any sshd change.
+
+It deliberately does not restrict port 22 to one IP. Home addresses change,
+and locking yourself out of the only host running the product is worse than
+the risk. If you do want that restriction: Oracle console → Networking →
+Virtual Cloud Networks → your VCN → Security Lists → edit the ingress rule
+for port 22 to your address instead of `0.0.0.0/0`. The recovery path when
+your IP changes is the instance's serial console (Instance → Console
+connection), so set that up first.
+
+Secrets: see `docs/SECRET_ROTATION.md`.
+
 ## Troubleshooting
 
 **Container exits immediately.** `docker logs mykavo-worker`. Usually a
