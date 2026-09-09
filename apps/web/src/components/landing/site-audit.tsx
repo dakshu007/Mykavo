@@ -9,11 +9,16 @@ import { eyebrow, fontDisplay } from "./style";
  * (no fake customer data - house rule).
  */
 
+/**
+ * Counts come from the check registry in @mykavo/seo-audit (86 checks across
+ * 21 categories). If checks are added there, update these - an understated
+ * number is still a wrong number, and this section previously said "75+".
+ */
 const AUDIT_BULLETS = [
-  "75+ technical checks - crawlability, titles, links, schema, security",
-  "Every issue explains itself: what it means and exactly how to fix it",
-  "Health score and severity triage - errors first, notices last",
-  "Crawls up to 1,500 pages per audit on Pro - 3× Screaming Frog's free cap",
+  "86 checks across 21 categories - crawlability, indexability, titles, headings, links, images, schema, security, performance",
+  "Sorted for you: errors first, then warnings, then notices - so you always know what to fix next",
+  "Every issue says what it means, why it matters, and exactly how to fix it",
+  "See the exact URLs each issue was found on, and export the whole list as CSV",
 ];
 
 const MOCK_ISSUES: { severity: "err" | "warn" | "note"; label: string; count: number }[] = [
@@ -125,21 +130,25 @@ export function SiteAuditSection() {
           {/* Copy */}
           <div className="order-1 lg:order-2">
             <p className={`${eyebrow} mb-4`}>{"// site audit //"}</p>
+            {/* Headline leads with the capability - what it finds and that it
+                sorts the results - rather than with the pricing angle, which
+                now sits below as the supporting line. */}
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
-              Audits like the big tools.
+              Every technical issue.
               <br />
               <span className="relative inline-block">
                 <span
                   aria-hidden
                   className="absolute inset-x-[-6px] bottom-[8%] top-[10%] -rotate-1 rounded-md bg-[#FFD400]"
                 />
-                <span className="relative">Priced like neither.</span>
+                <span className="relative">Found and sorted.</span>
               </span>
             </h2>
             <p className="mt-5 max-w-md text-[15px] leading-7 text-[#6B6B60]">
-              Crawl any site you manage and get the full technical picture - broken pages,
-              duplicate titles, missing schema, mixed content, slow responses - triaged by
-              severity, with plain-English fix steps on every single issue.
+              A full technical SEO crawl of any site you manage - broken pages and links,
+              redirect chains, noindex mistakes, duplicate titles, missing schema, mixed
+              content, slow responses. The same job the expensive crawlers do, ranked by
+              severity so the list reads as a to-do, not a data dump.
             </p>
             <ul className="mt-8 space-y-3.5">
               {AUDIT_BULLETS.map((t) => (
@@ -153,6 +162,7 @@ export function SiteAuditSection() {
               ))}
             </ul>
             <p className="mt-8 text-[14px] leading-6 text-[#6B6B60]">
+              <span className="font-semibold text-[#151515]">Audits like the big tools, priced like neither.</span>{" "}
               Included in every plan - free accounts audit 150 pages a day, Pro runs ten
               1,500-page audits daily for <span className="font-semibold text-[#151515]">$20/mo</span>,
               monitoring included. The dedicated audit tools start at $129/mo.
