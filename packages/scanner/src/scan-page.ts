@@ -286,8 +286,29 @@ export async function scanPage(
       });
       const screenshot = await compressScreenshot(raw);
       screenshotHash = sha256(screenshot);
-      screenshotStorageKey = `${options.artifactPrefix}/screenshot.jpg`;
-      await storage.put(screenshotStorageKey, screenshot, "image/jpeg");
+
+      if (options.screenshotPrefix) {
+        // CONTENT-ADDRESSED: the key IS the hash of the stored bytes, so two
+        // scans of an unchanged page resolve to the same object. Most
+        // monitored pages look identical for weeks at a time, and storing
+        // each of those days separately was the single largest storage cost
+        // in the product - a year of daily scans kept 365 copies of one
+        // unchanging pricing page.
+        //
+        // Many snapshot rows may now reference one object, so deletion is
+        // reference-counted in the retention sweep. Never delete an object
+        // here on the assumption it belongs to this scan alone.
+        screenshotStorageKey = `${options.screenshotPrefix}/${screenshotHash}.jpg`;
+        // A miss costs one redundant upload; never a lost screenshot.
+        if (!(await storage.exists(screenshotStorageKey))) {
+          await storage.put(screenshotStorageKey, screenshot, "image/jpeg");
+        }
+      } else {
+        // Legacy one-object-per-scan layout, kept so existing callers and the
+        // objects already in the bucket keep working unchanged.
+        screenshotStorageKey = `${options.artifactPrefix}/screenshot.jpg`;
+        await storage.put(screenshotStorageKey, screenshot, "image/jpeg");
+      }
     } catch (err) {
       // Screenshot failure degrades the snapshot but doesn't void it.
       screenshotStorageKey = null;

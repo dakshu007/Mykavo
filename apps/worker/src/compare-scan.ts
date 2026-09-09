@@ -21,7 +21,7 @@ import {
   type ScoredChange,
   type Severity,
 } from "@mykavo/comparison-engine";
-import { normalizeUrl } from "@mykavo/shared";
+import { diffKey, normalizeUrl } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { logger } from "./logger";
 
@@ -159,7 +159,14 @@ export async function runComparisonForScan(
 ): Promise<ComparisonResult> {
   const scan = await prisma.scan.findUnique({
     where: { id: scanId },
-    select: { id: true, websiteId: true, triggerType: true },
+    select: {
+      id: true,
+      websiteId: true,
+      triggerType: true,
+      // workspaceId scopes the diff key, so the retention sweep can rebuild
+      // exactly the same key months later instead of guessing at it.
+      website: { select: { workspaceId: true } },
+    },
   });
   if (!scan || scan.triggerType === "BASELINE")
     return { changes: 0, highest: null, pagesCompared: 0, pagesFailed: 0 };
@@ -284,12 +291,20 @@ export async function runComparisonForScan(
                 percentage: visual.contentDifferencePercentage,
               });
               if (scored) {
-                const diffKey = `${snapshot.screenshotStorageKey.replace(/screenshot\.jpg$/, "")}diff.png`;
-                await storage.put(diffKey, visual.diffPng, "image/png");
+                // Derived from ids, NOT by rewriting the screenshot key: that
+                // key is now a content hash shared between scans, so a diff
+                // named after it would be overwritten by the next page that
+                // happened to look identical.
+                const key = diffKey({
+                  workspaceId: scan.website.workspaceId,
+                  scanId,
+                  monitoredPageId: snapshot.monitoredPageId,
+                });
+                await storage.put(key, visual.diffPng, "image/png");
                 changes.push({
                   ...scored,
                   metadata: {
-                    diffStorageKey: diffKey,
+                    diffStorageKey: key,
                     pixelDifferencePercentage: visual.differencePercentage,
                     contentDifferencePercentage: visual.contentDifferencePercentage,
                   },

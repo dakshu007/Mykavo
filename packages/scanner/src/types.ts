@@ -28,6 +28,14 @@ export interface ScanPageOptions {
   postLoadDelayMs?: number;
   /** Storage key prefix for artifacts (e.g. "ws/<workspaceId>/scan/<scanId>"). */
   artifactPrefix: string;
+  /**
+   * Prefix for CONTENT-ADDRESSED screenshots, e.g. "ws/<workspaceId>/shot".
+   * The object is stored at `<prefix>/<sha256>.jpg`, so a page that looks
+   * identical from one scan to the next is stored once and referenced by
+   * every snapshot rather than re-uploaded daily. Omit to keep the legacy
+   * one-object-per-scan key under `artifactPrefix`.
+   */
+  screenshotPrefix?: string;
   /** Conversion elements to check on this page (Phase 9). */
   elements?: MonitoredElementInput[];
   /**

@@ -108,6 +108,12 @@ jobs:
           pnpm --filter @mykavo/severity-engine test
           pnpm --filter @mykavo/email test
           pnpm --filter @mykavo/scanner test
+          # @mykavo/database is a live-DB integration suite with no Postgres
+          # here, but this ONE file needs no database and guards the rule that
+          # decides whether a shared screenshot is safe to delete. Getting it
+          # wrong silently blanks the evidence on approved baselines, so it
+          # gates deploys rather than only running on a developer's machine.
+          pnpm --filter @mykavo/database exec vitest run src/unreferenced-keys.test.ts
 
       # `--filter web` is REQUIRED: it lets Netlify manage base/publish for the
       # monorepo. netlify.toml must not set base/publish itself, or the publish

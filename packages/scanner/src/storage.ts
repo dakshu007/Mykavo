@@ -13,13 +13,22 @@
  * else means local disk.
  */
 
-import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, normalize } from "node:path";
 
 export interface ArtifactStorage {
   put(key: string, data: Buffer, contentType: string): Promise<void>;
   get(key: string): Promise<Buffer | null>;
   delete(key: string): Promise<void>;
+  /**
+   * True if an object is already stored under this key.
+   *
+   * Exists so content-addressed screenshots can skip re-uploading bytes that
+   * are already there (see scan-page.ts). A false negative only costs one
+   * redundant upload, so implementations answer `false` when they cannot
+   * tell rather than throwing.
+   */
+  exists(key: string): Promise<boolean>;
 }
 
 export class LocalDiskStorage implements ArtifactStorage {
@@ -47,6 +56,15 @@ export class LocalDiskStorage implements ArtifactStorage {
 
   async delete(key: string): Promise<void> {
     await rm(this.resolve(key), { force: true });
+  }
+
+  async exists(key: string): Promise<boolean> {
+    try {
+      await stat(this.resolve(key));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -95,6 +113,18 @@ export class NetlifyBlobsStorage implements ArtifactStorage {
   async delete(key: string): Promise<void> {
     const store = await this.store();
     await store.delete(key);
+  }
+
+  async exists(key: string): Promise<boolean> {
+    const store = await this.store();
+    // The legacy store has no metadata-only probe exposed through this
+    // structural type, so this fetches the blob. Acceptable: the store is
+    // legacy and R2 is the production backend.
+    try {
+      return (await store.get(key, { type: "arrayBuffer" })) !== null;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -165,6 +195,18 @@ export class R2Storage implements ArtifactStorage {
     if (!res.ok && res.status !== 404) {
       throw new Error(`R2 delete failed for ${key}: ${res.status} ${await res.text()}`);
     }
+  }
+
+  async exists(key: string): Promise<boolean> {
+    const client = await this.client();
+    // HEAD, not GET: this runs once per page per scan and only the status
+    // code is needed. It is a Class B operation, the cheap kind.
+    const res = await client.fetch(this.url(key), { method: "HEAD" });
+    if (res.ok) return true;
+    if (res.status === 404) return false;
+    // Anything else (throttling, a blip) is answered as "not stored", which
+    // costs one redundant upload rather than losing a screenshot.
+    return false;
   }
 }
 

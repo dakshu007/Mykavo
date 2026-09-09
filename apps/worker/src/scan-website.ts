@@ -17,6 +17,7 @@ import {
   computeNextScanAt,
   parseSelectorList,
   resolveScanOutcome,
+  screenshotPrefix,
   type StageFailure,
 } from "@mykavo/shared";
 import { logger } from "./logger";
@@ -122,6 +123,9 @@ export async function runScanWebsiteJob(
       const result = await pool.withBrowser((browser) =>
         scanPage(browser, page.url, storage, {
           artifactPrefix,
+          // Content-addressed screenshots: an unchanged page is stored once
+          // and referenced by every later snapshot instead of re-uploaded.
+          screenshotPrefix: screenshotPrefix(website.workspaceId),
           elements: elementInputs,
           ignoredSelectors,
           screenshotMasks,

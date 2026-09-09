@@ -7,7 +7,7 @@ async function load(env: Record<string, string | undefined>) {
     if (v === undefined) delete process.env[k];
     else process.env[k] = v;
   }
-  return await import("./send");
+  return await import("./send.js");
 }
 
 const ORIGINAL = { ...process.env };

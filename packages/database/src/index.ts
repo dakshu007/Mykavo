@@ -30,6 +30,7 @@ export {
 } from "./changes";
 export {
   findExpiredSnapshots,
+  findUnreferencedScreenshotKeys,
   deleteSnapshots,
   deleteExpiredChangeEvents,
   type ExpiredSnapshot,

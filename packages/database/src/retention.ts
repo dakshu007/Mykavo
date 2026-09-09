@@ -20,6 +20,8 @@ type Db = PrismaClient | Prisma.TransactionClient;
 export interface ExpiredSnapshot {
   id: string;
   screenshotStorageKey: string | null;
+  scanId: string;
+  monitoredPageId: string;
 }
 
 /**
@@ -43,7 +45,7 @@ export async function findExpiredSnapshots(
       createdAt: { lt: params.cutoff },
       ...(protectedIds.length ? { id: { notIn: protectedIds } } : {}),
     },
-    select: { id: true, screenshotStorageKey: true },
+    select: { id: true, screenshotStorageKey: true, scanId: true, monitoredPageId: true },
     orderBy: { createdAt: "asc" },
     take: params.limit,
   });
@@ -66,4 +68,43 @@ export async function deleteExpiredChangeEvents(
     where: { websiteId: params.websiteId, detectedAt: { lt: params.cutoff } },
   });
   return res.count;
+}
+
+/**
+ * Of `keys`, the ones no PageSnapshot references any more - i.e. safe to
+ * delete from object storage.
+ *
+ * Screenshots are content-addressed (see @mykavo/shared artifact-keys), so an
+ * unchanged page resolves to ONE object referenced by every snapshot of it.
+ * Deleting on the old assumption - that a snapshot owns its screenshot - would
+ * remove an image that surviving snapshots, INCLUDING APPROVED BASELINES,
+ * still display. A baseline that renders a missing image is silent damage:
+ * nothing errors, the comparison just has nothing to show.
+ *
+ * MUST be called AFTER the expired snapshot rows are deleted. Called before,
+ * the expiring rows count as references and nothing is ever reclaimed.
+ *
+ * Legacy per-scan keys pass through this unchanged: they are referenced by
+ * exactly one snapshot, so once it is gone the count is zero and the object
+ * is deleted, exactly as before.
+ */
+export async function findUnreferencedScreenshotKeys(
+  db: Db,
+  keys: string[],
+): Promise<string[]> {
+  const unique = [...new Set(keys)];
+  if (unique.length === 0) return [];
+
+  const stillReferenced = await db.pageSnapshot.findMany({
+    where: { screenshotStorageKey: { in: unique } },
+    select: { screenshotStorageKey: true },
+    distinct: ["screenshotStorageKey"],
+  });
+
+  const referenced = new Set(
+    stillReferenced
+      .map((row) => row.screenshotStorageKey)
+      .filter((key): key is string => key !== null),
+  );
+  return unique.filter((key) => !referenced.has(key));
 }

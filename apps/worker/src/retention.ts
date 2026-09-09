@@ -15,8 +15,9 @@ import {
   deleteSnapshots,
   deleteExpiredChangeEvents,
   deleteExpiredHealthChecks,
+  findUnreferencedScreenshotKeys,
 } from "@mykavo/database";
-import { historyDaysForPlan } from "@mykavo/shared";
+import { diffKey, historyDaysForPlan } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { logger } from "./logger";
 
@@ -76,21 +77,42 @@ export async function runRetentionSweep(
       });
       if (expired.length === 0) break;
 
+      // A diff image belongs to exactly one page in one scan, so it goes with
+      // the snapshot. Its key is derived from ids rather than by rewriting the
+      // screenshot key - screenshots are content-addressed now, so the old
+      // string replace would have matched nothing and orphaned every diff.
       for (const snap of expired) {
-        if (!snap.screenshotStorageKey) continue;
-        await storage.delete(snap.screenshotStorageKey).catch(() => {});
-        artifactsDeleted++;
-        const diffKey = snap.screenshotStorageKey.replace(/screenshot\.jpg$/, "diff.png");
-        if (diffKey !== snap.screenshotStorageKey) {
-          await storage.delete(diffKey).catch(() => {});
-        }
+        await storage
+          .delete(
+            diffKey({
+              workspaceId: website.workspaceId,
+              scanId: snap.scanId,
+              monitoredPageId: snap.monitoredPageId,
+            }),
+          )
+          .catch(() => {});
       }
 
+      const candidateKeys = expired
+        .map((s) => s.screenshotStorageKey)
+        .filter((key): key is string => key !== null);
+
+      // ORDER MATTERS. Rows first, THEN ask what is unreferenced: screenshots
+      // are content-addressed, so one object may serve many snapshots, and
+      // asking while the expiring rows still exist would count them as
+      // references and reclaim nothing. Asking BEFORE deleting rows and then
+      // deleting the object would be worse - it could remove an image that
+      // surviving snapshots, including approved baselines, still display.
       const deleted = await deleteSnapshots(
         prisma,
         expired.map((s) => s.id),
       );
       snapshotsDeleted += deleted;
+
+      for (const key of await findUnreferencedScreenshotKeys(prisma, candidateKeys)) {
+        await storage.delete(key).catch(() => {});
+        artifactsDeleted++;
+      }
       // Defensive: never spin if a batch failed to delete.
       if (deleted === 0 || expired.length < BATCH) break;
     }
