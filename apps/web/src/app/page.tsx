@@ -267,6 +267,14 @@ const faqs = [
     q: "What makes the best website monitoring software?",
     a: "Four things: it should detect meaningful change (not just uptime), keep false positives near zero, show before-and-after evidence for every alert, and cover the full surface - visual, SEO, content, links, scripts, performance, and availability - in one place. That checklist is exactly what MyKavo is built around.",
   },
+  {
+    q: "What should I look for in an SEO monitoring tool?",
+    a: "Rank trackers tell you that traffic moved; an SEO monitoring tool tells you what changed on the page to move it. Look for alerts on title, meta description, canonical, robots meta and H1 changes, indexability flips like index to noindex, broken internal links, redirect changes, and sitemap or robots.txt regressions - each with the previous and current value. MyKavo covers all of those, adds a technical site audit of 86 checks across 21 categories, and correlates them with your Google Search Console data.",
+  },
+  {
+    q: "Is there a free website monitoring tool?",
+    a: "MyKavo has a genuinely free plan: one website, five monitored pages, weekly scans, 30-day history and email alerts, with no card required. Free accounts also get a 150-page site audit each day and all six free tools without an account at all. Paid plans exist for more sites, daily scans and team seats, but the free tier is a working product rather than a trial.",
+  },
 ];
 
 /* ------------------------------- primitives ------------------------------ */
