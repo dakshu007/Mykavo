@@ -27,10 +27,30 @@ function resolveProvider(): "console" | "resend" | "noop" {
   return "noop";
 }
 
-const FROM = process.env.EMAIL_FROM ?? "MyKavo <onboarding@resend.dev>";
+const SANDBOX_FROM = "MyKavo <onboarding@resend.dev>";
+/**
+ * Resend's sandbox sender delivers ONLY to the Resend account owner - mail to
+ * anyone else is accepted and dropped. Fine for a first smoke test, useless
+ * for customers, and indistinguishable from working unless you happen to be
+ * the owner. Set EMAIL_FROM to an address on a verified domain.
+ */
+const FROM = process.env.EMAIL_FROM ?? SANDBOX_FROM;
+
+let warnedSandbox = false;
 
 export async function sendEmail(message: EmailMessage): Promise<SendResult> {
   const provider = resolveProvider();
+
+  if (provider === "resend" && FROM === SANDBOX_FROM && !warnedSandbox) {
+    warnedSandbox = true;
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        app: "email",
+        msg: "EMAIL_FROM is Resend's sandbox sender - only the Resend account owner will receive mail",
+      }),
+    );
+  }
 
   if (provider === "console") {
     console.log(
@@ -46,8 +66,27 @@ export async function sendEmail(message: EmailMessage): Promise<SendResult> {
     return { ok: true, provider };
   }
 
+  // Production with no RESEND_API_KEY. This used to return ok:true, so every
+  // caller recorded a successful send for an email that was never written,
+  // let alone delivered - the notification pipeline reporting success for
+  // work it had not done. It is always a misconfiguration, never a valid
+  // state, so it is reported as the failure it is and named loudly enough
+  // to be found in a log.
   if (provider === "noop") {
-    return { ok: true, provider };
+    console.error(
+      JSON.stringify({
+        level: "error",
+        app: "email",
+        msg: "email NOT sent - RESEND_API_KEY is unset in production",
+        subject: message.subject,
+        recipients: message.to.length,
+      }),
+    );
+    return {
+      ok: false,
+      provider,
+      error: "RESEND_API_KEY is not configured - no email was sent",
+    };
   }
 
   try {
