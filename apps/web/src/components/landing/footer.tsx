@@ -1,6 +1,25 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/brand/logo";
-import { site } from "@/config/site";
+import { site, socials } from "@/config/site";
+
+/**
+ * Brand glyphs are inlined because lucide-react ships none - it dropped every
+ * social/brand icon for trademark reasons. Single-path, currentColor, so each
+ * mark inherits the footer's ink and flips to ink-on-gold on hover exactly
+ * like the rest of the v4 furniture.
+ */
+type SocialGlyph = (props: { className?: string }) => React.ReactElement;
+
+const LinkedInGlyph: SocialGlyph = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden focusable="false">
+    <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+  </svg>
+);
+
+/** Glyph per social label. An unmapped label degrades to its initial. */
+const SOCIAL_GLYPHS: Record<string, SocialGlyph> = {
+  LinkedIn: LinkedInGlyph,
+};
 
 const columns = [
   {
@@ -72,6 +91,36 @@ export function LandingFooter() {
               <span className="text-lg font-semibold tracking-tight text-[#151515]">MyKavo</span>
             </Link>
             <p className="mt-4 max-w-60 text-sm leading-6 text-[#6B6B60]">{site.tagline}</p>
+
+            {/* Socials in the v4 language: ink border + offset shadow, gold on
+                hover, shadow collapsing as the tile presses into the page. */}
+            {socials.length > 0 && (
+              <ul className="mt-6 flex items-center gap-2.5">
+                {socials.map((social) => {
+                  const Glyph = SOCIAL_GLYPHS[social.label];
+                  return (
+                    <li key={social.label}>
+                      <a
+                        href={social.href}
+                        target="_blank"
+                        rel="me noopener noreferrer"
+                        aria-label={`MyKavo on ${social.label}`}
+                        title={`MyKavo on ${social.label}`}
+                        className="inline-flex size-10 items-center justify-center rounded-xl border border-[#151515] bg-[#FBFAF3] text-[#151515] shadow-[3px_3px_0_#151515] transition-all hover:-translate-y-0.5 hover:bg-[#FFD400] hover:shadow-[5px_5px_0_#151515] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#151515] active:translate-y-0 active:shadow-[1px_1px_0_#151515]"
+                      >
+                        {Glyph ? (
+                          <Glyph className="size-4.5" />
+                        ) : (
+                          <span aria-hidden className="text-[13px] font-semibold">
+                            {social.label.charAt(0)}
+                          </span>
+                        )}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
           {columns.map((col) => (
             <nav key={col.title} aria-label={col.title}>

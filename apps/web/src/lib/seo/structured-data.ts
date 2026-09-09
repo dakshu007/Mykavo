@@ -16,7 +16,7 @@
  * Every builder below is fed from the same constants the page renders.
  */
 
-import { site } from "@/config/site";
+import { site, socials } from "@/config/site";
 
 /** Escape `<` so a JSON-LD payload can never break out of its script tag. */
 export function jsonLdScript(payload: object): string {
@@ -36,7 +36,11 @@ export function organizationNode() {
     logo: `${site.url}/icon.png`,
     description: site.description,
     founder: { "@type": "Person", name: "Dakshesh B" },
-  } as const;
+    // sameAs ties this domain to the same brand entity elsewhere, which is
+    // how knowledge panels and AI answer engines resolve "who is MyKavo".
+    // MyKavo's own E-E-A-T Analyzer scores sites on having it.
+    ...(socials.length > 0 ? { sameAs: socials.map((s) => s.href) } : {}),
+  };
 }
 
 export function websiteNode() {

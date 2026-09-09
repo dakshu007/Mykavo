@@ -9,6 +9,7 @@ import {
   softwareApplicationNode,
 } from "./structured-data";
 import { plans } from "@/config/plans";
+import { socials } from "@/config/site";
 
 describe("jsonLdScript", () => {
   it("escapes < so a payload cannot break out of its script tag", () => {
@@ -120,5 +121,19 @@ describe("blogIndexGraph", () => {
     const graph = blogIndexGraph([]);
     const list = graph["@graph"][1] as { itemListElement: unknown[] };
     expect(list.itemListElement).toEqual([]);
+  });
+});
+
+describe("sameAs (brand entity resolution)", () => {
+  it("emits every configured social profile", () => {
+    const node = organizationNode() as { sameAs?: string[] };
+    expect(node.sameAs).toEqual(socials.map((s) => s.href));
+  });
+
+  it("only lists absolute https profile URLs", () => {
+    for (const social of socials) {
+      expect(social.href).toMatch(/^https:\/\//);
+      expect(social.label.length).toBeGreaterThan(0);
+    }
   });
 });

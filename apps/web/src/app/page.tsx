@@ -32,7 +32,7 @@ import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { plans } from "@/config/plans";
 import { site } from "@/config/site";
-import { FEATURE_LIST } from "@/lib/seo/structured-data";
+import { FEATURE_LIST, organizationNode, websiteNode } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   // Absolute title (not the layout template) so the homepage leads with the
@@ -74,21 +74,8 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
-    {
-      "@type": "Organization",
-      "@id": `${site.url}/#organization`,
-      name: site.name,
-      url: site.url,
-      logo: `${site.url}/icon.png`,
-      founder: { "@type": "Person", name: "Dakshesh B" },
-    },
-    {
-      "@type": "WebSite",
-      "@id": `${site.url}/#website`,
-      name: site.name,
-      url: site.url,
-      publisher: { "@id": `${site.url}/#organization` },
-    },
+    organizationNode(),
+    websiteNode(),
     {
       "@type": "SoftwareApplication",
       name: site.name,

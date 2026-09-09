@@ -8,3 +8,19 @@ export const site = {
     "MyKavo is a website change detection and regression monitoring platform built for agencies, developers, SEO teams, and website owners managing important websites. MyKavo creates approved website baselines, automatically scans monitored pages, detects meaningful changes, shows clear before-and-after comparisons, and alerts users when important regressions require attention.",
   category: "Website Change & Regression Monitoring SaaS",
 } as const;
+
+/**
+ * Official social profiles. Single source: the footer renders these, and
+ * Organization JSON-LD emits them as `sameAs` so search and AI answer engines
+ * can tie mykavo.app to the same brand entity across the web.
+ *
+ * ONLY add accounts that genuinely exist and are controlled by MyKavo - a
+ * sameAs pointing at a profile the brand does not own is an entity-graph
+ * error, and the spec forbids fake social proof of any kind.
+ */
+export const socials = [
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/mykavo/",
+  },
+] as const;

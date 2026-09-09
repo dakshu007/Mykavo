@@ -77,6 +77,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 - [About](${site.url}/about): the story behind MyKavo
 - [Blog](${site.url}/blog): guides on website monitoring
 - [Support](${site.url}/support): help and contact
+- [LinkedIn](https://www.linkedin.com/company/mykavo/): official company page
 
 ## Who it is for
 
