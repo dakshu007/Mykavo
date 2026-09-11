@@ -13,10 +13,25 @@ import "dotenv/config";
 import { prisma } from "@mykavo/database";
 import {
   findTrafficDrops,
+  normalizeUrl,
   DROP_RULES,
   type PageDailyPoint,
   type PageChange,
 } from "@mykavo/shared";
+
+/**
+ * MUST match apps/web/src/lib/traffic-drops.ts. A diagnostic that joins
+ * differently from production reports on a system that does not exist - it
+ * would show "no change detected" for a page the real feature matches
+ * perfectly, or the reverse.
+ */
+function key(url: string): string {
+  try {
+    return normalizeUrl(new URL(url), { stripAllParams: false });
+  } catch {
+    return url;
+  }
+}
 
 const HISTORY_DAYS = DROP_RULES.windowDays + DROP_RULES.baselineDays + 5;
 
@@ -48,20 +63,20 @@ async function main(): Promise<void> {
 
   const series = new Map<string, PageDailyPoint[]>();
   for (const row of rows) {
-    const list = series.get(row.page) ?? [];
+    const list = series.get(key(row.page)) ?? [];
     list.push({
       date: row.date.toISOString().slice(0, 10),
       clicks: row.clicks,
       impressions: row.impressions,
       position: row.position,
     });
-    series.set(row.page, list);
+    series.set(key(row.page), list);
   }
 
   const changesByPage = new Map<string, PageChange[]>();
   for (const change of changes) {
     if (!change.monitoredPage) continue;
-    const list = changesByPage.get(change.monitoredPage.url) ?? [];
+    const list = changesByPage.get(key(change.monitoredPage.url)) ?? [];
     list.push({
       id: change.id,
       detectedAt: change.detectedAt,
@@ -69,7 +84,7 @@ async function main(): Promise<void> {
       severity: change.severity,
       title: change.title,
     });
-    changesByPage.set(change.monitoredPage.url, list);
+    changesByPage.set(key(change.monitoredPage.url), list);
   }
 
   console.log(`pages with history: ${series.size}`);
@@ -90,6 +105,23 @@ async function main(): Promise<void> {
     console.log(
       `  ${String(total).padStart(5)} clicks  ${quiet ? "(too quiet)" : "           "}  ${page}`,
     );
+  }
+
+  // THE JOIN. If Search Console's page URLs do not resolve to the same key as
+  // the monitored page URLs, every drop will forever report "no change found"
+  // - indistinguishable from a page that genuinely did not change. Worth
+  // checking explicitly rather than inferring from an empty result.
+  console.log("\njoin check (Search Console page -> monitored page):");
+  let matched = 0;
+  for (const page of series.keys()) {
+    const hits = changesByPage.get(page)?.length ?? 0;
+    if (hits > 0) matched++;
+    console.log(`  ${hits > 0 ? "OK  " : "----"}  ${String(hits).padStart(3)} changes  ${page}`);
+  }
+  if (matched === 0 && changesByPage.size > 0) {
+    console.log("\n  WARNING: no Search Console page matched any monitored page.");
+    console.log("  Change events exist but none can ever be attributed. Monitored page keys:");
+    for (const k of [...changesByPage.keys()].slice(0, 5)) console.log(`    ${k}`);
   }
 
   const drops = findTrafficDrops(series, changesByPage);
