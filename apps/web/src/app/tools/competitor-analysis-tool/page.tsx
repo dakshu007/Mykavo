@@ -9,6 +9,8 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 import { breadcrumbList } from "@/lib/seo/structured-data";
+import { site } from "@/config/site";
+import { CompetitorAnalysis } from "./competitor-analysis";
 
 /**
  * Competitor monitoring - the same scanner, pointed outward.
@@ -36,6 +38,19 @@ export const metadata: Metadata = {
     "website change tracker for competitors",
   ],
   alternates: { canonical: "/tools/competitor-analysis-tool" },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Competitor Analysis Tool",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "Compare your page against a competitor's side by side - title, meta description, indexability, canonical, page weight, response time, third-party scripts and the services each one loads.",
+  url: `${site.url}/tools/competitor-analysis-tool`,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  publisher: { "@type": "Organization", name: site.name, url: site.url },
 };
 
 const faqs = [
@@ -81,6 +96,10 @@ export default function CompetitorAnalysisToolPage() {
     <>
       <script
         type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd(faqs)) }}
       />
       <script
@@ -105,8 +124,15 @@ export default function CompetitorAnalysisToolPage() {
             changed. The day they change it.
           </>
         }
-        intro="A competitor analysis tool that watches the pages that matter - pricing, homepage, features - and emails you the exact before-and-after when anything moves. Public pages only, no login required, set up in two minutes."
+        intro="Compare your page against a competitor's, free and without signing up - search visibility, speed, content and the third-party services each one runs. Then have MyKavo watch their page and tell you the day it changes."
       >
+        {/* The tool leads. Someone who searched "competitor analysis tool"
+            came to compare two pages, not to read an essay first - the prose
+            below is for the ones still deciding, and for search engines. */}
+        <div className="not-prose my-8">
+          <CompetitorAnalysis />
+        </div>
+
         <h2>Most competitor research is a snapshot. This is a tripwire.</h2>
         <p>
           You already check a rival&apos;s pricing page now and then. You open it, squint, try to
