@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Download, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
+import { loadTrafficDrops } from "@/lib/traffic-drops";
+import { TrafficDrops } from "@/components/dashboard/traffic-drops";
 import {
   buildOpportunities,
   isGscReauthMessage,
@@ -89,7 +91,7 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
 
   // ----- Data -----
   const since = sinceDate(rangeDays);
-  const [daily, dimensionRows, latestAudit, syncPending] = await Promise.all([
+  const [daily, dimensionRows, latestAudit, syncPending, trafficDrops] = await Promise.all([
     prisma.gscDaily.findMany({
       where: { websiteId: website.id, date: { gte: since } },
       orderBy: { date: "asc" },
@@ -101,6 +103,7 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
       select: { id: true, issues: true, healthScore: true },
     }),
     Promise.resolve(!connection.lastSyncAt),
+    loadTrafficDrops(website.id),
   ]);
 
   const dim = (dimension: string, period: string): DimensionMetrics[] =>
@@ -237,6 +240,12 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
               <span>{daily[daily.length - 1]?.date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}</span>
             </div>
           </Card>
+
+          {/* Search data x CHANGE HISTORY. Above Priority Opportunities on
+              purpose: that answers "what is wrong now", this answers "what did
+              we do", and a drop already happening is the more urgent of the
+              two. Renders nothing when no page has dropped. */}
+          <TrafficDrops drops={trafficDrops} />
 
           {/* THE differentiator: search data × audit issues */}
           <Card>

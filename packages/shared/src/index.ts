@@ -13,3 +13,4 @@ export * from "./performance";
 export * from "./gsc";
 export * from "./scan-outcome";
 export * from "./artifact-keys";
+export * from "./traffic-drop";

@@ -54,6 +54,15 @@ async function freshAccessToken(connection: GscConnection): Promise<string> {
   return tokens.accessToken;
 }
 
+/**
+ * How many pages get per-day history. 50 x 90 days is 4,500 rows per site,
+ * replaced wholesale each sync. The cap exists because a large site has
+ * thousands of URLs and almost all of them earn too little search traffic for
+ * a drop to mean anything - the detector skips them anyway (see
+ * DROP_RULES.minBaselineClicks).
+ */
+const PAGE_DAILY_LIMIT = 50;
+
 export async function runGscSync(job: GscSyncJob): Promise<void> {
   if (!KEY || !CLIENT_ID || !CLIENT_SECRET) {
     logger.warn("gsc sync skipped - GOOGLE_CLIENT_ID/SECRET or GSC_TOKEN_KEY unset");
@@ -75,6 +84,47 @@ export async function runGscSync(job: GscSyncJob): Promise<void> {
       accessToken, property, dimensions: ["date"],
       startDate: gscDate(92), endDate: end, rowLimit: 100,
     });
+
+    // Per-PAGE daily history - the series behind "what changed before the
+    // drop?". One request for the whole 90 days with both dimensions; Google
+    // returns rows ordered by clicks descending, so a site that exceeds the
+    // row limit loses its quietest pages, which are the ones the detector
+    // would skip regardless.
+    const pageDaily = await querySearchAnalytics({
+      accessToken, property, dimensions: ["date", "page"],
+      startDate: gscDate(92), endDate: end, rowLimit: 25_000,
+    });
+
+    // Keep only the busiest pages. Ranking on total clicks across the whole
+    // window, not on any single day, so one viral Tuesday does not evict a
+    // page that earns steadily.
+    const clicksByPage = new Map<string, number>();
+    for (const row of pageDaily) {
+      const page = row.keys[1] ?? "";
+      if (!page) continue;
+      clicksByPage.set(page, (clicksByPage.get(page) ?? 0) + row.clicks);
+    }
+    const keptPages = new Set(
+      [...clicksByPage.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, PAGE_DAILY_LIMIT)
+        .map(([page]) => page),
+    );
+    const pageDailyRows: Prisma.GscPageDailyCreateManyInput[] = [];
+    for (const row of pageDaily) {
+      const date = row.keys[0];
+      const page = row.keys[1] ?? "";
+      if (!date || !page || !keptPages.has(page)) continue;
+      pageDailyRows.push({
+        websiteId: connection.websiteId,
+        date: new Date(date),
+        page,
+        clicks: Math.round(row.clicks),
+        impressions: Math.round(row.impressions),
+        ctr: row.ctr,
+        position: row.position,
+      });
+    }
 
     const windows: { period: "CURRENT" | "PREVIOUS"; start: string; endDate: string }[] = [
       { period: "CURRENT", start: gscDate(30), endDate: end },
@@ -116,6 +166,8 @@ export async function runGscSync(job: GscSyncJob): Promise<void> {
       }),
       prisma.gscDimensionRow.deleteMany({ where: { websiteId: connection.websiteId } }),
       prisma.gscDimensionRow.createMany({ data: dimensionRows }),
+      prisma.gscPageDaily.deleteMany({ where: { websiteId: connection.websiteId } }),
+      prisma.gscPageDaily.createMany({ data: pageDailyRows }),
       prisma.gscConnection.update({
         where: { id: connection.id },
         data: { lastSyncAt: new Date(), lastError: null },

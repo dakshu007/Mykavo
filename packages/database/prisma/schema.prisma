@@ -3,7 +3,7 @@
 // Target model documented in docs/DATABASE_SCHEMA.md.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // "native" for local dev; the rhel target is the engine for Netlify/AWS
   // Lambda (Node 20 / OpenSSL 3) where the serverless functions run.
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
@@ -112,18 +112,18 @@ enum WorkspaceRole {
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  ownerId   String
-  owner     User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  id           String   @id @default(cuid())
+  name         String
+  ownerId      String
+  owner        User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   // Agency branding for white-label client reports (Pro). The logo lives in
   // object storage - only the served /api/brand-logos/<name> path is stored.
   // brandColor is a validated #rrggbb accent.
   brandName    String?
   brandLogoUrl String?
   brandColor   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   members              WorkspaceMember[]
   invites              WorkspaceInvite[]
@@ -191,38 +191,38 @@ enum ScanFrequency {
 }
 
 model Website {
-  id            String        @id @default(cuid())
-  workspaceId   String
-  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name          String
-  url           String
-  normalizedUrl String
-  status        WebsiteStatus @default(PENDING)
-  scanFrequency ScanFrequency @default(WEEKLY)
-  timezone      String        @default("UTC")
-  lastScanAt    DateTime?
-  nextScanAt    DateTime?
+  id                     String              @id @default(cuid())
+  workspaceId            String
+  workspace              Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name                   String
+  url                    String
+  normalizedUrl          String
+  status                 WebsiteStatus       @default(PENDING)
+  scanFrequency          ScanFrequency       @default(WEEKLY)
+  timezone               String              @default("UTC")
+  lastScanAt             DateTime?
+  nextScanAt             DateTime?
   // Maintenance window (spec §25): while in the future, alerts are not sent
   // (change events / incidents still recorded). Null or past = not muted.
-  muteAlertsUntil DateTime?
+  muteAlertsUntil        DateTime?
   // Public uptime badge. The opaque token is the ONLY public identifier —
   // website ids must never be exposed publicly. Disabling keeps the token.
-  badgeEnabled  Boolean       @default(false)
-  publicToken   String?       @unique
+  badgeEnabled           Boolean             @default(false)
+  publicToken            String?             @unique
   // Public status page at /status/[token] — shares publicToken with the
   // badge (whichever feature is enabled first mints it). Gated separately.
-  statusPageEnabled Boolean   @default(false)
+  statusPageEnabled      Boolean             @default(false)
   // White-label client report at /r/[token] (agency retainer proof). Its own
   // token, independent of publicToken, so regenerating a report link never
   // breaks the badge/status URLs. Regenerating revokes the old link.
-  reportEnabled Boolean       @default(false)
-  reportToken   String?       @unique
+  reportEnabled          Boolean             @default(false)
+  reportToken            String?             @unique
   // Post-deploy verification hook (POST /api/hooks/deploy/[token]): CI or a
   // deploy notification hits it after a release and MyKavo scans + compares
   // against the baseline immediately. Own secret token, same lifecycle as
   // reportToken (mint on enable, keep on disable, rotate on regenerate).
-  deployHookEnabled Boolean   @default(false)
-  deployToken   String?       @unique
+  deployHookEnabled      Boolean             @default(false)
+  deployToken            String?             @unique
   // Scheduled client report delivery (Pro): MyKavo emails the branded
   // report to the client on a cadence so the agency never has to remember.
   // reportRecipients is a JSON array of client emails (max 5, validated in
@@ -239,15 +239,15 @@ model Website {
   // comparison entirely (cookie banners, ads, rotating content).
   // screenshotMasks: matching elements are covered with a solid block in
   // the screenshot only — their content is still compared (dates, counters).
-  ignoredSelectors Json?
-  screenshotMasks  Json?
+  ignoredSelectors       Json?
+  screenshotMasks        Json?
   // Organization tags (agency labels: client, team, retainer…). JSON array
   // of lowercase display tags — max 5 per website, each 1–20 chars of
   // [a-z0-9-] (normalized + enforced in the API; parsed defensively via
   // parseTags in apps/web/src/lib/tags.ts).
-  tags          Json?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  tags                   Json?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
 
   monitoredPages    MonitoredPage[]
   scans             Scan[]
@@ -259,6 +259,7 @@ model Website {
   healthIncidents   HealthIncident[]
   siteMetaSnapshots SiteMetaSnapshot[]
   gscConnection     GscConnection?
+  gscPageDaily      GscPageDaily[]
   gscDaily          GscDaily[]
   gscDimensionRows  GscDimensionRow[]
   siteAudits        SiteAudit[]
@@ -384,9 +385,9 @@ model SiteMetaSnapshot {
 }
 
 model PageSnapshot {
-  id                         String   @id @default(cuid())
+  id                         String        @id @default(cuid())
   scanId                     String
-  scan                       Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  scan                       Scan          @relation(fields: [scanId], references: [id], onDelete: Cascade)
   monitoredPageId            String
   monitoredPage              MonitoredPage @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
   websiteId                  String
@@ -410,13 +411,13 @@ model PageSnapshot {
   requestCount               Int?
   errorCode                  String?
   errorMessage               String?
-  createdAt                  DateTime @default(now())
+  createdAt                  DateTime      @default(now())
 
   links                   PageLink[]
   scripts                 PageScript[]
   baselines               Baseline[]
-  changesAsPrevious       ChangeEvent[] @relation("ChangePreviousSnapshot")
-  changesAsCurrent        ChangeEvent[] @relation("ChangeCurrentSnapshot")
+  changesAsPrevious       ChangeEvent[]            @relation("ChangePreviousSnapshot")
+  changesAsCurrent        ChangeEvent[]            @relation("ChangeCurrentSnapshot")
   monitoredElementResults MonitoredElementResult[]
 
   @@unique([scanId, monitoredPageId])
@@ -776,26 +777,26 @@ model Notification {
 // ---------- Billing (Phase 8 — Dodo Payments) ----------
 
 model Subscription {
-  id                 String    @id @default(cuid())
-  workspaceId        String    @unique
-  workspace          Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  workspaceId           String    @unique
+  workspace             Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   // Entitlement source of truth: "free" | "pro". Set by verified webhooks.
-  planId             String    @default("free")
+  planId                String    @default("free")
   // Provider status string (dodo): active | on_hold | cancelled | expired | failed | pending.
-  status             String    @default("active")
-  provider           String    @default("dodo")
-  dodoCustomerId     String?
-  dodoSubscriptionId String?   @unique
-  currentPeriodEnd   DateTime?
-  cancelAtPeriodEnd  Boolean   @default(false)
+  status                String    @default("active")
+  provider              String    @default("dodo")
+  dodoCustomerId        String?
+  dodoSubscriptionId    String?   @unique
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean   @default(false)
   // When the "renews soon" reminder for the CURRENT period was sent - reset
   // implicitly each period because the sweep compares it to currentPeriodEnd.
   renewalReminderSentAt DateTime?
   // Logical time of the last applied webhook event — guards against
   // out-of-order/retried delivery re-applying a stale transition.
-  lastEventAt        DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  lastEventAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([dodoCustomerId])
   @@map("subscription")
@@ -864,24 +865,24 @@ enum BlogPostStatus {
 }
 
 model BlogPost {
-  id             String         @id @default(cuid())
-  slug           String         @unique
-  title          String
-  excerpt        String?
+  id               String         @id @default(cuid())
+  slug             String         @unique
+  title            String
+  excerpt          String?
   // Markdown source — rendered with react-markdown (raw HTML stays escaped).
-  content        String
-  status         BlogPostStatus @default(DRAFT)
+  content          String
+  status           BlogPostStatus @default(DRAFT)
   // Set on first publish, preserved across unpublish/re-publish cycles.
-  publishedAt    DateTime?
-  authorName     String         @default("MyKavo Team")
-  seoTitle       String?
-  seoDescription String?
+  publishedAt      DateTime?
+  authorName       String         @default("MyKavo Team")
+  seoTitle         String?
+  seoDescription   String?
   // SEO focus keywords surfaced in <meta keywords> and Article JSON-LD.
   primaryKeyword   String?
   secondaryKeyword String?
-  tags             String[]     @default([])
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  tags             String[]       @default([])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   @@index([status, publishedAt])
   @@map("blog_post")
@@ -987,6 +988,32 @@ model GscDaily {
 
 /// Top rows per dimension (query/page/country/device/appearance), stored for
 /// the CURRENT 28-day window and the PREVIOUS one so the UI shows change.
+/// Per-PAGE daily Search Console history, which GscDaily (site-wide) and
+/// GscDimensionRow (per-page but only two 28-day windows) cannot express
+/// between them. Needed to answer "this page's traffic fell on the 12th -
+/// what changed on it just before?", which is the one question no rank
+/// tracker or analytics suite can answer, because none of them hold a record
+/// of how the page changed.
+///
+/// Capped to the busiest pages per site at sync time (see PAGE_DAILY_LIMIT in
+/// the worker) so a large site cannot balloon this table: 50 pages x 90 days
+/// is 4,500 rows, and the sync replaces the whole set each run.
+model GscPageDaily {
+  id          String   @id @default(cuid())
+  websiteId   String
+  website     Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  page        String
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+
+  @@unique([websiteId, date, page])
+  @@index([websiteId, page, date])
+  @@map("gsc_page_daily")
+}
+
 model GscDimensionRow {
   id          String       @id @default(cuid())
   websiteId   String
