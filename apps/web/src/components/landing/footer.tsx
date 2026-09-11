@@ -53,6 +53,7 @@ const columns = [
       { href: "/website-monitoring-for-wordpress", label: "For WordPress" },
       { href: "/website-monitoring-for-shopify", label: "For Shopify" },
       { href: "/website-monitoring-for-webflow", label: "For Webflow" },
+      { href: "/tools/competitor-analysis-tool", label: "Competitor analysis" },
       { href: "/compare", label: "Compare tools" },
     ],
   },

@@ -54,6 +54,10 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Script Detector: ${site.url}/tools/script-detector
 - E-E-A-T Analyzer: ${site.url}/tools/eeat-analyzer
 
+## Competitor monitoring
+
+- [Competitor Analysis Tool](${site.url}/tools/competitor-analysis-tool): the same scanner pointed at a rival's public site. Approve a snapshot of their pricing, homepage and feature pages, then get the exact before-and-after the day anything moves - price and plan changes, new or removed pages, positioning rewrites, third-party script swaps, title and meta rewrites, CTA changes. Public pages only, robots.txt obeyed, nothing behind a login. Differs from research suites (Ahrefs, Semrush) which report a competitor's keywords, backlinks and estimated traffic - the outcome of what they did; MyKavo reports what they actually changed, and when.
+
 ## Solutions
 
 - [Visual Regression Testing](${site.url}/visual-regression-testing): automated screenshot comparison against approved baselines - no test code or CI required

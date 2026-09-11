@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/tools/bulk-url-status-checker",
     "/tools/script-detector",
     "/tools/eeat-analyzer",
+    "/tools/competitor-analysis-tool",
     "/visual-regression-testing",
     "/seo-monitoring",
     "/website-content-monitoring",
