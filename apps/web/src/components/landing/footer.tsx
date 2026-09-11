@@ -36,6 +36,7 @@ const columns = [
   {
     title: "Free tools",
     links: [
+      { href: "/tools/competitor-analysis-tool", label: "Competitor Analysis" },
       { href: "/tools/website-change-detector", label: "Website Change Detector" },
       { href: "/tools/meta-tag-checker", label: "Meta Tag Checker" },
       { href: "/tools/eeat-analyzer", label: "E-E-A-T Analyzer" },
@@ -53,7 +54,6 @@ const columns = [
       { href: "/website-monitoring-for-wordpress", label: "For WordPress" },
       { href: "/website-monitoring-for-shopify", label: "For Shopify" },
       { href: "/website-monitoring-for-webflow", label: "For Webflow" },
-      { href: "/tools/competitor-analysis-tool", label: "Competitor analysis" },
       { href: "/compare", label: "Compare tools" },
     ],
   },
