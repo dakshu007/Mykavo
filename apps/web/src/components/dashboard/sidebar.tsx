@@ -87,7 +87,10 @@ export function DashboardSidebar({
         />
       )}
 
-      <nav className="mt-4 flex-1 space-y-1" aria-label="Dashboard">
+      <nav
+        className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain"
+        aria-label="Dashboard"
+      >
         {items.map((item) => {
           const active = item.exact
             ? pathname === item.href
@@ -111,22 +114,28 @@ export function DashboardSidebar({
         })}
       </nav>
 
-      <CommandPaletteTrigger />
+      {/* Pinned footer. `shrink-0` keeps search, the upsell and sign-out at
+          their natural height; the nav above scrolls instead. Before this the
+          nav could not shrink, so on a short viewport the upgrade card and
+          sign-out button spilled out past the sidebar's rounded edge. */}
+      <div className="mt-3 shrink-0 space-y-3">
+        <CommandPaletteTrigger />
 
-      {upgradeCard && <div className="mt-4">{upgradeCard}</div>}
+        {upgradeCard}
 
-      <div className="mt-4 flex items-center justify-between gap-2 px-1">
-        <span className="px-3 text-[11px] font-medium text-ink-faint">Theme</span>
-        <ThemeToggle />
+        <div className="flex items-center justify-between gap-2 px-1">
+          <span className="px-3 text-[11px] font-medium text-ink-faint">Theme</span>
+          <ThemeToggle />
+        </div>
+
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ink-secondary transition-colors hover:bg-critical-soft hover:text-critical-strong"
+        >
+          <LogOut className="size-4.5 shrink-0" aria-hidden />
+          Sign out
+        </button>
       </div>
-
-      <button
-        onClick={handleSignOut}
-        className="mt-2 flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ink-secondary transition-colors hover:bg-critical-soft hover:text-critical-strong"
-      >
-        <LogOut className="size-4.5 shrink-0" aria-hidden />
-        Sign out
-      </button>
     </aside>
   );
 }
