@@ -5,7 +5,12 @@
  * are skipped, so a retried job resumes where it stopped.
  */
 
-import { prisma, createInitialBaselinesForScan, getWorkspaceEntitlement } from "@mykavo/database";
+import {
+  prisma,
+  createInitialBaselinesForScan,
+  getWorkspaceEntitlement,
+  type Prisma,
+} from "@mykavo/database";
 import {
   BrowserPool,
   ScanPageError,
@@ -153,6 +158,13 @@ export async function runScanWebsiteJob(
           structuredDataHash: result.structuredDataHash,
           pageWeightBytes: result.pageWeightBytes,
           requestCount: result.requestCount,
+          // Stored only when the page is on a platform we can read, so a
+          // non-WordPress snapshot keeps a NULL rather than a row full of
+          // zeroes that later reads would have to interpret.
+          platformFingerprint:
+            result.platformFingerprint.platform === null
+              ? undefined
+              : (result.platformFingerprint as unknown as Prisma.InputJsonValue),
           links: {
             create: result.links.map((l) => ({
               url: l.url.slice(0, 2048),

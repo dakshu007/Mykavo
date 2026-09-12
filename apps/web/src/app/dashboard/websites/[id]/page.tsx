@@ -39,6 +39,8 @@ import { ComparisonSettings } from "./comparison-settings";
 import { StatusBadgeSettings } from "./status-badge-settings";
 import { StatusPageSettings } from "./status-page-settings";
 import { ClientReportSettings } from "./client-report-settings";
+import { loadPlatformStack } from "@/lib/platform-stack";
+import { PlatformStackPanel } from "@/components/dashboard/platform-stack";
 import { DeployHookSettings } from "./deploy-hook-settings";
 
 /** Time windows for the health queries - one clock read per request. */
@@ -128,6 +130,11 @@ export default async function WebsiteDetailPage({
     getRecentHealthIncidents(prisma, { websiteId: id, limit: 10 }),
   ]);
   if (!website) notFound();
+
+  // Loaded after the ownership check rather than in the batch above: it is
+  // keyed by websiteId alone, and a workspace boundary is not something to hold
+  // open on the assumption that a later notFound() will catch it.
+  const platformStack = await loadPlatformStack(website.id);
 
   const sslDaysLeft = latestHealth?.sslValidTo
     ? daysUntil(latestHealth.sslValidTo, now)
@@ -513,6 +520,14 @@ export default async function WebsiteDetailPage({
           Title, description, H1, canonical and indexability checks from your latest scan.
         </p>
       </Card>
+
+      {/* Detected platform stack: plugins, theme and core versions. Renders
+          nothing until a scan has fingerprinted a readable platform. */}
+      {platformStack && (
+        <Card>
+          <PlatformStackPanel stack={platformStack} />
+        </Card>
+      )}
 
       {/* E-E-A-T signal report (live analysis of the homepage) */}
       <Card>

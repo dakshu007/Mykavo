@@ -190,6 +190,9 @@ importers:
       '@mykavo/severity-engine':
         specifier: workspace:*
         version: link:../severity-engine
+      '@mykavo/shared':
+        specifier: workspace:*
+        version: link:../shared
       jpeg-js:
         specifier: ^0.4.4
         version: 0.4.4

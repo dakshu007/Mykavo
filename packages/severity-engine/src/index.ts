@@ -17,9 +17,13 @@ export type ChangeCategory =
   | "LINKS"
   | "SCRIPT"
   | "PERFORMANCE"
-  | "CONVERSION";
+  | "CONVERSION"
+  | "PLATFORM";
 
 export type ElementImportance = "NORMAL" | "IMPORTANT" | "CRITICAL";
+
+/** Mirrors ComponentKind in @mykavo/shared; duplicated to keep this package dependency-free. */
+export type PlatformComponentKind = "core" | "plugin" | "theme";
 
 const SEVERITY_ORDER: Severity[] = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
@@ -83,6 +87,23 @@ export type ChangeSignal =
   | { kind: "sitemap_removed"; sitemapUrl: string; currentStatus: number | null }
   | { kind: "sitemap_url_count"; previous: number; current: number; sitemapUrl: string }
   | { kind: "sitemap_content_changed"; sitemapUrl: string }
+  // Platform (plugin/theme/core) attribution. Grouped on purpose: a site with
+  // twenty auto-updating plugins would otherwise produce twenty events every
+  // week, and the point of these is to explain other changes, not to become
+  // noise of their own.
+  | {
+      kind: "platform_updates";
+      components: Array<{ name: string; kind: PlatformComponentKind; previous: string; current: string }>;
+    }
+  | {
+      kind: "platform_components_added";
+      components: Array<{ name: string; kind: PlatformComponentKind; version: string }>;
+    }
+  | {
+      kind: "platform_components_removed";
+      components: Array<{ name: string; kind: PlatformComponentKind; version: string }>;
+    }
+  | { kind: "platform_theme_switched"; previous: string; current: string }
   // Conversion elements (spec §23, Phase 9)
   | { kind: "element_missing"; name: string; importance: ElementImportance }
   | { kind: "element_hidden"; name: string; importance: ElementImportance }
@@ -509,6 +530,93 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         description: `The sitemap at ${signal.sitemapUrl} changed without altering its URL count (reordered entries, lastmod updates, or swapped URLs).`,
         previousValue: null,
         currentValue: null,
+      });
+
+    // --- Platform: plugin, theme and core updates ---------------------------
+    //
+    // Deliberately low severity and never notified on their own. An update is
+    // not a problem; it is the EXPLANATION for a problem. Alerting on every
+    // plugin bump would train people to ignore MyKavo's email, and the value
+    // here is that when a title vanishes in the same scan, the cause is sitting
+    // right next to it in the change list.
+    case "platform_updates": {
+      if (signal.components.length === 0) return null;
+      const list = signal.components
+        .map((c) => `${c.name} ${c.previous} → ${c.current}`)
+        .join(", ");
+      const first = signal.components[0];
+      const title =
+        signal.components.length === 1
+          ? `${first.name} updated ${first.previous} → ${first.current}`
+          : `${signal.components.length} plugin and theme updates`;
+      return finalize({
+        category: "PLATFORM",
+        changeType: "platform_updates",
+        severity: "LOW",
+        title,
+        description:
+          `Detected from the versions on this page's asset URLs: ${list}. ` +
+          "If anything else changed in this scan, an update is the most likely cause — check those changes first.",
+        previousValue: signal.components.map((c) => `${c.name} ${c.previous}`).join(", "),
+        currentValue: signal.components.map((c) => `${c.name} ${c.current}`).join(", "),
+      });
+    }
+
+    case "platform_components_added": {
+      if (signal.components.length === 0) return null;
+      const list = signal.components.map((c) => `${c.name} ${c.version}`).join(", ");
+      return finalize({
+        category: "PLATFORM",
+        changeType: "platform_components_added",
+        severity: "LOW",
+        title:
+          signal.components.length === 1
+            ? `${signal.components[0].name} is now active on this page`
+            : `${signal.components.length} plugins or themes now active on this page`,
+        description: `Newly loading assets on this page: ${list}. A plugin was activated, or its assets now load here for the first time.`,
+        previousValue: "Not present",
+        currentValue: list,
+      });
+    }
+
+    // A plugin whose assets stopped loading usually means it was deactivated,
+    // and whatever it did for the page has stopped happening — a form, a
+    // cookie banner, a payment button. MEDIUM, because that is a real change in
+    // behaviour rather than a version bump, but not HIGH: it is also what a
+    // caching or asset-combining plugin looks like when it is switched on.
+    case "platform_components_removed": {
+      if (signal.components.length === 0) return null;
+      const list = signal.components.map((c) => `${c.name} ${c.version}`).join(", ");
+      return finalize({
+        category: "PLATFORM",
+        changeType: "platform_components_removed",
+        severity: "MEDIUM",
+        title:
+          signal.components.length === 1
+            ? `${signal.components[0].name} is no longer loading on this page`
+            : `${signal.components.length} plugins or themes no longer loading`,
+        description:
+          `These stopped loading assets on this page: ${list}. They may have been deactivated — ` +
+          "check that whatever they provided (forms, banners, checkout) still works. " +
+          "Enabling an asset-combining or caching plugin can also hide them from detection.",
+        previousValue: list,
+        currentValue: "Not present",
+      });
+    }
+
+    // A different theme directory is a redesign or a serious accident, and
+    // either way nobody should find out about it from a customer.
+    case "platform_theme_switched":
+      return finalize({
+        category: "PLATFORM",
+        changeType: "platform_theme_switched",
+        severity: "HIGH",
+        title: `Theme changed from ${signal.previous} to ${signal.current}`,
+        description:
+          "This page is being rendered by a different theme than the baseline. " +
+          "That is either an intended redesign or an accidental theme switch — the latter usually breaks layout site-wide.",
+        previousValue: signal.previous,
+        currentValue: signal.current,
       });
 
     case "element_missing":

@@ -7,6 +7,8 @@
  */
 
 import { scoreChange, type ScoredChange, type ChangeSignal } from "@mykavo/severity-engine";
+import type { PlatformFingerprint } from "@mykavo/shared";
+import { comparePlatform } from "./platform";
 
 export interface SnapshotLink {
   normalizedUrl: string;
@@ -51,6 +53,8 @@ export interface ComparableSnapshot {
   responseTimeMs: number | null;
   links: SnapshotLink[];
   scripts: SnapshotScript[];
+  /** Plugins/theme/core read off this page's assets; null when never captured. */
+  platformFingerprint: PlatformFingerprint | null;
   elements: ComparableElement[];
 }
 
@@ -176,6 +180,9 @@ export function compareSnapshots(
         });
       }
     }
+
+    // --- Platform: which plugin or theme update explains the rest ---------
+    signals.push(...comparePlatform(baseline.platformFingerprint, current.platformFingerprint));
 
     // --- Performance (spec §22) ---
     if (baseline.pageWeightBytes && current.pageWeightBytes) {

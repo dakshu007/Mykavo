@@ -7,7 +7,11 @@
  * a retried job produces exactly one set.
  */
 
-import { prisma, type ChangeSeverity } from "@mykavo/database";
+import {
+  prisma,
+  type ChangeSeverity,
+  type ChangeCategory as ChangeCategoryEnum,
+} from "@mykavo/database";
 import {
   compareBrokenLinks,
   compareSnapshots,
@@ -20,11 +24,14 @@ import {
   type PageLinkObservations,
   type ScoredChange,
   type Severity,
+  type ChangeCategory,
 } from "@mykavo/comparison-engine";
-import { diffKey, normalizeUrl } from "@mykavo/shared";
+import { diffKey, normalizeUrl, parseFingerprint } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { logger } from "./logger";
 
+// `satisfies` makes this exhaustive: adding a category to the severity engine
+// without mapping it here is a compile error, not a runtime crash mid-scan.
 const CATEGORY_TO_ENUM = {
   AVAILABILITY: "AVAILABILITY",
   VISUAL: "VISUAL",
@@ -34,7 +41,8 @@ const CATEGORY_TO_ENUM = {
   SCRIPT: "SCRIPT",
   PERFORMANCE: "PERFORMANCE",
   CONVERSION: "CONVERSION",
-} as const;
+  PLATFORM: "PLATFORM",
+} as const satisfies Record<ChangeCategory, ChangeCategoryEnum>;
 
 interface SnapshotRow {
   id: string;
@@ -53,6 +61,7 @@ interface SnapshotRow {
   requestCount: number | null;
   responseTimeMs: number | null;
   screenshotStorageKey: string | null;
+  platformFingerprint: unknown;
   errorCode: string | null;
 }
 
@@ -102,6 +111,9 @@ async function toComparable(
     pageWeightBytes: snapshot.pageWeightBytes,
     requestCount: snapshot.requestCount,
     responseTimeMs: snapshot.responseTimeMs,
+    // null when the page is not on a readable platform, or predates the
+    // feature. comparePlatform treats that as "we do not know" and stays quiet.
+    platformFingerprint: parseFingerprint(snapshot.platformFingerprint),
     links,
     scripts: scripts.map((s) => ({
       domain: s.domain,
@@ -191,6 +203,7 @@ export async function runComparisonForScan(
       h1Values: true,
       pageWeightBytes: true,
       requestCount: true,
+      platformFingerprint: true,
       responseTimeMs: true,
       screenshotStorageKey: true,
       errorCode: true,
@@ -244,6 +257,7 @@ export async function runComparisonForScan(
               h1Values: true,
               pageWeightBytes: true,
               requestCount: true,
+              platformFingerprint: true,
               responseTimeMs: true,
               screenshotStorageKey: true,
               errorCode: true,

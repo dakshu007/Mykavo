@@ -409,6 +409,10 @@ model PageSnapshot {
   structuredDataHash         String?
   pageWeightBytes            Int?
   requestCount               Int?
+  // Plugins, theme and core version read off this page's asset URLs, shaped as
+  // PlatformFingerprint from @mykavo/shared. JSONB rather than rows: it is read
+  // whole, compared whole, and never queried by component.
+  platformFingerprint        Json?
   errorCode                  String?
   errorMessage               String?
   createdAt                  DateTime      @default(now())
@@ -647,6 +651,10 @@ enum ChangeCategory {
   SCRIPT
   PERFORMANCE
   CONVERSION
+  // Plugin, theme and core version changes on the underlying platform. Its own
+  // category because these events explain other changes rather than being
+  // problems in themselves.
+  PLATFORM
 }
 
 enum ChangeSeverity {

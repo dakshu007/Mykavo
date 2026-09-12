@@ -29,6 +29,7 @@ export const CHANGE_CATEGORIES: ChangeCategory[] = [
   "SCRIPT",
   "PERFORMANCE",
   "CONVERSION",
+  "PLATFORM",
 ];
 
 export type ChangeFilterParams = {

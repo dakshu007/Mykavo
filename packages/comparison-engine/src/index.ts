@@ -6,6 +6,7 @@ export {
   type ComparableElement,
 } from "./compare";
 export { compareScreenshots, type VisualDiffResult } from "./visual";
+export { comparePlatform } from "./platform";
 export {
   compareBrokenLinks,
   isBrokenLinkStatus,

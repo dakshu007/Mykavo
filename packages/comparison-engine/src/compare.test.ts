@@ -28,6 +28,7 @@ const BASE: ComparableSnapshot = {
     { domain: "www.googletagmanager.com", isThirdParty: true, service: "Google Tag Manager" },
     { domain: "js.stripe.com", isThirdParty: true, service: "Stripe" },
   ],
+  platformFingerprint: null,
   elements: [],
 };
 
@@ -206,5 +207,37 @@ describe("compareSnapshots — conversion elements (spec §23)", () => {
       withChanges({ httpStatus: 500, elements: [el({ exists: false, visible: false })] }),
     );
     expect(changes.every((c) => c.category === "AVAILABILITY")).toBe(true);
+  });
+});
+
+describe("platform fingerprint via compareSnapshots", () => {
+  const wp = (version: string) => ({
+    platform: "wordpress" as const,
+    components: [
+      { kind: "plugin" as const, slug: "elementor", name: "Elementor", version },
+    ],
+    assetsSeen: 1,
+    assetsVersioned: 1,
+  });
+
+  it("surfaces a plugin update alongside the change it explains", () => {
+    const changes = compareSnapshots(
+      { ...BASE, platformFingerprint: wp("3.18.0") },
+      { ...BASE, h1Values: [], platformFingerprint: wp("3.19.1") },
+    );
+    const platform = changes.find((c) => c.category === "PLATFORM");
+    const seo = changes.find((c) => c.changeType === "h1_removed" || c.category === "SEO");
+
+    // Both must be present: the damage AND the update that likely caused it.
+    expect(platform?.title).toBe("Elementor updated 3.18.0 → 3.19.1");
+    expect(seo).toBeDefined();
+    // The update itself must never page anyone at 2am.
+    expect(platform?.notify).toBe(false);
+    expect(platform?.severity).toBe("LOW");
+  });
+
+  it("emits no platform change when neither side was fingerprinted", () => {
+    const changes = compareSnapshots(BASE, { ...BASE, title: "New" });
+    expect(changes.some((c) => c.category === "PLATFORM")).toBe(false);
   });
 });

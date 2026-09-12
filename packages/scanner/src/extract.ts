@@ -13,6 +13,14 @@ export interface InPageExtraction {
   structuredData: string;
   links: Array<{ href: string }>;
   scripts: Array<{ src: string }>;
+  /**
+   * Stylesheet hrefs. Not stored as rows - they exist so the platform
+   * fingerprinter can read theme versions, which live in stylesheets
+   * (/wp-content/themes/astra/style.css?ver=4.6.2) and nowhere else.
+   */
+  stylesheets: Array<{ href: string }>;
+  /** <meta name="generator">, e.g. "WordPress 6.4.2". */
+  generator: string | null;
   normalizedDom: string;
   visibleText: string;
 }
@@ -48,6 +56,12 @@ export function extractInPage(): InPageExtraction {
   const scripts = Array.from(doc.querySelectorAll("script[src]"))
     .map((s) => ({ src: (s as HTMLScriptElement).src }))
     .filter((s) => /^https?:/.test(s.src));
+
+  const stylesheets = Array.from(
+    doc.querySelectorAll('link[rel="stylesheet" i][href]'),
+  )
+    .map((l) => ({ href: (l as HTMLLinkElement).href }))
+    .filter((l) => /^https?:/.test(l.href));
 
   // ---- DOM normalization (spec §16) ----
   const VOLATILE_ATTRIBUTES = [
@@ -123,6 +137,8 @@ export function extractInPage(): InPageExtraction {
     structuredData,
     links,
     scripts,
+    stylesheets,
+    generator: meta("generator"),
     normalizedDom,
     visibleText,
   };

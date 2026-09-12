@@ -61,6 +61,7 @@ const categoryLabels: Record<ChangeCategory, string> = {
   SCRIPT: "Scripts",
   PERFORMANCE: "Performance",
   CONVERSION: "Conversion",
+  PLATFORM: "Platform",
 };
 
 export function ChangeCategoryChip({ category }: { category: ChangeCategory }) {

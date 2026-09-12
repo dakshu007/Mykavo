@@ -1,3 +1,5 @@
+import type { PlatformFingerprint } from "@mykavo/shared";
+
 export type ElementImportance = "NORMAL" | "IMPORTANT" | "CRITICAL";
 
 /** A conversion element to observe on the page (Phase 9). */
@@ -83,6 +85,13 @@ export interface PageScanResult {
   requestCount: number;
   links: ScannedLink[];
   scripts: ScannedScript[];
+  /**
+   * Plugins, theme and core version read off the page's asset URLs, so an
+   * update can be named as the cause of a change. `platform: null` when the
+   * page shows no sign of a platform we can read - which is a legitimate,
+   * common answer, not a failure.
+   */
+  platformFingerprint: PlatformFingerprint;
   /** Observed state of each requested monitored element (Phase 9). */
   elements: MonitoredElementCheck[];
 }

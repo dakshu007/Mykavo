@@ -10,6 +10,7 @@ import {
   assertSafeUrl,
   UnsafeUrlError,
   normalizeUrl,
+  fingerprintPlatform,
   isSameOrigin,
   parseSelectorList,
 } from "@mykavo/shared";
@@ -237,6 +238,19 @@ export async function scanPage(
       }
     });
 
+    // Platform fingerprint: which plugins, theme and core version the page is
+    // built on, read off the asset URLs. Stylesheets are included because the
+    // theme's version lives in one and nowhere else; they are used here and
+    // then discarded - only the derived fingerprint is stored, which is a few
+    // dozen bytes against hundreds of rows of asset URLs.
+    const platformFingerprint = fingerprintPlatform({
+      assetUrls: [
+        ...extraction.scripts.map((s) => s.src),
+        ...extraction.stylesheets.map((l) => l.href),
+      ],
+      generator: extraction.generator,
+    });
+
     const seenScripts = new Set<string>();
     const scripts = extraction.scripts.flatMap((s) => {
       try {
@@ -338,6 +352,7 @@ export async function scanPage(
       requestCount,
       links,
       scripts,
+      platformFingerprint,
       elements,
     };
   } finally {

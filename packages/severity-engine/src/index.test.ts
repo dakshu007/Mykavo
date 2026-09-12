@@ -235,3 +235,63 @@ describe("conversion element rules (spec §23)", () => {
     ).toBe("HIGH");
   });
 });
+
+describe("platform (plugin/theme/core) rules", () => {
+  it("names the plugin and both versions when exactly one updated", () => {
+    const c = score({
+      kind: "platform_updates",
+      components: [
+        { name: "Elementor", kind: "plugin", previous: "3.18.0", current: "3.19.1" },
+      ],
+    });
+    expect(c?.category).toBe("PLATFORM");
+    expect(c?.title).toBe("Elementor updated 3.18.0 → 3.19.1");
+    expect(c?.severity).toBe("LOW");
+    // An update is an explanation, not an emergency. Never wake anyone for it.
+    expect(c?.notify).toBe(false);
+  });
+
+  it("counts them instead of listing them in the title when several updated", () => {
+    const c = score({
+      kind: "platform_updates",
+      components: [
+        { name: "Elementor", kind: "plugin", previous: "3.18.0", current: "3.19.1" },
+        { name: "Yoast SEO", kind: "plugin", previous: "21.4", current: "21.5" },
+      ],
+    });
+    expect(c?.title).toBe("2 plugin and theme updates");
+    // The detail must still be recoverable from the event itself.
+    expect(c?.description).toContain("Elementor 3.18.0 → 3.19.1");
+    expect(c?.description).toContain("Yoast SEO 21.4 → 21.5");
+  });
+
+  it("produces nothing from an empty component list", () => {
+    expect(score({ kind: "platform_updates", components: [] })).toBeNull();
+    expect(score({ kind: "platform_components_added", components: [] })).toBeNull();
+    expect(score({ kind: "platform_components_removed", components: [] })).toBeNull();
+  });
+
+  it("treats a plugin that stopped loading as worth a look, not an alert", () => {
+    const c = score({
+      kind: "platform_components_removed",
+      components: [{ name: "Contact Form 7", kind: "plugin", version: "5.9" }],
+    });
+    expect(c?.severity).toBe("MEDIUM");
+    expect(c?.notify).toBe(false);
+    expect(c?.title).toBe("Contact Form 7 is no longer loading on this page");
+    // The honest alternative explanation has to be in front of the user, or
+    // they will go hunting for a deactivation that never happened.
+    expect(c?.description).toMatch(/caching/i);
+  });
+
+  it("escalates a theme switch, which is a redesign or an accident", () => {
+    const c = score({
+      kind: "platform_theme_switched",
+      previous: "Astra 4.6.2",
+      current: "Kadence 1.2.3",
+    });
+    expect(c?.severity).toBe("HIGH");
+    expect(c?.notify).toBe(true);
+    expect(c?.title).toBe("Theme changed from Astra 4.6.2 to Kadence 1.2.3");
+  });
+});

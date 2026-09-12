@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@mykavo/severity-engine": "workspace:*",
+    "@mykavo/shared": "workspace:*",
     "jpeg-js": "^0.4.4",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0"
