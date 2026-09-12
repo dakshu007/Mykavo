@@ -25,6 +25,20 @@
 
 export type ComponentKind = "core" | "plugin" | "theme";
 
+/**
+ * Sub-directories inside a plugin or theme that hold SOMEBODY ELSE'S code.
+ *
+ * Found the hard way, on a real site: Elementor Pro bundles libraries under
+ * /assets/lib/, and their versions (1.2.1, 4.1.2) were being reported as
+ * Elementor Pro's own - which is in the 3.x range. Worse, the two tied on
+ * asset count, so losing a single asset from a scan would flip the winner and
+ * announce "elementor-pro 1.2.1 -> 4.1.2" as an update, over and over.
+ *
+ * A vendored library's version says nothing about when the plugin was updated,
+ * so it is not evidence and must not be treated as any.
+ */
+const VENDORED_PATH = /\/(?:lib|libs|vendor|vendors|node_modules|third-?party|bower_components)\//i;
+
 export interface PlatformComponent {
   kind: ComponentKind;
   /** Directory slug, e.g. "elementor". Stable identity across versions. */
@@ -43,6 +57,15 @@ export interface PlatformFingerprint {
   assetsSeen: number;
   /** How many of those yielded a version we were willing to trust. */
   assetsVersioned: number;
+  /**
+   * Every plugin/theme whose assets were seen, as "kind:slug", whether or not
+   * a version could be read. Sorted.
+   *
+   * Kept separately from `components` so that losing the ability to READ a
+   * component's version is never mistaken for the component being switched
+   * off - a distinction that matters enormously on a site running WP Rocket.
+   */
+  present: string[];
 }
 
 export const EMPTY_FINGERPRINT: PlatformFingerprint = {
@@ -50,6 +73,7 @@ export const EMPTY_FINGERPRINT: PlatformFingerprint = {
   components: [],
   assetsSeen: 0,
   assetsVersioned: 0,
+  present: [],
 };
 
 /**
@@ -194,7 +218,10 @@ interface Candidate {
  * Read one asset URL. Returns null when the URL is not a platform asset, or is
  * one whose version we do not trust.
  */
-function readAsset(url: string, counters: { seen: number; versioned: number }): Candidate | null {
+function readAsset(
+  url: string,
+  counters: { seen: number; versioned: number; present: Set<string> },
+): Candidate | null {
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -209,6 +236,22 @@ function readAsset(url: string, counters: { seen: number; versioned: number }): 
   if (!plugin && !theme && !core) return null;
 
   counters.seen++;
+  const match = plugin ?? theme;
+  if (match) {
+    // Record that this component's assets are loading, even if we end up
+    // unable to read a version for it. "Present but unreadable" and "gone"
+    // are different facts, and only the second is worth an alert.
+    counters.present.add(
+      `${plugin ? "plugin" : "theme"}:${decodeURIComponent(match[1])}`,
+    );
+  }
+
+  // Everything after the component's own directory. A version living in there
+  // belongs to a bundled library, not to the plugin or theme.
+  if (match && VENDORED_PATH.test(path.slice(match.index + match[0].length - 1))) {
+    return null;
+  }
+
   const ver = parsed.searchParams.get("ver");
   if (!ver || !isTrustworthyVersion(ver)) return null;
   counters.versioned++;
@@ -277,7 +320,7 @@ export function fingerprintPlatform(input: {
   /** Contents of <meta name="generator">, if the page has one. */
   generator?: string | null;
 }): PlatformFingerprint {
-  const counters = { seen: 0, versioned: 0 };
+  const counters = { seen: 0, versioned: 0, present: new Set<string>() };
   const candidates: Candidate[] = [];
   for (const url of input.assetUrls) {
     const candidate = readAsset(url, counters);
@@ -310,6 +353,7 @@ export function fingerprintPlatform(input: {
     components,
     assetsSeen: counters.seen,
     assetsVersioned: counters.versioned,
+    present: [...counters.present].sort(),
   };
 }
 
@@ -346,11 +390,19 @@ export function parseFingerprint(value: unknown): PlatformFingerprint | null {
     });
   }
 
+  // Rows written before `present` existed fall back to the components they
+  // did record. That is the conservative reading: it can only suppress an
+  // event, never invent one.
+  const present = Array.isArray(raw.present)
+    ? raw.present.filter((p): p is string => typeof p === "string").sort()
+    : components.filter((c) => c.kind !== "core").map((c) => `${c.kind}:${c.slug}`).sort();
+
   return {
     platform: raw.platform,
     components,
     assetsSeen: typeof raw.assetsSeen === "number" ? raw.assetsSeen : components.length,
     assetsVersioned:
       typeof raw.assetsVersioned === "number" ? raw.assetsVersioned : components.length,
+    present,
   };
 }

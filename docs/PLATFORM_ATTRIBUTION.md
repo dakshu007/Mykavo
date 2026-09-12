@@ -66,6 +66,17 @@ firing on every single scan:
   comparison emits nothing. Switching on WP Rocket or Autoptimize combines
   assets and hides every version at once — that is our blindness, not twenty
   deactivated plugins.
+- **A library bundled inside a plugin.** Elementor Pro ships libraries under
+  `/assets/lib/`, and their versions (1.2.1, 4.1.2) are not Elementor Pro's —
+  which is 3.x. Anything under `lib/`, `vendor/`, `node_modules/` and friends is
+  ignored. Found on a real site, where the two tied on asset count: losing one
+  asset from a scan would have flipped the winner and announced an update that
+  never happened, forever.
+- **A component we stopped being able to read.** `present` records every plugin
+  and theme whose assets are loading, separately from those whose version we
+  could read. A plugin still serving assets is never reported as deactivated
+  just because a caching plugin started stripping its `?ver=`, and one we merely
+  started reading is never reported as newly activated.
 - **A snapshot with no fingerprint.** Rows predating this feature, and
   non-WordPress pages, compare to nothing rather than to an empty set.
 

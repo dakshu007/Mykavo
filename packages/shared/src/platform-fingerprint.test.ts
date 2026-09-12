@@ -160,6 +160,38 @@ describe("fingerprintPlatform", () => {
     ]);
   });
 
+  // Straight from jpfitness.co.in: Elementor Pro reported two versions,
+  // 1.2.1 and 4.1.2, tied on asset count. Both are bundled libraries; the
+  // plugin itself is 3.x. A tie like that flips whenever one asset drops out
+  // of a scan, announcing a plugin update that never happened.
+  it("ignores versions of libraries bundled inside a plugin", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [
+        asset("/wp-content/plugins/elementor-pro/assets/lib/smartmenus/jquery.smartmenus.min.js?ver=1.2.1"),
+        asset("/wp-content/plugins/elementor-pro/assets/lib/sticky/jquery.sticky.min.js?ver=4.1.2"),
+        asset("/wp-content/plugins/elementor-pro/assets/js/webpack-pro.runtime.min.js?ver=3.21.2"),
+      ],
+    });
+    expect(fp.components).toEqual([
+      { kind: "plugin", slug: "elementor-pro", name: "Elementor Pro", version: "3.21.2" },
+    ]);
+  });
+
+  it("records a plugin as present even when every version is vendored", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [
+        asset("/wp-content/plugins/elementor-pro/assets/lib/smartmenus/x.js?ver=1.2.1"),
+        asset("/wp-content/plugins/wp-rocket/assets/js/lazyload.js"),
+      ],
+    });
+    // No version is readable for either - but both are demonstrably loading,
+    // which is what stops a later scan calling them "deactivated".
+    expect(fp.components).toEqual([]);
+    expect(fp.present).toEqual(["plugin:elementor-pro", "plugin:wp-rocket"]);
+    expect(fp.assetsSeen).toBe(2);
+    expect(fp.assetsVersioned).toBe(0);
+  });
+
   it("survives malformed URLs without throwing", () => {
     const fp = fingerprintPlatform({ assetUrls: ["not a url", "", "://x"] });
     expect(fp.platform).toBeNull();

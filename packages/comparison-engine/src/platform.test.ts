@@ -16,6 +16,10 @@ function fp(
     })),
     assetsSeen: components.length,
     assetsVersioned: components.length,
+    present: components
+      .filter((c) => (c.kind ?? "plugin") !== "core")
+      .map((c) => `${c.kind ?? "plugin"}:${c.slug}`)
+      .sort(),
     ...overrides,
   };
 }
@@ -138,6 +142,7 @@ describe("comparePlatform", () => {
       components: [],
       assetsSeen: 0,
       assetsVersioned: 0,
+      present: [],
     };
     expect(comparePlatform(none, fp([{ slug: "x", version: "1.0" }]))).toEqual([]);
     expect(comparePlatform(fp([{ slug: "x", version: "1.0" }]), none)).toEqual([]);
@@ -151,6 +156,7 @@ describe("comparePlatform", () => {
       components: [],
       assetsSeen: 4,
       assetsVersioned: 0,
+      present: [],
     };
     const signals = comparePlatform(
       fp([
@@ -161,5 +167,53 @@ describe("comparePlatform", () => {
       blind,
     );
     expect(signals).toEqual([]);
+  });
+});
+
+// Found on a real site running WP Rocket, which combines assets and hides
+// versions unpredictably. Every case here is a false alarm that would have
+// shipped without it.
+describe("comparePlatform when a version becomes unreadable", () => {
+  const readable: PlatformFingerprint = {
+    platform: "wordpress",
+    components: [
+      { kind: "plugin", slug: "elementor-pro", name: "Elementor Pro", version: "3.21.2" },
+    ],
+    assetsSeen: 6,
+    assetsVersioned: 6,
+    present: ["plugin:elementor-pro"],
+  };
+
+  // Same plugin, still loading assets, but every version now stripped.
+  const unreadable: PlatformFingerprint = {
+    platform: "wordpress",
+    components: [
+      { kind: "plugin", slug: "wp-rocket", name: "WP Rocket", version: "3.15" },
+    ],
+    assetsSeen: 6,
+    assetsVersioned: 1,
+    present: ["plugin:elementor-pro", "plugin:wp-rocket"],
+  };
+
+  it("does not report a plugin as deactivated when its assets still load", () => {
+    const signals = comparePlatform(readable, unreadable);
+    expect(signals.some((s) => s.kind === "platform_components_removed")).toBe(false);
+  });
+
+  it("does not report a plugin as activated when we merely started reading it", () => {
+    const signals = comparePlatform(unreadable, readable);
+    expect(signals.some((s) => s.kind === "platform_components_added")).toBe(false);
+  });
+
+  it("still reports a plugin whose assets genuinely stopped loading", () => {
+    const gone: PlatformFingerprint = {
+      ...unreadable,
+      present: ["plugin:wp-rocket"], // elementor-pro not loading at all
+    };
+    const signals = comparePlatform(readable, gone);
+    expect(signals).toContainEqual({
+      kind: "platform_components_removed",
+      components: [{ name: "Elementor Pro", kind: "plugin", version: "3.21.2" }],
+    });
   });
 });

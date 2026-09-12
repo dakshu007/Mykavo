@@ -218,6 +218,7 @@ describe("platform fingerprint via compareSnapshots", () => {
     ],
     assetsSeen: 1,
     assetsVersioned: 1,
+    present: ["plugin:elementor"],
   });
 
   it("surfaces a plugin update alongside the change it explains", () => {

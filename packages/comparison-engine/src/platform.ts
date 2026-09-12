@@ -60,6 +60,10 @@ export function comparePlatform(
   for (const [id, now] of after) {
     const then = before.get(id);
     if (!then) {
+      // Present in the baseline but unreadable there, and readable now? We
+      // started being able to see it - the plugin did not arrive. Announcing
+      // an activation that never happened is as wrong as missing a real one.
+      if (baseline.present.includes(id)) continue;
       added.push({ name: now.name, kind: now.kind, version: now.version });
       continue;
     }
@@ -77,7 +81,13 @@ export function comparePlatform(
   }
 
   for (const [id, then] of before) {
-    if (!after.has(id)) removed.push({ name: then.name, kind: then.kind, version: then.version });
+    if (after.has(id)) continue;
+    // Its assets are still loading; we have merely lost the ability to read a
+    // version for it. That is our blindness, not a deactivated plugin. On a
+    // site running WP Rocket this is the difference between a useful feature
+    // and a weekly false alarm.
+    if (current.present.includes(id)) continue;
+    removed.push({ name: then.name, kind: then.kind, version: then.version });
   }
 
   // A theme SWITCH is a different event from a theme disappearing: one theme

@@ -47,6 +47,7 @@ async function main(): Promise<void> {
   let alreadyStored = 0;
   const rejected = new Map<string, number>();
   const componentsFound = new Map<string, string>();
+  const presentButUnreadable = new Set<string>();
 
   for (const snap of snapshots) {
     if (snap.platformFingerprint !== null) alreadyStored++;
@@ -58,6 +59,12 @@ async function main(): Promise<void> {
     assetsSeen += fp.assetsSeen;
     assetsVersioned += fp.assetsVersioned;
     for (const c of fp.components) componentsFound.set(`${c.kind}:${c.slug}`, c.version);
+    // Loading assets, but no version we were willing to trust. These are the
+    // ones a caching plugin has hidden from us - worth seeing, because the
+    // panel claims them as "may be incomplete" rather than omitting them.
+    for (const id of fp.present) {
+      if (!componentsFound.has(id)) presentButUnreadable.add(id);
+    }
 
     // The interesting failure: a platform asset that HAD a ver we threw away.
     // If this list is long, the version guard is too strict.
@@ -96,6 +103,13 @@ async function main(): Promise<void> {
     for (const [id, version] of [...componentsFound].sort()) {
       console.log(`  ${id.padEnd(40)} ${version}`);
     }
+  }
+
+  const stillUnreadable = [...presentButUnreadable].filter((id) => !componentsFound.has(id));
+  if (stillUnreadable.length > 0) {
+    console.log(`\ncomponents seen but with NO readable version (${stillUnreadable.length}):`);
+    console.log("  a caching or asset-combining plugin is hiding these.");
+    for (const id of stillUnreadable.sort()) console.log(`  ${id}`);
   }
 
   if (rejected.size > 0) {

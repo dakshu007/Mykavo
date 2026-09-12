@@ -61,6 +61,7 @@ async function queryPlatformStack(websiteId: string): Promise<PlatformStack | nu
   let assetsSeen = 0;
   let assetsVersioned = 0;
   let platform: PlatformFingerprint["platform"] = null;
+  const present = new Set<string>();
 
   for (const page of pages) {
     const fp = parseFingerprint(page.snapshots[0]?.platformFingerprint);
@@ -69,6 +70,7 @@ async function queryPlatformStack(websiteId: string): Promise<PlatformStack | nu
     assetsSeen += fp.assetsSeen;
     assetsVersioned += fp.assetsVersioned;
     if (fp.platform) platform = fp.platform;
+    for (const id of fp.present) present.add(id);
     for (const component of fp.components) {
       const id = `${component.kind}:${component.slug}`;
       const existing = merged.get(id);
@@ -88,7 +90,13 @@ async function queryPlatformStack(websiteId: string): Promise<PlatformStack | nu
   );
 
   return {
-    fingerprint: { platform, components, assetsSeen, assetsVersioned },
+    fingerprint: {
+      platform,
+      components,
+      assetsSeen,
+      assetsVersioned,
+      present: [...present].sort(),
+    },
     pagesRead,
     assetsSeen,
     assetsVersioned,
