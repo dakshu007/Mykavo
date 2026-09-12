@@ -19,8 +19,19 @@ export interface InPageExtraction {
    * (/wp-content/themes/astra/style.css?ver=4.6.2) and nowhere else.
    */
   stylesheets: Array<{ href: string }>;
-  /** <meta name="generator">, e.g. "WordPress 6.4.2". */
-  generator: string | null;
+  /**
+   * Every <meta name="generator"> on the page, e.g. "WordPress 6.4.2" and
+   * "Elementor 3.19.1". Plural because WordPress plugins each add their own,
+   * and on a site behind a caching plugin these are often the only version
+   * evidence that survives asset combining.
+   */
+  generators: string[];
+  /**
+   * HTML comments that look like they carry a plugin version marker (Yoast,
+   * WP Rocket and friends announce themselves this way). Filtered and capped
+   * in-page so a page full of comments cannot bloat the payload.
+   */
+  versionComments: string[];
   normalizedDom: string;
   visibleText: string;
 }
@@ -62,6 +73,22 @@ export function extractInPage(): InPageExtraction {
   )
     .map((l) => ({ href: (l as HTMLLinkElement).href }))
     .filter((l) => /^https?:/.test(l.href));
+
+  const generators = Array.from(doc.querySelectorAll('meta[name="generator" i]'))
+    .map((m) => (m.getAttribute("content") ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 20);
+
+  // Comment nodes are dropped by DOM normalization below, so they have to be
+  // read here. Only comments that mention a known marker AND contain a digit
+  // are kept - anything else is somebody's build note or a licence header.
+  const versionComments: string[] = [];
+  const MARKERS = /yoast|wp rocket|litespeed|autoptimize/i;
+  const walker = doc.createTreeWalker(doc.documentElement, NodeFilter.SHOW_COMMENT);
+  while (walker.nextNode() && versionComments.length < 20) {
+    const text = (walker.currentNode.nodeValue ?? "").slice(0, 300);
+    if (MARKERS.test(text) && /\d/.test(text)) versionComments.push(text);
+  }
 
   // ---- DOM normalization (spec §16) ----
   const VOLATILE_ATTRIBUTES = [
@@ -138,7 +165,8 @@ export function extractInPage(): InPageExtraction {
     links,
     scripts,
     stylesheets,
-    generator: meta("generator"),
+    generators,
+    versionComments,
     normalizedDom,
     visibleText,
   };

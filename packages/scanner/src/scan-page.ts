@@ -248,7 +248,8 @@ export async function scanPage(
         ...extraction.scripts.map((s) => s.src),
         ...extraction.stylesheets.map((l) => l.href),
       ],
-      generator: extraction.generator,
+      generators: extraction.generators,
+      comments: extraction.versionComments,
     });
 
     const seenScripts = new Set<string>();

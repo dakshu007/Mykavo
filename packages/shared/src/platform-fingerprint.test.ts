@@ -83,7 +83,7 @@ describe("fingerprintPlatform", () => {
   it("trusts the generator tag over anything inferred from asset paths", () => {
     const fp = fingerprintPlatform({
       assetUrls: [asset("/wp-includes/js/wp-emoji-release.min.js?ver=6.3.0")],
-      generator: "WordPress 6.4.2",
+      generators: ["WordPress 6.4.2"],
     });
     expect(fp.components).toEqual([
       { kind: "core", slug: "wordpress", name: "WordPress", version: "6.4.2" },
@@ -91,7 +91,7 @@ describe("fingerprintPlatform", () => {
   });
 
   it("finds core from the generator tag when no asset carries a version", () => {
-    const fp = fingerprintPlatform({ assetUrls: [], generator: "WordPress 6.5.2" });
+    const fp = fingerprintPlatform({ assetUrls: [], generators: ["WordPress 6.5.2"] });
     expect(fp.platform).toBe("wordpress");
     expect(fp.components).toEqual([
       { kind: "core", slug: "wordpress", name: "WordPress", version: "6.5.2" },
@@ -104,7 +104,7 @@ describe("fingerprintPlatform", () => {
         "https://example.com/_next/static/chunks/main-abc123.js",
         "https://cdn.shopify.com/s/files/1/theme.js?v=123456",
       ],
-      generator: "Next.js",
+      generators: ["Next.js"],
     });
     expect(fp.platform).toBeNull();
     expect(fp.components).toEqual([]);
@@ -256,5 +256,89 @@ describe("parseFingerprint", () => {
       components: [{ kind: "plugin", slug: "wp-rocket", version: "3.15" }],
     });
     expect(parsed?.components[0].name).toBe("WP Rocket");
+  });
+});
+
+// Measured on the first real WordPress site in the database: WP Rocket had
+// stripped every ?ver=, and asset URLs identified ZERO components. These are
+// the signals a caching plugin cannot touch.
+describe("declarations in the HTML, not the asset URLs", () => {
+  it("reads Elementor and WooCommerce from their own generator tags", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [],
+      generators: [
+        "WordPress 6.4.2",
+        "Elementor 3.19.1; features=e_optimized_assets_loading, additional_custom_breakpoints",
+        "WooCommerce 8.5.1",
+      ],
+    });
+    expect(fp.components).toEqual([
+      { kind: "core", slug: "wordpress", name: "WordPress", version: "6.4.2" },
+      { kind: "plugin", slug: "elementor", name: "Elementor", version: "3.19.1" },
+      { kind: "plugin", slug: "woocommerce", name: "WooCommerce", version: "8.5.1" },
+    ]);
+  });
+
+  it("reads Yoast and WP Rocket from their HTML comments", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [],
+      comments: [
+        " This site is optimized with the Yoast SEO plugin v21.5 - https://yoast.com/wordpress/plugins/seo/ ",
+        " This website is like a Rocket, literally. It is optimized by WP Rocket v3.15.8 ",
+      ],
+    });
+    expect(fp.components).toEqual([
+      { kind: "plugin", slug: "wordpress-seo", name: "Yoast SEO", version: "21.5" },
+      { kind: "plugin", slug: "wp-rocket", name: "WP Rocket", version: "3.15.8" },
+    ]);
+  });
+
+  it("a declaration beats a version guessed from a file path", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [asset("/wp-content/plugins/elementor/assets/js/frontend.js?ver=3.18.0")],
+      generators: ["Elementor 3.19.1; features=x"],
+    });
+    expect(fp.components).toEqual([
+      { kind: "plugin", slug: "elementor", name: "Elementor", version: "3.19.1" },
+    ]);
+  });
+
+  it("counts a declared plugin as present, so it is never reported as removed", () => {
+    const fp = fingerprintPlatform({ assetUrls: [], generators: ["Elementor 3.19.1"] });
+    expect(fp.present).toEqual(["plugin:elementor"]);
+  });
+
+  it("ignores a generator tag from something that is not WordPress", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [],
+      generators: ["Next.js", "Gatsby 5.12.0", "Hugo 0.120.4"],
+    });
+    expect(fp.platform).toBeNull();
+    expect(fp.components).toEqual([]);
+  });
+
+  it("rejects a declared version that is really a build stamp", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [],
+      generators: ["Elementor 20240115", "WooCommerce 1712345678"],
+    });
+    expect(fp.components).toEqual([]);
+  });
+});
+
+describe("assetsVersioned counts only assets that produced a component", () => {
+  // The bug this replaces reported "10 of 25 assets gave a trusted version"
+  // on a site where 0 components were identified, because the discarded
+  // jQuery files were counted on the way out.
+  it("does not count a jQuery asset it deliberately discards", () => {
+    const fp = fingerprintPlatform({
+      assetUrls: [
+        asset("/wp-includes/js/jquery/jquery.min.js?ver=3.7.1"),
+        asset("/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1"),
+      ],
+    });
+    expect(fp.components).toEqual([]);
+    expect(fp.assetsSeen).toBe(2);
+    expect(fp.assetsVersioned).toBe(0);
   });
 });

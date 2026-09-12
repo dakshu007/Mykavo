@@ -33,6 +33,26 @@ Scripts **and stylesheets** are read, because a theme's version lives in a
 stylesheet and nowhere else. Only the derived fingerprint is stored — a few
 dozen bytes — not the stylesheet URLs.
 
+### Declarations beat asset URLs
+
+Asset URLs are not enough on their own. Measured against the first real
+WordPress site in the database, WP Rocket had stripped every `?ver=` and asset
+URLs identified **zero** components.
+
+So the page's own declarations are read too, and they take precedence — a
+component naming its own version beats us guessing from a directory:
+
+| Source | Example | Identifies |
+| --- | --- | --- |
+| `<meta name="generator">` | `Elementor 3.19.1; features=…` | Elementor, WooCommerce, WordPress, Site Kit, Slider Revolution, Astra |
+| HTML comment | `optimized by WP Rocket v3.15.8` | WP Rocket, Yoast SEO, LiteSpeed Cache, Autoptimize |
+
+A caching plugin combines and renames files; it does not touch these. On the
+sites most likely to defeat URL-based detection, this is the only evidence left.
+
+The lists are deliberately short. A loose pattern would invent components,
+which is worse than missing them.
+
 ## Change events it produces
 
 | Event | Severity | Notifies |

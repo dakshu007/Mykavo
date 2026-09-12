@@ -208,6 +208,72 @@ export function compareVersions(a: string, b: string): number {
   return left.suffix.localeCompare(right.suffix);
 }
 
+/**
+ * Version declarations that live in the HTML itself rather than in an asset
+ * URL, and therefore survive WP Rocket, Autoptimize and every other plugin
+ * that combines and renames files.
+ *
+ * This exists because of a real measurement. Across the first WordPress site
+ * in the database, asset URLs identified ZERO components: WP Rocket had
+ * stripped every `?ver=`. Elementor and WooCommerce announce themselves in a
+ * `<meta name="generator">` tag, and Yoast and WP Rocket leave a versioned
+ * HTML comment, none of which a caching plugin touches. Without these the
+ * feature returns nothing on exactly the sites most likely to need it.
+ *
+ * Kept to a short, curated list. A pattern that matches loosely would invent
+ * components, which is worse than missing them.
+ */
+const GENERATOR_PATTERNS: ReadonlyArray<{
+  pattern: RegExp;
+  kind: ComponentKind;
+  slug: string;
+}> = [
+  { pattern: /^\s*WordPress\s+([\w.\-+]+)/i, kind: "core", slug: "wordpress" },
+  { pattern: /^\s*Elementor\s+([\w.\-+]+)/i, kind: "plugin", slug: "elementor" },
+  { pattern: /^\s*WooCommerce\s+([\w.\-+]+)/i, kind: "plugin", slug: "woocommerce" },
+  { pattern: /^\s*Site Kit by Google\s+([\w.\-+]+)/i, kind: "plugin", slug: "google-site-kit" },
+  { pattern: /^\s*Powered by Slider Revolution\s+([\w.\-+]+)/i, kind: "plugin", slug: "revslider" },
+  { pattern: /^\s*Astra\s+([\w.\-+]+)/i, kind: "theme", slug: "astra" },
+];
+
+/** Versioned markers plugins leave as HTML comments. */
+const COMMENT_PATTERNS: ReadonlyArray<{
+  pattern: RegExp;
+  kind: ComponentKind;
+  slug: string;
+}> = [
+  { pattern: /Yoast SEO plugin v([\d][\w.\-+]*)/i, kind: "plugin", slug: "wordpress-seo" },
+  { pattern: /WP Rocket v([\d][\w.\-+]*)/i, kind: "plugin", slug: "wp-rocket" },
+  { pattern: /optimized by LiteSpeed Cache v([\d][\w.\-+]*)/i, kind: "plugin", slug: "litespeed-cache" },
+  { pattern: /Autoptimize v?([\d][\w.\-+]*)/i, kind: "plugin", slug: "autoptimize" },
+];
+
+/**
+ * Read every declaration out of the page's generator tags and comments.
+ * A declaration is a component naming its own version outright, so it beats
+ * anything inferred from a file path.
+ */
+function readDeclarations(
+  generators: readonly string[],
+  comments: readonly string[],
+): Candidate[] {
+  const found: Candidate[] = [];
+  const take = (
+    text: string,
+    rules: typeof GENERATOR_PATTERNS,
+  ): void => {
+    for (const rule of rules) {
+      const match = rule.pattern.exec(text);
+      if (!match) continue;
+      if (!isTrustworthyVersion(match[1])) continue;
+      found.push({ kind: rule.kind, slug: rule.slug, version: match[1] });
+    }
+  };
+  for (const g of generators) take(g, GENERATOR_PATTERNS);
+  for (const c of comments) take(c, COMMENT_PATTERNS);
+  return found;
+}
+
 interface Candidate {
   kind: ComponentKind;
   slug: string;
@@ -254,15 +320,27 @@ function readAsset(
 
   const ver = parsed.searchParams.get("ver");
   if (!ver || !isTrustworthyVersion(ver)) return null;
-  counters.versioned++;
 
-  if (plugin) return { kind: "plugin", slug: decodeURIComponent(plugin[1]), version: ver };
-  if (theme) return { kind: "theme", slug: decodeURIComponent(theme[1]), version: ver };
+  // NOTE: `versioned` is only incremented where a Candidate is actually
+  // returned. It previously counted any asset with a trustworthy `ver`,
+  // including the jQuery files discarded two lines below - so a real site
+  // reported "10 of 25 assets gave a trusted version" alongside "0 components
+  // identified". A coverage number that contradicts the coverage is worse than
+  // no number, because it is the one thing being used to judge the feature.
+  if (plugin) {
+    counters.versioned++;
+    return { kind: "plugin", slug: decodeURIComponent(plugin[1]), version: ver };
+  }
+  if (theme) {
+    counters.versioned++;
+    return { kind: "theme", slug: decodeURIComponent(theme[1]), version: ver };
+  }
 
   // /wp-includes/ assets normally carry the WordPress core version - but not
   // jquery, which carries its own and would otherwise be reported as the core
   // version of every WordPress site on earth.
   if (/\/jquery/i.test(path)) return null;
+  counters.versioned++;
   return { kind: "core", slug: "wordpress", version: ver };
 }
 
@@ -301,24 +379,23 @@ function resolve(candidates: Candidate[]): PlatformComponent[] {
   );
 }
 
-/** Pull "WordPress 6.4.2" out of a generator meta tag. */
-function coreFromGenerator(generator: string | null | undefined): string | null {
-  if (!generator) return null;
-  const match = /^\s*WordPress\s+([\w.\-+]+)/i.exec(generator);
-  if (!match) return null;
-  return isTrustworthyVersion(match[1]) ? match[1] : null;
-}
-
 /**
- * Build a fingerprint from the asset URLs of one page.
+ * Build a fingerprint for one page.
  *
  * `assetUrls` should be every script src and stylesheet href on the page;
  * non-platform URLs are ignored, so passing extras is harmless.
+ *
+ * `generators` and `comments` are the declarations the page makes about
+ * itself. They matter more than they look: on a site behind a caching plugin
+ * they are frequently the ONLY surviving evidence, because combining assets
+ * destroys every `?ver=` while leaving the HTML's own markers untouched.
  */
 export function fingerprintPlatform(input: {
   assetUrls: readonly string[];
-  /** Contents of <meta name="generator">, if the page has one. */
-  generator?: string | null;
+  /** Contents of every <meta name="generator"> on the page. */
+  generators?: readonly string[];
+  /** HTML comments that might carry a plugin's version marker. */
+  comments?: readonly string[];
 }): PlatformFingerprint {
   const counters = { seen: 0, versioned: 0, present: new Set<string>() };
   const candidates: Candidate[] = [];
@@ -327,26 +404,24 @@ export function fingerprintPlatform(input: {
     if (candidate) candidates.push(candidate);
   }
 
-  const generatorCore = coreFromGenerator(input.generator);
+  const declared = readDeclarations(input.generators ?? [], input.comments ?? []);
   const components = resolve(candidates);
 
-  if (generatorCore) {
-    // The generator tag is WordPress stating its own version outright, so it
-    // outranks anything inferred from asset paths.
-    const existing = components.find((c) => c.kind === "core");
-    if (existing) existing.version = generatorCore;
-    else
-      components.unshift({
-        kind: "core",
-        slug: "wordpress",
-        name: "WordPress",
-        version: generatorCore,
-      });
+  // A declaration outranks anything inferred from a file path: it is the
+  // component naming its own version, not us guessing from a directory.
+  for (const d of declared) {
+    if (d.kind !== "core") counters.present.add(`${d.kind}:${d.slug}`);
+    const existing = components.find((c) => c.kind === d.kind && c.slug === d.slug);
+    if (existing) existing.version = d.version;
+    else components.push({ kind: d.kind, slug: d.slug, name: humanize(d.slug), version: d.version });
   }
+
   for (const c of components) if (c.kind === "core") c.name = "WordPress";
 
-  const isWordPress =
-    components.length > 0 || counters.seen > 0 || generatorCore !== null;
+  const kindOrder: Record<ComponentKind, number> = { core: 0, theme: 1, plugin: 2 };
+  components.sort((a, b) => kindOrder[a.kind] - kindOrder[b.kind] || a.slug.localeCompare(b.slug));
+
+  const isWordPress = components.length > 0 || counters.seen > 0;
 
   return {
     platform: isWordPress ? "wordpress" : null,

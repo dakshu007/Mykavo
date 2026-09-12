@@ -11,8 +11,15 @@
  *
  * It reads PageScript rows, which have stored full asset URLs since long before
  * this feature existed - so it reports on history, not just future scans.
- * Stylesheets are NOT stored as rows, so the theme is invisible here even
- * though live scans can see it. Treat the numbers below as a floor.
+ *
+ * IMPORTANT: this is a FLOOR, and on a cached site a very low one. It sees only
+ * asset URLs, so it is blind to two things a live scan uses:
+ *   - stylesheets, where a theme's version lives and nowhere else
+ *   - generator tags and HTML comments, which is how Elementor, WooCommerce,
+ *     Yoast and WP Rocket announce themselves - and the only evidence that
+ *     survives a plugin that combines assets
+ * A site reporting zero components here can still fingerprint fine on a live
+ * scan. Compare against the stored fingerprint count before drawing conclusions.
  */
 
 import "dotenv/config";
