@@ -52,6 +52,7 @@ import { StatusPageSettings } from "./status-page-settings";
 import { ClientReportSettings } from "./client-report-settings";
 import { loadPlatformStack } from "@/lib/platform-stack";
 import { PlatformStackPanel } from "@/components/dashboard/platform-stack";
+import { DomainExpiryPanel } from "@/components/dashboard/domain-expiry";
 import { DeployHookSettings } from "./deploy-hook-settings";
 
 /** Time windows for the health queries - one clock read per request. */
@@ -347,6 +348,14 @@ export default async function WebsiteDetailPage({
       {platformStack && (
         <Card>
           <PlatformStackPanel stack={platformStack} />
+        </Card>
+      )}
+
+      {/* Domain expiry. The Card is guarded too, not just the panel: a panel
+          that returns null inside a Card leaves an empty white box on the page. */}
+      {website.domainCheckedAt && (
+        <Card>
+          <DomainExpiryPanel domain={website} />
         </Card>
       )}
 

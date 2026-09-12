@@ -15,6 +15,8 @@ export const BILLING_SWEEP_QUEUE = "billing-sweep";
 export const CLIENT_REPORT_SWEEP_QUEUE = "client-report-sweep";
 export const GSC_SYNC_QUEUE = "gsc-sync";
 export const GSC_SYNC_SWEEP_QUEUE = "gsc-sync-sweep";
+/** Weekly RDAP pass: when does each monitored domain expire? */
+export const DOMAIN_SWEEP_QUEUE = "domain-sweep";
 export const SITE_AUDIT_QUEUE = "site-audit";
 
 export interface ScanWebsiteJob {

@@ -16,3 +16,4 @@ export * from "./artifact-keys";
 export * from "./traffic-drop";
 export * from "./platform-fingerprint";
 export * from "./tech-stack";
+export * from "./domain-expiry";

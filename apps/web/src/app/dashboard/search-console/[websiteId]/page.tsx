@@ -5,6 +5,7 @@ import { ArrowLeft, Download, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { loadTrafficDrops } from "@/lib/traffic-drops";
 import { TrafficDrops } from "@/components/dashboard/traffic-drops";
+import { SearchPerformanceChart } from "@/components/charts/search-performance-chart";
 import {
   buildOpportunities,
   isGscReauthMessage,
@@ -141,15 +142,15 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
   const avgCtr = totals.impressions > 0 ? totals.clicks / totals.impressions : 0;
   const avgPosition = daily.length > 0 ? daily.reduce((s, d) => s + d.position, 0) / daily.length : 0;
 
-  // SVG chart: clicks line + impressions area.
-  const w = 720, h = 140;
-  const maxClicks = Math.max(1, ...daily.map((d) => d.clicks));
-  const maxImpr = Math.max(1, ...daily.map((d) => d.impressions));
-  const x = (i: number) => (daily.length > 1 ? (i / (daily.length - 1)) * w : 0);
-  const clicksPath = daily.map((d, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${(h - (d.clicks / maxClicks) * (h - 10)).toFixed(1)}`).join(" ");
-  const imprPath = daily.length > 0
-    ? `M 0 ${h} ` + daily.map((d, i) => `L ${x(i).toFixed(1)} ${(h - (d.impressions / maxImpr) * (h - 10)).toFixed(1)}`).join(" ") + ` L ${w} ${h} Z`
-    : "";
+  // Chart points. Shaped here so the client component receives plain data and
+  // never a Date - Dates do not survive the server/client boundary intact.
+  const chartPoints = daily.map((d) => ({
+    date: d.date.toISOString().slice(0, 10),
+    clicks: d.clicks,
+    impressions: d.impressions,
+    ctr: d.ctr,
+    position: d.position,
+  }));
 
   const cards = [
     { label: `Clicks · ${rangeDays}d`, value: fmt(totals.clicks) },
@@ -227,18 +228,7 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
                 ))}
               </div>
             </div>
-            <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img" aria-label="Clicks and impressions over time">
-              <path d={imprPath} fill="var(--color-primary-soft)" opacity="0.6" />
-              <path d={clicksPath} fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinejoin="round" />
-            </svg>
-            <div className="mt-2 flex justify-between text-[11px] text-ink-faint">
-              <span>{daily[0]?.date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}</span>
-              <span className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-4 bg-primary" /> Clicks (max {fmt(maxClicks)})</span>
-                <span className="inline-flex items-center gap-1.5"><span className="inline-block size-2.5 rounded-[2px] bg-primary-soft" /> Impressions (max {fmt(maxImpr)})</span>
-              </span>
-              <span>{daily[daily.length - 1]?.date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}</span>
-            </div>
+            <SearchPerformanceChart daily={chartPoints} />
           </Card>
 
           {/* Search data x CHANGE HISTORY. Above Priority Opportunities on

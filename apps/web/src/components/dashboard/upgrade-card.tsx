@@ -1,36 +1,47 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import { getPlan, PAID_PLAN_ID, formatLimit } from "@/config/plans";
 
 /**
  * Sidebar upsell, shown only on the free plan.
  *
- * Deliberately states the limits rather than adjectives: "1 website, weekly
- * scans" is the reason someone upgrades, and a card that says "unlock more"
- * teaches them nothing and reads as filler. It disappears the moment they pay
- * - an upsell shown to a paying customer is an insult.
+ * Every number is READ FROM THE PLAN CONFIG (spec §37: never hardcode plan
+ * limits). The first version of this card hardcoded "{formatLimit(pro.limits.websites)} websites, a year of
+ * history" from the spec's aspirational pricing table - Pro actually ships 8
+ * websites at $20. An upsell that misstates what you get is worse than no
+ * upsell: the customer finds out after paying.
  */
-export function UpgradeCard({ websitesUsed, websiteLimit }: {
+export function UpgradeCard({
+  websitesUsed,
+  websiteLimit,
+}: {
   websitesUsed: number;
   websiteLimit: number;
 }) {
+  const pro = getPlan(PAID_PLAN_ID);
   const atLimit = websiteLimit !== Infinity && websitesUsed >= websiteLimit;
 
   return (
     <div className="rounded-xl bg-primary-soft p-3.5">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
         <Sparkles aria-hidden className="size-3.5 text-accent" />
-        Upgrade to Pro
+        Upgrade to {pro.name}
       </p>
       {/* Two lines at most. This sits in a fixed-height column above sign-out,
           so every extra line of copy is height taken from the nav. */}
       <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
         {atLimit ? (
           <>
-            All {websiteLimit} Free website{websiteLimit === 1 ? "" : "s"} in use. Pro
-            monitors 25.
+            All {formatLimit(websiteLimit)} Free website
+            {websiteLimit === 1 ? "" : "s"} in use. {pro.name} monitors{" "}
+            {formatLimit(pro.limits.websites)}.
           </>
         ) : (
-          <>25 websites, daily scans, a year of history.</>
+          <>
+            {formatLimit(pro.limits.websites)} websites,{" "}
+            {pro.limits.scanFrequency === "DAILY" ? "daily" : "weekly"} scans, $
+            {pro.priceMonthlyUsd}/mo.
+          </>
         )}
       </p>
       <Link

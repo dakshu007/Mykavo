@@ -46,6 +46,12 @@
      a gold border fails the 3:1 minimum for UI edges. This bronze is the same
      hue family at 6.25:1 on white. */
   --color-accent: var(--fx-accent);
+  /* Data-mark gold. Brand gold (#ffd400) is 1.39:1 on white and sits outside
+     the OKLCH lightness band for a mark, so a chart line in it is barely
+     visible - which is exactly how the old Performance chart read. This step
+     passes the lightness band, the chroma floor and 3:1 contrast in BOTH
+     themes, so one value serves both. */
+  --color-chart-gold: var(--fx-chart-gold);
 
   --color-success: var(--fx-success);
   --color-success-soft: var(--fx-success-soft);
@@ -104,6 +110,7 @@
   /* Ink, not white: ink on gold is 12.76:1, white on gold is 1.43:1. */
   --fx-primary-contrast: #151515;
   --fx-accent: #7a5c00;
+  --fx-chart-gold: #b8860b;
 
   --fx-success: #16a34a;
   --fx-success-soft: #e5f6ec;
@@ -154,6 +161,7 @@
   --fx-primary-contrast: #151515;
   /* On a dark ground gold is 11.81:1, so it needs no bronze substitute. */
   --fx-accent: #ffd400;
+  --fx-chart-gold: #b8860b;
 
   --fx-success: #34c979;
   --fx-success-soft: #122b1d;
@@ -201,6 +209,8 @@
     --fx-primary-soft: #3a2f00;
     --fx-primary-contrast: #151515;
     --fx-accent: #ffd400;
+    --fx-chart-gold: #b8860b;
+  --fx-chart-gold: #b8860b;
 
     --fx-success: #34c979;
     --fx-success-soft: #122b1d;
@@ -295,6 +305,7 @@
     --fx-primary-soft: #fff3b0;
     --fx-primary-contrast: #151515;
     --fx-accent: #7a5c00;
+    --fx-chart-gold: #b8860b;
     --fx-shadow-card: 0 1px 2px rgb(22 24 29 / 4%), 0 8px 24px rgb(22 24 29 / 6%);
   }
   /* Bigger reading type on the public post page only. */

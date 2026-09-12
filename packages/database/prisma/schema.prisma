@@ -246,6 +246,17 @@ model Website {
   // [a-z0-9-] (normalized + enforced in the API; parsed defensively via
   // parseTags in apps/web/src/lib/tags.ts).
   tags                   Json?
+  // Domain registration facts, read over RDAP. Stored on the website because
+  // several sites can share a registrable domain and the answer is identical
+  // for all of them; refreshed weekly, which is far more often than a yearly
+  // registration changes.
+  domainName             String?
+  domainExpiresAt        DateTime?
+  domainRegistrar        String?
+  domainStatuses         Json?
+  domainCheckedAt        DateTime?
+  // Structured failure code from the last lookup, null when it succeeded.
+  domainLookupError      String?
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 
@@ -267,6 +278,7 @@ model Website {
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
   @@index([status, nextScanAt])
+  @@index([domainCheckedAt])
   @@map("website")
 }
 

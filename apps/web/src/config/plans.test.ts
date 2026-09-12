@@ -51,3 +51,31 @@ describe("plans config", () => {
     expect(() => getPlan("enterprise" as never)).toThrow();
   });
 });
+
+/**
+ * Guards the upsell against drifting from the plans it sells.
+ *
+ * The sidebar card originally advertised "25 websites, a year of history" -
+ * numbers from the spec's aspirational pricing table, not from this config,
+ * where Pro is 8 websites at $20. A customer finding that out after paying is
+ * the worst possible moment.
+ */
+describe("no component hardcodes a plan number", () => {
+  it("keeps the upgrade card reading from this config", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { fileURLToPath } = await import("node:url");
+    const source = readFileSync(
+      fileURLToPath(new URL("../components/dashboard/upgrade-card.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(source).toContain("getPlan(PAID_PLAN_ID)");
+    // Strip comments and class names: a doc comment naming the old wrong
+    // number is documentation, and Tailwind classes are full of digits.
+    // What is left is the copy a customer actually reads.
+    const copy = source
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "")
+      .replace(/className="[^"]*"/g, "");
+    expect(copy).not.toMatch(/\b(?:25|100|2500|500|50)\b/);
+  });
+});

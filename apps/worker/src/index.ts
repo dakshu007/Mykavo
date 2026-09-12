@@ -20,6 +20,7 @@ import {
   SITE_AUDIT_QUEUE,
   GSC_SYNC_QUEUE,
   GSC_SYNC_SWEEP_QUEUE,
+  DOMAIN_SWEEP_QUEUE,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
   type SiteAuditJob,
@@ -37,6 +38,7 @@ import { runBillingSweep } from "./billing-sweep";
 import { runClientReportSweep } from "./client-report";
 import { runSiteAuditJob } from "./site-audit";
 import { runGscSync, runGscSweep } from "./gsc-sync";
+import { runDomainSweep } from "./domain-check";
 import { startWatchdog } from "./watchdog";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
@@ -47,6 +49,9 @@ const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 const BILLING_CRON = process.env.BILLING_CRON ?? "0 9 * * *"; // daily 09:00 UTC
 const CLIENT_REPORT_CRON = process.env.CLIENT_REPORT_CRON ?? "30 8 * * *"; // daily 08:30 UTC
 const GSC_CRON = process.env.GSC_CRON ?? "0 7 * * *"; // daily 07:00 UTC
+// A registration changes once a year; weekly is already far more often than
+// it can move, and keeps us a polite visitor to the registries.
+const DOMAIN_CRON = process.env.DOMAIN_CRON ?? "0 5 * * 3"; // Wednesdays 05:00 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -160,6 +165,13 @@ async function main() {
   });
   await boss.schedule(GSC_SYNC_SWEEP_QUEUE, GSC_CRON);
 
+  // Domain expiry (RDAP). One request per registrable domain, a second apart.
+  await boss.createQueue(DOMAIN_SWEEP_QUEUE, { expireInSeconds: 20 * 60 }).catch(() => {});
+  await boss.work(DOMAIN_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runDomainSweep();
+  });
+  await boss.schedule(DOMAIN_SWEEP_QUEUE, DOMAIN_CRON);
+
   // Site audits (technical SEO crawl): up to ~10 min of polite fetching per
   // run, so strictly one at a time with a single retry on expiry.
   await boss
@@ -197,6 +209,7 @@ async function main() {
     schedulerCron: SWEEP_CRON,
     retentionCron: RETENTION_CRON,
     healthCron: HEALTH_CRON,
+    domainCron: DOMAIN_CRON,
     reportCron: REPORT_CRON,
     auditCron: AUDIT_CRON,
     watchdog: true,
