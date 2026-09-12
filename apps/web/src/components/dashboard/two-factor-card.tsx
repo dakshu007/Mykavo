@@ -108,7 +108,7 @@ export function TwoFactorCard({
         autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="h-11 w-full max-w-sm rounded-field border border-line bg-card px-4 text-[14px] text-ink focus:border-primary focus:outline-none"
+        className="h-11 w-full max-w-sm rounded-field border border-line bg-card px-4 text-[14px] text-ink focus:border-accent focus:outline-none"
       />
     </div>
   );
@@ -143,7 +143,7 @@ export function TwoFactorCard({
               placeholder="123456"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="h-11 w-36 rounded-field border border-line bg-card px-4 font-mono text-[14px] text-ink focus:border-primary focus:outline-none"
+              className="h-11 w-36 rounded-field border border-line bg-card px-4 font-mono text-[14px] text-ink focus:border-accent focus:outline-none"
             />
           </div>
           <button

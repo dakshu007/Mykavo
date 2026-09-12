@@ -80,7 +80,7 @@ export default async function WebsitesPage({
             className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
               activeTags.length === 0
                 ? "bg-primary text-primary-contrast"
-                : "bg-surface text-ink-secondary hover:text-primary"
+                : "bg-surface text-ink-secondary hover:text-accent"
             }`}
           >
             All
@@ -98,11 +98,11 @@ export default async function WebsitesPage({
                 className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
                   active
                     ? "bg-primary text-primary-contrast"
-                    : "bg-primary-soft text-primary hover:bg-primary hover:text-primary-contrast"
+                    : "bg-primary-soft text-accent hover:bg-primary hover:text-primary-contrast"
                 }`}
               >
                 {t}
-                <span className={active ? "ml-1.5 text-primary-contrast/70" : "ml-1.5 text-primary/60"}>
+                <span className={active ? "ml-1.5 text-primary-contrast/70" : "ml-1.5 text-accent/60"}>
                   {tagCounts.get(t)}
                 </span>
               </Link>
@@ -122,7 +122,7 @@ export default async function WebsitesPage({
             atLimit ? (
               <Link
                 href="/dashboard/billing"
-                className="rounded-full bg-surface px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:text-primary"
+                className="rounded-full bg-surface px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:text-accent"
               >
                 {plan.id === "pro" ? "Add capacity" : `${plan.name} limit reached - upgrade`}
               </Link>
@@ -141,7 +141,7 @@ export default async function WebsitesPage({
             No websites with this tag.{" "}
             <Link
               href={tagFilterHref([])}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-accent hover:underline"
             >
               Clear filters
             </Link>
@@ -163,7 +163,7 @@ export default async function WebsitesPage({
                   <tr key={w.id}>
                     <td className="py-4 pr-4">
                       <Link href={`/dashboard/websites/${w.id}`} className="group block">
-                        <p className="text-sm font-medium text-ink group-hover:text-primary">
+                        <p className="text-sm font-medium text-ink group-hover:text-accent">
                           {w.name}
                         </p>
                         <p className="font-mono text-xs text-ink-faint">
@@ -175,7 +175,7 @@ export default async function WebsitesPage({
                           {w.tags.slice(0, ROW_TAG_LIMIT).map((t) => (
                             <span
                               key={t}
-                              className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary"
+                              className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-accent"
                             >
                               {t}
                             </span>

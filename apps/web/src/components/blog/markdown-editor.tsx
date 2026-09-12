@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  */
 
 const fieldClass =
-  "w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none";
+  "w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none";
 
 // Content textarea metrics (from its classes: py-3 + leading-6) used to place
 // the "/" insert menu just below the line the slash was typed on.
@@ -152,7 +152,7 @@ export function MarkdownEditor({
                   )}
                 >
                   <span className="text-sm font-medium text-ink">
-                    <span className="font-mono text-primary">/{option.command}</span>
+                    <span className="font-mono text-accent">/{option.command}</span>
                     {" - "}
                     {option.label}
                   </span>

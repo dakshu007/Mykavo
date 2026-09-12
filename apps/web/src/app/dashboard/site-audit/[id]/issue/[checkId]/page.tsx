@@ -112,7 +112,7 @@ export default async function AuditIssuePage({ params }: Params) {
                       href={entry.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex max-w-full items-baseline gap-1.5 break-all font-mono text-[12.5px] text-ink hover:text-primary"
+                      className="inline-flex max-w-full items-baseline gap-1.5 break-all font-mono text-[12.5px] text-ink hover:text-accent"
                     >
                       {entry.url}
                       <ExternalLink className="size-3 shrink-0 self-center text-ink-faint" aria-hidden />
@@ -133,7 +133,7 @@ export default async function AuditIssuePage({ params }: Params) {
                               href={source}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="break-all font-mono text-xs text-ink-secondary underline decoration-line underline-offset-2 hover:text-primary"
+                              className="break-all font-mono text-xs text-ink-secondary underline decoration-line underline-offset-2 hover:text-accent"
                             >
                               {pagePathLabel(source)}
                             </a>

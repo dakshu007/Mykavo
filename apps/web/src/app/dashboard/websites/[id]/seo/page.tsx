@@ -71,7 +71,7 @@ function IssueRow({ websiteId, issue }: { websiteId: string; issue: SeoIssue }) 
     <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2.5">
       <Link
         href={`/dashboard/websites/${websiteId}/pages/${issue.monitoredPageId}`}
-        className="min-w-0 max-w-full truncate font-mono text-[13px] font-medium text-ink hover:text-primary"
+        className="min-w-0 max-w-full truncate font-mono text-[13px] font-medium text-ink hover:text-accent"
       >
         {pagePath(issue.pageUrl)}
       </Link>
@@ -156,7 +156,7 @@ export default async function SeoHealthPage({
             No finished scan yet - the report is built from scan data.{" "}
             <Link
               href={`/dashboard/websites/${website.id}`}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-accent hover:underline"
             >
               Run your first scan →
             </Link>
@@ -228,7 +228,7 @@ export default async function SeoHealthPage({
             - the latest finished scan is from {scanDateLabel}, more than 7 days ago.{" "}
             <Link
               href={`/dashboard/websites/${website.id}`}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-accent hover:underline"
             >
               Run a scan for fresh results →
             </Link>
@@ -242,7 +242,7 @@ export default async function SeoHealthPage({
             The latest scan recorded no page snapshots.{" "}
             <Link
               href={`/dashboard/websites/${website.id}/pages`}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-accent hover:underline"
             >
               Choose pages to monitor →
             </Link>

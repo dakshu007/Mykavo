@@ -129,12 +129,12 @@ export function ResponseTimeChart({
         {/* Area fill + line, one pair per contiguous run */}
         {segments.map((segment, i) => (
           <g key={i}>
-            <path d={areaPath(segment, BOTTOM)} className="fill-primary" opacity={0.08} />
+            <path d={areaPath(segment, BOTTOM)} className="fill-accent" opacity={0.08} />
             {segment.length >= 2 ? (
               <path
                 d={linePath(segment)}
                 fill="none"
-                className="stroke-primary"
+                className="stroke-accent"
                 strokeWidth={1.5}
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -145,7 +145,7 @@ export function ResponseTimeChart({
                 cx={segment[0].x.toFixed(1)}
                 cy={segment[0].y.toFixed(1)}
                 r={2.5}
-                className="fill-primary"
+                className="fill-accent"
               />
             )}
           </g>
@@ -159,7 +159,7 @@ export function ResponseTimeChart({
               cx={toX(p.t).toFixed(1)}
               cy={toY(p.avgMs).toFixed(1)}
               r={2.5}
-              className="fill-primary"
+              className="fill-accent"
             >
               <title>{formatBucketLabel(p.t, p.avgMs)}</title>
             </circle>

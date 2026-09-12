@@ -56,7 +56,7 @@ export default async function BillingPage({
     <div className="max-w-2xl space-y-6">
       {justCheckedOut && (
         <div className="flex items-start gap-3 rounded-card bg-primary-soft px-5 py-4">
-          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
           <p className="text-sm text-ink">
             Thanks for your payment! It&apos;s being confirmed - the change activates the moment
             Dodo confirms the charge (usually seconds). Refresh this page shortly.
@@ -119,7 +119,7 @@ export default async function BillingPage({
         <ul className="mt-5 space-y-2.5">
           {plan.features.map((f) => (
             <li key={f} className="flex items-start gap-2.5 text-sm text-ink-secondary">
-              <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+              <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
               {f}
             </li>
           ))}
@@ -177,11 +177,11 @@ export default async function BillingPage({
 
       {/* Upgrade CTA (only when on Free) */}
       {!isPro && (
-        <Card className="ring-2 ring-primary">
+        <Card className="ring-2 ring-accent">
           <div className="flex items-start justify-between gap-4">
             <div>
               <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft">
-                <Sparkles className="size-5 text-primary" aria-hidden />
+                <Sparkles className="size-5 text-accent" aria-hidden />
               </span>
               <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
                 Upgrade to Pro - <Price usd={pro.priceMonthlyUsd} />/month
@@ -197,7 +197,7 @@ export default async function BillingPage({
           <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
             {pro.features.map((f) => (
               <li key={f} className="flex items-start gap-2.5 text-sm text-ink-secondary">
-                <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
                 {f}
               </li>
             ))}
@@ -225,7 +225,7 @@ export default async function BillingPage({
 
       <p className="text-center text-[13px] text-ink-faint">
         Compare plans on the{" "}
-        <Link href="/pricing" className="font-medium text-primary hover:underline">
+        <Link href="/pricing" className="font-medium text-accent hover:underline">
           pricing page
         </Link>
         .

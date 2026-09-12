@@ -42,7 +42,7 @@ export interface PendingInviteView {
 
 const ROLE_CHIP: Record<WorkspaceRole, string> = {
   OWNER: "bg-ink text-ink-inverse",
-  ADMIN: "bg-primary-soft text-primary",
+  ADMIN: "bg-primary-soft text-accent",
   MEMBER: "bg-ink/5 text-ink-secondary",
   VIEWER: "bg-ink/5 text-ink-faint",
 };
@@ -186,7 +186,7 @@ export function TeamSettings({
                         body: JSON.stringify({ role: e.target.value }),
                       })
                     }
-                    className="h-8 cursor-pointer rounded-full border border-line bg-card px-2.5 text-[12px] font-medium text-ink-secondary focus:border-primary focus:outline-none disabled:opacity-60"
+                    className="h-8 cursor-pointer rounded-full border border-line bg-card px-2.5 text-[12px] font-medium text-ink-secondary focus:border-accent focus:outline-none disabled:opacity-60"
                   >
                     {INVITABLE_ROLES.map((r) => (
                       <option key={r} value={r}>
@@ -294,7 +294,7 @@ export function TeamSettings({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="teammate@agency.com"
                 disabled={!seatsLeft}
-                className="h-10 w-full rounded-field border border-line bg-card px-3.5 text-sm text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none disabled:opacity-60"
+                className="h-10 w-full rounded-field border border-line bg-card px-3.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none disabled:opacity-60"
               />
             </label>
             <label className="shrink-0">
@@ -303,7 +303,7 @@ export function TeamSettings({
                 value={role}
                 onChange={(e) => setRole(e.target.value as InvitableRole)}
                 disabled={!seatsLeft}
-                className="h-10 cursor-pointer rounded-field border border-line bg-card px-3 text-sm text-ink focus:border-primary focus:outline-none disabled:opacity-60"
+                className="h-10 cursor-pointer rounded-field border border-line bg-card px-3 text-sm text-ink focus:border-accent focus:outline-none disabled:opacity-60"
               >
                 {INVITABLE_ROLES.map((r) => (
                   <option key={r} value={r}>

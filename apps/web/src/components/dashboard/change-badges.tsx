@@ -5,7 +5,7 @@ const severityStyles: Record<ChangeSeverity, { chip: string; dot: string; label:
   CRITICAL: { chip: "bg-critical-soft text-critical-strong", dot: "bg-critical", label: "Critical" },
   HIGH: { chip: "bg-orange-soft text-orange-strong", dot: "bg-orange", label: "High" },
   MEDIUM: { chip: "bg-warning-soft text-warning-strong", dot: "bg-warning", label: "Medium" },
-  LOW: { chip: "bg-primary-soft text-primary", dot: "bg-primary", label: "Low" },
+  LOW: { chip: "bg-primary-soft text-accent", dot: "bg-primary", label: "Low" },
   INFO: { chip: "bg-info-soft text-info", dot: "bg-info", label: "Info" },
 };
 
@@ -32,7 +32,7 @@ export function ChangeSeverityBadge({
 }
 
 const statusStyles: Record<ChangeStatus, string> = {
-  NEW: "bg-primary-soft text-primary",
+  NEW: "bg-primary-soft text-accent",
   REVIEWED: "bg-info-soft text-info",
   APPROVED: "bg-success-soft text-success-strong",
   RESOLVED: "bg-success-soft text-success-strong",

@@ -195,7 +195,7 @@ export function BrandingForm({
           maxLength={BRAND_NAME_MAX_LENGTH}
           placeholder="Northwind Digital"
           disabled={!canEdit}
-          className="h-11 w-full max-w-sm rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none disabled:opacity-60"
+          className="h-11 w-full max-w-sm rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none disabled:opacity-60"
         />
       </div>
 

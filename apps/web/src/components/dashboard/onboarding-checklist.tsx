@@ -67,11 +67,11 @@ export function OnboardingChecklist({
                 href={step.href}
                 className="group flex items-center gap-3.5 py-3"
               >
-                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary">
+                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-accent">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-ink group-hover:text-primary">
+                  <p className="text-sm font-medium text-ink group-hover:text-accent">
                     {step.title}
                     {step.optional && (
                       <span className="ml-2 align-middle text-[11px] font-medium uppercase tracking-wide text-ink-faint">
@@ -84,7 +84,7 @@ export function OnboardingChecklist({
                   </p>
                 </div>
                 <ArrowRight
-                  className="size-4 shrink-0 text-ink-faint transition-colors group-hover:text-primary"
+                  className="size-4 shrink-0 text-ink-faint transition-colors group-hover:text-accent"
                   aria-hidden
                 />
               </Link>

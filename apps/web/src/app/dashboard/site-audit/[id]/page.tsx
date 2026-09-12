@@ -87,7 +87,7 @@ export default async function SiteAuditReportPage({ params }: Params) {
               href={audit.website.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[13px] text-ink-secondary hover:text-primary"
+              className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[13px] text-ink-secondary hover:text-accent"
             >
               {hostname}
               <ExternalLink className="size-3" aria-hidden />
@@ -175,7 +175,7 @@ export default async function SiteAuditReportPage({ params }: Params) {
           {audit.stoppedReason === "page-limit" && (
             <p className="text-[12.5px] text-ink-faint">
               Crawl stopped at your plan&apos;s page limit - more URLs exist.{" "}
-              <Link href="/dashboard/billing" className="font-medium text-primary hover:underline">
+              <Link href="/dashboard/billing" className="font-medium text-accent hover:underline">
                 Upgrade for 1,500-page crawls
               </Link>
               .
@@ -210,16 +210,16 @@ export default async function SiteAuditReportPage({ params }: Params) {
                           </span>
                           <Link
                             href={`/dashboard/site-audit/${audit.id}/issue/${group.checkId}`}
-                            className="group/issue min-w-0 flex-1 truncate text-sm font-medium text-ink hover:text-primary"
+                            className="group/issue min-w-0 flex-1 truncate text-sm font-medium text-ink hover:text-accent"
                           >
                             {def.title}
-                            <span className="ml-1.5 hidden text-[12px] font-normal text-primary group-hover/issue:inline">
+                            <span className="ml-1.5 hidden text-[12px] font-normal text-accent group-hover/issue:inline">
                               view all →
                             </span>
                           </Link>
                           <Link
                             href={`/dashboard/site-audit/${audit.id}/issue/${group.checkId}`}
-                            className="shrink-0 text-sm font-semibold tabular-nums text-ink hover:text-primary"
+                            className="shrink-0 text-sm font-semibold tabular-nums text-ink hover:text-accent"
                           >
                             {group.count.toLocaleString("en-US")}
                           </Link>
@@ -240,7 +240,7 @@ export default async function SiteAuditReportPage({ params }: Params) {
                                     href={entry.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="min-w-0 break-all font-mono text-[12px] text-ink-secondary hover:text-primary"
+                                    className="min-w-0 break-all font-mono text-[12px] text-ink-secondary hover:text-accent"
                                   >
                                     {entry.url}
                                   </a>
@@ -258,7 +258,7 @@ export default async function SiteAuditReportPage({ params }: Params) {
                                           href={source}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="break-all font-mono text-[11px] text-ink-secondary underline decoration-line underline-offset-2 hover:text-primary"
+                                          className="break-all font-mono text-[11px] text-ink-secondary underline decoration-line underline-offset-2 hover:text-accent"
                                         >
                                           {pagePathLabel(source)}
                                         </a>

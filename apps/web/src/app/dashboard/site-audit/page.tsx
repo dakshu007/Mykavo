@@ -123,7 +123,7 @@ export default async function SiteAuditPage() {
                 {audit && audit.status === "COMPLETED" ? (
                   <Link
                     href={`/dashboard/site-audit/${audit.id}`}
-                    className="text-[13px] font-medium text-primary hover:underline"
+                    className="text-[13px] font-medium text-accent hover:underline"
                   >
                     View full report →
                   </Link>

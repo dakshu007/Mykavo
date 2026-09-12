@@ -35,7 +35,7 @@ export function PreviewOverview() {
             <p className="mt-1 text-sm text-ink-secondary">websites monitored</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-ink">
-                <Globe className="size-3.5 text-primary" aria-hidden /> 143 pages
+                <Globe className="size-3.5 text-accent" aria-hidden /> 143 pages
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-ink">
                 <ShieldCheck className="size-3.5 text-success" aria-hidden /> 9 healthy
@@ -86,7 +86,7 @@ export function PreviewOverview() {
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-flex size-10 items-center justify-center rounded-full bg-card shadow-card">
-              <Mail className="size-4.5 text-primary" aria-hidden />
+              <Mail className="size-4.5 text-accent" aria-hidden />
             </span>
             <span className="inline-flex size-10 items-center justify-center rounded-full bg-card/60 text-ink-faint shadow-card">
               <span className="text-[11px] font-semibold">+3</span>

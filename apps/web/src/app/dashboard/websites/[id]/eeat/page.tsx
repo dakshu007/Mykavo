@@ -69,7 +69,7 @@ export default async function WebsiteEeatPage({ params }: Params) {
               href={website.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[13px] text-ink-secondary hover:text-primary"
+              className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[13px] text-ink-secondary hover:text-accent"
             >
               {(() => { try { return new URL(website.url).hostname; } catch { return website.url; } })()}
               <ExternalLink className="size-3" aria-hidden />

@@ -184,7 +184,7 @@ export default async function PublicStatusPage({ params }: Params) {
           href={website.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[13px] text-ink-secondary hover:text-primary"
+          className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-[13px] text-ink-secondary hover:text-accent"
         >
           {hostname}
           <ExternalLink className="size-3" aria-hidden />

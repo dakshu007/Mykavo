@@ -40,7 +40,7 @@ type SaveResponse = {
 };
 
 const fieldClass =
-  "w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none";
+  "w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none";
 
 export function BlogPostEditor({ post }: { post?: EditorPost }) {
   const router = useRouter();
@@ -185,7 +185,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
             <Link
               href={`/blog/${post.slug}`}
               target="_blank"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-primary-hover"
             >
               View live <ExternalLink className="size-3.5" aria-hidden />
             </Link>

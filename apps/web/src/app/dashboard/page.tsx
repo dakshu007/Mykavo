@@ -145,7 +145,7 @@ export default async function DashboardOverviewPage() {
             action={
               <Link
                 href="/dashboard/websites"
-                className="text-[13px] font-medium text-primary hover:underline"
+                className="text-[13px] font-medium text-accent hover:underline"
               >
                 View all →
               </Link>
@@ -182,7 +182,7 @@ export default async function DashboardOverviewPage() {
                     }`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink group-hover:text-primary">
+                    <p className="truncate text-sm font-medium text-ink group-hover:text-accent">
                       {w.name}
                     </p>
                     <p className="truncate font-mono text-xs text-ink-faint">

@@ -263,7 +263,7 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
                       <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${opp.priority === "HIGH" ? "bg-critical-soft text-critical-strong" : "bg-warning-soft text-warning-strong"}`}>
                         {opp.priority === "HIGH" ? "High priority" : "Medium"}
                       </span>
-                      <a href={opp.page} target="_blank" rel="noopener noreferrer" className="min-w-0 break-all font-mono text-[12.5px] text-ink hover:text-primary">
+                      <a href={opp.page} target="_blank" rel="noopener noreferrer" className="min-w-0 break-all font-mono text-[12.5px] text-ink hover:text-accent">
                         {opp.page.replace(/^https?:\/\/[^/]+/, "") || "/"}
                       </a>
                       <span className="ml-auto text-[12px] tabular-nums text-ink-faint">

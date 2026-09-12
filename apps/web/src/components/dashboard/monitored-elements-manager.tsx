@@ -48,7 +48,7 @@ const EMPTY_FORM: FormState = {
 
 function importanceClasses(importance: Importance): string {
   if (importance === "CRITICAL") return "bg-critical-soft text-critical-strong";
-  if (importance === "IMPORTANT") return "bg-primary-soft text-primary";
+  if (importance === "IMPORTANT") return "bg-primary-soft text-accent";
   return "bg-surface text-ink-secondary";
 }
 
@@ -161,7 +161,7 @@ export function MonitoredElementsManager({
   }
 
   const inputClass =
-    "w-full rounded-field border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none";
+    "w-full rounded-field border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none";
 
   return (
     <div>
@@ -228,7 +228,7 @@ export function MonitoredElementsManager({
                   className={cn(
                     "rounded-tile border px-3 py-2 text-left transition-colors",
                     form.importance === opt.value
-                      ? "border-primary bg-primary-soft"
+                      ? "border-accent bg-primary-soft"
                       : "border-line bg-card hover:border-ink-faint",
                   )}
                 >

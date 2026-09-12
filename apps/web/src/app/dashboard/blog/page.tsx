@@ -75,7 +75,7 @@ export default async function DashboardBlogPage() {
                 <td className="max-w-90 py-3.5 pr-4">
                   <Link
                     href={`/dashboard/blog/${post.id}/edit`}
-                    className="block truncate text-sm font-medium text-ink hover:text-primary"
+                    className="block truncate text-sm font-medium text-ink hover:text-accent"
                   >
                     {post.title}
                   </Link>

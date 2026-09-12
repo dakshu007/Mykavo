@@ -51,7 +51,7 @@ export default async function AnalyserPage() {
                   </div>
                   <Link
                     href={`/dashboard/websites/${website.id}/eeat`}
-                    className="shrink-0 text-[13px] font-medium text-primary hover:underline"
+                    className="shrink-0 text-[13px] font-medium text-accent hover:underline"
                   >
                     Analyse homepage →
                   </Link>

@@ -362,7 +362,7 @@ export function PerformanceAuditPanel({
             setError("");
           }}
           disabled={busy}
-          className="h-9 max-w-full rounded-field border border-line bg-card px-3 font-mono text-[13px] text-ink focus:border-primary focus:outline-none disabled:opacity-60"
+          className="h-9 max-w-full rounded-field border border-line bg-card px-3 font-mono text-[13px] text-ink focus:border-accent focus:outline-none disabled:opacity-60"
         >
           <option value={HOMEPAGE}>{homepagePath} (homepage)</option>
           {pagePaths.map((p) => (
@@ -374,7 +374,7 @@ export function PerformanceAuditPanel({
         </select>
 
         {selected === CUSTOM && (
-          <div className="flex h-9 items-stretch overflow-hidden rounded-field border border-line bg-card focus-within:border-primary">
+          <div className="flex h-9 items-stretch overflow-hidden rounded-field border border-line bg-card focus-within:border-accent">
             <span className="flex select-none items-center border-r border-line bg-surface px-2.5 font-mono text-[13px] text-ink-faint">
               {hostname}
             </span>
@@ -446,7 +446,7 @@ export function PerformanceAuditPanel({
             href={shown.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex max-w-full items-center gap-1.5 font-mono text-[13px] font-medium text-ink hover:text-primary"
+            className="mt-4 inline-flex max-w-full items-center gap-1.5 font-mono text-[13px] font-medium text-ink hover:text-accent"
           >
             <span className="truncate">{pathOf(shown.url)}</span>
             <ExternalLink className="size-3 shrink-0" aria-hidden />

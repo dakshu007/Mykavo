@@ -61,7 +61,7 @@ export function TagEditor({
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-full bg-primary-soft py-0.5 pl-2.5 pr-1 text-[12px] font-medium text-primary"
+            className="inline-flex items-center gap-1 rounded-full bg-primary-soft py-0.5 pl-2.5 pr-1 text-[12px] font-medium text-accent"
           >
             {tag}
             <button
@@ -93,7 +93,7 @@ export function TagEditor({
             placeholder={tags.length === 0 ? "Add tag - e.g. acme-corp" : "Add tag"}
             maxLength={40}
             aria-label="Add tag"
-            className="h-7 w-44 rounded-full border border-line bg-card px-3 text-[12px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none disabled:opacity-60"
+            className="h-7 w-44 rounded-full border border-line bg-card px-3 text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none disabled:opacity-60"
           />
         )}
         {busy && <Loader2 className="size-3.5 animate-spin text-ink-faint" aria-hidden />}

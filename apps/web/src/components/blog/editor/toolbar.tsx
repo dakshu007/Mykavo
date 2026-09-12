@@ -59,7 +59,7 @@ function ToolbarButton({
       onClick={onClick}
       className={cn(
         "flex size-8 items-center justify-center rounded-field transition-colors",
-        active ? "bg-primary-soft text-primary" : "text-ink-secondary hover:bg-surface hover:text-ink",
+        active ? "bg-primary-soft text-accent" : "text-ink-secondary hover:bg-surface hover:text-ink",
         disabled && "cursor-not-allowed opacity-40 hover:bg-transparent",
       )}
     >
@@ -100,7 +100,7 @@ function Popover({ onClose, children }: { onClose: () => void; children: ReactNo
 }
 
 const popoverFieldClass =
-  "w-full rounded-field border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none";
+  "w-full rounded-field border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none";
 
 function LinkPopover({ editor, onClose }: { editor: Editor; onClose: () => void }) {
   const current = String(editor.getAttributes("link").href ?? "");
@@ -232,7 +232,7 @@ export function ImagePopover({ editor, onClose }: { editor: Editor; onClose: () 
         type="button"
         disabled={uploading}
         onClick={() => fileRef.current?.click()}
-        className="flex w-full items-center justify-center gap-2 rounded-field border border-dashed border-line px-3 py-2.5 text-sm font-medium text-ink-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-field border border-dashed border-line px-3 py-2.5 text-sm font-medium text-ink-secondary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
       >
         {uploading ? (
           <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -333,7 +333,7 @@ export function EditorToolbar({
           title="Block type"
           value={state.headingLevel ? String(state.headingLevel) : "p"}
           onChange={(event) => setBlockType(event.target.value)}
-          className="h-8 rounded-field border border-line bg-card pl-2 pr-1 text-[13px] font-medium text-ink focus:border-primary focus:outline-none"
+          className="h-8 rounded-field border border-line bg-card pl-2 pr-1 text-[13px] font-medium text-ink focus:border-accent focus:outline-none"
         >
           <option value="p">Paragraph</option>
           {HEADING_LEVELS.map((level) => (

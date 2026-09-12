@@ -217,7 +217,7 @@ export default async function BlogPostPage({ params }: Params) {
                 <div className="flex items-center gap-4">
                   <span
                     aria-hidden
-                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-lg font-semibold text-primary"
+                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-lg font-semibold text-accent"
                   >
                     {authorInitial}
                   </span>

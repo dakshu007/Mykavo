@@ -49,7 +49,7 @@ export function WorkspaceSwitcher({
         disabled={switching}
         className={cn(
           "w-full cursor-pointer truncate rounded-full border border-line bg-card px-3 py-1.5 text-[12px] font-medium text-ink-secondary",
-          "focus:border-primary focus:outline-none disabled:opacity-60",
+          "focus:border-accent focus:outline-none disabled:opacity-60",
         )}
       >
         {workspaces.map((w) => (

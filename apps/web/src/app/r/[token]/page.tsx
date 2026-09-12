@@ -239,7 +239,7 @@ export default async function ClientReportPage({ params }: Params) {
               href={website.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-mono text-[13px] text-ink-secondary hover:text-primary"
+              className="inline-flex items-center gap-1 font-mono text-[13px] text-ink-secondary hover:text-accent"
             >
               {hostname}
               <ExternalLink className="size-3 print:hidden" aria-hidden />
@@ -394,7 +394,7 @@ export default async function ClientReportPage({ params }: Params) {
             </Link>
             <Link
               href="/?utm_source=client-report"
-              className="text-[13px] font-medium text-primary hover:underline print:hidden"
+              className="text-[13px] font-medium text-accent hover:underline print:hidden"
             >
               Monitor your website with MyKavo →
             </Link>

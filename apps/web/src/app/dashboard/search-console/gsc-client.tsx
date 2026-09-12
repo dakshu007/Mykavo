@@ -50,7 +50,7 @@ export function PropertyPicker({ websiteId }: { websiteId: string }) {
       <select
         value={selected}
         onChange={(e) => setSelected(e.target.value)}
-        className="h-10 min-w-64 rounded-field border border-line bg-card px-3 text-[14px] text-ink focus:border-primary focus:outline-none"
+        className="h-10 min-w-64 rounded-field border border-line bg-card px-3 text-[14px] text-ink focus:border-accent focus:outline-none"
       >
         <option value="">Choose a property…</option>
         {properties.map((p) => (
@@ -159,7 +159,7 @@ export function SitemapsPanel({ websiteId }: { websiteId: string }) {
       {sitemaps.map((sitemap) => (
         <div key={sitemap.path} className="flex flex-wrap items-center justify-between gap-2 rounded-tile bg-surface px-4 py-3">
           <div className="min-w-0">
-            <a href={sitemap.path} target="_blank" rel="noopener noreferrer" className="break-all font-mono text-[12.5px] text-ink hover:text-primary">{sitemap.path}</a>
+            <a href={sitemap.path} target="_blank" rel="noopener noreferrer" className="break-all font-mono text-[12.5px] text-ink hover:text-accent">{sitemap.path}</a>
             <p className="mt-0.5 text-[11.5px] text-ink-faint">
               {sitemap.isPending ? "Pending" : `Last read ${sitemap.lastDownloaded ? new Date(sitemap.lastDownloaded).toLocaleDateString("en-US", { dateStyle: "medium" }) : "never"}`}
               {" · "}{sitemap.contents?.reduce((sum, c) => sum + Number(c.submitted ?? 0), 0).toLocaleString("en-US")} URLs submitted
@@ -229,7 +229,7 @@ export function InspectBox({ websiteId, baseUrl }: { websiteId: string; baseUrl:
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://…"
-          className="h-10 min-w-0 flex-1 rounded-field border border-line bg-card px-3.5 font-mono text-[13px] text-ink focus:border-primary focus:outline-none"
+          className="h-10 min-w-0 flex-1 rounded-field border border-line bg-card px-3.5 font-mono text-[13px] text-ink focus:border-accent focus:outline-none"
         />
         <button
           onClick={inspect}

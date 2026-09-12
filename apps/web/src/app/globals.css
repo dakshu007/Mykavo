@@ -41,6 +41,11 @@
   --color-primary-soft: var(--fx-primary-soft);
   /* Text placed on bg-primary fills (was `text-white` on buttons). */
   --color-primary-contrast: var(--fx-primary-contrast);
+  /* Readable brand tone for TEXT and BORDERS. MyKavo's gold is a background
+     colour: #FFD400 on white measures 1.43:1, so gold text is unreadable and
+     a gold border fails the 3:1 minimum for UI edges. This bronze is the same
+     hue family at 6.25:1 on white. */
+  --color-accent: var(--fx-accent);
 
   --color-success: var(--fx-success);
   --color-success-soft: var(--fx-success-soft);
@@ -92,10 +97,13 @@
   --fx-line: #e4e7ee;
   --fx-panel: #16181d;
 
-  --fx-primary: #3556f4;
-  --fx-primary-hover: #2a46d6;
-  --fx-primary-soft: #e8ecfe;
-  --fx-primary-contrast: #ffffff;
+  /* MyKavo gold. Used as a BACKGROUND only - see --fx-accent for text. */
+  --fx-primary: #ffd400;
+  --fx-primary-hover: #e6bf00;
+  --fx-primary-soft: #fff3b0;
+  /* Ink, not white: ink on gold is 12.76:1, white on gold is 1.43:1. */
+  --fx-primary-contrast: #151515;
+  --fx-accent: #7a5c00;
 
   --fx-success: #16a34a;
   --fx-success-soft: #e5f6ec;
@@ -140,10 +148,12 @@
   --fx-line: #262b35;
   --fx-panel: #16181d;
 
-  --fx-primary: #7c92fa;
-  --fx-primary-hover: #93a5fb;
-  --fx-primary-soft: #1c2547;
-  --fx-primary-contrast: #0a0e1a;
+  --fx-primary: #ffd400;
+  --fx-primary-hover: #ffe14d;
+  --fx-primary-soft: #3a2f00;
+  --fx-primary-contrast: #151515;
+  /* On a dark ground gold is 11.81:1, so it needs no bronze substitute. */
+  --fx-accent: #ffd400;
 
   --fx-success: #34c979;
   --fx-success-soft: #122b1d;
@@ -186,10 +196,11 @@
     --fx-line: #262b35;
     --fx-panel: #16181d;
 
-    --fx-primary: #7c92fa;
-    --fx-primary-hover: #93a5fb;
-    --fx-primary-soft: #1c2547;
-    --fx-primary-contrast: #0a0e1a;
+    --fx-primary: #ffd400;
+    --fx-primary-hover: #ffe14d;
+    --fx-primary-soft: #3a2f00;
+    --fx-primary-contrast: #151515;
+    --fx-accent: #ffd400;
 
     --fx-success: #34c979;
     --fx-success-soft: #122b1d;
@@ -279,10 +290,11 @@
     --fx-ink-hover: #000000;
     --fx-line: #e4e7ee;
     --fx-panel: #16181d;
-    --fx-primary: #3556f4;
-    --fx-primary-hover: #2a46d6;
-    --fx-primary-soft: #e8ecfe;
-    --fx-primary-contrast: #ffffff;
+    --fx-primary: #ffd400;
+    --fx-primary-hover: #e6bf00;
+    --fx-primary-soft: #fff3b0;
+    --fx-primary-contrast: #151515;
+    --fx-accent: #7a5c00;
     --fx-shadow-card: 0 1px 2px rgb(22 24 29 / 4%), 0 8px 24px rgb(22 24 29 / 6%);
   }
   /* Bigger reading type on the public post page only. */

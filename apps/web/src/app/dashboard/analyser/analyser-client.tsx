@@ -63,7 +63,7 @@ export function AnalyserClient() {
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://any-page.com/article - yours, a client's, a competitor's"
           aria-label="Page URL to analyze"
-          className="h-11 min-w-0 flex-1 rounded-field border border-line bg-card px-4 font-mono text-[13.5px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+          className="h-11 min-w-0 flex-1 rounded-field border border-line bg-card px-4 font-mono text-[13.5px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
         />
         <button
           type="submit"

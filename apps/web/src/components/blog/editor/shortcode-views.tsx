@@ -41,12 +41,12 @@ function ChipShell({
       as="div"
       data-drag-handle
       className={cn(
-        "my-4 cursor-grab rounded-tile border border-primary/15 bg-primary-soft/50 px-4 py-3",
-        selected && "ring-2 ring-primary/40",
+        "my-4 cursor-grab rounded-tile border border-accent/15 bg-primary-soft/50 px-4 py-3",
+        selected && "ring-2 ring-accent/40",
       )}
     >
       <div className="flex items-center gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-accent">
           {icon}
         </span>
         <span className="min-w-0 flex-1 text-sm">
@@ -118,7 +118,7 @@ function FaqBlockView({ node, selected, deleteNode, updateAttributes }: ReactNod
         onChange={(event) =>
           updateAttributes({ raw: joinFaqRaw(open, event.target.value, close) })
         }
-        className="mt-3 w-full cursor-text resize-y rounded-field border border-line bg-card px-3 py-2 font-mono text-[13px] leading-6 text-ink focus:border-primary focus:outline-none"
+        className="mt-3 w-full cursor-text resize-y rounded-field border border-line bg-card px-3 py-2 font-mono text-[13px] leading-6 text-ink focus:border-accent focus:outline-none"
       />
       <p className="mt-1.5 text-[12px] text-ink-faint">
         Lines starting with <span className="font-mono">Q:</span> open a question,{" "}

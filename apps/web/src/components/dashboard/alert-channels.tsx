@@ -167,7 +167,7 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
                 className={cn(
                   "inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium transition-colors",
                   type === t
-                    ? "border-primary bg-primary-soft text-primary"
+                    ? "border-accent bg-primary-soft text-accent"
                     : "border-line text-ink-secondary hover:text-ink",
                 )}
               >
@@ -187,7 +187,7 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder={TYPE_META[type].placeholder}
-              className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+              className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
             />
             <p className="mt-1.5 text-[13px] text-ink-faint">{TYPE_META[type].hint}</p>
           </div>
@@ -202,7 +202,7 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
                 value={secret}
                 onChange={(e) => setSecret(e.target.value)}
                 placeholder="Used for the X-MyKavo-Signature HMAC header"
-                className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+                className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
               />
             </div>
           )}

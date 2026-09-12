@@ -155,7 +155,7 @@ export default async function ChangeDetailPage({
               <li key={note.id} className="flex gap-3 py-3.5 first:pt-0">
                 <span
                   aria-hidden
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[13px] font-semibold text-primary"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[13px] font-semibold text-accent"
                 >
                   {note.author.name.trim().charAt(0).toUpperCase() || "?"}
                 </span>
@@ -213,7 +213,7 @@ export default async function ChangeDetailPage({
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="min-w-0 max-w-full truncate font-mono text-[13px] font-medium text-ink hover:text-primary"
+                  className="min-w-0 max-w-full truncate font-mono text-[13px] font-medium text-ink hover:text-accent"
                 >
                   {pathOf(link.url)}
                 </a>
@@ -255,7 +255,7 @@ export default async function ChangeDetailPage({
             change.monitoredPage ? (
               <Link
                 href={`/dashboard/websites/${change.monitoredPage.websiteId}/pages/${change.monitoredPage.id}`}
-                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary hover:underline"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline"
               >
                 View page baseline <ExternalLink className="size-3.5" aria-hidden />
               </Link>

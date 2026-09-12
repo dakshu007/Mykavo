@@ -106,7 +106,7 @@ export function UptimeBars({
               rx={radius}
               tabIndex={0}
               aria-label={label}
-              className={`${BAND_CLASSES[uptimeBand(day.uptimePercent)].bar} outline-none focus-visible:stroke-primary focus-visible:stroke-2`}
+              className={`${BAND_CLASSES[uptimeBand(day.uptimePercent)].bar} outline-none focus-visible:stroke-accent focus-visible:stroke-2`}
             >
               <title>{label}</title>
             </rect>

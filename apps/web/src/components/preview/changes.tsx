@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { changes } from "./data";
 
 const statusStyles: Record<string, string> = {
-  NEW: "bg-primary-soft text-primary",
+  NEW: "bg-primary-soft text-accent",
   REVIEWED: "bg-info-soft text-info",
   APPROVED: "bg-success-soft text-success-strong",
   RESOLVED: "bg-success-soft text-success-strong",

@@ -47,7 +47,7 @@ function Field({
         autoFocus={autoFocus}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 w-full rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+        className="h-12 w-full rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
       />
     </div>
   );
@@ -224,7 +224,7 @@ export function AuthForm({
     return (
       <form onSubmit={submitLoginCode} className="space-y-4">
         <div className="flex items-center gap-2.5 rounded-xl border border-line bg-card px-4 py-3">
-          <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
+          <ShieldCheck className="size-4.5 shrink-0 text-accent" aria-hidden />
           <p className="text-[13px] leading-5 text-ink-secondary">
             Two-factor authentication is on for this account. Enter the code from your
             authenticator app.
@@ -278,7 +278,7 @@ export function AuthForm({
     return (
       <form onSubmit={submitEnrollCode} className="space-y-4">
         <div className="flex items-center gap-2.5 rounded-xl border border-line bg-card px-4 py-3">
-          <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
+          <ShieldCheck className="size-4.5 shrink-0 text-accent" aria-hidden />
           <p className="text-[13px] leading-5 text-ink-secondary">
             Secure your account: scan this QR code with Google Authenticator (or any TOTP app),
             then enter the 6-digit code it shows.
@@ -321,7 +321,7 @@ export function AuthForm({
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2.5 rounded-xl border border-line bg-card px-4 py-3">
-          <ShieldCheck className="size-4.5 shrink-0 text-primary" aria-hidden />
+          <ShieldCheck className="size-4.5 shrink-0 text-accent" aria-hidden />
           <p className="text-[13px] leading-5 text-ink-secondary">
             Two-factor authentication is on. One last thing - save your backup codes.
           </p>
@@ -405,7 +405,7 @@ export function AuthForm({
               Already have an account?{" "}
               <Link
                 href={`/login${nextQuery}`}
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-accent hover:underline"
               >
                 Sign in
               </Link>
@@ -415,7 +415,7 @@ export function AuthForm({
               New to MyKavo?{" "}
               <Link
                 href={`/signup${nextQuery}`}
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-accent hover:underline"
               >
                 Create an account
               </Link>

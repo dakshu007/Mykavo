@@ -139,10 +139,10 @@ function TocList({ headings, className }: { headings: PostHeading[]; className?:
         <li key={heading.id} className={heading.depth === 3 ? "pl-6" : undefined}>
           <a
             href={`#${heading.id}`}
-            className="group flex items-baseline gap-2 text-sm leading-5 text-ink-secondary transition-colors hover:text-primary"
+            className="group flex items-baseline gap-2 text-sm leading-5 text-ink-secondary transition-colors hover:text-accent"
           >
             {number !== undefined && (
-              <span className="w-4 shrink-0 font-mono text-[11px] font-medium text-ink-faint group-hover:text-primary">
+              <span className="w-4 shrink-0 font-mono text-[11px] font-medium text-ink-faint group-hover:text-accent">
                 {number}.
               </span>
             )}

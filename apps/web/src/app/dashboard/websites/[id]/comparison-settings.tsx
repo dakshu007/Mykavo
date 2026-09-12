@@ -43,7 +43,7 @@ function SelectorField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         spellCheck={false}
-        className="w-full rounded-field border border-line bg-card px-4 py-3 font-mono text-[13px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+        className="w-full rounded-field border border-line bg-card px-4 py-3 font-mono text-[13px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
       />
       <p className="mt-1.5 text-[13px] text-ink-faint">{help}</p>
     </div>

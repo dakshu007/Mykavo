@@ -204,7 +204,7 @@ export function ClientReportSettings({
                     value={recipientsText}
                     onChange={(e) => setRecipientsText(e.target.value)}
                     placeholder="client@company.com"
-                    className="h-10 w-full rounded-field border border-line bg-card px-3.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+                    className="h-10 w-full rounded-field border border-line bg-card px-3.5 text-[14px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
                   />
                 </div>
                 <div className="shrink-0">
@@ -215,7 +215,7 @@ export function ClientReportSettings({
                     id={`report-cadence-${websiteId}`}
                     value={cadence}
                     onChange={(e) => setCadence(e.target.value as "OFF" | "WEEKLY" | "MONTHLY")}
-                    className="h-10 rounded-field border border-line bg-card px-3 text-[14px] text-ink focus:border-primary focus:outline-none"
+                    className="h-10 rounded-field border border-line bg-card px-3 text-[14px] text-ink focus:border-accent focus:outline-none"
                   >
                     <option value="OFF">Off</option>
                     <option value="WEEKLY">Weekly</option>

@@ -42,7 +42,7 @@ export function SetBaselineButton({
       <button
         onClick={run}
         disabled={loading}
-        className={`inline-flex items-center gap-1.5 rounded-full border border-line bg-card font-medium text-ink-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-60 ${sizeClasses}`}
+        className={`inline-flex items-center gap-1.5 rounded-full border border-line bg-card font-medium text-ink-secondary transition-colors hover:border-accent hover:text-accent disabled:opacity-60 ${sizeClasses}`}
       >
         {loading ? (
           <Loader2 className="size-3.5 animate-spin" aria-hidden />

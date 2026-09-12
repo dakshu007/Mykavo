@@ -11,7 +11,7 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
           key={plan.id}
           className={cn(
             "relative flex flex-col rounded-card bg-card p-6 shadow-card",
-            plan.highlighted && "ring-2 ring-primary",
+            plan.highlighted && "ring-2 ring-accent",
           )}
         >
           {plan.highlighted && (
@@ -30,7 +30,7 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
           <ul className={cn("mt-5 space-y-2.5", compact && "mt-4 space-y-2")}>
             {plan.features.map((f) => (
               <li key={f} className="flex items-start gap-2.5 text-sm text-ink-secondary">
-                <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
                 {f}
               </li>
             ))}

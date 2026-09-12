@@ -122,7 +122,7 @@ export function ChangesBulkList({ changes }: { changes: ChangeListRow[] }) {
               />
               <ChangeSeverityBadge severity={c.severity} className="w-24 shrink-0 justify-center" />
               <Link href={`/dashboard/changes/${c.id}`} className="group min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-ink group-hover:text-primary">
+                <p className="truncate text-sm font-medium text-ink group-hover:text-accent">
                   {c.title}
                 </p>
                 <p className="truncate text-xs text-ink-faint">

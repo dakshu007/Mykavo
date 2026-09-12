@@ -185,7 +185,7 @@ export default async function ChangesPage({
             </p>
             <Link
               href="/dashboard/changes"
-              className="mt-3 inline-block text-[13px] font-medium text-primary hover:underline"
+              className="mt-3 inline-block text-[13px] font-medium text-accent hover:underline"
             >
               Clear filters
             </Link>
@@ -199,7 +199,7 @@ export default async function ChangesPage({
             </p>
             <Link
               href={buildHref(sp, { status: "all" })}
-              className="mt-3 inline-block text-[13px] font-medium text-primary hover:underline"
+              className="mt-3 inline-block text-[13px] font-medium text-accent hover:underline"
             >
               View all changes
             </Link>

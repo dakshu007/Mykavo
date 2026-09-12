@@ -47,6 +47,7 @@ export function PlatformStackPanel({ stack }: { stack: PlatformStack | null }) {
   return (
     <>
       <CardHeader
+        icon={Layers}
         title="Detected stack"
         action={
           <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-semibold text-ink-secondary">

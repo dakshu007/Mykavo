@@ -103,7 +103,7 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="example.com"
-              className="h-12 w-full rounded-field border border-line bg-card px-4 font-mono text-[14px] text-ink placeholder:font-sans placeholder:text-ink-faint focus:border-primary focus:outline-none"
+              className="h-12 w-full rounded-field border border-line bg-card px-4 font-mono text-[14px] text-ink placeholder:font-sans placeholder:text-ink-faint focus:border-accent focus:outline-none"
             />
           </div>
           <div>
@@ -116,7 +116,7 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Client site, My store…"
-              className="h-12 w-full rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+              className="h-12 w-full rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
             />
           </div>
           {error && (

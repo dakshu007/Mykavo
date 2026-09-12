@@ -58,7 +58,7 @@ export function ValueQuoteCard() {
   return (
     <div className="rounded-card border border-line bg-card px-5 py-4">
       <p className="text-[15px] font-medium leading-6 text-ink">
-        {quote.lead} - <span className="text-primary">{quote.tail}</span>
+        {quote.lead} - <span className="text-accent">{quote.tail}</span>
       </p>
       <p className="mt-1 font-mono text-[13px] font-semibold text-ink-secondary">{quote.perDay}</p>
     </div>

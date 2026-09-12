@@ -81,7 +81,7 @@ export default async function InvitePage({
   } else {
     const intro = (
       <>
-        <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-primary">
+        <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-accent">
           Workspace invitation
         </p>
         <h1 className="mb-2 text-xl font-semibold tracking-tight text-ink">

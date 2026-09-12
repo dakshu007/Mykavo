@@ -114,7 +114,7 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
           value={recipients}
           onChange={(e) => setRecipients(e.target.value)}
           placeholder="you@agency.com, teammate@agency.com"
-          className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+          className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
         />
         <p className="mt-1.5 text-[13px] text-ink-faint">Comma-separated. Up to 10 recipients.</p>
       </div>

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const styles: Record<ScanStatus, { chip: string; label: string }> = {
   QUEUED: { chip: "bg-info-soft text-info", label: "Queued" },
-  RUNNING: { chip: "bg-primary-soft text-primary", label: "Running" },
+  RUNNING: { chip: "bg-primary-soft text-accent", label: "Running" },
   COMPLETED: { chip: "bg-success-soft text-success-strong", label: "Completed" },
   PARTIAL: { chip: "bg-warning-soft text-warning-strong", label: "Partial" },
   FAILED: { chip: "bg-critical-soft text-critical-strong", label: "Failed" },

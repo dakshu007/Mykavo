@@ -81,7 +81,7 @@ export function DashboardPreview({ className }: { className?: string }) {
             {t.label}
           </button>
         ))}
-        <span className="ml-auto hidden self-center rounded-full bg-primary-soft px-3 py-1.5 text-[11px] font-semibold text-primary sm:inline-block">
+        <span className="ml-auto hidden self-center rounded-full bg-primary-soft px-3 py-1.5 text-[11px] font-semibold text-accent sm:inline-block">
           Product preview · sample data
         </span>
       </div>

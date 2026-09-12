@@ -8,6 +8,8 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { Greeting } from "@/components/dashboard/greeting";
+import { UpgradeCard } from "@/components/dashboard/upgrade-card";
+import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -29,11 +31,16 @@ export default async function DashboardLayout({
   const visitorHour = (visitorTz ? hourInTimeZone(visitorTz) : null) ?? new Date().getHours();
   const initialGreeting = greetingForHour(visitorHour);
   // All memberships power the sidebar workspace switcher (shown when >1).
-  const memberships = await prisma.workspaceMember.findMany({
-    where: { userId: session.user.id },
-    select: { workspace: { select: { id: true, name: true } } },
-    orderBy: { createdAt: "asc" },
-  });
+  const [memberships, plan, websiteLimit, websitesUsed] = await Promise.all([
+    prisma.workspaceMember.findMany({
+      where: { userId: session.user.id },
+      select: { workspace: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    getWorkspacePlan(workspace.id),
+    getEffectiveWebsiteLimit(workspace.id),
+    prisma.website.count({ where: { workspaceId: workspace.id } }),
+  ]);
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
@@ -44,6 +51,11 @@ export default async function DashboardLayout({
           isBlogAdmin={isBlogAdmin(session.user.email)}
           workspaces={memberships.map((m) => m.workspace)}
           currentWorkspaceId={workspace.id}
+          upgradeCard={
+            plan.id === "free" ? (
+              <UpgradeCard websitesUsed={websitesUsed} websiteLimit={websiteLimit} />
+            ) : null
+          }
         />
       </div>
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">

@@ -108,7 +108,7 @@ export function ProfileForm({
         ) : (
           <span
             aria-hidden
-            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xl font-semibold text-primary"
+            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xl font-semibold text-accent"
           >
             {initial}
           </span>
@@ -165,7 +165,7 @@ export function ProfileForm({
           maxLength={PROFILE_NAME_MAX_LENGTH}
           required
           autoComplete="name"
-          className="h-11 w-full max-w-sm rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+          className="h-11 w-full max-w-sm rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
         />
       </div>
 

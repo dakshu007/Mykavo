@@ -112,7 +112,7 @@ export default async function MonitoredPageDetail({
             href={page.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-secondary hover:text-primary"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-secondary hover:text-accent"
           >
             Open page <ExternalLink className="size-3.5" aria-hidden />
           </a>
@@ -225,7 +225,7 @@ export default async function MonitoredPageDetail({
                   missing, hidden, or changes.
                 </p>
               </div>
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold text-primary">
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold text-accent">
                 <Sparkles className="size-3.5" aria-hidden /> Pro
               </span>
             </div>

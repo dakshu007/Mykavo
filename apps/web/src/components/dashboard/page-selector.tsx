@@ -99,7 +99,7 @@ export function PageSelector({
             "rounded-full px-3.5 py-1.5 text-[13px] font-semibold",
             selected.size >= pageBudget
               ? "bg-warning-soft text-warning-strong"
-              : "bg-primary-soft text-primary",
+              : "bg-primary-soft text-accent",
           )}
         >
           {pageBudget === Infinity
@@ -131,7 +131,7 @@ export function PageSelector({
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Search pages"
             aria-label="Search pages"
-            className="h-11 w-full rounded-full border border-line bg-card pl-11 pr-4 text-sm text-ink placeholder:text-ink-faint focus:border-primary focus:outline-none"
+            className="h-11 w-full rounded-full border border-line bg-card pl-11 pr-4 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
           />
         </div>
         <button
@@ -191,7 +191,7 @@ export function PageSelector({
           onChange={(e) => setManualUrl(e.target.value)}
           placeholder="Add a page manually: example.com/pricing"
           aria-label="Add a page manually"
-          className="h-11 flex-1 rounded-full border border-line bg-card px-4 font-mono text-[13px] text-ink placeholder:font-sans placeholder:text-ink-faint focus:border-primary focus:outline-none"
+          className="h-11 flex-1 rounded-full border border-line bg-card px-4 font-mono text-[13px] text-ink placeholder:font-sans placeholder:text-ink-faint focus:border-accent focus:outline-none"
         />
         <button
           type="submit"

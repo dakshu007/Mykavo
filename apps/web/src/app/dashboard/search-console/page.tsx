@@ -98,7 +98,7 @@ export default async function SearchConsolePage({
               <div className="mt-4 flex items-center gap-4 border-t border-line pt-4">
                 {connection ? (
                   <>
-                    <Link href={`/dashboard/search-console/${website.id}`} className="text-[13px] font-medium text-primary hover:underline">
+                    <Link href={`/dashboard/search-console/${website.id}`} className="text-[13px] font-medium text-accent hover:underline">
                       Open dashboard →
                     </Link>
                     {/* Without this, a revoked connection is a dead end: the

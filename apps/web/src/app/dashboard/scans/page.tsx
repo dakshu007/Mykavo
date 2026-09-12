@@ -64,7 +64,7 @@ export default async function ScansPage() {
                     href={`/dashboard/scans/${scan.id}`}
                     className="group block"
                   >
-                    <p className="text-sm font-medium text-ink group-hover:text-primary">
+                    <p className="text-sm font-medium text-ink group-hover:text-accent">
                       {scan.website.name}
                     </p>
                     <p className="font-mono text-xs text-ink-faint">

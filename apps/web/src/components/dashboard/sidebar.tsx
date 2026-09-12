@@ -41,11 +41,15 @@ const nav = [
 
 export function DashboardSidebar({
   workspaceName,
+  upgradeCard,
   isBlogAdmin = false,
   workspaces = [],
   currentWorkspaceId,
 }: {
   workspaceName: string;
+  /** Rendered upsell, or null on a paid plan. Passed in because the plan
+      lookup is a server query and this is a client component. */
+  upgradeCard?: React.ReactNode;
   isBlogAdmin?: boolean;
   /** All workspaces the user belongs to - switcher renders when >1. */
   workspaces?: WorkspaceOption[];
@@ -108,6 +112,8 @@ export function DashboardSidebar({
       </nav>
 
       <CommandPaletteTrigger />
+
+      {upgradeCard && <div className="mt-4">{upgradeCard}</div>}
 
       <div className="mt-4 flex items-center justify-between gap-2 px-1">
         <span className="px-3 text-[11px] font-medium text-ink-faint">Theme</span>

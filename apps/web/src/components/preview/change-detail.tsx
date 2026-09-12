@@ -109,7 +109,7 @@ export function PreviewChangeDetail() {
         <CardHeader
           title="What changed"
           action={
-            <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary">
+            <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent">
               Open affected page <ExternalLink className="size-3.5" aria-hidden />
             </span>
           }

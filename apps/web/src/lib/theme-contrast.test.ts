@@ -67,11 +67,14 @@ const TEXT_PAIRS: [string, string, number][] = [
   // Inverted pills/buttons (bg-ink text-ink-inverse).
   ["ink-inverse", "ink", 4.5],
   ["ink-inverse", "ink-hover", 4.5],
-  // Links and primary buttons.
-  ["primary", "card", 4.5],
-  ["primary", "surface", 4.5],
-  ["primary", "canvas", 4.5],
-  ["primary", "primary-soft", 4.5],
+  // Link and accent TEXT. Deliberately a different token from `primary`:
+  // MyKavo's gold is a background colour (#ffd400 on white is 1.43:1), so the
+  // readable member of that hue family carries the text.
+  ["accent", "card", 4.5],
+  ["accent", "surface", 4.5],
+  ["accent", "canvas", 4.5],
+  ["accent", "primary-soft", 4.5],
+  // Primary buttons: label on the gold fill.
   ["primary-contrast", "primary", 4.5],
   ["primary-contrast", "primary-hover", 4.5],
   // Status text on -soft chips and on cards.
@@ -108,6 +111,19 @@ const GRAPHIC_PAIRS_LIGHT: [string, string, number][] = [
 ];
 
 describe("globals.css token blocks", () => {
+  /**
+   * The invariant that forced `accent` to exist. `primary` is the brand gold
+   * and is legible only as a BACKGROUND - using it for text or a border ships
+   * something nobody can read. This asserts the fact rather than the intent,
+   * so if anyone ever retunes `primary` into a dark shade the pairing above
+   * becomes the thing to revisit.
+   */
+  it("keeps primary a background-only colour in light mode", () => {
+    expect(contrast(light.primary, light.card)).toBeLessThan(3);
+    expect(contrast(light["primary-contrast"], light.primary)).toBeGreaterThanOrEqual(4.5);
+  });
+
+
   it("parses light and dark palettes", () => {
     expect(Object.keys(light).length).toBeGreaterThan(20);
     expect(Object.keys(dark).length).toBeGreaterThan(20);
@@ -139,5 +155,42 @@ describe.each([
 
   it.each(graphicPairs)("%s on %s ≥ %s (non-text)", (fg, bg, min) => {
     expect(contrast(tokens[fg], tokens[bg])).toBeGreaterThanOrEqual(min);
+  });
+});
+
+/**
+ * Guards the migration that introduced `accent`.
+ *
+ * 140 `text-primary` / `border-primary` usages were rewritten to `accent` when
+ * the palette went gold. Reintroducing one would render unreadable text that
+ * nothing else in this suite could catch, because the token audit above checks
+ * the palette, not which class a component reaches for.
+ */
+describe("no component uses the gold token for text or borders", () => {
+  it("finds no bare text-primary or border-primary in app source", async () => {
+    const { readdirSync, statSync, readFileSync } = await import("node:fs");
+    const root = fileURLToPath(new URL("..", import.meta.url));
+
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir)) {
+        const full = `${dir}/${entry}`;
+        if (statSync(full).isDirectory()) {
+          walk(full);
+          continue;
+        }
+        // Test files ship no styles, and this one names the forbidden class
+        // in its own comment - it would flag itself forever.
+        if (!/\.(tsx?|css)$/.test(entry) || /\.test\.tsx?$/.test(entry)) continue;
+        const source = readFileSync(full, "utf8");
+        // Bare token only: text-primary-contrast and bg-primary-soft are fine.
+        if (/\b(?:text|border|ring|divide|outline)-primary(?![-\w])/.test(source)) {
+          offenders.push(full.slice(root.length));
+        }
+      }
+    };
+    walk(root);
+
+    expect(offenders, "use accent for text and borders; primary is a background").toEqual([]);
   });
 });

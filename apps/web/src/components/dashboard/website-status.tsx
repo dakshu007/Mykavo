@@ -2,7 +2,7 @@ import type { WebsiteStatus } from "@mykavo/database";
 import { cn } from "@/lib/utils";
 
 const styles: Record<WebsiteStatus, { dot: string; text: string; label: string }> = {
-  PENDING: { dot: "bg-primary", text: "text-primary", label: "Ready to baseline" },
+  PENDING: { dot: "bg-primary", text: "text-accent", label: "Ready to baseline" },
   DISCOVERING: { dot: "bg-warning", text: "text-warning-strong", label: "Discovering" },
   BASELINING: { dot: "bg-warning", text: "text-warning-strong", label: "Baselining" },
   ACTIVE: { dot: "bg-success", text: "text-success-strong", label: "Monitoring" },
