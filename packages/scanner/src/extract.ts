@@ -32,11 +32,18 @@ export interface InPageExtraction {
    * in-page so a page full of comments cannot bloat the payload.
    */
   versionComments: string[];
+  /** Which probed `window` globals were actually present. */
+  presentGlobals: string[];
+  /** Which probed CSS selectors actually matched. */
+  matchedSelectors: string[];
   normalizedDom: string;
   visibleText: string;
 }
 
-export function extractInPage(): InPageExtraction {
+export function extractInPage(
+  probedGlobals: string[] = [],
+  probedSelectors: string[] = [],
+): InPageExtraction {
   const doc = document;
 
   const meta = (name: string): string | null => {
@@ -82,6 +89,23 @@ export function extractInPage(): InPageExtraction {
   // Comment nodes are dropped by DOM normalization below, so they have to be
   // read here. Only comments that mention a known marker AND contain a digit
   // are kept - anything else is somebody's build note or a licence header.
+  // Stack probes. Only the names the caller asked about are touched - walking
+  // `window` wholesale is slow, noisy, and can trip getters that throw.
+  const presentGlobals = probedGlobals.filter((name) => {
+    try {
+      return (window as unknown as Record<string, unknown>)[name] !== undefined;
+    } catch {
+      return false;
+    }
+  });
+  const matchedSelectors = probedSelectors.filter((selector) => {
+    try {
+      return doc.querySelector(selector) !== null;
+    } catch {
+      return false; // invalid selector must never fail a scan
+    }
+  });
+
   const versionComments: string[] = [];
   const MARKERS = /yoast|wp rocket|litespeed|autoptimize/i;
   const walker = doc.createTreeWalker(doc.documentElement, NodeFilter.SHOW_COMMENT);
@@ -167,6 +191,8 @@ export function extractInPage(): InPageExtraction {
     stylesheets,
     generators,
     versionComments,
+    presentGlobals,
+    matchedSelectors,
     normalizedDom,
     visibleText,
   };

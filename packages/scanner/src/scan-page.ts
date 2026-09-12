@@ -11,6 +11,9 @@ import {
   UnsafeUrlError,
   normalizeUrl,
   fingerprintPlatform,
+  detectTechnologies,
+  PROBED_GLOBALS,
+  PROBED_SELECTORS,
   isSameOrigin,
   parseSelectorList,
 } from "@mykavo/shared";
@@ -157,6 +160,17 @@ export async function scanPage(
       throw new ScanPageError("NAVIGATION_FAILED", "Navigation returned no response.");
     }
 
+    // Response headers identify the host and CDN, which no amount of reading
+    // the HTML can. Playwright already lowercases the keys. Wrapped because a
+    // response whose body never arrived can throw here, and a missing header
+    // must degrade the stack report, not fail the scan.
+    let responseHeaders: Record<string, string> = {};
+    try {
+      responseHeaders = response.headers();
+    } catch {
+      responseHeaders = {};
+    }
+
     // Stabilization (spec §15): fonts, bounded network quiet, settle delay,
     // animations disabled.
     await page.addStyleTag({ content: STABILIZATION_CSS }).catch(() => {});
@@ -190,7 +204,8 @@ export async function scanPage(
     // calls into the browser, where `__name` is undefined. Inject the function
     // as source with a local `__name` shim so it resolves in-page.
     const extraction: InPageExtraction = await page.evaluate(
-      `(() => { const __name = (fn) => fn; return (${extractInPage.toString()})(); })()`,
+      `(() => { const __name = (fn) => fn; return (${extractInPage.toString()})(` +
+        `${JSON.stringify(PROBED_GLOBALS)}, ${JSON.stringify(PROBED_SELECTORS)}); })()`,
     );
 
     // Conversion element checks (spec §23, Phase 9). Evaluated on the same
@@ -250,6 +265,20 @@ export async function scanPage(
       ],
       generators: extraction.generators,
       comments: extraction.versionComments,
+    });
+
+    // What is this site built with? Broader than the WordPress fingerprint
+    // above, and the only one of the two that says anything on the ~57% of the
+    // web that is not WordPress.
+    const technologies = detectTechnologies({
+      assetUrls: [
+        ...extraction.scripts.map((s) => s.src),
+        ...extraction.stylesheets.map((l) => l.href),
+      ],
+      generators: extraction.generators,
+      globals: extraction.presentGlobals,
+      selectors: extraction.matchedSelectors,
+      headers: responseHeaders,
     });
 
     const seenScripts = new Set<string>();
@@ -354,6 +383,7 @@ export async function scanPage(
       links,
       scripts,
       platformFingerprint,
+      technologies,
       elements,
     };
   } finally {

@@ -1,5 +1,12 @@
 import { prisma } from "@mykavo/database";
-import { parseFingerprint, compareVersions, type PlatformFingerprint } from "@mykavo/shared";
+import {
+  parseFingerprint,
+  parseTechnologies,
+  mergeTechnologies,
+  compareVersions,
+  type PlatformFingerprint,
+  type TechEntry,
+} from "@mykavo/shared";
 
 /**
  * The platform stack MyKavo can see on a website: plugins, theme and core
@@ -11,6 +18,12 @@ import { parseFingerprint, compareVersions, type PlatformFingerprint } from "@my
  * since a stale cached asset can leave one page on the older file.
  */
 export interface PlatformStack {
+  /**
+   * Everything the site is built with, merged across its pages. Populated for
+   * every site - this is the half that says something about the ~57% of the web
+   * that is not WordPress.
+   */
+  technologies: TechEntry[];
   fingerprint: PlatformFingerprint;
   /** Pages whose latest snapshot carried a fingerprint at all. */
   pagesRead: number;
@@ -51,12 +64,15 @@ async function queryPlatformStack(websiteId: string): Promise<PlatformStack | nu
         where: { errorCode: null },
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { platformFingerprint: true },
+        select: { platformFingerprint: true, technologies: true },
       },
     },
   });
 
   const merged = new Map<string, PlatformFingerprint["components"][number]>();
+  // A site's stack is the union of its pages': a payment script loads only on
+  // /checkout, a chat widget only on /contact. Any single page under-reports.
+  const perPageTech: TechEntry[][] = [];
   let pagesRead = 0;
   let assetsSeen = 0;
   let assetsVersioned = 0;
@@ -64,7 +80,13 @@ async function queryPlatformStack(websiteId: string): Promise<PlatformStack | nu
   const present = new Set<string>();
 
   for (const page of pages) {
-    const fp = parseFingerprint(page.snapshots[0]?.platformFingerprint);
+    const snapshot = page.snapshots[0];
+    if (!snapshot) continue;
+
+    const tech = parseTechnologies(snapshot.technologies);
+    if (tech.length > 0) perPageTech.push(tech);
+
+    const fp = parseFingerprint(snapshot.platformFingerprint);
     if (!fp) continue;
     pagesRead++;
     assetsSeen += fp.assetsSeen;
@@ -82,7 +104,11 @@ async function queryPlatformStack(websiteId: string): Promise<PlatformStack | nu
     }
   }
 
-  if (pagesRead === 0) return null;
+  const technologies = mergeTechnologies(perPageTech);
+  // Nothing detected at all means no scan has run since this shipped. Hiding
+  // the panel is right: an empty "Detected stack" card reads as "we looked and
+  // your site uses nothing", which is never true.
+  if (pagesRead === 0 && technologies.length === 0) return null;
 
   const kindOrder = { core: 0, theme: 1, plugin: 2 } as const;
   const components = [...merged.values()].sort(
@@ -90,6 +116,7 @@ async function queryPlatformStack(websiteId: string): Promise<PlatformStack | nu
   );
 
   return {
+    technologies,
     fingerprint: {
       platform,
       components,

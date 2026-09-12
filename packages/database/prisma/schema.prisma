@@ -413,6 +413,10 @@ model PageSnapshot {
   // PlatformFingerprint from @mykavo/shared. JSONB rather than rows: it is read
   // whole, compared whole, and never queried by component.
   platformFingerprint        Json?
+  // What this page is built with - CMS, framework, host, analytics, payments -
+  // shaped as TechEntry[] from @mykavo/shared. Read whole, never queried by
+  // element, so JSONB rather than rows.
+  technologies               Json?
   errorCode                  String?
   errorMessage               String?
   createdAt                  DateTime      @default(now())

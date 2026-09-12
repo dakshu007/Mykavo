@@ -1,3 +1,46 @@
+# Detected stack & plugin update attribution
+
+Two related features, worth separating:
+
+| | Works on | Answers |
+| --- | --- | --- |
+| **Detected stack** (`packages/shared/src/tech-stack.ts`) | every site | What is this built with? |
+| **Plugin attribution** (`packages/shared/src/platform-fingerprint.ts`) | WordPress | Which update broke it? |
+
+The first exists because the second says nothing on the ~57% of the web that is
+not WordPress — including, as it turned out, all four of the author's own sites.
+
+## Detected stack
+
+Identifies CMS, framework, host, CDN, tag manager, analytics, marketing,
+payments, support, monitoring, security, consent and font tooling — about 60
+technologies — from five kinds of evidence the scanner already has:
+
+| Signal | Example | Catches |
+| --- | --- | --- |
+| Asset URL | `js.stripe.com` | most third-party tools |
+| Generator tag | `WooCommerce 8.5.1` | CMSs, and versions |
+| `window` global | `__NEXT_DATA__` | frameworks |
+| DOM marker | `html[data-wf-page]` | Webflow, Angular, Gatsby |
+| Response header | `x-vercel-id` | hosts and CDNs, invisible in HTML |
+
+Globals and selectors are probed against a fixed allowlist exported from the
+rule table itself (`PROBED_GLOBALS`, `PROBED_SELECTORS`), so a rule can never
+depend on a signal nobody looks for. Walking `window` wholesale is slow and can
+trip getters that throw.
+
+Every entry carries its **evidence** — the panel shows `asset: js.stripe.com`,
+not just "Stripe" — because a detection a user cannot check is a detection they
+cannot trust.
+
+A site's stack is the **union of its pages'**: a payment script loads only on
+`/checkout`, a chat widget only on `/contact`. Any single page under-reports.
+
+The rule table is curated, not exhaustive. Reporting Stripe on a site with no
+payments is worse than reporting nothing.
+
+---
+
 # Plugin & theme update attribution
 
 > Elementor updated 3.18.0 → 3.19.1 on Sep 9.

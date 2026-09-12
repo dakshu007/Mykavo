@@ -165,6 +165,10 @@ export async function runScanWebsiteJob(
             result.platformFingerprint.platform === null
               ? undefined
               : (result.platformFingerprint as unknown as Prisma.InputJsonValue),
+          technologies:
+            result.technologies.length === 0
+              ? undefined
+              : (result.technologies as unknown as Prisma.InputJsonValue),
           links: {
             create: result.links.map((l) => ({
               url: l.url.slice(0, 2048),

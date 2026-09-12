@@ -1,4 +1,4 @@
-import type { PlatformFingerprint } from "@mykavo/shared";
+import type { PlatformFingerprint, TechEntry } from "@mykavo/shared";
 
 export type ElementImportance = "NORMAL" | "IMPORTANT" | "CRITICAL";
 
@@ -92,6 +92,12 @@ export interface PageScanResult {
    * common answer, not a failure.
    */
   platformFingerprint: PlatformFingerprint;
+  /**
+   * What this page is built with - CMS, framework, host, analytics, payments,
+   * support tooling. Unlike platformFingerprint this says something on every
+   * site, not only WordPress ones.
+   */
+  technologies: TechEntry[];
   /** Observed state of each requested monitored element (Phase 9). */
   elements: MonitoredElementCheck[];
 }
