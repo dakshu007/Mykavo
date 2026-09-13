@@ -105,11 +105,13 @@ const URGENCY_LABEL: Record<ExpiryUrgency, string> = {
  * run, and says plainly when the registry could not be read rather than
  * implying the domain is fine.
  */
-function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
+function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo | undefined }) {
   const { palette } = useTheme();
 
-  // Nothing to show until the weekly sweep has reached this site.
-  if (!domain.checkedAt) return null;
+  // `domain` is absent entirely when the backend predates this feature - the
+  // app ships independently of the server, so a new build WILL meet an old
+  // one. Nothing to show until the weekly sweep has reached this site either.
+  if (!domain?.checkedAt) return null;
 
   const tone: Record<ExpiryUrgency, { bg: string; text: string }> = {
     expired: { bg: palette.criticalSoft, text: palette.criticalStrong },
@@ -119,6 +121,11 @@ function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
     ok: { bg: palette.successSoft, text: palette.successStrong },
   };
 
+  // An unknown or missing urgency must not index into the maps below and
+  // return undefined - that is the same crash one level down.
+  const urgency: ExpiryUrgency =
+    domain.urgency && domain.urgency in URGENCY_LABEL ? domain.urgency : "ok";
+  const blocking = domain.blockingStatuses ?? [];
   const failed = Boolean(domain.lookupError) || !domain.expiresAt;
 
   return (
@@ -128,9 +135,9 @@ function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
         <CardTitle style={{ flex: 1 }}>Domain</CardTitle>
         {!failed ? (
           <Chip
-            label={URGENCY_LABEL[domain.urgency]}
-            bg={tone[domain.urgency].bg}
-            color={tone[domain.urgency].text}
+            label={URGENCY_LABEL[urgency]}
+            bg={tone[urgency].bg}
+            color={tone[urgency].text}
           />
         ) : null}
       </View>
@@ -154,7 +161,7 @@ function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
                 color: palette.ink,
               }}
             >
-              {domain.daysRemaining !== null && domain.daysRemaining >= 0
+              {typeof domain.daysRemaining === "number" && domain.daysRemaining >= 0
                 ? `in ${domain.daysRemaining} day${domain.daysRemaining === 1 ? "" : "s"}`
                 : "already passed"}
             </Text>
@@ -188,7 +195,7 @@ function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
               <KeyRow label="Domain" value={<Mono color={palette.ink}>{domain.name}</Mono>} />
             </>
           ) : null}
-          {domain.blockingStatuses.length > 0 ? (
+          {blocking.length > 0 ? (
             <View
               style={{
                 marginTop: 12,
@@ -198,7 +205,7 @@ function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
               }}
             >
               <Small color={palette.warningStrong}>
-                The registry has a hold on this domain ({domain.blockingStatuses.join(", ")}),
+                The registry has a hold on this domain ({blocking.join(", ")}),
                 which can block renewal or transfer.
               </Small>
             </View>
@@ -221,10 +228,14 @@ function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
  */
 function DetectedStackCard({ stack }: { stack: StackInfo }) {
   const { palette } = useTheme();
-  if (stack.technologies.length === 0 && stack.components.length === 0) return null;
+  // Same reasoning as DomainExpiryCard: a backend one deploy behind can send
+  // the object without its arrays, and `.length` on undefined is a crash.
+  const technologies = stack.technologies ?? [];
+  const components = stack.components ?? [];
+  if (technologies.length === 0 && components.length === 0) return null;
 
-  const byCategory = new Map<string, typeof stack.technologies>();
-  for (const tech of stack.technologies) {
+  const byCategory = new Map<string, typeof technologies>();
+  for (const tech of technologies) {
     const list = byCategory.get(tech.category) ?? [];
     list.push(tech);
     byCategory.set(tech.category, list);
@@ -238,7 +249,7 @@ function DetectedStackCard({ stack }: { stack: StackInfo }) {
         <Layers size={17} color={palette.accent} />
         <CardTitle style={{ flex: 1 }}>Detected stack</CardTitle>
         <Chip
-          label={`${stack.technologies.length}`}
+          label={`${technologies.length}`}
           bg={palette.infoSoft}
           color={palette.info}
         />
@@ -260,12 +271,12 @@ function DetectedStackCard({ stack }: { stack: StackInfo }) {
         </View>
       ))}
 
-      {stack.components.length > 0 ? (
+      {components.length > 0 ? (
         <View style={{ marginTop: 16, gap: 8 }}>
           <MicroLabel>
             {stack.platform === "wordpress" ? "WordPress components" : "Components"}
           </MicroLabel>
-          {stack.components.map((component, i) => (
+          {components.map((component, i) => (
             <Fragment key={`${component.kind}:${component.slug}`}>
               {i > 0 ? <Divider /> : null}
               <View

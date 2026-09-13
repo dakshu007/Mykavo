@@ -247,9 +247,16 @@ export interface WebsiteDetailResponse {
     highestOpenSeverity: Severity | null;
   };
   health: WebsiteHealth;
-  domain: DomainRegistrationInfo;
-  /** null when the fingerprint migration has not run, or nothing was read. */
-  stack: StackInfo | null;
+  /**
+   * OPTIONAL on purpose. The app updates independently of the backend: a phone
+   * running a new build against a server that predates these fields receives a
+   * response without them. Typing it as always-present made the compiler agree
+   * with an assumption reality does not, and the screen crashed on
+   * `domain.checkedAt` of undefined.
+   */
+  domain?: DomainRegistrationInfo;
+  /** Absent on older backends; null when nothing could be read. */
+  stack?: StackInfo | null;
   incidents: WebsiteIncident[];
   recentScans: ScanListItem[];
   scanInProgress: { scanId: string } | null;
