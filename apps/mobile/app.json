@@ -43,7 +43,8 @@
           "color": "#FFD400",
           "defaultChannel": "changes"
         }
-      ]
+      ],
+      "./plugins/with-release-signing"
     ],
     "experiments": {
       "typedRoutes": true,

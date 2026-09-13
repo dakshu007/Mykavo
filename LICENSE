@@ -1,0 +1,62 @@
+MyKavo — Proprietary Software Licence
+Copyright (c) 2026 Dakshesh B. All rights reserved.
+
+MyKavo, including the MyKavo web application, background workers, and the
+MyKavo mobile applications for Android and iOS (together, the "Software"),
+is proprietary and confidential. It is NOT open-source software.
+
+1. Ownership
+   The Software and all intellectual property rights in it are and remain the
+   exclusive property of the copyright holder. No rights are granted except
+   those expressly stated in this licence.
+
+2. Permitted use
+   Use of the Software is permitted only:
+   (a) by the copyright holder; or
+   (b) by end users, through officially distributed builds of the MyKavo
+       mobile application and through the hosted MyKavo service, subject to
+       the MyKavo Terms of Service at https://mykavo.app/terms and the
+       Privacy Policy at https://mykavo.app/privacy.
+
+   Installing and using an officially distributed MyKavo mobile application
+   does not transfer ownership of the Software or of its source code.
+
+3. Restrictions
+   Except to the extent such a restriction is unenforceable under applicable
+   law, no person may, without prior written permission from the copyright
+   holder:
+   (a) copy, publish, distribute, sublicense, sell, rent or lease the
+       Software or its source code;
+   (b) modify, adapt, translate or create derivative works of the Software;
+   (c) reverse engineer, decompile or disassemble the Software;
+   (d) remove or alter any copyright, trademark or attribution notice; or
+   (e) use the Software to build a competing product or service.
+
+4. Trademarks
+   "MyKavo", the MyKavo name, logo and brand assets are trademarks of the
+   copyright holder. This licence grants no trademark rights.
+
+5. Third-party components
+   The Software incorporates third-party open-source components, which remain
+   subject to their own licences. Those licences govern those components and
+   nothing in this licence restricts rights granted by them. Attribution and
+   licence texts for the components distributed in the MyKavo mobile
+   application are in apps/mobile/THIRD-PARTY-NOTICES.md and are reproduced in
+   the application under Settings → Open source licences.
+
+6. No warranty
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+7. Limitation of liability
+   TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE
+   COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+   OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+   Nothing in this licence limits liability that cannot be limited under
+   applicable law.
+
+For licensing enquiries, contact the copyright holder via https://mykavo.app.

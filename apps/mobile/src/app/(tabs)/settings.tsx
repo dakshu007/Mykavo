@@ -7,7 +7,7 @@
 import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Bell, Check } from "lucide-react-native";
+import { Bell, Check, ChevronRight, Scale } from "lucide-react-native";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -358,6 +358,49 @@ export default function SettingsScreen() {
           <Small>Version</Small>
           <Mono>{Constants.expoConfig?.version ?? "unknown"}</Mono>
         </View>
+        <Divider />
+        <Pressable
+          onPress={() => router.push("/licenses")}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingVertical: 12,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Scale size={16} color={palette.inkSecondary} />
+          <Small style={{ flex: 1 }}>Open source licences</Small>
+          <ChevronRight size={16} color={palette.inkFaint} />
+        </Pressable>
+        <Divider />
+        <Pressable
+          onPress={() => void Linking.openURL("https://mykavo.app/privacy")}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingVertical: 12,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Small style={{ flex: 1 }}>Privacy policy</Small>
+          <ChevronRight size={16} color={palette.inkFaint} />
+        </Pressable>
+        <Divider />
+        <Pressable
+          onPress={() => void Linking.openURL("https://mykavo.app/terms")}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingVertical: 12,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Small style={{ flex: 1 }}>Terms of service</Small>
+          <ChevronRight size={16} color={palette.inkFaint} />
+        </Pressable>
       </Card>
 
       <Button
