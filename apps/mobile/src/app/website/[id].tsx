@@ -6,17 +6,19 @@
  */
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { CalendarClock, ChevronLeft, ChevronRight, Layers } from "lucide-react-native";
 import { Fragment, useState, type ReactNode } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
 import { HealthDot, ScanStatusBadge, WebsiteStatusBadge } from "@/components/badges";
 import { Screen } from "@/components/screen";
 import {
+  Body,
   Button,
   Card,
   CardTitle,
   Divider,
+  MicroLabel,
   ErrorState,
   Heading,
   LoadingState,
@@ -37,6 +39,7 @@ import {
 import { activeInterval, useLive } from "@/lib/live";
 import { fonts, radius } from "@/lib/theme";
 import { useTheme } from "@/lib/theme-context";
+import type { DomainRegistrationInfo, ExpiryUrgency, StackInfo } from "@/lib/types";
 
 /** Small filled chip - local helper for baseline/incident/off markers. */
 function Chip({ label, bg, color }: { label: string; bg: string; color: string }) {
@@ -70,6 +73,234 @@ function KeyRow({ label, value }: { label: string; value: ReactNode }) {
       <Small>{label}</Small>
       {value}
     </View>
+  );
+}
+
+/* --------------------------- domain expiry -------------------------------- */
+
+/** Why a registry lookup failed, without blaming the user. */
+const DOMAIN_ERROR_COPY: Record<string, string> = {
+  NO_REGISTRABLE_DOMAIN: "This address has no public domain registration to check.",
+  NOT_FOUND: "The registry has no record for this domain.",
+  RATE_LIMITED: "The registry rate-limited us. MyKavo will retry on the next sweep.",
+  UNSUPPORTED_TLD: "This domain's registry does not publish expiry data.",
+  BLOCKED_URL: "The registry lookup was blocked by MyKavo's request guard.",
+  LOOKUP_FAILED: "The registry could not be reached.",
+};
+
+const URGENCY_LABEL: Record<ExpiryUrgency, string> = {
+  expired: "Expired",
+  critical: "Renew now",
+  warning: "Renew soon",
+  notice: "Coming up",
+  ok: "In good standing",
+};
+
+/**
+ * When does this domain expire?
+ *
+ * An expired domain takes the site AND every email address on it down at once,
+ * and unlike an outage nobody gets paged - the renewal notice went to an inbox
+ * someone left the agency with. Renders nothing until a lookup has actually
+ * run, and says plainly when the registry could not be read rather than
+ * implying the domain is fine.
+ */
+function DomainExpiryCard({ domain }: { domain: DomainRegistrationInfo }) {
+  const { palette } = useTheme();
+
+  // Nothing to show until the weekly sweep has reached this site.
+  if (!domain.checkedAt) return null;
+
+  const tone: Record<ExpiryUrgency, { bg: string; text: string }> = {
+    expired: { bg: palette.criticalSoft, text: palette.criticalStrong },
+    critical: { bg: palette.criticalSoft, text: palette.criticalStrong },
+    warning: { bg: palette.warningSoft, text: palette.warningStrong },
+    notice: { bg: palette.primarySoft, text: palette.accent },
+    ok: { bg: palette.successSoft, text: palette.successStrong },
+  };
+
+  const failed = Boolean(domain.lookupError) || !domain.expiresAt;
+
+  return (
+    <Card>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <CalendarClock size={17} color={palette.accent} />
+        <CardTitle style={{ flex: 1 }}>Domain</CardTitle>
+        {!failed ? (
+          <Chip
+            label={URGENCY_LABEL[domain.urgency]}
+            bg={tone[domain.urgency].bg}
+            color={tone[domain.urgency].text}
+          />
+        ) : null}
+      </View>
+
+      {failed ? (
+        <Small>
+          {domain.lookupError
+            ? (DOMAIN_ERROR_COPY[domain.lookupError] ??
+              "The registry lookup did not return an expiry date.")
+            : "The registry did not publish an expiry date for this domain."}
+        </Small>
+      ) : (
+        <>
+          <View style={{ gap: 2, marginBottom: 4 }}>
+            <MicroLabel>Expires</MicroLabel>
+            <Text
+              style={{
+                fontFamily: fonts.bodySemiBold,
+                fontSize: 22,
+                lineHeight: 28,
+                color: palette.ink,
+              }}
+            >
+              {domain.daysRemaining !== null && domain.daysRemaining >= 0
+                ? `in ${domain.daysRemaining} day${domain.daysRemaining === 1 ? "" : "s"}`
+                : "already passed"}
+            </Text>
+          </View>
+          {domain.message ? <Small>{domain.message}</Small> : null}
+          <Divider style={{ marginTop: 14 }} />
+          <KeyRow
+            label="Expiry date"
+            value={
+              <Mono color={palette.ink}>
+                {domain.expiresAt ? formatDateTime(domain.expiresAt).split(",")[0] : "\u2014"}
+              </Mono>
+            }
+          />
+          {domain.registrar ? (
+            <>
+              <Divider />
+              <KeyRow
+                label="Registrar"
+                value={
+                  <Small color={palette.ink} numberOfLines={1} style={{ flexShrink: 1 }}>
+                    {domain.registrar}
+                  </Small>
+                }
+              />
+            </>
+          ) : null}
+          {domain.name ? (
+            <>
+              <Divider />
+              <KeyRow label="Domain" value={<Mono color={palette.ink}>{domain.name}</Mono>} />
+            </>
+          ) : null}
+          {domain.blockingStatuses.length > 0 ? (
+            <View
+              style={{
+                marginTop: 12,
+                padding: 12,
+                borderRadius: radius.field,
+                backgroundColor: palette.warningSoft,
+              }}
+            >
+              <Small color={palette.warningStrong}>
+                The registry has a hold on this domain ({domain.blockingStatuses.join(", ")}),
+                which can block renewal or transfer.
+              </Small>
+            </View>
+          ) : null}
+        </>
+      )}
+    </Card>
+  );
+}
+
+/* ----------------------------- detected stack ----------------------------- */
+
+/**
+ * What the site is built with, merged across its monitored pages.
+ *
+ * Plugins are enqueued per page - a checkout plugin only loads on /checkout -
+ * so the homepage alone under-reports the site. The coverage line is
+ * deliberately blunt: a number that contradicts what is listed is worse than
+ * no number.
+ */
+function DetectedStackCard({ stack }: { stack: StackInfo }) {
+  const { palette } = useTheme();
+  if (stack.technologies.length === 0 && stack.components.length === 0) return null;
+
+  const byCategory = new Map<string, typeof stack.technologies>();
+  for (const tech of stack.technologies) {
+    const list = byCategory.get(tech.category) ?? [];
+    list.push(tech);
+    byCategory.set(tech.category, list);
+  }
+
+  const unread = stack.assetsSeen - stack.assetsVersioned;
+
+  return (
+    <Card>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <Layers size={17} color={palette.accent} />
+        <CardTitle style={{ flex: 1 }}>Detected stack</CardTitle>
+        <Chip
+          label={`${stack.technologies.length}`}
+          bg={palette.infoSoft}
+          color={palette.info}
+        />
+      </View>
+
+      {[...byCategory.entries()].map(([category, entries], i) => (
+        <View key={category} style={{ marginTop: i === 0 ? 0 : 14, gap: 8 }}>
+          <MicroLabel>{category.replace(/[-_]/g, " ")}</MicroLabel>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {entries.map((tech) => (
+              <Chip
+                key={tech.slug}
+                label={tech.version ? `${tech.name} ${tech.version}` : tech.name}
+                bg={palette.surface}
+                color={palette.ink}
+              />
+            ))}
+          </View>
+        </View>
+      ))}
+
+      {stack.components.length > 0 ? (
+        <View style={{ marginTop: 16, gap: 8 }}>
+          <MicroLabel>
+            {stack.platform === "wordpress" ? "WordPress components" : "Components"}
+          </MicroLabel>
+          {stack.components.map((component, i) => (
+            <Fragment key={`${component.kind}:${component.slug}`}>
+              {i > 0 ? <Divider /> : null}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  paddingVertical: 8,
+                }}
+              >
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Small color={palette.ink} numberOfLines={1}>
+                    {component.name}
+                  </Small>
+                  <Small color={palette.inkFaint}>{component.kind}</Small>
+                </View>
+                <Mono color={palette.ink}>{component.version}</Mono>
+              </View>
+            </Fragment>
+          ))}
+        </View>
+      ) : null}
+
+      {stack.assetsSeen > 0 && unread > 0 ? (
+        <Body style={{ marginTop: 14 }}>
+          <Small color={palette.inkFaint}>
+            Read from {stack.pagesRead} page{stack.pagesRead === 1 ? "" : "s"}.{" "}
+            {unread} of {stack.assetsSeen} platform assets did not state a version, usually
+            because a cache or CDN stripped it — those components are present but their
+            versions are unknown.
+          </Small>
+        </Body>
+      ) : null}
+    </Card>
   );
 }
 
@@ -304,6 +535,8 @@ export default function WebsiteDetailScreen() {
         />
       </Card>
 
+      <DomainExpiryCard domain={data.domain} />
+
       {/* Incidents */}
       {incidents.length > 0 ? (
         <Card>
@@ -415,6 +648,8 @@ export default function WebsiteDetailScreen() {
           ))
         )}
       </Card>
+
+      {data.stack ? <DetectedStackCard stack={data.stack} /> : null}
 
       {/* Alerts */}
       <Card>

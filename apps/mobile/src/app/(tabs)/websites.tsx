@@ -5,13 +5,14 @@
  */
 
 import { useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Plus } from "lucide-react-native";
 import { Fragment } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import { WebsiteStatusBadge } from "@/components/badges";
 import { Screen } from "@/components/screen";
 import {
+  Button,
   Card,
   CardTitle,
   Divider,
@@ -43,6 +44,14 @@ export default function WebsitesScreen() {
     <Screen
       title="Websites"
       subtitle={data ? `${websites.length} monitored` : undefined}
+      headerRight={
+        <Button
+          title="Add"
+          size="sm"
+          icon={<Plus size={15} color={palette.primaryContrast} />}
+          onPress={() => router.push("/website/new")}
+        />
+      }
       refreshing={refreshing}
       onRefresh={() => void refresh()}
     >
@@ -54,7 +63,14 @@ export default function WebsitesScreen() {
         <Card>
           <EmptyState
             title="No websites yet"
-            message="Add your first website from the dashboard at mykavo.app"
+            message="Add a site and MyKavo finds its pages, takes a baseline, then tells you when something changes."
+            action={
+              <Button
+                title="Add your first website"
+                icon={<Plus size={16} color={palette.primaryContrast} />}
+                onPress={() => router.push("/website/new")}
+              />
+            }
           />
         </Card>
       ) : (

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Pressable,
   Text,
+  TextInput,
   View,
   type StyleProp,
   type TextStyle,
@@ -332,6 +333,127 @@ export function Pill({
       >
         {label}
       </Text>
+    </Pressable>
+  );
+}
+
+/* ------------------------------ inputs ------------------------------------ */
+
+/** Labeled text field on the fx palette (the dashboard's input pattern). */
+export function Field({
+  label,
+  hint,
+  value,
+  onChangeText,
+  placeholder,
+  autoFocus,
+  autoCapitalize = "none",
+  keyboardType,
+  mono = false,
+  onSubmitEditing,
+  returnKeyType,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder?: string;
+  autoFocus?: boolean;
+  autoCapitalize?: "none" | "sentences" | "words";
+  keyboardType?: "default" | "url" | "email-address";
+  mono?: boolean;
+  onSubmitEditing?: () => void;
+  returnKeyType?: "done" | "go" | "next";
+}) {
+  const { palette } = useTheme();
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: palette.ink }}>
+          {label}
+        </Text>
+        {hint ? <Small color={palette.inkFaint}>{hint}</Small> : null}
+      </View>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={palette.inkFaint}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={false}
+        autoFocus={autoFocus}
+        keyboardType={keyboardType}
+        onSubmitEditing={onSubmitEditing}
+        returnKeyType={returnKeyType}
+        style={{
+          height: 48,
+          borderWidth: 1,
+          borderColor: palette.line,
+          borderRadius: radius.field,
+          backgroundColor: palette.card,
+          paddingHorizontal: 14,
+          fontSize: 15,
+          fontFamily: mono ? fonts.mono : fonts.body,
+          color: palette.ink,
+        }}
+      />
+    </View>
+  );
+}
+
+/** Tappable row with a checkbox - the page-selection pattern. */
+export function CheckRow({
+  checked,
+  onToggle,
+  title,
+  subtitle,
+  disabled = false,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  disabled?: boolean;
+}) {
+  const { palette } = useTheme();
+  return (
+    <Pressable
+      onPress={onToggle}
+      disabled={disabled}
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingVertical: 12,
+        opacity: disabled ? 0.45 : pressed ? 0.7 : 1,
+      })}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 6,
+          borderWidth: checked ? 0 : 1.5,
+          borderColor: palette.line,
+          backgroundColor: checked ? palette.primary : "transparent",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {checked ? (
+          <Text
+            style={{
+              fontFamily: fonts.bodyBold,
+              fontSize: 13,
+              lineHeight: 16,
+              color: palette.primaryContrast,
+            }}
+          >
+            {"\u2713"}
+          </Text>
+        ) : null}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>{typeof title === "string" ? <CardTitle numberOfLines={1}>{title}</CardTitle> : title}{subtitle}</View>
     </Pressable>
   );
 }

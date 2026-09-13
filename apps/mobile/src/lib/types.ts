@@ -247,6 +247,9 @@ export interface WebsiteDetailResponse {
     highestOpenSeverity: Severity | null;
   };
   health: WebsiteHealth;
+  domain: DomainRegistrationInfo;
+  /** null when the fingerprint migration has not run, or nothing was read. */
+  stack: StackInfo | null;
   incidents: WebsiteIncident[];
   recentScans: ScanListItem[];
   scanInProgress: { scanId: string } | null;
@@ -276,4 +279,76 @@ export interface ApiErrorBody {
   error: string;
   code?: string;
   scanId?: string;
+}
+
+/* ------------------------- adding a website ------------------------------ */
+
+/**
+ * POST /api/websites/[id]/discover. `source` says where a URL was found
+ * (sitemap, homepage link, ...) so the selection list can explain itself.
+ */
+export interface DiscoveredPage {
+  url: string;
+  source: string;
+}
+
+export interface DiscoveryResponse {
+  pages: DiscoveredPage[];
+  /** Non-fatal problems worth showing, e.g. an unreachable sitemap. */
+  warnings: string[];
+  /** True when discovery hit its cap and more pages probably exist. */
+  truncated: boolean;
+  /** The homepage after redirects (apex -> www, http -> https). */
+  finalUrl: string;
+}
+
+/* -------------------- domain registration + tech stack -------------------- */
+
+/**
+ * Domain registration facts read over RDAP. `checkedAt` null means the weekly
+ * sweep has not reached this site yet, which must NOT be shown as "fine".
+ */
+export type ExpiryUrgency = "expired" | "critical" | "warning" | "notice" | "ok";
+
+export interface DomainRegistrationInfo {
+  name: string | null;
+  expiresAt: string | null;
+  registrar: string | null;
+  checkedAt: string | null;
+  lookupError: string | null;
+  /** Computed server-side by @mykavo/shared's assessExpiry - never in the app. */
+  daysRemaining: number | null;
+  urgency: ExpiryUrgency;
+  /** Plain-language summary; empty when there is nothing to say. */
+  message: string;
+  /** Registry holds that block renewal or transfer. */
+  blockingStatuses: string[];
+}
+
+export type TechCategory = string;
+
+export interface TechEntry {
+  slug: string;
+  name: string;
+  category: TechCategory;
+  version: string | null;
+  /** Which signal matched - shown to the user, so it must read plainly. */
+  evidence: string;
+}
+
+export interface PlatformComponentInfo {
+  kind: string;
+  slug: string;
+  name: string;
+  version: string;
+}
+
+/** What the site is built with, merged across its monitored pages. */
+export interface StackInfo {
+  technologies: TechEntry[];
+  platform: "wordpress" | null;
+  components: PlatformComponentInfo[];
+  pagesRead: number;
+  assetsSeen: number;
+  assetsVersioned: number;
 }

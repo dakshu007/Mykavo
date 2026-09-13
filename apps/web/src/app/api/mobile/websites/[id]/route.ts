@@ -14,6 +14,8 @@ import {
   mapIncident,
 } from "@/lib/mobile/health";
 import { highestSeverity, mapScanListItem } from "@/lib/mobile/mapping";
+import { loadPlatformStack } from "@/lib/platform-stack";
+import { assessExpiry, blockingStatuses } from "@mykavo/shared";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -34,7 +36,7 @@ export async function GET(_request: Request, { params }: Params) {
   const now = new Date();
   // All queries scope to the workspace/route param, so they run in parallel;
   // the website null-check below 404s before any of their data is returned.
-  const [website, openChanges, latestHealth, uptime24h, uptime7d, incidents, plan] =
+  const [website, openChanges, latestHealth, uptime24h, uptime7d, incidents, plan, stack] =
     await Promise.all([
       prisma.website.findFirst({
         where: { id, workspaceId: ctx.workspace.id },
@@ -64,6 +66,9 @@ export async function GET(_request: Request, { params }: Params) {
       }),
       getRecentHealthIncidents(prisma, { websiteId: id, limit: 10 }),
       getWorkspacePlan(ctx.workspace.id),
+      // Returns null (and logs) rather than throwing if the fingerprint
+      // migration has not run yet - the panel hides, the screen still loads.
+      loadPlatformStack(id),
     ]);
   if (!website) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -96,6 +101,40 @@ export async function GET(_request: Request, { params }: Params) {
       createdAt: website.createdAt,
       updatedAt: website.updatedAt,
     },
+    // Domain registration (spec: an expired domain takes the site AND its
+    // email down at once). `domainCheckedAt` being null means the weekly
+    // sweep has not reached this site - the app must say that rather than
+    // imply the domain is fine.
+    domain: {
+      name: website.domainName,
+      expiresAt: website.domainExpiresAt,
+      registrar: website.domainRegistrar,
+      checkedAt: website.domainCheckedAt,
+      lookupError: website.domainLookupError,
+      // The urgency verdict is computed HERE, with the same shared function the
+      // dashboard uses, rather than reimplemented in the app: the app is
+      // outside the pnpm workspace and cannot import @mykavo/shared, so a
+      // second copy of the 60/30/14-day thresholds would quietly drift.
+      ...assessExpiry(website.domainExpiresAt),
+      /** Registry holds that block renewal or transfer, if any. */
+      blockingStatuses: blockingStatuses(
+        Array.isArray(website.domainStatuses)
+          ? (website.domainStatuses as unknown[]).filter(
+              (v): v is string => typeof v === "string",
+            )
+          : [],
+      ),
+    },
+    stack: stack
+      ? {
+          technologies: stack.technologies,
+          platform: stack.fingerprint.platform,
+          components: stack.fingerprint.components,
+          pagesRead: stack.pagesRead,
+          assetsSeen: stack.assetsSeen,
+          assetsVersioned: stack.assetsVersioned,
+        }
+      : null,
     pages: website.monitoredPages.map((page) => ({
       id: page.id,
       websiteId: page.websiteId,

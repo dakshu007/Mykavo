@@ -19,6 +19,7 @@ import { buildQuery } from "./query";
 import { safeSecureStorage, WORKSPACE_KEY } from "./secure-storage";
 import type {
   ApiErrorBody,
+  DiscoveryResponse,
   ChangeAction,
   ChangeDetailResponse,
   ChangesListResponse,
@@ -179,6 +180,23 @@ export const api = {
     safeSecureStorage.setItem(WORKSPACE_KEY, workspaceId);
     return result;
   },
+
+  /* --------------------------- adding a website -------------------------- */
+
+  createWebsite: (input: { url: string; name?: string }) =>
+    request<{ website: { id: string; name: string; url: string } }>("/api/websites", {
+      method: "POST",
+      body: input,
+    }),
+
+  discoverPages: (websiteId: string) =>
+    request<DiscoveryResponse>(`/api/websites/${websiteId}/discover`, { method: "POST" }),
+
+  setMonitoredPages: (websiteId: string, pages: { url: string; name?: string }[]) =>
+    request<{ pages: unknown[] }>(`/api/websites/${websiteId}/pages`, {
+      method: "PUT",
+      body: { pages },
+    }),
 
   /* ------------------------------- push --------------------------------- */
 

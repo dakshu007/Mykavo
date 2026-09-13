@@ -6,9 +6,9 @@
  */
 
 import { useFocusEffect, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Plus } from "lucide-react-native";
 import { useCallback, useRef } from "react";
-import { BackHandler, Linking, Platform, Pressable, Text, ToastAndroid, View } from "react-native";
+import { BackHandler, Platform, Pressable, Text, ToastAndroid, View } from "react-native";
 
 import { HealthDot, SeverityBadge, WebsiteStatusBadge } from "@/components/badges";
 import { Screen } from "@/components/screen";
@@ -161,13 +161,13 @@ export default function OverviewScreen() {
         {websites.length === 0 ? (
           <EmptyState
             title="Add your first website"
-            message="Add and configure websites from the web dashboard at mykavo.app. Once monitoring starts, everything shows up here."
+            message="MyKavo finds its pages, takes a baseline, then tells you the moment something changes."
             action={
               <Button
-                title="Open mykavo.app"
-                variant="secondary"
+                title="Add a website"
                 size="sm"
-                onPress={() => void Linking.openURL("https://mykavo.app/dashboard/websites/new")}
+                icon={<Plus size={15} color={palette.primaryContrast} />}
+                onPress={() => router.push("/website/new")}
               />
             }
           />
