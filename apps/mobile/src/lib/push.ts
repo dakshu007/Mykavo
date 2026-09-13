@@ -133,10 +133,18 @@ export async function registerForPush(
 
   const id = projectId();
   if (!id) {
+    // Not a bug and not something the app can fix at runtime: Expo issues push
+    // tokens per project, and the project belongs to the account that owns the
+    // app. Name both the cause and the fix, since "contact support" for
+    // something the owner can do in 30 seconds is a dead end.
     return {
       ok: false,
       reason:
-        "This build has no EAS project id, so Expo cannot issue a push token. Run `eas init` and rebuild.",
+        "Push is not set up for this build yet.\n\n" +
+        "Expo issues push tokens per project, and this build carries no project id. " +
+        "The owner needs to run `eas init` in apps/mobile and add the id it prints as " +
+        "the EXPO_PROJECT_ID secret (or into app.json), then rebuild.\n\n" +
+        "Android delivery also needs Firebase credentials. See apps/mobile/RELEASING.md.",
       canRetry: false,
     };
   }
