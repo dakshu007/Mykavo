@@ -28,21 +28,37 @@ Against a local backend: copy `.env.example` to `.env`, set `EXPO_PUBLIC_API_URL
 
 ## Build an installable Android APK
 
-Option A - EAS (free tier, easiest):
+CI does this: **Actions -> android-apk -> Run workflow**. It produces a sideload
+APK always, and a Play-ready AAB once the signing secrets exist. See
+[RELEASING.md](./RELEASING.md) for the one-time setup (upload key, Firebase, EAS
+project id) - those steps need accounts and cannot be done from CI.
+
+Locally, if you have Android Studio:
 
 ```bash
-npm install -g eas-cli
-eas login                        # your expo.dev account
-eas build -p android --profile preview
+npx expo run:android --variant release   # debug-signed, sideload only
 ```
 
-Option B - local build (needs Android Studio / SDK installed):
+`app.json` carries the package id (`app.mykavo.mobile`), the `mykavo://` scheme
+and the brand icons; `app.config.js` layers on the EAS project id, versionCode
+and google-services.json from the environment so switching accounts needs no
+commit.
 
-```bash
-npx expo run:android --variant release
-```
+### Signing (do not regress)
 
-`app.json` already carries the Android package id (`app.mykavo.mobile`), the `mykavo://` scheme, and brand icons (generated from the page-spark mark).
+Expo's prebuild template signs RELEASE builds with the DEBUG key - the
+certificate `CN=Android Debug`, which Play rejects and whose password is public
+knowledge. `plugins/with-release-signing.js` replaces it with a real
+signingConfig from `ANDROID_KEYSTORE_*` env vars, refuses a partial credential
+set rather than falling back, and CI re-reads the certificate off the built APK
+so a debug-signed "release" fails the run instead of shipping.
+
+### Licences
+
+`npm run notices` regenerates `THIRD-PARTY-NOTICES.md` and the in-app licences
+screen from the real production dependency closure (212 shipped packages). CI
+runs `npm run notices:check` and fails if they have drifted - MIT, ISC, BSD and
+Apache all require their notices to travel with the APK.
 
 ## Push notifications
 
