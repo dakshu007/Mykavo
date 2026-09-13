@@ -180,6 +180,24 @@ export const api = {
     return result;
   },
 
+  /* ------------------------------- push --------------------------------- */
+
+  registerPushDevice: (input: {
+    token: string;
+    platform: "ios" | "android";
+    deviceName?: string;
+  }) =>
+    request<{ device: { id: string; enabled: boolean } }>("/api/mobile/push/register", {
+      method: "POST",
+      body: input,
+    }),
+
+  unregisterPushDevice: (token: string) =>
+    request<{ removed: number }>("/api/mobile/push/register", {
+      method: "DELETE",
+      body: { token },
+    }),
+
   pauseWebsite: (id: string, paused: boolean) =>
     request<{ website: unknown }>(`/api/websites/${id}`, {
       method: "PATCH",

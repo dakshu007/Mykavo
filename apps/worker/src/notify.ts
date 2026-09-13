@@ -15,6 +15,8 @@ import {
   type Severity,
 } from "@mykavo/email";
 import {
+  failureAlert as pushFailureAlert,
+  scanAlert as pushScanAlert,
   dispatchChannelMessage,
   channelTargetUrl,
   isWebhookChannelType,
@@ -23,6 +25,7 @@ import {
   type ChannelMessage,
 } from "@mykavo/shared";
 import { logger } from "./logger";
+import { fanOutToPush } from "./push";
 
 const SEVERITY_RANK: Record<Severity, number> = {
   INFO: 0,
@@ -241,6 +244,17 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
       url: dashboardUrl,
       severity: verdictMissing ? "HIGH" : "CRITICAL",
     });
+    await fanOutToPush(
+      website.workspaceId,
+      website.id,
+      scan.id,
+      pushFailureAlert({
+        host,
+        websiteId: website.id,
+        reason,
+        kind: verdictMissing ? "incomplete" : "failed",
+      }),
+    );
     return ok;
   }
 
@@ -310,6 +324,32 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
       url: dashboardUrl,
       severity: highest ?? "INFO",
     });
+    // A clean deploy is the product moment - push it too, so the person who
+    // shipped gets the all-clear on their phone without opening anything.
+    await fanOutToPush(
+      website.workspaceId,
+      website.id,
+      scan.id,
+      changes.length === 0
+        ? {
+            title: `Deploy verified on ${host}`,
+            body: scan.note
+              ? `${scan.note} matches its baseline.`
+              : "Everything matches its baseline.",
+            severity: "INFO",
+            path: `/website/${website.id}`,
+            websiteId: website.id,
+            scanId: scan.id,
+          }
+        : pushScanAlert({
+            host,
+            changeCount: changes.length,
+            highestSeverity: highest,
+            websiteId: website.id,
+            scanId: scan.id,
+            ...(lines[0] ? { topChange: `${lines[0].title} - ${lines[0].pagePath}` } : {}),
+          }),
+    );
     return ok;
   }
 
@@ -374,5 +414,18 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
     url: dashboardUrl,
     severity: highest,
   });
+  await fanOutToPush(
+    website.workspaceId,
+    website.id,
+    scan.id,
+    pushScanAlert({
+      host,
+      changeCount: eligible.length,
+      highestSeverity: highest,
+      websiteId: website.id,
+      scanId: scan.id,
+      ...(lines[0] ? { topChange: `${lines[0].title} - ${lines[0].pagePath}` } : {}),
+    }),
+  );
   return ok;
 }

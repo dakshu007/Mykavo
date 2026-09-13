@@ -36,7 +36,7 @@ const statusStyles: Record<ChangeStatus, string> = {
   REVIEWED: "bg-info-soft text-info",
   APPROVED: "bg-success-soft text-success-strong",
   RESOLVED: "bg-success-soft text-success-strong",
-  IGNORED: "bg-info-soft text-ink-faint",
+  IGNORED: "bg-info-soft text-info",
 };
 
 export function ChangeStatusBadge({ status }: { status: ChangeStatus }) {

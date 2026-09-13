@@ -72,7 +72,7 @@ function CardHeader({ title, onViewAll }: { title: string; onViewAll?: () => voi
       <CardTitle>{title}</CardTitle>
       {onViewAll ? (
         <Pressable onPress={onViewAll} hitSlop={8}>
-          <Small color={palette.primary}>View all</Small>
+          <Small color={palette.accent}>View all</Small>
         </Pressable>
       ) : null}
     </View>
@@ -201,7 +201,7 @@ export default function OverviewScreen() {
                   {w.openChanges > 0 && w.highestOpenSeverity ? (
                     <OpenChangesBadge severity={w.highestOpenSeverity} count={w.openChanges} />
                   ) : null}
-                  {w.scanInProgress ? <Small color={palette.primary}>Scanning</Small> : null}
+                  {w.scanInProgress ? <Small color={palette.accent}>Scanning</Small> : null}
                 </View>
                 <ChevronRight size={16} color={palette.inkFaint} />
               </Pressable>

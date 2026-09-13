@@ -215,7 +215,7 @@ export default function ScanDetailScreen() {
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <ScanStatusBadge status={scan.status} />
-          {inFlight ? <Small color={palette.primary}>Updating automatically</Small> : null}
+          {inFlight ? <Small color={palette.accent}>Updating automatically</Small> : null}
         </View>
         <Small color={palette.inkFaint}>{formatDateTime(scan.createdAt)}</Small>
       </View>

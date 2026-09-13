@@ -7,10 +7,11 @@ import {
 import { GeistMono_400Regular, GeistMono_500Medium } from "@expo-google-fonts/geist-mono";
 import { Poppins_500Medium, Poppins_600SemiBold } from "@expo-google-fonts/poppins";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppState, Pressable, ScrollView, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -24,6 +25,10 @@ import {
   wasLastBootInterrupted,
   type CrashRecord,
 } from "@/lib/crash-guard";
+import {
+  configureNotificationHandler,
+  routeForNotification,
+} from "@/lib/push";
 import { wipeSecureStorage } from "@/lib/secure-storage";
 import { fonts, gold } from "@/lib/theme";
 import { ThemeProvider, useTheme } from "@/lib/theme-context";
@@ -31,6 +36,10 @@ import { ThemeProvider, useTheme } from "@/lib/theme-context";
 // Record any fatal JS error before the OS kills the process, so the next
 // launch can show it instead of crash-looping silently.
 installCrashGuard();
+
+// Decide how notifications behave while the app is foregrounded. Registered at
+// module scope so it is in place before any notification can be delivered.
+configureNotificationHandler();
 
 void SplashScreen.preventAutoHideAsync().catch(() => {
   // Splash may already be hidden (fast reload) - never fatal.
@@ -153,11 +162,59 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Pro
   );
 }
 
+/**
+ * Sends the user where a tapped notification points.
+ *
+ * Two cases, and both matter: the app was already running (listener), or the
+ * tap LAUNCHED the app from cold (the response is waiting when we mount).
+ * Handling only the first is the common bug - the alert opens the app and
+ * dumps you on the overview, leaving you to hunt for what it was about.
+ */
+function PushBridge() {
+  const router = useRouter();
+  const handled = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const go = (response: Notifications.NotificationResponse | null) => {
+      if (!response || cancelled) return;
+      // The same response is returned on every mount until cleared, so guard
+      // against navigating twice for one tap.
+      const id = response.notification.request.identifier;
+      if (handled.current === id) return;
+      const route = routeForNotification(
+        response.notification.request.content.data as unknown,
+      );
+      if (!route) return;
+      handled.current = id;
+      router.push(route as never);
+    };
+
+    // Cold start: the tap that opened the app.
+    void Notifications.getLastNotificationResponseAsync()
+      .then(go)
+      .catch(() => {
+        // No transport (web/simulator) - nothing to route.
+      });
+
+    // Warm: taps while the app is alive.
+    const sub = Notifications.addNotificationResponseReceivedListener(go);
+    return () => {
+      cancelled = true;
+      sub.remove();
+    };
+  }, [router]);
+
+  return null;
+}
+
 function Root() {
   const { palette, theme } = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: palette.canvas }}>
       <StatusBar style={theme === "dark" ? "light" : "dark"} />
+      <PushBridge />
       <Stack
         screenOptions={{
           headerShown: false,

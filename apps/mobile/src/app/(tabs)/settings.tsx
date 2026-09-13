@@ -7,9 +7,17 @@
 import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Check } from "lucide-react-native";
+import { Bell, Check } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Pressable,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 
 import { Screen } from "@/components/screen";
 import {
@@ -26,6 +34,7 @@ import {
 import { api, authedImageSource } from "@/lib/api";
 import { API_BASE, authClient } from "@/lib/auth";
 import { useLive } from "@/lib/live";
+import { locallyRegisteredToken, registerForPush, unregisterFromPush } from "@/lib/push";
 import { fonts, radius } from "@/lib/theme";
 import { useTheme } from "@/lib/theme-context";
 import type { WorkspaceRole } from "@/lib/types";
@@ -61,7 +70,7 @@ function Avatar({ name, image }: { name: string; image: string | null }) {
         justifyContent: "center",
       }}
     >
-      <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 18, color: palette.primary }}>
+      <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 18, color: palette.accent }}>
         {name.trim().charAt(0).toUpperCase() || "?"}
       </Text>
     </View>
@@ -90,6 +99,80 @@ function TwoFactorChip({ enabled }: { enabled: boolean }) {
         {enabled ? "2FA enabled" : "2FA off"}
       </Text>
     </View>
+  );
+}
+
+/**
+ * Push alerts toggle.
+ *
+ * Shows the REASON when enabling fails (no EAS project id, permission denied
+ * at OS level, offline) rather than silently flipping back. An alerting
+ * product that looks switched on but delivers nothing is worse than one that
+ * says plainly why it cannot.
+ */
+function PushAlertsCard() {
+  const { palette } = useTheme();
+  const [enabled, setEnabled] = useState(() => locallyRegisteredToken() !== null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  async function toggle(next: boolean) {
+    if (busy) return;
+    setBusy(true);
+    setProblem(null);
+    if (next) {
+      const result = await registerForPush({ promptIfUndetermined: true });
+      if (result.ok) {
+        setEnabled(true);
+      } else {
+        setEnabled(false);
+        setProblem(result.reason);
+      }
+    } else {
+      const ok = await unregisterFromPush();
+      if (ok) {
+        setEnabled(false);
+      } else {
+        setProblem("Could not turn alerts off. Check your connection and try again.");
+      }
+    }
+    setBusy(false);
+  }
+
+  return (
+    <Card>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <Bell size={18} color={palette.accent} />
+        <CardTitle style={{ flex: 1 }}>Alerts on this phone</CardTitle>
+        {busy ? (
+          <ActivityIndicator size="small" color={palette.accent} />
+        ) : (
+          <Switch
+            value={enabled}
+            onValueChange={(v) => void toggle(v)}
+            trackColor={{ false: palette.line, true: palette.primary }}
+            thumbColor={enabled ? palette.primaryContrast : palette.card}
+          />
+        )}
+      </View>
+      <Small>
+        {enabled
+          ? "Critical and high-severity changes are pushed to this device as soon as a scan finds them."
+          : "Turn on to get a notification the moment a scan finds something important - no need to open the app."}
+      </Small>
+      {problem ? (
+        <View
+          style={{
+            marginTop: 12,
+            padding: 12,
+            borderRadius: radius.field,
+            backgroundColor: palette.criticalSoft,
+          }}
+        >
+          <Small color={palette.criticalStrong}>{problem}</Small>
+        </View>
+      ) : null}
+    </Card>
   );
 }
 
@@ -171,6 +254,8 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
+      <PushAlertsCard />
+
       <Card>
         <CardTitle style={{ marginBottom: 4 }}>Workspace</CardTitle>
         {workspaces.map((w, i) => (
@@ -198,13 +283,13 @@ export default function SettingsScreen() {
                       width: 8,
                       height: 8,
                       borderRadius: 4,
-                      backgroundColor: palette.primary,
+                      backgroundColor: palette.accent,
                     }}
                   />
-                  <Small color={palette.primary}>Active</Small>
+                  <Small color={palette.accent}>Active</Small>
                 </View>
               ) : switching === w.id ? (
-                <ActivityIndicator size="small" color={palette.primary} />
+                <ActivityIndicator size="small" color={palette.accent} />
               ) : (
                 <Small color={palette.inkFaint}>Switch</Small>
               )}

@@ -64,6 +64,15 @@ const TEXT_PAIRS: [string, string, number][] = [
   ["ink-secondary", "card", 4.5],
   ["ink-secondary", "surface", 4.5],
   ["ink-secondary", "canvas", 4.5],
+  // Faint metadata (hostnames, timestamps, the PAUSED and IGNORED labels).
+  // Held to the AA large-text floor, not 4.5:1 - it is the quietest of the
+  // three ink tiers by design. It was #9aa1b1 (2.59:1 on a card, unreadable on
+  // a phone outdoors) until this pairing was asserted; anything smaller than
+  // ~13px should use ink-secondary instead.
+  ["ink-faint", "card", 3],
+  ["ink-faint", "surface", 3],
+  ["ink-faint", "canvas", 3],
+  ["ink-faint", "info-soft", 3],
   // Inverted pills/buttons (bg-ink text-ink-inverse).
   ["ink-inverse", "ink", 4.5],
   ["ink-inverse", "ink-hover", 4.5],

@@ -216,9 +216,9 @@ export default function WebsiteDetailScreen() {
           })}
         >
           <View
-            style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.primary }}
+            style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.accent }}
           />
-          <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: palette.primary }}>
+          <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: palette.accent }}>
             Scan in progress...
           </Text>
         </Pressable>

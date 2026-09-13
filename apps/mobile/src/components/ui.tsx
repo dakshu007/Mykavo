@@ -16,6 +16,7 @@ import {
   type ViewStyle,
 } from "react-native";
 
+import { useReducedMotion } from "@/lib/reduced-motion";
 import { useTheme } from "@/lib/theme-context";
 import { cardShadow, radius, type, fonts } from "@/lib/theme";
 
@@ -203,6 +204,18 @@ export function Divider({ style }: { style?: StyleProp<ViewStyle> }) {
 type ButtonVariant = "primary" | "secondary" | "ghost" | "dark" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
+/** Resting shadow per variant - ink-tinted, stronger on the filled buttons. */
+function elevation(theme: "light" | "dark", variant: ButtonVariant) {
+  const strong = variant === "primary" || variant === "dark";
+  return {
+    shadowColor: "#151515",
+    shadowOpacity: theme === "dark" ? (strong ? 0.5 : 0.3) : strong ? 0.16 : 0.06,
+    shadowRadius: strong ? 8 : 3,
+    shadowOffset: { width: 0, height: strong ? 2 : 1 },
+    elevation: strong ? 3 : 1,
+  } as const;
+}
+
 export function Button({
   title,
   onPress,
@@ -222,7 +235,8 @@ export function Button({
   icon?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { palette } = useTheme();
+  const { palette, theme } = useTheme();
+  const reducedMotion = useReducedMotion();
 
   const height = size === "sm" ? 36 : size === "md" ? 44 : 48;
   const paddingHorizontal = size === "sm" ? 16 : size === "md" ? 20 : 28;
@@ -253,7 +267,17 @@ export function Button({
           alignItems: "center",
           justifyContent: "center",
           gap: 8,
-          opacity: disabled || loading ? 0.5 : pressed ? 0.85 : 1,
+          opacity: disabled || loading ? 0.5 : 1,
+          // The shadow is ink-tinted, never gold-tinted: a gold glow under a
+          // gold button reads as a blur. It collapses on press so the button
+          // feels pressed rather than merely recoloured - and holds still for
+          // anyone who asked for reduced motion.
+          ...(variant === "ghost" || disabled || loading
+            ? null
+            : pressed
+              ? { shadowOpacity: 0, elevation: 0 }
+              : elevation(theme, variant)),
+          ...(pressed && !reducedMotion ? { transform: [{ scale: 0.985 }] } : null),
         },
         style,
       ]}
@@ -341,7 +365,7 @@ export function LoadingState() {
   const { palette } = useTheme();
   return (
     <View style={{ paddingVertical: 48, alignItems: "center" }}>
-      <ActivityIndicator color={palette.primary} />
+      <ActivityIndicator color={palette.accent} />
     </View>
   );
 }
