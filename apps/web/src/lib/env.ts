@@ -26,6 +26,23 @@ const serverEnvSchema = z.object({
   // Blog mini-CMS admins (optional). Comma-separated emails allowed to
   // write/publish blog posts from the dashboard. Unset = CMS disabled.
   BLOG_ADMIN_EMAILS: z.string().optional(),
+  // Platform admins (optional). Comma-separated emails allowed to see the
+  // All Usage page - total load across every workspace, plus the
+  // infrastructure caps. Falls back to BLOG_ADMIN_EMAILS; unset = nobody.
+  ADMIN_EMAILS: z.string().optional(),
+  // Optional: lets the All Usage page read Netlify bandwidth. Without it that
+  // one row reads "Not configured" and everything else still works.
+  NETLIFY_AUTH_TOKEN: z.string().optional(),
+  NETLIFY_ACCOUNT_SLUG: z.string().optional(),
+  // Optional overrides for the provider caps in config/quotas.ts. Set these
+  // after upgrading a plan, or the meters keep measuring against the free
+  // tier and read alarmingly high.
+  QUOTA_DATABASE_MB: z.string().optional(),
+  QUOTA_DATABASE_CONNECTIONS: z.string().optional(),
+  QUOTA_R2_GB: z.string().optional(),
+  QUOTA_RESEND_DAILY: z.string().optional(),
+  QUOTA_RESEND_MONTHLY: z.string().optional(),
+  QUOTA_NETLIFY_BANDWIDTH_GB: z.string().optional(),
   // Dodo Payments (optional - billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
   // Website capacity add-on product ($6/mo per +30 websites). When unset, the

@@ -29,6 +29,24 @@ export interface ArtifactStorage {
    * tell rather than throwing.
    */
   exists(key: string): Promise<boolean>;
+  /**
+   * Total stored bytes and object count, for the admin usage page.
+   *
+   * Optional because only R2 can answer it meaningfully - and even there it
+   * costs one Class A list request per 1,000 objects, so callers must treat
+   * it as a sampled figure rather than something to call per request.
+   * `truncated` is true when the walk hit its page budget, in which case the
+   * numbers are a FLOOR, not a total. Reporting a truncated sum as if it
+   * were complete would understate storage, which is the direction that
+   * loses money quietly.
+   */
+  usage?(options?: { maxPages?: number }): Promise<StorageUsage>;
+}
+
+export interface StorageUsage {
+  bytes: number;
+  objects: number;
+  truncated: boolean;
 }
 
 export class LocalDiskStorage implements ArtifactStorage {
@@ -129,6 +147,41 @@ export class NetlifyBlobsStorage implements ArtifactStorage {
 }
 
 /**
+ * One page of an S3 ListObjectsV2 response.
+ *
+ * Parsed with regexes rather than an XML library on purpose: the only things
+ * read are a sequence of integers and one opaque token in a fixed-shape
+ * document, and object keys - the part that could contain hostile characters
+ * - are never parsed at all. Pulling in an XML parser to read three fields
+ * would be a dependency for nothing.
+ *
+ * Exported so the size arithmetic and the truncation handling can be tested
+ * without a bucket, which is where the interesting mistakes live: an
+ * unhandled `IsTruncated` silently reports a fraction of real storage.
+ */
+export function parseListObjectsPage(xml: string): {
+  bytes: number;
+  objects: number;
+  more: boolean;
+  nextToken: string | null;
+} {
+  let bytes = 0;
+  let objects = 0;
+  for (const match of xml.matchAll(/<Size>(\d+)<\/Size>/g)) {
+    bytes += Number(match[1]);
+    objects += 1;
+  }
+  const next = /<NextContinuationToken>([^<]*)<\/NextContinuationToken>/.exec(xml);
+  const token = next && next[1].length > 0 ? next[1] : null;
+  return {
+    bytes,
+    objects,
+    more: /<IsTruncated>\s*true\s*<\/IsTruncated>/i.test(xml),
+    nextToken: token,
+  };
+}
+
+/**
  * Cloudflare R2 via its S3-compatible endpoint. Keys are used verbatim as
  * object keys; the bucket stays PRIVATE — every read goes through an
  * authorized application route, never a public bucket URL.
@@ -207,6 +260,52 @@ export class R2Storage implements ArtifactStorage {
     // Anything else (throttling, a blip) is answered as "not stored", which
     // costs one redundant upload rather than losing a screenshot.
     return false;
+  }
+
+  /**
+   * Walk the bucket with ListObjectsV2 and sum object sizes.
+   *
+   * R2 has no "how big is this bucket" API on the S3 endpoint, so the only
+   * way to know is to add it up. That is one request per 1,000 objects, so
+   * the walk is bounded by `maxPages` and reports `truncated` when it stops
+   * early - a floor, clearly labelled, rather than a wrong total.
+   *
+   * The response is XML. Parsed with a regex over <Size> elements rather
+   * than pulling in an XML library: the only thing read is a sequence of
+   * integers in a fixed-shape document, and object keys (the part that could
+   * contain hostile characters) are never parsed at all.
+   */
+  async usage(options: { maxPages?: number } = {}): Promise<StorageUsage> {
+    const maxPages = Math.max(1, options.maxPages ?? 20);
+    const client = await this.client();
+    const base = `https://${this.config.accountId}.r2.cloudflarestorage.com/${this.config.bucket}`;
+
+    let bytes = 0;
+    let objects = 0;
+    let token: string | null = null;
+
+    for (let page = 0; page < maxPages; page += 1) {
+      const url = new URL(base);
+      url.searchParams.set("list-type", "2");
+      url.searchParams.set("max-keys", "1000");
+      if (token) url.searchParams.set("continuation-token", token);
+
+      const res = await client.fetch(url.toString(), { method: "GET" });
+      if (!res.ok) {
+        throw new Error(`R2 list failed: ${res.status} ${await res.text()}`);
+      }
+      const page = parseListObjectsPage(await res.text());
+      bytes += page.bytes;
+      objects += page.objects;
+
+      if (!page.more) return { bytes, objects, truncated: false };
+      // Truncated with no token is a protocol contradiction; stop rather
+      // than loop forever, and say the figure is incomplete.
+      if (!page.nextToken) return { bytes, objects, truncated: true };
+      token = page.nextToken;
+    }
+
+    return { bytes, objects, truncated: true };
   }
 }
 

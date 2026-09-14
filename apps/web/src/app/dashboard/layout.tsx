@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
+import { isPlatformAdmin } from "@/lib/platform-admin";
 import { greetingForHour, hourInTimeZone, timezoneFromNetlifyGeo } from "@/lib/greeting";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
@@ -44,11 +45,15 @@ export default async function DashboardLayout({
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
-      <CommandPalette isBlogAdmin={isBlogAdmin(session.user.email)} />
+      <CommandPalette
+        isBlogAdmin={isBlogAdmin(session.user.email)}
+        isPlatformAdmin={isPlatformAdmin(session.user.email)}
+      />
       <div className="sticky top-6 hidden h-[calc(100vh-3rem)] w-60 shrink-0 overflow-hidden rounded-card bg-card p-3 shadow-card lg:block">
         <DashboardSidebar
           workspaceName={workspace.name}
           isBlogAdmin={isBlogAdmin(session.user.email)}
+          isPlatformAdmin={isPlatformAdmin(session.user.email)}
           workspaces={memberships.map((m) => m.workspace)}
           currentWorkspaceId={workspace.id}
           upgradeCard={
@@ -59,7 +64,10 @@ export default async function DashboardLayout({
         />
       </div>
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">
-        <DashboardMobileNav isBlogAdmin={isBlogAdmin(session.user.email)} />
+        <DashboardMobileNav
+          isBlogAdmin={isBlogAdmin(session.user.email)}
+          isPlatformAdmin={isPlatformAdmin(session.user.email)}
+        />
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <Greeting

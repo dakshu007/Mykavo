@@ -21,11 +21,21 @@ const nav = [
 ];
 
 /** Horizontal pill navigation shown below the lg breakpoint. */
-export function DashboardMobileNav({ isBlogAdmin = false }: { isBlogAdmin?: boolean }) {
+export function DashboardMobileNav({
+  isBlogAdmin = false,
+  isPlatformAdmin = false,
+}: {
+  isBlogAdmin?: boolean;
+  isPlatformAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   // Blog CMS entry is allowlist-gated; the pages/APIs enforce it server-side.
-  const items = isBlogAdmin ? [...nav, { href: "/dashboard/blog", label: "Blog" }] : nav;
+  const items = [
+    ...nav,
+    ...(isBlogAdmin ? [{ href: "/dashboard/blog", label: "Blog" }] : []),
+    ...(isPlatformAdmin ? [{ href: "/dashboard/usage", label: "All Usage" }] : []),
+  ];
 
   async function handleSignOut() {
     await authClient.signOut();
