@@ -111,7 +111,7 @@ workflow from the Actions tab and type `deploy` to confirm.
 From a clean copy OUTSIDE any parent git repo - Next file-tracing bundles a stale parent
 Prisma client otherwise:
 ```bash
-export PATH="$HOME/.hermes/node/bin:$PATH"   # pnpm/node/netlify live here on the owner's Mac
+export PATH="$HOME/.hermes/node/bin:$PATH"
 rm -rf /tmp/mykavo-deploy
 rsync -a --exclude node_modules --exclude .next --exclude .git --exclude '.env*' \
   --exclude .data --exclude .netlify --exclude .claude ./ /tmp/mykavo-deploy/
@@ -148,15 +148,24 @@ See `apps/web/.env.example` and `apps/worker/.env.example` for the annotated lis
 ## Running it locally
 
 ```bash
-export PATH="$HOME/.hermes/node/bin:$PATH"   # owner's Mac; otherwise any Node 20+ with pnpm 10
+export PATH="$HOME/.hermes/node/bin:$PATH"
 pnpm install
-pnpm dev        # web → http://localhost:3000 (Claude sessions: launch.json "web" → 3010, autoPort
-                #   assigns another port if 3010 is busy - then update BETTER_AUTH_URL/APP_URL in
-                #   the worktree's apps/web/.env.local to that port or login fails "Invalid origin")
-pnpm worker     # scan worker, 2nd terminal (apps/worker/.env → local postgres fluxen_dev)
-pnpm test       # per package: pnpm --filter web test, etc.
+pnpm dev
+pnpm worker
+pnpm test
 pnpm --filter web lint && pnpm --filter web typecheck && pnpm --filter web build
 ```
+
+The `PATH` line is for the owner's Mac, where pnpm/node/netlify live under
+`~/.hermes`; anywhere else, any Node 20+ with pnpm 10 will do.
+
+- `pnpm dev` serves the web app on <http://localhost:3000>. In Claude sessions
+  `launch.json`'s "web" target uses 3010, and autoPort picks another port if
+  3010 is busy - then set `BETTER_AUTH_URL`/`APP_URL` in the worktree's
+  `apps/web/.env.local` to that port, or login fails with "Invalid origin".
+- `pnpm worker` is the scan worker; run it in a second terminal. It reads
+  `apps/worker/.env` and expects the local postgres database `fluxen_dev`.
+- `pnpm test` runs everything; per package, `pnpm --filter web test`.
 Local migrations: `cd packages/database && pnpm exec prisma migrate deploy` (24 migrations). Note: `migrate dev` may demand a destructive reset due to drift - the repo's established pattern is to hand-write migration SQL and apply with `migrate deploy`. Local test login: `alex@example.com` / `correct-horse-battery` (Pro, has data; add `BLOG_ADMIN_EMAILS="alex@example.com"` to `apps/web/.env.local` to use the blog editor locally).
 
 ## Repository layout (pnpm workspace + turborepo)

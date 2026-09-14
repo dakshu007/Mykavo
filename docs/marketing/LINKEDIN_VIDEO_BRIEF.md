@@ -136,11 +136,13 @@ Scene backgrounds alternate canvas -> paper -> canvas -> gold band -> canvas -> 
 **Recommended: Remotion** (React + TypeScript, same stack as the repo).
 
 ```bash
-npx create-video@latest mykavo-video --template blank   # or set up in a scratch dir
-# fonts: @remotion/google-fonts/Poppins, @remotion/google-fonts/DMSans, @remotion/google-fonts/JetBrainsMono
-# composition: 1080x1350, fps 30, durationInFrames 1080
+npx create-video@latest mykavo-video --template blank
 npx remotion render MyKavoLinkedIn out/mykavo-linkedin-4x5.mp4 --codec h264
 ```
+
+Scaffold it in a scratch directory, not in this repo. Fonts come from
+`@remotion/google-fonts/Poppins`, `/DMSans` and `/JetBrainsMono`; the
+composition is 1080x1350, fps 30, durationInFrames 1080.
 
 - Put the section-3 palette in one `theme.ts` constants file and use it everywhere - no inline hex duplicates.
 - Build each storyboard scene as its own `<Sequence>`; drive the highlighter sweep with `interpolate(frame, ...)` on `scaleX` (transform-origin left).

@@ -4,10 +4,12 @@ Everything in the repo is ready. What remains needs your accounts, so it cannot
 be done from CI or by an agent: a signing key that must only ever exist on your
 machine, an Expo project id, and Firebase credentials.
 
-**Do the sections in order.** §2 is already done. §3a and §4 are what stand
-between you and a working notification: without §3a Expo has nothing to hand
-FCM, and without §4 the device cannot register at all. Work through §1–§5 once;
-after that, every release is just a workflow run.
+**Do the sections in order.** §2 is already done. §1 must come before §3a —
+Expo's credentials wizard will not let you reach the FCM step until an Android
+upload keystore exists, even though we do not use EAS Build. After that, §3a
+and §4 are what stand between you and a working notification: without §3a Expo
+has nothing to hand FCM, and without §4 the device cannot register at all.
+Work through §1–§5 once; after that, every release is just a workflow run.
 
 ---
 
@@ -38,11 +40,28 @@ and reviews.
 > the *app* signing key, and yours is only the *upload* key, which can be reset
 > by support if lost. Leave it enabled. It does not make the backup optional.
 
-Then produce the base64 for the GitHub secret:
+Then produce the base64 for the GitHub secret. This puts it on your clipboard
+and prints nothing:
 
 ```bash
-base64 -i ~/mykavo-upload.jks | pbcopy   # now on your clipboard
+base64 -i ~/mykavo-upload.jks | pbcopy
 ```
+
+**Expo will ask for this same file** during §3a, because its credentials wizard
+makes an upload keystore mandatory before it will show the FCM step. Give it
+this one rather than a second throwaway key — two similar `.jks` files is how
+people end up signing a release with the wrong one. The values it wants:
+
+| Field | Value |
+| --- | --- |
+| Android keystore file | `~/mykavo-upload.jks` |
+| Android keystore password | the password you chose above |
+| Android key alias | `mykavo-upload` |
+| Android key password | the same password |
+
+Expo stores it but never uses it here — GitHub Actions does the signing. If the
+wizard offers to *generate* a keystore instead, decline: the signing key must be
+one you hold and can hand to CI.
 
 ---
 
@@ -78,6 +97,11 @@ app, no error in the worker.
 
 Do it in the browser. The CLI (`npx eas-cli credentials`) needs an `eas login`
 that has already failed for you once, and this is a one-time upload.
+
+If Expo has no Android credentials for this project yet, it runs a 5-step
+wizard. Step 2 is the application identifier (`app.mykavo.mobile`, already
+correct) and **step 3 demands an upload keystore** — that is §1, so do §1 first
+and feed it the table there. The FCM step comes after.
 
 1. Firebase Console → your project → gear icon → **Project settings**
 2. **Service accounts** tab → **Generate new private key** → confirm. A `.json`

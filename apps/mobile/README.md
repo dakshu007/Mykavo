@@ -21,8 +21,10 @@ This package is intentionally OUTSIDE the pnpm workspace (Metro prefers its own 
 ```bash
 cd apps/mobile
 npm install
-npx expo start          # QR code -> open in Expo Go on your phone (talks to production)
+npx expo start
 ```
+
+That prints a QR code; open it in Expo Go on your phone. It talks to production.
 
 Against a local backend: copy `.env.example` to `.env`, set `EXPO_PUBLIC_API_URL=http://<your-Mac-LAN-IP>:3010`, run the web dev server, then `npx expo start`.
 
@@ -36,8 +38,10 @@ project id) - those steps need accounts and cannot be done from CI.
 Locally, if you have Android Studio:
 
 ```bash
-npx expo run:android --variant release   # debug-signed, sideload only
+npx expo run:android --variant release
 ```
+
+A local build like that is debug-signed: fine for sideloading, rejected by Play.
 
 `app.json` carries the package id (`app.mykavo.mobile`), the `mykavo://` scheme
 and the brand icons; `app.config.js` layers on the EAS project id, versionCode
