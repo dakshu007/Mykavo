@@ -81,7 +81,13 @@ that has already failed for you once, and this is a one-time upload.
 
 1. Firebase Console → your project → gear icon → **Project settings**
 2. **Service accounts** tab → **Generate new private key** → confirm. A `.json`
-   file downloads. Treat it as a password; it can send push as your project.
+   file downloads.
+
+   **This file is a private key.** It can send push notifications to every
+   MyKavo device and read your Firebase storage bucket. It goes from your
+   Downloads folder to Expo and nowhere else — not into a chat, not into a
+   commit, not into an issue. If it ever does, delete that key in Google Cloud
+   IAM and generate a new one (`docs/SECRET_ROTATION.md` §7).
 3. <https://expo.dev> → **MyKavo** → **Project settings** → **Credentials**
 4. Under Android, **FCM V1 service account key** → **Add a service account key**
 5. Upload the `.json` from step 2.
