@@ -120,6 +120,8 @@ function PushAlertsCard() {
   const [enabled, setEnabled] = useState(() => locallyRegisteredToken() !== null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [tested, setTested] = useState(false);
 
   // Decided synchronously, so a build that cannot do push renders the toggle
   // disabled from the first frame instead of offering a switch that fails.
@@ -129,6 +131,7 @@ function PushAlertsCard() {
     if (busy || unavailable) return;
     setBusy(true);
     setProblem(null);
+    setTested(false);
     if (next) {
       const result = await registerForPush({ promptIfUndetermined: true });
       if (result.ok) {
@@ -148,6 +151,23 @@ function PushAlertsCard() {
       }
     }
     setBusy(false);
+  }
+
+  async function sendTest() {
+    if (testing) return;
+    setTesting(true);
+    setProblem(null);
+    setTested(false);
+    try {
+      await api.sendTestPush();
+      setTested(true);
+    } catch (err) {
+      setProblem(
+        err instanceof Error ? err.message : "Could not send a test alert. Please try again.",
+      );
+    } finally {
+      setTesting(false);
+    }
   }
 
   return (
@@ -176,6 +196,24 @@ function PushAlertsCard() {
             ? "Critical and high-severity changes are pushed to this device as soon as a scan finds them."
             : "Turn on to get a notification the moment a scan finds something important - no need to open the app."}
       </Small>
+      {enabled && !unavailable ? (
+        <>
+          <Button
+            title={testing ? "Sending\u2026" : "Send a test alert"}
+            variant="secondary"
+            size="sm"
+            loading={testing}
+            onPress={() => void sendTest()}
+            style={{ marginTop: 14, alignSelf: "flex-start" }}
+          />
+          {tested ? (
+            <Small color={palette.successStrong} style={{ marginTop: 10 }}>
+              Test alert sent. It should arrive in a few seconds - if nothing
+              appears, alerts are not reaching this phone.
+            </Small>
+          ) : null}
+        </>
+      ) : null}
       {problem ? (
         <View
           style={{

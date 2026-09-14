@@ -264,6 +264,22 @@ export function scanAlert(input: {
   };
 }
 
+/**
+ * The "send me a test alert" notification.
+ *
+ * Deliberately says it is a test AND what a real one looks like, so somebody
+ * who taps the button months later is not left wondering whether a site just
+ * broke.
+ */
+export function testAlert(): PushAlert {
+  return {
+    title: "MyKavo alerts are working",
+    body: "This is a test. Real alerts name the site and what changed.",
+    severity: "INFO",
+    path: "/(tabs)/settings",
+  };
+}
+
 /** Alert for a scan that could not produce a verdict. */
 export function failureAlert(input: {
   host: string;

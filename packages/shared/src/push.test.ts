@@ -14,6 +14,7 @@ import {
   pushChannelId,
   pushPriority,
   scanAlert,
+  testAlert,
   tokensToPrune,
   truncate,
   type ExpoPushTicket,
@@ -243,6 +244,32 @@ describe("scanAlert", () => {
     });
     expect(alert.title).toBe("New changes on example.com");
     expect(alert.body).toBe("2 changes detected.");
+  });
+});
+
+describe("testAlert", () => {
+  it("says it is a test and what a real alert looks like", () => {
+    const alert = testAlert();
+    // Somebody tapping this months later must not mistake it for an outage.
+    expect(alert.title).toBe("MyKavo alerts are working");
+    expect(alert.body).toContain("test");
+    expect(alert.body).toContain("Real alerts");
+  });
+
+  it("never rings through as urgent", () => {
+    // A test that arrives at CRITICAL priority trains people to ignore the
+    // channel that matters.
+    const alert = testAlert();
+    expect(alert.severity).toBe("INFO");
+    expect(pushPriority(alert.severity ?? null)).toBe("default");
+    expect(pushChannelId(alert.severity ?? null)).toBe(PUSH_CHANNEL_DEFAULT);
+  });
+
+  it("survives the payload builder", () => {
+    const messages = buildPushMessages([TOKEN_A], testAlert());
+    expect(messages).toHaveLength(1);
+    expect(messages[0].priority).toBe("default");
+    expect(messages[0].title.length).toBeLessThanOrEqual(PUSH_TITLE_MAX);
   });
 });
 

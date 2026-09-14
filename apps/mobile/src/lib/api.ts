@@ -210,6 +210,12 @@ export const api = {
       body: input,
     }),
 
+  /** Ask the backend to push a test alert to this user's own devices. */
+  sendTestPush: () =>
+    request<{ queued: true; devices: number }>("/api/mobile/push/test", {
+      method: "POST",
+    }),
+
   unregisterPushDevice: (token: string) =>
     request<{ removed: number }>("/api/mobile/push/register", {
       method: "DELETE",

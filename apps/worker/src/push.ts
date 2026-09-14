@@ -14,6 +14,7 @@ import {
   classifyTickets,
   EXPO_PUSH_SEND_URL,
   isExpoPushToken,
+  testAlert,
   type ExpoPushTicket,
   type PushAlert,
   type TicketOutcome,
@@ -131,6 +132,45 @@ async function applyOutcomes(outcomes: readonly TicketOutcome[]): Promise<number
   }
 
   return delivered.length;
+}
+
+/**
+ * "Send me a test alert" from the app's Settings screen.
+ *
+ * Scoped to ONE user's own devices - a test must never buzz a colleague's
+ * phone. Returns the same summary as a real send, and null when the user has
+ * no registered device, so the caller can tell "nothing to send to" from
+ * "sent and it failed".
+ */
+export async function sendTestPush(userId: string): Promise<SendSummary | null> {
+  const devices = await prisma.pushDevice.findMany({
+    where: { userId, enabled: true },
+    select: { token: true },
+  });
+  const tokens = devices.map((d) => d.token).filter(isExpoPushToken);
+  if (tokens.length === 0) return null;
+
+  const outcomes: TicketOutcome[] = [];
+  for (const chunk of chunkTokens(tokens)) {
+    outcomes.push(
+      ...(await sendChunk(
+        chunk,
+        testAlert(),
+        process.env.EXPO_ACCESS_TOKEN,
+      )),
+    );
+  }
+
+  const delivered = await applyOutcomes(outcomes);
+  const pruned = outcomes.filter((o) => o.prune).length;
+  logger.info("push test dispatched", {
+    userId,
+    attempted: tokens.length,
+    delivered,
+    pruned,
+    ...(delivered === 0 && outcomes[0]?.message ? { error: outcomes[0].message } : {}),
+  });
+  return { attempted: tokens.length, delivered, pruned };
 }
 
 /**

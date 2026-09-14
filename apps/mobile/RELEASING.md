@@ -172,6 +172,11 @@ is kept on the device.
 - Bump `version` in `app.json` for user-visible releases. `versionCode` is
   automatic.
 - To test push end to end: install the build, enable **Settings → Alerts on this
-  phone**, then trigger a scan that finds a HIGH or CRITICAL change. Muted
-  websites and the workspace severity threshold apply to push exactly as they do
-  to email.
+  phone**, then tap **Send a test alert**. That job goes through the real path
+  (web → pg-boss → worker → Expo → FCM → phone), so a notification arriving
+  proves the whole chain rather than a shortcut. If nothing arrives within a few
+  seconds, check the worker log for `push test dispatched` - it records
+  attempted/delivered/pruned counts and the first Expo error.
+- Muted websites and the workspace severity threshold apply to push exactly as
+  they do to email, so a real alert needs a scan that finds a HIGH or CRITICAL
+  change.
