@@ -47,6 +47,14 @@ export interface FxPalette {
   criticalStrong: string;
   info: string;
   infoSoft: string;
+  /**
+   * Usage-meter middle fill. Its own token because neither warningStrong (a
+   * normal-vision deltaE of 9.1 from criticalStrong - the two read as one
+   * colour) nor chartGold (2.96:1 on its track, under the 3:1 WCAG 1.4.11
+   * floor for non-text UI) clears both constraints. Matches
+   * --fx-meter-warning in apps/web/src/app/globals.css.
+   */
+  meterWarning: string;
   chartAmber: string;
   chartViolet: string;
   /** [start, mid, end] stops of the coral stat-tile gradient (135deg on web). */
@@ -86,6 +94,7 @@ export const lightPalette: FxPalette = {
   criticalStrong: "#b91c1c",
   info: "#666c7a",
   infoSoft: "#eef0f3",
+  meterWarning: "#a67908",
   chartAmber: "#d97706",
   chartViolet: "#7c3aed",
   gradientCoral: ["#fde5d8", "#e9d5f2", "#fbc7b6"],
@@ -123,6 +132,7 @@ export const darkPalette: FxPalette = {
   criticalStrong: "#ff9298",
   info: "#9aa3b2",
   infoSoft: "#232833",
+  meterWarning: "#ffd400",
   chartAmber: "#f0b750",
   chartViolet: "#a78bfa",
   gradientCoral: ["#39262c", "#2e2542", "#3d2823"],

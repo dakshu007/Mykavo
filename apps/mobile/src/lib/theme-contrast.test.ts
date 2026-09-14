@@ -67,6 +67,32 @@ function textPairs(p: FxPalette): [string, string, number, string][] {
   ];
 }
 
+/**
+ * Usage-meter fill against its own track (app/(tabs)/usage.tsx).
+ *
+ * Non-text UI, so WCAG 1.4.11's 3:1 applies. A fill that does not separate
+ * from its track renders the meter as EMPTY - which on a capacity screen
+ * reads as "nothing used", the exact opposite of the truth. The BASE status
+ * colours fail this in light mode (warning 1.95:1, success 2.94:1), which is
+ * why the meter uses the -strong steps and its own amber.
+ */
+function meterPairs(p: FxPalette): [string, string, number, string][] {
+  return [
+    [p.successStrong, p.successSoft, 3, "healthy meter fill on its track"],
+    [p.meterWarning, p.warningSoft, 3, "getting-full meter fill on its track"],
+    [p.criticalStrong, p.criticalSoft, 3, "at-capacity meter fill on its track"],
+  ];
+}
+
+describe.each(themes)("%s usage meter contrast", (_name, palette) => {
+  it.each(meterPairs(palette))(
+    "%s on %s clears %s:1 (%s)",
+    (fg, bg, min) => {
+      expect(contrast(fg, bg)).toBeGreaterThanOrEqual(min);
+    },
+  );
+});
+
 describe.each(themes)("%s palette text contrast", (_name, palette) => {
   it.each(textPairs(palette))(
     "%s on %s clears %s:1 (%s)",

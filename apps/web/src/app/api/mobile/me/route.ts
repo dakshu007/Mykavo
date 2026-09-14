@@ -4,10 +4,19 @@ import { prisma } from "@mykavo/database";
 import { getSession } from "@/lib/session";
 import { resolveWorkspaceSelection, WORKSPACE_COOKIE } from "@/lib/team";
 import { getWorkspacePlan } from "@/lib/limits";
+import { isBlogAdmin } from "@/lib/blog-admin";
+import { isPlatformAdmin } from "@/lib/platform-admin";
 
 /**
  * Mobile session bootstrap: the signed-in user, every workspace membership
- * (flagging the active one), and the active workspace's plan limits.
+ * (flagging the active one), the active workspace's plan limits, and which
+ * operator-only areas this account may see.
+ *
+ * The two admin flags drive whether the app shows the Usage tab and the Blog
+ * screen at all. They are UX hints ONLY - every admin endpoint re-checks the
+ * same allowlist server-side, so a tampered response reveals nothing. Sending
+ * them is what stops the app rendering a tab that answers 404 when tapped.
+ *
  * Read-only; implements MeResponse in apps/mobile/src/lib/types.ts.
  */
 export async function GET() {
@@ -37,6 +46,10 @@ export async function GET() {
       email: session.user.email,
       image: session.user.image ?? null,
       twoFactorEnabled: Boolean(session.user.twoFactorEnabled),
+    },
+    admin: {
+      usage: isPlatformAdmin(session.user.email),
+      blog: isBlogAdmin(session.user.email),
     },
     workspaces: memberships.map((m) => ({
       id: m.workspaceId,

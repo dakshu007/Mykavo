@@ -10,19 +10,38 @@ import { ActivityIndicator, View } from "react-native";
 import { Directions, Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { FloatingTabBar, TabBarProvider } from "@/components/tab-bar";
-import { onUnauthorized } from "@/lib/api";
+import { api, onUnauthorized } from "@/lib/api";
+import { useLive } from "@/lib/live";
 import { authClient, useSession } from "@/lib/auth";
 import { wipeSecureStorage } from "@/lib/secure-storage";
 import { useTheme } from "@/lib/theme-context";
 
-/** Tab order for swipe navigation - must match the Tabs.Screen order. */
-const TAB_ROUTES = ["/", "/websites", "/changes", "/scans", "/settings"] as const;
+/**
+ * Tab order for swipe navigation - must match the rendered Tabs.Screen order,
+ * INCLUDING the admin-only Usage tab, which is why this is built rather than
+ * declared: swiping past a hidden tab would land on a screen with no way back.
+ */
+function tabRoutes(showUsage: boolean): string[] {
+  return [
+    "/",
+    "/websites",
+    "/changes",
+    "/scans",
+    ...(showUsage ? ["/usage"] : []),
+    "/settings",
+  ];
+}
 
 export default function TabsLayout() {
   const { palette } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
+  // Whether to show the operator-only Usage tab. Fetched once; while it is
+  // unknown the tab stays hidden, so it appears rather than disappears - a
+  // control that vanishes after a second reads as a glitch.
+  const { data: me } = useLive(api.me, [], { interval: 0 });
+  const showUsage = me?.admin?.usage === true;
 
   // Session-expiry recovery: when the backend stops accepting our session
   // (expired/revoked cookie -> 401s), sign out locally and land on /login
@@ -43,11 +62,12 @@ export default function TabsLayout() {
     });
   }, [router]);
 
-  const tabIndex = TAB_ROUTES.indexOf(pathname as (typeof TAB_ROUTES)[number]);
+  const routes = tabRoutes(showUsage);
+  const tabIndex = routes.indexOf(pathname);
 
   const swipeTo = (direction: 1 | -1) => {
     if (tabIndex === -1) return;
-    const next = TAB_ROUTES[tabIndex + direction];
+    const next = routes[tabIndex + direction];
     if (next) router.navigate(next);
   };
 
@@ -92,7 +112,9 @@ export default function TabsLayout() {
       <GestureDetector gesture={swipeGesture}>
         <View style={{ flex: 1 }}>
           <Tabs
-            tabBar={(props) => <FloatingTabBar {...props} />}
+            tabBar={(props) => (
+              <FloatingTabBar {...props} hiddenTabs={showUsage ? [] : ["usage"]} />
+            )}
             screenOptions={{
               headerShown: false,
               sceneStyle: { backgroundColor: palette.canvas },
@@ -102,6 +124,13 @@ export default function TabsLayout() {
             <Tabs.Screen name="websites" options={{ title: "Websites" }} />
             <Tabs.Screen name="changes" options={{ title: "Changes" }} />
             <Tabs.Screen name="scans" options={{ title: "Scans" }} />
+            {/* href: null removes it from the bar without unregistering the
+                route - a non-admin who deep-links to /usage still gets the
+                screen's own 404 from the API rather than a router crash. */}
+            <Tabs.Screen
+              name="usage"
+              options={{ title: "Usage", href: showUsage ? undefined : null }}
+            />
             <Tabs.Screen name="settings" options={{ title: "Settings" }} />
           </Tabs>
         </View>
