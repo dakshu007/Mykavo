@@ -84,9 +84,55 @@ function projectId(): string | null {
   return typeof fromExtra === "string" && fromExtra.length > 0 ? fromExtra : null;
 }
 
+/**
+ * Why push could not be turned on, and whether the person holding the phone
+ * can do anything about it.
+ *
+ * "unavailable" means this build or this device cannot do push at all - there
+ * is no button that fixes it, so the UI shows it calmly and disables the
+ * toggle rather than raising an alarm the user cannot answer.
+ * "actionable" means a retry is meaningful: permission was declined, the
+ * device is offline, the request failed.
+ *
+ * Every `reason` here is shown to END USERS. No repo paths, no CLI commands,
+ * no environment variable names - those go to console.warn for whoever is
+ * attached to the logs.
+ */
+export type PushFailureKind = "unavailable" | "actionable";
+
 export type PushRegistration =
   | { ok: true; token: string }
-  | { ok: false; reason: string; canRetry: boolean };
+  | { ok: false; kind: PushFailureKind; reason: string };
+
+/**
+ * Whether this build/device can do push AT ALL, decided synchronously so the
+ * toggle can render disabled from the first frame instead of flashing enabled
+ * and then failing. Returns a user-facing sentence, or null when push is
+ * possible.
+ */
+let warnedMissingProjectId = false;
+
+export function pushUnavailableReason(): string | null {
+  if (Platform.OS === "web") return "Push alerts are only available in the MyKavo app.";
+  if (!Device.isDevice) {
+    return "Push alerts need a physical device - an emulator has no way to receive them.";
+  }
+  if (!projectId()) {
+    // The owner has not finished push setup for this build. Deliberately vague
+    // to the user: naming `eas init` or a file in the repo is meaningless to
+    // them and looks broken in a store listing. Warned once, not on every
+    // render - this function is called during layout.
+    if (!warnedMissingProjectId) {
+      warnedMissingProjectId = true;
+      console.warn(
+        "[push] No EAS project id in this build - see apps/mobile/RELEASING.md. " +
+          "Expo cannot issue a push token without it.",
+      );
+    }
+    return "Push alerts aren't available in this version of MyKavo yet.";
+  }
+  return null;
+}
 
 /**
  * Ask for permission (if not already decided), fetch the Expo token and
@@ -98,15 +144,9 @@ export type PushRegistration =
 export async function registerForPush(
   options: { promptIfUndetermined?: boolean } = {},
 ): Promise<PushRegistration> {
-  if (Platform.OS === "web") {
-    return { ok: false, reason: "Push alerts are only available in the app.", canRetry: false };
-  }
-  if (!Device.isDevice) {
-    return {
-      ok: false,
-      reason: "Push alerts need a real device - simulators have no push transport.",
-      canRetry: false,
-    };
+  const unavailable = pushUnavailableReason();
+  if (unavailable) {
+    return { ok: false, kind: "unavailable", reason: unavailable };
   }
 
   const existing = await Notifications.getPermissionsAsync();
@@ -117,35 +157,33 @@ export async function registerForPush(
     if (!existing.canAskAgain) {
       return {
         ok: false,
-        reason: "Notifications are blocked for MyKavo in your system settings.",
-        canRetry: false,
+        kind: "actionable",
+        reason:
+          "Notifications are turned off for MyKavo. Enable them in your phone's " +
+          "settings, then try again.",
       };
     }
     if (options.promptIfUndetermined === false) {
-      return { ok: false, reason: "Notifications are not enabled yet.", canRetry: true };
+      return { ok: false, kind: "actionable", reason: "Notifications are not enabled yet." };
     }
     const asked = await Notifications.requestPermissionsAsync();
     granted = asked.granted;
   }
   if (!granted) {
-    return { ok: false, reason: "Notification permission was declined.", canRetry: true };
-  }
-
-  const id = projectId();
-  if (!id) {
-    // Not a bug and not something the app can fix at runtime: Expo issues push
-    // tokens per project, and the project belongs to the account that owns the
-    // app. Name both the cause and the fix, since "contact support" for
-    // something the owner can do in 30 seconds is a dead end.
     return {
       ok: false,
-      reason:
-        "Push is not set up for this build yet.\n\n" +
-        "Expo issues push tokens per project, and this build carries no project id. " +
-        "The owner needs to run `eas init` in apps/mobile and add the id it prints as " +
-        "the EXPO_PROJECT_ID secret (or into app.json), then rebuild.\n\n" +
-        "Android delivery also needs Firebase credentials. See apps/mobile/RELEASING.md.",
-      canRetry: false,
+      kind: "actionable",
+      reason: "Notification permission was declined.",
+    };
+  }
+
+  // pushUnavailableReason() already established there is one.
+  const id = projectId();
+  if (!id) {
+    return {
+      ok: false,
+      kind: "unavailable",
+      reason: "Push alerts aren't available in this version of MyKavo yet.",
     };
   }
 
@@ -158,10 +196,13 @@ export async function registerForPush(
   } catch (err) {
     // Offline, or Android without FCM credentials. Surface the real message -
     // guessing here is how "enabled but silent" happens.
+    // e.g. "FirebaseApp is not initialized" - true, and meaningless to a user.
+    console.warn("[push] getExpoPushTokenAsync failed:", err);
     return {
       ok: false,
-      reason: err instanceof Error ? err.message : "Could not get a push token.",
-      canRetry: true,
+      kind: "actionable",
+      reason:
+        "Could not set up alerts right now. Check your connection and try again.",
     };
   }
 
@@ -172,10 +213,11 @@ export async function registerForPush(
       deviceName: Device.deviceName ?? undefined,
     });
   } catch (err) {
+    console.warn("[push] device registration failed:", err);
     return {
       ok: false,
-      reason: err instanceof Error ? err.message : "Could not register this device.",
-      canRetry: true,
+      kind: "actionable",
+      reason: "Could not register this device for alerts. Please try again.",
     };
   }
 

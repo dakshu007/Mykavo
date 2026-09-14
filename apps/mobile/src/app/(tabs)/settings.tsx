@@ -34,7 +34,12 @@ import {
 import { api, authedImageSource } from "@/lib/api";
 import { API_BASE, authClient } from "@/lib/auth";
 import { useLive } from "@/lib/live";
-import { locallyRegisteredToken, registerForPush, unregisterFromPush } from "@/lib/push";
+import {
+  locallyRegisteredToken,
+  pushUnavailableReason,
+  registerForPush,
+  unregisterFromPush,
+} from "@/lib/push";
 import { fonts, radius } from "@/lib/theme";
 import { useTheme } from "@/lib/theme-context";
 import type { WorkspaceRole } from "@/lib/types";
@@ -116,8 +121,12 @@ function PushAlertsCard() {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
+  // Decided synchronously, so a build that cannot do push renders the toggle
+  // disabled from the first frame instead of offering a switch that fails.
+  const [unavailable] = useState(() => pushUnavailableReason());
+
   async function toggle(next: boolean) {
-    if (busy) return;
+    if (busy || unavailable) return;
     setBusy(true);
     setProblem(null);
     if (next) {
@@ -126,7 +135,9 @@ function PushAlertsCard() {
         setEnabled(true);
       } else {
         setEnabled(false);
-        setProblem(result.reason);
+        // "unavailable" is not the user's problem to solve, so it is never
+        // raised as an error here - the disabled state below already says so.
+        setProblem(result.kind === "actionable" ? result.reason : null);
       }
     } else {
       const ok = await unregisterFromPush();
@@ -142,23 +153,28 @@ function PushAlertsCard() {
   return (
     <Card>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        <Bell size={18} color={palette.accent} />
-        <CardTitle style={{ flex: 1 }}>Alerts on this phone</CardTitle>
+        <Bell size={18} color={unavailable ? palette.inkFaint : palette.accent} />
+        <CardTitle style={{ flex: 1 }} color={unavailable ? palette.inkSecondary : undefined}>
+          Alerts on this phone
+        </CardTitle>
         {busy ? (
           <ActivityIndicator size="small" color={palette.accent} />
         ) : (
           <Switch
-            value={enabled}
+            value={enabled && !unavailable}
+            disabled={Boolean(unavailable)}
             onValueChange={(v) => void toggle(v)}
             trackColor={{ false: palette.line, true: palette.primary }}
-            thumbColor={enabled ? palette.primaryContrast : palette.card}
+            thumbColor={enabled && !unavailable ? palette.primaryContrast : palette.card}
           />
         )}
       </View>
       <Small>
-        {enabled
-          ? "Critical and high-severity changes are pushed to this device as soon as a scan finds them."
-          : "Turn on to get a notification the moment a scan finds something important - no need to open the app."}
+        {unavailable
+          ? unavailable
+          : enabled
+            ? "Critical and high-severity changes are pushed to this device as soon as a scan finds them."
+            : "Turn on to get a notification the moment a scan finds something important - no need to open the app."}
       </Small>
       {problem ? (
         <View
