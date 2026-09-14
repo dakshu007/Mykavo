@@ -6,12 +6,13 @@
 
 import { Redirect, Tabs, usePathname, useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Easing, View } from "react-native";
 import { Directions, Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { FloatingTabBar, TabBarProvider } from "@/components/tab-bar";
 import { api, onUnauthorized } from "@/lib/api";
 import { useLive } from "@/lib/live";
+import { TAB_TRANSITION_MS, tabSceneStyle } from "@/lib/tab-transition";
 import { authClient, useSession } from "@/lib/auth";
 import { wipeSecureStorage } from "@/lib/secure-storage";
 import { useTheme } from "@/lib/theme-context";
@@ -117,15 +118,24 @@ export default function TabsLayout() {
             )}
             screenOptions={{
               headerShown: false,
+              // Opaque, and it must stay opaque: see tabSceneStyle.
               sceneStyle: { backgroundColor: palette.canvas },
-              // Screens slide rather than cut. "none" is the library default
-              // and made every tab change feel like a page reload; "shift"
-              // carries the eye across, which is what makes a swipe between
-              // tabs read as one movement instead of two states.
-              animation: "shift",
+              // Screens slide rather than cut. Deliberately NOT
+              // `animation: "shift"` - that preset crossfades the scene and
+              // left the outgoing page showing through the incoming one.
+              // Supplying the interpolator directly is what keeps both scenes
+              // opaque while still carrying the eye across.
+              sceneStyleInterpolator: ({ current }) => ({
+                sceneStyle: tabSceneStyle(current.progress),
+              }),
               transitionSpec: {
-                animation: "spring",
-                config: { stiffness: 900, damping: 90, mass: 2.4 },
+                animation: "timing",
+                config: {
+                  duration: TAB_TRANSITION_MS,
+                  // Decelerating: the screen arrives and settles rather than
+                  // stopping dead, which is the part that reads as "smooth".
+                  easing: Easing.out(Easing.cubic),
+                },
               },
             }}
           >
