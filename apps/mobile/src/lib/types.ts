@@ -31,6 +31,19 @@ export interface MeResponse {
     image: string | null;
     twoFactorEnabled: boolean;
   };
+  /**
+   * Which operator-only areas to show. UX hints ONLY - every admin endpoint
+   * re-checks the allowlist server-side, so faking these reveals nothing. They
+   * exist so the app never renders a tab that 404s when tapped.
+   *
+   * Optional because the app ships independently of the backend: an APK
+   * installed against a server that predates this field must not crash, it
+   * must simply show no admin areas.
+   */
+  admin?: {
+    usage: boolean;
+    blog: boolean;
+  };
   workspaces: {
     id: string;
     name: string;
@@ -358,4 +371,66 @@ export interface StackInfo {
   pagesRead: number;
   assetsSeen: number;
   assetsVersioned: number;
+}
+
+/* --------------------------------- usage ---------------------------------- */
+
+/** How much to trust a figure - mirrors MetricState in the web collector. */
+export type UsageMetricState = "measured" | "partial" | "unavailable" | "unconfigured";
+
+export type UsageUnit = "bytes" | "count";
+
+export interface UsageMeterItem {
+  id: string;
+  label: string;
+  provider: string;
+  used: number;
+  limit: number;
+  unit: UsageUnit;
+  state: UsageMetricState;
+  detail: string;
+}
+
+export interface UsageStatItem {
+  id: string;
+  order: number;
+  label: string;
+  provider: string;
+  value: number | null;
+  unit: UsageUnit;
+  state: UsageMetricState;
+  detail: string;
+}
+
+export interface UsageResponse {
+  generatedAt: string;
+  meters: UsageMeterItem[];
+  stats: UsageStatItem[];
+  uncapped: { label: string; detail: string }[];
+  problems: string[];
+}
+
+/* ---------------------------------- blog ---------------------------------- */
+
+export type BlogPostStatus = "DRAFT" | "PUBLISHED";
+
+export interface BlogPostListItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  status: BlogPostStatus;
+  publishedAt: string | null;
+  updatedAt: string;
+}
+
+export interface BlogListResponse {
+  posts: BlogPostListItem[];
+}
+
+export interface BlogStatusResponse {
+  id: string;
+  status: BlogPostStatus;
+  publishedAt: string | null;
+  updatedAt: string;
 }

@@ -19,6 +19,9 @@ import { buildQuery } from "./query";
 import { safeSecureStorage, WORKSPACE_KEY } from "./secure-storage";
 import type {
   ApiErrorBody,
+  BlogListResponse,
+  BlogPostStatus,
+  BlogStatusResponse,
   DiscoveryResponse,
   ChangeAction,
   ChangeDetailResponse,
@@ -28,6 +31,7 @@ import type {
   ScanDetailResponse,
   ScansListResponse,
   ScanTriggerResponse,
+  UsageResponse,
   WebsiteDetailResponse,
   WebsitesListResponse,
 } from "./types";
@@ -226,6 +230,21 @@ export const api = {
     request<{ website: unknown }>(`/api/websites/${id}`, {
       method: "PATCH",
       body: { paused },
+    }),
+
+  /** Operator-only. 404s for everyone else - the gate is server-side. */
+  usage: () => request<UsageResponse>("/api/mobile/usage"),
+
+  blogPosts: () => request<BlogListResponse>("/api/mobile/blog"),
+
+  /**
+   * Publish or unpublish. Sends ONLY the status: the phone never holds a
+   * post's markdown, so it cannot overwrite the body by round-tripping it.
+   */
+  setBlogPostStatus: (id: string, status: BlogPostStatus) =>
+    request<BlogStatusResponse>(`/api/mobile/blog/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
     }),
 
   muteWebsite: (id: string, muteHours: 1 | 8 | 24 | null) =>

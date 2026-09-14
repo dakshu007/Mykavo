@@ -9,6 +9,7 @@
  */
 
 import {
+  Gauge,
   GitCompareArrows,
   Globe,
   History,
@@ -92,8 +93,27 @@ const TAB_ICONS: Record<string, LucideIcon> = {
   websites: Globe,
   changes: GitCompareArrows,
   scans: History,
+  usage: Gauge,
   settings: Settings,
 };
+
+/**
+ * Item geometry, sized so the pill always fits the narrowest phone it will
+ * meet (360dp) while every target stays at or above the 44dp accessibility
+ * minimum.
+ *
+ *   5 tabs: 5x48 + 4x6 + 20 = 284dp
+ *   6 tabs: 6x48 + 5x6 + 20 = 338dp   <- the Usage tab, admins only
+ *   7 tabs: 7x48 + 6x6 + 20 = 392dp   <- would overflow a 360dp screen
+ *
+ * Hence the step down at seven rather than a fixed size: the bar shrinks
+ * before it clips. Below 44 it would be an accessibility regression, so
+ * anything past seven needs a different shape, not smaller buttons.
+ */
+function itemGeometry(count: number): { size: number; gap: number } {
+  if (count <= 6) return { size: 48, gap: 6 };
+  return { size: 44, gap: 4 };
+}
 
 /**
  * Structural subset of react-navigation's BottomTabBarProps - expo-router 57
@@ -101,6 +121,17 @@ const TAB_ICONS: Record<string, LucideIcon> = {
  */
 interface FloatingTabBarProps {
   state: { index: number; routes: { key: string; name: string }[] };
+  /**
+   * Route names to leave out of the pill (the admin-only Usage tab for
+   * everyone else).
+   *
+   * Passed explicitly rather than inferred from `href: null`, because that
+   * option hides a screen from react-navigation's OWN tab bar and leaves the
+   * route in `state.routes` - a custom bar that iterates those routes draws
+   * it regardless. That is not theoretical: it shipped the Usage tab to every
+   * non-admin in testing, each of whom would have tapped it into a 404.
+   */
+  hiddenTabs?: readonly string[];
   navigation: {
     emit: (event: {
       type: "tabPress";
@@ -111,7 +142,11 @@ interface FloatingTabBarProps {
   };
 }
 
-export function FloatingTabBar({ state, navigation }: FloatingTabBarProps) {
+export function FloatingTabBar({
+  state,
+  navigation,
+  hiddenTabs = [],
+}: FloatingTabBarProps) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const bar = useTabBar();
@@ -119,6 +154,11 @@ export function FloatingTabBar({ state, navigation }: FloatingTabBarProps) {
   const translateY = bar
     ? bar.hiddenAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 160] })
     : 0;
+
+  const routes = state.routes.filter(
+    (route) => route.name in TAB_ICONS && !hiddenTabs.includes(route.name),
+  );
+  const { size, gap } = itemGeometry(routes.length);
 
   return (
     <Animated.View
@@ -136,7 +176,7 @@ export function FloatingTabBar({ state, navigation }: FloatingTabBarProps) {
         style={{
           flexDirection: "row",
           alignItems: "center",
-          gap: 6,
+          gap,
           backgroundColor: gold.ink,
           borderRadius: 999,
           paddingHorizontal: 10,
@@ -150,9 +190,12 @@ export function FloatingTabBar({ state, navigation }: FloatingTabBarProps) {
           elevation: 10,
         }}
       >
-        {state.routes.map((route, index) => {
+        {routes.map((route) => {
           const Icon = TAB_ICONS[route.name] ?? LayoutDashboard;
-          const active = state.index === index;
+          // Compared against the FULL route list: state.index indexes that,
+          // not the filtered one, and using the filtered index would light up
+          // the wrong tab as soon as any route is hidden.
+          const active = state.routes[state.index]?.key === route.key;
           return (
             <Pressable
               key={route.key}
@@ -167,16 +210,20 @@ export function FloatingTabBar({ state, navigation }: FloatingTabBarProps) {
                 }
               }}
               style={({ pressed }) => ({
-                width: 48,
-                height: 48,
-                borderRadius: 24,
+                width: size,
+                height: size,
+                borderRadius: size / 2,
                 alignItems: "center",
                 justifyContent: "center",
                 backgroundColor: active ? gold.gold : "transparent",
                 opacity: pressed && !active ? 0.7 : 1,
               })}
             >
-              <Icon size={21} color={active ? gold.ink : gold.dimOnDark} strokeWidth={2} />
+              <Icon
+                size={Math.round(size * 0.44)}
+                color={active ? gold.ink : gold.dimOnDark}
+                strokeWidth={2}
+              />
             </Pressable>
           );
         })}
