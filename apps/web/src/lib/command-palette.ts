@@ -40,7 +40,10 @@ export interface PaletteGroup {
  * mirrors the sidebar (Blog only for allowlisted admins - same flag the
  * layout already computes; pages/APIs enforce it server-side).
  */
-export function staticEntries(isBlogAdmin: boolean): PaletteEntry[] {
+export function staticEntries(
+  isBlogAdmin: boolean,
+  isPlatformAdmin = false,
+): PaletteEntry[] {
   const actions: PaletteEntry[] = [
     {
       id: "action-add-website",
@@ -84,6 +87,15 @@ export function staticEntries(isBlogAdmin: boolean): PaletteEntry[] {
       section: "Navigation",
       label: "Blog",
       href: "/dashboard/blog",
+    });
+  }
+  if (isPlatformAdmin) {
+    navigation.push({
+      id: "nav-usage",
+      section: "Navigation",
+      label: "All Usage",
+      href: "/dashboard/usage",
+      hint: "quota limits infrastructure",
     });
   }
 

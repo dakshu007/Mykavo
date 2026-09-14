@@ -2,7 +2,11 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LocalDiskStorage, type ArtifactStorage } from "./storage";
+import {
+  LocalDiskStorage,
+  parseListObjectsPage,
+  type ArtifactStorage,
+} from "./storage";
 
 let dir: string;
 // Typed as the interface: production only ever touches these through
@@ -62,5 +66,75 @@ describe("LocalDiskStorage round trip", () => {
     await storage.put("ws/w1/shot/h.jpg", data, "image/jpeg");
     await storage.put("ws/w1/shot/h.jpg", data, "image/jpeg");
     expect(await storage.get("ws/w1/shot/h.jpg")).toEqual(data);
+  });
+});
+
+describe("parseListObjectsPage", () => {
+  const page = (body: string) =>
+    `<?xml version="1.0" encoding="UTF-8"?><ListBucketResult>${body}</ListBucketResult>`;
+
+  it("sums object sizes and counts them", () => {
+    const xml = page(`
+      <Contents><Key>a/1.webp</Key><Size>1024</Size></Contents>
+      <Contents><Key>a/2.webp</Key><Size>2048</Size></Contents>
+      <IsTruncated>false</IsTruncated>
+    `);
+    expect(parseListObjectsPage(xml)).toEqual({
+      bytes: 3072,
+      objects: 2,
+      more: false,
+      nextToken: null,
+    });
+  });
+
+  it("reports an empty bucket as zero rather than failing", () => {
+    expect(parseListObjectsPage(page("<IsTruncated>false</IsTruncated>"))).toEqual({
+      bytes: 0,
+      objects: 0,
+      more: false,
+      nextToken: null,
+    });
+  });
+
+  it("surfaces truncation and the continuation token", () => {
+    const xml = page(`
+      <Contents><Key>a</Key><Size>10</Size></Contents>
+      <IsTruncated>true</IsTruncated>
+      <NextContinuationToken>1ueGcx/LEcQ==</NextContinuationToken>
+    `);
+    const result = parseListObjectsPage(xml);
+    expect(result.more).toBe(true);
+    expect(result.nextToken).toBe("1ueGcx/LEcQ==");
+  });
+
+  it("treats a truncated page with an empty token as having none", () => {
+    // Guards the caller's loop: a token of "" would be sent as a
+    // continuation and the walk would repeat page one forever.
+    const xml = page(`
+      <IsTruncated>true</IsTruncated>
+      <NextContinuationToken></NextContinuationToken>
+    `);
+    expect(parseListObjectsPage(xml).nextToken).toBeNull();
+    expect(parseListObjectsPage(xml).more).toBe(true);
+  });
+
+  it("documents the one thing a regex parse cannot do", () => {
+    // A <Size> embedded in a Key is indistinguishable from a real one to a
+    // regex, so it would be counted. This is recorded rather than fixed
+    // because it is unreachable: every key this bucket holds is built from
+    // cuids and fixed path segments (`ws/{workspaceId}/shot/...`, see
+    // packages/shared/src/artifact-keys.ts). No scanned URL, page title, or
+    // any other user-supplied text ever becomes part of an object key, and
+    // nothing but MyKavo writes to the bucket.
+    //
+    // If that ever changes - a key derived from a URL, or a shared bucket -
+    // this test is the note saying to swap in a real XML parser first.
+    const xml = page(`
+      <Contents><Key>evil<Size>999999</Size>.webp</Key><Size>50</Size></Contents>
+      <IsTruncated>false</IsTruncated>
+    `);
+    const result = parseListObjectsPage(xml);
+    expect(result.objects).toBe(2);
+    expect(result.bytes).toBe(1_000_049);
   });
 });

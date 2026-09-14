@@ -83,7 +83,13 @@ const statusLabels: Record<ChangeStatus, string> = {
   IGNORED: "Ignored",
 };
 
-export function CommandPalette({ isBlogAdmin }: { isBlogAdmin: boolean }) {
+export function CommandPalette({
+  isBlogAdmin,
+  isPlatformAdmin = false,
+}: {
+  isBlogAdmin: boolean;
+  isPlatformAdmin?: boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -106,14 +112,22 @@ export function CommandPalette({ isBlogAdmin }: { isBlogAdmin: boolean }) {
 
   // Nothing mounts until first open - zero layout cost on dashboard pages.
   if (!open) return null;
-  return <PaletteDialog isBlogAdmin={isBlogAdmin} onClose={() => setOpen(false)} />;
+  return (
+    <PaletteDialog
+      isBlogAdmin={isBlogAdmin}
+      isPlatformAdmin={isPlatformAdmin}
+      onClose={() => setOpen(false)}
+    />
+  );
 }
 
 function PaletteDialog({
   isBlogAdmin,
+  isPlatformAdmin = false,
   onClose,
 }: {
   isBlogAdmin: boolean;
+  isPlatformAdmin?: boolean;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -158,11 +172,11 @@ function PaletteDialog({
 
   const groups = useMemo(() => {
     const entries = [
-      ...filterEntries(staticEntries(isBlogAdmin), query),
+      ...filterEntries(staticEntries(isBlogAdmin, isPlatformAdmin), query),
       ...(query.trim() && results ? serverEntries(results) : []),
     ];
     return groupEntries(entries);
-  }, [isBlogAdmin, query, results]);
+  }, [isBlogAdmin, isPlatformAdmin, query, results]);
 
   const flat = useMemo(() => flattenGroups(groups), [groups]);
 

@@ -13,6 +13,7 @@ import {
   BarChart3,
   ShieldCheck,
   LogOut,
+  Gauge,
   PenLine,
   Settings,
 } from "lucide-react";
@@ -43,6 +44,7 @@ export function DashboardSidebar({
   workspaceName,
   upgradeCard,
   isBlogAdmin = false,
+  isPlatformAdmin = false,
   workspaces = [],
   currentWorkspaceId,
 }: {
@@ -51,16 +53,23 @@ export function DashboardSidebar({
       lookup is a server query and this is a client component. */
   upgradeCard?: React.ReactNode;
   isBlogAdmin?: boolean;
+  isPlatformAdmin?: boolean;
   /** All workspaces the user belongs to - switcher renders when >1. */
   workspaces?: WorkspaceOption[];
   currentWorkspaceId?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Blog CMS entry is allowlist-gated; the pages/APIs enforce it server-side.
-  const items = isBlogAdmin
-    ? [...nav, { href: "/dashboard/blog", label: "Blog", icon: PenLine }]
-    : nav;
+  // Blog CMS and All Usage are allowlist-gated; the pages/APIs enforce it
+  // server-side. Two separate flags because publishing a post and reading the
+  // infrastructure bill are different privileges.
+  const items = [
+    ...nav,
+    ...(isBlogAdmin ? [{ href: "/dashboard/blog", label: "Blog", icon: PenLine }] : []),
+    ...(isPlatformAdmin
+      ? [{ href: "/dashboard/usage", label: "All Usage", icon: Gauge }]
+      : []),
+  ];
 
   async function handleSignOut() {
     await authClient.signOut();

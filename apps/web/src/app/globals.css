@@ -52,6 +52,10 @@
      passes the lightness band, the chroma floor and 3:1 contrast in BOTH
      themes, so one value serves both. */
   --color-chart-gold: var(--fx-chart-gold);
+  /* Usage-meter middle step. Neither warning-strong (collides with red:
+     normal-vision deltaE 9.1) nor chart-gold (2.96:1 on its track, under the
+     3:1 WCAG 1.4.11 floor) works, so the meter gets its own amber. */
+  --color-meter-warning: var(--fx-meter-warning);
 
   --color-success: var(--fx-success);
   --color-success-soft: var(--fx-success-soft);
@@ -112,6 +116,8 @@
   --fx-accent: #7a5c00;
   --fx-chart-gold: #b8860b;
 
+  --fx-meter-warning: #a67908;
+
   --fx-success: #16a34a;
   --fx-success-soft: #e5f6ec;
   --fx-success-strong: #147a3a;
@@ -163,6 +169,10 @@
   --fx-accent: #ffd400;
   --fx-chart-gold: #b8860b;
 
+  /* Dark: the brand gold reads clearly here and separates from both the
+     green and the red for every CVD type (protan deltaE 10.9). */
+  --fx-meter-warning: #ffd400;
+
   --fx-success: #34c979;
   --fx-success-soft: #122b1d;
   --fx-success-strong: #5fd695;
@@ -211,6 +221,10 @@
     --fx-accent: #ffd400;
     --fx-chart-gold: #b8860b;
   --fx-chart-gold: #b8860b;
+
+    /* Dark: the brand gold reads clearly here and separates from both the
+       green and the red for every CVD type (protan deltaE 10.9). */
+    --fx-meter-warning: #ffd400;
 
     --fx-success: #34c979;
     --fx-success-soft: #122b1d;

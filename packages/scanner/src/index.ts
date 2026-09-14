@@ -10,7 +10,9 @@ export {
 export {
   LocalDiskStorage,
   getDefaultStorage,
+  parseListObjectsPage,
   type ArtifactStorage,
+  type StorageUsage,
 } from "./storage";
 export {
   ScanPageError,

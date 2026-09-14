@@ -103,6 +103,14 @@ const TEXT_PAIRS: [string, string, number][] = [
  * mode the amber/orange dots are brand colors that predate this audit and are
  * always paired with a text label, so they get a documented lower floor. */
 const GRAPHIC_PAIRS_DARK: [string, string, number][] = [
+  // Usage meter fill against its own track (components/dashboard/usage-meters).
+  // A fill that does not separate from its track renders the meter as EMPTY,
+  // which is worse than no meter: it reads as "nothing used". The base status
+  // colours fail this in light mode (warning 1.95:1, orange 2.47:1), and so
+  // does chart-gold (2.96:1) - hence the dedicated meter-warning token.
+  ["success-strong", "success-soft", 3],
+  ["meter-warning", "warning-soft", 3],
+  ["critical-strong", "critical-soft", 3],
   ["success", "card", 3],
   ["warning", "card", 3],
   ["critical", "card", 3],
@@ -111,6 +119,10 @@ const GRAPHIC_PAIRS_DARK: [string, string, number][] = [
   ["chart-violet", "card", 3],
 ];
 const GRAPHIC_PAIRS_LIGHT: [string, string, number][] = [
+  // Same meter pairings in light mode - the mode where they went wrong.
+  ["success-strong", "success-soft", 3],
+  ["meter-warning", "warning-soft", 3],
+  ["critical-strong", "critical-soft", 3],
   ["success", "card", 3],
   ["warning", "card", 2],
   ["critical", "card", 3],
