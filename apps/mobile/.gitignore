@@ -41,3 +41,12 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase / signing material. This repository is PUBLIC.
+# google-services.json carries a Google API key for the Firebase project; it
+# ships inside the APK by design, but a public repo makes it harvestable by
+# bots, so CI writes it from the GOOGLE_SERVICES_JSON_B64 secret instead.
+google-services.json
+GoogleService-Info.plist
+*.jks
+*.keystore

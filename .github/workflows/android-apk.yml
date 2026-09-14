@@ -24,8 +24,10 @@
 #   ANDROID_KEY_ALIAS             key alias
 #   ANDROID_KEY_PASSWORD          key password
 #   GOOGLE_SERVICES_JSON_B64      base64 of google-services.json (FCM push)
-#   EXPO_PROJECT_ID               EAS project id (push tokens). Not secret, but
-#                                 kept here so changing Expo account needs no commit.
+#   EXPO_PROJECT_ID               OPTIONAL override for the EAS project id. The
+#                                 real one is committed in app.json (it is a
+#                                 public identifier); set this only to build
+#                                 against a different Expo account.
 #   RELEASE_TOKEN                 write access to the public download repo
 #   ANDROID_DEBUG_KEYSTORE_B64    legacy stable debug key, for sideload builds
 #                                 while the real upload key is not yet set up
@@ -136,9 +138,31 @@ jobs:
             echo "::warning::No GOOGLE_SERVICES_JSON_B64 - the app will build, but Android push notifications cannot be delivered."
           fi
 
-          if [ -z "${EXPO_PROJECT_ID:-}" ]; then
-            echo "::warning::No EXPO_PROJECT_ID - the in-app push toggle will refuse to enable and explain why."
-          fi
+      # Checks the config that actually ships, not an env var: app.json carries
+      # extra.eas.projectId and EXPO_PROJECT_ID only overrides it, so testing
+      # the variable would have said "missing" for the normal case and nothing
+      # at all if the committed id were deleted. Without a project id Expo
+      # cannot issue a push token, and the app installs looking fine with a
+      # dead alerts toggle - so fail here rather than 25 minutes later on a
+      # phone.
+      - name: Verify push configuration
+        env:
+          GOOGLE_SERVICES_JSON: ${{ steps.signing.outputs.google_services }}
+        run: |
+          set -euo pipefail
+          npx --no-install expo config --type public --json > "${RUNNER_TEMP}/resolved.json"
+          node -e '
+            const c = require(process.env.RUNNER_TEMP + "/resolved.json");
+            const id = c.extra?.eas?.projectId;
+            const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+            if (typeof id !== "string" || !uuid.test(id)) {
+              console.log("::error::No usable EAS project id in the resolved app config (got " + JSON.stringify(id) + "). Expo cannot issue push tokens, so the in-app alerts toggle would be dead. Restore extra.eas.projectId in apps/mobile/app.json.");
+              process.exit(1);
+            }
+            console.log("EAS project id: " + id);
+            console.log("package       : " + c.android?.package);
+            console.log("googleServices: " + (c.android?.googleServicesFile ?? "(none - push cannot be delivered)"));
+          '
 
       - name: Generate native Android project
         env:
@@ -157,6 +181,27 @@ jobs:
             cp "${RUNNER_TEMP}/dbg/debug.keystore" android/app/debug.keystore
             echo "Stable debug keystore installed."
           fi
+
+      # prebuild copies google-services.json into the native project. If that
+      # copy did not happen, the APK builds and runs but FCM has no project to
+      # register against, so tokens never receive anything.
+      - name: Verify FCM credentials reached the native project
+        if: steps.signing.outputs.google_services != ''
+        run: |
+          set -euo pipefail
+          if [ ! -s android/app/google-services.json ]; then
+            echo "::error::GOOGLE_SERVICES_JSON_B64 was supplied but android/app/google-services.json is missing after prebuild - push would never be delivered."
+            exit 1
+          fi
+          PKG="$(node -e 'const c=require("./android/app/google-services.json");console.log(c.client[0].client_info.android_client_info.package_name)')"
+          APP_PKG="$(node -e 'console.log(require("./app.json").expo.android.package)')"
+          echo "google-services.json package: ${PKG}"
+          echo "app.json package            : ${APP_PKG}"
+          if [ "$PKG" != "$APP_PKG" ]; then
+            echo "::error::google-services.json is registered for ${PKG} but this app is ${APP_PKG}. Expo would issue push tokens that silently never deliver."
+            exit 1
+          fi
+          echo "FCM credentials match the app package."
 
       - name: Report build configuration
         run: |

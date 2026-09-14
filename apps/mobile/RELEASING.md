@@ -4,10 +4,10 @@ Everything in the repo is ready. What remains needs your accounts, so it cannot
 be done from CI or by an agent: a signing key that must only ever exist on your
 machine, an Expo project id, and Firebase credentials.
 
-**Do the sections in order.** §3 depends on §2 (there is no EAS project to
-attach FCM credentials to until `eas init` has run), and §4 must happen before
-the in-app toggle can register a device. Work through §1–§5 once; after that,
-every release is just a workflow run.
+**Do the sections in order.** §2 is already done. §3a and §4 are what stand
+between you and a working notification: without §3a Expo has nothing to hand
+FCM, and without §4 the device cannot register at all. Work through §1–§5 once;
+after that, every release is just a workflow run.
 
 ---
 
@@ -46,22 +46,19 @@ base64 -i ~/mykavo-upload.jks | pbcopy   # now on your clipboard
 
 ---
 
-## 2. Expo project id (do this BEFORE §3)
+## 2. Expo project id — already done
 
-Expo issues push tokens per project, which is why the in-app toggle currently
-refuses to turn on. §3 also needs this project to exist before it can attach
-credentials to it.
+Nothing to do. The project id `9ac2f0fe-f11b-47b8-9c1c-db7b514d6c4c` is
+committed in `app.json` under `extra.eas.projectId`.
 
-```bash
-cd apps/mobile
-npx eas-cli login      # your Expo account (free tier is enough)
-npx eas-cli init       # prints a project id like 8f3b1c4a-...-...
-```
+It is a public identifier, not a secret: it names the Expo project that issues
+push tokens, and holding it does not let anyone send you a notification (that
+needs a device token). Committing it means one less thing to configure, and CI
+now *fails the build* if it ever goes missing, rather than shipping an app whose
+alerts toggle silently refuses to turn on.
 
-Copy the id. It is **not** a secret — it is a public identifier — so either
-put it in the `EXPO_PROJECT_ID` GitHub secret (§5) or let `eas init` write
-`extra.eas.projectId` into `app.json` and commit that. The secret wins if both
-are present.
+`EXPO_PROJECT_ID` still works as a GitHub secret if you ever build against a
+different Expo account; it overrides the committed value.
 
 ---
 
@@ -70,24 +67,52 @@ are present.
 Expo relays through FCM, and Android has no other push transport. Both are free
 with no per-message charge and no message cap.
 
-1. <https://console.firebase.google.com> → **Add project** (reuse one if you have it).
-2. **Add app → Android**, package name **exactly** `app.mykavo.mobile`.
-   A mismatch here produces tokens that silently never deliver.
-3. Download **`google-services.json`**, then:
-   ```bash
-   base64 -i ~/Downloads/google-services.json | pbcopy
-   ```
-4. Firebase → **Project settings → Cloud Messaging**: confirm the
-   **Firebase Cloud Messaging API (V1)** is enabled.
-5. Firebase → **Project settings → Service accounts → Generate new private key**.
-6. Hand that key to Expo so it can deliver on your behalf:
-   ```bash
-   cd apps/mobile
-   npx eas-cli credentials      # Android → production → FCM V1 service account key
-   ```
+The Firebase project `mykavo-e0f9c` exists and has the Android app registered
+under `app.mykavo.mobile`, matching `app.json`. Two things remain.
 
-Step 6 is the one people skip. Without it Expo accepts your sends and has
-nothing to hand FCM, so nothing arrives and no error appears in the app.
+### 3a. The FCM V1 service account key → Expo
+
+This is the step everybody skips, and skipping it is invisible: Expo accepts
+your sends, has no credential to hand FCM, and nothing arrives. No error in the
+app, no error in the worker.
+
+Do it in the browser. The CLI (`npx eas-cli credentials`) needs an `eas login`
+that has already failed for you once, and this is a one-time upload.
+
+1. Firebase Console → your project → gear icon → **Project settings**
+2. **Service accounts** tab → **Generate new private key** → confirm. A `.json`
+   file downloads. Treat it as a password; it can send push as your project.
+3. <https://expo.dev> → **MyKavo** → **Project settings** → **Credentials**
+4. Under Android, **FCM V1 service account key** → **Add a service account key**
+5. Upload the `.json` from step 2.
+6. Delete the downloaded file afterwards. Expo keeps its own copy.
+
+Also confirm, while you are in Firebase: **Project settings → Cloud Messaging**
+shows **Firebase Cloud Messaging API (V1)** as *Enabled*.
+
+### 3b. `google-services.json` → a GitHub secret
+
+**This repository is public**, so the file does not live in it. Its API key is
+restricted to the app's package name and signing certificate and it ships inside
+every APK regardless, but a public repo makes it harvestable by scanners, so CI
+writes it from a secret instead — and `.gitignore` now blocks it from being
+committed by accident.
+
+```bash
+base64 -i ~/Downloads/google-services.json
+```
+
+Copy the output into the `GOOGLE_SERVICES_JSON_B64` secret (§5).
+
+CI checks that the package name inside the file matches `app.mykavo.mobile`
+after prebuild, and fails the build if it does not — a mismatch there produces
+push tokens that are accepted and then silently never deliver, which is the
+worst failure mode available.
+
+> Optional hardening, worth five minutes later: Google Cloud Console →
+> **APIs & Services → Credentials** → the Android key → restrict it to *Android
+> apps* with package `app.mykavo.mobile` and your signing SHA-1. That makes the
+> key useless to anyone who extracts it from the APK.
 
 ---
 
@@ -139,8 +164,8 @@ ALTER TABLE "push_device"
 | `ANDROID_KEYSTORE_PASSWORD` | the store password from §1 |
 | `ANDROID_KEY_ALIAS` | `mykavo-upload` |
 | `ANDROID_KEY_PASSWORD` | the key password from §1 |
-| `EXPO_PROJECT_ID` | the id from §2 |
-| `GOOGLE_SERVICES_JSON_B64` | base64 from §3 |
+| `EXPO_PROJECT_ID` | **not needed** — committed in `app.json`. Set only to build against another Expo account. |
+| `GOOGLE_SERVICES_JSON_B64` | base64 from §3b |
 
 Already present and still used: `RELEASE_TOKEN` (publishes the sideload APK to
 the public download repo) and `ANDROID_DEBUG_KEYSTORE_B64` (the old sideload
@@ -182,9 +207,9 @@ Expo error, which tells you which link broke:
 
 | Symptom | Almost always |
 | --- | --- |
-| Toggle refuses, says unavailable | `EXPO_PROJECT_ID` missing from the build (§2, §5) |
+| Toggle refuses, says unavailable | running in Expo Go or a simulator, or `extra.eas.projectId` was removed (CI now fails on that) |
 | Toggle turns on, test arrives | working — you are done |
-| Toggle turns on, nothing arrives | FCM V1 service key not uploaded to Expo (§3 step 6) |
+| Toggle turns on, nothing arrives | FCM V1 service account key not uploaded to Expo (§3a) |
 | Toggle fails with a server error | migration not run (§4) |
 | `push test dispatched` absent from the log | worker is down or on old code |
 
