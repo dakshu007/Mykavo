@@ -223,21 +223,66 @@ jobs:
       # A release build that quietly came out on the debug certificate is the
       # exact thing this workflow exists to prevent, so assert it rather than
       # trust it. Play rejects CN=Android Debug on upload.
+      #
+      # This used to use `keytool -printcert -jarfile`, which printed NOTHING
+      # for a modern APK: AGP signs with APK Signature Scheme v2/v3 and emits
+      # no legacy JAR signature for keytool to read. The owner variable came
+      # out empty, the debug-certificate grep therefore never matched, and the
+      # step reported "Signed with the release upload key" whatever the APK
+      # actually carried. A check that cannot fail is worse than no check,
+      # because it is believed.
+      #
+      # apksigner reads v2/v3, and every branch below that cannot establish
+      # the certificate now FAILS instead of passing quietly.
       - name: Verify signing certificate
         run: |
           set -euo pipefail
           APK=android/app/build/outputs/apk/release/app-release.apk
-          echo "--- certificate ---"
-          keytool -printcert -jarfile "$APK" | grep -E "Owner:|Valid from" || true
-          OWNER="$(keytool -printcert -jarfile "$APK" | grep -m1 'Owner:' || true)"
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+
+          APKSIGNER="$(ls -d "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::apksigner not found under ${ANDROID_HOME:-unset}/build-tools - cannot verify how the APK is signed."
+            exit 1
+          fi
+
+          echo "--- apksigner: $APKSIGNER ---"
+          CERTS="$("$APKSIGNER" verify --print-certs --verbose "$APK")"
+          echo "$CERTS"
+
+          DN="$(printf '%s\n' "$CERTS" | grep -m1 'certificate DN:' || true)"
+          SHA="$(printf '%s\n' "$CERTS" | grep -m1 'certificate SHA-256 digest:' || true)"
+          if [ -z "$DN" ] || [ -z "$SHA" ]; then
+            echo "::error::Could not read a signing certificate from the APK. Refusing to report on how it is signed."
+            exit 1
+          fi
+          echo "$DN"
+          echo "$SHA"
+
           if [ "${{ steps.signing.outputs.release_signing }}" = "true" ]; then
-            if echo "$OWNER" | grep -q "CN=Android Debug"; then
+            if printf '%s' "$DN" | grep -q "CN=Android Debug"; then
               echo "::error::Release signing was configured but the APK carries the DEBUG certificate. Google Play would reject this."
               exit 1
             fi
-            echo "Signed with the release upload key."
+            echo "APK is signed with the release upload key (not the debug certificate)."
+
+            # The AAB is what Play actually receives, and it is JAR-signed, so
+            # keytool does work here. Verify it separately rather than assuming
+            # bundleRelease used the same config as assembleRelease.
+            AAB_OWNER="$(keytool -printcert -jarfile "$AAB" 2>/dev/null | grep -m1 'Owner:' || true)"
+            if [ -z "$AAB_OWNER" ]; then
+              echo "::error::Could not read a signing certificate from the AAB, which is the artifact Play receives."
+              exit 1
+            fi
+            echo "AAB $AAB_OWNER"
+            if printf '%s' "$AAB_OWNER" | grep -q "CN=Android Debug"; then
+              echo "::error::The Play App Bundle carries the DEBUG certificate. Play would reject this upload."
+              exit 1
+            fi
+            echo "AAB is signed with the release upload key."
           else
             echo "Sideload build on the debug certificate (expected - no upload key configured)."
+            echo "$DN"
           fi
 
       - name: Upload APK artifact
