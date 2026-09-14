@@ -11,7 +11,8 @@ It signs into the SAME backend as the website (Better Auth cookie sessions, incl
 - `src/lib/auth.ts` - Better Auth Expo client (SecureStore cookie storage); `EXPO_PUBLIC_API_URL` overrides the backend (defaults to production)
 - `src/lib/api.ts` - typed API client; `src/lib/live.ts` - the polling/focus/foreground live-sync hook
 - `src/components/` - UI kit (cards, badges, buttons) matching the web dashboard components
-- `src/app/` - expo-router screens: `login` (gold v4 style, 2FA), `(tabs)` Overview / Websites / Changes / Scans / Settings, plus `website/[id]`, `change/[id]`, `scan/[id]`
+- `src/lib/push.ts` - push permissions, Expo token registration, tap-to-route (pure routing in `push-route.ts` so it is unit-testable)
+- `src/app/` - expo-router screens: `login` (gold v4 style, 2FA), `(tabs)` Overview / Websites / Changes / Scans / Settings, plus `website/[id]`, `website/new` (add a site), `change/[id]`, `scan/[id]`
 
 ## Run it
 
@@ -20,28 +21,79 @@ This package is intentionally OUTSIDE the pnpm workspace (Metro prefers its own 
 ```bash
 cd apps/mobile
 npm install
-npx expo start          # QR code -> open in Expo Go on your phone (talks to production)
+npx expo start
 ```
+
+That prints a QR code; open it in Expo Go on your phone. It talks to production.
 
 Against a local backend: copy `.env.example` to `.env`, set `EXPO_PUBLIC_API_URL=http://<your-Mac-LAN-IP>:3010`, run the web dev server, then `npx expo start`.
 
 ## Build an installable Android APK
 
-Option A - EAS (free tier, easiest):
+CI does this: **Actions -> android-apk -> Run workflow**. It produces a sideload
+APK always, and a Play-ready AAB once the signing secrets exist. See
+[RELEASING.md](./RELEASING.md) for the one-time setup (upload key, Firebase, EAS
+project id) - those steps need accounts and cannot be done from CI.
 
-```bash
-npm install -g eas-cli
-eas login                        # your expo.dev account
-eas build -p android --profile preview
-```
-
-Option B - local build (needs Android Studio / SDK installed):
+Locally, if you have Android Studio:
 
 ```bash
 npx expo run:android --variant release
 ```
 
-`app.json` already carries the Android package id (`app.mykavo.mobile`), the `mykavo://` scheme, and brand icons (generated from the page-spark mark).
+A local build like that is debug-signed: fine for sideloading, rejected by Play.
+
+`app.json` carries the package id (`app.mykavo.mobile`), the `mykavo://` scheme
+and the brand icons; `app.config.js` layers on the EAS project id, versionCode
+and google-services.json from the environment so switching accounts needs no
+commit.
+
+### Signing (do not regress)
+
+Expo's prebuild template signs RELEASE builds with the DEBUG key - the
+certificate `CN=Android Debug`, which Play rejects and whose password is public
+knowledge. `plugins/with-release-signing.js` replaces it with a real
+signingConfig from `ANDROID_KEYSTORE_*` env vars, refuses a partial credential
+set rather than falling back, and CI re-reads the certificate off the built APK
+so a debug-signed "release" fails the run instead of shipping.
+
+### Licences
+
+`npm run notices` regenerates `THIRD-PARTY-NOTICES.md` and the in-app licences
+screen from the real production dependency closure (212 shipped packages). CI
+runs `npm run notices:check` and fails if they have drifted - MIT, ISC, BSD and
+Apache all require their notices to travel with the APK.
+
+## Push notifications
+
+This is the reason the app exists rather than a bookmark: alerts reach the phone
+without anyone opening anything. Settings -> "Alerts on this phone" registers the
+device; the worker sends at the same seam as email and Slack
+(`apps/worker/src/push.ts`), so muted websites and severity thresholds already
+apply. HIGH/CRITICAL ring through on the `critical-changes` Android channel;
+everything quieter arrives at normal priority on `changes`.
+
+**Two prerequisites, neither of which can be set from this repo alone. Until both
+are done the toggle will refuse to turn on and say why - it never pretends to be
+enabled.**
+
+1. **An EAS project id.** Expo issues push tokens per project. Run `eas init` in
+   this directory while signed in to the Expo account that owns the app; it
+   writes `extra.eas.projectId` into `app.json`. Commit that.
+2. **FCM credentials for Android.** A release APK needs Firebase Cloud Messaging
+   to receive anything. Create a Firebase project, add an Android app with the
+   package id `app.mykavo.mobile`, download `google-services.json` into this
+   directory, and upload the FCM V1 service-account key to Expo
+   (`eas credentials`). Expo Go dropped Android remote push in SDK 53, so
+   testing needs a development or release build, not Expo Go.
+
+`EXPO_ACCESS_TOKEN` on the worker is optional; set it to raise Expo's rate limits
+for a high-volume project.
+
+Devices that answer `DeviceNotRegistered` (app uninstalled, token rotated) are
+disabled automatically with that reason recorded - Expo requires senders to stop,
+and continuing is what gets a project rate-limited. Transient failures only
+increment a counter, so a rate-limited send never unsubscribes a working phone.
 
 ## Reliability hardening (do not regress)
 
@@ -51,6 +103,11 @@ npx expo run:android --variant release
 - 401 recovery in `src/app/(tabs)/_layout.tsx` - expired/revoked sessions sign out locally and return to /login instead of stranding the user.
 - Tab-swipe gestures use `.runOnJS(true)` - plain JS thread, no release-build worklet risk.
 - `src/lib/query.ts` instead of URLSearchParams (React Native's polyfill is partial).
+- `src/lib/theme.ts` is a 1:1 port of the dashboard's `--fx-*` tokens. `primary`
+  (MyKavo gold) is a BACKGROUND colour - #ffd400 is 1.39:1 as text on white. Gold
+  text and icons must use `accent`. `theme-contrast.test.ts` asserts every pairing
+  AND walks the screens for `palette.primary` used as a text colour, so this
+  cannot come back.
 - CI signs every APK with ONE stable key (repo secret `ANDROID_DEBUG_KEYSTORE_B64`, backup copy at `~/.fluxen/mykavo-android-debug.keystore` on the owner's Mac) so installed apps update in place. Replace with a proper keystore before any Play Store release.
 
 ## Tests

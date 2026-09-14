@@ -9,6 +9,8 @@ import {
   LIGHTHOUSE_AUDIT_QUEUE,
   SITE_AUDIT_QUEUE,
   GSC_SYNC_QUEUE,
+  PUSH_TEST_QUEUE,
+  type PushTestJob,
   type ScanWebsiteJob,
   type SiteAuditJob,
   type GscSyncJob,
@@ -66,6 +68,12 @@ export async function enqueueLighthouseAudit(job: LighthouseAuditJob): Promise<s
 export async function enqueueSiteAudit(job: SiteAuditJob): Promise<string | null> {
   const boss = await getBoss();
   return boss.send(SITE_AUDIT_QUEUE, { ...job });
+}
+
+/** Enqueue a test push notification for one user. Returns the pg-boss job id. */
+export async function enqueuePushTest(job: PushTestJob): Promise<string | null> {
+  const boss = await getBoss();
+  return boss.send(PUSH_TEST_QUEUE, { ...job });
 }
 
 /** Enqueue a Search Console sync. Returns the pg-boss job id. */

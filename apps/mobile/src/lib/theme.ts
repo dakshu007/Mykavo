@@ -25,6 +25,14 @@ export interface FxPalette {
   primaryHover: string;
   primarySoft: string;
   primaryContrast: string;
+  /**
+   * Text/border gold. `primary` is a BACKGROUND-only colour: #ffd400 on white
+   * is 1.39:1, far under AA, so gold text must use this instead. Mirrors
+   * --fx-accent on the web (dark mode can use the bright gold directly).
+   */
+  accent: string;
+  /** Data-mark gold - the only gold step that clears 3:1 in BOTH themes. */
+  chartGold: string;
   success: string;
   successSoft: string;
   successStrong: string;
@@ -53,15 +61,17 @@ export const lightPalette: FxPalette = {
   card: "#ffffff",
   ink: "#16181d",
   inkSecondary: "#5c6270",
-  inkFaint: "#9aa1b1",
+  inkFaint: "#7f8697",
   inkInverse: "#ffffff",
   inkHover: "#000000",
   line: "#e4e7ee",
   panel: "#16181d",
-  primary: "#3556f4",
-  primaryHover: "#2a46d6",
-  primarySoft: "#e8ecfe",
-  primaryContrast: "#ffffff",
+  primary: "#ffd400",
+  primaryHover: "#e6bf00",
+  primarySoft: "#fff3b0",
+  primaryContrast: "#151515",
+  accent: "#7a5c00",
+  chartGold: "#b8860b",
   success: "#16a34a",
   successSoft: "#e5f6ec",
   successStrong: "#147a3a",
@@ -93,10 +103,12 @@ export const darkPalette: FxPalette = {
   inkHover: "#ffffff",
   line: "#262b35",
   panel: "#16181d",
-  primary: "#7c92fa",
-  primaryHover: "#93a5fb",
-  primarySoft: "#1c2547",
-  primaryContrast: "#0a0e1a",
+  primary: "#ffd400",
+  primaryHover: "#ffe14d",
+  primarySoft: "#3a2f00",
+  primaryContrast: "#151515",
+  accent: "#ffd400",
+  chartGold: "#b8860b",
   success: "#34c979",
   successSoft: "#122b1d",
   successStrong: "#5fd695",
@@ -194,7 +206,7 @@ export function severityColors(p: FxPalette, severity: Severity): { bg: string; 
     case "MEDIUM":
       return { bg: p.warningSoft, text: p.warningStrong, dot: p.warning, label: "Medium" };
     case "LOW":
-      return { bg: p.primarySoft, text: p.primary, dot: p.primary, label: "Low" };
+      return { bg: p.primarySoft, text: p.accent, dot: p.primary, label: "Low" };
     case "INFO":
       return { bg: p.infoSoft, text: p.info, dot: p.info, label: "Info" };
   }
@@ -204,7 +216,7 @@ export function severityColors(p: FxPalette, severity: Severity): { bg: string; 
 export function websiteStatusColors(p: FxPalette, status: WebsiteStatus): { dot: string; text: string; label: string } {
   switch (status) {
     case "PENDING":
-      return { dot: p.primary, text: p.primary, label: "Ready to baseline" };
+      return { dot: p.primary, text: p.accent, label: "Ready to baseline" };
     case "DISCOVERING":
       return { dot: p.warning, text: p.warningStrong, label: "Discovering" };
     case "BASELINING":
@@ -224,7 +236,7 @@ export function scanStatusColors(p: FxPalette, status: ScanStatus): { bg: string
     case "QUEUED":
       return { bg: p.infoSoft, text: p.info, label: "Queued" };
     case "RUNNING":
-      return { bg: p.primarySoft, text: p.primary, label: "Running" };
+      return { bg: p.primarySoft, text: p.accent, label: "Running" };
     case "COMPLETED":
       return { bg: p.successSoft, text: p.successStrong, label: "Completed" };
     case "PARTIAL":
@@ -238,7 +250,7 @@ export function scanStatusColors(p: FxPalette, status: ScanStatus): { bg: string
 export function changeStatusColors(p: FxPalette, status: ChangeStatus): { bg: string; text: string; label: string } {
   switch (status) {
     case "NEW":
-      return { bg: p.primarySoft, text: p.primary, label: "New" };
+      return { bg: p.primarySoft, text: p.accent, label: "New" };
     case "REVIEWED":
       return { bg: p.infoSoft, text: p.info, label: "Reviewed" };
     case "APPROVED":
@@ -246,7 +258,7 @@ export function changeStatusColors(p: FxPalette, status: ChangeStatus): { bg: st
     case "RESOLVED":
       return { bg: p.successSoft, text: p.successStrong, label: "Resolved" };
     case "IGNORED":
-      return { bg: p.infoSoft, text: p.inkFaint, label: "Ignored" };
+      return { bg: p.infoSoft, text: p.info, label: "Ignored" };
   }
 }
 

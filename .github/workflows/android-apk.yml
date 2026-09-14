@@ -1,22 +1,46 @@
-# Builds the MyKavo Android APK and publishes it to the rolling
-# "mobile-latest" release on the PUBLIC download repo (this repo is
-# private), so the newest APK is always at:
-#   https://github.com/dakshu007/Mykavo-app-download/releases/latest/download/mykavo.apk
+# Builds the MyKavo Android app.
 #
-# Cross-repo publishing needs the RELEASE_TOKEN secret (a token with
-# write access to dakshu007/Mykavo-app-download) - the default
-# github.token only reaches this repo.
+# Two artifacts, for two different jobs:
 #
-# Runs on every push to main that touches apps/mobile (or this file),
-# and can be started manually from the Actions tab (workflow_dispatch).
-# Release builds are signed with the Expo-generated debug keystore, which
-# is fine for direct installs (sideloading); switch to a real keystore
-# before any Play Store submission.
+#   mykavo.apk  - sideload/testing. Always built. Downloadable from the run,
+#                 and on main also published to the rolling "mobile-latest"
+#                 release on the PUBLIC download repo:
+#                 https://github.com/dakshu007/Mykavo-app-download/releases/latest/download/mykavo.apk
+#   mykavo.aab  - Google Play. Built ONLY when a real upload key is configured,
+#                 because Play requires an App Bundle and rejects anything
+#                 signed with the debug certificate.
+#
+# Signing:
+#   With the release secrets set, plugins/with-release-signing.js injects a
+#   real signingConfig and the build is Play-ready. Without them the build
+#   falls back to the debug key so sideload builds keep working - and the
+#   "Verify signing certificate" step below fails the run if a build that was
+#   SUPPOSED to be release-signed came out on the debug key anyway. Shipping a
+#   debug-signed build while believing otherwise is the failure this guards.
+#
+# Secrets (Settings -> Secrets and variables -> Actions):
+#   ANDROID_RELEASE_KEYSTORE_B64  base64 of your upload keystore (.jks)
+#   ANDROID_KEYSTORE_PASSWORD     store password
+#   ANDROID_KEY_ALIAS             key alias
+#   ANDROID_KEY_PASSWORD          key password
+#   GOOGLE_SERVICES_JSON_B64      base64 of google-services.json (FCM push)
+#   EXPO_PROJECT_ID               OPTIONAL override for the EAS project id. The
+#                                 real one is committed in app.json (it is a
+#                                 public identifier); set this only to build
+#                                 against a different Expo account.
+#   RELEASE_TOKEN                 write access to the public download repo
+#   ANDROID_DEBUG_KEYSTORE_B64    legacy stable debug key, for sideload builds
+#                                 while the real upload key is not yet set up
 
 name: android-apk
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_download:
+        description: "Publish the APK to the public download repo (main only)"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -36,6 +60,12 @@ jobs:
     defaults:
       run:
         working-directory: apps/mobile
+    env:
+      # Play rejects an upload whose versionCode is not higher than the last.
+      # The run number climbs monotonically, so nobody has to remember to bump.
+      ANDROID_VERSION_CODE: ${{ github.run_number }}
+      EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -62,27 +92,153 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Generate native Android project
-        run: npx expo prebuild --platform android --no-install
+      # Attribution has to match what is actually shipped: MIT, ISC, BSD and
+      # Apache all require their notices to travel with a redistribution.
+      - name: Third-party notices are current
+        run: npm run notices:check
 
-      # Sign every build with the SAME stable key (stored as a repo secret,
-      # standard debug-keystore alias/passwords) so installed apps can update
-      # in place - a fresh prebuild keystore would change the signature every
-      # run and force uninstall/reinstall.
-      - name: Install stable signing keystore
+      # ---------------------------------------------------------------- keys
+      - name: Configure signing and services
+        id: signing
         env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+          KEYSTORE_B64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_B64 }}
+          DEBUG_KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+          GOOGLE_SERVICES_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > android/app/debug.keystore
-            echo "Stable keystore installed"
+          set -euo pipefail
+
+          # Keys live outside the checkout so they can never be committed or
+          # swept into an artifact.
+          if [ -n "${KEYSTORE_B64:-}" ]; then
+            echo "${KEYSTORE_B64}" | base64 -d > "${RUNNER_TEMP}/release.jks"
+            if [ ! -s "${RUNNER_TEMP}/release.jks" ]; then
+              echo "::error::ANDROID_RELEASE_KEYSTORE_B64 decoded to an empty file."
+              exit 1
+            fi
+            echo "release_signing=true" >> "$GITHUB_OUTPUT"
+            echo "Release upload key configured - Play artifacts will be built."
           else
-            echo "WARNING: ANDROID_DEBUG_KEYSTORE_B64 secret missing - APK will use a throwaway key"
+            echo "release_signing=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No ANDROID_RELEASE_KEYSTORE_B64 - building a SIDELOAD-ONLY APK on the debug key. It cannot be uploaded to Google Play."
+            if [ -n "${DEBUG_KEYSTORE_B64:-}" ]; then
+              mkdir -p "${RUNNER_TEMP}/dbg"
+              echo "${DEBUG_KEYSTORE_B64}" | base64 -d > "${RUNNER_TEMP}/dbg/debug.keystore"
+              echo "Stable debug keystore staged (installs update in place)."
+            else
+              echo "::warning::ANDROID_DEBUG_KEYSTORE_B64 also missing - a throwaway key will be used and installs will NOT update in place."
+            fi
           fi
 
+          if [ -n "${GOOGLE_SERVICES_B64:-}" ]; then
+            echo "${GOOGLE_SERVICES_B64}" | base64 -d > "${RUNNER_TEMP}/google-services.json"
+            echo "google_services=${RUNNER_TEMP}/google-services.json" >> "$GITHUB_OUTPUT"
+            echo "FCM credentials configured - push can be delivered."
+          else
+            echo "google_services=" >> "$GITHUB_OUTPUT"
+            echo "::warning::No GOOGLE_SERVICES_JSON_B64 - the app will build, but Android push notifications cannot be delivered."
+          fi
+
+      # Checks the config that actually ships, not an env var: app.json carries
+      # extra.eas.projectId and EXPO_PROJECT_ID only overrides it, so testing
+      # the variable would have said "missing" for the normal case and nothing
+      # at all if the committed id were deleted. Without a project id Expo
+      # cannot issue a push token, and the app installs looking fine with a
+      # dead alerts toggle - so fail here rather than 25 minutes later on a
+      # phone.
+      - name: Verify push configuration
+        env:
+          GOOGLE_SERVICES_JSON: ${{ steps.signing.outputs.google_services }}
+        run: |
+          set -euo pipefail
+          npx --no-install expo config --type public --json > "${RUNNER_TEMP}/resolved.json"
+          node -e '
+            const c = require(process.env.RUNNER_TEMP + "/resolved.json");
+            const id = c.extra?.eas?.projectId;
+            const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+            if (typeof id !== "string" || !uuid.test(id)) {
+              console.log("::error::No usable EAS project id in the resolved app config (got " + JSON.stringify(id) + "). Expo cannot issue push tokens, so the in-app alerts toggle would be dead. Restore extra.eas.projectId in apps/mobile/app.json.");
+              process.exit(1);
+            }
+            console.log("EAS project id: " + id);
+            console.log("package       : " + c.android?.package);
+            console.log("googleServices: " + (c.android?.googleServicesFile ?? "(none - push cannot be delivered)"));
+          '
+
+      - name: Generate native Android project
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ steps.signing.outputs.release_signing == 'true' && format('{0}/release.jks', runner.temp) || '' }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ steps.signing.outputs.release_signing == 'true' && secrets.ANDROID_KEYSTORE_PASSWORD || '' }}
+          ANDROID_KEY_ALIAS: ${{ steps.signing.outputs.release_signing == 'true' && secrets.ANDROID_KEY_ALIAS || '' }}
+          ANDROID_KEY_PASSWORD: ${{ steps.signing.outputs.release_signing == 'true' && secrets.ANDROID_KEY_PASSWORD || '' }}
+          GOOGLE_SERVICES_JSON: ${{ steps.signing.outputs.google_services }}
+        run: npx expo prebuild --platform android --no-install
+
+      # Only meaningful on the debug-key path; prebuild regenerates android/.
+      - name: Install stable debug keystore
+        if: steps.signing.outputs.release_signing != 'true'
+        run: |
+          if [ -f "${RUNNER_TEMP}/dbg/debug.keystore" ]; then
+            cp "${RUNNER_TEMP}/dbg/debug.keystore" android/app/debug.keystore
+            echo "Stable debug keystore installed."
+          fi
+
+      # prebuild copies google-services.json into the native project. If that
+      # copy did not happen, the APK builds and runs but FCM has no project to
+      # register against, so tokens never receive anything.
+      - name: Verify FCM credentials reached the native project
+        if: steps.signing.outputs.google_services != ''
+        run: |
+          set -euo pipefail
+          if [ ! -s android/app/google-services.json ]; then
+            echo "::error::GOOGLE_SERVICES_JSON_B64 was supplied but android/app/google-services.json is missing after prebuild - push would never be delivered."
+            exit 1
+          fi
+          PKG="$(node -e 'const c=require("./android/app/google-services.json");console.log(c.client[0].client_info.android_client_info.package_name)')"
+          APP_PKG="$(node -e 'console.log(require("./app.json").expo.android.package)')"
+          echo "google-services.json package: ${PKG}"
+          echo "app.json package            : ${APP_PKG}"
+          if [ "$PKG" != "$APP_PKG" ]; then
+            echo "::error::google-services.json is registered for ${PKG} but this app is ${APP_PKG}. Expo would issue push tokens that silently never deliver."
+            exit 1
+          fi
+          echo "FCM credentials match the app package."
+
+      - name: Report build configuration
+        run: |
+          echo "versionCode : $(grep -m1 'versionCode' android/app/build.gradle | tr -s ' ')"
+          echo "versionName : $(grep -m1 'versionName' android/app/build.gradle | tr -s ' ')"
+          echo "release signing: ${{ steps.signing.outputs.release_signing }}"
+          grep -m1 -A1 'signingConfig signingConfigs' android/app/build.gradle || true
+
+      # --------------------------------------------------------------- build
       - name: Build release APK
         working-directory: apps/mobile/android
         run: ./gradlew assembleRelease --no-daemon
+
+      - name: Build Play App Bundle (AAB)
+        if: steps.signing.outputs.release_signing == 'true'
+        working-directory: apps/mobile/android
+        run: ./gradlew bundleRelease --no-daemon
+
+      # A release build that quietly came out on the debug certificate is the
+      # exact thing this workflow exists to prevent, so assert it rather than
+      # trust it. Play rejects CN=Android Debug on upload.
+      - name: Verify signing certificate
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          echo "--- certificate ---"
+          keytool -printcert -jarfile "$APK" | grep -E "Owner:|Valid from" || true
+          OWNER="$(keytool -printcert -jarfile "$APK" | grep -m1 'Owner:' || true)"
+          if [ "${{ steps.signing.outputs.release_signing }}" = "true" ]; then
+            if echo "$OWNER" | grep -q "CN=Android Debug"; then
+              echo "::error::Release signing was configured but the APK carries the DEBUG certificate. Google Play would reject this."
+              exit 1
+            fi
+            echo "Signed with the release upload key."
+          else
+            echo "Sideload build on the debug certificate (expected - no upload key configured)."
+          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -91,8 +247,16 @@ jobs:
           path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
+      - name: Upload Play App Bundle artifact
+        if: steps.signing.outputs.release_signing == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mykavo-play-aab
+          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
       - name: Publish rolling release to the public download repo
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish_download)
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           DOWNLOAD_REPO: dakshu007/Mykavo-app-download
@@ -102,5 +266,4 @@ jobs:
           gh release create mobile-latest mykavo.apk \
             --repo "$DOWNLOAD_REPO" \
             --title "MyKavo Android (latest)" \
-            --notes "Auto-built from Mykavo@$GITHUB_SHA. Download mykavo.apk, open it on your Android phone, and allow installing from this source. Signs into your normal MyKavo account at https://mykavo.app." \
-            --latest
+            --notes "Auto-built from Mykavo@$GITHUB_SHA. Download mykavo.apk, open it on your Android phone, and allow installing from this source. Signs into your normal MyKavo account at https://mykavo.app."

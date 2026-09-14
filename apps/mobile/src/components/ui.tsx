@@ -10,12 +10,14 @@ import {
   ActivityIndicator,
   Pressable,
   Text,
+  TextInput,
   View,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
 } from "react-native";
 
+import { useReducedMotion } from "@/lib/reduced-motion";
 import { useTheme } from "@/lib/theme-context";
 import { cardShadow, radius, type, fonts } from "@/lib/theme";
 
@@ -203,6 +205,18 @@ export function Divider({ style }: { style?: StyleProp<ViewStyle> }) {
 type ButtonVariant = "primary" | "secondary" | "ghost" | "dark" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
+/** Resting shadow per variant - ink-tinted, stronger on the filled buttons. */
+function elevation(theme: "light" | "dark", variant: ButtonVariant) {
+  const strong = variant === "primary" || variant === "dark";
+  return {
+    shadowColor: "#151515",
+    shadowOpacity: theme === "dark" ? (strong ? 0.5 : 0.3) : strong ? 0.16 : 0.06,
+    shadowRadius: strong ? 8 : 3,
+    shadowOffset: { width: 0, height: strong ? 2 : 1 },
+    elevation: strong ? 3 : 1,
+  } as const;
+}
+
 export function Button({
   title,
   onPress,
@@ -222,7 +236,8 @@ export function Button({
   icon?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { palette } = useTheme();
+  const { palette, theme } = useTheme();
+  const reducedMotion = useReducedMotion();
 
   const height = size === "sm" ? 36 : size === "md" ? 44 : 48;
   const paddingHorizontal = size === "sm" ? 16 : size === "md" ? 20 : 28;
@@ -253,7 +268,17 @@ export function Button({
           alignItems: "center",
           justifyContent: "center",
           gap: 8,
-          opacity: disabled || loading ? 0.5 : pressed ? 0.85 : 1,
+          opacity: disabled || loading ? 0.5 : 1,
+          // The shadow is ink-tinted, never gold-tinted: a gold glow under a
+          // gold button reads as a blur. It collapses on press so the button
+          // feels pressed rather than merely recoloured - and holds still for
+          // anyone who asked for reduced motion.
+          ...(variant === "ghost" || disabled || loading
+            ? null
+            : pressed
+              ? { shadowOpacity: 0, elevation: 0 }
+              : elevation(theme, variant)),
+          ...(pressed && !reducedMotion ? { transform: [{ scale: 0.985 }] } : null),
         },
         style,
       ]}
@@ -312,6 +337,127 @@ export function Pill({
   );
 }
 
+/* ------------------------------ inputs ------------------------------------ */
+
+/** Labeled text field on the fx palette (the dashboard's input pattern). */
+export function Field({
+  label,
+  hint,
+  value,
+  onChangeText,
+  placeholder,
+  autoFocus,
+  autoCapitalize = "none",
+  keyboardType,
+  mono = false,
+  onSubmitEditing,
+  returnKeyType,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder?: string;
+  autoFocus?: boolean;
+  autoCapitalize?: "none" | "sentences" | "words";
+  keyboardType?: "default" | "url" | "email-address";
+  mono?: boolean;
+  onSubmitEditing?: () => void;
+  returnKeyType?: "done" | "go" | "next";
+}) {
+  const { palette } = useTheme();
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: palette.ink }}>
+          {label}
+        </Text>
+        {hint ? <Small color={palette.inkFaint}>{hint}</Small> : null}
+      </View>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={palette.inkFaint}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={false}
+        autoFocus={autoFocus}
+        keyboardType={keyboardType}
+        onSubmitEditing={onSubmitEditing}
+        returnKeyType={returnKeyType}
+        style={{
+          height: 48,
+          borderWidth: 1,
+          borderColor: palette.line,
+          borderRadius: radius.field,
+          backgroundColor: palette.card,
+          paddingHorizontal: 14,
+          fontSize: 15,
+          fontFamily: mono ? fonts.mono : fonts.body,
+          color: palette.ink,
+        }}
+      />
+    </View>
+  );
+}
+
+/** Tappable row with a checkbox - the page-selection pattern. */
+export function CheckRow({
+  checked,
+  onToggle,
+  title,
+  subtitle,
+  disabled = false,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  disabled?: boolean;
+}) {
+  const { palette } = useTheme();
+  return (
+    <Pressable
+      onPress={onToggle}
+      disabled={disabled}
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingVertical: 12,
+        opacity: disabled ? 0.45 : pressed ? 0.7 : 1,
+      })}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 6,
+          borderWidth: checked ? 0 : 1.5,
+          borderColor: palette.line,
+          backgroundColor: checked ? palette.primary : "transparent",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {checked ? (
+          <Text
+            style={{
+              fontFamily: fonts.bodyBold,
+              fontSize: 13,
+              lineHeight: 16,
+              color: palette.primaryContrast,
+            }}
+          >
+            {"\u2713"}
+          </Text>
+        ) : null}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>{typeof title === "string" ? <CardTitle numberOfLines={1}>{title}</CardTitle> : title}{subtitle}</View>
+    </Pressable>
+  );
+}
+
 /* ------------------------------ states ------------------------------------ */
 
 export function EmptyState({
@@ -341,7 +487,7 @@ export function LoadingState() {
   const { palette } = useTheme();
   return (
     <View style={{ paddingVertical: 48, alignItems: "center" }}>
-      <ActivityIndicator color={palette.primary} />
+      <ActivityIndicator color={palette.accent} />
     </View>
   );
 }

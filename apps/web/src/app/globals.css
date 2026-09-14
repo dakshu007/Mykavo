@@ -97,7 +97,7 @@
 
   --fx-ink: #16181d;
   --fx-ink-secondary: #5c6270;
-  --fx-ink-faint: #9aa1b1;
+  --fx-ink-faint: #7f8697;
   --fx-ink-inverse: #ffffff;
   --fx-ink-hover: #000000;
   --fx-line: #e4e7ee;
@@ -295,7 +295,7 @@
     --fx-ink: #16181d;
     /* Darker than the app default for long-form body contrast. */
     --fx-ink-secondary: #454b58;
-    --fx-ink-faint: #9aa1b1;
+    --fx-ink-faint: #7f8697;
     --fx-ink-inverse: #ffffff;
     --fx-ink-hover: #000000;
     --fx-line: #e4e7ee;

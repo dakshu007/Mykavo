@@ -18,6 +18,13 @@ export const GSC_SYNC_SWEEP_QUEUE = "gsc-sync-sweep";
 /** Weekly RDAP pass: when does each monitored domain expire? */
 export const DOMAIN_SWEEP_QUEUE = "domain-sweep";
 export const SITE_AUDIT_QUEUE = "site-audit";
+/**
+ * "Send me a test alert" from the app. Deliberately goes through the queue and
+ * the worker rather than sending from the web request, so a green result
+ * proves the REAL delivery path - web -> pg-boss -> worker -> Expo -> phone -
+ * which is the whole point of a test.
+ */
+export const PUSH_TEST_QUEUE = "push-test";
 
 export interface ScanWebsiteJob {
   scanId: string;
@@ -35,4 +42,9 @@ export interface SiteAuditJob {
 
 export interface GscSyncJob {
   websiteId: string;
+}
+
+export interface PushTestJob {
+  /** Whose devices to alert. Never taken from client input - see the route. */
+  userId: string;
 }

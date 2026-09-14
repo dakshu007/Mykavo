@@ -78,7 +78,7 @@ export default function TabsLayout() {
           justifyContent: "center",
         }}
       >
-        <ActivityIndicator color={palette.primary} />
+        <ActivityIndicator color={palette.accent} />
       </View>
     );
   }

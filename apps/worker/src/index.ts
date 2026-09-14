@@ -21,12 +21,15 @@ import {
   GSC_SYNC_QUEUE,
   GSC_SYNC_SWEEP_QUEUE,
   DOMAIN_SWEEP_QUEUE,
+  PUSH_TEST_QUEUE,
+  type PushTestJob,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
   type SiteAuditJob,
   type GscSyncJob,
 } from "@mykavo/shared";
 import { logger } from "./logger";
+import { sendTestPush } from "./push";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
 import { runRetentionSweep } from "./retention";
@@ -171,6 +174,21 @@ async function main() {
     await runDomainSweep();
   });
   await boss.schedule(DOMAIN_SWEEP_QUEUE, DOMAIN_CRON);
+
+  // "Send me a test alert" from the app. Short expiry: a test nobody receives
+  // within a minute has failed its purpose, and a stale one arriving later
+  // would be more confusing than none.
+  await boss
+    .createQueue(PUSH_TEST_QUEUE, { retryLimit: 0, expireInSeconds: 60 })
+    .catch(() => {});
+  await boss.work<PushTestJob>(
+    PUSH_TEST_QUEUE,
+    { batchSize: 1, pollingIntervalSeconds: 2 },
+    async ([job]) => {
+      logger.info("push test job received", { jobId: job.id, userId: job.data.userId });
+      await sendTestPush(job.data.userId);
+    },
+  );
 
   // Site audits (technical SEO crawl): up to ~10 min of polite fetching per
   // run, so strictly one at a time with a single retry on expiry.

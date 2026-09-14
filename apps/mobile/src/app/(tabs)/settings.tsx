@@ -7,9 +7,17 @@
 import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Check } from "lucide-react-native";
+import { Bell, Check, ChevronRight, Scale } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Pressable,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 
 import { Screen } from "@/components/screen";
 import {
@@ -26,6 +34,12 @@ import {
 import { api, authedImageSource } from "@/lib/api";
 import { API_BASE, authClient } from "@/lib/auth";
 import { useLive } from "@/lib/live";
+import {
+  locallyRegisteredToken,
+  pushUnavailableReason,
+  registerForPush,
+  unregisterFromPush,
+} from "@/lib/push";
 import { fonts, radius } from "@/lib/theme";
 import { useTheme } from "@/lib/theme-context";
 import type { WorkspaceRole } from "@/lib/types";
@@ -61,7 +75,7 @@ function Avatar({ name, image }: { name: string; image: string | null }) {
         justifyContent: "center",
       }}
     >
-      <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 18, color: palette.primary }}>
+      <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 18, color: palette.accent }}>
         {name.trim().charAt(0).toUpperCase() || "?"}
       </Text>
     </View>
@@ -90,6 +104,129 @@ function TwoFactorChip({ enabled }: { enabled: boolean }) {
         {enabled ? "2FA enabled" : "2FA off"}
       </Text>
     </View>
+  );
+}
+
+/**
+ * Push alerts toggle.
+ *
+ * Shows the REASON when enabling fails (no EAS project id, permission denied
+ * at OS level, offline) rather than silently flipping back. An alerting
+ * product that looks switched on but delivers nothing is worse than one that
+ * says plainly why it cannot.
+ */
+function PushAlertsCard() {
+  const { palette } = useTheme();
+  const [enabled, setEnabled] = useState(() => locallyRegisteredToken() !== null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [tested, setTested] = useState(false);
+
+  // Decided synchronously, so a build that cannot do push renders the toggle
+  // disabled from the first frame instead of offering a switch that fails.
+  const [unavailable] = useState(() => pushUnavailableReason());
+
+  async function toggle(next: boolean) {
+    if (busy || unavailable) return;
+    setBusy(true);
+    setProblem(null);
+    setTested(false);
+    if (next) {
+      const result = await registerForPush({ promptIfUndetermined: true });
+      if (result.ok) {
+        setEnabled(true);
+      } else {
+        setEnabled(false);
+        // "unavailable" is not the user's problem to solve, so it is never
+        // raised as an error here - the disabled state below already says so.
+        setProblem(result.kind === "actionable" ? result.reason : null);
+      }
+    } else {
+      const ok = await unregisterFromPush();
+      if (ok) {
+        setEnabled(false);
+      } else {
+        setProblem("Could not turn alerts off. Check your connection and try again.");
+      }
+    }
+    setBusy(false);
+  }
+
+  async function sendTest() {
+    if (testing) return;
+    setTesting(true);
+    setProblem(null);
+    setTested(false);
+    try {
+      await api.sendTestPush();
+      setTested(true);
+    } catch (err) {
+      setProblem(
+        err instanceof Error ? err.message : "Could not send a test alert. Please try again.",
+      );
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  return (
+    <Card>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <Bell size={18} color={unavailable ? palette.inkFaint : palette.accent} />
+        <CardTitle style={{ flex: 1 }} color={unavailable ? palette.inkSecondary : undefined}>
+          Alerts on this phone
+        </CardTitle>
+        {busy ? (
+          <ActivityIndicator size="small" color={palette.accent} />
+        ) : (
+          <Switch
+            value={enabled && !unavailable}
+            disabled={Boolean(unavailable)}
+            onValueChange={(v) => void toggle(v)}
+            trackColor={{ false: palette.line, true: palette.primary }}
+            thumbColor={enabled && !unavailable ? palette.primaryContrast : palette.card}
+          />
+        )}
+      </View>
+      <Small>
+        {unavailable
+          ? unavailable
+          : enabled
+            ? "Critical and high-severity changes are pushed to this device as soon as a scan finds them."
+            : "Turn on to get a notification the moment a scan finds something important - no need to open the app."}
+      </Small>
+      {enabled && !unavailable ? (
+        <>
+          <Button
+            title={testing ? "Sending\u2026" : "Send a test alert"}
+            variant="secondary"
+            size="sm"
+            loading={testing}
+            onPress={() => void sendTest()}
+            style={{ marginTop: 14, alignSelf: "flex-start" }}
+          />
+          {tested ? (
+            <Small color={palette.successStrong} style={{ marginTop: 10 }}>
+              Test alert sent. It should arrive in a few seconds - if nothing
+              appears, alerts are not reaching this phone.
+            </Small>
+          ) : null}
+        </>
+      ) : null}
+      {problem ? (
+        <View
+          style={{
+            marginTop: 12,
+            padding: 12,
+            borderRadius: radius.field,
+            backgroundColor: palette.criticalSoft,
+          }}
+        >
+          <Small color={palette.criticalStrong}>{problem}</Small>
+        </View>
+      ) : null}
+    </Card>
   );
 }
 
@@ -171,6 +308,8 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
+      <PushAlertsCard />
+
       <Card>
         <CardTitle style={{ marginBottom: 4 }}>Workspace</CardTitle>
         {workspaces.map((w, i) => (
@@ -198,13 +337,13 @@ export default function SettingsScreen() {
                       width: 8,
                       height: 8,
                       borderRadius: 4,
-                      backgroundColor: palette.primary,
+                      backgroundColor: palette.accent,
                     }}
                   />
-                  <Small color={palette.primary}>Active</Small>
+                  <Small color={palette.accent}>Active</Small>
                 </View>
               ) : switching === w.id ? (
-                <ActivityIndicator size="small" color={palette.primary} />
+                <ActivityIndicator size="small" color={palette.accent} />
               ) : (
                 <Small color={palette.inkFaint}>Switch</Small>
               )}
@@ -273,6 +412,49 @@ export default function SettingsScreen() {
           <Small>Version</Small>
           <Mono>{Constants.expoConfig?.version ?? "unknown"}</Mono>
         </View>
+        <Divider />
+        <Pressable
+          onPress={() => router.push("/licenses")}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingVertical: 12,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Scale size={16} color={palette.inkSecondary} />
+          <Small style={{ flex: 1 }}>Open source licences</Small>
+          <ChevronRight size={16} color={palette.inkFaint} />
+        </Pressable>
+        <Divider />
+        <Pressable
+          onPress={() => void Linking.openURL("https://mykavo.app/privacy")}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingVertical: 12,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Small style={{ flex: 1 }}>Privacy policy</Small>
+          <ChevronRight size={16} color={palette.inkFaint} />
+        </Pressable>
+        <Divider />
+        <Pressable
+          onPress={() => void Linking.openURL("https://mykavo.app/terms")}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingVertical: 12,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Small style={{ flex: 1 }}>Terms of service</Small>
+          <ChevronRight size={16} color={palette.inkFaint} />
+        </Pressable>
       </Card>
 
       <Button

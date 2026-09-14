@@ -120,7 +120,34 @@ The deploy workflow uses it; nothing else does.
 
 ---
 
-## 7. Redeploy, then verify
+## 7. Firebase service account key (FCM) - added 2026-09-14
+
+The `mykavo-e0f9c` service account JSON was pasted into a chat transcript.
+
+**What it grants:** Firebase Admin on that project - sending push notifications
+to every registered MyKavo device, and read/write on the
+`mykavo-e0f9c.firebasestorage.app` bucket. Not the database, not auth, not
+Stripe.
+
+**Consequence of rotating:** none right now. The key has not been uploaded to
+Expo yet, so nothing is using it. Rotate before wiring it up, not after.
+
+1. Firebase Console → gear → **Project settings → Service accounts**
+2. **Manage service account permissions** (opens Google Cloud IAM) →
+   **Service Accounts** → `firebase-adminsdk-fbsvc@mykavo-e0f9c.iam.gserviceaccount.com`
+   → **Keys** tab
+3. Delete the key ending **`...222a0e629`** (created 2026-09-14)
+4. **Add key → Create new key → JSON**
+5. Upload that new file straight to Expo (see `apps/mobile/RELEASING.md` §3a).
+   It must not pass through a chat, a commit, or an issue on the way.
+6. Delete the download once Expo has it
+
+Do not skip step 3 because the key "was never used". A key that exists can be
+used; deleting it is the only thing that makes that false.
+
+---
+
+## 8. Redeploy, then verify
 
 Netlify environment changes only reach the running functions after a deploy.
 

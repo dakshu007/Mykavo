@@ -34,6 +34,7 @@ model User {
   sentInvites       WorkspaceInvite[] @relation("WorkspaceInviter")
   approvedBaselines Baseline[]        @relation("BaselineApprover")
   changeNotes       ChangeNote[]      @relation("ChangeNoteAuthor")
+  pushDevices       PushDevice[]
 
   @@map("user")
 }
@@ -753,6 +754,7 @@ enum NotificationChannelType {
   WEBHOOK
   DISCORD
   MICROSOFT_TEAMS
+  PUSH
 }
 
 enum NotificationStatus {
@@ -796,6 +798,37 @@ model Notification {
 
   @@index([workspaceId, createdAt(sort: Desc)])
   @@map("notification")
+}
+
+/// A phone registered for push alerts (spec §27). Owned by the USER, not the
+/// workspace: one person's device should alert them about every workspace they
+/// belong to, and membership can change without re-registering the handset.
+///
+/// `token` is unique because Expo issues one token per app install - a
+/// reinstall produces a new token and the old one starts answering
+/// DeviceNotRegistered, which is what `disabledReason` records.
+model PushDevice {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Expo push token ("ExponentPushToken[...]").
+  token          String    @unique
+  platform       String
+  deviceName     String?
+  enabled        Boolean   @default(true)
+  /// Set when Expo told us to stop (DeviceNotRegistered), so a silently dead
+  /// device is distinguishable from one the user switched off deliberately.
+  disabledReason String?
+  /// Consecutive transient send failures; reset on success.
+  failureCount   Int       @default(0)
+  lastSeenAt     DateTime  @default(now())
+  lastNotifiedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([enabled])
+  @@map("push_device")
 }
 
 // ---------- Billing (Phase 8 — Dodo Payments) ----------

@@ -35,8 +35,22 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 96
         }
-      ]
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#FFD400",
+          "defaultChannel": "changes"
+        }
+      ],
+      "./plugins/with-release-signing"
     ],
+    "extra": {
+      "eas": {
+        "projectId": "9ac2f0fe-f11b-47b8-9c1c-db7b514d6c4c"
+      }
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
