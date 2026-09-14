@@ -28,6 +28,39 @@ That prints a QR code; open it in Expo Go on your phone. It talks to production.
 
 Against a local backend: copy `.env.example` to `.env`, set `EXPO_PUBLIC_API_URL=http://<your-Mac-LAN-IP>:3010`, run the web dev server, then `npx expo start`.
 
+## Admin-only areas
+
+Two screens appear only for accounts on an allowlist, set by environment
+variables on the WEB app (they gate the API, not the phone):
+
+| Screen | Where | Allowlist |
+| --- | --- | --- |
+| **Usage** | sixth tab in the floating bar | `ADMIN_EMAILS` |
+| **Blog** | Settings → Admin → Blog | `BLOG_ADMIN_EMAILS` |
+
+`/api/mobile/me` returns an `admin` object saying which to draw. That is a UX
+hint only: `/api/mobile/usage` and `/api/mobile/blog` both re-check the
+allowlist and answer 404 to everyone else, so the flags decide what is
+rendered, never what is permitted. The field is optional in the mobile types
+because a shipped APK can meet a server that predates it — such a build simply
+shows no admin areas.
+
+Blog lists posts and publishes or unpublishes them; it is deliberately not an
+editor, and `/api/mobile/blog/[id]` accepts a status and nothing else, so the
+phone cannot overwrite a post's body. Writing stays in the web editor, which
+the screen links out to.
+
+### Adding a tab
+
+The floating pill fits six 48dp items on a 360dp phone and shrinks to 44dp
+past that. `FloatingTabBar` takes an explicit `hiddenTabs` prop — do NOT rely
+on expo-router's `href: null` to hide a tab from it. That option hides a
+screen from react-navigation's own bar and leaves the route in
+`state.routes`, so a custom bar draws it anyway; that bug shipped the Usage
+tab to every non-admin until it was caught by counting tabs in a real build.
+
+---
+
 ## Build an installable Android APK
 
 CI does this: **Actions -> android-apk -> Run workflow**. It produces a sideload
