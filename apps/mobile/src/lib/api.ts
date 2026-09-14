@@ -31,6 +31,7 @@ import type {
   ScanDetailResponse,
   ScansListResponse,
   ScanTriggerResponse,
+  SearchConsoleResponse,
   UsageResponse,
   WebsiteDetailResponse,
   WebsitesListResponse,
@@ -236,6 +237,9 @@ export const api = {
   usage: () => request<UsageResponse>("/api/mobile/usage"),
 
   blogPosts: () => request<BlogListResponse>("/api/mobile/blog"),
+
+  /** Every GSC-connected website in one call - the picker switches instantly. */
+  searchConsole: () => request<SearchConsoleResponse>("/api/mobile/search-console"),
 
   /**
    * Publish or unpublish. Sends ONLY the status: the phone never holds a

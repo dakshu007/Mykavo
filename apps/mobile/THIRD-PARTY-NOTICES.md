@@ -4,7 +4,7 @@ MyKavo for Android bundles the open-source packages listed below. Their
 licences require that these notices travel with the app, so this file is
 generated from the real dependency tree by `npm run notices` and checked in.
 
-Scope: the **production** dependency closure - 212 packages that ship
+Scope: the **production** dependency closure - 213 packages that ship
 inside the APK. Build-only tooling (Metro, ESLint, the Expo CLI) is not
 redistributed and is therefore not listed.
 
@@ -12,7 +12,7 @@ redistributed and is therefore not listed.
 
 | Licence | Packages |
 | --- | ---: |
-| MIT | 190 |
+| MIT | 191 |
 | ISC | 9 |
 | Apache-2.0 | 4 |
 | BlueOak-1.0.0 | 4 |
@@ -135,6 +135,7 @@ redistributed and is therefore not listed.
 - **expo-device** 57.0.1 - Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
 - **expo-font** 57.0.1 - Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
 - **expo-glass-effect** 57.0.1 - Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
+- **expo-haptics** 57.0.3 - Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
 - **expo-image** 57.0.1 - Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
 - **expo-linear-gradient** 57.0.1 - Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
 - **expo-linking** 57.0.3 - Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)
@@ -513,7 +514,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### 10. @expo/config-plugins@57.0.5 and 23 other package(s)
+### 10. @expo/config-plugins@57.0.5 and 24 other package(s)
 
 <details><summary>Packages under this text</summary>
 
@@ -530,6 +531,7 @@ SOFTWARE.
 - expo-device@57.0.1
 - expo-font@57.0.1
 - expo-glass-effect@57.0.1
+- expo-haptics@57.0.3
 - expo-image@57.0.1
 - expo-linear-gradient@57.0.1
 - expo-linking@57.0.3

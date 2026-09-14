@@ -434,3 +434,42 @@ export interface BlogStatusResponse {
   publishedAt: string | null;
   updatedAt: string;
 }
+
+/* --------------------------- search console ------------------------------ */
+
+export interface GscTotals {
+  clicks: number;
+  impressions: number;
+  /** 0-1, recomputed from totals rather than averaged from daily ratios. */
+  ctr: number;
+  position: number;
+}
+
+export interface GscDimensionItem {
+  key: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  /** null = no figure for the previous window, which is not the same as 0. */
+  clicksDelta: number | null;
+}
+
+export interface GscWebsiteReport {
+  websiteId: string;
+  name: string;
+  url: string;
+  property: string | null;
+  lastSyncAt: string | null;
+  lastError: string | null;
+  windowDays: number;
+  current: GscTotals;
+  previous: GscTotals;
+  trend: { date: string; clicks: number; impressions: number }[];
+  topQueries: GscDimensionItem[];
+  topPages: GscDimensionItem[];
+}
+
+export interface SearchConsoleResponse {
+  websites: GscWebsiteReport[];
+}
