@@ -51,6 +51,8 @@ function textPairs(p: FxPalette): [string, string, number, string][] {
     [p.ink, p.surface, 4.5, "body text on a surface"],
     [p.inkSecondary, p.card, 4.5, "secondary text on a card"],
     [p.inkSecondary, p.canvas, 4.5, "secondary text on the canvas"],
+    [p.inkSecondary, p.surface, 4.5, "secondary text on a surface"],
+    [p.inkFaint, p.surface, 3, "faint text on a surface"],
     // Faint text is metadata at >=13px, held to the AA large-text floor.
     [p.inkFaint, p.card, 3, "faint text on a card"],
     // Gold: ink ON gold is the button; accent is gold AS text.
@@ -143,6 +145,15 @@ describe.each(themes)("%s badge label contrast", (_name, palette) => {
 });
 
 describe("the always-dark panel", () => {
+  it("is unreadable with normal ink in light mode - which is the trap", () => {
+    // `panel` looks like "a subtle raised background" and is not one: it is
+    // #16181d in BOTH themes. Used with ordinary ink it is invisible in light
+    // mode, which is exactly what happened to the Search Console stat tiles
+    // and the Blog screen's buttons. `surface` is the token that follows the
+    // theme. This asserts the hazard so the guard below has a stated reason.
+    expect(contrast(lightPalette.ink, lightPalette.panel)).toBeLessThan(4.5);
+  });
+
   it("carries white text in both themes", () => {
     // `panel` is #16181d in BOTH palettes (it is the dark sidebar/panel), so
     // the pairing to assert is white on it - not `inkInverse`, which is the
@@ -188,6 +199,43 @@ describe("gold is never used as a text colour", () => {
     walk(srcRoot);
 
     // The walk must actually find files, or this guard proves nothing.
+    expect(existsSync(join(srcRoot, "components", "ui.tsx"))).toBe(true);
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("the always-dark panel is not used as a themed background", () => {
+  it("no screen paints a background with palette.panel", () => {
+    // `panel` is dark in both themes, so anything drawn on it must use white
+    // text. Every use so far meant "a subtle background that follows the
+    // theme", which is `surface` - and each one was invisible in light mode.
+    // If a genuinely always-dark panel is ever needed, add that file to
+    // ALLOWED and assert its text colour in the block above.
+    const ALLOWED: string[] = [];
+    const srcRoot = fileURLToPath(new URL("..", import.meta.url));
+    const offenders: string[] = [];
+
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === "node_modules") continue;
+          walk(full);
+          continue;
+        }
+        if (!entry.name.endsWith(".tsx")) continue;
+        const rel = relative(srcRoot, full);
+        if (ALLOWED.includes(rel)) continue;
+        const source = readFileSync(full, "utf8")
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .replace(/(^|[^:])\/\/.*$/gm, "$1");
+        if (/backgroundColor:\s*[^,;\n]*palette\.panel\b/.test(source)) {
+          offenders.push(rel);
+        }
+      }
+    };
+    walk(srcRoot);
+
     expect(existsSync(join(srcRoot, "components", "ui.tsx"))).toBe(true);
     expect(offenders).toEqual([]);
   });

@@ -101,7 +101,7 @@ function PostRow({
             flex: 1,
             paddingVertical: 9,
             borderRadius: 12,
-            backgroundColor: published ? palette.panel : palette.successSoft,
+            backgroundColor: published ? palette.surface : palette.successSoft,
             opacity: pressed || busy ? 0.7 : 1,
           })}
         >
@@ -127,7 +127,7 @@ function PostRow({
             paddingVertical: 9,
             paddingHorizontal: 12,
             borderRadius: 12,
-            backgroundColor: palette.panel,
+            backgroundColor: palette.surface,
             opacity: pressed ? 0.7 : 1,
           })}
         >

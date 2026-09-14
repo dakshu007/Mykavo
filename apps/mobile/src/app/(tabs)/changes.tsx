@@ -1,15 +1,22 @@
 /**
  * Changes list - mobile counterpart of the web dashboard's
- * dashboard/changes page: status / severity / category filter pills over a
- * single card list with severity + status badges per row.
+ * dashboard/changes page: a single card list with severity + status badges
+ * per row, under one compact row of filters.
+ *
+ * The filters were three rows of chips, which took the top third of the
+ * screen and pushed the first change below the fold - the page spent its best
+ * space on controls rather than on the thing you opened it to see. They are
+ * now three selects that state their current value; see components/
+ * filter-select.tsx.
  */
 
 import { useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { SeverityBadge, ChangeStatusBadge } from "@/components/badges";
+import { FilterSelect, type FilterOption } from "@/components/filter-select";
 import { Screen } from "@/components/screen";
 import {
   Button,
@@ -20,7 +27,6 @@ import {
   ErrorState,
   LoadingState,
   Mono,
-  Pill,
   Small,
 } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -32,35 +38,27 @@ import type { ChangeListItem } from "@/lib/types";
 
 type StatusFilter = "open" | "all";
 
-const SEVERITIES: { value: Severity; label: string }[] = [
-  { value: "CRITICAL", label: "Critical" },
+const STATUS_OPTIONS: FilterOption<StatusFilter>[] = [
+  { value: "open", label: "Open", hint: "Still needs a decision" },
+  { value: "all", label: "All changes", hint: "Including reviewed, approved and ignored" },
+];
+
+const SEVERITY_OPTIONS: FilterOption<Severity | undefined>[] = [
+  { value: undefined, label: "Any severity" },
+  { value: "CRITICAL", label: "Critical", hint: "Something is broken or gone" },
   { value: "HIGH", label: "High" },
   { value: "MEDIUM", label: "Medium" },
   { value: "LOW", label: "Low" },
-  { value: "INFO", label: "Info" },
+  { value: "INFO", label: "Info", hint: "Noted, not alarming" },
 ];
 
-const CATEGORIES = Object.keys(categoryLabels) as ChangeCategory[];
-
-/** Edge-to-edge horizontal pill row aligned with the screen padding. */
-function FilterRow({ children }: { children: React.ReactNode }) {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={{ marginHorizontal: -16 }}
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingVertical: 4,
-        gap: 8,
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-    >
-      {children}
-    </ScrollView>
-  );
-}
+const CATEGORY_OPTIONS: FilterOption<ChangeCategory | undefined>[] = [
+  { value: undefined, label: "Any type" },
+  ...(Object.keys(categoryLabels) as ChangeCategory[]).map((value) => ({
+    value: value as ChangeCategory | undefined,
+    label: categoryLabels[value],
+  })),
+];
 
 function ChangeRow({ change }: { change: ChangeListItem }) {
   const { palette } = useTheme();
@@ -185,55 +183,36 @@ export default function ChangesScreen() {
       refreshing={refreshing}
       onRefresh={() => void refresh()}
     >
-      <View style={{ gap: 4 }}>
-        <FilterRow>
-          <Pill
-            label="Open"
-            active={status === "open"}
-            onPress={() => setStatus("open")}
-            style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-          />
-          <Pill
-            label="All"
-            active={status === "all"}
-            onPress={() => setStatus("all")}
-            style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-          />
-        </FilterRow>
-        <FilterRow>
-          <Pill
-            label="Any severity"
-            active={severity === undefined}
-            onPress={() => setSeverity(undefined)}
-            style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-          />
-          {SEVERITIES.map((s) => (
-            <Pill
-              key={s.value}
-              label={s.label}
-              active={severity === s.value}
-              onPress={() => setSeverity(s.value)}
-              style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-            />
-          ))}
-        </FilterRow>
-        <FilterRow>
-          <Pill
-            label="Any type"
-            active={category === undefined}
-            onPress={() => setCategory(undefined)}
-            style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-          />
-          {CATEGORIES.map((c) => (
-            <Pill
-              key={c}
-              label={categoryLabels[c]}
-              active={category === c}
-              onPress={() => setCategory(c)}
-              style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-            />
-          ))}
-        </FilterRow>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+          marginBottom: 12,
+        }}
+      >
+        <FilterSelect
+          label="Status"
+          value={status}
+          options={STATUS_OPTIONS}
+          isDefault={status === "open"}
+          onChange={setStatus}
+        />
+        <FilterSelect
+          label="Severity"
+          value={severity}
+          options={SEVERITY_OPTIONS}
+          isDefault={severity === undefined}
+          onChange={setSeverity}
+        />
+        <FilterSelect
+          label="Type"
+          value={category}
+          options={CATEGORY_OPTIONS}
+          isDefault={category === undefined}
+          onChange={setCategory}
+        />
       </View>
       {body}
     </Screen>

@@ -118,6 +118,15 @@ export default function TabsLayout() {
             screenOptions={{
               headerShown: false,
               sceneStyle: { backgroundColor: palette.canvas },
+              // Screens slide rather than cut. "none" is the library default
+              // and made every tab change feel like a page reload; "shift"
+              // carries the eye across, which is what makes a swipe between
+              // tabs read as one movement instead of two states.
+              animation: "shift",
+              transitionSpec: {
+                animation: "spring",
+                config: { stiffness: 900, damping: 90, mass: 2.4 },
+              },
             }}
           >
             <Tabs.Screen name="index" options={{ title: "Overview" }} />
