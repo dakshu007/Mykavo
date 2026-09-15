@@ -140,4 +140,28 @@ describe("the floating tab bar", () => {
     expect(code).toContain("indicator.interpolate");
     expect(code).not.toMatch(/color=\{lit \?/);
   });
+
+  /**
+   * The press-after-drag suppression must be armed ONLY by a gesture that
+   * actually activated. onFinalize runs at the end of every touch, activated
+   * or not, so arming it there unconditionally meant every tap armed the
+   * suppression a few milliseconds before its own press arrived - and
+   * tapping a tab did nothing at all. This shipped.
+   */
+  it("suppresses a press only after a gesture that really activated", () => {
+    expect(code).toContain("activatedRef");
+    expect(code).toMatch(/if \(wasDrag\)\s*dragEndedAtRef\.current = Date\.now\(\)/);
+    // The unconditional form is the bug, verbatim.
+    expect(code).not.toMatch(/\n\s*dragEndedAtRef\.current = Date\.now\(\);/);
+  });
+
+  /**
+   * Tab screens are lazy, so without preloading the first switch to each one
+   * mounts it during the transition and the animation waits on that render.
+   */
+  it("mounts every tab ahead of the first switch to it", () => {
+    // The CALL, not the word: `preloadedRef` contains "preload" too, so a
+    // substring check here would pass with the preloading deleted.
+    expect(code).toMatch(/\.preload\?\.\(\s*name\s*\)/);
+  });
 });

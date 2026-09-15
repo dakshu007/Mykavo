@@ -123,6 +123,11 @@ export default function TabsLayout() {
               headerShown: false,
               // Opaque, and it must stay opaque: see tabSceneStyle.
               sceneStyle: { backgroundColor: palette.canvas },
+              // Every tab is mounted ahead of time (see the tab bar), so
+              // without this the five screens you are NOT looking at would
+              // re-render along with the one you are - during the transition,
+              // on the same thread that has to draw it.
+              freezeOnBlur: true,
               // Pages push sideways, one screen width, in the direction of
               // travel. Deliberately NOT one of the named presets: both of
               // them crossfade the scene, which left the outgoing page
