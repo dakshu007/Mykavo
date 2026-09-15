@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { indexAtX } from "./tab-geometry";
+import { indexAtPoint, indexAtX } from "./tab-geometry";
 
 /**
  * The drag-to-switch hit test.
@@ -84,5 +84,38 @@ describe("indexAtX", () => {
         expect(index).toBeLessThan(count);
       }
     }
+  });
+});
+
+describe("indexAtPoint", () => {
+  const SIZE = 48;
+  const GAP = 6;
+  const COUNT = 6;
+  const at = (x: number, y: number) => indexAtPoint(x, y, COUNT, SIZE, GAP);
+
+  it("behaves like indexAtX while the finger is on the bar", () => {
+    for (const x of [-20, 0, 10, 34, 64, 118, 200, 338, 355, 400]) {
+      expect(at(x, SIZE / 2)).toBe(indexAtX(x, COUNT, SIZE, GAP));
+    }
+  });
+
+  it("tolerates a thumb wandering off the bar's height mid-sweep", () => {
+    // A sideways sweep near the bottom of a phone is not a straight line.
+    expect(at(118, -40)).toBe(2);
+    expect(at(118, SIZE + 40)).toBe(2);
+  });
+
+  /**
+   * Straight up is how a thumb backs out of a gesture. Checking x alone meant
+   * lifting up there still committed the switch.
+   */
+  it("cancels once the finger is clearly away from the bar", () => {
+    expect(at(118, -120)).toBeNull();
+    expect(at(118, SIZE + 120)).toBeNull();
+  });
+
+  it("still cancels sideways, whatever the height", () => {
+    expect(at(-200, SIZE / 2)).toBeNull();
+    expect(at(900, SIZE / 2)).toBeNull();
   });
 });

@@ -1,54 +1,60 @@
 /**
  * How tab scenes move when you switch tabs.
  *
- * The built-in `animation: "fade"` and `animation: "shift"` presets both
- * animate OPACITY on the scene view - the same view that carries the scene's
- * background colour. So mid-transition neither screen is opaque, and the
- * outgoing page's text shows straight through the incoming one: two pages of
- * headings and figures superimposed, which reads as smearing or a stuck
- * afterimage rather than a transition. Painting an opaque background cannot
- * fix it, because the background fades with everything else.
+ * Two rules, both learned the hard way.
  *
- * So this interpolator translates and does NOT touch opacity. Every scene
- * stays fully opaque, the incoming one sits above the outgoing one (the
- * navigator gives the focused scene the higher zIndex), and switching tabs
- * looks like one surface pushing the other aside. Nothing is ever composited
- * over anything, so there is nothing to ghost.
+ * NO OPACITY. The built-in `animation: "fade"` and `animation: "shift"`
+ * presets animate opacity on the scene view - the same view that carries the
+ * scene's background colour. So mid-transition neither screen is opaque and
+ * the outgoing page's text shows straight through the incoming one: two pages
+ * of headings and figures superimposed, which reads as smearing rather than a
+ * transition. Painting an opaque background cannot fix it, because the
+ * background fades with everything else.
  *
- * Kept out of the layout so the no-opacity rule can be asserted in a test:
- * the regression is invisible in code review and obvious only on a device.
+ * A FULL SCREEN WIDTH, not a nudge. Scenes are stacked absolutely, so a
+ * translated incoming scene exposes whatever is beneath it - the outgoing
+ * scene. At a 32dp shift that exposure is a narrow band of half-cut letters
+ * and card corners down one edge, which looks like a rendering fault. At a
+ * full width it is the outgoing page itself, correctly positioned and moving
+ * off: the same thing every paged interface does, and the thing our own
+ * left/right swipe between tabs implies is happening. Same mechanism either
+ * way; only the distance decides whether it reads as motion or as breakage.
+ *
+ * Kept out of the layout so both rules can be asserted in a test: they are
+ * invisible in code review and obvious only on a device.
  */
 
 /**
- * How far a scene slides, in dp.
+ * Transition length in ms.
  *
- * Both scenes move together, so at the halfway point a strip this wide shows
- * the outgoing screen at the leading edge. Small enough to read as motion
- * rather than as a second screen, large enough to give the eye a direction.
+ * A page-width push wants longer than a nudge, and shorter than a stack
+ * push - you change tabs far more often than you open a detail screen. The
+ * floating tab bar's indicator shares this so the gold circle and the page
+ * arrive together; two different durations is what made a switch feel out of
+ * step even once it stopped ghosting.
  */
-export const TAB_SHIFT_DISTANCE = 32;
-
-/**
- * Transition length in ms. The library default is 150; the spring this
- * replaced settled over roughly twice that, which is what made the overlap
- * long enough to notice in the first place. Slides want to be quick.
- */
-export const TAB_TRANSITION_MS = 200;
+export const TAB_TRANSITION_MS = 260;
 
 /**
  * Progress is -1 for scenes left of the active tab, 0 for the active one, and
- * +1 for scenes to its right - so translating by progress moves the whole set
- * in the direction of travel.
+ * +1 for scenes to its right, so translating by progress moves the pair in
+ * the direction of travel: the page you left exits the way you came from.
+ *
+ * `width` is the window width - the distance that takes a scene exactly off
+ * screen. Passed in rather than read here so this stays a pure function.
  */
-export function tabSceneStyle<T>(progress: {
-  interpolate(config: { inputRange: number[]; outputRange: number[] }): T;
-}) {
+export function tabSceneStyle<T>(
+  progress: {
+    interpolate(config: { inputRange: number[]; outputRange: number[] }): T;
+  },
+  width: number,
+) {
   return {
     transform: [
       {
         translateX: progress.interpolate({
           inputRange: [-1, 0, 1],
-          outputRange: [-TAB_SHIFT_DISTANCE, 0, TAB_SHIFT_DISTANCE],
+          outputRange: [-width, 0, width],
         }),
       },
     ],

@@ -6,12 +6,13 @@
 
 import { Redirect, Tabs, usePathname, useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { ActivityIndicator, Easing, View } from "react-native";
+import { ActivityIndicator, useWindowDimensions, View } from "react-native";
 import { Directions, Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { FloatingTabBar, TabBarProvider } from "@/components/tab-bar";
 import { api, onUnauthorized } from "@/lib/api";
 import { useLive } from "@/lib/live";
+import { TAB_EASING } from "@/lib/tab-motion";
 import { TAB_TRANSITION_MS, tabSceneStyle } from "@/lib/tab-transition";
 import { authClient, useSession } from "@/lib/auth";
 import { wipeSecureStorage } from "@/lib/secure-storage";
@@ -35,6 +36,8 @@ function tabRoutes(showUsage: boolean): string[] {
 
 export default function TabsLayout() {
   const { palette } = useTheme();
+  // The push distance: exactly far enough to take a scene off screen.
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const pathname = usePathname();
   const { data: session, isPending } = useSession();
@@ -120,22 +123,17 @@ export default function TabsLayout() {
               headerShown: false,
               // Opaque, and it must stay opaque: see tabSceneStyle.
               sceneStyle: { backgroundColor: palette.canvas },
-              // Screens slide rather than cut. Deliberately NOT
-              // `animation: "shift"` - that preset crossfades the scene and
-              // left the outgoing page showing through the incoming one.
-              // Supplying the interpolator directly is what keeps both scenes
-              // opaque while still carrying the eye across.
+              // Pages push sideways, one screen width, in the direction of
+              // travel. Deliberately NOT one of the named presets: both of
+              // them crossfade the scene, which left the outgoing page
+              // showing through the incoming one. See tabSceneStyle for why
+              // the distance is a full width rather than a nudge.
               sceneStyleInterpolator: ({ current }) => ({
-                sceneStyle: tabSceneStyle(current.progress),
+                sceneStyle: tabSceneStyle(current.progress, width),
               }),
               transitionSpec: {
                 animation: "timing",
-                config: {
-                  duration: TAB_TRANSITION_MS,
-                  // Decelerating: the screen arrives and settles rather than
-                  // stopping dead, which is the part that reads as "smooth".
-                  easing: Easing.out(Easing.cubic),
-                },
+                config: { duration: TAB_TRANSITION_MS, easing: TAB_EASING },
               },
             }}
           >

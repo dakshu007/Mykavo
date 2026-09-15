@@ -40,7 +40,9 @@ import { Animated, Platform, Pressable, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { indexAtX, itemGeometry, itemOffset, PILL_PADDING } from "@/lib/tab-geometry";
+import { indexAtPoint, itemGeometry, itemOffset, PILL_PADDING } from "@/lib/tab-geometry";
+import { TAB_EASING } from "@/lib/tab-motion";
+import { TAB_TRANSITION_MS } from "@/lib/tab-transition";
 import { gold } from "@/lib/theme";
 import { useTheme } from "@/lib/theme-context";
 
@@ -174,15 +176,22 @@ export function FloatingTabBar({
   // pops on per item - that slide IS the animation the bar is judged by.
   const [indicator] = useState(() => new Animated.Value(itemOffset(activeIndex, size, gap)));
   useEffect(() => {
-    Animated.spring(indicator, {
-      toValue: itemOffset(shownIndex, size, gap),
+    const toValue = itemOffset(shownIndex, size, gap);
+    Animated[dragging ? "spring" : "timing"](indicator, {
+      toValue,
       useNativeDriver: true,
-      // Tuned to feel like it is being carried, not thrown: high enough
-      // tension to keep up with a finger, enough friction not to wobble.
-      tension: 180,
-      friction: 18,
+      // Under a finger it should feel carried, so it springs: enough tension
+      // to keep up, enough friction not to wobble.
+      ...(dragging
+        ? { tension: 180, friction: 18 }
+        : // On a committed change it must arrive WITH the page, so it borrows
+          // the page's own curve and duration. A spring here finished at its
+          // own pace and left the circle trailing a screen that had already
+          // settled - the switch read as out of step even once it stopped
+          // ghosting.
+          { duration: TAB_TRANSITION_MS, easing: TAB_EASING }),
     }).start();
-  }, [indicator, shownIndex, size, gap]);
+  }, [indicator, shownIndex, size, gap, dragging]);
 
   const go = useCallback(
     (index: number) => {
@@ -212,9 +221,9 @@ export function FloatingTabBar({
   // builder below: that builder runs during render, and a ref may not be read
   // there. Here they are ordinary callbacks, which is what they are.
   const handleDragStart = useCallback(
-    (x: number) => {
+    (x: number, y: number) => {
       setDragging(true);
-      const index = indexAtX(x, routes.length, size, gap);
+      const index = indexAtPoint(x, y, routes.length, size, gap);
       lastPreviewRef.current = index;
       setPreviewIndex(index);
       tick();
@@ -223,8 +232,8 @@ export function FloatingTabBar({
   );
 
   const handleDragMove = useCallback(
-    (x: number) => {
-      const index = indexAtX(x, routes.length, size, gap);
+    (x: number, y: number) => {
+      const index = indexAtPoint(x, y, routes.length, size, gap);
       if (index === lastPreviewRef.current) return;
       lastPreviewRef.current = index;
       setPreviewIndex(index);
@@ -234,13 +243,54 @@ export function FloatingTabBar({
     [routes.length, size, gap],
   );
 
+  /**
+   * Clearing the preview is deferred on a commit, not on a cancel.
+   *
+   * `activeIndex` only catches up once the navigator has committed the new
+   * route. Dropping the preview in the same breath as calling go() left a
+   * window where the circle's target was still the OLD tab, so it started
+   * sliding back before snapping forward - a visible flinch at the end of
+   * every drag. Holding the preview until the page has arrived removes it,
+   * and the timer (rather than waiting for activeIndex to match) means a
+   * navigation that never happens slides the circle back instead of
+   * stranding it on a tab you are not on.
+   */
+  const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (settleRef.current) clearTimeout(settleRef.current);
+  }, []);
+
+  /**
+   * When the last drag finished - the thing that stops a drag being undone.
+   *
+   * Lifting a finger ends the pan gesture AND completes the press on
+   * whichever tab the finger first went down on, because Pressable's touch
+   * handling and the gesture system are separate. So a drag from Overview to
+   * Scans navigated to Scans and was immediately sent back to Overview by
+   * the press it started from. That is why hold-and-drag never changed tabs.
+   *
+   * A timestamp rather than a "swallow the next press" flag: on a platform
+   * where the press is cancelled for us the flag would never be consumed and
+   * would eat a real tap instead.
+   */
+  const dragEndedAtRef = useRef(0);
+  /** Long enough to cover the press that follows the same finger lifting. */
+  const PRESS_AFTER_DRAG_MS = 400;
+
   const handleDragEnd = useCallback(() => {
     const index = lastPreviewRef.current;
+    dragEndedAtRef.current = Date.now();
     setDragging(false);
-    setPreviewIndex(null);
     lastPreviewRef.current = null;
-    // null means the finger left the pill - a deliberate cancel.
-    if (index !== null) go(index);
+    // null means the finger left the pill - a deliberate cancel, so the
+    // circle returns immediately.
+    if (index === null) {
+      setPreviewIndex(null);
+      return;
+    }
+    go(index);
+    if (settleRef.current) clearTimeout(settleRef.current);
+    settleRef.current = setTimeout(() => setPreviewIndex(null), TAB_TRANSITION_MS);
   }, [go]);
 
   /**
@@ -256,8 +306,8 @@ export function FloatingTabBar({
       Gesture.Pan()
         .activateAfterLongPress(200)
         .runOnJS(true)
-        .onStart((event) => handleDragStart(event.x))
-        .onUpdate((event) => handleDragMove(event.x))
+        .onStart((event) => handleDragStart(event.x, event.y))
+        .onUpdate((event) => handleDragMove(event.x, event.y))
         .onFinalize(() => handleDragEnd()),
     [handleDragStart, handleDragMove, handleDragEnd],
   );
@@ -315,13 +365,35 @@ export function FloatingTabBar({
           {routes.map((route, index) => {
             const Icon = TAB_ICONS[route.name] ?? LayoutDashboard;
             const lit = index === shownIndex;
+            const iconSize = Math.round(size * 0.44);
+            const offset = itemOffset(index, size, gap);
+            /**
+             * An icon is ink only while the gold disc is actually under it.
+             *
+             * Switching the colour on `lit` flipped it the instant you
+             * tapped, while the disc still had the whole transition left to
+             * travel - so the tab you were heading for drew ink on the dark
+             * pill and simply vanished for a quarter of a second, and the one
+             * you left drew dim grey on gold. Deriving it from the disc's
+             * position means the colour cannot outrun the circle: the icon is
+             * dark BECAUSE there is gold behind it.
+             */
+            const inkOpacity = indicator.interpolate({
+              inputRange: [offset - size, offset, offset + size],
+              outputRange: [0, 1, 0],
+              extrapolate: "clamp",
+            });
             return (
               <Pressable
                 key={route.key}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: index === activeIndex }}
                 accessibilityLabel={route.name === "index" ? "Overview" : route.name}
-                onPress={() => go(index)}
+                onPress={() => {
+                  // The tail of a drag, not a tap: see dragEndedAtRef.
+                  if (Date.now() - dragEndedAtRef.current < PRESS_AFTER_DRAG_MS) return;
+                  go(index);
+                }}
                 style={({ pressed }) => ({
                   width: size,
                   height: size,
@@ -331,11 +403,16 @@ export function FloatingTabBar({
                   opacity: pressed && !lit ? 0.7 : 1,
                 })}
               >
-                <Icon
-                  size={Math.round(size * 0.44)}
-                  color={lit ? gold.ink : gold.dimOnDark}
-                  strokeWidth={2}
-                />
+                <Icon size={iconSize} color={gold.dimOnDark} strokeWidth={2} />
+                {/* The ink copy, faded in over the dim one as the disc lands.
+                    Two stacked icons rather than an animated colour because
+                    the icon takes a plain string for `color`. */}
+                <Animated.View
+                  pointerEvents="none"
+                  style={{ position: "absolute", opacity: inkOpacity }}
+                >
+                  <Icon size={iconSize} color={gold.ink} strokeWidth={2} />
+                </Animated.View>
               </Pressable>
             );
           })}
