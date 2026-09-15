@@ -6,7 +6,7 @@
  */
 
 import { Redirect, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -21,8 +21,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GoogleMark } from "@/components/google-mark";
 import { LogoMark } from "@/components/logo";
-import { authClient, useSession, API_BASE } from "@/lib/auth";
+import {
+  authClient,
+  fetchAuthConfig,
+  signInWithGoogle,
+  useSession,
+  API_BASE,
+} from "@/lib/auth";
 import { fonts, gold, radius } from "@/lib/theme";
 
 type Step = "credentials" | "totp" | "backup";
@@ -141,6 +148,58 @@ function GoldButton({
   );
 }
 
+/**
+ * The Google button, deliberately NOT gold.
+ *
+ * Gold is this app's one primary action, and a screen with two equally loud
+ * buttons makes you choose before you have read either. A white button with
+ * the same ink outline reads as the alternative route it is.
+ */
+function GoogleButton({ onPress, loading }: { onPress: () => void; loading: boolean }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Continue with Google"
+      onPress={onPress}
+      disabled={loading}
+      style={({ pressed }) => ({
+        height: 48,
+        borderRadius: radius.pill,
+        backgroundColor: gold.elevated,
+        borderWidth: 1,
+        borderColor: gold.ink,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+        opacity: pressed || loading ? 0.85 : 1,
+      })}
+    >
+      {loading ? (
+        <ActivityIndicator color={gold.ink} />
+      ) : (
+        <>
+          <GoogleMark size={18} />
+          <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 15, color: gold.ink }}>
+            Continue with Google
+          </Text>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+/** "or" with a rule either side. */
+function Divider() {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+      <View style={{ flex: 1, height: 1, backgroundColor: "#15151520" }} />
+      <Text style={{ fontFamily: fonts.body, fontSize: 12, color: gold.dim }}>or</Text>
+      <View style={{ flex: 1, height: 1, backgroundColor: "#15151520" }} />
+    </View>
+  );
+}
+
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -152,10 +211,47 @@ export default function LoginScreen() {
   const [code, setCode] = useState("");
   const [trustDevice, setTrustDevice] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Shown until the backend says otherwise.
+   *
+   * Google is configured on mykavo.app, so the common case must not wait on a
+   * round trip - a button that appears a second late reads as a glitch, and
+   * on a slow connection it might not appear before you have started typing.
+   * The fetch only ever takes the button AWAY, for a deployment that has no
+   * Google credentials.
+   */
+  const [googleOffered, setGoogleOffered] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAuthConfig().then((config) => {
+      if (!cancelled && config) setGoogleOffered(config.google);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!isPending && session) {
     return <Redirect href="/(tabs)" />;
+  }
+
+  async function startGoogle() {
+    setGoogleBusy(true);
+    setError(null);
+    try {
+      const result = await signInWithGoogle();
+      if (result.status === "signed-in") {
+        router.replace("/(tabs)");
+        return;
+      }
+      // Dismissing the browser is a decision, not a failure - saying
+      // "sign-in failed" for it would be simply untrue.
+      if (result.status === "failed") setError(result.message);
+    } finally {
+      setGoogleBusy(false);
+    }
   }
 
   async function submitCredentials() {
@@ -308,6 +404,12 @@ export default function LoginScreen() {
                 secure
               />
               <GoldButton title="Sign in" onPress={() => void submitCredentials()} loading={busy} />
+              {googleOffered ? (
+                <>
+                  <Divider />
+                  <GoogleButton onPress={() => void startGoogle()} loading={googleBusy} />
+                </>
+              ) : null}
             </>
           ) : (
             <>

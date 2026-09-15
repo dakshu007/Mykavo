@@ -41,3 +41,76 @@ export const authClient = createAuthClient({
 });
 
 export const { useSession } = authClient;
+
+/* ------------------------------ Google sign-in ---------------------------- */
+
+/**
+ * Where Google sends the browser back to. The app's own scheme, which the
+ * backend lists in trustedOrigins - the Expo plugin hands this to
+ * openAuthSessionAsync as the URL that ends the browser session, and the
+ * session cookie rides back on it.
+ */
+const APP_CALLBACK_URL = "mykavo://";
+
+export type GoogleSignInResult =
+  | { status: "signed-in" }
+  /** The browser was dismissed without finishing. Not an error to report. */
+  | { status: "cancelled" }
+  | { status: "failed"; message: string };
+
+/**
+ * Sign in with Google.
+ *
+ * The same accounts as mykavo.app: anyone who created their account with
+ * Google has no password to type, so without this they simply cannot get
+ * into the app at all.
+ *
+ * The Expo client plugin does the browser work - it opens Google through the
+ * backend's authorization proxy and stores the returned cookie. What it does
+ * NOT do is tell us whether a session actually resulted, so this asks: a
+ * dismissed browser and a completed sign-in both return quietly otherwise.
+ */
+export async function signInWithGoogle(): Promise<GoogleSignInResult> {
+  try {
+    const res = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: APP_CALLBACK_URL,
+    });
+    if (res.error) {
+      return {
+        status: "failed",
+        message: res.error.message || "Google sign-in failed. Please try again.",
+      };
+    }
+  } catch {
+    return {
+      status: "failed",
+      message: `Could not reach ${API_BASE}. Check your connection.`,
+    };
+  }
+
+  // The plugin resolves whether or not a session was established, so the
+  // only trustworthy answer is the session itself.
+  try {
+    const session = await authClient.getSession();
+    if (session.data?.session) return { status: "signed-in" };
+  } catch {
+    return {
+      status: "failed",
+      message: "Signed in with Google, but the session could not be read. Try again.",
+    };
+  }
+  return { status: "cancelled" };
+}
+
+/** Which sign-in methods this backend offers. */
+export async function fetchAuthConfig(): Promise<{ google: boolean } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/auth-config`);
+    if (!res.ok) return null;
+    const body = (await res.json()) as { google?: unknown };
+    return { google: body.google === true };
+  } catch {
+    return null;
+  }
+}
