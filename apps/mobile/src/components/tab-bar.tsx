@@ -124,6 +124,12 @@ interface FloatingTabBarProps {
       canPreventDefault: true;
     }) => { defaultPrevented: boolean };
     navigate: (name: string) => void;
+    /**
+     * Mount a tab's screen without going to it. Optional because the app
+     * ships independently of the backend it was built against, and a runtime
+     * without it must lose the optimisation, not crash.
+     */
+    preload?: (name: string) => void;
   };
   /**
    * Route names to leave out of the pill (the admin-only Usage tab for
@@ -193,6 +199,41 @@ export function FloatingTabBar({
     }).start();
   }, [indicator, shownIndex, size, gap, dragging]);
 
+  /**
+   * Mount every tab shortly after the bar appears.
+   *
+   * Tab screens are lazy, so the FIRST switch to each one mounts it during
+   * the transition - the screen does not exist in the tree until you tap,
+   * and the animation waits on that render. Traced in a real export: an
+   * already-mounted tab starts moving 40ms after the tap, while an unmounted
+   * one has no scene to move at all until the mount lands.
+   *
+   * Deliberately after a delay, and deliberately not `lazy: false`: the first
+   * screen should still paint as fast as it does now, and preloaded screens
+   * cost only a render - useLive fetches on focus, so none of them touch the
+   * network until you actually go there.
+   */
+  const navigationRef = useRef(navigation);
+  useEffect(() => {
+    navigationRef.current = navigation;
+  });
+  const routeNames = routes.map((route) => route.name).join(",");
+  const preloadedRef = useRef("");
+  useEffect(() => {
+    if (preloadedRef.current === routeNames) return;
+    const timer = setTimeout(() => {
+      preloadedRef.current = routeNames;
+      for (const name of routeNames.split(",")) {
+        try {
+          navigationRef.current.preload?.(name);
+        } catch {
+          // Preloading is a hint; a runtime without it just stays lazy.
+        }
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [routeNames]);
+
   const go = useCallback(
     (index: number) => {
       const route = routes[index];
@@ -217,18 +258,35 @@ export function FloatingTabBar({
    */
   const lastPreviewRef = useRef<number | null>(null);
 
+  /**
+   * Whether the gesture that is ending was a real drag.
+   *
+   * onFinalize runs at the end of EVERY touch, activated or not - a plain
+   * tap tracks the pan, fails the long-press test, and still finalizes. Arming
+   * the suppression there unconditionally meant every tap armed it a few
+   * milliseconds before its own press arrived, so tapping a tab did nothing
+   * at all. Only onStart can tell the two apart.
+   */
+  const activatedRef = useRef(false);
+
+
   // The three handlers live in useCallback rather than inline in the gesture
   // builder below: that builder runs during render, and a ref may not be read
   // there. Here they are ordinary callbacks, which is what they are.
   const handleDragStart = useCallback(
     (x: number, y: number) => {
+      // onStart only runs once the long press has actually activated, so
+      // this is the one place that can tell a drag from a tap.
+      activatedRef.current = true;
       setDragging(true);
       const index = indexAtPoint(x, y, routes.length, size, gap);
       lastPreviewRef.current = index;
       setPreviewIndex(index);
       tick();
     },
-    [routes.length, size, gap],
+    // The state setters are stable, but the compiler wants them named
+    // before it will optimise this component.
+    [routes.length, size, gap, setDragging, setPreviewIndex],
   );
 
   const handleDragMove = useCallback(
@@ -240,7 +298,7 @@ export function FloatingTabBar({
       // A tick per boundary crossed, so the bar can be used without looking.
       if (index !== null) tick();
     },
-    [routes.length, size, gap],
+    [routes.length, size, gap, setPreviewIndex],
   );
 
   /**
@@ -279,7 +337,10 @@ export function FloatingTabBar({
 
   const handleDragEnd = useCallback(() => {
     const index = lastPreviewRef.current;
-    dragEndedAtRef.current = Date.now();
+    const wasDrag = activatedRef.current;
+    activatedRef.current = false;
+    // Only a real drag may suppress the press that follows it.
+    if (wasDrag) dragEndedAtRef.current = Date.now();
     setDragging(false);
     lastPreviewRef.current = null;
     // null means the finger left the pill - a deliberate cancel, so the
@@ -291,7 +352,7 @@ export function FloatingTabBar({
     go(index);
     if (settleRef.current) clearTimeout(settleRef.current);
     settleRef.current = setTimeout(() => setPreviewIndex(null), TAB_TRANSITION_MS);
-  }, [go]);
+  }, [go, setDragging, setPreviewIndex]);
 
   /**
    * Press-and-hold, then slide.
@@ -300,16 +361,36 @@ export function FloatingTabBar({
    * left/right fling working: a quick gesture never reaches this handler, so
    * only a deliberate hold turns the bar into a picker. runOnJS matches the
    * rest of this app - no worklets, so no release-build worklet crashes.
+   *
+   * Built ONCE and pointed at a handlers ref, rather than rebuilt whenever a
+   * handler's identity changes. Two reasons: a gesture object rebuilt on
+   * every render is re-attached mid-drag, which is a poor thing to do to a
+   * gesture a finger is currently inside; and the callbacks passed here are
+   * invoked by the gesture later, never during render, which is the one
+   * thing the compiler cannot see when they are inlined.
    */
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .activateAfterLongPress(200)
-        .runOnJS(true)
-        .onStart((event) => handleDragStart(event.x, event.y))
-        .onUpdate((event) => handleDragMove(event.x, event.y))
-        .onFinalize(() => handleDragEnd()),
-    [handleDragStart, handleDragMove, handleDragEnd],
+  const handlersRef = useRef({
+    start: handleDragStart,
+    move: handleDragMove,
+    end: handleDragEnd,
+  });
+  useEffect(() => {
+    handlersRef.current = { start: handleDragStart, move: handleDragMove, end: handleDragEnd };
+  }, [handleDragStart, handleDragMove, handleDragEnd]);
+
+  // The compiler cannot see that .onStart/.onUpdate/.onFinalize STORE these
+  // callbacks for the gesture to invoke later - it sees a function that
+  // touches a ref being passed to another function during render, and assumes
+  // the worst. The alternative it would accept is subscribing the gesture to
+  // state, which re-attaches it mid-drag. Narrowed to this one expression.
+  // eslint-disable-next-line react-hooks/refs
+  const [pan] = useState(() =>
+    Gesture.Pan()
+      .activateAfterLongPress(200)
+      .runOnJS(true)
+      .onStart((event: { x: number; y: number }) => handlersRef.current.start(event.x, event.y))
+      .onUpdate((event: { x: number; y: number }) => handlersRef.current.move(event.x, event.y))
+      .onFinalize(() => handlersRef.current.end()),
   );
 
   const translateY = bar

@@ -28,12 +28,14 @@
  * Transition length in ms.
  *
  * A page-width push wants longer than a nudge, and shorter than a stack
- * push - you change tabs far more often than you open a detail screen. The
+ * push - you change tabs far more often than you open a detail screen. Traced
+ * frame by frame, 260ms settled at 273ms from the tap, which is past where a
+ * tab switch stops feeling immediate. The
  * floating tab bar's indicator shares this so the gold circle and the page
  * arrive together; two different durations is what made a switch feel out of
  * step even once it stopped ghosting.
  */
-export const TAB_TRANSITION_MS = 260;
+export const TAB_TRANSITION_MS = 220;
 
 /**
  * Progress is -1 for scenes left of the active tab, 0 for the active one, and
