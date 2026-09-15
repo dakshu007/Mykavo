@@ -65,3 +65,35 @@ export function indexAtX(
   const nearest = Math.round((x - PILL_PADDING - size / 2) / (size + gap));
   return Math.min(count - 1, Math.max(0, nearest));
 }
+
+/**
+ * How far above or below the pill a finger may stray before the drag counts
+ * as cancelled.
+ *
+ * Generous, because a thumb sweeping sideways along a bar near the bottom of
+ * the screen does not travel in a straight line, and because the pill is only
+ * 48dp tall. Cancelling needs a deliberate move away from the bar, not a
+ * wobble.
+ */
+const VERTICAL_SLOP = 56;
+
+/**
+ * Which tab a finger at (x, y) is over - (0, 0) being the pill's top-left.
+ *
+ * The vertical check is the other half of "slide off the pill and lift to
+ * cancel". Testing x alone meant dragging straight up off the bar and
+ * releasing still switched tabs, which is the one direction a thumb
+ * instinctively goes to back out: your finger is nowhere near the bar, and
+ * the app changes screen anyway.
+ */
+export function indexAtPoint(
+  x: number,
+  y: number,
+  count: number,
+  size: number,
+  gap: number,
+  slop = 24,
+): number | null {
+  if (y < -VERTICAL_SLOP || y > size + VERTICAL_SLOP) return null;
+  return indexAtX(x, count, size, gap, slop);
+}
