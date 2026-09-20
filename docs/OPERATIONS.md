@@ -45,7 +45,19 @@ after it shipped. Objects stored under the earlier, looser rules - some of them
 several megabytes - stay exactly as they are until their snapshot ages out of
 the retention window months later.
 
-To shrink them now:
+**This now happens automatically.** The nightly retention sweep inspects 200
+of the oldest screenshot objects and shrinks any that are over budget, so the
+backlog clears over weeks with no manual step. It is deliberately a small
+batch: the work rewrites content-addressed objects and repoints database
+rows, which is fine unattended two hundred at a time and is not fine across
+the whole bucket at once.
+
+Two environment variables control it:
+
+- `SHRINK_SCREENSHOTS=0` turns it off without a deploy.
+- `SHRINK_SCREENSHOTS_BATCH=N` changes how many are inspected per night.
+
+To finish the backlog sooner, with a dry run first and somebody watching:
 
 ```bash
 ARTIFACT_STORE=r2 R2_ACCOUNT_ID=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… \

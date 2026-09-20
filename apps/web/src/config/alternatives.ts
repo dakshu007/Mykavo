@@ -373,6 +373,115 @@ export const ALTERNATIVES: Alternative[] = [
       { label: "Distill.io reviews - G2", url: "https://www.g2.com/products/distill-io/reviews" },
     ],
   },
+  {
+    slug: "hexowatch-alternative",
+    name: "Hexowatch",
+    title: "MyKavo vs Hexowatch - Website Change Monitoring Compared",
+    description:
+      "Hexowatch watches any page for thirteen kinds of change and archives the evidence. MyKavo monitors sites you are responsible for against an approved baseline and tells you whether a change broke anything. Compared capability by capability.",
+    keywords: [
+      "hexowatch alternative",
+      "mykavo vs hexowatch",
+      "website change monitoring comparison",
+      "hexowatch for agencies",
+    ],
+    capsule:
+      "Hexowatch is the broadest page watcher on the market - thirteen monitor types across visual, content, source code, technology, keyword, WHOIS and availability, on any URL, archived for compliance. MyKavo is narrower and deeper on one question: what changed since the state you approved on a site you own, and how urgently does it matter.",
+    whatItIs:
+      "Hexowatch, from Hexact, monitors any website for visual, content, source code, technology, keyword, availability, price and WHOIS changes - thirteen monitor types in total - and archives screenshots of changed pages for compliance and legal purposes. It integrates with Slack, Zapier, Telegram, Gmail and Google Sheets, and offers webhooks and API access. Published plans are Pro at $29/month for 4,500 monthly checks, Business at $55/month for 10,000, Business+ at $99/month for 25,000, and custom Enterprise pricing. Note that Hexowatch is a different product from Hexometer, its sibling from the same company - Hexometer is a broad site-and-server QA monitor, Hexowatch is change detection.",
+    rows: [
+      {
+        capability: "Primary job",
+        them: "Detect and archive changes on any page, for any reason.",
+        us: "Detect regressions on sites you are responsible for, and score how badly they matter.",
+      },
+      {
+        capability: "Billing unit",
+        them: "Monthly checks - 4,500 on Pro, 10,000 on Business. Frequency and page count both draw from that pool.",
+        us: "Websites and monitored pages. Scans are weekly on Free and daily on Pro, with no per-check meter to budget against.",
+      },
+      {
+        capability: "Monitor breadth",
+        them: "Thirteen monitor types including keyword, price, WHOIS and domain records.",
+        us: "Eight change categories plus uptime and SSL. No keyword, price or WHOIS monitoring - MyKavo tracks domain expiry but not ownership records.",
+      },
+      {
+        capability: "Baseline model",
+        them: "Compares against the previous check.",
+        us: "Compares against a baseline you approved. Approving an expected change makes it the new known-good state, so a redesign produces one round of alerts rather than a permanent stream.",
+      },
+      {
+        capability: "Change severity",
+        them: "Changes are detected and archived; you decide what matters.",
+        us: "Every change scored INFO to CRITICAL by one deterministic rules engine, so index-to-noindex outranks a reworded heading automatically.",
+      },
+      {
+        capability: "Works on sites you do not own",
+        them: "Yes - competitor and price monitoring are core use cases.",
+        us: "No. MyKavo is built around monitoring your own pages and assumes you can fix what it finds.",
+      },
+      {
+        capability: "Compliance archiving",
+        them: "Yes - changed pages are archived as evidence for legal and compliance use.",
+        us: "History is retained for your plan window (30 days Free, 1 year Pro) with before-and-after values and screenshots, but it is not a legal archiving product.",
+      },
+      {
+        capability: "Technical SEO audit",
+        them: "Not the product's purpose.",
+        us: "Included: a full-site crawl scored against 89 checks across 22 categories, with CSV export.",
+      },
+      {
+        capability: "Search Console data",
+        them: "Not offered.",
+        us: "Connect a property and MyKavo correlates clicks, impressions and position with audit findings into prioritised opportunities.",
+      },
+      {
+        capability: "Conversion element checks",
+        them: "You can monitor an HTML element for change.",
+        us: "You name a selector and what you expect of it - exists, visible, its text, its destination - and each is checked and alerted on separately.",
+      },
+      {
+        capability: "Entry price",
+        them: "Pro at $29/month. A free trial rather than a free plan.",
+        us: "Free plan (1 website, 5 pages, weekly, no card), then $20/month for 8 websites with 15 pages each.",
+      },
+    ],
+    whereTheyWin: [
+      "You need to monitor pages you do not own - competitor pricing, supplier catalogues, regulatory notices. That is central to Hexowatch and outside MyKavo entirely.",
+      "You need price or keyword monitoring, or WHOIS and domain ownership records. MyKavo does none of those.",
+      "You need an archive of changed pages as evidence for legal or compliance purposes. MyKavo keeps history for your plan window, but archiving is not what it is for.",
+      "You want the widest possible set of monitor types in one subscription, and are happy to decide for yourself which changes matter.",
+      "You want checks far more often than daily on arbitrary pages, and would rather buy a pool of checks than a number of pages.",
+    ],
+    bestFor:
+      "Pick MyKavo if the sites in question are yours or your clients', and the job is catching regressions - the deploy that dropped a canonical tag, the plugin update that removed the analytics script, the edit that hid the checkout button - with a severity, an approval workflow and before-and-after evidence. Pick Hexowatch if you are watching the wider web, or need monitor types MyKavo deliberately does not have.",
+    faqs: [
+      {
+        q: "Is MyKavo a Hexowatch alternative?",
+        a: "For monitoring websites you own or manage, yes - and MyKavo adds an approved-baseline workflow, deterministic severity scoring, a technical SEO audit and Search Console correlation. For competitor, price or WHOIS monitoring, Hexowatch does things MyKavo does not do at all.",
+      },
+      {
+        q: "What is the difference between Hexowatch and Hexometer?",
+        a: "They are two products from the same company, Hexact, and they are easy to confuse. Hexowatch is change detection - it watches pages for thirteen kinds of change. Hexometer is a broad website QA monitor covering availability, SEO, security, UX and server infrastructure. We compare MyKavo with both, because they compete on different ground.",
+      },
+      {
+        q: "How does pricing compare?",
+        a: "They are metered differently, which matters more than the headline figures. Hexowatch sells a pool of monthly checks (4,500 on Pro at $29/month), so frequency and page count compete for the same budget. MyKavo sells websites and pages ($20/month for 8 websites with 15 monitored pages each, scanned daily), so adding a page does not force you to slow down the others. MyKavo also has a genuinely free plan rather than a trial.",
+      },
+      {
+        q: "How current is this comparison?",
+        a: `Every Hexowatch fact here was checked on ${VERIFIED_ON} against their own site and major software directories, with sources listed at the foot of this page. Plans change - confirm on their pricing page before deciding.`,
+      },
+    ],
+    sources: [
+      { label: "Hexowatch - official site", url: "https://hexowatch.com/" },
+      { label: "Hexowatch pricing - Capterra", url: "https://www.capterra.com/p/206900/Hexowatch/pricing/" },
+      {
+        label: "Hexowatch profile - GetApp",
+        url: "https://www.getapp.com/business-intelligence-analytics-software/a/hexowatch/",
+      },
+    ],
+  },
 ];
 
 export function findAlternative(slug: string): Alternative | undefined {

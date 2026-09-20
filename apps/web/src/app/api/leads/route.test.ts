@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const recordLead = vi.fn(async (_lead: unknown) => ({ stored: true }));
+const recordLead = vi.fn<(lead: unknown) => Promise<{ stored: boolean }>>(async () => ({
+  stored: true,
+}));
 vi.mock("@/lib/lead-sheet", () => ({
   recordLead: (lead: unknown) => recordLead(lead),
 }));

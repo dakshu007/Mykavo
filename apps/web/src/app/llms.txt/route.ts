@@ -114,6 +114,7 @@ Each page below sources the other product's facts from that vendor's own publish
 - [MyKavo vs Visualping](${site.url}/alternatives/visualping-alternative)
 - [MyKavo vs Hexometer](${site.url}/alternatives/hexometer-alternative)
 - [MyKavo vs Distill](${site.url}/alternatives/distill-alternative)
+- [MyKavo vs Hexowatch](${site.url}/alternatives/hexowatch-alternative)
 - [All comparisons](${site.url}/alternatives)
 
 ## What can be independently verified, and what cannot
