@@ -17,6 +17,20 @@ time and verify each before moving on.
 Every value you add to Netlify from now on: tick **"Contains secret values"**.
 That is the setting that was missing.
 
+Two things about that tick box, both learned the hard way:
+
+- **It is one-way.** Netlify will not let you un-tick it. To undo it you must
+  delete the variable and create it again, which means having the value to
+  hand before you start.
+- **Netlify hides a secret-flagged value from its own API**, returning a mask
+  like `****************mw0=`. This repo builds with `netlify deploy --build`
+  from GitHub Actions, so the build reads env through that API and sees the
+  mask, not the value. `apps/web/src/lib/env.ts` now accepts a mask during
+  the build and enforces every rule at runtime, where Netlify injects the
+  real values - so flagging a secret no longer breaks the deploy. Before that
+  fix it did, and the only escape anyone found was to un-flag the variable,
+  which is how a live database password ended up back in plain text.
+
 ---
 
 ## 1. BETTER_AUTH_SECRET - do this first
@@ -24,16 +38,71 @@ That is the setting that was missing.
 **What it is:** the key that signs every login session. Anyone holding it can
 forge a session as any user, including you. It is the sharpest of the set.
 
-**Consequence:** everyone is logged out. That is all.
+**Consequence: everyone is logged out AND every two-factor enrolment is
+destroyed.** Not just invalidated - unrecoverable.
+
+This is the part that is easy to miss, because nothing in Better Auth's
+config hints at it. `BETTER_AUTH_SECRET` is not only a signing key; the
+two-factor plugin uses it as an **encryption key** for what it stores:
+
+```js
+// enrolment  - better-auth/plugins/two-factor/index.mjs
+const encryptedSecret = await symmetricEncrypt({ key: ctx.context.secretConfig, data: secret });
+// verifying  - better-auth/plugins/two-factor/totp/index.mjs
+const secret = await symmetricDecrypt({ key: ctx.context.secretConfig, data: twoFactor.secret });
+```
+
+`secretConfig` is this variable. Change it and every stored TOTP secret
+becomes undecryptable, so no authenticator code will ever match again.
+**Backup codes do not help** - `generateBackupCodes(ctx.context.secretConfig, …)`
+encrypts those with the same key. Affected users see only *"That code didn't
+work. Try again."* and have no way through.
+
+This is the same hazard as `GSC_TOKEN_KEY` in §5, which destroys stored
+Google OAuth tokens for exactly the same reason. If a secret is used to
+*encrypt* stored data rather than merely to sign it, rotating it is a
+destructive migration, not a swap.
+
+### Before you rotate
+
+1. Find who is enrolled:
+
+   ```sql
+   SELECT email FROM "user" WHERE "twoFactorEnabled" = true;
+   ```
+
+2. Tell them first. After the rotation they sign in with email and password
+   only, then re-add two-factor from Settings, deleting the stale MyKavo
+   entry in their authenticator app. Until they do, those accounts are
+   password-only.
+
+### Rotate
 
 ```bash
-openssl rand -base64 32
+openssl rand -base64 48
 ```
 
 Netlify → Environment variables → `BETTER_AUTH_SECRET` → replace the value,
 tick **Contains secret values**, save. Then redeploy (see the end).
 
 Not needed on the worker - it does not authenticate users.
+
+### Immediately after the deploy
+
+Clear the now-unreadable enrolments, or nobody in that list can log in:
+
+```sql
+BEGIN;
+DELETE FROM "twoFactor"
+  WHERE "userId" IN (SELECT id FROM "user" WHERE "twoFactorEnabled" = true);
+UPDATE "user" SET "twoFactorEnabled" = false WHERE "twoFactorEnabled" = true;
+COMMIT;
+```
+
+Then re-enrol. Do not try to rescue the old enrolments by restoring the
+previous secret: the secret you are rotating is the exposed one, and putting
+it back to save a re-enrolment trades account-takeover risk for a two-minute
+inconvenience.
 
 ---
 
@@ -77,18 +146,59 @@ Note the two URLs differ and must stay that way:
 | Netlify (web) | transaction | `6543` | `?pgbouncer=true&connection_limit=1` |
 | Worker | session | `5432` | `?connection_limit=5` |
 
-1. Supabase → Project Settings → Database → **Reset database password**
-2. Immediately update Netlify's `DATABASE_URL` with the new password,
-   keeping the `6543` host and the `pgbouncer=true&connection_limit=1`
-   suffix. Tick **Contains secret values**.
-3. Immediately update the worker's `worker.env`, keeping the `5432` host and
-   `?connection_limit=5`, then recreate the container
-4. Redeploy Netlify
-5. Verify: load the dashboard, then `docker logs --tail 20 mykavo-worker`
+**Choose an alphanumeric password.** Letters and digits only, 20+ characters.
+Anything in `@ : / ? # [ ] %` has to be percent-encoded inside a connection
+URL, and an unencoded `@` splits the URL at the wrong place - which surfaces
+as a baffling hostname error rather than anything about passwords. Do **not**
+use Supabase's *Generate* button: it favours punctuation, which is the trap.
 
-If the password contains characters like `@`, `#` or `/`, they must be
-percent-encoded in the URL. Simplest fix: let Supabase generate the password
-and copy the connection string it gives you rather than assembling one.
+**Stage both sides first, flip last.** Nothing breaks until step 3, which
+keeps the outage to the length of one deploy instead of however long the
+edits take.
+
+1. Update Netlify's `DATABASE_URL` with the new password, keeping the `6543`
+   host and the `pgbouncer=true&connection_limit=1` suffix. Tick **Contains
+   secret values**.
+2. Update the worker's `worker.env`, keeping the `5432` host and
+   `?connection_limit=5`. Change **only the password** - the two URLs are not
+   interchangeable. This swaps it in place without touching host or params:
+
+   ```bash
+   read -rs -p "New DB password: " NEWPW && echo
+   sed -i "s|\(^DATABASE_URL=postgresql://[^:]*:\)[^@]*\(@.*\)|\1$NEWPW\2|" \
+     infra/worker/worker.env
+   unset NEWPW
+   ```
+
+   Do not recreate the container yet.
+3. Supabase → Project Settings → Database → **Reset database password**.
+   *Downtime starts here.*
+4. Immediately: recreate the worker container, and trigger the web deploy.
+5. Verify: load the dashboard, then `docker logs --tail 20 mykavo-worker`.
+
+### If it comes back "Can't reach database server"
+
+Prisma reports a **rejected password** as `P1001 Can't reach database server`,
+which reads like a network fault and sends you checking DNS and firewalls.
+It is usually the password. Get the real error from Postgres instead:
+
+```bash
+read -rs -p "DB password: " PGPASSWORD && export PGPASSWORD && echo
+psql -h aws-0-us-east-1.pooler.supabase.com -p 5432 \
+  -U postgres.<project-ref> -d postgres -c "select 1"
+unset PGPASSWORD
+```
+
+| psql says | Meaning |
+|---|---|
+| `select 1` returns a row | credentials fine - the fault is in how the app builds its URL |
+| `password authentication failed` | the reset did not save what you think it did; set it again |
+| `Tenant or user not found` | wrong username for the pooler, or the project is paused |
+| hangs, then times out | the project is down or restarting |
+
+`nc -vz <pooler host> 5432` succeeding proves nothing on its own - that load
+balancer fronts every Supabase project in the region, so it answers whether
+or not yours is reachable.
 
 ---
 
