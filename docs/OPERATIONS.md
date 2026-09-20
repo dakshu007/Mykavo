@@ -1,5 +1,19 @@
 # Operations
 
+> **Migrations are applied BY HAND, before the web deploy** (see README).
+> Nothing in the build pipeline runs `prisma migrate deploy`. Two migrations
+> from 2026-09-20 are outstanding unless you have already applied them:
+> `20260920100000_pending_artifact_deletion` and
+> `20260920110000_email_alerts_opt_in`. Neither is required for correctness -
+> the code degrades safely without them - but until the first one is applied,
+> deleted websites' storage is not actually reclaimed.
+>
+> ```bash
+> cd packages/database && DATABASE_URL=<session-pooler-url> pnpm exec prisma migrate deploy
+> ```
+>
+> Then re-run `enable-rls.ts`: `pending_artifact_deletion` is a new table.
+
 Runbook notes for things that are configured or run by hand rather than on a
 schedule. Scheduled work (scans, retention, health, reports) lives in the
 worker and needs nothing from you.
