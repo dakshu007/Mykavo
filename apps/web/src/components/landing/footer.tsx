@@ -74,6 +74,7 @@ const columns = [
       { href: "/alternatives/visualping-alternative", label: "Visualping alternative" },
       { href: "/alternatives/hexometer-alternative", label: "Hexometer alternative" },
       { href: "/alternatives/distill-alternative", label: "Distill alternative" },
+      { href: "/alternatives/hexowatch-alternative", label: "Hexowatch alternative" },
       { href: "/alternatives", label: "All comparisons" },
     ],
   },

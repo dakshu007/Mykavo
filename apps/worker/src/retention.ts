@@ -20,6 +20,7 @@ import {
 import { diffKey, historyDaysForPlan } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { drainArtifactPurge } from "./purge-artifacts";
+import { runScreenshotShrink } from "./shrink-oversized";
 import { logger } from "./logger";
 
 const BATCH = 500;
@@ -128,6 +129,19 @@ export async function runRetentionSweep(
     artifactsDeleted += purged.deleted;
   } catch (err) {
     logger.warn("artifact purge drain failed during retention sweep", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // Shrink a small batch of pre-cap screenshots each night. Bounded on
+  // purpose: it rewrites content-addressed objects and repoints rows, which
+  // is fine to do unattended two hundred at a time and is not fine to do to
+  // the whole bucket at once. The backlog clears over weeks, which is the
+  // right trade for storage that is already being paid for.
+  try {
+    await runScreenshotShrink(storage);
+  } catch (err) {
+    logger.warn("screenshot shrink failed during retention sweep", {
       error: err instanceof Error ? err.message : String(err),
     });
   }
