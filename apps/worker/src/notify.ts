@@ -43,7 +43,16 @@ interface ChannelConfig {
 
 const DEFAULT_MIN_SEVERITY: Severity = "HIGH";
 
-/** Resolve the workspace's email channel config, falling back to owner email. */
+/**
+ * The workspace's email channel config, or null when it must not be emailed.
+ *
+ * There is deliberately NO fallback to the owner's address. Email alerts are
+ * opt-in: a workspace that has never saved notification settings receives
+ * nothing until somebody turns it on in the dashboard. Workspaces that
+ * predate that rule had their existing behaviour written down as a real
+ * channel row by migration 20260920110000, so nobody lost alerts in the
+ * switch - the absence of a row now genuinely means "never opted in".
+ */
 export async function resolveEmailConfig(workspaceId: string): Promise<ChannelConfig | null> {
   const channel = await prisma.notificationChannel.findUnique({
     where: { workspaceId_type: { workspaceId, type: "EMAIL" } },
@@ -61,17 +70,8 @@ export async function resolveEmailConfig(workspaceId: string): Promise<ChannelCo
     };
   }
 
-  // No channel configured yet - default to the workspace owner's email.
-  const workspace = await prisma.workspace.findUnique({
-    where: { id: workspaceId },
-    include: { owner: { select: { email: true } } },
-  });
-  if (!workspace?.owner.email) return null;
-  return {
-    recipients: [workspace.owner.email],
-    minSeverity: DEFAULT_MIN_SEVERITY,
-    failureAlerts: true,
-  };
+  // Never opted in. Silence is the correct answer, not the owner's inbox.
+  return null;
 }
 
 function pagePath(url: string): string {

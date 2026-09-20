@@ -17,6 +17,12 @@ export const GSC_SYNC_QUEUE = "gsc-sync";
 export const GSC_SYNC_SWEEP_QUEUE = "gsc-sync-sweep";
 /** Weekly RDAP pass: when does each monitored domain expire? */
 export const DOMAIN_SWEEP_QUEUE = "domain-sweep";
+/**
+ * Delete object-storage keys whose owning rows are already gone. Enqueued the
+ * moment a website is deleted so the bucket shrinks in seconds rather than
+ * waiting for the nightly retention sweep, which drains the same table.
+ */
+export const ARTIFACT_PURGE_QUEUE = "artifact-purge";
 export const SITE_AUDIT_QUEUE = "site-audit";
 /**
  * "Send me a test alert" from the app. Deliberately goes through the queue and
@@ -42,6 +48,11 @@ export interface SiteAuditJob {
 
 export interface GscSyncJob {
   websiteId: string;
+}
+
+export interface ArtifactPurgeJob {
+  /** For logging only - the worker drains the whole table regardless. */
+  workspaceId: string;
 }
 
 export interface PushTestJob {

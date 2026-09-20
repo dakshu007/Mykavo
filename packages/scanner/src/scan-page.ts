@@ -35,30 +35,95 @@ import {
 
 const VIEWPORT = { width: 1440, height: 900 };
 const MAX_SCREENSHOT_HEIGHT = 8000;
-/** Stored screenshot budget — keeps object storage lean (spec §60). */
-const MAX_SCREENSHOT_BYTES = 200 * 1024;
+/**
+ * Stored screenshot budget (spec §60).
+ *
+ * Every monitored page writes one of these on every scan that changes it, so
+ * the figure multiplies by pages x scans x customers - it is the main lever
+ * on storage cost. 150KB is comfortably enough for a legible full-page
+ * screenshot at these dimensions and roughly a third of what an unconstrained
+ * Playwright JPEG of a long, image-heavy page produces.
+ */
+export const MAX_SCREENSHOT_BYTES = 150 * 1024;
 
 /**
- * Re-encode a screenshot down to the storage budget: descending JPEG quality
- * first, then a width downscale as the last resort. Returns the original
- * buffer untouched when it is already within budget, and falls back to the
- * best-effort smallest output if even the floor stays above it.
+ * Total pixels a stored screenshot may cover.
+ *
+ * Quality alone cannot rescue a 1440x8000 page: at 11.5 megapixels even
+ * aggressive JPEG lands in the megabytes, which is where the 2MB objects in
+ * the bucket came from. Past this, the image is scaled down as a whole, which
+ * costs detail evenly rather than blurring everything.
  */
-async function compressScreenshot(raw: Buffer): Promise<Buffer> {
-  if (raw.length <= MAX_SCREENSHOT_BYTES) return raw;
+const MAX_SCREENSHOT_PIXELS = 1440 * 2600;
+
+/**
+ * The quality/scale ladder, tried in order until one lands under budget.
+ *
+ * Quality first, because re-encoding preserves layout and text position -
+ * what the visual diff actually compares. Scale is the later resort, since
+ * halving the width halves the pixels a diff can see.
+ */
+const COMPRESSION_LADDER: { quality: number; width?: number }[] = [
+  { quality: 72 },
+  { quality: 62 },
+  { quality: 52 },
+  { quality: 44 },
+  { quality: 60, width: 1280 },
+  { quality: 52, width: 1080 },
+  { quality: 46, width: 900 },
+  { quality: 40, width: 720 },
+];
+
+/**
+ * Re-encode a screenshot down to the storage budget.
+ *
+ * Returns the original untouched when it is already small enough. Otherwise
+ * it walks the ladder and returns the FIRST result under budget, so a page
+ * that only slightly overshoots keeps almost all of its quality.
+ *
+ * The previous version stopped at one fixed downscale and, if that still
+ * overshot, stored whatever it had - which is how multi-megabyte objects got
+ * into the bucket despite a budget being nominally in force. It now also
+ * scales anything with an absurd pixel count before encoding, and reports
+ * whether it actually succeeded so the caller can say so out loud rather
+ * than quietly banking the cost.
+ */
+export async function compressScreenshot(
+  raw: Buffer,
+): Promise<{ buffer: Buffer; withinBudget: boolean }> {
+  if (raw.length <= MAX_SCREENSHOT_BYTES) return { buffer: raw, withinBudget: true };
+
   // sharp is ESM/worker-side only — dynamic import keeps web bundles clean.
   const { default: sharp } = await import("sharp");
+
+  // One decode of the source, reused for every rung of the ladder.
+  const metadata = await sharp(raw).metadata();
+  const pixels = (metadata.width ?? 0) * (metadata.height ?? 0);
+  const pixelCapWidth =
+    pixels > MAX_SCREENSHOT_PIXELS && metadata.width && metadata.height
+      ? Math.max(640, Math.round(metadata.width * Math.sqrt(MAX_SCREENSHOT_PIXELS / pixels)))
+      : undefined;
+
   let smallest = raw;
-  for (const quality of [70, 60, 50, 40]) {
-    const out = await sharp(raw).jpeg({ quality, mozjpeg: true }).toBuffer();
+  for (const rung of COMPRESSION_LADDER) {
+    // The pixel cap applies to every rung, and a rung's own width only
+    // narrows it further - never widens it back past the cap.
+    const width = pixelCapWidth
+      ? Math.min(pixelCapWidth, rung.width ?? pixelCapWidth)
+      : rung.width;
+
+    let pipeline = sharp(raw);
+    if (width) pipeline = pipeline.resize({ width, withoutEnlargement: true });
+    const out = await pipeline.jpeg({ quality: rung.quality, mozjpeg: true }).toBuffer();
+
     if (out.length < smallest.length) smallest = out;
-    if (out.length <= MAX_SCREENSHOT_BYTES) return out;
+    if (out.length <= MAX_SCREENSHOT_BYTES) return { buffer: out, withinBudget: true };
   }
-  const downscaled = await sharp(raw)
-    .resize({ width: 1024, withoutEnlargement: true })
-    .jpeg({ quality: 55, mozjpeg: true })
-    .toBuffer();
-  return downscaled.length < smallest.length ? downscaled : smallest;
+
+  // Everything overshot. Store the smallest we managed rather than losing the
+  // screenshot entirely - a snapshot without an image cannot be compared at
+  // all - but tell the truth about it.
+  return { buffer: smallest, withinBudget: smallest.length <= MAX_SCREENSHOT_BYTES };
 }
 // Solid block painted over masked elements (spec §25). A fixed opaque color
 // keeps masked regions byte-identical between scans regardless of content.
@@ -328,7 +393,15 @@ export async function scanPage(
           ? { clip: { x: 0, y: 0, width: VIEWPORT.width, height: MAX_SCREENSHOT_HEIGHT } }
           : { fullPage: true }),
       });
-      const screenshot = await compressScreenshot(raw);
+      const compressed = await compressScreenshot(raw);
+      const screenshot = compressed.buffer;
+      if (!compressed.withinBudget) {
+        // Worth a line in the log: it means a page defeated the whole ladder,
+        // and storage is being spent that the budget says should not be.
+        console.warn(
+          `[scan-page] screenshot over budget after compression: ${screenshot.length} bytes for ${url}`,
+        );
+      }
       screenshotHash = sha256(screenshot);
 
       if (options.screenshotPrefix) {
