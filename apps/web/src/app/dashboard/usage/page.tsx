@@ -7,6 +7,8 @@ import { isPlatformAdmin } from "@/lib/platform-admin";
 import { collectUsage, logUsageProblems } from "@/lib/usage/collect";
 import { Card, CardHeader } from "@/components/ui/card";
 import { UsageMeters } from "@/components/dashboard/usage-meters";
+import { WorkerStatus } from "@/components/dashboard/worker-status";
+import { getWorkerLiveness } from "@/lib/usage/worker-health";
 
 export const metadata: Metadata = {
   title: "All Usage",
@@ -22,6 +24,15 @@ async function UsagePanel() {
   const report = await collectUsage();
   logUsageProblems(report);
   return <UsageMeters initial={report} />;
+}
+
+/**
+ * Two queries, so it paints almost immediately - deliberately NOT inside the
+ * usage panel, whose R2 bucket walk takes seconds. The one fact worth knowing
+ * urgently must not queue behind the slowest measurement on the page.
+ */
+async function WorkerPanel() {
+  return <WorkerStatus liveness={await getWorkerLiveness()} />;
 }
 
 function UsageSkeleton() {
@@ -47,6 +58,10 @@ export default async function UsagePage() {
 
   return (
     <div className="max-w-2xl space-y-6">
+      <Suspense fallback={null}>
+        <WorkerPanel />
+      </Suspense>
+
       <Card>
         <CardHeader
           icon={Gauge}
