@@ -15,6 +15,7 @@ import {
   type Severity,
 } from "@mykavo/email";
 import {
+  emailIsGrandfathered,
   failureAlert as pushFailureAlert,
   scanAlert as pushScanAlert,
   dispatchChannelMessage,
@@ -70,8 +71,22 @@ export async function resolveEmailConfig(workspaceId: string): Promise<ChannelCo
     };
   }
 
-  // Never opted in. Silence is the correct answer, not the owner's inbox.
-  return null;
+  // No channel row. Silence is right for a NEW workspace - but a workspace
+  // that predates the opt-in rule was already being emailed, and cutting it
+  // off without being asked is an outage its owner cannot see. The migration
+  // materialises those as real rows; this keeps the answer correct whether or
+  // not it has been applied yet.
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { createdAt: true, owner: { select: { email: true } } },
+  });
+  if (!emailIsGrandfathered(workspace?.createdAt) || !workspace?.owner.email) return null;
+
+  return {
+    recipients: [workspace.owner.email],
+    minSeverity: DEFAULT_MIN_SEVERITY,
+    failureAlerts: true,
+  };
 }
 
 function pagePath(url: string): string {
