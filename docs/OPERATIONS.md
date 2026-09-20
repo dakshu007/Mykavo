@@ -20,6 +20,46 @@ worker and needs nothing from you.
 
 ---
 
+## When the worker loses the database
+
+The worker emails the operators if it cannot reach Postgres. This exists
+because it has twice run for hours unable to connect, and both times it
+surfaced only because somebody went looking: while it is true there are no
+scans, no uptime checks, no alerts and no reports, and **the dashboard looks
+entirely normal**, because the dashboard shows what is in the database and the
+database simply stops changing.
+
+**Setup.** Set `ALERT_EMAILS` (comma-separated) in the worker's `worker.env`,
+or rely on `ADMIN_EMAILS`. With neither set the alert is disabled, and the
+worker logs an error saying so at boot rather than starting up quietly.
+
+**Behaviour.** A probe runs every minute, starting immediately at boot so a
+worker that starts with bad credentials reports itself rather than waiting out
+the first interval.
+
+| Situation | What happens |
+|---|---|
+| Unreachable under 5 minutes | nothing - restarts and failovers recover on their own |
+| Unreachable 5 minutes or more | one email, carrying the underlying error |
+| Still unreachable | one reminder every 6 hours, subject marked `STILL` |
+| Reachable again | one email with the total outage duration |
+| A query fails for a non-connectivity reason | nothing - a constraint violation is not an outage |
+
+**Why it is a plain timer, not a pg-boss cron.** Every other recurring job in
+the worker is a pg-boss schedule, and pg-boss fetches its jobs from Postgres.
+In this exact failure that fetch is what is broken, so a cron-based check
+would be silent precisely when it matters. The decision logic lives in
+`packages/shared/src/db-watch.ts` where CI tests it; `apps/worker/src/db-watch.ts`
+only probes, sends and logs.
+
+**After an outage.** Queued work resumes by itself. Scans and audits whose
+pg-boss jobs died mid-flight stay `QUEUED` until the scheduler's recovery
+sweep fails them - 60 minutes for scans, 45 for audits - and then need running
+again. If you want them cleared sooner, the sweep's own statements are safe to
+run by hand against the `scan` and `site_audit` tables.
+
+---
+
 ## Lead forms: demo, guest posts, partner applications
 
 The Book a Demo (`/demo`), Write for Us (`/write-for-us`) and Partner Program

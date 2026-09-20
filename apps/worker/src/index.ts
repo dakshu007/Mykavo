@@ -33,6 +33,7 @@ import { logger } from "./logger";
 import { sendTestPush } from "./push";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
+import { startDatabaseWatch } from "./db-watch";
 import { runRetentionSweep } from "./retention";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
@@ -244,9 +245,15 @@ async function main() {
     watchdog: true,
   });
 
+  // Self-monitoring. Deliberately NOT a pg-boss schedule: pg-boss fetches its
+  // jobs from Postgres, so a cron-based check is silent in the one failure it
+  // exists to report. A plain interval keeps ticking either way.
+  const stopDatabaseWatch = startDatabaseWatch();
+
   async function shutdown(signal: string) {
     logger.info("shutting down", { signal });
     try {
+      stopDatabaseWatch();
       await boss.stop({ graceful: true, timeout: 30_000 });
       await pool.close();
     } finally {
