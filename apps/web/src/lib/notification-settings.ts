@@ -24,12 +24,17 @@ export async function getEmailSettings(
   });
 
   if (!channel) {
+    // OPT-IN. A workspace that has never saved notification settings gets no
+    // email, and the form shows the switch off with the owner's address
+    // pre-filled - one toggle away from working, rather than already sending.
+    // Mailing people who never asked is how a monitoring product trains its
+    // own customers to filter it into a folder they stop reading.
     return {
       recipients: [ownerEmail],
       minSeverity: "HIGH",
       failureAlerts: true,
       weeklyReports: true,
-      enabled: true,
+      enabled: false,
       configured: false,
     };
   }

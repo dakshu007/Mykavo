@@ -1,5 +1,5 @@
 export { BrowserPool, type BrowserPoolOptions } from "./browser-pool";
-export { scanPage } from "./scan-page";
+export { scanPage, compressScreenshot, MAX_SCREENSHOT_BYTES } from "./scan-page";
 export {
   runLighthouse,
   parseLighthouseResult,

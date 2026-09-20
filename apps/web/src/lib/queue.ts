@@ -10,7 +10,9 @@ import {
   SITE_AUDIT_QUEUE,
   GSC_SYNC_QUEUE,
   PUSH_TEST_QUEUE,
+  ARTIFACT_PURGE_QUEUE,
   type PushTestJob,
+  type ArtifactPurgeJob,
   type ScanWebsiteJob,
   type SiteAuditJob,
   type GscSyncJob,
@@ -50,6 +52,24 @@ function getBoss(): Promise<PgBoss> {
     });
   }
   return globalForBoss.boss;
+}
+
+/**
+ * Ask the worker to empty the pending-artifact-deletion table.
+ *
+ * Deliberately swallows its own failures: it is called right after a website
+ * has already been deleted, and the nightly retention sweep drains the same
+ * table, so a queue outage costs a few hours of storage rather than the
+ * delete reporting a failure for work that did succeed.
+ */
+export async function enqueueArtifactPurge(job: ArtifactPurgeJob): Promise<void> {
+  try {
+    const boss = await getBoss();
+    await boss.createQueue(ARTIFACT_PURGE_QUEUE, { retryLimit: 2 }).catch(() => {});
+    await boss.send(ARTIFACT_PURGE_QUEUE, { ...job });
+  } catch {
+    // Reclaiming storage is never worth failing a user action over.
+  }
 }
 
 /** Enqueue a website scan. Returns the pg-boss job id. */

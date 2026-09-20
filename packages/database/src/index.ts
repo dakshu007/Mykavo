@@ -36,6 +36,17 @@ export {
   type ExpiredSnapshot,
 } from "./retention";
 export {
+  collectWebsiteArtifactKeys,
+  queueArtifactDeletions,
+  takePendingArtifactDeletions,
+  clearPendingArtifactDeletion,
+  recordArtifactDeletionFailure,
+  countPendingArtifactDeletions,
+  type WebsiteArtifactKeys,
+  type PendingDeletion,
+  type PurgeReason,
+} from "./artifact-purge";
+export {
   failStuckScans,
   STUCK_SCAN_MINUTES,
   type StuckScanRecovery,

@@ -82,7 +82,9 @@ export function NotificationSettingsForm({ initial }: { initial: EmailSettings }
         <span>
           <span className="block text-sm font-medium text-ink">Email alerts</span>
           <span className="block text-[13px] text-ink-secondary">
-            Send a grouped summary email when important changes are detected.
+            {enabled
+              ? "Send a grouped summary email when important changes are detected."
+              : "Off. MyKavo keeps monitoring and recording changes - it just will not email you about them."}
           </span>
         </span>
         <button

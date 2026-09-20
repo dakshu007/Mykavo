@@ -1,10 +1,16 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@mykavo/database";
+import {
+  prisma,
+  collectWebsiteArtifactKeys,
+  findUnreferencedScreenshotKeys,
+  queueArtifactDeletions,
+} from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import { logger } from "@/lib/logger";
+import { enqueueArtifactPurge } from "@/lib/queue";
 import { parseTags } from "@/lib/tags";
 
 type Params = { params: Promise<{ id: string }> };
@@ -179,10 +185,47 @@ export async function DELETE(_request: Request, { params }: Params) {
   const website = await getOwnedWebsite(ctx, id);
   if (!website) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // Read the storage keys BEFORE the cascade: deleting the website removes
+  // the snapshots and change events that name them, and nothing afterwards
+  // can say which objects in the bucket belonged to this site. Skipping this
+  // is why deleted websites used to keep costing money forever.
+  const { screenshotKeys, diffKeys } = await collectWebsiteArtifactKeys(prisma, website.id);
+
   await prisma.website.delete({ where: { id: website.id } });
+
+  // Now that the rows are gone, ask which screenshots nothing else points at.
+  // Screenshots are content-addressed per workspace, so an identical-looking
+  // page on another site in the same workspace shares the object - deleting
+  // by ownership rather than by reference count would blank that site's
+  // history. Diffs belong to exactly one snapshot, so they need no check.
+  let queued = 0;
+  try {
+    const unreferenced = await findUnreferencedScreenshotKeys(prisma, screenshotKeys);
+    queued = await queueArtifactDeletions(
+      prisma,
+      ctx.workspace.id,
+      [...unreferenced, ...diffKeys],
+      "website_deleted",
+    );
+    // Deleting the objects is unbounded work - thousands of them for a site
+    // with a year of history - so it belongs on the worker, not in this
+    // request. The daily retention sweep drains the same table, so a queue
+    // that is down delays the reclaim instead of losing it.
+    if (queued > 0) void enqueueArtifactPurge({ workspaceId: ctx.workspace.id });
+  } catch (err) {
+    // The website IS deleted; failing the response now would tell the user
+    // otherwise and invite a retry that finds nothing. Loud log, quiet API.
+    logger.error("artifact purge could not be queued", {
+      workspaceId: ctx.workspace.id,
+      websiteId: website.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   logger.info("website deleted", {
     workspaceId: ctx.workspace.id,
     websiteId: website.id,
+    artifactsQueued: queued,
   });
   return NextResponse.json({ ok: true });
 }

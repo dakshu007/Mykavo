@@ -19,6 +19,7 @@ import {
 } from "@mykavo/database";
 import { diffKey, historyDaysForPlan } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
+import { drainArtifactPurge } from "./purge-artifacts";
 import { logger } from "./logger";
 
 const BATCH = 500;
@@ -116,6 +117,19 @@ export async function runRetentionSweep(
       // Defensive: never spin if a batch failed to delete.
       if (deleted === 0 || expired.length < BATCH) break;
     }
+  }
+
+  // Safety net for the delete-time purge: if that job never ran (queue down,
+  // worker restarted mid-batch), the keys are still parked in the table and
+  // this is the run that clears them. Failures here must not fail the sweep -
+  // expired snapshots have already been removed and that work should stand.
+  try {
+    const purged = await drainArtifactPurge(storage);
+    artifactsDeleted += purged.deleted;
+  } catch (err) {
+    logger.warn("artifact purge drain failed during retention sweep", {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 
   logger.info("retention sweep complete", {

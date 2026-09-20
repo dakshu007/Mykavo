@@ -1087,3 +1087,29 @@ model GscDimensionRow {
   @@index([websiteId, dimension, period])
   @@map("gsc_dimension_row")
 }
+
+/// Object-storage keys whose owning rows are already gone.
+///
+/// Deleting a website removes thousands of screenshots and diff images from
+/// R2. That cannot happen inside the HTTP request - it is unbounded work on a
+/// serverless function - and it cannot be re-derived afterwards either, since
+/// the snapshots naming those keys are deleted by the same cascade. So the
+/// keys are written here first, and a worker drains the table.
+///
+/// Deliberately has NO foreign key to Workspace: deleting a whole workspace
+/// is exactly when these rows matter most, and a cascade would take them with
+/// it, orphaning the bytes forever - which is the bug this table exists to
+/// fix. workspaceId is kept only for logging and for grouping.
+model PendingArtifactDeletion {
+  id          String   @id @default(cuid())
+  workspaceId String
+  /// Unique so re-queuing the same key is a no-op rather than a double delete.
+  storageKey  String   @unique
+  reason      String
+  attempts    Int      @default(0)
+  lastError   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("pending_artifact_deletion")
+}

@@ -11,6 +11,7 @@ import {
   SCAN_WEBSITE_QUEUE,
   SCHEDULER_SWEEP_QUEUE,
   RETENTION_SWEEP_QUEUE,
+  ARTIFACT_PURGE_QUEUE,
   LIGHTHOUSE_AUDIT_QUEUE,
   HEALTH_SWEEP_QUEUE,
   REPORT_SWEEP_QUEUE,
@@ -33,6 +34,7 @@ import { sendTestPush } from "./push";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
 import { runRetentionSweep } from "./retention";
+import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
 import { runHealthSweep } from "./health";
 import { runReportSweep } from "./report";
@@ -116,6 +118,15 @@ async function main() {
     await runRetentionSweep();
   });
   await boss.schedule(RETENTION_SWEEP_QUEUE, RETENTION_CRON);
+
+  // Storage reclaim: deletes objects whose owning rows are already gone.
+  // Enqueued by the web app the moment a website is deleted, so the bucket
+  // shrinks immediately rather than at 03:00; the retention sweep drains the
+  // same table, so a missed job costs hours, not the saving itself.
+  await boss.createQueue(ARTIFACT_PURGE_QUEUE, { retryLimit: 2 }).catch(() => {});
+  await boss.work(ARTIFACT_PURGE_QUEUE, { batchSize: 1 }, async () => {
+    await drainArtifactPurge();
+  });
 
   // Site-health sweep: uptime probe + SSL expiry for every ACTIVE website.
   await boss.createQueue(HEALTH_SWEEP_QUEUE).catch(() => {});
