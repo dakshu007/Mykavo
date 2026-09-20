@@ -8,7 +8,8 @@ import { describe, expect, it } from "vitest";
 process.env.DATABASE_URL = "postgresql://user:pw@host:5432/db";
 process.env.BETTER_AUTH_SECRET = "x".repeat(40);
 
-const { parseServerEnv, isMaskedSecret, isBuildPhase } = await import("./env");
+const { parseServerEnv, isMaskedSecret, isBuildPhase, SERVER_ENV_KEYS } =
+  await import("./env");
 
 const BUILD = "phase-production-build";
 const REAL_DB = "postgresql://user:pw@host:5432/db?pgbouncer=true";
@@ -138,5 +139,87 @@ describe("parseServerEnv", () => {
     // string to them - they were never what broke the build.
     expect(result.env.GSC_TOKEN_KEY).toBe(MASKED_SECRET);
     expect(result.deferred).toEqual([]);
+  });
+});
+
+describe("every variable survives being secret-flagged", () => {
+  /**
+   * The guard that outlives the four variables this was written for.
+   *
+   * Any variable can be ticked "Contains secret values" in Netlify - it is a
+   * checkbox, not a code change - and from then on the build sees a mask. So
+   * a shape rule added later without strictAtRuntime does not fail in review,
+   * it fails on the deploy after somebody ticks a box, which is how tonight
+   * went. Feeding a mask to every key catches that here instead.
+   *
+   * NODE_ENV is excluded: Netlify does not hold it, so it is never masked.
+   */
+  it("accepts a mask for every key during the build", () => {
+    const source: Record<string, string | undefined> = { NEXT_PHASE: BUILD };
+    for (const key of SERVER_ENV_KEYS) {
+      if (key === "NODE_ENV") continue;
+      source[key] = MASKED_SECRET;
+    }
+
+    expect(() => parseServerEnv(source)).not.toThrow();
+  });
+
+  it("covers the variables that carry a shape rule", () => {
+    // Named explicitly so removing a wrapper is visible in the diff, not just
+    // in a loop's pass/fail.
+    for (const key of [
+      "DATABASE_URL",
+      "BETTER_AUTH_SECRET",
+      "BETTER_AUTH_URL",
+      "LEAD_SHEET_WEBHOOK_URL",
+      "APP_URL",
+      "DODO_MODE",
+    ]) {
+      expect(SERVER_ENV_KEYS).toContain(key);
+      const result = parseServerEnv({
+        NEXT_PHASE: BUILD,
+        DATABASE_URL: REAL_DB,
+        BETTER_AUTH_SECRET: REAL_SECRET,
+        [key]: MASKED_SECRET,
+      });
+      expect(result.deferred).toContain(key);
+    }
+  });
+});
+
+describe("optional variables", () => {
+  it("treats an empty value as unset rather than malformed", () => {
+    // Netlify writes "" for a deploy context left blank. Failing the schema
+    // over a blank optional would take the site down for a feature nobody
+    // had configured.
+    const result = parseServerEnv({
+      DATABASE_URL: REAL_DB,
+      BETTER_AUTH_SECRET: REAL_SECRET,
+      LEAD_SHEET_WEBHOOK_URL: "",
+      APP_URL: "",
+    });
+    expect(result.env.LEAD_SHEET_WEBHOOK_URL).toBeUndefined();
+    expect(result.env.APP_URL).toBeUndefined();
+    expect(result.deferred).toEqual([]);
+  });
+
+  it("still rejects a malformed optional value at runtime", () => {
+    expect(() =>
+      parseServerEnv({
+        DATABASE_URL: REAL_DB,
+        BETTER_AUTH_SECRET: REAL_SECRET,
+        LEAD_SHEET_WEBHOOK_URL: "not-a-url",
+      }),
+    ).toThrow(/LEAD_SHEET_WEBHOOK_URL/);
+  });
+
+  it("accepts a real Apps Script webhook URL", () => {
+    const url = "https://script.google.com/macros/s/AKfycbx_example_id/exec";
+    const result = parseServerEnv({
+      DATABASE_URL: REAL_DB,
+      BETTER_AUTH_SECRET: REAL_SECRET,
+      LEAD_SHEET_WEBHOOK_URL: url,
+    });
+    expect(result.env.LEAD_SHEET_WEBHOOK_URL).toBe(url);
   });
 });

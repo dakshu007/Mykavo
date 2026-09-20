@@ -80,6 +80,36 @@ function strictAtRuntime(
   });
 }
 
+/**
+ * The optional counterpart. Same deferral, plus: an empty string is treated
+ * as unset rather than as a malformed value. Netlify writes an empty string
+ * for a deploy context left blank, and a blank optional variable means "not
+ * configured" - failing the whole schema over one would take the site down
+ * for a feature nobody had turned on.
+ */
+function optionalStrictAtRuntime(
+  rule: z.ZodType<string>,
+  key: string,
+  ctxRef: { allowMasked: boolean; deferred: string[] },
+) {
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (value === undefined || value === "") return;
+      if (ctxRef.allowMasked && unavailableAtBuild(value)) {
+        if (!ctxRef.deferred.includes(key)) ctxRef.deferred.push(key);
+        return;
+      }
+      const result = rule.safeParse(value);
+      if (result.success) return;
+      for (const issue of result.error.issues) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: issue.message });
+      }
+    })
+    .transform((value) => (value === "" ? undefined : value));
+}
+
 function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   return z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -95,12 +125,16 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
     "BETTER_AUTH_SECRET",
     ctxRef,
   ),
-  BETTER_AUTH_URL: z.string().url().optional(),
+  BETTER_AUTH_URL: optionalStrictAtRuntime(z.string().url(), "BETTER_AUTH_URL", ctxRef),
   WAITLIST_FILE: z.string().optional(),
   // Apps Script web app that appends demo requests, guest-post pitches and
   // partner applications to the marketing spreadsheet. Unset = forms still
   // work and every submission is written to the application log instead.
-  LEAD_SHEET_WEBHOOK_URL: z.string().url().optional(),
+  LEAD_SHEET_WEBHOOK_URL: optionalStrictAtRuntime(
+    z.string().url(),
+    "LEAD_SHEET_WEBHOOK_URL",
+    ctxRef,
+  ),
   // Google OAuth (optional). Create credentials at
   // https://console.cloud.google.com → APIs & Services → Credentials.
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -109,7 +143,7 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   // secret values during builds, and a masked value must not fail the whole
   // env schema - gscConfigured()/gscKey() validate the real length at use.
   GSC_TOKEN_KEY: z.string().optional(),
-  APP_URL: z.string().url().optional(),
+  APP_URL: optionalStrictAtRuntime(z.string().url(), "APP_URL", ctxRef),
   // Blog mini-CMS admins (optional). Comma-separated emails allowed to
   // write/publish blog posts from the dashboard. Unset = CMS disabled.
   BLOG_ADMIN_EMAILS: z.string().optional(),
@@ -137,11 +171,21 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   DODO_ADDON_PRODUCT_ID: z.string().optional(),
   DODO_WEBHOOK_SECRET: z.string().optional(),
   DODO_API_KEY: z.string().optional(),
-  DODO_MODE: z.enum(["test", "live"]).optional(),
+  DODO_MODE: optionalStrictAtRuntime(z.enum(["test", "live"]), "DODO_MODE", ctxRef),
   });
 }
 
 export type ServerEnv = z.infer<ReturnType<typeof buildSchema>>;
+
+/**
+ * Every variable the schema knows about. Exported so a test can feed a mask
+ * to each one and prove none of them fails the build - which is how a newly
+ * added rule that forgot strictAtRuntime gets caught here rather than in a
+ * failed production deploy.
+ */
+export const SERVER_ENV_KEYS = Object.keys(
+  buildSchema({ allowMasked: false, deferred: [] }).shape,
+) as Array<keyof ServerEnv>;
 
 export interface LoadResult {
   env: ServerEnv;
