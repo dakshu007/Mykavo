@@ -14,6 +14,10 @@ const serverEnvSchema = z.object({
     .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   BETTER_AUTH_URL: z.string().url().optional(),
   WAITLIST_FILE: z.string().optional(),
+  // Apps Script web app that appends demo requests, guest-post pitches and
+  // partner applications to the marketing spreadsheet. Unset = forms still
+  // work and every submission is written to the application log instead.
+  LEAD_SHEET_WEBHOOK_URL: z.string().url().optional(),
   // Google OAuth (optional). Create credentials at
   // https://console.cloud.google.com → APIs & Services → Credentials.
   GOOGLE_CLIENT_ID: z.string().optional(),

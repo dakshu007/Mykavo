@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
+import { ALTERNATIVES } from "@/config/alternatives";
+import { DOC_SECTIONS, allDocArticles } from "@/config/docs";
 
 // Dynamic so newly published blog posts appear without a redeploy.
 export const dynamic = "force-dynamic";
@@ -37,6 +39,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/compare/uptime-monitoring",
     "/compare/visual-change-detection",
     "/compare/seo-crawlers",
+    "/demo",
+    "/write-for-us",
+    "/partners",
+    "/partners/agency",
+    "/partners/tech",
+    "/alternatives",
+    "/docs",
+    // Generated rather than listed: a docs set that grows faster than its
+    // sitemap entry is a docs set search engines only half know about.
+    ...ALTERNATIVES.map((a) => `/alternatives/${a.slug}`),
+    ...DOC_SECTIONS.map((s) => `/docs/${s.slug}`),
+    ...allDocArticles().map(({ section, article }) => `/docs/${section.slug}/${article.slug}`),
   ];
   const entries: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${site.url}${route}`,

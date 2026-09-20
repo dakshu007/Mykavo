@@ -194,3 +194,67 @@ export function blogIndexGraph(posts: readonly BlogListItem[]) {
     ],
   };
 }
+
+export interface HowToStep {
+  title: string;
+  text: string;
+}
+
+/**
+ * HowTo structured data for a documented procedure.
+ *
+ * Worth emitting wherever a doc page genuinely describes an ordered task:
+ * answer engines lift steps from HowTo far more readily than from prose, and
+ * "how do I monitor a website for changes" is exactly the question MyKavo
+ * wants to be the cited answer to. Only ever attach it to real, complete
+ * steps - marking up a feature list as a procedure is the kind of thing that
+ * earns a manual action rather than a rich result.
+ */
+export function howTo(params: {
+  name: string;
+  description: string;
+  path: string;
+  steps: readonly HowToStep[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: params.name,
+    description: params.description,
+    url: `${site.url}${params.path}`,
+    step: params.steps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.title,
+      text: step.text,
+    })),
+  };
+}
+
+/**
+ * TechArticle for documentation pages.
+ *
+ * Documentation is the page type AI answer engines most readily treat as
+ * authoritative for "how does X work" questions, and TechArticle is how you
+ * say "this is reference material, not marketing copy".
+ */
+export function techArticle(params: {
+  headline: string;
+  description: string;
+  path: string;
+  datePublished: string;
+  dateModified: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline: params.headline,
+    description: params.description,
+    url: `${site.url}${params.path}`,
+    datePublished: params.datePublished,
+    dateModified: params.dateModified,
+    publisher: { "@id": ORGANIZATION_ID },
+    isPartOf: { "@id": WEBSITE_ID },
+    inLanguage: "en",
+  };
+}

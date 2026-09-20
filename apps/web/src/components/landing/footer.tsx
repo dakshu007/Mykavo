@@ -58,8 +58,10 @@ const columns = [
     ],
   },
   {
-    title: "Guides",
+    title: "Resources",
     links: [
+      { href: "/docs", label: "Documentation" },
+      { href: "/docs/getting-started/quick-start", label: "Quick start" },
       { href: "/guides/how-to-monitor-website-changes", label: "Monitor website changes" },
       { href: "/guides/website-monitoring-checklist", label: "Monitoring checklist" },
       { href: "/guides/website-maintenance-checklist", label: "Maintenance checklist" },
@@ -67,9 +69,21 @@ const columns = [
     ],
   },
   {
+    title: "Alternatives",
+    links: [
+      { href: "/alternatives/visualping-alternative", label: "Visualping alternative" },
+      { href: "/alternatives/hexometer-alternative", label: "Hexometer alternative" },
+      { href: "/alternatives/distill-alternative", label: "Distill alternative" },
+      { href: "/alternatives", label: "All comparisons" },
+    ],
+  },
+  {
     title: "Company",
     links: [
       { href: "/about", label: "About" },
+      { href: "/demo", label: "Book a demo" },
+      { href: "/partners", label: "Partner program" },
+      { href: "/write-for-us", label: "Write for us" },
       { href: "/support", label: "Support" },
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
@@ -86,7 +100,7 @@ export function LandingFooter() {
   return (
     <footer className="overflow-hidden border-t border-black/10 bg-[#F3F1E6]">
       <div className="mx-auto max-w-7xl px-5 pt-16 lg:px-8">
-        <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[0.95fr_0.95fr_1.25fr_1.05fr_1.1fr_0.9fr]">
+        <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.15fr_repeat(6,minmax(0,1fr))]">
           <div>
             <Link href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
               <LogoMark size={28} />
