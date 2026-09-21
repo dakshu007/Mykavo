@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -136,5 +136,72 @@ describe("parseListObjectsPage", () => {
     const result = parseListObjectsPage(xml);
     expect(result.objects).toBe(2);
     expect(result.bytes).toBe(1_000_049);
+  });
+});
+
+/**
+ * R2 uploads from the web app failed with `411 MissingContentLength` while
+ * the identical code path in the worker succeeded. A Uint8Array body normally
+ * lets the runtime set Content-Length, and plain Node does - but Next.js
+ * patches global fetch, and under that patch the body went out chunked with
+ * no length at all. R2 refuses those.
+ *
+ * The header is set explicitly now, so the request no longer depends on which
+ * fetch implementation happens to be installed.
+ */
+describe("R2Storage.put", () => {
+  let captured: { url: string; init: RequestInit | undefined } | null = null;
+
+  beforeEach(() => {
+    captured = null;
+    vi.doMock("aws4fetch", () => ({
+      AwsClient: class {
+        async fetch(url: string, init?: RequestInit) {
+          captured = { url, init };
+          return new Response(null, { status: 200 });
+        }
+      },
+    }));
+  });
+
+  afterEach(() => {
+    vi.doUnmock("aws4fetch");
+    vi.resetModules();
+  });
+
+  async function putBytes(bytes: Buffer) {
+    const { R2Storage } = await import("./storage");
+    const storage = new R2Storage({
+      accountId: "acct",
+      accessKeyId: "key",
+      secretAccessKey: "secret",
+      bucket: "mykavo",
+    });
+    await storage.put("blog-images/abc.jpg", bytes, "image/jpeg");
+    return captured;
+  }
+
+  it("sends Content-Length matching the body", async () => {
+    const bytes = Buffer.from("x".repeat(4096));
+    const result = await putBytes(bytes);
+    const headers = result?.init?.headers as Record<string, string>;
+    expect(headers["content-length"]).toBe("4096");
+    expect(headers["content-type"]).toBe("image/jpeg");
+  });
+
+  it("sends Content-Length for an empty body rather than omitting it", async () => {
+    // "0" is a valid length and what R2 expects; omitting the header is the
+    // failure, not the value being zero.
+    const result = await putBytes(Buffer.alloc(0));
+    const headers = result?.init?.headers as Record<string, string>;
+    expect(headers["content-length"]).toBe("0");
+  });
+
+  it("puts to the bucket path for the key", async () => {
+    const result = await putBytes(Buffer.from("bytes"));
+    expect(result?.url).toBe(
+      "https://acct.r2.cloudflarestorage.com/mykavo/blog-images/abc.jpg",
+    );
+    expect(result?.init?.method).toBe("PUT");
   });
 });
