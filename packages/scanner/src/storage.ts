@@ -221,10 +221,22 @@ export class R2Storage implements ArtifactStorage {
 
   async put(key: string, data: Buffer, contentType: string): Promise<void> {
     const client = await this.client();
+    const body = new Uint8Array(data);
     const res = await client.fetch(this.url(key), {
       method: "PUT",
-      headers: { "content-type": contentType },
-      body: new Uint8Array(data),
+      headers: {
+        "content-type": contentType,
+        // R2 rejects a PUT with no Content-Length: 411 MissingContentLength.
+        // Passing a Uint8Array body normally lets the runtime set it, and
+        // plain Node does - which is why the worker uploads screenshots
+        // happily. Next.js patches global fetch, and under that patch on
+        // Netlify the same body goes out chunked with no length, so every
+        // blog-image upload from the web app failed while the worker's
+        // identical code path succeeded. Setting it explicitly makes the
+        // request the same in every runtime instead of depending on one.
+        "content-length": String(body.byteLength),
+      },
+      body,
     });
     if (!res.ok) {
       throw new Error(`R2 put failed for ${key}: ${res.status} ${await res.text()}`);

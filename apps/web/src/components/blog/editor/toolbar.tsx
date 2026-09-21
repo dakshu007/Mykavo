@@ -199,11 +199,19 @@ export function ImagePopover({ editor, onClose }: { editor: Editor; onClose: () 
       const body = new FormData();
       body.append("file", file);
       const res = await fetch("/api/blog/images", { method: "POST", body });
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+        detail?: string;
+      };
       if (!res.ok || !data.url) {
         // Include the status when the server sent no JSON, so a failure is
-        // never just "Upload failed." with nothing to go on.
-        setError(data.error ?? `Upload failed (HTTP ${res.status}).`);
+        // never just "Upload failed." with nothing to go on. `detail` carries
+        // the storage error itself when the route has one - "try again in a
+        // moment" is useless advice for a misconfiguration, and the operator
+        // should not have to read function logs to find that out.
+        const base = data.error ?? `Upload failed (HTTP ${res.status}).`;
+        setError(data.detail ? `${base} (${data.detail})` : base);
         return;
       }
       insert(data.url);

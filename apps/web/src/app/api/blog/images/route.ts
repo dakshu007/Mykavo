@@ -67,12 +67,24 @@ export async function POST(request: Request) {
   try {
     await getDefaultStorage().put(`blog-images/${name}`, data, mime);
   } catch (err) {
-    // The R2 backend throws on a failed PUT. Unhandled, that became a generic
-    // HTML 500, the client's res.json() threw, and the editor showed a bare
-    // "Upload failed." with nothing to debug from. Always answer with JSON.
+    // The R2 backend throws on a failed PUT, and getDefaultStorage() throws
+    // when the R2 variables are missing entirely. Unhandled, that became a
+    // generic HTML 500, the client's res.json() threw, and the editor showed a
+    // bare "Upload failed." with nothing to debug from. Always answer JSON.
     logger.error("blog image upload failed", { userId: gate.userId, name, mime }, err);
+
+    // The reason travels to the caller too. This route is behind the blog-admin
+    // gate, so the only person who can see this is an operator - and the
+    // alternative was a message that says "try again" for a fault that retrying
+    // cannot fix, with the real cause reachable only by digging through the
+    // hosting provider's function logs. The message carries the object key and
+    // the storage response, never a credential or an endpoint.
+    const detail = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "Could not save the image to storage. Try again in a moment." },
+      {
+        error: "Could not save the image to storage. Try again in a moment.",
+        detail: detail.slice(0, 300),
+      },
       { status: 502 },
     );
   }
