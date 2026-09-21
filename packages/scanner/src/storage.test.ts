@@ -4,9 +4,28 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   LocalDiskStorage,
+  R2Storage,
   parseListObjectsPage,
   type ArtifactStorage,
 } from "./storage";
+
+/**
+ * aws4fetch is ESM-only and loaded through a dynamic import inside
+ * R2Storage.client(), so the mock is hoisted and the captured request is
+ * carried out through vi.hoisted rather than a closure.
+ */
+const aws = vi.hoisted(() => ({
+  captured: null as { url: string; init: RequestInit | undefined } | null,
+}));
+
+vi.mock("aws4fetch", () => ({
+  AwsClient: class {
+    async fetch(url: string, init?: RequestInit) {
+      aws.captured = { url, init };
+      return new Response(null, { status: 200 });
+    }
+  },
+}));
 
 let dir: string;
 // Typed as the interface: production only ever touches these through
@@ -150,51 +169,35 @@ describe("parseListObjectsPage", () => {
  * fetch implementation happens to be installed.
  */
 describe("R2Storage.put", () => {
-  let captured: { url: string; init: RequestInit | undefined } | null = null;
-
   beforeEach(() => {
-    captured = null;
-    vi.doMock("aws4fetch", () => ({
-      AwsClient: class {
-        async fetch(url: string, init?: RequestInit) {
-          captured = { url, init };
-          return new Response(null, { status: 200 });
-        }
-      },
-    }));
-  });
-
-  afterEach(() => {
-    vi.doUnmock("aws4fetch");
-    vi.resetModules();
+    aws.captured = null;
   });
 
   async function putBytes(bytes: Buffer) {
-    const { R2Storage } = await import("./storage");
-    const storage = new R2Storage({
+    const r2 = new R2Storage({
       accountId: "acct",
       accessKeyId: "key",
       secretAccessKey: "secret",
       bucket: "mykavo",
     });
-    await storage.put("blog-images/abc.jpg", bytes, "image/jpeg");
-    return captured;
+    await r2.put("blog-images/abc.jpg", bytes, "image/jpeg");
+    return aws.captured;
   }
 
   it("sends Content-Length matching the body", async () => {
-    const bytes = Buffer.from("x".repeat(4096));
-    const result = await putBytes(bytes);
+    const result = await putBytes(Buffer.from("x".repeat(4096)));
     const headers = result?.init?.headers as Record<string, string>;
     expect(headers["content-length"]).toBe("4096");
     expect(headers["content-type"]).toBe("image/jpeg");
   });
 
-  it("sends Content-Length for an empty body rather than omitting it", async () => {
+  it("sends Content-Length for an empty body rather than omitting it", () => {
     // "0" is a valid length and what R2 expects; omitting the header is the
     // failure, not the value being zero.
-    const result = await putBytes(Buffer.alloc(0));
-    const headers = result?.init?.headers as Record<string, string>;
-    expect(headers["content-length"]).toBe("0");
+    return putBytes(Buffer.alloc(0)).then((result) => {
+      const headers = result?.init?.headers as Record<string, string>;
+      expect(headers["content-length"]).toBe("0");
+    });
   });
 
   it("puts to the bucket path for the key", async () => {

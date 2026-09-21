@@ -10,8 +10,10 @@ import {
   SITE_AUDIT_QUEUE,
   GSC_SYNC_QUEUE,
   PUSH_TEST_QUEUE,
+  ADMIN_SIGNUP_QUEUE,
   ARTIFACT_PURGE_QUEUE,
   type PushTestJob,
+  type AdminSignupJob,
   type ArtifactPurgeJob,
   type ScanWebsiteJob,
   type SiteAuditJob,
@@ -69,6 +71,24 @@ export async function enqueueArtifactPurge(job: ArtifactPurgeJob): Promise<void>
     await boss.send(ARTIFACT_PURGE_QUEUE, { ...job });
   } catch {
     // Reclaiming storage is never worth failing a user action over.
+  }
+}
+
+/**
+ * Tell the operator somebody signed up.
+ *
+ * Swallows its own failures, like the artifact purge and for the same reason:
+ * this is called from the hook that creates a user account, and a notification
+ * the operator would like to receive is never worth failing a signup over.
+ * The account exists either way, and the admin page lists it regardless.
+ */
+export async function enqueueAdminSignupAlert(job: AdminSignupJob): Promise<void> {
+  try {
+    const boss = await getBoss();
+    await boss.createQueue(ADMIN_SIGNUP_QUEUE, { retryLimit: 2 }).catch(() => {});
+    await boss.send(ADMIN_SIGNUP_QUEUE, { ...job });
+  } catch {
+    // Never let telling ourselves about a customer cost us the customer.
   }
 }
 

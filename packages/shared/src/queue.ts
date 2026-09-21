@@ -31,6 +31,15 @@ export const SITE_AUDIT_QUEUE = "site-audit";
  * which is the whole point of a test.
  */
 export const PUSH_TEST_QUEUE = "push-test";
+/**
+ * "Somebody just signed up." Goes to the platform operator, not to a customer.
+ *
+ * Enqueued from the signup hook rather than sent there: the hook runs inside
+ * the request that creates the account, and a push must never be able to slow
+ * that down or fail it. A pg-boss insert is one fast local write; the Expo
+ * round trip happens in the worker where a failure costs nothing.
+ */
+export const ADMIN_SIGNUP_QUEUE = "admin-signup";
 
 export interface ScanWebsiteJob {
   scanId: string;
@@ -57,5 +66,10 @@ export interface ArtifactPurgeJob {
 
 export interface PushTestJob {
   /** Whose devices to alert. Never taken from client input - see the route. */
+  userId: string;
+}
+
+export interface AdminSignupJob {
+  /** The account that was just created. Everything else is read from the row. */
   userId: string;
 }

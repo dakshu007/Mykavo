@@ -20,3 +20,4 @@ export * from "./tech-stack";
 export * from "./domain-expiry";
 export * from "./push";
 export * from "./db-watch";
+export * from "./admin-alerts";
