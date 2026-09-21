@@ -6,6 +6,8 @@ import {
   weeklyReportEmail,
   workspaceInviteEmail,
   performanceDropEmail,
+  workerDbOutageEmail,
+  workerDbRecoveryEmail,
   type DeployVerdictData,
   clientReportDeliveryEmail,
   type ClientReportDeliveryData,
@@ -387,5 +389,56 @@ describe("clientReportDeliveryEmail", () => {
     expect(evil.html).not.toContain("<b>Evil</b>");
     expect(evil.html).toContain("&lt;b&gt;Evil&lt;/b&gt; &amp; Co");
     expect(evil.html).toContain("A &amp; B");
+  });
+});
+
+describe("worker database outage emails", () => {
+  const outage = {
+    downFor: "42 minutes",
+    reason: "Can't reach database server at `aws-0-us-east-1.pooler.supabase.com:5432`",
+    repeat: false,
+    dashboardUrl: "https://mykavo.app/dashboard/usage",
+  };
+
+  it("says plainly that nothing is running", () => {
+    const mail = workerDbOutageEmail(outage);
+    expect(mail.subject).toContain("cannot reach the database");
+    expect(mail.text).toContain("Nothing is being scanned");
+    expect(mail.text).toContain("42 minutes");
+    // The reason the operator cannot infer this from the dashboard is the
+    // single most useful sentence in the email.
+    expect(mail.text).toContain("dashboard will look normal");
+  });
+
+  it("carries the underlying error so it can be acted on", () => {
+    const mail = workerDbOutageEmail(outage);
+    expect(mail.text).toContain("pooler.supabase.com:5432");
+    expect(mail.html).toContain("pooler.supabase.com:5432");
+  });
+
+  it("distinguishes a reminder from a first report", () => {
+    const first = workerDbOutageEmail(outage);
+    const again = workerDbOutageEmail({ ...outage, repeat: true });
+    expect(first.subject).not.toContain("STILL");
+    expect(again.subject).toContain("STILL");
+    expect(again.text).toContain("already reported");
+  });
+
+  it("escapes the error text rather than trusting it", () => {
+    const mail = workerDbOutageEmail({ ...outage, reason: '<img src=x onerror="alert(1)">' });
+    expect(mail.html).not.toContain("<img");
+    expect(mail.html).toContain("&lt;img");
+  });
+
+  it("reports recovery with the duration and what to do next", () => {
+    const mail = workerDbRecoveryEmail({
+      downFor: "2 hours",
+      dashboardUrl: "https://mykavo.app/dashboard/usage",
+    });
+    expect(mail.subject).toContain("reconnected");
+    expect(mail.subject).toContain("2 hours");
+    // Scans killed mid-flight do not resume, and saying so saves the reader
+    // wondering why the dashboard still shows failures.
+    expect(mail.text).toContain("need running again");
   });
 });

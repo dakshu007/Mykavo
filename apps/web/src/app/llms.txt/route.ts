@@ -1,4 +1,4 @@
-import { site } from "@/config/site";
+import { site, socials } from "@/config/site";
 
 /**
  * /llms.txt - the emerging convention that gives LLMs and AI search engines
@@ -90,7 +90,7 @@ Each comparison page states plainly where the other category of tool is the bett
 - [About](${site.url}/about): the story behind MyKavo
 - [Blog](${site.url}/blog): guides on website monitoring
 - [Support](${site.url}/support): help and contact
-- [LinkedIn](https://www.linkedin.com/company/mykavo/): official company page
+${socials.map((s) => `- [${s.label}](${s.href}): ${s.description}`).join("\n")}
 
 ## Documentation
 

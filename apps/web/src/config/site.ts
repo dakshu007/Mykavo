@@ -22,5 +22,24 @@ export const socials = [
   {
     label: "LinkedIn",
     href: "https://www.linkedin.com/company/mykavo/",
+    description: "official company page",
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/mykavo_/",
+    description: "product shots and release notes",
+  },
+  {
+    label: "YouTube",
+    href: "https://www.youtube.com/@mykavo",
+    description: "walkthroughs and feature demos",
   },
 ] as const;
+
+/**
+ * Note on the URLs above: share links copied from the apps carry tracking
+ * parameters - Instagram's `?stkn=` and YouTube's `?si=` - which are tied to
+ * the account that generated them. They are stripped here deliberately. A
+ * `sameAs` is a claim about brand identity, and a one-off share token is not
+ * part of that identity; it also does not belong in a public page's markup.
+ */

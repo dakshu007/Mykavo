@@ -136,4 +136,26 @@ describe("sameAs (brand entity resolution)", () => {
       expect(social.label.length).toBeGreaterThan(0);
     }
   });
+
+  /**
+   * Share links copied out of the apps carry a tracking parameter tied to the
+   * account that generated them - Instagram's `?stkn=`, YouTube's `?si=`. It
+   * is the natural thing to paste, and it would end up both in the footer's
+   * markup and in sameAs, where a one-off share token is not part of the
+   * brand's identity and does not belong on a public page.
+   */
+  it("carries no share or tracking parameters", () => {
+    for (const social of socials) {
+      expect(social.href).not.toContain("?");
+      expect(social.href).not.toContain("stkn");
+      expect(social.href).not.toContain("si=");
+      expect(social.href).not.toContain("utm_");
+    }
+  });
+
+  it("describes each profile, for llms.txt", () => {
+    for (const social of socials) {
+      expect(social.description.length).toBeGreaterThan(5);
+    }
+  });
 });

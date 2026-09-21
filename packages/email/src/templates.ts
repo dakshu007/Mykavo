@@ -326,6 +326,78 @@ export function recoveryAlertEmail(data: RecoveryAlertData): { subject: string; 
   return { subject, html: shell(inner), text };
 }
 
+/**
+ * MyKavo monitoring itself. These two go to the operators, not to customers.
+ *
+ * When the worker cannot reach Postgres there are no scans, no uptime checks,
+ * no alerts and no reports, and the dashboard looks entirely normal because
+ * it reports what is in the database and the database stops changing. Email
+ * is the only channel that still works, because Resend is an HTTPS call that
+ * touches no database at all.
+ */
+export interface WorkerDbOutageData {
+  /** Human duration, e.g. "42 minutes". */
+  downFor: string;
+  /** The error the probe last saw, already trimmed to something readable. */
+  reason: string;
+  /** True when this is a reminder about an outage already reported. */
+  repeat: boolean;
+  dashboardUrl: string;
+}
+
+export interface WorkerDbRecoveryData {
+  downFor: string;
+  dashboardUrl: string;
+}
+
+export function workerDbOutageEmail(data: WorkerDbOutageData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = data.repeat
+    ? `\u{1F534} MyKavo worker STILL cannot reach the database - ${data.downFor}`
+    : `\u{1F534} MyKavo worker cannot reach the database`;
+  const lead = data.repeat
+    ? "This outage was already reported and is still unresolved."
+    : "Nothing is being scanned, no alerts are being sent, and no sweeps are running.";
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#e5484d">Worker offline</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">The scan worker has lost its database</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">Unreachable for ${esc(data.downFor)}</p>
+    <div style="background:#fdeaeb;border-radius:12px;padding:14px 16px;font-size:14px;color:#b42318;margin-bottom:16px">${esc(lead)} The dashboard will look normal throughout, because it only shows what is in the database.</div>
+    <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#5c6270">What the worker last saw</p>
+    <div style="background:#f4f5f7;border-radius:10px;padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#3a3f4b;margin-bottom:24px;word-break:break-word">${esc(data.reason)}</div>
+    ${button(data.dashboardUrl, "Open dashboard")}
+  `;
+  const text =
+    `MyKavo worker cannot reach the database - unreachable for ${data.downFor}\n\n` +
+    `${lead} The dashboard will look normal throughout, because it only shows what is in the database.\n\n` +
+    `What the worker last saw:\n${data.reason}\n\n` +
+    `Dashboard: ${data.dashboardUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
+export function workerDbRecoveryEmail(data: WorkerDbRecoveryData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `\u{2705} MyKavo worker reconnected - database was unreachable for ${data.downFor}`;
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a">Recovered</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">The scan worker is back</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">The database was unreachable for ${esc(data.downFor)}</p>
+    <div style="background:#eefaf0;border-radius:12px;padding:14px 16px;font-size:14px;color:#16653a;margin-bottom:24px">Queued work resumes automatically. Scans whose jobs died during the outage are marked failed by the recovery sweep and need running again.</div>
+    ${button(data.dashboardUrl, "Open dashboard")}
+  `;
+  const text =
+    `MyKavo worker reconnected - the database was unreachable for ${data.downFor}\n\n` +
+    `Queued work resumes automatically. Scans whose jobs died during the outage are marked failed and need running again.\n\n` +
+    `Dashboard: ${data.dashboardUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
 export function sslExpiryAlertEmail(data: SslExpiryAlertData): { subject: string; html: string; text: string } {
   const expired = data.daysLeft <= 0;
   const when = expired
