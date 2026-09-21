@@ -42,6 +42,8 @@ export interface MeResponse {
    */
   admin?: {
     usage: boolean;
+    /** Optional on its own: an APK may outlive the server that first sent it. */
+    users?: boolean;
     blog: boolean;
   };
   workspaces: {
@@ -408,6 +410,35 @@ export interface UsageResponse {
   stats: UsageStatItem[];
   uncapped: { label: string; detail: string }[];
   problems: string[];
+}
+
+/* --------------------------------- users ---------------------------------- */
+
+/**
+ * One signed-up account, as the operator sees it. Mirrors SignupRow in
+ * apps/web/src/lib/admin/recent-signups.ts.
+ */
+export interface SignupRow {
+  id: string;
+  /**
+   * Already made presentable by the server: rows created before name
+   * validation shipped can hold anything, so the backend falls back to the
+   * address handle rather than sending a row of dashes to be rendered.
+   */
+  name: string;
+  email: string;
+  joinedAt: string;
+  websites: number;
+  /** Has added at least one website - the line between a signup and a user. */
+  activated: boolean;
+}
+
+export interface UsersResponse {
+  rows: SignupRow[];
+  total: number;
+  lastSevenDays: number;
+  /** Non-null when the list could not be read. The screen says so. */
+  error: string | null;
 }
 
 /* ---------------------------------- blog ---------------------------------- */

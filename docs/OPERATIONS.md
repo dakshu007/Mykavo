@@ -63,7 +63,8 @@ run by hand against the `scan` and `site_audit` tables.
 ## New-signup alerts
 
 The operator gets a push notification the first time somebody creates a MyKavo
-account, and `/dashboard/usage` lists who has joined.
+account, and both `/dashboard/users` on the web and **Settings → Admin → Users**
+in the Android app list who has joined.
 
 **Signups only, never logins.** A login alert would fire several times a day
 for returning customers and be muted within a week, at which point it reports
@@ -101,6 +102,19 @@ back to the address handle rather than printing the junk.
 **Users lives on its own page** (`/dashboard/users`), not beside All Usage.
 They answer different questions - "is anybody using it" versus "what is this
 costing" - and sharing a screen made the first easy to miss under the second.
+
+**Tapping the notification** opens the app's Users screen, which is where the
+notification's obvious next question - who else joined, and did any of them
+activate - is answered. An APK older than that screen (anything before the
+build that added it) lands on expo-router's unmatched route instead; these
+pushes only reach platform admins, who are the people who update the app.
+
+**On the phone** the screen is reached from Settings rather than the tab bar:
+at 48px a tab the floating bar stops fitting a 360dp phone past six, and Users
+is a screen you open when a notification arrives, not one you check constantly.
+It reads `/api/mobile/users`, which is gated by the same `ADMIN_EMAILS`
+allowlist and answers **404** rather than 403 for everyone else - whether this
+installation has an operator view is not something a customer needs to learn.
 
 **The dashboard card** lists the 25 most recent users with how long ago they
 joined and how many websites they have added. The website count is the point:

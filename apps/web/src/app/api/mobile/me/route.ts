@@ -12,8 +12,8 @@ import { isPlatformAdmin } from "@/lib/platform-admin";
  * (flagging the active one), the active workspace's plan limits, and which
  * operator-only areas this account may see.
  *
- * The two admin flags drive whether the app shows the Usage tab and the Blog
- * screen at all. They are UX hints ONLY - every admin endpoint re-checks the
+ * The admin flags drive whether the app shows the Usage tab and the Users and
+ * Blog screens at all. They are UX hints ONLY - every admin endpoint re-checks the
  * same allowlist server-side, so a tampered response reveals nothing. Sending
  * them is what stops the app rendering a tab that answers 404 when tapped.
  *
@@ -49,6 +49,9 @@ export async function GET() {
     },
     admin: {
       usage: isPlatformAdmin(session.user.email),
+      // Same predicate as usage today, sent as its own flag so that changing
+      // who may see the user list later does not change who sees the meters.
+      users: isPlatformAdmin(session.user.email),
       blog: isBlogAdmin(session.user.email),
     },
     workspaces: memberships.map((m) => ({
