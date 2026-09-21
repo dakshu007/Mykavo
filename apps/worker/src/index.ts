@@ -23,7 +23,9 @@ import {
   GSC_SYNC_SWEEP_QUEUE,
   DOMAIN_SWEEP_QUEUE,
   PUSH_TEST_QUEUE,
+  ADMIN_SIGNUP_QUEUE,
   type PushTestJob,
+  type AdminSignupJob,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
   type SiteAuditJob,
@@ -34,6 +36,7 @@ import { sendTestPush } from "./push";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
 import { startDatabaseWatch } from "./db-watch";
+import { runAdminSignupJob } from "./admin-signup";
 import { runRetentionSweep } from "./retention";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
@@ -243,6 +246,14 @@ async function main() {
     reportCron: REPORT_CRON,
     auditCron: AUDIT_CRON,
     watchdog: true,
+  });
+
+  // "Somebody signed up" - to the operator, not to a customer. Enqueued by the
+  // web app's signup hook; delivered here so a push round trip can never slow
+  // down or fail the request that creates an account.
+  await boss.createQueue(ADMIN_SIGNUP_QUEUE, { retryLimit: 2 }).catch(() => {});
+  await boss.work<AdminSignupJob>(ADMIN_SIGNUP_QUEUE, { batchSize: 1 }, async ([job]) => {
+    await runAdminSignupJob(job.data.userId);
   });
 
   // Self-monitoring. Deliberately NOT a pg-boss schedule: pg-boss fetches its

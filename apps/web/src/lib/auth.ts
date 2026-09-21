@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { validateSignupEmail, EMAIL_VALIDATION_MESSAGES } from "@/lib/email-validation";
 import { recordSignupToSheet } from "@/lib/signup-sheet";
+import { enqueueAdminSignupAlert } from "@/lib/queue";
 
 /**
  * Whether Google sign-in is configured. Drives the "Continue with Google"
@@ -108,6 +109,12 @@ export const auth = betterAuth({
           });
           // Marketing export - fire-and-forget, never blocks signup.
           recordSignupToSheet({ email: user.email, name: user.name });
+
+          // Tell the operator. Queued rather than sent here: this runs inside
+          // the request that creates the account, and a push round trip must
+          // never be able to slow that down or fail it. enqueue swallows its
+          // own errors for the same reason.
+          await enqueueAdminSignupAlert({ userId: user.id });
         },
       },
     },

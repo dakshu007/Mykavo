@@ -60,6 +60,41 @@ run by hand against the `scan` and `site_audit` tables.
 
 ---
 
+## New-signup alerts
+
+The operator gets a push notification the first time somebody creates a MyKavo
+account, and `/dashboard/usage` lists who has joined.
+
+**Signups only, never logins.** A login alert would fire several times a day
+for returning customers and be muted within a week, at which point it reports
+nothing. One notification per person, ever, is a signal worth reading.
+
+**Setup.** `ADMIN_EMAILS` in the worker's `worker.env` decides who is an
+operator - the same allowlist the web app uses, and the worker logs a warning
+rather than staying silent if it is unset. The push lands on any device where
+an admin has signed in to the mobile app; with none registered the worker says
+so in the log, since "configured but nowhere to land" and "working" otherwise
+look identical.
+
+**Path.** Signup hook (`apps/web/src/lib/auth.ts`) enqueues to pg-boss; the
+worker sends. Never sent from the signup request itself: that request creates
+the account, and an Expo round trip must not be able to slow it down or fail
+it. The enqueue swallows its own errors for the same reason.
+
+**What the notification says.** The name and a masked address - `d******@gmail.com`.
+A push body shows on a lock screen before anyone unlocks the phone, so the
+full address stays out of it; the admin page and the email copy use it in full.
+An admin's own signup is skipped.
+
+**The dashboard card** lists the 25 most recent users with how long ago they
+joined and how many websites they have added. The website count is the point:
+a signup that never added one is not a customer yet, and "12 signups, 3 of whom
+added a website" is a different fact from "12 signups". There is deliberately
+no signups table - `User.createdAt` already holds this, and a second copy would
+start disagreeing with the first the day an account was deleted.
+
+---
+
 ## Lead forms: demo, guest posts, partner applications
 
 The Book a Demo (`/demo`), Write for Us (`/write-for-us`) and Partner Program

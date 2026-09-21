@@ -142,6 +142,26 @@ async function applyOutcomes(outcomes: readonly TicketOutcome[]): Promise<number
  * no registered device, so the caller can tell "nothing to send to" from
  * "sent and it failed".
  */
+/**
+ * Deliver one chunk of tokens and return how many landed.
+ *
+ * The send-and-reconcile pair that sendTestPush and fanOutToPush each inline.
+ * Exported for the admin alerts, whose audience is an allowlist in the
+ * environment rather than a workspace, so neither of those fits - and
+ * re-implementing the DeviceNotRegistered pruning beside them is how a dead
+ * device quietly stops being pruned on one path only.
+ *
+ * Caller chunks; Expo caps a request at a fixed number of messages.
+ */
+export async function sendPushToTokens(
+  tokens: readonly string[],
+  alert: PushAlert,
+): Promise<number> {
+  if (tokens.length === 0) return 0;
+  const outcomes = await sendChunk(tokens, alert, process.env.EXPO_ACCESS_TOKEN);
+  return applyOutcomes(outcomes);
+}
+
 export async function sendTestPush(userId: string): Promise<SendSummary | null> {
   const devices = await prisma.pushDevice.findMany({
     where: { userId, enabled: true },
