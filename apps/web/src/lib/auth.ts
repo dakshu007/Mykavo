@@ -7,6 +7,7 @@ import { prisma } from "@mykavo/database";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { validateSignupEmail, EMAIL_VALIDATION_MESSAGES } from "@/lib/email-validation";
+import { checkPersonName, NAME_REJECTION_MESSAGES } from "@mykavo/shared";
 import { recordSignupToSheet } from "@/lib/signup-sheet";
 import { enqueueAdminSignupAlert } from "@/lib/queue";
 
@@ -69,6 +70,19 @@ export const auth = betterAuth({
     // DNS MX check - the address must belong to a domain that accepts mail.
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== "/sign-up/email") return;
+
+      // Name first: it is a pure string check, where the email check does a
+      // DNS lookup. No reason to pay for a resolver round trip to reject a
+      // row of dashes.
+      const name = typeof ctx.body?.name === "string" ? ctx.body.name : "";
+      const nameCheck = checkPersonName(name);
+      if (!nameCheck.ok && nameCheck.reason) {
+        logger.info("signup name rejected", { reason: nameCheck.reason });
+        throw new APIError("BAD_REQUEST", {
+          message: NAME_REJECTION_MESSAGES[nameCheck.reason],
+        });
+      }
+
       const email = typeof ctx.body?.email === "string" ? ctx.body.email : "";
       const result = await validateSignupEmail(email);
       if (!result.ok) {

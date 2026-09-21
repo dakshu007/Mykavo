@@ -86,6 +86,22 @@ A push body shows on a lock screen before anyone unlocks the phone, so the
 full address stays out of it; the admin page and the email copy use it in full.
 An admin's own signup is skipped.
 
+**Signup names are checked**, because accounts were arriving named
+`------------------`. The rule is deliberately NOT "alphabetic characters
+only": MyKavo's market is global, and that rule turns away Jose with an
+accent, Jean-Luc, O'Brien and every non-Latin script there is. Rejecting a
+paying customer over an accent is a worse outcome than a junk row in an admin
+list. Instead a name must have at least two letters in any script, letters
+must be at least half of the non-space characters, and it must not contain a
+URL. See `packages/shared/src/person-name.ts`.
+
+Rows created before that shipped keep whatever was stored, so the list falls
+back to the address handle rather than printing the junk.
+
+**Users lives on its own page** (`/dashboard/users`), not beside All Usage.
+They answer different questions - "is anybody using it" versus "what is this
+costing" - and sharing a screen made the first easy to miss under the second.
+
 **The dashboard card** lists the 25 most recent users with how long ago they
 joined and how many websites they have added. The website count is the point:
 a signup that never added one is not a customer yet, and "12 signups, 3 of whom

@@ -16,6 +16,7 @@ import {
   Gauge,
   PenLine,
   Settings,
+  UserPlus,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -67,7 +68,10 @@ export function DashboardSidebar({
     ...nav,
     ...(isBlogAdmin ? [{ href: "/dashboard/blog", label: "Blog", icon: PenLine }] : []),
     ...(isPlatformAdmin
-      ? [{ href: "/dashboard/usage", label: "All Usage", icon: Gauge }]
+      ? [
+          { href: "/dashboard/users", label: "Users", icon: UserPlus },
+          { href: "/dashboard/usage", label: "All Usage", icon: Gauge },
+        ]
       : []),
   ];
 

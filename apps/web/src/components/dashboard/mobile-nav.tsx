@@ -34,7 +34,12 @@ export function DashboardMobileNav({
   const items = [
     ...nav,
     ...(isBlogAdmin ? [{ href: "/dashboard/blog", label: "Blog" }] : []),
-    ...(isPlatformAdmin ? [{ href: "/dashboard/usage", label: "All Usage" }] : []),
+    ...(isPlatformAdmin
+      ? [
+          { href: "/dashboard/users", label: "Users" },
+          { href: "/dashboard/usage", label: "All Usage" },
+        ]
+      : []),
   ];
 
   async function handleSignOut() {
