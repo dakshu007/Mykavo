@@ -357,9 +357,6 @@ export default function HomePage() {
         {/* Hero - badge, headline, URL input, browser-frame dashboard mock */}
         <LandingHero />
 
-        {/* Gold ticker - everything a scan checks */}
-        <SignalMarquee />
-
         {/* The problem - dark ink band with incident-log cards */}
         <section className="mt-16 border-y border-[#151515] bg-[#151515]">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
@@ -396,20 +393,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* What it watches - interactive category tabs */}
-        <Section id="categories">
-          <p className={`${eyebrow} mb-4 text-center`}>{"// what mykavo watches //"}</p>
+        {/* How it works - numbered rail */}
+        <Section id="how-it-works">
+          <p className={`${eyebrow} mb-4 text-center`}>{"// how it works //"}</p>
           <DisplayHeading>
-            Eight kinds of change.
+            Baseline. Monitor.
             <br />
-            <span className="text-[#6B6B60]">One monitoring layer.</span>
+            <span className="text-[#6B6B60]">Detect. Fix.</span>
           </DisplayHeading>
-          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#6B6B60]">
-            Every scan checks each monitored page across all eight categories and scores what it
-            finds by severity - so you see what matters first. Pick a category to see a real
-            example.
-          </p>
-          <CategoryTabs />
+
+          <div className="relative mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Connecting rail (desktop) */}
+            <div aria-hidden className="absolute left-0 right-0 top-[22px] hidden border-t-2 border-dashed border-[#151515]/15 lg:block" />
+            {workflow.map((w) => (
+              <div key={w.step} className="relative">
+                <span className="relative inline-flex items-center justify-center rounded-full border border-[#151515] bg-[#FFD400] px-4 py-2 font-mono text-[13px] font-bold text-[#151515] shadow-[3px_3px_0_#151515]">
+                  {w.step}
+                </span>
+                <h3 className={`${fontDisplay} mt-5 text-[22px] leading-snug text-[#151515]`}>{w.title}</h3>
+                <p className="mt-2.5 text-[14px] leading-6.5 text-[#6B6B60]">
+                  {w.desc.split(w.keyword).map((part, i, arr) => (
+                    <span key={i}>
+                      {part}
+                      {i < arr.length - 1 && (
+                        <span className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-[3px] underline-offset-4">
+                          {w.keyword}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            ))}
+          </div>
+          <SplitPill />
         </Section>
 
         {/* Before / after MyKavo - v7-style stat pairs */}
@@ -497,41 +514,27 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How it works - numbered rail */}
-        <Section id="how-it-works">
-          <p className={`${eyebrow} mb-4 text-center`}>{"// how it works //"}</p>
+        {/* What it watches - interactive category tabs */}
+        <Section id="categories">
+          <p className={`${eyebrow} mb-4 text-center`}>{"// what mykavo watches //"}</p>
           <DisplayHeading>
-            Baseline. Monitor.
+            Eight kinds of change.
             <br />
-            <span className="text-[#6B6B60]">Detect. Fix.</span>
+            <span className="text-[#6B6B60]">One monitoring layer.</span>
           </DisplayHeading>
-
-          <div className="relative mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Connecting rail (desktop) */}
-            <div aria-hidden className="absolute left-0 right-0 top-[22px] hidden border-t-2 border-dashed border-[#151515]/15 lg:block" />
-            {workflow.map((w) => (
-              <div key={w.step} className="relative">
-                <span className="relative inline-flex items-center justify-center rounded-full border border-[#151515] bg-[#FFD400] px-4 py-2 font-mono text-[13px] font-bold text-[#151515] shadow-[3px_3px_0_#151515]">
-                  {w.step}
-                </span>
-                <h3 className={`${fontDisplay} mt-5 text-[22px] leading-snug text-[#151515]`}>{w.title}</h3>
-                <p className="mt-2.5 text-[14px] leading-6.5 text-[#6B6B60]">
-                  {w.desc.split(w.keyword).map((part, i, arr) => (
-                    <span key={i}>
-                      {part}
-                      {i < arr.length - 1 && (
-                        <span className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-[3px] underline-offset-4">
-                          {w.keyword}
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </p>
-              </div>
-            ))}
-          </div>
-          <SplitPill />
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#6B6B60]">
+            Every scan checks each monitored page across all eight categories and scores what it
+            finds by severity - so you see what matters first. Pick a category to see a real
+            example.
+          </p>
+          <CategoryTabs />
         </Section>
+
+        {/* Gold ticker - everything a scan checks. Below the categories now:
+            immediately under the hero it was a breadth signal in the
+            breadth-first slot, which is what made the product read as several
+            products. Here it is detail on a claim already made. */}
+        <SignalMarquee />
 
         {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
         <AlertChannelsSection />

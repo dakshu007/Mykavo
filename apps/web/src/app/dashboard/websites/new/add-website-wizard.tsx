@@ -18,6 +18,28 @@ async function requestJson<T>(url: string, body?: unknown, method = "POST"): Pro
   return data;
 }
 
+/**
+ * Kick off the baseline scan, returning the scan to watch - or null when it
+ * could not be started.
+ *
+ * Deliberately swallows its own failures. By the time this runs the monitored
+ * pages are already saved, so the user's work is safe whatever happens here;
+ * surfacing "could not queue the scan" as if the whole wizard failed would be
+ * a lie, and blocking on it would leave them on a form with nowhere to go. A
+ * 409 means a scan is already running, which is a success for our purposes -
+ * there is a baseline in flight to watch.
+ */
+async function startBaseline(websiteId: string): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/websites/${websiteId}/scan`, { method: "POST" });
+    const data = (await res.json()) as { scan?: { id: string }; scanId?: string };
+    if (res.status === 409 && data.scanId) return data.scanId;
+    return res.ok && data.scan ? data.scan.id : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
   const router = useRouter();
 
@@ -69,21 +91,48 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
     }
   }
 
+  /**
+   * Save the page selection and START THE BASELINE, landing on the live scan.
+   *
+   * The baseline used to be left for the user to find: this saved the pages,
+   * pushed to the website page, and stopped. Every new account then had to
+   * work out on its own that monitoring had not actually begun yet - which is
+   * the whole first-run loop (add a URL, approve a baseline, get the first
+   * alert) breaking at step two, one click after signup.
+   *
+   * Starting it here is safe because the scan route decides the trigger type
+   * itself: a website with no finished scan gets BASELINE, which is exempt
+   * from the manual-scan plan gate. Nothing about who may scan is decided in
+   * this component.
+   */
   async function handleSave() {
     if (loading || selected.size === 0) return;
     setLoading(true);
     setError("");
     try {
+      setPhase("Saving monitored pages…");
       await requestJson(
         `/api/websites/${websiteId}/pages`,
         { pages: [...selected].map((u) => ({ url: u })) },
         "PUT",
       );
-      router.push(`/dashboard/websites/${websiteId}`);
+
+      // From here the pages ARE saved. A baseline that fails to start must
+      // therefore never look like a failed save, and must never dead-end:
+      // the fallback is the website page, which offers "Run baseline scan".
+      setPhase("Starting your baseline scan…");
+      const scanId = await startBaseline(websiteId);
+      if (scanId) {
+        track("baseline_started", { websiteId });
+        router.push(`/dashboard/scans/${scanId}`);
+      } else {
+        router.push(`/dashboard/websites/${websiteId}`);
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);
+      setPhase("");
     }
   }
 
@@ -164,14 +213,18 @@ export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
       )}
 
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-ink-faint">You can change monitored pages anytime.</p>
+        <p className="text-[13px] text-ink-faint">
+          {loading && phase
+            ? phase
+            : "Your baseline scan starts straight away. You can change monitored pages anytime."}
+        </p>
         <button
           onClick={handleSave}
           disabled={loading || selected.size === 0}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-8 text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
-          Monitor {selected.size} page{selected.size === 1 ? "" : "s"}
+          Start monitoring {selected.size} page{selected.size === 1 ? "" : "s"}
         </button>
       </div>
     </div>

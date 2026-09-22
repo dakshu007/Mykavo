@@ -9,8 +9,6 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { UsageMeters } from "@/components/dashboard/usage-meters";
 import { WorkerStatus } from "@/components/dashboard/worker-status";
 import { getWorkerLiveness } from "@/lib/usage/worker-health";
-import { RecentSignups } from "@/components/dashboard/recent-signups";
-import { getRecentSignups } from "@/lib/admin/recent-signups";
 
 export const metadata: Metadata = {
   title: "All Usage",
@@ -35,14 +33,6 @@ async function UsagePanel() {
  */
 async function WorkerPanel() {
   return <WorkerStatus liveness={await getWorkerLiveness()} />;
-}
-
-/**
- * Its own boundary, like the worker panel: two cheap indexed queries that
- * must not queue behind the R2 bucket walk.
- */
-async function SignupsPanel() {
-  return <RecentSignups report={await getRecentSignups()} />;
 }
 
 function UsageSkeleton() {
@@ -91,10 +81,6 @@ export default async function UsagePage() {
           <UsagePanel />
         </Suspense>
       </Card>
-
-      <Suspense fallback={null}>
-        <SignupsPanel />
-      </Suspense>
     </div>
   );
 }

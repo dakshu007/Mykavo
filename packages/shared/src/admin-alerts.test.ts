@@ -80,11 +80,18 @@ describe("signupPushAlert", () => {
   });
 
   /**
-   * The mobile app has no admin users screen. A deep link to a route that
-   * does not exist opens the app on an error instead of its home.
+   * Opens the app's Users screen. A relative path, because routeForNotification
+   * in the app refuses anything that is not - an absolute URL must never
+   * become a router target.
    */
-  it("carries no deep link", () => {
-    expect(signupPushAlert({ name: "Jo", email: "j@x.com" }).path).toBeUndefined();
+  it("deep-links to the Users screen", () => {
+    expect(signupPushAlert({ name: "Jo", email: "j@x.com" }).path).toBe("/users");
+  });
+
+  it("uses a path the app's router will accept", () => {
+    const { path } = signupPushAlert({ name: "Jo", email: "j@x.com" });
+    expect(path?.startsWith("/")).toBe(true);
+    expect(path?.startsWith("//")).toBe(false);
   });
 });
 

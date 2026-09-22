@@ -1,4 +1,5 @@
 import { prisma } from "@mykavo/database";
+import { displayPersonName } from "@mykavo/shared";
 
 /**
  * Who has joined MyKavo, for the operator's eyes only.
@@ -76,7 +77,10 @@ export async function getRecentSignups(
         );
         return {
           id: user.id,
-          name: user.name,
+          // Rows created before the signup check keep whatever was stored, so
+          // the list must not simply print it. Falls back to the address
+          // handle rather than showing a row of dashes.
+          name: displayPersonName(user.name, user.email),
           email: user.email,
           joinedAt: user.createdAt.toISOString(),
           websites,

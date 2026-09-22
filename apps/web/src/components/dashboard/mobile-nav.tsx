@@ -6,36 +6,32 @@ import { LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { dashboardNav, flattenNav, isNavItemActive } from "@/lib/dashboard-nav";
 
-const nav = [
-  { href: "/dashboard", label: "Overview", exact: true },
-  { href: "/dashboard/websites", label: "Websites" },
-  { href: "/dashboard/changes", label: "Changes" },
-  { href: "/dashboard/scans", label: "Scans" },
-  { href: "/dashboard/site-audit", label: "Audit" },
-  { href: "/dashboard/search-console", label: "GSC" },
-  { href: "/dashboard/analyser", label: "Analyser" },
-  { href: "/dashboard/notifications", label: "Notifications" },
-  { href: "/dashboard/billing", label: "Billing" },
-  { href: "/dashboard/settings", label: "Settings" },
-];
-
-/** Horizontal pill navigation shown below the lg breakpoint. */
+/**
+ * Horizontal pill navigation shown below the lg breakpoint.
+ *
+ * Reads the same grouped definition as the sidebar (lib/dashboard-nav), so
+ * the two can no longer drift - they were separate hand-maintained lists, and
+ * a pill row with ten entries is even worse than a sidebar with ten, since it
+ * scrolls sideways and most of it is off screen. Group headings do not fit a
+ * single scrolling row, so here the grouping shows up as ORDER and as the
+ * analysis tools being absent until monitoring is live.
+ */
 export function DashboardMobileNav({
+  monitoringLive = false,
   isBlogAdmin = false,
   isPlatformAdmin = false,
 }: {
+  monitoringLive?: boolean;
   isBlogAdmin?: boolean;
   isPlatformAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Blog CMS entry is allowlist-gated; the pages/APIs enforce it server-side.
-  const items = [
-    ...nav,
-    ...(isBlogAdmin ? [{ href: "/dashboard/blog", label: "Blog" }] : []),
-    ...(isPlatformAdmin ? [{ href: "/dashboard/usage", label: "All Usage" }] : []),
-  ];
+  const items = flattenNav(
+    dashboardNav({ monitoringLive, isBlogAdmin, isPlatformAdmin }),
+  );
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -61,10 +57,7 @@ export function DashboardMobileNav({
         aria-label="Dashboard"
       >
         {items.map((item) => {
-          const active =
-            "exact" in item && item.exact
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
+          const active = isNavItemActive(item, pathname);
           return (
             <Link
               key={item.href}
@@ -77,7 +70,7 @@ export function DashboardMobileNav({
                   : "bg-card text-ink-secondary shadow-card hover:text-ink",
               )}
             >
-              {item.label}
+              {item.short ?? item.label}
             </Link>
           );
         })}

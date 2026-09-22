@@ -46,10 +46,15 @@ function displayName(summary: SignupSummary): string {
 /**
  * Push alert for a new signup.
  *
- * No `path`: the mobile app has no admin users screen to deep-link into, and
- * a link to a route that does not exist is worse than none - it opens the app
- * on an error instead of its home.
+ * Deep-links to the app's Users screen, which is where the notification's
+ * obvious next question - who else has joined, and did any of them activate -
+ * is answered. An APK older than that screen lands on expo-router's unmatched
+ * route instead; these pushes only ever reach platform admins, who are the
+ * people who update the app, so that is a tolerable floor rather than a
+ * reason to leave every future tap doing nothing.
  */
+export const SIGNUP_ALERT_PATH = "/users";
+
 export function signupPushAlert(summary: SignupSummary): PushAlert {
   const who = displayName(summary);
   const total = summary.totalUsers;
@@ -60,6 +65,7 @@ export function signupPushAlert(summary: SignupSummary): PushAlert {
         ? `${who} just created an account. That makes ${total} user${total === 1 ? "" : "s"}.`
         : `${who} just created an account.`,
     severity: "INFO",
+    path: SIGNUP_ALERT_PATH,
   };
 }
 

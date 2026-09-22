@@ -7,7 +7,7 @@
 import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { BarChart3, Bell, Check, ChevronRight, PenLine, Scale } from "lucide-react-native";
+import { BarChart3, Bell, Check, ChevronRight, PenLine, Scale, Users } from "lucide-react-native";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -407,30 +407,52 @@ export default function SettingsScreen() {
       </Card>
 
       {/* Operator-only. The server re-checks the same allowlist on every
-          blog endpoint, so this is convenience rather than the boundary -
+          admin endpoint, so this is convenience rather than the boundary -
           but showing a row that 404s on tap is its own kind of broken. */}
-      {data.admin?.blog ? (
+      {data.admin?.blog || data.admin?.users ? (
         <Card style={{ marginBottom: 14 }}>
           <CardTitle style={{ marginBottom: 4 }}>Admin</CardTitle>
-          <Pressable
-            onPress={() => router.push("/blog")}
-            style={({ pressed }) => ({
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 10,
-              paddingVertical: 12,
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <PenLine size={16} color={palette.inkSecondary} />
-            <View style={{ flex: 1 }}>
-              <Small>Blog</Small>
-              <Small color={palette.inkSecondary}>
-                Publish and unpublish posts
-              </Small>
-            </View>
-            <ChevronRight size={16} color={palette.inkFaint} />
-          </Pressable>
+          {data.admin?.users ? (
+            <Pressable
+              onPress={() => router.push("/users")}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 12,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Users size={16} color={palette.inkSecondary} />
+              <View style={{ flex: 1 }}>
+                <Small>Users</Small>
+                <Small color={palette.inkSecondary}>
+                  Who has signed up, and who has activated
+                </Small>
+              </View>
+              <ChevronRight size={16} color={palette.inkFaint} />
+            </Pressable>
+          ) : null}
+          {data.admin?.users && data.admin?.blog ? <Divider /> : null}
+          {data.admin?.blog ? (
+            <Pressable
+              onPress={() => router.push("/blog")}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 12,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <PenLine size={16} color={palette.inkSecondary} />
+              <View style={{ flex: 1 }}>
+                <Small>Blog</Small>
+                <Small color={palette.inkSecondary}>Publish and unpublish posts</Small>
+              </View>
+              <ChevronRight size={16} color={palette.inkFaint} />
+            </Pressable>
+          ) : null}
         </Card>
       ) : null}
 

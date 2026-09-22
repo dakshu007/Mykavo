@@ -28,7 +28,7 @@ The lesson, which is why the manual runbook is buried in a collapsed block below
 
 1. **Read this README top to bottom** - current state, architecture, runbooks, gotchas.
 2. **Read `CLAUDE.md`** - the original product spec (vision, principles, phases). All phases 0-11 are COMPLETE; the spec still governs product philosophy (deterministic detection, low false positives, cost control, no fake social proof).
-3. **Skim `docs/`** - ARCHITECTURE, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM.
+3. **Skim `docs/`** - ARCHITECTURE, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM, FIRST_RUN (why the dashboard nav is grouped and the onboarding checklist is only the loop - easy to undo by accident).
 4. Git: **`main` is the branch of record and always equals what is deployed** - enforced by CI, not by discipline. Remote: `git@github.com:dakshu007/Mykavo.git` - a **PRIVATE** repo. The only public repo is **`dakshu007/Mykavo-app-download`** (Android APK releases + download page; the site's download button points at its `releases/latest`). Work on a branch, verify, fast-forward `main`, then **push - the push is the deploy**. Never leave finished work on an unpushed branch: that is exactly how five weeks of shipped features ended up with no copy in git.
 5. Secrets are NEVER in this repo. They live in **Netlify env** (web) and **`~/.fluxen/app/apps/worker/.env.production`** on the owner's Mac (worker). Ask the owner (Dakshesh B, GitHub `dakshu007`) for anything missing.
 
@@ -187,7 +187,8 @@ packages/       (@mykavo/* scope)
   email             console/Resend sender + all templates (incl. renewal reminder)
   shared            url/ssrf/link-check/queues/schedule/retention/channels/stabilization/
                     health/report/performance/script-services
-docs/           ARCHITECTURE, IMPLEMENTATION_PLAN, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM
+docs/           ARCHITECTURE, IMPLEMENTATION_PLAN, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM,
+                FIRST_RUN, OPERATIONS, SECRET_ROTATION
 CLAUDE.md       the original product spec - still the product constitution
 ```
 

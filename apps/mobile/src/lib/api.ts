@@ -33,6 +33,7 @@ import type {
   ScanTriggerResponse,
   SearchConsoleResponse,
   UsageResponse,
+  UsersResponse,
   WebsiteDetailResponse,
   WebsitesListResponse,
 } from "./types";
@@ -235,6 +236,9 @@ export const api = {
 
   /** Operator-only. 404s for everyone else - the gate is server-side. */
   usage: () => request<UsageResponse>("/api/mobile/usage"),
+
+  /** Operator-only, same gate. Who has signed up, newest first. */
+  users: () => request<UsersResponse>("/api/mobile/users"),
 
   blogPosts: () => request<BlogListResponse>("/api/mobile/blog"),
 

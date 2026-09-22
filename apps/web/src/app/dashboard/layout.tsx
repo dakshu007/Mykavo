@@ -11,6 +11,7 @@ import { CommandPalette } from "@/components/dashboard/command-palette";
 import { Greeting } from "@/components/dashboard/greeting";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
+import { isMonitoringLive } from "@/lib/monitoring-live";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -32,7 +33,10 @@ export default async function DashboardLayout({
   const visitorHour = (visitorTz ? hourInTimeZone(visitorTz) : null) ?? new Date().getHours();
   const initialGreeting = greetingForHour(visitorHour);
   // All memberships power the sidebar workspace switcher (shown when >1).
-  const [memberships, plan, websiteLimit, websitesUsed] = await Promise.all([
+  // monitoringLive gates the sidebar's "Deeper analysis" group: the audit,
+  // Search Console and analyser pages have nothing to show before a baseline
+  // exists, so on day one they would be dead ends in the navigation.
+  const [memberships, plan, websiteLimit, websitesUsed, monitoringLive] = await Promise.all([
     prisma.workspaceMember.findMany({
       where: { userId: session.user.id },
       select: { workspace: { select: { id: true, name: true } } },
@@ -41,6 +45,7 @@ export default async function DashboardLayout({
     getWorkspacePlan(workspace.id),
     getEffectiveWebsiteLimit(workspace.id),
     prisma.website.count({ where: { workspaceId: workspace.id } }),
+    isMonitoringLive(workspace.id),
   ]);
 
   return (
@@ -52,6 +57,7 @@ export default async function DashboardLayout({
       <div className="sticky top-6 hidden h-[calc(100vh-3rem)] w-60 shrink-0 overflow-hidden rounded-card bg-card p-3 shadow-card lg:block">
         <DashboardSidebar
           workspaceName={workspace.name}
+          monitoringLive={monitoringLive}
           isBlogAdmin={isBlogAdmin(session.user.email)}
           isPlatformAdmin={isPlatformAdmin(session.user.email)}
           workspaces={memberships.map((m) => m.workspace)}
@@ -65,6 +71,7 @@ export default async function DashboardLayout({
       </div>
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">
         <DashboardMobileNav
+          monitoringLive={monitoringLive}
           isBlogAdmin={isBlogAdmin(session.user.email)}
           isPlatformAdmin={isPlatformAdmin(session.user.email)}
         />

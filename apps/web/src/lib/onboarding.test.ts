@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveOnboarding, type OnboardingCounts } from "./onboarding";
+import { deriveOnboarding, LOOP_STEP_IDS, type OnboardingCounts } from "./onboarding";
 
 const zero: OnboardingCounts = {
   websites: 0,
@@ -59,36 +59,63 @@ describe("deriveOnboarding", () => {
     expect(stepById({ ...zero, pendingInvites: 1 }, "invite-teammate").done).toBe(true);
   });
 
-  it("marks only invite-teammate as optional", () => {
+  /**
+   * The required set must be exactly the first-run loop. An extra required
+   * step is not a small regression: the card tells a user they are not set up
+   * yet, which is the confusion this whole shape exists to remove.
+   */
+  it("requires exactly the loop - add, select, baseline", () => {
+    const state = deriveOnboarding(zero);
+    expect(state.steps.filter((s) => !s.optional).map((s) => s.id)).toEqual([
+      ...LOOP_STEP_IDS,
+    ]);
+    expect(state.requiredCount).toBe(3);
+  });
+
+  it("marks the non-loop steps optional", () => {
     const state = deriveOnboarding(zero);
     expect(state.steps.filter((s) => s.optional).map((s) => s.id)).toEqual([
+      "add-alert-channel",
       "invite-teammate",
     ]);
   });
 
-  it("does not block allRequiredDone on the optional teammate step", () => {
+  /**
+   * The bug this replaced: a new account with monitoring genuinely running was
+   * still told it was mid-setup until it had wired up Slack, Discord or a
+   * webhook. Email alerts already work; a third-party integration must not
+   * gate the product's own setup.
+   */
+  it("is complete with the loop done and NO alert channel wired up", () => {
     const state = deriveOnboarding({
       ...zero,
       websites: 1,
       monitoredPages: 5,
       completedScans: 1,
-      extraChannels: 1,
-      // members still 1, no invites - optional step pending.
+      // extraChannels 0, members 1 - both optional steps pending.
     });
-    expect(state.doneCount).toBe(4);
     expect(state.allRequiredDone).toBe(true);
+    expect(state.requiredDoneCount).toBe(3);
   });
 
-  it("stays incomplete when a required step is missing even if teammate is done", () => {
+  it("is incomplete while any loop step is missing, whatever the extras say", () => {
     const state = deriveOnboarding({
       ...zero,
       websites: 1,
       monitoredPages: 5,
-      completedScans: 1,
-      members: 3, // teammate done
-      // extraChannels still 0 - required step pending.
+      extraChannels: 2,
+      members: 3,
+      // no scan and no baseline - the loop has not run.
     });
     expect(state.allRequiredDone).toBe(false);
+    expect(state.requiredDoneCount).toBe(2);
+  });
+
+  it("orders the loop before the optional tail, so the card reads as one path", () => {
+    const ids = deriveOnboarding(zero).steps.map((s) => s.id);
+    const lastLoop = Math.max(...LOOP_STEP_IDS.map((id) => ids.indexOf(id)));
+    const firstOptional = ids.indexOf("add-alert-channel");
+    expect(firstOptional).toBeGreaterThan(lastLoop);
   });
 
   it("counts all five steps in doneCount when everything is done", () => {
@@ -102,7 +129,26 @@ describe("deriveOnboarding", () => {
       pendingInvites: 0,
     });
     expect(state.doneCount).toBe(5);
+    expect(state.requiredDoneCount).toBe(3);
     expect(state.allRequiredDone).toBe(true);
+  });
+
+  /**
+   * No "approve your baseline" step, however natural it reads. The first
+   * baseline is created AND approved by the system (approvedByUserId null,
+   * approvedAt set - see packages/database/src/baseline.ts); a human approves
+   * only once a later scan finds a change. Such a step could not be completed
+   * on day one, so it would leave the card up forever.
+   */
+  it("has no step that a brand-new workspace cannot complete", () => {
+    const fresh = deriveOnboarding({
+      ...zero,
+      websites: 1,
+      monitoredPages: 3,
+      completedScans: 1,
+      activeBaselines: 3,
+    });
+    expect(fresh.allRequiredDone).toBe(true);
   });
 
   it("derivation is independent of dismissal - no dismissal input exists", () => {
