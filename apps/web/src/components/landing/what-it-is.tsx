@@ -75,7 +75,7 @@ export function WhatItIsSection() {
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-[15px] leading-7 text-[#6B6B60] sm:text-base">
             Not uptime checks. Not a crawler. Not an SEO suite. You choose the pages that
-            matter, and MyKavo remembers exactly how each one should look &mdash; then tells you
+            matter, and MyKavo remembers exactly how each one should look - then tells you
             when that stops being true.
           </p>
         </div>

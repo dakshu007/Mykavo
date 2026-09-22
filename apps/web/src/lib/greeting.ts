@@ -13,7 +13,7 @@ export function greetingForHour(hour: number): Greeting {
   return "Good evening";
 }
 
-/** Current hour (0–23) in an IANA timezone; null when the zone is invalid. */
+/** Current hour (0-23) in an IANA timezone; null when the zone is invalid. */
 export function hourInTimeZone(timeZone: string, now: Date = new Date()): number | null {
   try {
     const hour = new Intl.DateTimeFormat("en-US", {

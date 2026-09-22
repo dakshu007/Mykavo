@@ -13,7 +13,7 @@ export const OPEN_STATUSES: ChangeStatus[] = ["NEW", "REVIEWED"];
 export type ChangeAction = "review" | "approve" | "ignore" | "resolve" | "reopen";
 
 /**
- * The update payload for a triage action — status plus the timestamp fields
+ * The update payload for a triage action - status plus the timestamp fields
  * that status implies. Shared by the single-change PATCH and the bulk route so
  * both apply identical transitions.
  */

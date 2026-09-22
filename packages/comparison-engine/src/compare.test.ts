@@ -11,7 +11,7 @@ const BASE: ComparableSnapshot = {
   redirectCount: 0,
   domHash: "dom-a",
   textHash: "text-a",
-  title: "Pricing — Shop",
+  title: "Pricing - Shop",
   metaDescription: "Our plans",
   canonicalUrl: "https://shop.test/pricing",
   robotsMeta: "index, follow",
@@ -132,7 +132,7 @@ describe("compareSnapshots", () => {
   });
 });
 
-describe("compareSnapshots — conversion elements (spec §23)", () => {
+describe("compareSnapshots - conversion elements (spec §23)", () => {
   it("flags a missing critical element as CRITICAL", () => {
     const baseline = withChanges({ elements: [el({ exists: true })] });
     const current = withChanges({

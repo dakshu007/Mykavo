@@ -177,7 +177,7 @@ describe("createInitialBaselinesForScan", () => {
     const created = await createInitialBaselinesForScan(prisma, scan.id);
     expect(created).toBe(1);
 
-    // Running again is a no-op — the page already has a baseline.
+    // Running again is a no-op - the page already has a baseline.
     const again = await createInitialBaselinesForScan(prisma, scan.id);
     expect(again).toBe(0);
   });

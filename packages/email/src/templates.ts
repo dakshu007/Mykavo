@@ -135,13 +135,13 @@ export function scanSummaryEmail(data: ScanSummaryData): { subject: string; html
 export interface ClientReportDeliveryData {
   websiteName: string;
   websiteHost: string;
-  /** e.g. "Jul 3 – Aug 2, 2026". */
+  /** e.g. "Jul 3 - Aug 2, 2026". */
   periodLabel: string;
   /** Agency name for white-label framing; null falls back to MyKavo voice. */
   brandName: string | null;
   scansRun: number;
   totalChanges: number;
-  /** Rounded percentage (0–100), or null when no checks ran. */
+  /** Rounded percentage (0-100), or null when no checks ran. */
   uptimePercent: number | null;
   /** Average response time in ms, or null when unknown. */
   avgResponseMs: number | null;
@@ -521,14 +521,14 @@ export interface WeeklyLighthouseScores {
 export interface WeeklyReportData {
   websiteName: string;
   websiteHost: string;
-  /** e.g. "Jul 3 – Jul 10, 2026". */
+  /** e.g. "Jul 3 - Jul 10, 2026". */
   periodLabel: string;
   scansRun: number;
   scansFailed: number;
   totalChanges: number;
   /** Non-zero severities only, highest first. */
   changesBySeverity: WeeklySeverityCount[];
-  /** Rounded percentage (0–100), or null when no checks ran. */
+  /** Rounded percentage (0-100), or null when no checks ran. */
   uptimePercent: number | null;
   /** Average response time in ms, or null when unknown. */
   avgResponseMs: number | null;
@@ -880,14 +880,14 @@ export function appAccessApprovedEmail(data: AppAccessApprovedData): {
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Android app approved</p>
-    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${greeting} &mdash; your app is ready</h1>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${greeting} - your app is ready</h1>
     <p style="margin:0 0 20px;font-size:14px;color:#5c6270">MyKavo for Android is approved for your account. Open the link below and the download starts on its own, on your phone or your desktop.</p>
     ${button(data.downloadUrl, "Download the Android app")}
     <div style="margin:22px 0 0;background:#f4f6fb;border-radius:12px;padding:14px 16px">
       <p style="margin:0 0 4px;font-size:14px;font-weight:600">Sign in with this address</p>
       <p style="margin:0;font-size:13px;color:#5c6270">The download is tied to <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${esc(data.email)}</span>. Signing in with a different address will not show it. From then on it also lives in your dashboard, under <strong>Android app</strong>.</p>
     </div>
-    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">Android may warn you about installing outside the Play Store &mdash; that is expected while MyKavo is in review. Just reply if anything goes wrong; a real person reads it.</p>
+    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">Android may warn you about installing outside the Play Store - that is expected while MyKavo is in review. Just reply if anything goes wrong; a real person reads it.</p>
   `;
 
   const text =

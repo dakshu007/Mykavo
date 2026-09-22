@@ -177,7 +177,7 @@ export default async function ClientReportPage({ params }: Params) {
       label: "Avg response",
       value:
         uptime.avgResponseTimeMs === null
-          ? "–"
+          ? "-"
           : `${Math.round(uptime.avgResponseTimeMs)} ms`,
     },
     {
@@ -356,7 +356,7 @@ export default async function ClientReportPage({ params }: Params) {
             {audits.map((audit) => (
               <div key={audit.label} className="rounded-tile bg-surface px-4 py-3 text-center">
                 <p className={cn("text-2xl font-semibold tabular-nums", scoreTone(audit.score))}>
-                  {audit.score ?? "–"}
+                  {audit.score ?? "-"}
                 </p>
                 <p className="mt-0.5 text-[12px] text-ink-secondary">{audit.label}</p>
               </div>

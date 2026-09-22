@@ -72,7 +72,7 @@ export async function discoverPages(websiteUrl: string): Promise<DiscoveryResult
   const base = homepage.finalUrl;
   pages.set(normalizeUrl(base), "homepage");
 
-  // 2–3. robots.txt → declared sitemaps.
+  // 2-3. robots.txt → declared sitemaps.
   const origin = new URL(base).origin;
   let sitemapCandidates: string[] = [];
   try {
@@ -87,7 +87,7 @@ export async function discoverPages(websiteUrl: string): Promise<DiscoveryResult
     sitemapCandidates = [`${origin}/sitemap.xml`];
   }
 
-  // 4–6. Fetch sitemaps, expanding indexes, within a bounded fetch budget.
+  // 4-6. Fetch sitemaps, expanding indexes, within a bounded fetch budget.
   const queue = [...sitemapCandidates];
   const fetched = new Set<string>();
   let sitemapFound = false;

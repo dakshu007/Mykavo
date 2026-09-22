@@ -151,7 +151,7 @@ export default function UsersScreen() {
           </Card>
 
           <Small color={palette.inkSecondary} style={{ marginTop: 14 }}>
-            A filled circle means the account has added at least one website — the
+            A filled circle means the account has added at least one website - the
             line between a signup and a user. Pull down to re-read.
           </Small>
         </>

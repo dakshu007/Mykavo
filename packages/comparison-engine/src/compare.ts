@@ -1,7 +1,7 @@
 /**
- * Deterministic snapshot comparison (spec §19–§22, §24). Consumes a baseline
+ * Deterministic snapshot comparison (spec §19-§22, §24). Consumes a baseline
  * and a current snapshot (plus their links/scripts) and emits scored changes
- * via the centralized severity engine. No severity logic lives here — this
+ * via the centralized severity engine. No severity logic lives here - this
  * module only decides *what* differs; the severity engine decides *how much
  * it matters*. Related changes are grouped (e.g. "17 internal links removed").
  */
@@ -66,7 +66,7 @@ function scriptKey(s: SnapshotScript): string {
 /**
  * Compare a current snapshot against its approved baseline. Returns scored,
  * meaningful changes only (signals below threshold are dropped by the
- * severity engine). Availability failures short-circuit the rest — if a page
+ * severity engine). Availability failures short-circuit the rest - if a page
  * is 4xx/5xx, its SEO/DOM/etc. diffs are noise.
  */
 export function compareSnapshots(
@@ -90,7 +90,7 @@ export function compareSnapshots(
 
   const currentBroken = (current.httpStatus ?? 0) >= 400;
 
-  // When the page is now an error, only availability matters — skip the rest.
+  // When the page is now an error, only availability matters - skip the rest.
   if (!currentBroken) {
     if (
       baseline.finalUrl &&
@@ -223,7 +223,7 @@ export function compareSnapshots(
           signals.push({ kind: "element_missing", name: c.name, importance: c.importance });
           continue; // gone → don't also diff its visibility/text/href
         }
-        if (!c.exists) continue; // absent in both — no change to report
+        if (!c.exists) continue; // absent in both - no change to report
 
         if (c.expectedVisibility && b.visible && !c.visible) {
           signals.push({ kind: "element_hidden", name: c.name, importance: c.importance });
@@ -251,7 +251,7 @@ export function compareSnapshots(
           });
         }
       } else if (!b.exists && c.exists) {
-        // Element is expected to be ABSENT — flag when it appears.
+        // Element is expected to be ABSENT - flag when it appears.
         signals.push({ kind: "element_appeared", name: c.name, importance: c.importance });
       }
     }

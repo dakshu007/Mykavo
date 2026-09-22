@@ -37,7 +37,7 @@ const CATEGORIES: { key: keyof AuditView; label: string }[] = [
   { key: "seoScore", label: "SEO" },
 ];
 
-/** Lighthouse colour bands: ≥90 good, 50–89 needs work, <50 poor. */
+/** Lighthouse colour bands: ≥90 good, 50-89 needs work, <50 poor. */
 function scoreClasses(score: number | null): string {
   if (score === null) return "bg-surface text-ink-faint";
   if (score >= 90) return "bg-success-soft text-success-strong";
@@ -422,7 +422,7 @@ export function PerformanceAuditPanel({
       {pending && latest && (
         <p className="mt-4 text-[13px] text-ink-secondary">
           Auditing <span className="font-mono text-ink">{pathOf(latest.url)}</span> -{" "}
-          {latest.status === "RUNNING" ? "in progress" : "queued"}, this usually takes 20–40
+          {latest.status === "RUNNING" ? "in progress" : "queued"}, this usually takes 20-40
           seconds.
         </p>
       )}

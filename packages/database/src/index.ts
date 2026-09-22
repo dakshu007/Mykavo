@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
 /**
- * Prisma client singleton — survives Next.js dev-server hot reloads
+ * Prisma client singleton - survives Next.js dev-server hot reloads
  * without exhausting database connections.
  */
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };

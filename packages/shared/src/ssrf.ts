@@ -92,7 +92,7 @@ export function isBlockedIp(ip: string): boolean {
 }
 
 /**
- * Validate a single URL (steps 1–7 of the pipeline): scheme, credentials,
+ * Validate a single URL (steps 1-7 of the pipeline): scheme, credentials,
  * hostname denylist, DNS resolution, and IP range checks on every resolved
  * address. Returns the parsed URL. Throws UnsafeUrlError.
  */

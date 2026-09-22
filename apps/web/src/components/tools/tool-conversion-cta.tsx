@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
+import { GoogleIcon } from "@/components/brand/integration-icons";
 import { fontDisplay } from "@/components/landing/style";
 
 /**
@@ -51,17 +52,17 @@ export function ToolConversionCta({
 
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
-            href="/signup"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-7 text-[15px] font-semibold text-[#151515] shadow-[4px_4px_0_#151515] transition-all hover:-translate-y-0.5 hover:shadow-[5px_6px_0_#151515] active:translate-y-0 active:shadow-[2px_2px_0_#151515]"
+            href="/signup?provider=google"
+            className="inline-flex h-12 items-center justify-center gap-2.5 rounded-full border border-[#151515] bg-white px-7 text-[15px] font-semibold text-[#151515] shadow-[4px_4px_0_#151515] transition-all hover:-translate-y-0.5 hover:shadow-[5px_6px_0_#151515] active:translate-y-0 active:shadow-[2px_2px_0_#151515]"
           >
-            Start monitoring free
-            <ArrowRight className="size-4" aria-hidden />
+            <GoogleIcon className="size-[18px]" />
+            Continue with Google
           </Link>
           <Link
-            href="/pricing"
+            href="/signup"
             className="inline-flex h-12 items-center justify-center rounded-full border border-[#151515]/20 bg-white px-6 text-[14px] font-semibold text-[#151515] transition-colors hover:border-[#151515]/45"
           >
-            See pricing
+            Sign up with email
           </Link>
         </div>
       </div>

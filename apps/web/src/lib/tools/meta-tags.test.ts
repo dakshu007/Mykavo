@@ -51,7 +51,7 @@ describe("extractMetaTags", () => {
   });
 });
 
-describe("evaluateTitle (50–60 guidance)", () => {
+describe("evaluateTitle (50-60 guidance)", () => {
   it("fails when missing", () => {
     expect(evaluateTitle(null).status).toBe("fail");
     expect(evaluateTitle(null).detail).toContain("Missing");
@@ -61,7 +61,7 @@ describe("evaluateTitle (50–60 guidance)", () => {
     const check = evaluateTitle("Short title");
     expect(check.status).toBe("warn");
     expect(check.detail).toContain("11 characters");
-    expect(check.detail).toContain("50–60");
+    expect(check.detail).toContain("50-60");
   });
 
   it("passes between 50 and 60 characters inclusive", () => {
@@ -76,7 +76,7 @@ describe("evaluateTitle (50–60 guidance)", () => {
   });
 });
 
-describe("evaluateMetaDescription (120–160 guidance)", () => {
+describe("evaluateMetaDescription (120-160 guidance)", () => {
   it("fails when missing", () => {
     expect(evaluateMetaDescription(null).status).toBe("fail");
   });
@@ -84,7 +84,7 @@ describe("evaluateMetaDescription (120–160 guidance)", () => {
   it("warns when shorter than 120 characters", () => {
     const check = evaluateMetaDescription("Too short.");
     expect(check.status).toBe("warn");
-    expect(check.detail).toContain("120–160");
+    expect(check.detail).toContain("120-160");
   });
 
   it("passes between 120 and 160 characters inclusive", () => {

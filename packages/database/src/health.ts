@@ -1,5 +1,5 @@
 /**
- * Site-health persistence (uptime + SSL expiry). Pure DB helpers — the worker
+ * Site-health persistence (uptime + SSL expiry). Pure DB helpers - the worker
  * sweep does the probing and decides transitions via @mykavo/shared, then
  * calls these; the web dashboard reads uptime stats server-side. Every
  * function takes a Prisma client or transaction client, matching retention.ts.
@@ -59,7 +59,7 @@ export interface LatestHealthCheckSummary {
 
 /**
  * Latest check per website across a whole workspace in ONE query (overview
- * dashboard dots — no N+1). Websites never checked are simply absent.
+ * dashboard dots - no N+1). Websites never checked are simply absent.
  */
 export async function getLatestHealthChecksForWorkspace(
   db: Db,
@@ -100,7 +100,7 @@ export async function openHealthIncident(
   });
 }
 
-/** Resolve an incident. Guarded update — a no-op if already resolved. */
+/** Resolve an incident. Guarded update - a no-op if already resolved. */
 export async function resolveHealthIncident(
   db: Db,
   incidentId: string,
@@ -129,7 +129,7 @@ export async function markHealthIncidentNotified(
 export interface UptimeStats {
   totalChecks: number;
   upChecks: number;
-  /** Percentage of checks that were up (0–100), null when no checks exist. */
+  /** Percentage of checks that were up (0-100), null when no checks exist. */
   uptimePercent: number | null;
   /** Average response time of successful checks, null when none exist. */
   avgResponseTimeMs: number | null;
@@ -167,7 +167,7 @@ export interface DailyHealthRollup {
   date: string;
   totalChecks: number;
   upChecks: number;
-  /** Percentage of checks that were up (0–100), null when the day has no checks. */
+  /** Percentage of checks that were up (0-100), null when the day has no checks. */
   uptimePercent: number | null;
   /** Average response time of successful checks, null when none exist. */
   avgResponseTimeMs: number | null;
@@ -187,7 +187,7 @@ interface DailyRollupRow {
  *
  * `checkedAt` is a timestamp column holding UTC (Prisma convention), so
  * date_trunc gives the UTC day without any server-timezone dependence. All
- * values are bound parameters — nothing is interpolated into the SQL text.
+ * values are bound parameters - nothing is interpolated into the SQL text.
  */
 export async function getDailyHealthRollups(
   db: Db,
@@ -247,8 +247,7 @@ interface ResponseTimeRow {
 /**
  * Time-bucketed average response times since a cutoff (response-time chart),
  * in ONE grouped query. Buckets are epoch-aligned (floor of checkedAt to a
- * multiple of bucketMinutes) and only buckets containing checks are returned —
- * callers treat missing buckets as gaps. Failed checks count toward
+ * multiple of bucketMinutes) and only buckets containing checks are returned - * callers treat missing buckets as gaps. Failed checks count toward
  * totalChecks but never pollute the average.
  */
 export async function getResponseTimeSeries(
@@ -289,7 +288,7 @@ export async function getRecentHealthIncidents(
 }
 
 /**
- * Prune checks older than the cutoff (plan history window — retention sweep).
+ * Prune checks older than the cutoff (plan history window - retention sweep).
  * Incidents are kept forever: tiny rows, long-term value. Returns the count.
  */
 export async function deleteExpiredHealthChecks(

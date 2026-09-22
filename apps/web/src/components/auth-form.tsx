@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
@@ -99,11 +99,18 @@ export function AuthForm({
   mode,
   googleEnabled = false,
   redirectTo,
+  autoGoogle = false,
 }: {
   mode: "login" | "signup";
   googleEnabled?: boolean;
   /** Same-origin relative path to return to after auth (validated server-side). */
   redirectTo?: string;
+  /**
+   * Start the Google handoff on arrival, for visitors who clicked a
+   * "Continue with Google" button on the marketing site. Without this the
+   * button would be a small lie: it promises Google and delivers a form.
+   */
+  autoGoogle?: boolean;
 }) {
   const router = useRouter();
   const target = redirectTo ?? "/dashboard";
@@ -142,6 +149,17 @@ export function AuthForm({
     }
     // On success the browser is redirected to Google.
   }
+
+  // Fires once. The ref guard matters because React mounts effects twice in
+  // development, and a second call would start a second OAuth handoff.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!autoGoogle || !googleEnabled || autoStarted.current) return;
+    autoStarted.current = true;
+    void continueWithGoogle();
+    // continueWithGoogle is stable for the life of this component.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoGoogle, googleEnabled]);
 
   async function submitCredentials(e: React.FormEvent) {
     e.preventDefault();

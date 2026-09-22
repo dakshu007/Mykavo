@@ -108,20 +108,20 @@ export function evaluateTitle(title: string | null): MetaCheck {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters - shorter than the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}. You may be leaving descriptive keywords on the table.`,
+      detail: `${len} characters - shorter than the recommended ${TITLE_LENGTH.min}-${TITLE_LENGTH.max}. You may be leaving descriptive keywords on the table.`,
     };
   }
   if (len > TITLE_LENGTH.max) {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters - longer than the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}. Search engines may truncate it.`,
+      detail: `${len} characters - longer than the recommended ${TITLE_LENGTH.min}-${TITLE_LENGTH.max}. Search engines may truncate it.`,
     };
   }
   return {
     ...base,
     status: "pass",
-    detail: `${len} characters - within the recommended ${TITLE_LENGTH.min}–${TITLE_LENGTH.max}.`,
+    detail: `${len} characters - within the recommended ${TITLE_LENGTH.min}-${TITLE_LENGTH.max}.`,
   };
 }
 
@@ -139,20 +139,20 @@ export function evaluateMetaDescription(description: string | null): MetaCheck {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters - shorter than the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}. There's room for a fuller, more clickable snippet.`,
+      detail: `${len} characters - shorter than the recommended ${DESCRIPTION_LENGTH.min}-${DESCRIPTION_LENGTH.max}. There's room for a fuller, more clickable snippet.`,
     };
   }
   if (len > DESCRIPTION_LENGTH.max) {
     return {
       ...base,
       status: "warn",
-      detail: `${len} characters - longer than the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}. Search engines may truncate it.`,
+      detail: `${len} characters - longer than the recommended ${DESCRIPTION_LENGTH.min}-${DESCRIPTION_LENGTH.max}. Search engines may truncate it.`,
     };
   }
   return {
     ...base,
     status: "pass",
-    detail: `${len} characters - within the recommended ${DESCRIPTION_LENGTH.min}–${DESCRIPTION_LENGTH.max}.`,
+    detail: `${len} characters - within the recommended ${DESCRIPTION_LENGTH.min}-${DESCRIPTION_LENGTH.max}.`,
   };
 }
 

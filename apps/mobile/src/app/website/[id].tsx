@@ -306,7 +306,7 @@ function DetectedStackCard({ stack }: { stack: StackInfo }) {
           <Small color={palette.inkFaint}>
             Read from {stack.pagesRead} page{stack.pagesRead === 1 ? "" : "s"}.{" "}
             {unread} of {stack.assetsSeen} platform assets did not state a version, usually
-            because a cache or CDN stripped it — those components are present but their
+            because a cache or CDN stripped it - those components are present but their
             versions are unknown.
           </Small>
         </Body>

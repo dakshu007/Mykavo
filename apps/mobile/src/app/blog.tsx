@@ -242,7 +242,7 @@ export default function BlogScreen() {
       )}
 
       <Small color={palette.inkSecondary} style={{ marginTop: 14 }}>
-        Writing and editing stay in the web editor — a touch keyboard is the wrong
+        Writing and editing stay in the web editor - a touch keyboard is the wrong
         tool for markdown. &ldquo;Edit&rdquo; opens the post there.
       </Small>
     </Screen>

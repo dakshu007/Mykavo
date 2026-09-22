@@ -75,7 +75,7 @@ function Row({
           )}
           {row.status === "APPROVED" && !row.emailSent && (
             <span className="text-[11px] font-semibold text-critical">
-              email failed — approve again to retry
+              email failed - approve again to retry
             </span>
           )}
         </p>

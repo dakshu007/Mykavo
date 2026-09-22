@@ -61,7 +61,7 @@ describe("upgradeWorkspaceToPro", () => {
     expect(ent?.dodoSubscriptionId).toBe("sub_1");
   });
 
-  it("is idempotent — a repeated active event keeps a single pro subscription", async () => {
+  it("is idempotent - a repeated active event keeps a single pro subscription", async () => {
     for (const _ of [1, 2, 3]) {
       await upgradeWorkspaceToPro(prisma, {
         workspaceId,
@@ -139,7 +139,7 @@ describe("checkout intents (unforgeable attribution)", () => {
   it("resolves and consumes a valid token exactly once, carrying its kind", async () => {
     await createCheckoutIntent(prisma, { token: "tok_ok", workspaceId, userId: RUN });
     expect(await consumeCheckoutIntent(prisma, "tok_ok")).toEqual({ workspaceId, kind: "pro" });
-    // Second consume returns null (already used) — no double-attribution.
+    // Second consume returns null (already used) - no double-attribution.
     expect(await consumeCheckoutIntent(prisma, "tok_ok")).toBeNull();
   });
 

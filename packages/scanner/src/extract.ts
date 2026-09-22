@@ -1,7 +1,7 @@
 /**
  * In-page extraction and DOM normalization (spec §16). Runs inside the
  * browser via page.evaluate, so it must be a self-contained serializable
- * function — no imports, no closures over Node scope.
+ * function - no imports, no closures over Node scope.
  */
 
 export interface InPageExtraction {
@@ -200,8 +200,8 @@ export function extractInPage(
 
 /**
  * Remove ignored elements from the live DOM (spec §25 false-positive
- * controls). Runs inside the browser via page.evaluate, so — like
- * extractInPage — it must be a self-contained serializable function.
+ * controls). Runs inside the browser via page.evaluate, so - like
+ * extractInPage - it must be a self-contained serializable function.
  * Each selector is applied inside its own try/catch: an invalid selector
  * is skipped and must never fail the scan. Returns the number of elements
  * removed (useful for diagnostics; callers may ignore it).
@@ -215,7 +215,7 @@ export function removeElementsInPage(selectors: string[]): number {
         removed++;
       }
     } catch {
-      // Invalid selector — skip it; the rest still apply.
+      // Invalid selector - skip it; the rest still apply.
     }
   }
   return removed;
@@ -223,7 +223,7 @@ export function removeElementsInPage(selectors: string[]): number {
 
 /**
  * Keep only selectors the browser's CSS engine accepts (per-selector
- * try/catch). Runs in-page via page.evaluate — self-contained. Used to
+ * try/catch). Runs in-page via page.evaluate - self-contained. Used to
  * pre-filter screenshot mask selectors so Playwright's mask locators never
  * throw on invalid user-supplied CSS.
  */
@@ -253,7 +253,7 @@ export interface ElementObservation {
 
 /**
  * Observe conversion elements in-page (spec §23, Phase 9). Runs inside the
- * browser via page.evaluate, so — like extractInPage — it must be a
+ * browser via page.evaluate, so - like extractInPage - it must be a
  * self-contained serializable function. For each probe (a MonitoredElement id
  * plus its CSS selector) it reports whether the FIRST match exists, whether it
  * is visible, and its text/href. The comparison engine diffs these against the
@@ -281,7 +281,7 @@ export function checkElementsInPage(probes: ElementProbe[]): ElementObservation[
     try {
       el = doc.querySelector(probe.selector);
     } catch {
-      // Invalid selector — report as not found rather than throwing.
+      // Invalid selector - report as not found rather than throwing.
       el = null;
     }
     if (!el) {

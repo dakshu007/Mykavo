@@ -24,7 +24,7 @@ export function parseHealthWindow(value: string | string[] | undefined): HealthW
 }
 
 /**
- * Bucket width for the response-time series: ~170–180 buckets per window -
+ * Bucket width for the response-time series: ~170-180 buckets per window -
  * dense enough to show shape, small enough to render + hover cheaply.
  */
 export function bucketMinutesForWindow(days: HealthWindowDays): number {
@@ -40,7 +40,7 @@ export interface UptimeDay {
   date: string;
   totalChecks: number;
   upChecks: number;
-  /** 0–100, null when the day has no checks. */
+  /** 0-100, null when the day has no checks. */
   uptimePercent: number | null;
 }
 

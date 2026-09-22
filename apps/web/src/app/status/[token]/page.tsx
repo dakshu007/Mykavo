@@ -61,7 +61,7 @@ const DAY_BAR_CLASS: Record<DayLevel, string> = {
 
 const LEGEND: { level: DayLevel; label: string }[] = [
   { level: "operational", label: "≥ 99.5%" },
-  { level: "degraded", label: "95–99.5%" },
+  { level: "degraded", label: "95-99.5%" },
   { level: "down", label: "< 95%" },
   { level: "empty", label: "No data" },
 ];

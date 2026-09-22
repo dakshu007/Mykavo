@@ -4,7 +4,7 @@
  * Comparators emit a semantic `ChangeSignal`; this module is the single place
  * that decides the resulting severity, category, user-facing title and
  * description, and notification eligibility. Every rule lives here so they
- * stay consistent and testable — no severity logic anywhere else.
+ * stay consistent and testable - no severity logic anywhere else.
  */
 
 export type Severity = "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -57,7 +57,7 @@ export type ChangeSignal =
   | { kind: "internal_links_removed"; count: number; total: number }
   | { kind: "internal_links_added"; count: number }
   // Site-wide grouped broken-link report (spec §20): the resulting change
-  // event carries no monitored page — the same link may break on many pages.
+  // event carries no monitored page - the same link may break on many pages.
   | {
       kind: "broken_links";
       count: number;
@@ -73,7 +73,7 @@ export type ChangeSignal =
   | { kind: "response_time"; previousMs: number; currentMs: number }
   | { kind: "visual_diff"; percentage: number }
   // Site-level robots.txt / sitemap regressions (spec §19 family). These are
-  // website-wide signals — the resulting change events carry no monitored page.
+  // website-wide signals - the resulting change events carry no monitored page.
   | { kind: "robots_txt_removed"; previousStatus: number; currentStatus: number | null }
   | {
       kind: "robots_txt_changed";
@@ -136,7 +136,7 @@ export interface ScoredChange {
 }
 
 function fmt(v: string | number | null | undefined): string {
-  if (v === null || v === undefined || v === "") return "—";
+  if (v === null || v === undefined || v === "") return "-";
   return String(v);
 }
 
@@ -206,7 +206,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         title: removed ? "Title tag removed" : "Title tag changed",
         description: removed
           ? "The page no longer has a title tag. This hurts search visibility."
-          : "The page title changed. Confirm this was intentional — titles affect rankings and click-through.",
+          : "The page title changed. Confirm this was intentional - titles affect rankings and click-through.",
         previousValue: fmt(signal.previous),
         currentValue: fmt(signal.current),
       });
@@ -272,8 +272,8 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         description: removed
           ? "The page no longer has an H1 heading."
           : "The main H1 heading text changed.",
-        previousValue: signal.previous.join(" · ") || "—",
-        currentValue: signal.current.join(" · ") || "—",
+        previousValue: signal.previous.join(" · ") || "-",
+        currentValue: signal.current.join(" · ") || "-",
       });
     }
 
@@ -356,7 +356,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
           ? `The ${signal.service} script is no longer loaded. If unintended, this can break analytics, payments, or tracking.`
           : `A script from ${signal.domain} is no longer loaded.`,
         previousValue: signal.service ?? signal.domain,
-        currentValue: "—",
+        currentValue: "-",
       });
     }
 
@@ -372,9 +372,9 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
             ? "Unknown third-party script added"
             : "Script added",
         description: unknownThirdParty
-          ? `A new third-party script from ${signal.domain} was added. Verify it is expected — unexpected scripts can indicate a compromise.`
+          ? `A new third-party script from ${signal.domain} was added. Verify it is expected - unexpected scripts can indicate a compromise.`
           : `A new script${signal.service ? ` (${signal.service})` : ""} from ${signal.domain} was added.`,
-        previousValue: "—",
+        previousValue: "-",
         currentValue: signal.service ?? signal.domain,
       });
     }
@@ -425,7 +425,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
 
     case "visual_diff": {
       const p = signal.percentage;
-      if (p < 1) return null; // 0–1% ignored (spec §18)
+      if (p < 1) return null; // 0-1% ignored (spec §18)
       // Spec §18 bands. 30%+ is the CRITICAL candidate tier - it previously
       // returned HIGH from both arms of the ternary, so it could never fire.
       const severity: Severity =
@@ -462,7 +462,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
           severity: "CRITICAL",
           title: "robots.txt now blocks all crawlers",
           description:
-            "The robots.txt file now contains a `User-agent: *` group with `Disallow: /`. Every search engine crawler is blocked from the entire site — pages will drop out of search results.",
+            "The robots.txt file now contains a `User-agent: *` group with `Disallow: /`. Every search engine crawler is blocked from the entire site - pages will drop out of search results.",
           previousValue: clip(signal.previous),
           currentValue: clip(signal.current),
         });
@@ -473,8 +473,8 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         severity: "MEDIUM",
         title: signal.appeared ? "robots.txt appeared" : "robots.txt content changed",
         description: signal.appeared
-          ? "A robots.txt file is now being served where there was none before. Review its rules — it controls what search engines may crawl."
-          : "The robots.txt content changed. Review the new rules — crawl directives affect what search engines index.",
+          ? "A robots.txt file is now being served where there was none before. Review its rules - it controls what search engines may crawl."
+          : "The robots.txt content changed. Review the new rules - crawl directives affect what search engines index.",
         previousValue: clip(signal.previous),
         currentValue: clip(signal.current),
       });
@@ -509,7 +509,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
           currentValue: `${signal.current} URLs`,
         });
       }
-      // Sitemaps churn normally — keep ordinary count movement quiet.
+      // Sitemaps churn normally - keep ordinary count movement quiet.
       return finalize({
         category: "SEO",
         changeType: "sitemap_url_count_changed",
@@ -556,7 +556,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         title,
         description:
           `Detected from the versions on this page's asset URLs: ${list}. ` +
-          "If anything else changed in this scan, an update is the most likely cause — check those changes first.",
+          "If anything else changed in this scan, an update is the most likely cause - check those changes first.",
         previousValue: signal.components.map((c) => `${c.name} ${c.previous}`).join(", "),
         currentValue: signal.components.map((c) => `${c.name} ${c.current}`).join(", "),
       });
@@ -580,7 +580,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
     }
 
     // A plugin whose assets stopped loading usually means it was deactivated,
-    // and whatever it did for the page has stopped happening — a form, a
+    // and whatever it did for the page has stopped happening - a form, a
     // cookie banner, a payment button. MEDIUM, because that is a real change in
     // behaviour rather than a version bump, but not HIGH: it is also what a
     // caching or asset-combining plugin looks like when it is switched on.
@@ -596,7 +596,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
             ? `${signal.components[0].name} is no longer loading on this page`
             : `${signal.components.length} plugins or themes no longer loading`,
         description:
-          `These stopped loading assets on this page: ${list}. They may have been deactivated — ` +
+          `These stopped loading assets on this page: ${list}. They may have been deactivated - ` +
           "check that whatever they provided (forms, banners, checkout) still works. " +
           "Enabling an asset-combining or caching plugin can also hide them from detection.",
         previousValue: list,
@@ -614,7 +614,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         title: `Theme changed from ${signal.previous} to ${signal.current}`,
         description:
           "This page is being rendered by a different theme than the baseline. " +
-          "That is either an intended redesign or an accidental theme switch — the latter usually breaks layout site-wide.",
+          "That is either an intended redesign or an accidental theme switch - the latter usually breaks layout site-wide.",
         previousValue: signal.previous,
         currentValue: signal.current,
       });
@@ -625,7 +625,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         changeType: "conversion_element_missing",
         severity: byImportance(signal.importance),
         title: `"${signal.name}" is missing`,
-        description: `The monitored conversion element "${signal.name}" is no longer on the page. Visitors can't see or use it — this can directly cost signups or sales.`,
+        description: `The monitored conversion element "${signal.name}" is no longer on the page. Visitors can't see or use it - this can directly cost signups or sales.`,
         previousValue: "Present",
         currentValue: "Missing",
       });
@@ -704,7 +704,7 @@ function linkPath(url: string): string {
  * value fields. Full content travels in the change event's metadata.
  */
 function clip(v: string | null, max = 400): string {
-  if (v === null || v === "") return "—";
+  if (v === null || v === "") return "-";
   return v.length > max ? `${v.slice(0, max)}…` : v;
 }
 

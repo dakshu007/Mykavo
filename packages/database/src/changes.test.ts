@@ -109,7 +109,7 @@ describe("updateBaselineFromSnapshot", () => {
     const snap = await newSnapshot();
     const a = await newChange(snap);
     const b = await newChange(snap);
-    // one already ignored — should stay ignored, not be re-approved
+    // one already ignored - should stay ignored, not be re-approved
     const c = await newChange(snap);
     await applyChangeAction(prisma, c.id, "ignore");
 

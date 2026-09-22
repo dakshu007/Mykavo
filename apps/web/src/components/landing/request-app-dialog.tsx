@@ -169,7 +169,7 @@ export function RequestAppButton({
                 <strong className="font-semibold text-[#151515]">
                   same email address as your MyKavo account
                 </strong>{" "}
-                below &mdash; approval is tied to the address.
+                below - approval is tied to the address.
               </p>
             </div>
 
@@ -194,7 +194,7 @@ export function RequestAppButton({
               htmlFor={`${formId}-email`}
               className="mb-1.5 block text-[13px] font-medium"
             >
-              Email &mdash; the one on your MyKavo account
+              Email - the one on your MyKavo account
             </label>
             <input
               id={`${formId}-email`}

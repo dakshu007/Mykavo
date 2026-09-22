@@ -103,7 +103,7 @@ function RequestRow({
               failed" is a real state the operator has to be able to see. */}
           {row.status === "APPROVED" && !row.emailSent ? (
             <Small color={palette.criticalStrong} style={{ fontWeight: "600", fontSize: 11.5 }}>
-              email failed — tap Re-send
+              email failed - tap Re-send
             </Small>
           ) : null}
           {row.status === "APPROVED" && row.emailSent ? (

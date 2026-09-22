@@ -50,7 +50,7 @@ describe("formatReportPeriod", () => {
         new Date("2026-07-02T00:00:00Z"),
         new Date("2026-08-01T00:00:00Z"),
       ),
-    ).toBe("Jul 2 – Aug 1, 2026");
+    ).toBe("Jul 2 - Aug 1, 2026");
   });
 });
 
@@ -59,7 +59,7 @@ describe("formatReportUptime", () => {
     expect(formatReportUptime(100)).toBe("100%");
     expect(formatReportUptime(99.999)).toBe("99.99%");
     expect(formatReportUptime(99.5)).toBe("99.50%");
-    expect(formatReportUptime(null)).toBe("–");
+    expect(formatReportUptime(null)).toBe("-");
   });
 });
 

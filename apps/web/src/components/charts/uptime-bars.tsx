@@ -26,7 +26,7 @@ const BAND_CLASSES: Record<UptimeBand, { bar: string; dot: string }> = {
 
 const BAND_LEGEND: readonly { band: UptimeBand; label: string }[] = [
   { band: "good", label: "≥ 99.5%" },
-  { band: "degraded", label: "95–99.5%" },
+  { band: "degraded", label: "95-99.5%" },
   { band: "bad", label: "< 95%" },
   { band: "empty", label: "no data" },
 ];

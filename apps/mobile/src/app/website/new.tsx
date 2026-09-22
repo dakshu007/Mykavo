@@ -100,7 +100,7 @@ export default function NewWebsiteScreen() {
       });
       setWebsiteId(created.website.id);
 
-      setPhase("Looking for pages — sitemaps and homepage links…");
+      setPhase("Looking for pages - sitemaps and homepage links…");
       const discovery = await api.discoverPages(created.website.id);
       setPages(discovery.pages);
       setWarnings(discovery.warnings);

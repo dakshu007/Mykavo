@@ -2,7 +2,7 @@
  * Retention cleanup helpers (Phase 10, spec §60 / §91). Deletes expired scan
  * history so storage and DB growth stay bounded and plan-based.
  *
- * SAFETY — the single most important invariant: a `PageSnapshot` referenced by
+ * SAFETY - the single most important invariant: a `PageSnapshot` referenced by
  * ANY `Baseline` is NEVER deleted here. `Baseline.pageSnapshot` is
  * `onDelete: Cascade`, so deleting a baseline's snapshot would silently destroy
  * the baseline and break comparison. `findExpiredSnapshots` therefore excludes

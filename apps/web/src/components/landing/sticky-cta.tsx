@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { GoogleIcon } from "@/components/brand/integration-icons";
 
 /**
  * Sticky split-pill CTA that floats at the bottom center once the visitor
@@ -26,10 +27,11 @@ export function StickyCta() {
     >
       <div className="flex overflow-hidden rounded-full border border-[#151515] shadow-[4px_4px_0_#151515]">
         <Link
-          href="/signup"
-          className="bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
+          href="/signup?provider=google"
+          className="flex items-center gap-2 bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#FFF3B0]"
         >
-          Start free
+          <GoogleIcon className="size-4" />
+          Continue with Google
         </Link>
         <Link
           href="/#how-it-works"

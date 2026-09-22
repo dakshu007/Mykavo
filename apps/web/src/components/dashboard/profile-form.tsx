@@ -12,7 +12,7 @@ import {
 /** Avatars are cropped to a centered square and resized to this edge length. */
 const AVATAR_SIZE = 256;
 
-/** JPEG qualities to try, best first; a 256×256 JPEG at 0.85 is ~10–30 KB. */
+/** JPEG qualities to try, best first; a 256×256 JPEG at 0.85 is ~10-30 KB. */
 const JPEG_QUALITIES = [0.85, 0.7, 0.5] as const;
 
 type Status = "idle" | "processing" | "saving" | "saved";

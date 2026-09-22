@@ -93,7 +93,7 @@ export async function compressScreenshot(
 ): Promise<{ buffer: Buffer; withinBudget: boolean }> {
   if (raw.length <= MAX_SCREENSHOT_BYTES) return { buffer: raw, withinBudget: true };
 
-  // sharp is ESM/worker-side only — dynamic import keeps web bundles clean.
+  // sharp is ESM/worker-side only - dynamic import keeps web bundles clean.
   const { default: sharp } = await import("sharp");
 
   // One decode of the source, reused for every rung of the ladder.
@@ -151,7 +151,7 @@ async function waitForNetworkQuiet(page: Page, maxWaitMs: number): Promise<void>
   try {
     await page.waitForLoadState("networkidle", { timeout: maxWaitMs });
   } catch {
-    // Busy pages never go idle — proceed after the bounded wait.
+    // Busy pages never go idle - proceed after the bounded wait.
   }
 }
 
@@ -164,7 +164,7 @@ export async function scanPage(
   const timeoutMs = options.timeoutMs ?? 30_000;
   const postLoadDelayMs = options.postLoadDelayMs ?? 1_000;
 
-  // SSRF validation — every scanned URL, every time (spec §11).
+  // SSRF validation - every scanned URL, every time (spec §11).
   let target: URL;
   try {
     target = await assertSafeUrl(url);
@@ -251,7 +251,7 @@ export async function scanPage(
     // live DOM after stabilization and BEFORE extraction, so they are
     // excluded from DOM/text hashing, link/script extraction, element checks,
     // and the screenshot. Removal (vs visibility:hidden) also collapses
-    // variable-height noise — a rotating banner can't shift layout between
+    // variable-height noise - a rotating banner can't shift layout between
     // scans. htmlHash above intentionally still covers the raw page. Invalid
     // selectors are skipped per-selector in-page; a failed evaluate degrades
     // to "nothing removed" rather than failing the scan.
@@ -360,11 +360,11 @@ export async function scanPage(
     });
 
     // Screenshot masks (spec §25/§36): cover matching elements with a solid
-    // block in the screenshot only — content is still compared. Playwright's
+    // block in the screenshot only - content is still compared. Playwright's
     // native `mask` option is used (with a fixed maskColor) because it tracks
-    // element geometry at capture time — correct through full-page scroll
+    // element geometry at capture time - correct through full-page scroll
     // stitching and fixed/sticky positioning, which hand-placed absolute
-    // overlays get wrong — and cleans up after itself. Selectors are
+    // overlays get wrong - and cleans up after itself. Selectors are
     // pre-filtered in-page so invalid user CSS never throws at capture.
     const maskSelectors = parseSelectorList(options.screenshotMasks);
     let maskLocators: Locator[] = [];
@@ -378,7 +378,7 @@ export async function scanPage(
     }
 
     // Deterministic screenshot (spec §17), height-capped. Stored artifacts
-    // are compressed to ≤200 KB (storage cost control, spec §60) — the hash
+    // are compressed to ≤200 KB (storage cost control, spec §60) - the hash
     // is computed on the FINAL stored bytes so baseline and current always
     // compare through the identical encode pipeline.
     let screenshotStorageKey: string | null = null;

@@ -1,5 +1,5 @@
 /**
- * Subscription persistence (Phase 8 — Dodo Payments). DB-level mutations
+ * Subscription persistence (Phase 8 - Dodo Payments). DB-level mutations
  * shared by the webhook handler and billing APIs. Entitlement mapping to
  * plan features lives in the web app; this module is pure persistence.
  *
@@ -48,7 +48,7 @@ export interface UpgradeInput {
   dodoSubscriptionId?: string | null;
   currentPeriodEnd?: Date | null;
   cancelAtPeriodEnd?: boolean;
-  /** Logical event time — used to reject stale, out-of-order events. */
+  /** Logical event time - used to reject stale, out-of-order events. */
   eventAt?: Date | null;
 }
 
@@ -154,7 +154,7 @@ export interface WebsiteAddonInput {
   websitesGranted?: number;
   currentPeriodEnd?: Date | null;
   cancelAtPeriodEnd?: boolean;
-  /** Logical event time — used to reject stale, out-of-order events. */
+  /** Logical event time - used to reject stale, out-of-order events. */
   eventAt?: Date | null;
 }
 
@@ -184,7 +184,7 @@ export async function applyWebsiteAddon(db: Db, input: WebsiteAddonInput): Promi
       cancelAtPeriodEnd: input.cancelAtPeriodEnd ?? false,
       lastEventAt: input.eventAt ?? null,
     },
-    // Never rewrite workspaceId here — the add-on stays bound to its buyer.
+    // Never rewrite workspaceId here - the add-on stays bound to its buyer.
     update: {
       status: input.status,
       dodoCustomerId: input.dodoCustomerId ?? undefined,

@@ -1,7 +1,6 @@
 /**
  * Site-level SEO comparators: robots.txt + sitemap.xml (spec §19 family,
- * "robots.txt Monitoring" / "Sitemap Monitoring" scenarios). Pure functions —
- * the worker does the fetching, these decide what changed; severity and copy
+ * "robots.txt Monitoring" / "Sitemap Monitoring" scenarios). Pure functions - * the worker does the fetching, these decide what changed; severity and copy
  * come from @mykavo/severity-engine like every other signal.
  */
 
@@ -21,7 +20,7 @@ export interface SiteMetaComparable {
 /**
  * Does this robots.txt block ALL crawling for every crawler? True only when a
  * `User-agent: *` group contains `Disallow: /` (the whole site) and no
- * `Allow: /` softens it. Deliberately conservative — this drives a CRITICAL
+ * `Allow: /` softens it. Deliberately conservative - this drives a CRITICAL
  * alert and false positives are poison (spec §4.5). Agent-specific groups
  * (e.g. only Googlebot blocked) do NOT count as blocking all.
  */
@@ -63,7 +62,7 @@ export type ParsedSitemap =
 
 /**
  * Minimal sitemap parse: count `<loc>` entries in a urlset, or list child
- * sitemaps in a sitemap index. Regex-based on purpose — sitemaps in the wild
+ * sitemaps in a sitemap index. Regex-based on purpose - sitemaps in the wild
  * are frequently malformed, and we only need counts, never the URLs' content.
  */
 export function parseSitemap(xml: string): ParsedSitemap {
@@ -85,7 +84,7 @@ const SIGNIFICANT_SHRINK_MIN_PREVIOUS = 10;
 /**
  * Compare two site-meta captures. `previous` is the most recent earlier
  * capture (site meta has no user-approved baseline concept); null on a
- * website's first capture — which produces no signals (baseline behavior).
+ * website's first capture - which produces no signals (baseline behavior).
  */
 export function compareSiteMeta(
   previous: SiteMetaComparable | null,

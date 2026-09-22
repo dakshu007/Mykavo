@@ -4,15 +4,15 @@
  * `lighthouse` and `chrome-launcher` are ESM-only, so they're loaded via
  * dynamic import (safe regardless of how tsx/tsc treat this file). chrome-launcher
  * launches Playwright's Chromium binary on a debugging port; Lighthouse attaches
- * to that port over CDP — pinning the Chromium version avoids protocol mismatch.
+ * to that port over CDP - pinning the Chromium version avoids protocol mismatch.
  *
- * Audits are heavyweight (~10–40s, hundreds of MB) — callers must run them
+ * Audits are heavyweight (~10-40s, hundreds of MB) - callers must run them
  * one-at-a-time. Cost/§22: this is on-demand, never per-scan.
  */
 
 import { chromium } from "playwright";
 
-/** Parsed, storage-ready audit result. Scores are 0–100; vitals are ms (CLS unitless). */
+/** Parsed, storage-ready audit result. Scores are 0-100; vitals are ms (CLS unitless). */
 export interface LighthouseResult {
   performanceScore: number | null;
   accessibilityScore: number | null;
@@ -32,7 +32,7 @@ interface Lhr {
   audits?: Record<string, { numericValue?: number | null } | undefined>;
 }
 
-/** Pure mapping from an LHR object to our stored fields — unit-tested. */
+/** Pure mapping from an LHR object to our stored fields - unit-tested. */
 export function parseLighthouseResult(lhr: Lhr): LighthouseResult {
   const score = (id: string): number | null => {
     const s = lhr.categories?.[id]?.score;
@@ -97,7 +97,7 @@ export async function runLighthouse(
     import("chrome-launcher"),
   ]);
 
-  // SECURITY: keep Chrome's OS sandbox ENABLED — the audited URL is untrusted
+  // SECURITY: keep Chrome's OS sandbox ENABLED - the audited URL is untrusted
   // and this process holds DB/storage credentials. Flags mirror the page
   // scanner (browser-pool.ts), which runs the same bundled Chromium sandboxed.
   // Never add --no-sandbox here; if a container truly can't sandbox, isolate
@@ -105,7 +105,7 @@ export async function runLighthouse(
   //
   // NOTE: this launches its own Chromium outside the BrowserPool's concurrency
   // accounting; a scan running on the same host simultaneously will contend for
-  // CPU. Acceptable for an on-demand, rate-limited feature — audits are rare.
+  // CPU. Acceptable for an on-demand, rate-limited feature - audits are rare.
   const chrome = await chromeLauncher.launch({
     chromePath: chromium.executablePath(),
     chromeFlags: ["--headless=new", "--disable-gpu", "--disable-dev-shm-usage"],
@@ -133,8 +133,7 @@ export async function runLighthouse(
     );
   } finally {
     // Always terminate Chrome + clean its temp profile, even on throw/timeout.
-    // kill() may return void or a promise depending on chrome-launcher version —
-    // await either, and never let cleanup mask the real result/error.
+    // kill() may return void or a promise depending on chrome-launcher version - // await either, and never let cleanup mask the real result/error.
     try {
       await chrome.kill();
     } catch {

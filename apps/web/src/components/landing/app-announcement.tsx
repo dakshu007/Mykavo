@@ -81,7 +81,7 @@ export function AppAnnouncement() {
             The MyKavo Android app is here
           </p>
           <p className="mt-0.5 text-[12.5px] leading-5 text-[#9C9E93]">
-            Every site you monitor, on your phone — with push alerts the moment
+            Every site you monitor, on your phone - with push alerts the moment
             something changes. Access is being approved in batches.
           </p>
           <div className="mt-3">

@@ -24,7 +24,7 @@ function raw(overrides: Partial<ReportRawData> = {}): ReportRawData {
 
 describe("formatPeriodLabel", () => {
   it("renders a compact range with the year once", () => {
-    expect(formatPeriodLabel(PERIOD_START, PERIOD_END)).toBe("Jul 3 – Jul 10, 2026");
+    expect(formatPeriodLabel(PERIOD_START, PERIOD_END)).toBe("Jul 3 - Jul 10, 2026");
   });
 });
 

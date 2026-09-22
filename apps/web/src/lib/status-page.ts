@@ -19,7 +19,7 @@ export interface DayRollupRow {
 export interface DayBucket {
   /** UTC calendar day, "YYYY-MM-DD". */
   date: string;
-  /** Uptime percentage (0–100) for the day, null when it has no checks. */
+  /** Uptime percentage (0-100) for the day, null when it has no checks. */
   uptimePercent: number | null;
 }
 

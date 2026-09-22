@@ -86,7 +86,7 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
   "crawl-depth": {
     category: "Crawlability", severity: "NOTICE", title: "Crawl depth too high",
     explain: "The page sits 5+ clicks from the homepage, so crawlers and users rarely reach it.",
-    fix: "Link to it from a hub page, category page, or the navigation to bring it within 3–4 clicks.",
+    fix: "Link to it from a hub page, category page, or the navigation to bring it within 3-4 clicks.",
   },
 
   // ---------- Indexability ----------
@@ -135,12 +135,12 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
   "title-missing": {
     category: "Titles", severity: "ERROR", title: "Missing title tag",
     explain: "The page has no <title>, so search results show a generated one and rankings suffer.",
-    fix: "Add a unique, descriptive <title> of roughly 30–60 characters that includes the page's main topic.",
+    fix: "Add a unique, descriptive <title> of roughly 30-60 characters that includes the page's main topic.",
   },
   "title-empty": {
     category: "Titles", severity: "ERROR", title: "Empty title tag",
     explain: "A <title> element exists but contains no text.",
-    fix: "Fill the title with a unique, descriptive 30–60 character summary of the page.",
+    fix: "Fill the title with a unique, descriptive 30-60 character summary of the page.",
   },
   "title-multiple": {
     category: "Titles", severity: "WARNING", title: "Multiple title tags",
@@ -150,7 +150,7 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
   "title-long": {
     category: "Titles", severity: "NOTICE", title: "Title too long",
     explain: "Titles over ~60 characters get truncated in search results.",
-    fix: "Shorten the title to roughly 30–60 characters, front-loading the important words.",
+    fix: "Shorten the title to roughly 30-60 characters, front-loading the important words.",
   },
   "title-short": {
     category: "Titles", severity: "NOTICE", title: "Title too short",
@@ -172,12 +172,12 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
   "desc-missing": {
     category: "Meta description", severity: "WARNING", title: "Missing meta description",
     explain: "Without a description, search engines improvise a snippet, which usually lowers click-through.",
-    fix: "Add a unique meta description of roughly 70–155 characters that sells the click.",
+    fix: "Add a unique meta description of roughly 70-155 characters that sells the click.",
   },
   "desc-empty": {
     category: "Meta description", severity: "WARNING", title: "Empty meta description",
     explain: "A description tag exists but is blank.",
-    fix: "Write a compelling 70–155 character summary of the page.",
+    fix: "Write a compelling 70-155 character summary of the page.",
   },
   "desc-multiple": {
     category: "Meta description", severity: "NOTICE", title: "Multiple meta descriptions",
@@ -187,12 +187,12 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
   "desc-long": {
     category: "Meta description", severity: "NOTICE", title: "Meta description too long",
     explain: "Descriptions over ~155 characters get cut off mid-sentence in results.",
-    fix: "Trim to roughly 70–155 characters with the value proposition early.",
+    fix: "Trim to roughly 70-155 characters with the value proposition early.",
   },
   "desc-short": {
     category: "Meta description", severity: "NOTICE", title: "Meta description too short",
     explain: "Very short descriptions waste snippet space and rarely earn the click.",
-    fix: "Expand toward 70–155 characters describing what the visitor gets.",
+    fix: "Expand toward 70-155 characters describing what the visitor gets.",
   },
   "desc-duplicate": {
     category: "Meta description", severity: "NOTICE", title: "Duplicate meta description",

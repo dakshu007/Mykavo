@@ -14,10 +14,11 @@ export const metadata: Metadata = {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; provider?: string }>;
 }) {
   // Only same-origin relative paths - never an open redirect.
-  const next = safeNextPath((await searchParams).next);
+  const params = await searchParams;
+  const next = safeNextPath(params.next);
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) redirect(next ?? "/dashboard");
 
@@ -29,7 +30,12 @@ export default async function SignupPage({
       <p className="mb-6 text-sm text-ink-secondary">
         Free plan included - no credit card required.
       </p>
-      <AuthForm mode="signup" googleEnabled={googleEnabled} redirectTo={next ?? undefined} />
+      <AuthForm
+        mode="signup"
+        googleEnabled={googleEnabled}
+        redirectTo={next ?? undefined}
+        autoGoogle={params.provider === "google"}
+      />
     </>
   );
 }

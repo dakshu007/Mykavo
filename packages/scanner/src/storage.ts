@@ -2,11 +2,11 @@
  * Artifact storage behind an interface (spec §8: screenshots never live in
  * PostgreSQL). Three backends:
  *
- * - LocalDiskStorage — development default (ARTIFACT_DIR).
- * - R2Storage — production (Cloudflare R2 free tier, S3-compatible API via
+ * - LocalDiskStorage - development default (ARTIFACT_DIR).
+ * - R2Storage - production (Cloudflare R2 free tier, S3-compatible API via
  *   aws4fetch SigV4 signing; zero egress fees). Both the worker and the
  *   Netlify-hosted web app authenticate with the same scoped API token.
- * - NetlifyBlobsStorage — legacy production backend (kept for the migration
+ * - NetlifyBlobsStorage - legacy production backend (kept for the migration
  *   window and as a fallback).
  *
  * Select with ARTIFACT_STORE=r2 or ARTIFACT_STORE=netlify-blobs; anything
@@ -88,10 +88,10 @@ export class LocalDiskStorage implements ArtifactStorage {
 
 /** Blob store name shared by the worker (writer) and web app (reader). */
 // Deliberately keeps the pre-rename name: every production screenshot/diff
-// already lives in this Netlify Blobs store — renaming it would orphan them.
+// already lives in this Netlify Blobs store - renaming it would orphan them.
 const BLOB_STORE_NAME = "fluxen-artifacts";
 
-// Minimal structural type for the store — @netlify/blobs is ESM-only and
+// Minimal structural type for the store - @netlify/blobs is ESM-only and
 // loaded via dynamic import() (same pattern as lighthouse.ts), so its types
 // aren't imported statically.
 interface BlobStore {
@@ -183,7 +183,7 @@ export function parseListObjectsPage(xml: string): {
 
 /**
  * Cloudflare R2 via its S3-compatible endpoint. Keys are used verbatim as
- * object keys; the bucket stays PRIVATE — every read goes through an
+ * object keys; the bucket stays PRIVATE - every read goes through an
  * authorized application route, never a public bucket URL.
  */
 export class R2Storage implements ArtifactStorage {
@@ -201,7 +201,7 @@ export class R2Storage implements ArtifactStorage {
   ) {}
 
   private client() {
-    // aws4fetch is ESM-only — dynamic import, same pattern as @netlify/blobs.
+    // aws4fetch is ESM-only - dynamic import, same pattern as @netlify/blobs.
     this.clientPromise ??= import("aws4fetch").then(
       ({ AwsClient }) =>
         new AwsClient({
@@ -256,7 +256,7 @@ export class R2Storage implements ArtifactStorage {
   async delete(key: string): Promise<void> {
     const client = await this.client();
     const res = await client.fetch(this.url(key), { method: "DELETE" });
-    // 404 is fine — delete is idempotent.
+    // 404 is fine - delete is idempotent.
     if (!res.ok && res.status !== 404) {
       throw new Error(`R2 delete failed for ${key}: ${res.status} ${await res.text()}`);
     }

@@ -1,7 +1,7 @@
 /**
  * Integration tests for site-health persistence. Like the other database
  * suites (see retention.test.ts) these need DATABASE_URL and run against a
- * real database — vitest.config.ts loads packages/database/.env.
+ * real database - vitest.config.ts loads packages/database/.env.
  */
 
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
@@ -163,7 +163,7 @@ describe("getUptimeStats", () => {
     await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 300, checkedAt: new Date(base - 2_000) });
     await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 200, checkedAt: new Date(base - 1_000) });
     await recordHealthCheck(prisma, { websiteId, up: false, responseTimeMs: null, checkedAt: new Date(base) });
-    // Outside the window — must not count.
+    // Outside the window - must not count.
     await recordHealthCheck(prisma, { websiteId, up: false, checkedAt: OLD });
 
     const stats = await getUptimeStats(prisma, {
@@ -196,7 +196,7 @@ describe("getDailyHealthRollups", () => {
     await recordHealthCheck(prisma, { websiteId, up: false, responseTimeMs: null, checkedAt: new Date("2026-07-08T06:00:00Z") });
     // Today: 1 up.
     await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 150, checkedAt: new Date("2026-07-10T10:00:00Z") });
-    // Before the 7-day window — must not appear.
+    // Before the 7-day window - must not appear.
     await recordHealthCheck(prisma, { websiteId, up: false, checkedAt: new Date("2026-07-03T23:59:59Z") });
 
     const rollups = await getDailyHealthRollups(prisma, { websiteId, days: 7, now: NOW });
@@ -235,13 +235,13 @@ describe("getDailyHealthRollups", () => {
 
 describe("getResponseTimeSeries", () => {
   it("buckets averages by aligned time windows, up checks only", async () => {
-    // Bucket 10:00–10:30 → up 100 + 300 (avg 200) + one down (counted, not averaged).
+    // Bucket 10:00-10:30 → up 100 + 300 (avg 200) + one down (counted, not averaged).
     await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 100, checkedAt: new Date("2026-07-10T10:00:00Z") });
     await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 300, checkedAt: new Date("2026-07-10T10:29:59Z") });
     await recordHealthCheck(prisma, { websiteId, up: false, responseTimeMs: null, checkedAt: new Date("2026-07-10T10:15:00Z") });
-    // Bucket 11:00–11:30 → single up check.
+    // Bucket 11:00-11:30 → single up check.
     await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 500, checkedAt: new Date("2026-07-10T11:05:00Z") });
-    // Before `since` — excluded.
+    // Before `since` - excluded.
     await recordHealthCheck(prisma, { websiteId, up: true, responseTimeMs: 999, checkedAt: OLD });
 
     const series = await getResponseTimeSeries(prisma, {
@@ -250,7 +250,7 @@ describe("getResponseTimeSeries", () => {
       bucketMinutes: 30,
     });
 
-    expect(series).toHaveLength(2); // the empty 10:30–11:00 bucket is absent
+    expect(series).toHaveLength(2); // the empty 10:30-11:00 bucket is absent
     expect(series[0].bucketStart.toISOString()).toBe("2026-07-10T10:00:00.000Z");
     expect(series[0].avgResponseTimeMs).toBe(200);
     expect(series[0].totalChecks).toBe(3);

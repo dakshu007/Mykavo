@@ -1,14 +1,14 @@
 /**
  * Broken internal link detection (spec §20). Consumes per-page link
- * observations — with the statuses the worker's link check recorded on
- * PageLink rows — from the baseline and the current scan, and emits ONE
+ * observations - with the statuses the worker's link check recorded on
+ * PageLink rows - from the baseline and the current scan, and emits ONE
  * grouped site-wide signal ("N internal links are broken"), never one event
  * per link per page.
  *
  * A link only counts as broken on a definite, visitor-affecting status:
- * unreachable (0), 404/410, or a 5xx. Unchecked links (null status — probe
+ * unreachable (0), 404/410, or a 5xx. Unchecked links (null status - probe
  * capped out, timed out, or predates this feature) are never assumed broken.
- * Links already broken in the approved baseline don't re-fire — approving a
+ * Links already broken in the approved baseline don't re-fire - approving a
  * baseline that includes a known-broken link acknowledges it (spec §24).
  */
 
@@ -36,7 +36,7 @@ export interface BrokenLinkSample {
 
 export type BrokenLinksSignal = Extract<ChangeSignal, { kind: "broken_links" }>;
 
-/** Definite, visitor-affecting failures only — never 401/403/429 or unchecked. */
+/** Definite, visitor-affecting failures only - never 401/403/429 or unchecked. */
 export function isBrokenLinkStatus(status: number | null): boolean {
   if (status === null) return false;
   return status === 0 || status === 404 || status === 410 || status >= 500;
@@ -46,7 +46,7 @@ export function isBrokenLinkStatus(status: number | null): boolean {
  * Diff link health between the approved baselines and the current scan.
  * Returns a single grouped signal, or null when nothing newly broke.
  *
- * `excludeUrls` should contain the monitored pages' own URLs — a monitored
+ * `excludeUrls` should contain the monitored pages' own URLs - a monitored
  * page that breaks already raises an AVAILABILITY event; repeating it as a
  * broken link would double-report.
  */

@@ -57,7 +57,7 @@ export function PlatformStackPanel({ stack }: { stack: PlatformStack | null }) {
         }
       />
       <p className="mb-4 text-sm text-ink-secondary">
-        Read from your pages&apos; own markup, assets and response headers — nothing is
+        Read from your pages&apos; own markup, assets and response headers - nothing is
         installed on your site. When one of these appears, disappears or changes version,
         MyKavo records it next to whatever else changed in the same scan.
       </p>
@@ -127,7 +127,7 @@ export function PlatformStackPanel({ stack }: { stack: PlatformStack | null }) {
 
       {isWordPress && components.length === 0 && (
         <p className="mt-4 text-sm text-ink-secondary">
-          This is a WordPress site, but none of its assets carry a readable version — a
+          This is a WordPress site, but none of its assets carry a readable version - a
           caching or asset-combining plugin is most likely stripping them, so plugin
           update alerts are not available here.
         </p>

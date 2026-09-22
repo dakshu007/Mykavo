@@ -42,7 +42,7 @@ export interface ReportRawData {
   scansFailed: number;
   /** Change-event counts keyed by severity; absent severities mean zero. */
   changesBySeverity: Partial<Record<ReportSeverity, number>>;
-  /** 0–100 (unrounded) or null when no health checks exist in the window. */
+  /** 0-100 (unrounded) or null when no health checks exist in the window. */
   uptimePercent: number | null;
   /** Average response time of successful checks, null when none exist. */
   avgResponseTimeMs: number | null;
@@ -56,7 +56,7 @@ export interface ReportRawData {
 export interface WeeklyReportModel {
   websiteName: string;
   websiteHost: string;
-  /** e.g. "Jul 3 – Jul 10, 2026". */
+  /** e.g. "Jul 3 - Jul 10, 2026". */
   periodLabel: string;
   scansRun: number;
   scansFailed: number;
@@ -83,10 +83,10 @@ function formatDay(date: Date): string {
   });
 }
 
-/** "Jul 3 – Jul 10, 2026" (year once, from the period end). */
+/** "Jul 3 - Jul 10, 2026" (year once, from the period end). */
 export function formatPeriodLabel(start: Date, end: Date): string {
   const year = end.toLocaleDateString("en-US", { year: "numeric", timeZone: "UTC" });
-  return `${formatDay(start)} – ${formatDay(end)}, ${year}`;
+  return `${formatDay(start)} - ${formatDay(end)}, ${year}`;
 }
 
 /** Round to one decimal (100 stays exactly 100, never "100.0…1"). */

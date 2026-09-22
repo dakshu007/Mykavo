@@ -13,6 +13,9 @@ export function CancelSubscriptionButton({ apiCancel }: { apiCancel: boolean }) 
     if (loading) return;
     // Without the API key, cancellation is done through the hosted portal.
     if (!apiCancel) {
+      /* Not an internal page: this route 302s out to the hosted billing
+         portal. */
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/api/billing/portal";
       return;
     }

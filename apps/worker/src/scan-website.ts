@@ -24,6 +24,7 @@ import {
   resolveScanOutcome,
   screenshotPrefix,
   type StageFailure,
+  withDefaultAdMasks,
 } from "@mykavo/shared";
 import { logger } from "./logger";
 import { runComparisonForScan } from "./compare-scan";
@@ -76,7 +77,10 @@ export async function runScanWebsiteJob(
   // parsed defensively - anything that isn't a clean selector array degrades
   // to no selectors rather than failing the scan.
   const ignoredSelectors = parseSelectorList(website.ignoredSelectors);
-  const screenshotMasks = parseSelectorList(website.screenshotMasks);
+  // Ad slots are masked whether or not anybody configured them: an ad network
+  // serves a different creative every load, so an unmasked slot makes a site
+  // differ on every scan forever. See packages/shared/src/ad-selectors.ts.
+  const screenshotMasks = withDefaultAdMasks(parseSelectorList(website.screenshotMasks));
 
   // Conversion element monitoring is Pro-only (spec §37). Gate here so a
   // downgraded workspace's configured elements simply stop being checked.

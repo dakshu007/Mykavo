@@ -53,7 +53,7 @@ export function buildSeverityRows(
   });
 }
 
-/** "Jul 2 – Aug 1, 2026" (UTC) for the report period header. */
+/** "Jul 2 - Aug 1, 2026" (UTC) for the report period header. */
 export function formatReportPeriod(start: Date, end: Date): string {
   const opts: Intl.DateTimeFormatOptions = {
     month: "short",
@@ -65,12 +65,12 @@ export function formatReportPeriod(start: Date, end: Date): string {
     ...opts,
     year: "numeric",
   });
-  return `${startLabel} – ${endLabel}`;
+  return `${startLabel} - ${endLabel}`;
 }
 
 /** "99.98%" / "100%" - trims noise, never rounds a partial outage to 100%. */
 export function formatReportUptime(percent: number | null): string {
-  if (percent === null) return "–";
+  if (percent === null) return "-";
   if (percent === 100) return "100%";
   // 99.999 must not display as 100% - floor at two decimals instead.
   const floored = Math.floor(percent * 100) / 100;

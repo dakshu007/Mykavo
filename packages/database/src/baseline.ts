@@ -35,7 +35,7 @@ export async function setSnapshotAsBaseline(
     });
 
     if (current?.pageSnapshotId === pageSnapshotId) {
-      return current; // already the active baseline — nothing to do
+      return current; // already the active baseline - nothing to do
     }
 
     if (current) {

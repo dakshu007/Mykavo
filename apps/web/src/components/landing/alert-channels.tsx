@@ -1,4 +1,9 @@
-import { Hash, Mail, MessagesSquare, Webhook, type LucideIcon } from "lucide-react";
+import { Mail } from "lucide-react";
+import {
+  DiscordIcon,
+  SlackIcon,
+  WebhookIcon,
+} from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, fontDisplay } from "./style";
 
@@ -14,7 +19,7 @@ interface Channel {
   key: string;
   name: string;
   desc: string;
-  icon: LucideIcon;
+  icon: (props: { className?: string }) => React.ReactElement;
   /** Diagram card position (desktop). */
   position: string;
   /** Connector path from the hub to this card (880x400 viewBox). */
@@ -27,7 +32,9 @@ const CHANNELS: Channel[] = [
     key: "email",
     name: "Email",
     desc: "Grouped digests, gated by severity",
-    icon: Mail,
+    icon: ({ className }: { className?: string }) => (
+      <Mail className={className} strokeWidth={1.8} />
+    ),
     position: "left-0 top-0",
     path: "M 440 200 C 355 200 330 66 228 66",
     delay: "0s",
@@ -36,7 +43,7 @@ const CHANNELS: Channel[] = [
     key: "slack",
     name: "Slack",
     desc: "Straight into your #alerts channel",
-    icon: Hash,
+    icon: SlackIcon,
     position: "right-0 top-0",
     path: "M 440 200 C 525 200 550 66 652 66",
     delay: "0.9s",
@@ -45,7 +52,7 @@ const CHANNELS: Channel[] = [
     key: "discord",
     name: "Discord",
     desc: "Pings where your team hangs out",
-    icon: MessagesSquare,
+    icon: DiscordIcon,
     position: "bottom-0 left-0",
     path: "M 440 200 C 355 200 330 334 228 334",
     delay: "1.8s",
@@ -54,7 +61,7 @@ const CHANNELS: Channel[] = [
     key: "webhook",
     name: "Webhook",
     desc: "Signed JSON to any endpoint",
-    icon: Webhook,
+    icon: WebhookIcon,
     position: "bottom-0 right-0",
     path: "M 440 200 C 525 200 550 334 652 334",
     delay: "2.7s",
@@ -66,8 +73,8 @@ function ChannelCard({ channel, className = "" }: { channel: Channel; className?
     <div
       className={`flex w-52 items-start gap-3 rounded-2xl border border-[#151515] bg-white p-4 shadow-[4px_4px_0_#151515] ${className}`}
     >
-      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-black/15 bg-[#FFD400]">
-        <channel.icon className="size-4.5 text-[#151515]" aria-hidden />
+      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-black/12 bg-white">
+        <channel.icon className="size-[18px] text-[#151515]" />
       </span>
       <div className="min-w-0">
         <p className="text-[14px] font-semibold text-[#151515]">{channel.name}</p>

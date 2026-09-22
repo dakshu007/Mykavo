@@ -111,14 +111,14 @@ export function DomainExpiryPanel({ domain }: { domain: DomainInfo }) {
           <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" />
           <span>
             The registry has this domain on hold ({blocking.join(", ")}). It may already
-            be unreachable — contact the registrar.
+            be unreachable - contact the registrar.
           </span>
         </p>
       )}
 
       <p className="mt-3 text-[12px] text-ink-faint">
         Read from the public registry (RDAP) on {formatDate(domain.domainCheckedAt)}.
-        MyKavo checks weekly — it cannot renew for you.
+        MyKavo checks weekly - it cannot renew for you.
       </p>
     </>
   );

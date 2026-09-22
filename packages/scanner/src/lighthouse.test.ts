@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseLighthouseResult } from "./lighthouse";
 
 describe("parseLighthouseResult", () => {
-  it("maps category scores to 0–100 and vitals to rounded ms", () => {
+  it("maps category scores to 0-100 and vitals to rounded ms", () => {
     const lhr = {
       categories: {
         performance: { score: 0.91 },

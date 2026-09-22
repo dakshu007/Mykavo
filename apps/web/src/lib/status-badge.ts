@@ -10,7 +10,7 @@ export type BadgeStatus = "up" | "down" | "unknown";
 
 export interface StatusBadgeInput {
   status: BadgeStatus;
-  /** 7-day uptime percentage (0–100); null when there are no checks. */
+  /** 7-day uptime percentage (0-100); null when there are no checks. */
   uptimePercent: number | null;
 }
 

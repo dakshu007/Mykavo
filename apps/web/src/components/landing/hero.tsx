@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { GoogleCta } from "./google-cta";
 import { LandingUrlInput } from "./url-input";
 import { DashboardMock } from "./dashboard-mock";
 import { fontDisplay } from "./style";
@@ -67,7 +68,7 @@ export function LandingHero() {
         <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg">
           Pick the pages that matter on every website you manage. MyKavo approves a known-good
           baseline of each, re-checks them around the clock, and tells you the moment one
-          changes &mdash; with before-and-after proof.
+          changes - with before-and-after proof.
         </p>
 
         {/* Product-led URL input - instant value, no signup */}
@@ -78,17 +79,14 @@ export function LandingHero() {
           </p>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href="/signup"
-            className="group inline-flex items-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-7 py-3.5 text-sm font-semibold text-[#151515] shadow-[4px_4px_0_#151515] transition-all hover:-translate-y-0.5 hover:shadow-[5px_6px_0_#151515] active:translate-y-0 active:shadow-[2px_2px_0_#151515]"
-          >
-            Start Monitoring Free
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-          </Link>
+        {/* Google first: one tap instead of a form is the single biggest
+            reduction in signup friction available, and the link starts the
+            handoff rather than landing on a form that merely offers it. */}
+        <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row sm:items-start">
+          <GoogleCta />
           <Link
             href="/#how-it-works"
-            className="inline-flex items-center gap-2 rounded-full border border-[#151515]/20 bg-white px-7 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:border-[#151515]/40"
+            className="inline-flex h-13 items-center gap-2 rounded-full border border-[#151515]/20 bg-white px-7 text-sm font-semibold text-[#151515] transition-colors hover:border-[#151515]/40"
           >
             See How MyKavo Works
           </Link>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { AppAnnouncement } from "./app-announcement";
+import { GoogleIcon } from "@/components/brand/integration-icons";
 
 const links = [
   { href: "/pricing", label: "Pricing" },
@@ -132,9 +133,12 @@ export function LandingNav() {
             Log in
           </Link>
           <Link
-            href="/signup"
-            className="rounded-full bg-[#FFD400] px-5 py-2.5 text-[13.5px] font-semibold text-[#151515] ring-1 ring-inset ring-black/15 transition-colors hover:bg-[#ffe14d]"
+            href="/signup?provider=google"
+            className="inline-flex items-center gap-2 rounded-full bg-[#FFD400] px-5 py-2.5 text-[13.5px] font-semibold text-[#151515] ring-1 ring-inset ring-black/15 transition-colors hover:bg-[#ffe14d]"
           >
+            <span className="inline-flex size-4.5 items-center justify-center rounded-full bg-white">
+              <GoogleIcon className="size-3" />
+            </span>
             Start free
           </Link>
         </div>
@@ -192,10 +196,13 @@ export function LandingNav() {
               Log in
             </Link>
             <Link
-              href="/signup"
+              href="/signup?provider=google"
               onClick={() => setOpen(false)}
-              className="rounded-full bg-[#FFD400] px-4 py-3 text-center text-sm font-semibold text-[#151515] ring-1 ring-inset ring-black/15"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FFD400] px-4 py-3 text-center text-sm font-semibold text-[#151515] ring-1 ring-inset ring-black/15"
             >
+              <span className="inline-flex size-5 items-center justify-center rounded-full bg-white">
+                <GoogleIcon className="size-3.5" />
+              </span>
               Start free
             </Link>
           </div>

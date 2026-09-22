@@ -4,7 +4,7 @@ export type ElementImportance = "NORMAL" | "IMPORTANT" | "CRITICAL";
 
 /** A conversion element to observe on the page (Phase 9). */
 export interface MonitoredElementInput {
-  /** The MonitoredElement id — used to match baseline vs current results. */
+  /** The MonitoredElement id - used to match baseline vs current results. */
   id: string;
   name: string;
   selector: string;
@@ -42,13 +42,12 @@ export interface ScanPageOptions {
   elements?: MonitoredElementInput[];
   /**
    * CSS selectors removed from the DOM before hashing/extraction and absent
-   * from the screenshot — excluded from comparison entirely (spec §25).
+   * from the screenshot - excluded from comparison entirely (spec §25).
    * Re-normalized defensively; invalid selectors are skipped per-selector.
    */
   ignoredSelectors?: string[];
   /**
-   * CSS selectors covered with a solid block in the screenshot only —
-   * content is still compared (spec §25). Invalid selectors are skipped.
+   * CSS selectors covered with a solid block in the screenshot only - * content is still compared (spec §25). Invalid selectors are skipped.
    */
   screenshotMasks?: string[];
 }

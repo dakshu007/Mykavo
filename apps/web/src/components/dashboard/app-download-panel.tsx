@@ -33,6 +33,9 @@ export function AppDownloadPanel({ autoStart }: { autoStart: boolean }) {
     if (!autoStart || started.current) return;
     started.current = true;
     setTriggered(true);
+    /* Not an internal page: this route 302s to the APK on GitHub. A router
+       push would soft-navigate and never hand the browser a file to save. */
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/api/app-access/download";
   }, [autoStart]);
 
@@ -63,7 +66,7 @@ export function AppDownloadPanel({ autoStart }: { autoStart: boolean }) {
           </a>
 
           <p className="mt-4 text-[12.5px] leading-5.5 text-ink-faint">
-            Android will warn you about installing outside the Play Store — that is expected
+            Android will warn you about installing outside the Play Store - that is expected
             while MyKavo is in review. Open the downloaded file and allow the install when
             prompted. Sign in with this same account and your workspaces appear straight
             away.

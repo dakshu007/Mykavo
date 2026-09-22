@@ -2,7 +2,7 @@
  * Website tags - agency organization labels ("acme-corp", "retainer",
  * "team-alpha") attached to websites and used to filter the websites list.
  *
- * Canonical form: lowercase [a-z0-9-], 1–20 chars, max 5 per website.
+ * Canonical form: lowercase [a-z0-9-], 1-20 chars, max 5 per website.
  * Stored as a JSON array on Website.tags; everything reading that column
  * goes through parseTags so malformed values degrade to [] instead of
  * crashing a page.

@@ -34,7 +34,7 @@ export function defaultCompareMode(images: CompareImages, preferSlider: boolean)
   return "side-by-side";
 }
 
-/** Clamp a slider divider position to 0–100%. Non-finite input recenters. */
+/** Clamp a slider divider position to 0-100%. Non-finite input recenters. */
 export function clampSliderPercent(value: number): number {
   if (!Number.isFinite(value)) return 50;
   return Math.min(100, Math.max(0, value));

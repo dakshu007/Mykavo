@@ -14,10 +14,11 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; provider?: string }>;
 }) {
   // Only same-origin relative paths - never an open redirect.
-  const next = safeNextPath((await searchParams).next);
+  const params = await searchParams;
+  const next = safeNextPath(params.next);
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) redirect(next ?? "/dashboard");
 
@@ -25,7 +26,12 @@ export default async function LoginPage({
     <>
       <h1 className="mb-1 text-xl font-semibold tracking-tight text-ink">Welcome back</h1>
       <p className="mb-6 text-sm text-ink-secondary">Sign in to your MyKavo dashboard.</p>
-      <AuthForm mode="login" googleEnabled={googleEnabled} redirectTo={next ?? undefined} />
+      <AuthForm
+        mode="login"
+        googleEnabled={googleEnabled}
+        redirectTo={next ?? undefined}
+        autoGoogle={params.provider === "google"}
+      />
     </>
   );
 }

@@ -266,7 +266,7 @@ export function UsageMeters({ initial }: { initial: UsageReport }) {
             {new Date(report.generatedAt).toLocaleString()}
           </time>
           . Caps are configured in <code className="text-ink">apps/web/src/config/quotas.ts</code>{" "}
-          and overridable by environment variable — check them against each provider&apos;s own
+          and overridable by environment variable - check them against each provider&apos;s own
           dashboard, because an out-of-date cap makes a meter read low.
         </p>
         {report.problems.length > 0 && (

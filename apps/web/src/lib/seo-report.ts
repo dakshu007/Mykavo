@@ -2,14 +2,14 @@
  * SEO health report derived from the latest completed scan's PageSnapshot
  * rows. Pure module - no Prisma imports - so every check is unit-testable.
  *
- * Length guidance (title 50–60, description 120–160) is shared with the free
+ * Length guidance (title 50-60, description 120-160) is shared with the free
  * Meta Tag Checker via `@/lib/tools/meta-tags`; the thresholds live there.
  *
  * Broken-link checks read the statuses the worker's per-scan link check
  * records on PageLink rows (apps/worker/src/check-links.ts). Links the check
  * never probed (null status) are silently skipped - never assumed broken.
  *
- * Health score formula (documented, clamped to 0–100):
+ * Health score formula (documented, clamped to 0-100):
  *   score = 100 − 25 × critical − 5 × warning − 1 × info
  * Every issue deducts individually - e.g. two noindex pages cost 50 points.
  */
@@ -72,7 +72,7 @@ export interface SeoReport {
   pagesAnalyzed: number;
   pagesWithIssues: number;
   counts: Record<SeoSeverity, number>;
-  /** 0–100; see the formula at the top of this file. */
+  /** 0-100; see the formula at the top of this file. */
   score: number;
 }
 
@@ -116,7 +116,7 @@ export const SEO_CHECK_META: Record<SeoCheckId, { title: string; why: string }> 
     why: "The title tag is the headline searchers click; pages without one rank and convert poorly.",
   },
   "title-length": {
-    title: "Title length outside 50–60 characters",
+    title: "Title length outside 50-60 characters",
     why: "Short titles waste the space searchers see; long ones get truncated in results.",
   },
   "duplicate-title": {
@@ -128,7 +128,7 @@ export const SEO_CHECK_META: Record<SeoCheckId, { title: string; why: string }> 
     why: "Without a description, search engines improvise a snippet from page content.",
   },
   "description-length": {
-    title: "Description length outside 120–160 characters",
+    title: "Description length outside 120-160 characters",
     why: "The description is your pitch under the headline - too short undersells, too long gets cut off.",
   },
   "missing-h1": {
@@ -314,7 +314,7 @@ function duplicateTitleIssues(healthy: SeoSnapshotInput[]): SeoIssue[] {
 
 /**
  * Health score: 100 minus per-issue deductions (critical 25, warning 5,
- * info 1), clamped to 0–100.
+ * info 1), clamped to 0-100.
  */
 export function calculateSeoScore(counts: Record<SeoSeverity, number>): number {
   const deduction =

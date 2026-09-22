@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { GoogleIcon } from "@/components/brand/integration-icons";
 import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -268,16 +269,17 @@ export default async function BlogPostPage({ params }: Params) {
 
                 <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
                   <Link
-                    href="/signup"
-                    className="bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
+                    href="/signup?provider=google"
+                    className="flex items-center gap-2.5 bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#FFF3B0]"
                   >
-                    Start monitoring free
+                    <GoogleIcon className="size-[18px]" />
+                    Continue with Google
                   </Link>
                   <Link
-                    href="/pricing"
+                    href="/signup"
                     className="bg-white/[0.06] px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-white/[0.12]"
                   >
-                    See pricing
+                    Use email
                   </Link>
                 </div>
 

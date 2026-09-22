@@ -23,3 +23,4 @@ export * from "./db-watch";
 export * from "./admin-alerts";
 export * from "./person-name";
 export * from "./app-access";
+export * from "./ad-selectors";

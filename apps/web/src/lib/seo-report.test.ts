@@ -66,7 +66,7 @@ describe("title checks", () => {
     const found = report.issues.find((i) => i.check === "title-length");
     expect(found?.severity).toBe("warning");
     expect(found?.value).toBe("Short");
-    expect(found?.message).toContain("50–60");
+    expect(found?.message).toContain("50-60");
   });
 
   it("warns on titles longer than 60 characters", () => {
@@ -92,7 +92,7 @@ describe("meta description checks", () => {
     expect(report.issues.map((i) => i.check)).toEqual(["missing-description"]);
   });
 
-  it("warns outside 120–160 characters and accepts the bounds", () => {
+  it("warns outside 120-160 characters and accepts the bounds", () => {
     expect(
       buildSeoReport([healthyPage({ metaDescription: "d".repeat(119) })]).issues.map(
         (i) => i.check,

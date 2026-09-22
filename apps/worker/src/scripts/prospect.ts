@@ -35,7 +35,7 @@ import {
 function headline(finding: LeadFinding, domain: string): string {
   const where = finding.exampleUrl ? ` (${finding.exampleUrl})` : "";
   const scale =
-    finding.group.count > 1 ? ` — and ${finding.group.count - 1} more like it` : "";
+    finding.group.count > 1 ? ` - and ${finding.group.count - 1} more like it` : "";
   return `${finding.title} on ${domain}${where}${scale}`;
 }
 
@@ -59,15 +59,15 @@ function draftEmail(params: {
     ``,
     `I was looking at ${domain} and spotted something worth a check: ${finding.explain.toLowerCase()}${example}`,
     ``,
-    `Fix is usually quick — ${finding.fix.toLowerCase()}`,
+    `Fix is usually quick - ${finding.fix.toLowerCase()}`,
     ``,
     others > 0
-      ? `I ran a full technical crawl while I was there (${result.pagesCrawled} pages, health score ${result.healthScore}/100) and it flagged ${others} other things. Happy to send the whole list — no signup, just reply and I'll paste it over.`
-      : `Happy to send the full crawl if it's useful — no signup, just reply.`,
+      ? `I ran a full technical crawl while I was there (${result.pagesCrawled} pages, health score ${result.healthScore}/100) and it flagged ${others} other things. Happy to send the whole list - no signup, just reply and I'll paste it over.`
+      : `Happy to send the full crawl if it's useful - no signup, just reply.`,
     ``,
-    `I found it with MyKavo, a website change monitoring tool I'm building. Not trying to sell you anything today — I just figured you'd want to know.`,
+    `I found it with MyKavo, a website change monitoring tool I'm building. Not trying to sell you anything today - I just figured you'd want to know.`,
     ``,
-    `— ${sender}`,
+    `- ${sender}`,
   ].join("\n");
 }
 
@@ -184,14 +184,14 @@ async function main(): Promise<void> {
 
     if (!trustworthy) {
       console.log(
-        "\nCOULD NOT AUDIT — most likely the crawler was blocked, not that the\n" +
+        "\nCOULD NOT AUDIT - most likely the crawler was blocked, not that the\n" +
           "site is broken. Do NOT email about this one; open it in a browser first.\n",
       );
     } else if (!finding) {
       // Worth saying plainly rather than inventing a problem: a clean site is
       // a bad prospect for this particular opener, and pretending otherwise is
       // how outreach turns into spam.
-      console.log("\nNothing worth leading with. Skip this one — the site is clean.\n");
+      console.log("\nNothing worth leading with. Skip this one - the site is clean.\n");
     } else {
       console.log(`\nLEAD: ${headline(finding, domain)}\n`);
       console.log(draftEmail({ domain, finding, result, sender: args.sender }));

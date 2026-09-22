@@ -66,7 +66,7 @@ describe("weeklyReportEmail", () => {
   const base: WeeklyReportData = {
     websiteName: "Aurora Outdoor",
     websiteHost: "aurora-outdoor.com",
-    periodLabel: "Jul 3 – Jul 10, 2026",
+    periodLabel: "Jul 3 - Jul 10, 2026",
     scansRun: 7,
     scansFailed: 1,
     totalChanges: 3,
@@ -101,7 +101,7 @@ describe("weeklyReportEmail", () => {
   it("includes stats, severity breakdown, SSL, Lighthouse, and the CTA", () => {
     const { html } = weeklyReportEmail(base);
     expect(html).toContain("Aurora Outdoor");
-    expect(html).toContain("Jul 3 – Jul 10, 2026");
+    expect(html).toContain("Jul 3 - Jul 10, 2026");
     expect(html).toContain("99.9%");
     expect(html).toContain("scans (1 failed)");
     expect(html).toContain("High");
@@ -132,7 +132,7 @@ describe("weeklyReportEmail", () => {
 
   it("provides a plain-text alternative with every section", () => {
     const { text } = weeklyReportEmail(base);
-    expect(text).toContain("Weekly report for aurora-outdoor.com (Jul 3 – Jul 10, 2026)");
+    expect(text).toContain("Weekly report for aurora-outdoor.com (Jul 3 - Jul 10, 2026)");
     expect(text).toContain("Uptime: 99.9%");
     expect(text).toContain("Scans: 7 run, 1 failed");
     expect(text).toContain("- [High] 1 change");
@@ -345,7 +345,7 @@ describe("clientReportDeliveryEmail", () => {
   const base: ClientReportDeliveryData = {
     websiteName: "Aurora Outdoor",
     websiteHost: "aurora-outdoor.com",
-    periodLabel: "Jul 3 – Aug 2, 2026",
+    periodLabel: "Jul 3 - Aug 2, 2026",
     brandName: "Northwind Digital",
     scansRun: 30,
     totalChanges: 3,
@@ -356,7 +356,7 @@ describe("clientReportDeliveryEmail", () => {
 
   it("leads with the agency brand, not MyKavo", () => {
     const { subject, html } = clientReportDeliveryEmail(base);
-    expect(subject).toBe("aurora-outdoor.com website report - Jul 3 – Aug 2, 2026");
+    expect(subject).toBe("aurora-outdoor.com website report - Jul 3 - Aug 2, 2026");
     expect(html).toContain("Prepared by Northwind Digital");
     // Brand heads the shell; MyKavo only appears as the transparency line.
     expect(html).toContain(">Northwind Digital</span>");

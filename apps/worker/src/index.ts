@@ -222,7 +222,7 @@ async function main() {
     },
   );
 
-  // Lighthouse audits (on-demand + weekly sweep). Heavyweight (~10–40s,
+  // Lighthouse audits (on-demand + weekly sweep). Heavyweight (~10-40s,
   // CPU-bound), so one at a time (batchSize 1) with a single retry.
   await boss
     .createQueue(LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60 })

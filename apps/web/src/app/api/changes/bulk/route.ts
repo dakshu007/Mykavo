@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     body = bodySchema.parse(await request.json());
   } catch {
     return NextResponse.json(
-      { error: "Provide 1–100 change ids and an action (REVIEWED, APPROVED, or IGNORED)." },
+      { error: "Provide 1-100 change ids and an action (REVIEWED, APPROVED, or IGNORED)." },
       { status: 400 },
     );
   }
