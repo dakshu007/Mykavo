@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
 import { META_TAG_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { MetaTagChecker } from "./meta-tag-checker";
@@ -91,6 +92,11 @@ export default function MetaTagCheckerPage() {
           </p>
         </section>
       
+        <ToolConversionCta
+          heading="Titles and canonicals change without anyone noticing."
+          body="A one-off check is a snapshot. MyKavo stores this page's approved tags and tells you when a title, description, canonical or robots rule changes - with the old value and the new one side by side."
+        />
+
         <ToolFaqSection
           faqs={META_TAG_FAQS}
           toolName="Meta Tag Checker"

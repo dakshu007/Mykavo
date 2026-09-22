@@ -24,7 +24,25 @@ import { BellRing, Check, Loader2, X } from "lucide-react";
 
 type State = "idle" | "sending" | "sent";
 
-export function RequestAppButton() {
+/**
+ * `hero` is the big gold pill in the Android section. `bar` is the compact
+ * trigger inside the announcement strip, where the surrounding card already
+ * carries the brand and a second loud gold pill would fight it.
+ */
+export type TriggerVariant = "hero" | "bar";
+
+const TRIGGER_CLASS: Record<TriggerVariant, string> = {
+  hero: "inline-flex items-center gap-2.5 rounded-full border border-black/25 bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)] transition-transform hover:-translate-y-0.5 active:translate-y-0",
+  bar: "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#FFD400] px-4 py-2 text-[13px] font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]",
+};
+
+export function RequestAppButton({
+  variant = "hero",
+  label = "Request the Android app",
+}: {
+  variant?: TriggerVariant;
+  label?: string;
+} = {}) {
   const ref = useRef<HTMLDialogElement>(null);
   const formId = useId();
   const [state, setState] = useState<State>("idle");
@@ -88,13 +106,9 @@ export function RequestAppButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={open}
-        className="inline-flex items-center gap-2.5 rounded-full border border-black/25 bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
-      >
-        <BellRing className="size-4.5" aria-hidden />
-        Request the Android app
+      <button type="button" onClick={open} className={TRIGGER_CLASS[variant]}>
+        <BellRing className={variant === "hero" ? "size-4.5" : "size-3.5"} aria-hidden />
+        {label}
       </button>
 
       <dialog

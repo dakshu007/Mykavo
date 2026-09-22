@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
 import { BULK_STATUS_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { BulkStatusChecker } from "./bulk-status-checker";
@@ -84,6 +85,11 @@ export default function BulkUrlStatusCheckerPage() {
           </p>
         </section>
       
+        <ToolConversionCta
+          heading="Today they all return 200. What about next Tuesday?"
+          body="MyKavo watches the pages you care about around the clock and tells you the moment one starts answering 404 or 500 - grouped into a single alert, not one email per URL."
+        />
+
         <ToolFaqSection
           faqs={BULK_STATUS_FAQS}
           toolName="Bulk URL Status Checker"

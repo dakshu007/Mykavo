@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
 import { REDIRECT_CHAIN_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { RedirectChainChecker } from "./redirect-chain-checker";
@@ -85,6 +86,11 @@ export default function RedirectChainCheckerPage() {
           </p>
         </section>
       
+        <ToolConversionCta
+          heading="Redirects break in silence, months after you set them."
+          body="MyKavo re-walks the chain on every scan and alerts you when a hop changes, a loop appears, or a redirect starts pointing somewhere new."
+        />
+
         <ToolFaqSection
           faqs={REDIRECT_CHAIN_FAQS}
           toolName="Redirect Chain Checker"

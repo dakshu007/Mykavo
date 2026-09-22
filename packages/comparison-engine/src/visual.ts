@@ -1,8 +1,20 @@
 /**
  * Screenshot comparison (spec §18). Decodes two JPEG screenshots, normalizes
  * them to a common canvas (baseline/current may differ in height when content
- * changes), runs pixelmatch, and returns the difference percentage plus a
- * PNG diff image. All libraries are MIT-licensed and run in the worker.
+ * changes), and returns difference percentages plus a PNG diff image. All
+ * libraries are MIT-licensed and run in the worker.
+ *
+ * THE DIFF IMAGE IS ROW-ALIGNED, NOT POSITIONAL.
+ * It used to come straight from pixelmatch, which compares row N against row
+ * N. A full-page screenshot is a vertical document, so adding one link to a
+ * nav pushes every row below it down and a positional diff paints the ENTIRE
+ * page red. The severity score already avoided that trap by matching rows as
+ * a multiset - but nobody looks at a number when there is a picture next to
+ * it, and the picture was saying "everything changed" about a one-word edit.
+ *
+ * So the image is built from the same row signatures: rows that exist in both
+ * screenshots are faded out, and only rows that genuinely appeared are
+ * highlighted. Deletions are marked where the page closed up over them.
  */
 
 import jpeg from "jpeg-js";
@@ -22,7 +34,10 @@ export interface VisualDiffResult {
   contentDifferencePercentage: number;
   changedPixels: number;
   totalPixels: number;
-  /** Encoded PNG diff image (baseline dimmed, changed pixels highlighted). */
+  /**
+   * Encoded PNG diff image: the current page faded, with rows that appeared
+   * highlighted and rows that were removed marked where the page closed up.
+   */
   diffPng: Buffer;
 }
 
@@ -175,6 +190,119 @@ function contentDifferencePercentage(baseline: RGBAImage, current: RGBAImage): n
   return ((added + removed) / total) * 100;
 }
 
+/* --------------------------- diff image rendering ------------------------- */
+
+/** Row classification for the diff image, one entry per CURRENT row. */
+const ROW_SAME = 0;
+/** This row is not in the baseline - it appeared, or its content changed. */
+const ROW_ADDED = 1;
+/** Baseline rows were dropped just above this one; the page closed up here. */
+const ROW_REMOVAL_MARK = 2;
+
+/**
+ * Align current rows to baseline rows IN ORDER, for the image.
+ *
+ * Deliberately a different algorithm from contentDifferencePercentage, which
+ * matches rows as an unordered multiset. That is the right call for a
+ * percentage - a reordered page genuinely has the same content - but it
+ * cannot say WHERE anything moved, and an image has to point at a place.
+ *
+ * This is a forward scan instead: walk the current rows, and for each one
+ * take the nearest baseline match at or after the last one matched. Monotonic
+ * by construction, so a gap in the baseline indices means rows were removed
+ * there and the page closed up - which is the only way a deletion can be
+ * shown on a screenshot of the page that no longer contains it.
+ *
+ * The lookahead is bounded: without a cap, one unmatched row would send the
+ * scan through the remaining thousands of baseline rows for every current
+ * row, turning an O(n) pass into O(n squared) on exactly the tall pages that
+ * are slowest to decode already.
+ */
+const MAX_LOOKAHEAD = 400;
+
+function classifyRows(baseline: RGBAImage, current: RGBAImage): Uint8Array {
+  const baseRows = rowSignatures(baseline);
+  const currRows = rowSignatures(current);
+  const flags = new Uint8Array(currRows.length);
+
+  const matches = (a: RowSignaturePair, b: RowSignaturePair): boolean =>
+    a.a === b.a || a.b === b.b;
+
+  let basePos = 0;
+  for (let y = 0; y < currRows.length; y++) {
+    const limit = Math.min(baseRows.length, basePos + MAX_LOOKAHEAD);
+    let found = -1;
+    for (let b = basePos; b < limit; b++) {
+      if (matches(currRows[y], baseRows[b])) {
+        found = b;
+        break;
+      }
+    }
+    if (found === -1) {
+      flags[y] = ROW_ADDED;
+      continue;
+    }
+    // Baseline rows skipped over were removed from the page. Mark the seam
+    // rather than the rows - they no longer exist to highlight.
+    if (found > basePos) flags[y] = ROW_REMOVAL_MARK;
+    basePos = found + 1;
+  }
+  return flags;
+}
+
+/** How far a matched row is washed out. High enough to read as background. */
+const FADE = 0.82;
+/** Highlight for rows that appeared. */
+const ADD_TINT = { r: 229, g: 72, b: 77 };
+/** Marker for a seam where rows were removed. */
+const REMOVE_TINT = { r: 21, g: 21, b: 21 };
+/** Width of the solid gutter stripe, so a one-row change is still visible. */
+const GUTTER = 6;
+
+/**
+ * The current page, faded, with changes picked out.
+ *
+ * Rendered on the CURRENT screenshot rather than the baseline because the
+ * question a person opens a diff to answer is "what does my page look like
+ * now, and what is new about it" - not "what did it used to be". The before
+ * screenshot is shown next to this one anyway.
+ */
+function renderAlignedDiff(
+  current: Uint8Array,
+  width: number,
+  height: number,
+  flags: Uint8Array,
+): PNG {
+  const png = new PNG({ width, height });
+  for (let y = 0; y < height; y++) {
+    const flag = y < flags.length ? flags[y] : ROW_SAME;
+    const tint = flag === ROW_ADDED ? ADD_TINT : flag === ROW_REMOVAL_MARK ? REMOVE_TINT : null;
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const r = current[i];
+      const g = current[i + 1];
+      const b = current[i + 2];
+      if (!tint) {
+        // Unchanged: wash toward white so the highlights carry the image.
+        png.data[i] = r + (255 - r) * FADE;
+        png.data[i + 1] = g + (255 - g) * FADE;
+        png.data[i + 2] = b + (255 - b) * FADE;
+      } else if (x < GUTTER) {
+        png.data[i] = tint.r;
+        png.data[i + 1] = tint.g;
+        png.data[i + 2] = tint.b;
+      } else {
+        // Changed: keep the pixels legible, lay the tint over them.
+        png.data[i] = r + (tint.r - r) * 0.28;
+        png.data[i + 1] = g + (tint.g - g) * 0.28;
+        png.data[i + 2] = b + (tint.b - b) * 0.28;
+      }
+      png.data[i + 3] = 255;
+    }
+  }
+  return png;
+}
+
 /**
  * Compare two JPEG screenshots. Returns null if either image fails to decode
  * (a degraded scan should not block the rest of the comparison).
@@ -200,11 +328,17 @@ export function compareScreenshots(
   const baseData = padToCanvas(baseline, width, height);
   const currData = padToCanvas(current, width, height);
 
-  const diff = new PNG({ width, height });
-  const changedPixels = pixelmatch(baseData, currData, diff.data, width, height, {
+  // The raw positional count is still reported - it is the honest answer to
+  // "how many pixels differ" and it is what the dashboard prints next to the
+  // image. It is NOT what the image is drawn from, and never scores severity.
+  const scratch = new PNG({ width, height });
+  const changedPixels = pixelmatch(baseData, currData, scratch.data, width, height, {
     threshold: 0.1, // per-pixel color tolerance; ignores sub-perceptual noise
     includeAA: false, // ignore anti-aliasing differences
   });
+
+  const flags = classifyRows(baseline, current);
+  const diff = renderAlignedDiff(currData, width, height, flags);
 
   return {
     differencePercentage: (changedPixels / totalPixels) * 100,

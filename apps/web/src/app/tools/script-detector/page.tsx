@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
 import { SCRIPT_DETECTOR_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { ScriptDetector } from "./script-detector";
@@ -85,6 +86,11 @@ export default function ScriptDetectorPage() {
           </p>
         </section>
       
+        <ToolConversionCta
+          heading="Scripts vanish quietly. Find out the same day."
+          body="This page told you what loads today. MyKavo re-checks it on a schedule and emails you the moment an analytics tag, a pixel or a payment script disappears - or an unfamiliar one appears."
+        />
+
         <ToolFaqSection
           faqs={SCRIPT_DETECTOR_FAQS}
           toolName="Script Detector"

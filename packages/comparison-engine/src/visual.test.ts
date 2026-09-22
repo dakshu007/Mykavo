@@ -146,3 +146,111 @@ describe("content difference vs raw pixel difference", () => {
     expect(result!.contentDifferencePercentage).toBeGreaterThan(0);
   });
 });
+
+/* ----------------------- the diff image, not the number ------------------- */
+
+import { PNG } from "pngjs";
+
+/**
+ * A page built from a list of row shades, one entry per pixel row.
+ *
+ * Solid blocks are the wrong fixture for this: shifting a block of one colour
+ * down only changes the few rows at its edges, so it understates the very
+ * inflation being tested. A real page is rows of text and images that each
+ * differ from their neighbours, so a shift misaligns essentially all of them.
+ * Shades step by more than the signature's quantisation, so adjacent rows are
+ * genuinely distinguishable rather than collapsing into one bucket.
+ */
+const SHADES = [20, 90, 160, 230, 55, 125, 195];
+
+/** Concatenate row-shade runs into one page image. */
+function pageOfRows(width: number, rows: number[]): Buffer {
+  const height = rows.length;
+  const data = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      data[i] = data[i + 1] = data[i + 2] = rows[y];
+      data[i + 3] = 255;
+    }
+  }
+  return jpeg.encode({ data: Buffer.from(data), width, height }, 100).data;
+}
+
+/** n rows cycling through the shade palette, starting at `from`. */
+function body(n: number, from = 0): number[] {
+  return Array.from({ length: n }, (_, i) => SHADES[(i + from) % SHADES.length]);
+}
+
+/** Share of rows in the diff image carrying a highlight rather than the fade. */
+function highlightedRowShare(diffPng: Buffer): number {
+  const png = PNG.sync.read(diffPng);
+  let flagged = 0;
+  for (let y = 0; y < png.height; y++) {
+    // The gutter stripe is painted solid, so the first pixel of a row is the
+    // cheapest reliable test for "this row was marked".
+    const i = y * png.width * 4;
+    const [r, g, b] = [png.data[i], png.data[i + 1], png.data[i + 2]];
+    const faded = r > 200 && g > 200 && b > 200;
+    if (!faded) flagged++;
+  }
+  return flagged / png.height;
+}
+
+describe("the diff image", () => {
+  /**
+   * THE BUG THIS EXISTS TO PREVENT.
+   *
+   * A real customer added one link to their nav. Everything below shifted by
+   * a few pixels, the positional pixel diff called every row changed, and the
+   * diff image came out solid red - useless for seeing what had actually
+   * happened. The severity score was already shift-aware; the picture was not.
+   */
+  it("does not light up the whole page when content merely shifts down", () => {
+    const before = pageOfRows(64, [...body(20), ...body(80, 3)]);
+    // Same page with an 8-row band inserted near the top: everything below
+    // slides down, which is the customer's nav link in miniature.
+    const after = pageOfRows(64, [...body(20), ...body(8, 5), ...body(80, 3)]);
+    const result = compareScreenshots(before, after)!;
+
+    // The positional count is still huge - that is the honest pixel answer,
+    // and exactly why it must not be what the image is drawn from.
+    expect(result.differencePercentage).toBeGreaterThan(30);
+
+    // The picture, though, points at the insertion and leaves the rest alone.
+    expect(highlightedRowShare(result.diffPng)).toBeLessThan(0.25);
+  });
+
+  it("highlights nothing when the page is unchanged", () => {
+    const unchanged = pageOfRows(64, body(60));
+    const result = compareScreenshots(unchanged, unchanged)!;
+    expect(highlightedRowShare(result.diffPng)).toBeLessThan(0.05);
+  });
+
+  /**
+   * The failure mode the fix could have introduced. A deleted section leaves
+   * the surviving rows matching perfectly - they just move up - so a naive
+   * "highlight what is new" would show a clean page for a real deletion.
+   */
+  it("still marks the page when a section is deleted", () => {
+    const before = pageOfRows(64, [...body(20), ...body(30, 2), ...body(30, 4)]);
+    const after = pageOfRows(64, [...body(20), ...body(30, 4)]);
+    const result = compareScreenshots(before, after)!;
+    expect(highlightedRowShare(result.diffPng)).toBeGreaterThan(0);
+  });
+
+  it("marks a genuinely rewritten page nearly everywhere", () => {
+    const before = pageOfRows(64, Array.from({ length: 80 }, () => 245));
+    const after = pageOfRows(64, Array.from({ length: 80 }, () => 15));
+    const result = compareScreenshots(before, after)!;
+    expect(highlightedRowShare(result.diffPng)).toBeGreaterThan(0.9);
+  });
+
+  it("produces an image the same size as the current page", () => {
+    const before = pageOfRows(64, body(40));
+    const after = pageOfRows(64, body(90));
+    const png = PNG.sync.read(compareScreenshots(before, after)!.diffPng);
+    expect(png.width).toBe(64);
+    expect(png.height).toBe(90);
+  });
+});

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
 import { CHANGE_DETECTOR_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { ChangeDetector } from "./change-detector";
@@ -85,6 +86,11 @@ export default function WebsiteChangeDetectorPage() {
           </p>
         </section>
       
+        <ToolConversionCta
+          heading="Comparing by hand does not scale past one page."
+          body="MyKavo does exactly this, automatically: approve a known-good baseline of the pages that matter and get a severity-ranked alert, with before-and-after evidence, whenever one of them changes."
+        />
+
         <ToolFaqSection
           faqs={CHANGE_DETECTOR_FAQS}
           toolName="Website Change Detector"

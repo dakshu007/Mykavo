@@ -231,15 +231,41 @@ export default async function BlogPostPage({ params }: Params) {
                 </div>
               </aside>
 
-              {/* End-of-post product CTA - ink band with the gold spark */}
+              {/*
+                End-of-post product CTA.
+
+                The heading used to be the brand tagline, which reads well and
+                asks for nothing; it now names what the reader would actually
+                get. The secondary button used to be "More posts" - at the one
+                moment somebody has finished reading and is deciding, it sent
+                them back into the blog. That is a conversion leak at the
+                highest-intent point on the page, so the deeper-reading link is
+                still there, demoted to text below the buttons, and the second
+                button goes to pricing instead (which GA4 shows getting a tenth
+                of the homepage's views).
+              */}
               <aside className="mt-8 rounded-[28px] border border-[#151515] bg-[#151515] px-7 py-12 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515] sm:px-10">
                 <h2 className={`${fontDisplay} text-3xl leading-tight text-[#E9EBDF] sm:text-4xl`}>
-                  Know what changed. <span className="text-[#FFD400]">Fix what matters.</span>
+                  Stop checking your pages{" "}
+                  <span className="text-[#FFD400]">by hand.</span>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#9C9E93]">
-                  MyKavo monitors your websites for visual, SEO, link, script, and performance
-                  changes - and alerts you before small problems become expensive problems.
+                  MyKavo watches the pages that matter and tells you the moment one changes or
+                  breaks - with before-and-after proof of exactly what moved.
                 </p>
+
+                <ul className="mx-auto mt-6 flex w-fit flex-col gap-2 text-left sm:flex-row sm:gap-5">
+                  {["Free forever plan", "No credit card", "Monitoring in minutes"].map((point) => (
+                    <li
+                      key={point}
+                      className="flex items-center gap-2 text-[13px] font-medium text-[#E9EBDF]"
+                    >
+                      <span className="size-1.5 rounded-full bg-[#FFD400]" aria-hidden />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+
                 <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
                   <Link
                     href="/signup"
@@ -248,12 +274,20 @@ export default async function BlogPostPage({ params }: Params) {
                     Start monitoring free
                   </Link>
                   <Link
-                    href="/blog"
+                    href="/pricing"
                     className="bg-white/[0.06] px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-white/[0.12]"
                   >
-                    More posts
+                    See pricing
                   </Link>
                 </div>
+
+                <p className="mt-5 text-[13px] text-[#9C9E93]">
+                  Or{" "}
+                  <Link href="/blog" className="text-[#E9EBDF] underline underline-offset-4 hover:text-[#FFD400]">
+                    read more posts
+                  </Link>
+                  .
+                </p>
               </aside>
             </article>
 

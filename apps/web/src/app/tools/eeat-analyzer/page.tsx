@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
+import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
 import { EEAT_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { EeatAnalyzer } from "./eeat-analyzer";
@@ -72,6 +73,11 @@ export default function EeatAnalyzerPage() {
           </p>
         </section>
       
+        <ToolConversionCta
+          heading="A good score today is not a good score forever."
+          body="MyKavo baselines the signals this page depends on and tells you when an author box, a date, a citation or a trust element quietly disappears in a redesign."
+        />
+
         <ToolFaqSection
           faqs={EEAT_FAQS}
           toolName="E-E-A-T Analyzer"
