@@ -125,6 +125,56 @@ start disagreeing with the first the day an account was deleted.
 
 ---
 
+## The welcome email
+
+Every new account gets one email, immediately after it is created:
+*"Welcome to MyKavo - start monitoring your website."*
+
+**Signup, never sign-in.** It fires from the same `user.create.after` hook as
+the operator alert (`apps/web/src/lib/auth.ts`), so it reaches everyone once
+whether they signed up with Google or with an email and password. A hook on
+sign-in would resend it on every visit, which is how a welcome becomes a spam
+report - and a spam report costs the sending domain's reputation for every
+alert MyKavo sends afterwards.
+
+**Its own queue.** `WELCOME_EMAIL_QUEUE`, separate from `ADMIN_SIGNUP_QUEUE`
+even though both fire on the same event. The admin job returns early when
+`ADMIN_EMAILS` is unset and skips an admin's own signup; folding the customer's
+welcome into it would let those early returns swallow it silently.
+
+**Sent exactly once.** The job de-duplicates on a `Notification` row for the
+workspace with `channelType=EMAIL` and the welcome's subject. Only a `SENT` row
+blocks a retry - `PENDING` or `FAILED` means the last attempt did not land and
+should be tried again. That also means the welcome shows up wherever
+notification history does, with no new column and no migration.
+
+**It does not honour the email opt-in rule, on purpose.** That rule
+(`apps/web/src/lib/notification-settings.ts`) governs recurring alerts about
+websites, which nobody receives until they ask. This is a single transactional
+message confirming an account somebody just created at the address they just
+typed in - the same category as a receipt.
+
+**It tells the reader alerts are off.** This is the part that matters
+operationally. New workspaces are opt-in, so a new user can add a website,
+watch the baseline finish, and then never hear anything - concluding the
+product does not work. The welcome is the one message guaranteed to arrive
+before that happens, so it says so and links to `/dashboard/notifications`.
+The getting-started checklist's step is worded to match ("Choose where alerts
+reach you"), rather than the old "Get alerts beyond email", which implied email
+was already working.
+
+**If nobody is getting it**, check in this order:
+
+1. `RESEND_API_KEY` in the worker's `worker.env` - without it `sendEmail` falls
+   back to the `noop` provider in production and reports success.
+2. `EMAIL_FROM` - Resend's sandbox sender delivers only to the Resend account
+   owner and silently drops everything else.
+3. `APP_URL` - wrong value means the links in the email point at the wrong host.
+4. `pgboss.job` for the `welcome-email` queue: rows in `failed` carry the
+   provider error in their output.
+
+---
+
 ## Lead forms: demo, guest posts, partner applications
 
 The Book a Demo (`/demo`), Write for Us (`/write-for-us`) and Partner Program

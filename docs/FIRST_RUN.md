@@ -91,6 +91,20 @@ card can never disagree about whether setup is finished.
 Account access is never gated. Billing and Settings must be reachable from the
 first second of the first session.
 
+### 4. The welcome email carries the loop too
+
+`packages/email/src/templates.ts` — `welcomeEmail()`
+
+One email, on account creation, built around the same three steps rather than
+around the feature list. Listing the audit, Search Console and the rest here
+would recreate in the inbox exactly the several-products-at-once problem this
+document exists to prevent; a test asserts those names do not appear.
+
+It also states that **email alerts are off until you turn them on**, because
+new workspaces are opt-in. Without that line the loop has a silent trap at the
+end: add a website, watch the baseline finish, hear nothing, conclude MyKavo
+does not work. See `docs/OPERATIONS.md` for the delivery details.
+
 ## What this does NOT mean
 
 **The marketing site keeps its breadth.** Agencies buy breadth: someone

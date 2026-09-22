@@ -740,3 +740,106 @@ export function renewalReminderEmail(data: RenewalReminderData): {
     `${subject}\n\n${lead}\n\nBilling: ${data.billingUrl}`;
   return { subject, html: shell(inner), text };
 }
+
+// ---------- Welcome (sent once, when an account is created) ----------
+
+export interface WelcomeEmailData {
+  /**
+   * What to call them. May be empty, junk, or an address handle - whatever
+   * was stored at signup - so the caller passes it through
+   * displayPersonName() first and this template only decides whether to use
+   * it or fall back to a greeting with no name in it.
+   */
+  name: string;
+  /** Absolute link to the add-website wizard. */
+  addWebsiteUrl: string;
+  /** Absolute link to notification settings, where email alerts are switched on. */
+  alertsUrl: string;
+  /** Absolute link to the docs, for the "how it works" line. */
+  docsUrl: string;
+}
+
+/**
+ * The one email a new account gets, immediately after it is created.
+ *
+ * Written around the first-run loop rather than around the feature list (see
+ * docs/FIRST_RUN.md): the job of this email is to get somebody to add one
+ * website, because an account with no website is not a user yet. Listing the
+ * audit, Search Console and everything else here would recreate, in the
+ * inbox, exactly the eight-entry-points problem the app was just fixed for.
+ *
+ * Sent on ACCOUNT CREATION, not on sign-in - a "welcome back" on every login
+ * is the fastest way into somebody's spam filter.
+ *
+ * It also has to say that email alerts are OFF. New workspaces are opt-in
+ * (apps/web/src/lib/notification-settings.ts), which is the right default -
+ * but it means somebody can add a website, watch the baseline finish, and
+ * then never hear anything, concluding MyKavo does not work. This is the one
+ * message guaranteed to reach them before that happens.
+ */
+export function welcomeEmail(data: WelcomeEmailData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = "Welcome to MyKavo - start monitoring your website";
+  const first = data.name.trim().split(/\s+/)[0] ?? "";
+  const greeting = first ? `Welcome, ${esc(first)}` : "Welcome to MyKavo";
+  const greetingText = first ? `Welcome, ${first}` : "Welcome to MyKavo";
+
+  const steps: [string, string][] = [
+    ["Add a website", "MyKavo finds your pages from robots.txt and your sitemap."],
+    ["Approve the baseline", "The first scan records the known-good state of every page you pick."],
+    [
+      "Get told when it changes",
+      "Every scan after that is compared against that baseline. You hear from us only when something matters.",
+    ],
+  ];
+
+  const stepsHtml = steps
+    .map(
+      ([title, body], i) => `
+    <tr>
+      <td style="padding:0 12px 14px 0;vertical-align:top;width:26px">
+        <span style="display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:9999px;background:#eaeefe;color:#3556f4;font-size:12px;font-weight:600">${i + 1}</span>
+      </td>
+      <td style="padding:0 0 14px;vertical-align:top">
+        <p style="margin:0 0 2px;font-size:14px;font-weight:600">${esc(title)}</p>
+        <p style="margin:0;font-size:13px;color:#5c6270">${esc(body)}</p>
+      </td>
+    </tr>`,
+    )
+    .join("");
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Welcome aboard</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${greeting}</h1>
+    <p style="margin:0 0 22px;font-size:14px;color:#5c6270">Your account is ready. MyKavo watches the websites you care about and tells you when something important changes or breaks - so you hear it from us rather than from a client.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 24px">${stepsHtml}</table>
+    ${button(data.addWebsiteUrl, "Add your first website")}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Adding a website starts its baseline scan straight away - you will see the first results in a couple of minutes. <a href="${esc(data.docsUrl)}" style="color:#3556f4;text-decoration:none">How MyKavo works</a></p>
+    <div style="margin:22px 0 0;background:#f4f6fb;border-radius:12px;padding:14px 16px">
+      <p style="margin:0 0 4px;font-size:14px;font-weight:600">One thing to switch on</p>
+      <p style="margin:0;font-size:13px;color:#5c6270">Email alerts are off until you turn them on - we do not mail anyone who did not ask for it. <a href="${esc(data.alertsUrl)}" style="color:#3556f4;text-decoration:none">Turn on alerts</a> so the changes MyKavo finds actually reach you.</p>
+    </div>
+    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">You are receiving this because an account was created with this address. Just reply if you get stuck - a real person reads it.</p>
+  `;
+
+  const text =
+    `${greetingText}\n\n` +
+    `Your account is ready. MyKavo watches the websites you care about and tells you when ` +
+    `something important changes or breaks.\n\n` +
+    steps.map(([title, body], i) => `${i + 1}. ${title} - ${body}`).join("\n") +
+    `\n\nAdd your first website: ${data.addWebsiteUrl}\n\n` +
+    `Adding a website starts its baseline scan straight away - you will see the first ` +
+    `results in a couple of minutes.\n` +
+    `How MyKavo works: ${data.docsUrl}\n\n` +
+    `ONE THING TO SWITCH ON\n` +
+    `Email alerts are off until you turn them on - we do not mail anyone who did not ` +
+    `ask for it. Turn them on so the changes MyKavo finds actually reach you:\n` +
+    `${data.alertsUrl}\n\n` +
+    `You are receiving this because an account was created with this address. ` +
+    `Just reply if you get stuck - a real person reads it.`;
+
+  return { subject, html: shell(inner), text };
+}

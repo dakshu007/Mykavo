@@ -40,6 +40,21 @@ export const PUSH_TEST_QUEUE = "push-test";
  * round trip happens in the worker where a failure costs nothing.
  */
 export const ADMIN_SIGNUP_QUEUE = "admin-signup";
+/**
+ * "Welcome to MyKavo" - the one email a new account gets, to the CUSTOMER.
+ *
+ * A separate queue from ADMIN_SIGNUP_QUEUE even though both fire on the same
+ * event, because they have different audiences and independent failure
+ * modes. The operator alert returns early when ADMIN_EMAILS is unset, and
+ * skips an admin's own signup; folding the customer's welcome into that job
+ * would make those early returns silently swallow it too.
+ *
+ * Enqueued from the signup hook rather than sent there, for the same reason
+ * as the admin alert: that hook runs inside the request that creates the
+ * account, and an email round trip must never be able to slow it down or
+ * fail it.
+ */
+export const WELCOME_EMAIL_QUEUE = "welcome-email";
 
 export interface ScanWebsiteJob {
   scanId: string;
@@ -71,5 +86,14 @@ export interface PushTestJob {
 
 export interface AdminSignupJob {
   /** The account that was just created. Everything else is read from the row. */
+  userId: string;
+}
+
+/**
+ * Whose welcome to send. Carries only the id: the worker reads the name and
+ * address itself, so a job sitting in the queue never holds a stale copy of
+ * either, and an account deleted before the job runs simply finds nothing.
+ */
+export interface WelcomeEmailJob {
   userId: string;
 }

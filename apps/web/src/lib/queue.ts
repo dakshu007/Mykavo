@@ -11,9 +11,11 @@ import {
   GSC_SYNC_QUEUE,
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
+  WELCOME_EMAIL_QUEUE,
   ARTIFACT_PURGE_QUEUE,
   type PushTestJob,
   type AdminSignupJob,
+  type WelcomeEmailJob,
   type ArtifactPurgeJob,
   type ScanWebsiteJob,
   type SiteAuditJob,
@@ -89,6 +91,27 @@ export async function enqueueAdminSignupAlert(job: AdminSignupJob): Promise<void
     await boss.send(ADMIN_SIGNUP_QUEUE, { ...job });
   } catch {
     // Never let telling ourselves about a customer cost us the customer.
+  }
+}
+
+/**
+ * Send the new account its welcome email.
+ *
+ * Swallows its own failures, like the admin alert and for the same reason: an
+ * account that exists without a welcome email is a much better outcome than a
+ * signup that failed because an email could not be queued. Enqueued
+ * separately from the admin alert so that neither can suppress the other.
+ *
+ * retryLimit 3 rather than 2: this one is addressed to a paying prospect
+ * rather than to us, and a transient SMTP failure should get another go.
+ */
+export async function enqueueWelcomeEmail(job: WelcomeEmailJob): Promise<void> {
+  try {
+    const boss = await getBoss();
+    await boss.createQueue(WELCOME_EMAIL_QUEUE, { retryLimit: 3 }).catch(() => {});
+    await boss.send(WELCOME_EMAIL_QUEUE, { ...job });
+  } catch {
+    // A missing welcome must never cost us the signup it was welcoming.
   }
 }
 

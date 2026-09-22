@@ -9,7 +9,7 @@ import { logger } from "@/lib/logger";
 import { validateSignupEmail, EMAIL_VALIDATION_MESSAGES } from "@/lib/email-validation";
 import { checkPersonName, NAME_REJECTION_MESSAGES } from "@mykavo/shared";
 import { recordSignupToSheet } from "@/lib/signup-sheet";
-import { enqueueAdminSignupAlert } from "@/lib/queue";
+import { enqueueAdminSignupAlert, enqueueWelcomeEmail } from "@/lib/queue";
 
 /**
  * Whether Google sign-in is configured. Drives the "Continue with Google"
@@ -129,6 +129,13 @@ export const auth = betterAuth({
           // never be able to slow that down or fail it. enqueue swallows its
           // own errors for the same reason.
           await enqueueAdminSignupAlert({ userId: user.id });
+
+          // Welcome the customer. Fires here - on ACCOUNT CREATION - so it
+          // reaches everyone once, whether they signed up with Google or with
+          // an email and password; a hook on sign-in would send it again on
+          // every visit, which is how a welcome becomes spam. Queued and
+          // error-swallowing for the same reason as the line above.
+          await enqueueWelcomeEmail({ userId: user.id });
         },
       },
     },

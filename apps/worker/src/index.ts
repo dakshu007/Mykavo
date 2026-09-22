@@ -24,8 +24,10 @@ import {
   DOMAIN_SWEEP_QUEUE,
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
+  WELCOME_EMAIL_QUEUE,
   type PushTestJob,
   type AdminSignupJob,
+  type WelcomeEmailJob,
   type ScanWebsiteJob,
   type LighthouseAuditJob,
   type SiteAuditJob,
@@ -37,6 +39,7 @@ import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
 import { startDatabaseWatch } from "./db-watch";
 import { runAdminSignupJob } from "./admin-signup";
+import { runWelcomeEmailJob } from "./welcome-email";
 import { runRetentionSweep } from "./retention";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
@@ -254,6 +257,15 @@ async function main() {
   await boss.createQueue(ADMIN_SIGNUP_QUEUE, { retryLimit: 2 }).catch(() => {});
   await boss.work<AdminSignupJob>(ADMIN_SIGNUP_QUEUE, { batchSize: 1 }, async ([job]) => {
     await runAdminSignupJob(job.data.userId);
+  });
+
+  // "Welcome to MyKavo" - to the customer this time. A separate queue from
+  // the operator alert above: the two have independent failure modes, and the
+  // admin job's early returns (no ADMIN_EMAILS, admin's own signup) must
+  // never be able to swallow a customer's welcome.
+  await boss.createQueue(WELCOME_EMAIL_QUEUE, { retryLimit: 3 }).catch(() => {});
+  await boss.work<WelcomeEmailJob>(WELCOME_EMAIL_QUEUE, { batchSize: 1 }, async ([job]) => {
+    await runWelcomeEmailJob(job.data.userId);
   });
 
   // Self-monitoring. Deliberately NOT a pg-boss schedule: pg-boss fetches its

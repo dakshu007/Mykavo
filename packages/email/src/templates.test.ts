@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  welcomeEmail,
   scanSummaryEmail,
   failureAlertEmail,
   deployVerdictEmail,
@@ -440,5 +441,106 @@ describe("worker database outage emails", () => {
     // Scans killed mid-flight do not resume, and saying so saves the reader
     // wondering why the dashboard still shows failures.
     expect(mail.text).toContain("need running again");
+  });
+});
+
+describe("welcomeEmail", () => {
+  const data = {
+    name: "Dakshesh Babu",
+    addWebsiteUrl: "https://mykavo.app/dashboard/websites/new",
+    alertsUrl: "https://mykavo.app/dashboard/notifications",
+    docsUrl: "https://mykavo.app/docs",
+  };
+
+  it("says what it is for, in the subject", () => {
+    const mail = welcomeEmail(data);
+    expect(mail.subject).toBe("Welcome to MyKavo - start monitoring your website");
+  });
+
+  it("greets by first name only", () => {
+    const mail = welcomeEmail(data);
+    expect(mail.html).toContain("Welcome, Dakshesh");
+    expect(mail.html).not.toContain("Dakshesh Babu");
+  });
+
+  /**
+   * The name column holds whatever was stored, and rows predating the signup
+   * name check can be empty. A greeting reading "Welcome, " is worse than no
+   * name at all.
+   */
+  it("falls back to a nameless greeting rather than an empty one", () => {
+    for (const name of ["", "   "]) {
+      const mail = welcomeEmail({ ...data, name });
+      expect(mail.subject).toBeTruthy();
+      expect(mail.html).toContain("Welcome to MyKavo");
+      expect(mail.html).not.toContain("Welcome, <");
+      expect(mail.text.startsWith("Welcome to MyKavo")).toBe(true);
+    }
+  });
+
+  /**
+   * The point of the email. An account with no website is not a user yet, so
+   * the single call to action is adding one.
+   */
+  it("leads with adding a website", () => {
+    const mail = welcomeEmail(data);
+    expect(mail.html).toContain(data.addWebsiteUrl);
+    expect(mail.html).toContain("Add your first website");
+    expect(mail.text).toContain(data.addWebsiteUrl);
+  });
+
+  it("teaches the loop, in order", () => {
+    const { text } = welcomeEmail(data);
+    const add = text.indexOf("Add a website");
+    const baseline = text.indexOf("Approve the baseline");
+    const told = text.indexOf("Get told when it changes");
+    expect(add).toBeGreaterThan(-1);
+    expect(add).toBeLessThan(baseline);
+    expect(baseline).toBeLessThan(told);
+  });
+
+  /**
+   * Deliberately NOT a feature list. Naming the audit, Search Console and the
+   * rest here would recreate in the inbox exactly the several-products-at-once
+   * problem the first-run work removed from the app (docs/FIRST_RUN.md).
+   */
+  it("does not open with a menu of every feature", () => {
+    const { text } = welcomeEmail(data);
+    for (const feature of ["Search Console", "Site Audit", "Analyser", "Lighthouse"]) {
+      expect(text).not.toContain(feature);
+    }
+  });
+
+  /**
+   * New workspaces are opt-in for email alerts, which is the right default
+   * and a silent trap: add a website, watch the baseline finish, never hear
+   * anything, conclude the product does not work. This email is the one
+   * message guaranteed to arrive before that happens, so it must say so.
+   */
+  it("warns that email alerts are off, and links to the switch", () => {
+    const mail = welcomeEmail(data);
+    expect(mail.text).toContain("Email alerts are off until you turn them on");
+    expect(mail.text).toContain(data.alertsUrl);
+    expect(mail.html).toContain(data.alertsUrl);
+  });
+
+  it("frames the default as a promise rather than a missing feature", () => {
+    expect(welcomeEmail(data).text).toContain("we do not mail anyone who did not ask");
+  });
+
+  it("says why they are getting it", () => {
+    expect(welcomeEmail(data).text).toContain("an account was created with this address");
+  });
+
+  it("escapes a name rather than trusting it", () => {
+    const mail = welcomeEmail({ ...data, name: '<img src=x onerror="alert(1)">' });
+    expect(mail.html).not.toContain("<img");
+    expect(mail.html).toContain("&lt;img");
+  });
+
+  it("has a plain-text part that is not HTML", () => {
+    const mail = welcomeEmail(data);
+    expect(mail.text).not.toContain("<");
+    expect(mail.text.length).toBeGreaterThan(100);
   });
 });
