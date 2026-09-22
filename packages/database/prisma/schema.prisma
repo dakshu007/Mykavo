@@ -29,12 +29,13 @@ model User {
   sessions          Session[]
   accounts          Account[]
   twoFactors        TwoFactor[]
-  ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
+  ownedWorkspaces   Workspace[]        @relation("WorkspaceOwner")
   memberships       WorkspaceMember[]
-  sentInvites       WorkspaceInvite[] @relation("WorkspaceInviter")
-  approvedBaselines Baseline[]        @relation("BaselineApprover")
-  changeNotes       ChangeNote[]      @relation("ChangeNoteAuthor")
+  sentInvites       WorkspaceInvite[]  @relation("WorkspaceInviter")
+  approvedBaselines Baseline[]         @relation("BaselineApprover")
+  changeNotes       ChangeNote[]       @relation("ChangeNoteAuthor")
   pushDevices       PushDevice[]
+  decidedAppAccess  AppAccessRequest[] @relation("AppAccessDecider")
 
   @@map("user")
 }
@@ -1112,4 +1113,49 @@ model PendingArtifactDeletion {
 
   @@index([createdAt])
   @@map("pending_artifact_deletion")
+}
+
+/// Someone asking for the Android app, from the marketing site.
+///
+/// The app is not on any store yet, so access is granted by hand: a visitor
+/// asks, the operator approves, and only then does a download appear in that
+/// person's dashboard. That makes it a marketing list as much as a
+/// distribution gate, which is why the row survives the decision - a DECLINED
+/// or PENDING request is still a name and an address that asked.
+///
+/// Keyed by EMAIL, not by user: people request before they have an account,
+/// and the whole point of the "use the same address as your MyKavo account"
+/// instruction is that the address is what links a request to a login later.
+model AppAccessRequest {
+  id                  String          @id @default(cuid())
+  /// As typed, after whitespace collapsing. Checked by checkPersonName.
+  name                String
+  /// Lowercased and trimmed. Unique: one live request per address, so a
+  /// second submission updates the existing row instead of queueing a
+  /// duplicate for the operator to decide twice.
+  email               String          @unique
+  status              AppAccessStatus @default(PENDING)
+  /// Where the request came from, for attribution ("landing", "pricing", ...).
+  source              String?
+  requestedAt         DateTime        @default(now())
+  decidedAt           DateTime?
+  decidedByUserId     String?
+  decidedByUser       User?           @relation("AppAccessDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+  /// Set when the "your download is ready" email is actually accepted by the
+  /// provider - so a send that failed can be retried without guessing.
+  approvalEmailSentAt DateTime?
+  /// First time the APK link was followed. The end of the funnel.
+  firstDownloadAt     DateTime?
+  downloadCount       Int             @default(0)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([status, requestedAt(sort: Desc)])
+  @@map("app_access_request")
+}
+
+enum AppAccessStatus {
+  PENDING
+  APPROVED
+  DECLINED
 }

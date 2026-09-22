@@ -74,17 +74,22 @@ describe("dashboardNav - operator entries", () => {
     expect(admin?.items.map((i) => i.id)).toEqual(["blog"]);
   });
 
-  it("adds Users and All Usage for a platform admin", () => {
+  it("adds the operator screens for a platform admin", () => {
     const admin = dashboardNav({ ...live, isPlatformAdmin: true }).find(
       (g) => g.id === "admin",
     );
-    expect(admin?.items.map((i) => i.id)).toEqual(["users", "usage"]);
+    expect(admin?.items.map((i) => i.id)).toEqual(["users", "app-requests", "usage"]);
   });
 
   it("keeps the two privileges independent", () => {
     const both = dashboardNav({ ...live, isBlogAdmin: true, isPlatformAdmin: true });
     const admin = both.find((g) => g.id === "admin");
-    expect(admin?.items.map((i) => i.id)).toEqual(["blog", "users", "usage"]);
+    expect(admin?.items.map((i) => i.id)).toEqual([
+      "blog",
+      "users",
+      "app-requests",
+      "usage",
+    ]);
   });
 
   it("puts admin last, below the user's own screens", () => {
@@ -93,12 +98,59 @@ describe("dashboardNav - operator entries", () => {
   });
 });
 
+describe("dashboardNav - the Android app download", () => {
+  /**
+   * The rule the whole app-access feature rests on. PENDING, DECLINED and
+   * "never asked" are all just absent here - and deliberately
+   * indistinguishable, so a declined user never learns they were declined.
+   */
+  it("hides the download from anyone not approved", () => {
+    for (const access of [live, { ...live, appApproved: false }]) {
+      expect(flattenNav(dashboardNav(access)).map((i) => i.id)).not.toContain("app");
+    }
+  });
+
+  it("shows it to an approved account", () => {
+    const ids = flattenNav(dashboardNav({ ...live, appApproved: true })).map((i) => i.id);
+    expect(ids).toContain("app");
+  });
+
+  it("puts it in the account group, above the account screens", () => {
+    const account = dashboardNav({ ...live, appApproved: true }).find(
+      (g) => g.id === "account",
+    );
+    expect(account?.items.map((i) => i.id)).toEqual([
+      "app",
+      "notifications",
+      "billing",
+      "settings",
+    ]);
+  });
+
+  /**
+   * Approval is not a monitoring milestone: somebody approved for the app
+   * before they have added a website must still see the download.
+   */
+  it("does not depend on monitoring being live", () => {
+    const ids = flattenNav(
+      dashboardNav({ ...fresh, appApproved: true }),
+    ).map((i) => i.id);
+    expect(ids).toContain("app");
+  });
+
+  it("never shows the approval queue to a non-admin", () => {
+    const ids = flattenNav(dashboardNav({ ...live, appApproved: true })).map((i) => i.id);
+    expect(ids).not.toContain("app-requests");
+  });
+});
+
 describe("dashboardNav - shape guarantees", () => {
   it("has no duplicate ids or hrefs in any configuration", () => {
     for (const access of [
       fresh,
       live,
-      { ...live, isBlogAdmin: true, isPlatformAdmin: true },
+      { ...live, appApproved: true },
+      { ...live, isBlogAdmin: true, isPlatformAdmin: true, appApproved: true },
     ]) {
       const items = flattenNav(dashboardNav(access));
       expect(new Set(items.map((i) => i.id)).size).toBe(items.length);

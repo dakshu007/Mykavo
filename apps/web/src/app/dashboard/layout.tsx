@@ -12,6 +12,8 @@ import { Greeting } from "@/components/dashboard/greeting";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { isMonitoringLive } from "@/lib/monitoring-live";
+import { getAppAccessStatus } from "@/lib/app-access";
+import { canDownloadApp } from "@mykavo/shared";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -36,7 +38,8 @@ export default async function DashboardLayout({
   // monitoringLive gates the sidebar's "Deeper analysis" group: the audit,
   // Search Console and analyser pages have nothing to show before a baseline
   // exists, so on day one they would be dead ends in the navigation.
-  const [memberships, plan, websiteLimit, websitesUsed, monitoringLive] = await Promise.all([
+  const [memberships, plan, websiteLimit, websitesUsed, monitoringLive, appStatus] =
+    await Promise.all([
     prisma.workspaceMember.findMany({
       where: { userId: session.user.id },
       select: { workspace: { select: { id: true, name: true } } },
@@ -45,8 +48,12 @@ export default async function DashboardLayout({
     getWorkspacePlan(workspace.id),
     getEffectiveWebsiteLimit(workspace.id),
     prisma.website.count({ where: { workspaceId: workspace.id } }),
-    isMonitoringLive(workspace.id),
-  ]);
+      isMonitoringLive(workspace.id),
+      // Approved for the Android app? Adds the download entry to the nav. By
+      // address, which is why the request form insists on the same one.
+      getAppAccessStatus(session.user.email),
+    ]);
+  const appApproved = canDownloadApp(appStatus);
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
@@ -58,6 +65,7 @@ export default async function DashboardLayout({
         <DashboardSidebar
           workspaceName={workspace.name}
           monitoringLive={monitoringLive}
+          appApproved={appApproved}
           isBlogAdmin={isBlogAdmin(session.user.email)}
           isPlatformAdmin={isPlatformAdmin(session.user.email)}
           workspaces={memberships.map((m) => m.workspace)}
@@ -72,6 +80,7 @@ export default async function DashboardLayout({
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">
         <DashboardMobileNav
           monitoringLive={monitoringLive}
+          appApproved={appApproved}
           isBlogAdmin={isBlogAdmin(session.user.email)}
           isPlatformAdmin={isPlatformAdmin(session.user.email)}
         />

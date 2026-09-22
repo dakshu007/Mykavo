@@ -843,3 +843,65 @@ export function welcomeEmail(data: WelcomeEmailData): {
 
   return { subject, html: shell(inner), text };
 }
+
+// ---------- Android app access approved ----------
+
+export interface AppAccessApprovedData {
+  /** Already made presentable by the caller. May be a fallback label. */
+  name: string;
+  /**
+   * Absolute link to the dashboard download page, with the auto-start flag.
+   * Signing in is required, so this lands on /login?next=... for a signed-out
+   * reader and comes straight back here afterwards.
+   */
+  downloadUrl: string;
+  /** The address the request was made with - the one they must sign in as. */
+  email: string;
+}
+
+/**
+ * "Your MyKavo Android app is ready."
+ *
+ * The one email in the app-access flow. It has a job beyond celebrating: it
+ * has to say WHICH account to sign in with. Access is granted to an address,
+ * and somebody who requested with a work address and then signs in with a
+ * personal one sees no download and concludes the approval never happened.
+ * So the address is printed, in the email, next to the button.
+ */
+export function appAccessApprovedEmail(data: AppAccessApprovedData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = "Your MyKavo Android app is ready to download";
+  const first = data.name.trim().split(/\s+/)[0] ?? "";
+  const greeting = first ? `Good news, ${esc(first)}` : "Good news";
+  const greetingText = first ? `Good news, ${first}` : "Good news";
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Android app approved</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${greeting} &mdash; your app is ready</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">MyKavo for Android is approved for your account. Open the link below and the download starts on its own, on your phone or your desktop.</p>
+    ${button(data.downloadUrl, "Download the Android app")}
+    <div style="margin:22px 0 0;background:#f4f6fb;border-radius:12px;padding:14px 16px">
+      <p style="margin:0 0 4px;font-size:14px;font-weight:600">Sign in with this address</p>
+      <p style="margin:0;font-size:13px;color:#5c6270">The download is tied to <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${esc(data.email)}</span>. Signing in with a different address will not show it. From then on it also lives in your dashboard, under <strong>Android app</strong>.</p>
+    </div>
+    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">Android may warn you about installing outside the Play Store &mdash; that is expected while MyKavo is in review. Just reply if anything goes wrong; a real person reads it.</p>
+  `;
+
+  const text =
+    `${greetingText} - your app is ready\n\n` +
+    `MyKavo for Android is approved for your account. Open the link below and ` +
+    `the download starts on its own, on your phone or your desktop.\n\n` +
+    `${data.downloadUrl}\n\n` +
+    `SIGN IN WITH THIS ADDRESS\n` +
+    `The download is tied to ${data.email}. Signing in with a different address ` +
+    `will not show it. From then on it also lives in your dashboard, under ` +
+    `"Android app".\n\n` +
+    `Android may warn you about installing outside the Play Store - that is ` +
+    `expected while MyKavo is in review. Just reply if anything goes wrong; ` +
+    `a real person reads it.`;
+
+  return { subject, html: shell(inner), text };
+}

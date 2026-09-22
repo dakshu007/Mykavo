@@ -7,7 +7,16 @@
 import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { BarChart3, Bell, Check, ChevronRight, PenLine, Scale, Users } from "lucide-react-native";
+import {
+  BarChart3,
+  Bell,
+  Check,
+  ChevronRight,
+  MailQuestion,
+  PenLine,
+  Scale,
+  Users,
+} from "lucide-react-native";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -409,7 +418,7 @@ export default function SettingsScreen() {
       {/* Operator-only. The server re-checks the same allowlist on every
           admin endpoint, so this is convenience rather than the boundary -
           but showing a row that 404s on tap is its own kind of broken. */}
-      {data.admin?.blog || data.admin?.users ? (
+      {data.admin?.blog || data.admin?.users || data.admin?.appRequests ? (
         <Card style={{ marginBottom: 14 }}>
           <CardTitle style={{ marginBottom: 4 }}>Admin</CardTitle>
           {data.admin?.users ? (
@@ -433,7 +442,31 @@ export default function SettingsScreen() {
               <ChevronRight size={16} color={palette.inkFaint} />
             </Pressable>
           ) : null}
-          {data.admin?.users && data.admin?.blog ? <Divider /> : null}
+          {data.admin?.users && (data.admin?.appRequests || data.admin?.blog) ? (
+            <Divider />
+          ) : null}
+          {data.admin?.appRequests ? (
+            <Pressable
+              onPress={() => router.push("/app-requests")}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 12,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <MailQuestion size={16} color={palette.inkSecondary} />
+              <View style={{ flex: 1 }}>
+                <Small>App requests</Small>
+                <Small color={palette.inkSecondary}>
+                  Approve who gets the Android app
+                </Small>
+              </View>
+              <ChevronRight size={16} color={palette.inkFaint} />
+            </Pressable>
+          ) : null}
+          {data.admin?.appRequests && data.admin?.blog ? <Divider /> : null}
           {data.admin?.blog ? (
             <Pressable
               onPress={() => router.push("/blog")}

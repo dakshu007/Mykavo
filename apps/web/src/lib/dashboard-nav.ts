@@ -39,7 +39,9 @@ export type NavItemId =
   | "settings"
   | "blog"
   | "users"
-  | "usage";
+  | "usage"
+  | "app-requests"
+  | "app";
 
 export interface NavItem {
   id: NavItemId;
@@ -59,6 +61,13 @@ export interface NavGroup {
 }
 
 export interface NavAccess {
+  /**
+   * Has this account been approved for the Android app? Adds a download entry
+   * to the account group. Absent for everyone else - including people whose
+   * request is pending or was declined, which are deliberately
+   * indistinguishable (see packages/shared/src/app-access.ts).
+   */
+  appApproved?: boolean;
   /**
    * Has the first-run loop completed for this workspace - at least one
    * finished scan or active baseline? Same signal the getting-started card
@@ -96,6 +105,14 @@ const ACCOUNT: NavItem[] = [
   { id: "settings", href: "/dashboard/settings", label: "Settings" },
 ];
 
+/** Shown only to an account approved for the Android app. */
+const APP_DOWNLOAD: NavItem = {
+  id: "app",
+  href: "/dashboard/app",
+  label: "Android app",
+  short: "App",
+};
+
 export function dashboardNav(access: NavAccess): NavGroup[] {
   const groups: NavGroup[] = [
     // Unlabelled: a heading over the first group is noise, since everything
@@ -107,7 +124,13 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
     groups.push({ id: "analysis", label: "Deeper analysis", items: ANALYSIS });
   }
 
-  groups.push({ id: "account", label: "Account", items: ACCOUNT });
+  groups.push({
+    id: "account",
+    label: "Account",
+    // The download sits at the top of the account group rather than with the
+    // monitoring screens: it is a thing you own, not a thing you check.
+    items: access.appApproved ? [APP_DOWNLOAD, ...ACCOUNT] : ACCOUNT,
+  });
 
   // Operator entries. Two separate flags because publishing a post and
   // reading the infrastructure bill are different privileges. Every one of
@@ -120,6 +143,12 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
   if (access.isPlatformAdmin) {
     admin.push(
       { id: "users", href: "/dashboard/users", label: "Users" },
+      {
+        id: "app-requests",
+        href: "/dashboard/app-requests",
+        label: "App requests",
+        short: "Requests",
+      },
       { id: "usage", href: "/dashboard/usage", label: "All Usage" },
     );
   }

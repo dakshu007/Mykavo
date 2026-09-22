@@ -52,6 +52,7 @@ export async function GET() {
       // Same predicate as usage today, sent as its own flag so that changing
       // who may see the user list later does not change who sees the meters.
       users: isPlatformAdmin(session.user.email),
+      appRequests: isPlatformAdmin(session.user.email),
       blog: isBlogAdmin(session.user.email),
     },
     workspaces: memberships.map((m) => ({

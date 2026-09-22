@@ -22,6 +22,7 @@ import type {
   BlogListResponse,
   BlogPostStatus,
   BlogStatusResponse,
+  AppAccessStatus,
   DiscoveryResponse,
   ChangeAction,
   ChangeDetailResponse,
@@ -34,6 +35,7 @@ import type {
   SearchConsoleResponse,
   UsageResponse,
   UsersResponse,
+  AppRequestsResponse,
   WebsiteDetailResponse,
   WebsitesListResponse,
 } from "./types";
@@ -239,6 +241,20 @@ export const api = {
 
   /** Operator-only, same gate. Who has signed up, newest first. */
   users: () => request<UsersResponse>("/api/mobile/users"),
+
+  /** Operator-only. Android app requests, pending first. */
+  appRequests: () => request<AppRequestsResponse>("/api/mobile/app-requests"),
+
+  /**
+   * Approve or decline one request. Hits the SAME route the web dashboard
+   * does, so a decision made on a phone is identical to one made at a desk -
+   * including sending the approval email.
+   */
+  decideAppRequest: (id: string, action: "approve" | "decline") =>
+    request<{ request: { id: string; status: AppAccessStatus }; emailSent: boolean }>(
+      `/api/app-access/${encodeURIComponent(id)}`,
+      { method: "PATCH", body: { action } },
+    ),
 
   blogPosts: () => request<BlogListResponse>("/api/mobile/blog"),
 

@@ -44,6 +44,7 @@ export interface MeResponse {
     usage: boolean;
     /** Optional on its own: an APK may outlive the server that first sent it. */
     users?: boolean;
+    appRequests?: boolean;
     blog: boolean;
   };
   workspaces: {
@@ -438,6 +439,35 @@ export interface UsersResponse {
   total: number;
   lastSevenDays: number;
   /** Non-null when the list could not be read. The screen says so. */
+  error: string | null;
+}
+
+/* ------------------------------ app requests ------------------------------ */
+
+export type AppAccessStatus = "PENDING" | "APPROVED" | "DECLINED";
+
+/** Mirrors AppRequestRow in apps/web/src/lib/app-access.ts. */
+export interface AppRequestRow {
+  id: string;
+  /** Already made presentable by the server. */
+  name: string;
+  email: string;
+  status: AppAccessStatus;
+  requestedAt: string;
+  decidedAt: string | null;
+  /** True once the approval email was accepted by the provider. */
+  emailSent: boolean;
+  downloadCount: number;
+  /** A MyKavo account already exists for this address. */
+  hasAccount: boolean;
+}
+
+export interface AppRequestsResponse {
+  rows: AppRequestRow[];
+  pending: number;
+  approved: number;
+  total: number;
+  /** Non-null when the list could not be read. */
   error: string | null;
 }
 

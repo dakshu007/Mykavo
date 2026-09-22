@@ -17,6 +17,8 @@ import {
   PenLine,
   Settings,
   UserPlus,
+  Smartphone,
+  MailQuestion,
   type LucideIcon,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
@@ -49,12 +51,15 @@ const ICONS: Record<NavItemId, LucideIcon> = {
   blog: PenLine,
   users: UserPlus,
   usage: Gauge,
+  "app-requests": MailQuestion,
+  app: Smartphone,
 };
 
 export function DashboardSidebar({
   workspaceName,
   upgradeCard,
   monitoringLive = false,
+  appApproved = false,
   isBlogAdmin = false,
   isPlatformAdmin = false,
   workspaces = [],
@@ -66,6 +71,8 @@ export function DashboardSidebar({
   upgradeCard?: React.ReactNode;
   /** First-run loop complete - reveals the "Deeper analysis" group. */
   monitoringLive?: boolean;
+  /** Approved for the Android app - adds the download entry. */
+  appApproved?: boolean;
   isBlogAdmin?: boolean;
   isPlatformAdmin?: boolean;
   /** All workspaces the user belongs to - switcher renders when >1. */
@@ -74,7 +81,7 @@ export function DashboardSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const groups = dashboardNav({ monitoringLive, isBlogAdmin, isPlatformAdmin });
+  const groups = dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin });
 
   async function handleSignOut() {
     await authClient.signOut();

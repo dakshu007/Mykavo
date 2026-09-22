@@ -20,17 +20,19 @@ import { dashboardNav, flattenNav, isNavItemActive } from "@/lib/dashboard-nav";
  */
 export function DashboardMobileNav({
   monitoringLive = false,
+  appApproved = false,
   isBlogAdmin = false,
   isPlatformAdmin = false,
 }: {
   monitoringLive?: boolean;
+  appApproved?: boolean;
   isBlogAdmin?: boolean;
   isPlatformAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const items = flattenNav(
-    dashboardNav({ monitoringLive, isBlogAdmin, isPlatformAdmin }),
+    dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin }),
   );
 
   async function handleSignOut() {

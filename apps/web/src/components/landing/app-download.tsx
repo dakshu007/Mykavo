@@ -1,5 +1,6 @@
-import { Apple, BellRing, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
+import { Apple, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
+import { RequestAppButton } from "./request-app-dialog";
 import { eyebrowOnDark, fontDisplay } from "./style";
 
 /**
@@ -9,15 +10,15 @@ import { eyebrowOnDark, fontDisplay } from "./style";
  * screens at the same moment (identical keyframe timing = the sync story
  * told visually). Pure CSS animation, fully paused for reduced-motion users.
  *
- * The public APK download is temporarily paused (bandwidth budget) - the
- * CTA shows "coming soon" instead of the download link. To re-enable,
- * restore the anchor around APK_URL in the CTA block below; the rolling
- * release on the PUBLIC Mykavo-app-download repo keeps building, so the
- * URL stays valid the whole time.
+ * The APK is NOT offered to everyone. The app is not on a store yet, so
+ * access is granted by hand: this section asks for a name and an address, the
+ * operator approves in /dashboard/app-requests, and the download then appears
+ * in that person's dashboard. That keeps the bandwidth budget predictable and
+ * turns the waiting list into a real list of people who want it - see
+ * docs/APP_ACCESS.md.
  */
 
-export const APK_URL =
-  "https://github.com/dakshu007/Mykavo-app-download/releases/latest/download/mykavo.apk";
+export { APK_URL } from "@/config/app-release";
 
 /** Gold chip that pops into both mock screens at the same moment. */
 function SyncedChip({ className = "" }: { className?: string }) {
@@ -230,20 +231,20 @@ export function AppDownloadSection() {
           one account · live in both directions · 3s refresh while scans run
         </p>
 
-        {/* Coming-soon CTA (public APK download paused - see file comment) */}
+        {/* Request-access CTA. Not a download link: approval is by hand while
+            the app is in review, and the dialog says why plus which address
+            to use. */}
         <div className="mt-10 flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-3 sm:flex-row">
-            <span className="inline-flex items-center gap-2.5 rounded-full border border-black/25 bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)]">
-              <BellRing className="size-4.5" aria-hidden />
-              Android app coming soon
-            </span>
+            <RequestAppButton />
             <span className="inline-flex items-center gap-2 rounded-full border border-[#E9EBDF]/25 px-5 py-3 text-[13px] font-medium text-[#9C9E93]">
               <Apple className="size-4" aria-hidden />
               iOS coming soon
             </span>
           </div>
-          <p className="font-mono text-[11px] text-[#9C9E93]">
-            free on every plan · launching shortly - watch this space
+          <p className="max-w-md text-center font-mono text-[11px] leading-5 text-[#9C9E93]">
+            free on every plan · approved in batches · needs a MyKavo account with the same
+            email
           </p>
         </div>
 

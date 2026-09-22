@@ -14,6 +14,7 @@ export {
   weeklyReportEmail,
   workspaceInviteEmail,
   welcomeEmail,
+  appAccessApprovedEmail,
   performanceDropEmail,
   renewalReminderEmail,
   type RenewalReminderData,
@@ -31,6 +32,7 @@ export {
   type WeeklyLighthouseScores,
   type WorkspaceInviteData,
   type WelcomeEmailData,
+  type AppAccessApprovedData,
   type PerformanceDropData,
   type PerformanceDropSnapshot,
 } from "./templates";

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   welcomeEmail,
+  appAccessApprovedEmail,
   scanSummaryEmail,
   failureAlertEmail,
   deployVerdictEmail,
@@ -542,5 +543,65 @@ describe("welcomeEmail", () => {
     const mail = welcomeEmail(data);
     expect(mail.text).not.toContain("<");
     expect(mail.text.length).toBeGreaterThan(100);
+  });
+});
+
+describe("appAccessApprovedEmail", () => {
+  const data = {
+    name: "Dakshesh Babu",
+    downloadUrl: "https://mykavo.app/dashboard/app?download=1",
+    email: "daksh@example.com",
+  };
+
+  it("says the app is ready, in the subject", () => {
+    expect(appAccessApprovedEmail(data).subject).toBe(
+      "Your MyKavo Android app is ready to download",
+    );
+  });
+
+  it("leads with the download link", () => {
+    const mail = appAccessApprovedEmail(data);
+    expect(mail.html).toContain(data.downloadUrl);
+    expect(mail.html).toContain("Download the Android app");
+    expect(mail.text).toContain(data.downloadUrl);
+  });
+
+  /**
+   * The failure this exists to prevent: access is granted to an ADDRESS, so
+   * somebody who requested with a work address and signs in with a personal
+   * one sees no download and concludes the approval never happened. The
+   * address has to be in the email, next to the button.
+   */
+  it("names the address they must sign in with", () => {
+    const mail = appAccessApprovedEmail(data);
+    expect(mail.html).toContain("daksh@example.com");
+    expect(mail.text).toContain("daksh@example.com");
+    expect(mail.text).toMatch(/sign in with this address/i);
+  });
+
+  it("warns about the off-store install, so the Android prompt is expected", () => {
+    expect(appAccessApprovedEmail(data).text).toMatch(/outside the Play Store/i);
+  });
+
+  it("greets by first name only, and copes with no name", () => {
+    expect(appAccessApprovedEmail(data).html).toContain("Good news, Dakshesh");
+    const nameless = appAccessApprovedEmail({ ...data, name: "  " });
+    expect(nameless.html).toContain("Good news");
+    expect(nameless.html).not.toContain("Good news, <");
+  });
+
+  it("escapes the name and the address rather than trusting them", () => {
+    const mail = appAccessApprovedEmail({
+      ...data,
+      name: '<img src=x onerror="alert(1)">',
+      email: '"><script>alert(1)</script>@x.com',
+    });
+    expect(mail.html).not.toContain("<img");
+    expect(mail.html).not.toContain("<script>");
+    expect(mail.html).toContain("&lt;img");
+  });
+
+  it("has a plain-text part that is not HTML", () => {
+    expect(appAccessApprovedEmail(data).text).not.toContain("<");
   });
 });

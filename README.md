@@ -188,7 +188,7 @@ packages/       (@mykavo/* scope)
   shared            url/ssrf/link-check/queues/schedule/retention/channels/stabilization/
                     health/report/performance/script-services
 docs/           ARCHITECTURE, IMPLEMENTATION_PLAN, DATABASE_SCHEMA, SECURITY_MODEL, DESIGN_SYSTEM,
-                FIRST_RUN, OPERATIONS, SECRET_ROTATION
+                FIRST_RUN, APP_ACCESS, OPERATIONS, SECRET_ROTATION
 CLAUDE.md       the original product spec - still the product constitution
 ```
 
