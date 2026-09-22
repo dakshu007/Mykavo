@@ -42,9 +42,21 @@ export function LandingHero() {
           Fix what matters.
         </h1>
 
+        {/*
+          One job, stated once.
+
+          This used to enumerate seven change categories in a single breath -
+          "visual, SEO, content, link, script, performance, and conversion" -
+          which is the fastest way to read as seven products rather than one.
+          The categories are genuinely worth knowing about, so they still get a
+          section of their own further down, under a heading that frames them
+          correctly: eight kinds of change, ONE monitoring layer. Here the copy
+          carries the loop, which is the thing a first-time visitor has to
+          understand before any of the breadth means anything.
+        */}
         <p className="mx-auto mt-6 max-w-xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg">
-          MyKavo watches your websites for visual, SEO, content, link, script, performance, and
-          conversion changes - and alerts you before small problems become expensive ones.
+          Approve a known-good baseline of your website. MyKavo re-checks it around the clock
+          and tells you the moment something important changes or breaks.
         </p>
 
         {/* Product-led URL input - instant value, no signup */}

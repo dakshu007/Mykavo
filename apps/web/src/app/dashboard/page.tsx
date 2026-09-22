@@ -96,7 +96,11 @@ export default async function DashboardOverviewPage() {
   return (
     <div className="space-y-6">
       {showChecklist && (
-        <OnboardingChecklist steps={onboarding.steps} doneCount={onboarding.doneCount} />
+        <OnboardingChecklist
+          steps={onboarding.steps}
+          requiredDoneCount={onboarding.requiredDoneCount}
+          requiredCount={onboarding.requiredCount}
+        />
       )}
 
       {websites.length === 0 ? (
