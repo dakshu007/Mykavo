@@ -23,27 +23,37 @@ export function LandingHero() {
         <div className="flex justify-center">
           <p className="flex items-center gap-2 rounded-full border border-[#151515]/15 bg-white px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#151515]/70 shadow-[2px_2px_0_#151515]">
             <Sparkles className="size-3.5 text-[#151515]" aria-hidden />
-            Website change &amp; regression monitoring
+            Website change detection
           </p>
         </div>
 
+        {/*
+          THE HEADLINE NAMES THE CATEGORY.
+
+          It used to be the brand tagline - "Know what changed. Fix what
+          matters." - which is a good tagline and a bad headline: the largest
+          text on the page told a first-time visitor nothing about what this
+          product IS. Readers said so directly. The category now lives in the
+          headline ("website monitoring"), the differentiator in the gold
+          ("page by page" - the unit of work is a page, not a whole site), and
+          the tagline keeps its home in the nav, the footer and every email.
+        */}
         <h1
           className={`${fontDisplay} mx-auto mt-8 max-w-4xl text-center text-[44px] leading-[1.04] text-[#151515] sm:text-6xl lg:text-[76px]`}
         >
-          Know what{" "}
+          Website monitoring,
+          <br />
           <span className="relative inline-block whitespace-nowrap">
             <span
               aria-hidden
-              className="absolute inset-x-[-4px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]"
+              className="absolute inset-x-[-6px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]"
             />
-            <span className="relative">changed.</span>
+            <span className="relative">page by page.</span>
           </span>
-          <br />
-          Fix what matters.
         </h1>
 
         {/*
-          One job, stated once.
+          One job, stated once, in plain words.
 
           This used to enumerate seven change categories in a single breath -
           "visual, SEO, content, link, script, performance, and conversion" -
@@ -54,9 +64,10 @@ export function LandingHero() {
           carries the loop, which is the thing a first-time visitor has to
           understand before any of the breadth means anything.
         */}
-        <p className="mx-auto mt-6 max-w-xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg">
-          Approve a known-good baseline of your website. MyKavo re-checks it around the clock
-          and tells you the moment something important changes or breaks.
+        <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg">
+          Pick the pages that matter on every website you manage. MyKavo approves a known-good
+          baseline of each, re-checks them around the clock, and tells you the moment one
+          changes &mdash; with before-and-after proof.
         </p>
 
         {/* Product-led URL input - instant value, no signup */}

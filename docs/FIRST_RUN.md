@@ -139,3 +139,36 @@ up two clicks later, when the app still opens on eight equal entry points.
 That was correct, and checking it against the code turned up the broken loop in
 §1 — a real funnel bug, not a matter of emphasis, that every account which ever
 signed up had walked into.
+
+---
+
+## The homepage says what the product is, before what it does
+
+Readers kept reporting the same thing, and it was true: the largest text on
+the homepage was the brand tagline — *Know what changed. Fix what matters.* —
+which tells a first-time visitor nothing about what MyKavo **is**. Everything
+below it was a feature, and features do not land until somebody knows the
+category they are looking at.
+
+So the top of the page is now ordered:
+
+1. **Hero** — the headline names the category (*Website monitoring, page by
+   page*) and the sub-copy states the loop. The tagline keeps its home in the
+   nav, the footer and every email.
+2. **What MyKavo is** (`components/landing/what-it-is.tsx`) — a definition
+   band, second screen, before any feature. It says it flatly ("MyKavo is page
+   monitoring"), rules out the neighbours it is mistaken for (*not uptime
+   checks, not a crawler, not an SEO suite* — CLAUDE.md §1's own non-goals),
+   and defines the three things needed to picture it working: **the unit** is
+   a page, **the method** is an approved baseline, **the output** is one
+   severity-ranked alert.
+3. **The problem**, then **how it works** — why, then mechanism.
+4. Everything else is a feature and sits below that.
+
+The before/after comparison moved down beside the agency section: it is an ROI
+argument, and four consecutive explain-the-product sections before the first
+feature was three too many.
+
+**Gold is the only accent this page has.** The hero uses the full slab
+highlight; the definition band uses an underline. Running the same full-block
+highlight twice within two screens turns a signature into a tic.

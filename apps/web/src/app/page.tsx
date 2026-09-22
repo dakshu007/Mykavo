@@ -22,6 +22,7 @@ import { Price } from "@/components/region";
 import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
 import { CategoryTabs } from "@/components/landing/categories";
+import { WhatItIsSection } from "@/components/landing/what-it-is";
 import { AlertChannelsSection } from "@/components/landing/alert-channels";
 import { AppDownloadSection } from "@/components/landing/app-download";
 import { SiteAuditSection } from "@/components/landing/site-audit";
@@ -357,8 +358,14 @@ export default function HomePage() {
         {/* Hero - badge, headline, URL input, browser-frame dashboard mock */}
         <LandingHero />
 
+        {/* What MyKavo IS - the plain definition, before any feature. Readers
+            kept saying the page never states what the product actually is;
+            everything below this point is a feature, and features only land
+            once somebody knows the category they are looking at. */}
+        <WhatItIsSection />
+
         {/* The problem - dark ink band with incident-log cards */}
-        <section className="mt-16 border-y border-[#151515] bg-[#151515]">
+        <section className="border-y border-[#151515] bg-[#151515]">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
             <p className={`${eyebrowOnDark} mb-4 text-center`}>{"// the problem //"}</p>
             <DisplayHeading onDark>
@@ -429,6 +436,38 @@ export default function HomePage() {
           <SplitPill />
         </Section>
 
+        {/* What it watches - interactive category tabs */}
+        <Section id="categories">
+          <p className={`${eyebrow} mb-4 text-center`}>{"// what mykavo watches //"}</p>
+          <DisplayHeading>
+            Eight kinds of change.
+            <br />
+            <span className="text-[#6B6B60]">One monitoring layer.</span>
+          </DisplayHeading>
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#6B6B60]">
+            Every scan checks each monitored page across all eight categories and scores what it
+            finds by severity - so you see what matters first. Pick a category to see a real
+            example.
+          </p>
+          <CategoryTabs />
+        </Section>
+
+        {/* Gold ticker - everything a scan checks. Below the categories now:
+            immediately under the hero it was a breadth signal in the
+            breadth-first slot, which is what made the product read as several
+            products. Here it is detail on a claim already made. */}
+        <SignalMarquee />
+
+        {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
+        <AlertChannelsSection />
+
+        {/* Android app - web + mobile sync story (download paused: coming soon) */}
+        <AppDownloadSection />
+
+        {/* Before / after MyKavo - v7-style stat pairs. Sits with the
+            agency argument rather than up top: it is an ROI case, and four
+            consecutive explain-the-product sections before the first feature
+            was three too many. */}
         {/* Before / after MyKavo - v7-style stat pairs */}
         <section className="border-y border-black/10 bg-[#F3F1E6]">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
@@ -513,34 +552,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        {/* What it watches - interactive category tabs */}
-        <Section id="categories">
-          <p className={`${eyebrow} mb-4 text-center`}>{"// what mykavo watches //"}</p>
-          <DisplayHeading>
-            Eight kinds of change.
-            <br />
-            <span className="text-[#6B6B60]">One monitoring layer.</span>
-          </DisplayHeading>
-          <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#6B6B60]">
-            Every scan checks each monitored page across all eight categories and scores what it
-            finds by severity - so you see what matters first. Pick a category to see a real
-            example.
-          </p>
-          <CategoryTabs />
-        </Section>
-
-        {/* Gold ticker - everything a scan checks. Below the categories now:
-            immediately under the hero it was a breadth signal in the
-            breadth-first slot, which is what made the product read as several
-            products. Here it is detail on a claim already made. */}
-        <SignalMarquee />
-
-        {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
-        <AlertChannelsSection />
-
-        {/* Android app - web + mobile sync story (download paused: coming soon) */}
-        <AppDownloadSection />
 
         {/* Agencies - split with client health board */}
         <section className="border-y border-black/10 bg-white">
