@@ -278,7 +278,8 @@ function PaletteDialog({
           id="command-palette-listbox"
           role="listbox"
           aria-label="Results"
-          className="max-h-[min(60vh,26rem)] overflow-y-auto p-2"
+          data-lenis-prevent
+        className="max-h-[min(60vh,26rem)] overflow-y-auto p-2"
         >
           {flat.length === 0 ? (
             <p className="px-3 py-10 text-center text-sm text-ink-secondary">

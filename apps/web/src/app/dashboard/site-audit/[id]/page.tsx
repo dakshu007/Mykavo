@@ -233,7 +233,8 @@ export default async function SiteAuditReportPage({ params }: Params) {
                               </span>
                               <span className="hidden group-open:inline">Hide URLs</span>
                             </summary>
-                            <ul className="mt-2 max-h-72 space-y-1.5 overflow-y-auto rounded-tile bg-surface px-3 py-2.5">
+                            <ul data-lenis-prevent
+        className="mt-2 max-h-72 space-y-1.5 overflow-y-auto rounded-tile bg-surface px-3 py-2.5">
                               {group.urls.map((entry: { url: string; detail?: string; foundOn?: string[] }) => (
                                 <li key={entry.url + (entry.detail ?? "")} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                                   <a

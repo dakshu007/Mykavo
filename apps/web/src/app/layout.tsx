@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { SmoothScroll } from "@/components/smooth-scroll";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
 import { site } from "@/config/site";
 import "./globals.css";
@@ -99,6 +100,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className="flex min-h-full flex-col">
+        {/* Site-wide, including the dashboard. Self-disables for
+            prefers-reduced-motion and on touch; inner scroll containers opt
+            out with data-lenis-prevent. */}
+        <SmoothScroll />
         {children}
         {/* Google tag (gtag.js) - production only */}
         {process.env.NODE_ENV === "production" && (

@@ -116,7 +116,8 @@ export function PostTocRail({ headings }: { headings: PostHeading[] }) {
   return (
     <nav
       aria-label="Table of contents"
-      className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-card bg-card p-6 shadow-card"
+      data-lenis-prevent
+        className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-card bg-card p-6 shadow-card"
     >
       <p className="label-micro">Table of contents</p>
       <TocList headings={headings} className="mt-3" />

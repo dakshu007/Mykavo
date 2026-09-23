@@ -109,6 +109,7 @@ export function DashboardSidebar({
       )}
 
       <nav
+        data-lenis-prevent
         className="mt-4 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain"
         aria-label="Dashboard"
       >

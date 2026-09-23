@@ -192,7 +192,8 @@ export function SearchPerformanceChart({ daily }: { daily: DayPoint[] }) {
         <summary className="cursor-pointer text-[11px] text-ink-faint hover:text-ink-secondary">
           View as table
         </summary>
-        <div className="mt-2 max-h-56 overflow-auto">
+        <div data-lenis-prevent
+        className="mt-2 max-h-56 overflow-auto">
           <table className="w-full text-left text-[12px] tabular-nums">
             <thead className="sticky top-0 bg-card text-ink-faint">
               <tr>

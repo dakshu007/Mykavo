@@ -4,9 +4,14 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 
 /**
- * Smooth scrolling on the marketing pages, via Lenis.
+ * Smooth scrolling across the whole site, via Lenis.
  *
- * THREE CONDITIONS, AND THEY ARE NOT OPTIONAL
+ * Mounted in the root layout rather than beside the marketing nav, so the
+ * dashboard feels the same as the landing page. That raises two problems a
+ * marketing-only version never had, both handled below: lists that scroll
+ * inside the page, and modal dialogs.
+ *
+ * TWO CONDITIONS, AND THEY ARE NOT OPTIONAL
  *
  * 1. `prefers-reduced-motion` switches it off entirely. Interpolated
  *    scrolling is exactly the kind of motion that triggers vestibular
@@ -19,9 +24,13 @@ import Lenis from "lenis";
  *    better than anything a library can do on top of it - and overriding it
  *    is what makes a site feel laggy on a mid-range phone.
  *
- * 3. Marketing pages only. This never mounts on the dashboard, where people
- *    scan tables and diffs and expect a scroll position to land exactly where
- *    they put it.
+ * INNER SCROLL CONTAINERS KEEP NATIVE SCROLLING. Lenis owns the page, not a
+ * list inside it - a sidebar, a command palette, a page picker, a long issue
+ * list. Each carries `data-lenis-prevent`, which is how Lenis is told to keep
+ * out; without it, scrolling a list would drag the page behind it instead.
+ *
+ * MODALS STOP IT ENTIRELY. A native dialog scrolls its own content and the
+ * page behind it must not move at all, smoothly or otherwise.
  *
  * WHAT IT COSTS. Lenis drives scroll from requestAnimationFrame, so it is
  * real main-thread work on every frame of every scroll, and that is measured
@@ -86,8 +95,28 @@ export function SmoothScroll() {
       window.history.pushState(null, "", hash);
     }
 
+    /**
+     * Pause while a modal is open.
+     *
+     * A native <dialog> scrolls its own content, and the page behind it must
+     * not move. Watched with a MutationObserver on the `open` attribute
+     * rather than polling: <dialog> fires `close` but has no matching `open`
+     * event, and querying the DOM every animation frame to answer a question
+     * that changes twice a session would be absurd.
+     */
+    const observer = new MutationObserver(() => {
+      if (document.querySelector("dialog[open]")) lenis.stop();
+      else lenis.start();
+    });
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["open"],
+      subtree: true,
+    });
+
     document.addEventListener("click", onClick);
     return () => {
+      observer.disconnect();
       document.removeEventListener("click", onClick);
       cancelAnimationFrame(frame);
       lenis.destroy();

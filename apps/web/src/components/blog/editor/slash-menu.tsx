@@ -208,7 +208,8 @@ export function SlashMenuPopup({
       role="listbox"
       aria-label="Insert block"
       style={{ left: position.left, top: position.top }}
-      className="fixed z-30 max-h-80 w-72 overflow-y-auto rounded-tile border border-line bg-card py-1 shadow-float"
+      data-lenis-prevent
+        className="fixed z-30 max-h-80 w-72 overflow-y-auto rounded-tile border border-line bg-card py-1 shadow-float"
     >
       {items.length === 0 && (
         <p className="px-4 py-2.5 text-sm text-ink-faint">No matching blocks.</p>

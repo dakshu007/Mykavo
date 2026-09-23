@@ -165,7 +165,8 @@ export function MarkdownEditor({
       </div>
       <div>
         <p className="mb-1.5 text-sm font-medium text-ink">Preview</p>
-        <div className="max-h-160 min-h-120 overflow-y-auto rounded-field border border-line px-4 py-3">
+        <div data-lenis-prevent
+        className="max-h-160 min-h-120 overflow-y-auto rounded-field border border-line px-4 py-3">
           {value.trim() ? (
             <PostContent content={value} />
           ) : (

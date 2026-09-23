@@ -144,6 +144,7 @@ export function PageSelector({
       </div>
 
       <ul
+        data-lenis-prevent
         className="max-h-96 divide-y divide-line overflow-y-auto rounded-tile border border-line"
         aria-label="Pages"
       >
