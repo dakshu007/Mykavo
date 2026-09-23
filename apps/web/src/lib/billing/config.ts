@@ -10,12 +10,9 @@ import { site } from "@/config/site";
 export const DODO_PRODUCT_ID =
   process.env.DODO_PRODUCT_ID ?? "pdt_0NjKwQ1pTRkSQhk6cmVzo";
 
-/**
- * The $49 Agency product id in Dodo. No default: the product has to be
- * created in the Dodo dashboard first, and a wrong id would sell the wrong
- * thing. Unset means Agency cannot be bought yet.
- */
-export const DODO_AGENCY_PRODUCT_ID = process.env.DODO_AGENCY_PRODUCT_ID ?? "";
+/** The $49 Agency product id in Dodo (LIVE-mode product; override via env). */
+export const DODO_AGENCY_PRODUCT_ID =
+  process.env.DODO_AGENCY_PRODUCT_ID ?? "pdt_0NoEhSbtZs80pP9y9XT0S";
 
 export type PaidPlan = "pro" | "agency";
 
