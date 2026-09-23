@@ -6,8 +6,14 @@ import { getAlertChannels } from "@/lib/notification-channels";
 import { Card, CardHeader } from "@/components/ui/card";
 import { NotificationSettingsForm } from "@/components/dashboard/notification-settings-form";
 import { AlertChannels } from "@/components/dashboard/alert-channels";
+import { slackInstallConfigured } from "@/lib/integrations/slack";
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ slack?: string }>;
+}) {
+  const { slack } = await searchParams;
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
@@ -45,7 +51,11 @@ export default async function NotificationsPage() {
             </span>
           }
         />
-        <AlertChannels initial={channels} />
+        <AlertChannels
+          initial={channels}
+          slackInstall={slackInstallConfigured()}
+          slackResult={slack}
+        />
       </Card>
 
       <Card>

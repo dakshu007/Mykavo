@@ -21,6 +21,22 @@ export interface AlertChannelView {
   type: WebhookChannelType;
   enabled: boolean;
   maskedUrl: string;
+  /**
+   * Where it posts, when known - "#alerts in Acme" for a channel added with
+   * Add to Slack. Pasted webhooks don't say, so they show the masked URL.
+   */
+  destination: string | null;
+}
+
+/** "#alerts in Acme" from an Add to Slack configuration, else null. */
+export function slackDestination(configuration: unknown): string | null {
+  if (typeof configuration !== "object" || configuration === null) return null;
+  const cfg = configuration as Record<string, unknown>;
+  const channel = typeof cfg.channelName === "string" ? cfg.channelName : null;
+  const team = typeof cfg.teamName === "string" ? cfg.teamName : null;
+  if (!channel) return null;
+  const name = channel.startsWith("#") ? channel : `#${channel}`;
+  return team ? `${name} in ${team}` : name;
 }
 
 export async function getAlertChannels(workspaceId: string): Promise<AlertChannelView[]> {
@@ -38,6 +54,7 @@ export async function getAlertChannels(workspaceId: string): Promise<AlertChanne
       type: channel.type,
       enabled: channel.enabled,
       maskedUrl: target ? maskChannelUrl(target) : "…",
+      destination: channel.type === "SLACK" ? slackDestination(channel.configuration) : null,
     });
   }
   return views;

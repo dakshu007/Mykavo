@@ -1,11 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Hash, MessagesSquare, Plus, Send, Trash2, Webhook } from "lucide-react";
+import { MessagesSquare, Plus, Send, Trash2, Webhook } from "lucide-react";
 import type { WebhookChannelType } from "@mykavo/shared";
 import type { AlertChannelView } from "@/lib/notification-channels";
+import { SlackIcon } from "@/components/brand/integration-icons";
 import { cn } from "@/lib/utils";
+
+/** What the Add to Slack callback reported, keyed by its ?slack= value. */
+const SLACK_RESULTS: Record<string, { tone: "ok" | "error"; text: string }> = {
+  connected: {
+    tone: "ok",
+    text: "Slack connected. MyKavo posted a hello message in the channel you picked.",
+  },
+  cancelled: { tone: "error", text: "Slack connection cancelled - nothing changed." },
+  expired: { tone: "error", text: "That Slack link expired. Press Add to Slack to try again." },
+  limit: {
+    tone: "error",
+    text: "You've reached the alert channel limit. Remove a channel, then add Slack.",
+  },
+  forbidden: { tone: "error", text: "Viewers can't add alert channels. Ask an admin." },
+  unavailable: {
+    tone: "error",
+    text: "Add to Slack isn't available right now. Paste an incoming webhook URL instead.",
+  },
+  error: {
+    tone: "error",
+    text: "Couldn't connect Slack. Try again, or paste an incoming webhook URL instead.",
+  },
+};
 
 const TYPE_META: Record<
   WebhookChannelType,
@@ -29,20 +53,43 @@ const TYPE_META: Record<
 };
 
 function TypeIcon({ type, className }: { type: WebhookChannelType; className?: string }) {
-  if (type === "SLACK") return <Hash className={className} aria-hidden />;
+  if (type === "SLACK") return <SlackIcon className={className} />;
   if (type === "DISCORD") return <MessagesSquare className={className} aria-hidden />;
   return <Webhook className={className} aria-hidden />;
 }
 
-export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
+export function AlertChannels({
+  initial,
+  slackInstall = false,
+  slackResult,
+}: {
+  initial: AlertChannelView[];
+  /** Whether the Slack app is configured, so "Add to Slack" can be offered. */
+  slackInstall?: boolean;
+  /** The ?slack= result the Add to Slack callback redirected back with. */
+  slackResult?: string;
+}) {
   const router = useRouter();
+  const result = slackResult ? SLACK_RESULTS[slackResult] : undefined;
+  const hasSlack = initial.some((c) => c.type === "SLACK");
+
+  // Show the Add to Slack result once, then drop ?slack= so a reload or a
+  // shared link doesn't repeat it.
+  useEffect(() => {
+    if (!slackResult) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("slack");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, [slackResult]);
   const [adding, setAdding] = useState(false);
   const [type, setType] = useState<WebhookChannelType>("SLACK");
   const [url, setUrl] = useState("");
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    result?.tone === "error" ? result.text : null,
+  );
+  const [notice, setNotice] = useState<string | null>(result?.tone === "ok" ? result.text : null);
 
   async function call(path: string, init: RequestInit, okNotice?: string) {
     setError(null);
@@ -98,7 +145,11 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
               <TypeIcon type={c.type} className="size-4.5 shrink-0 text-ink-secondary" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-ink">{TYPE_META[c.type].label}</p>
-                <p className="truncate font-mono text-xs text-ink-faint">{c.maskedUrl}</p>
+                {c.destination ? (
+                  <p className="truncate text-xs text-ink-secondary">{c.destination}</p>
+                ) : (
+                  <p className="truncate font-mono text-xs text-ink-faint">{c.maskedUrl}</p>
+                )}
               </div>
               {!c.enabled && (
                 <span className="rounded-full bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-faint">
@@ -189,7 +240,11 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
               placeholder={TYPE_META[type].placeholder}
               className="w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
             />
-            <p className="mt-1.5 text-[13px] text-ink-faint">{TYPE_META[type].hint}</p>
+            <p className="mt-1.5 text-[13px] text-ink-faint">
+              {type === "SLACK" && slackInstall
+                ? "Easier: use Add to Slack instead - you pick the channel in Slack, no URL to copy."
+                : TYPE_META[type].hint}
+            </p>
           </div>
           {type === "WEBHOOK" && (
             <div>
@@ -227,12 +282,23 @@ export function AlertChannels({ initial }: { initial: AlertChannelView[] }) {
           </div>
         </form>
       ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line px-5 text-[13px] font-medium text-ink-secondary transition-colors hover:text-ink"
-        >
-          <Plus className="size-4" aria-hidden /> Add channel
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {slackInstall && (
+            <a
+              href="/api/integrations/slack/install"
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-white px-5 text-[13px] font-semibold text-[#151515] shadow-[0_1px_2px_rgb(21_21_21/8%)] transition-colors hover:border-ink-faint"
+            >
+              <SlackIcon className="size-4" />
+              {hasSlack ? "Change Slack channel" : "Add to Slack"}
+            </a>
+          )}
+          <button
+            onClick={() => setAdding(true)}
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-line px-5 text-[13px] font-medium text-ink-secondary transition-colors hover:text-ink"
+          >
+            <Plus className="size-4" aria-hidden /> Add channel
+          </button>
+        </div>
       )}
 
       {error && <p className="text-sm text-critical">{error}</p>}

@@ -172,6 +172,10 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   // Retired website add-on product - nothing reads it any more.
   DODO_ADDON_PRODUCT_ID: z.string().optional(),
   DODO_WEBHOOK_SECRET: z.string().optional(),
+  // "Add to Slack" (Slack app OAuth). When either is unset, the button is
+  // hidden and customers paste an incoming-webhook URL instead.
+  SLACK_CLIENT_ID: z.string().optional(),
+  SLACK_CLIENT_SECRET: z.string().optional(),
   DODO_API_KEY: z.string().optional(),
   DODO_MODE: optionalStrictAtRuntime(z.enum(["test", "live"]), "DODO_MODE", ctxRef),
   });
