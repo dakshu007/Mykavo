@@ -362,14 +362,27 @@
   .blog-prose p {
     margin: 1em 0;
   }
+  /* Brand gold is a fill colour, not a text colour: #FFD400 on white is
+     about 1.4:1 and links vanished into the paragraph. Ink text with a thick
+     gold underline reads as a link in both themes - the same treatment the
+     landing pages use - and hover fills it gold like a highlighter. */
   .blog-prose a {
-    color: var(--fx-primary);
-    font-weight: 500;
-    text-decoration: underline;
+    color: var(--fx-ink);
+    font-weight: 600;
+    text-decoration-line: underline;
+    text-decoration-color: var(--fx-primary);
+    text-decoration-thickness: 2px;
     text-underline-offset: 3px;
+    border-radius: 2px;
+    transition: background-color 120ms ease-out;
   }
   .blog-prose a:hover {
-    color: var(--fx-primary-hover);
+    background-color: var(--fx-primary);
+    color: var(--fx-primary-contrast);
+  }
+  .blog-prose a:focus-visible {
+    outline: 2px solid var(--fx-ink);
+    outline-offset: 2px;
   }
   .blog-prose strong {
     color: var(--fx-ink);
