@@ -45,6 +45,17 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, conversion element monitoring, up to 5 team members
 - Monthly billing via Dodo Payments; cancel anytime
 
+## Honest comparison with other tools
+
+MyKavo is not the right answer to every monitoring question, and the roundup at
+${site.url}/best-website-monitoring-tools says so explicitly:
+
+- Availability only: use an uptime monitor (UptimeRobot, Better Stack, Pingdom). MyKavo does not replace them.
+- A one-off deep technical audit before a migration: use a crawler (Screaming Frog, Sitebulb).
+- Blocking a visual regression before it ships, when you own the codebase and have CI: use Percy, Chromatic or Applitools.
+- Watching a single public page with no setup: Visualping or Distill are quicker.
+- Knowing what changed on the pages that matter, across several sites, with severity ranking and before-and-after evidence: this is what MyKavo is built for.
+
 ## Free tools (no signup)
 
 - Website Change Detector: ${site.url}/tools/website-change-detector

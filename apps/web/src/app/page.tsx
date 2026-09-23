@@ -39,10 +39,14 @@ export const metadata: Metadata = {
   // Absolute title (not the layout template) so the homepage leads with the
   // primary keywords: website monitoring tool / website change detection.
   title: {
-    absolute: "MyKavo - Website Monitoring & Change Detection Tool",
+    // Matches the H1's promise ("Website monitoring, page by page") while
+    // keeping the phrase people actually search for at the front. A title
+    // that contradicts the headline costs trust on arrival and tells a
+    // search engine the page is about something it is not.
+    absolute: "Website Monitoring, Page by Page - MyKavo Change Detection Tool",
   },
   description:
-    "The best website monitoring software shows you what changed, not just that the site is up. MyKavo monitors your websites for visual, SEO, content, link, script and performance changes - and alerts you before small problems become expensive ones.",
+    "The best website monitoring software tells you what changed, not just that the site is up. MyKavo baselines the pages that matter, re-checks them around the clock, and sends one severity-ranked alert with before-and-after proof when a visual, SEO, content, link, script or performance change breaks one.",
   keywords: [
     "website monitoring tools",
     "best website monitoring software",

@@ -26,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/tools/competitor-analysis-tool",
     "/visual-regression-testing",
     "/seo-monitoring",
+    "/best-website-monitoring-tools",
     "/website-content-monitoring",
     "/website-monitoring-for-wordpress",
     "/website-monitoring-for-shopify",
