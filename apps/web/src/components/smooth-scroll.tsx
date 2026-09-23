@@ -64,6 +64,42 @@ export function SmoothScroll() {
     frame = requestAnimationFrame(raf);
 
     /**
+     * Re-measure whenever the page gets taller or shorter.
+     *
+     * THE BUG THIS FIXES. Lenis caches the scrollable height when it starts.
+     * Dashboard pages stream their content in through Suspense, so the page
+     * is short at that moment and taller a beat later - and Lenis kept
+     * scrolling to the height it measured first, stopping dead partway down
+     * a page that had since grown. It looked exactly like a broken page,
+     * because it was one.
+     *
+     * Not limited to streaming either: expanding a section, filtering a
+     * table or loading more rows changes the height the same way. Observing
+     * the document is the only version of this that covers all of them.
+     */
+    const resizeObserver = new ResizeObserver(() => lenis.resize());
+    resizeObserver.observe(document.documentElement);
+    resizeObserver.observe(document.body);
+
+    /**
+     * And re-measure on any DOM change, debounced to a frame.
+     *
+     * A ResizeObserver on the body misses the case where the body's own box
+     * does not change but its scrollHeight does, which is common with
+     * absolutely positioned or flex-grown containers - and the dashboard
+     * shell is exactly that shape.
+     */
+    let pending = 0;
+    const domObserver = new MutationObserver(() => {
+      if (pending) return;
+      pending = requestAnimationFrame(() => {
+        pending = 0;
+        lenis.resize();
+      });
+    });
+    domObserver.observe(document.body, { childList: true, subtree: true });
+
+    /**
      * Same-page anchors have to go through Lenis.
      *
      * Once Lenis owns the scroll position, the browser's own jump to a hash
@@ -116,6 +152,9 @@ export function SmoothScroll() {
 
     document.addEventListener("click", onClick);
     return () => {
+      if (pending) cancelAnimationFrame(pending);
+      domObserver.disconnect();
+      resizeObserver.disconnect();
       observer.disconnect();
       document.removeEventListener("click", onClick);
       cancelAnimationFrame(frame);

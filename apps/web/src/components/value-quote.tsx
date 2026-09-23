@@ -1,30 +1,27 @@
-"use client";
-
-import { useIsIndia } from "@/components/region";
-
 /**
- * Region-aware value quote (user-directed copy): the US line is the default
- * (primary market) and swaps to the INR line for visitors whose browser
- * timezone is India. Region detection lives in @/components/region - the
- * same hook drives every localized price on the site.
+ * The value quote, in USD.
+ *
+ * This used to swap to a rupee line for visitors whose browser timezone said
+ * India. One price, one currency, everywhere now: MyKavo charges in USD, so a
+ * rupee figure was only ever a converted display at a fixed anchor rate - it
+ * drifts against the real exchange rate and then has to be corrected at
+ * checkout. One number nobody has to reconcile beats a familiar one that
+ * quietly stops being true.
+ *
+ * No longer a client component: with the region hook gone there is nothing
+ * here that depends on the browser, so it renders on the server like the rest
+ * of the marketing page.
  */
 
 export const VALUE_QUOTE = {
-  us: {
-    lead: "Your most valuable investment isn't $20/month",
-    tail: "it's the hours you'll get back.",
-    perDay: "Just $0.67/day.",
-  },
-  in: {
-    lead: "Your best investment isn't ₹1,700/month",
-    tail: "it's the hours you'll get back.",
-    perDay: "Just ~₹57/day.",
-  },
+  lead: "Your most valuable investment isn't $20/month",
+  tail: "it's the hours you'll get back.",
+  perDay: "Just $0.67/day.",
 } as const;
 
 /** Big, attractive marketing variant (landing + pricing, v4 fixed palette). */
 export function ValueQuoteBanner() {
-  const quote = VALUE_QUOTE[useIsIndia() ? "in" : "us"];
+  const quote = VALUE_QUOTE;
   return (
     <figure className="mx-auto max-w-3xl px-5 text-center">
       <blockquote className="relative rounded-2xl border border-[#151515] bg-white px-7 py-10 shadow-[7px_7px_0_#FFD400,7px_7px_0_1px_#151515] sm:px-12">
@@ -54,7 +51,7 @@ export function ValueQuoteBanner() {
 
 /** Compact dashboard variant (fx design tokens, light + dark themes). */
 export function ValueQuoteCard() {
-  const quote = VALUE_QUOTE[useIsIndia() ? "in" : "us"];
+  const quote = VALUE_QUOTE;
   return (
     <div className="rounded-card border border-line bg-card px-5 py-4">
       <p className="text-[15px] font-medium leading-6 text-ink">

@@ -20,7 +20,6 @@ import { dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getPlan, formatLimit } from "@/config/plans";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
 import { ValueQuoteCard } from "@/components/value-quote";
-import { Price, BilledInUsdNote } from "@/components/region";
 import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscription-button";
 
 export default async function BillingPage({
@@ -76,7 +75,7 @@ export default async function BillingPage({
         <div className="flex flex-wrap items-baseline gap-3">
           <p className="text-3xl font-semibold tracking-tight text-ink">{plan.name}</p>
           <p className="text-sm text-ink-secondary">
-            <Price usd={plan.priceMonthlyUsd} />/month
+            ${plan.priceMonthlyUsd}/month
           </p>
           {isPro && (
             <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
@@ -108,7 +107,7 @@ export default async function BillingPage({
                   {daysToRenewal !== null && (
                     <span className="text-ink-secondary"> (in {daysToRenewal} day{daysToRenewal === 1 ? "" : "s"})</span>
                   )}{" "}
-                  - <Price usd={plan.priceMonthlyUsd} /> billed monthly via Dodo Payments (charged
+                  - ${plan.priceMonthlyUsd} billed monthly via Dodo Payments (charged
                   as ${plan.priceMonthlyUsd} USD).
                 </>
               )}
@@ -184,12 +183,11 @@ export default async function BillingPage({
                 <Sparkles className="size-5 text-accent" aria-hidden />
               </span>
               <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
-                Upgrade to Pro - <Price usd={pro.priceMonthlyUsd} />/month
+                Upgrade to Pro - ${pro.priceMonthlyUsd}/month
               </h2>
               <p className="mt-1 text-sm text-ink-secondary">
                 8 websites with {pro.limits.pagesPerWebsite} monitored pages each, daily scans,
-                and every advanced feature.{" "}
-                <BilledInUsdNote usd={pro.priceMonthlyUsd} className="text-ink-faint" />
+                and every advanced feature.
               </p>
             </div>
           </div>

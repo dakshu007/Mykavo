@@ -6,7 +6,6 @@ import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
 import { ValueQuoteBanner } from "@/components/value-quote";
-import { Price, BilledInUsdNote } from "@/components/region";
 import { plans, formatLimit } from "@/config/plans";
 import {
   FEATURE_LIST,
@@ -164,16 +163,10 @@ export default function PricingPage() {
                 <p className="mt-2 text-sm leading-6 text-[#151515]/65">{plan.headline}</p>
                 <p className="mt-6">
                   <span className={`${fontDisplay} text-5xl`}>
-                    <Price usd={plan.priceMonthlyUsd} />
+                    ${plan.priceMonthlyUsd}
                   </span>
                   <span className="text-sm text-[#151515]/55"> / month</span>
                 </p>
-                {pro && (
-                  <BilledInUsdNote
-                    usd={plan.priceMonthlyUsd}
-                    className="mt-1 block text-[12px] text-[#151515]/50"
-                  />
-                )}
                 <ul className="mt-7 flex-1 space-y-3">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-[14px] leading-6">
@@ -210,7 +203,7 @@ export default function PricingPage() {
                     <th key={p.id} className="px-4 py-3 text-sm font-semibold text-[#151515]">
                       {p.name}
                       <span className="block font-mono text-xs font-normal text-[#6B6B60]">
-                        <Price usd={p.priceMonthlyUsd} />/mo
+                        ${p.priceMonthlyUsd}/mo
                       </span>
                     </th>
                   ))}

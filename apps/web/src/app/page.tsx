@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { ValueQuoteBanner } from "@/components/value-quote";
-import { Price } from "@/components/region";
 import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
 import { CategoryTabs } from "@/components/landing/categories";
@@ -726,7 +725,7 @@ export default function HomePage() {
                     <p className="mt-2 text-sm leading-6 text-[#151515]/65">{plan.headline}</p>
                     <p className="mt-6">
                       <span className={`${fontDisplay} text-5xl`}>
-                        <Price usd={plan.priceMonthlyUsd} />
+                        ${plan.priceMonthlyUsd}
                       </span>
                       <span className="text-sm text-[#151515]/55"> / month</span>
                     </p>
