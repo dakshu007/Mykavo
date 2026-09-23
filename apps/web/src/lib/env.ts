@@ -166,8 +166,10 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   QUOTA_NETLIFY_BANDWIDTH_GB: z.string().optional(),
   // Dodo Payments (optional - billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
-  // Website capacity add-on product ($6/mo per +30 websites). When unset, the
-  // add-on purchase UI stays hidden.
+  // The $49/mo Agency product. When unset, Agency checkout and upgrades are
+  // unavailable and the billing page says so instead of offering a button.
+  DODO_AGENCY_PRODUCT_ID: z.string().optional(),
+  // Retired website add-on product - nothing reads it any more.
   DODO_ADDON_PRODUCT_ID: z.string().optional(),
   DODO_WEBHOOK_SECRET: z.string().optional(),
   DODO_API_KEY: z.string().optional(),

@@ -15,8 +15,29 @@ type Db = PrismaClient | Prisma.TransactionClient;
 /** Dodo statuses that grant paid access. */
 const ACTIVE_STATUSES = new Set(["active"]);
 
+/** A paid plan a subscription can hold. Anything else resolves to Free. */
+export type PaidPlanId = "pro" | "agency";
+
+function toPaidPlanId(value: string): PaidPlanId | null {
+  return value === "pro" || value === "agency" ? value : null;
+}
+
+/**
+ * Pro subscriptions that began before the Agency plan launched keep what Pro
+ * included when they bought it: white-label client reports, automatic report
+ * emails and 5 seats. Keyed on the subscription row's creation time, which a
+ * cancellation does not reset - a returning customer keeps their deal too.
+ */
+export const PRO_GRANDFATHER_CUTOFF = new Date("2026-09-24T00:00:00Z");
+
+export function isGrandfatheredPro(planId: string, subscriptionCreatedAt: Date): boolean {
+  return planId === "pro" && subscriptionCreatedAt < PRO_GRANDFATHER_CUTOFF;
+}
+
 export interface Entitlement {
-  planId: "free" | "pro";
+  planId: "free" | PaidPlanId;
+  /** Pro bought before Agency existed - keeps the features it included then. */
+  grandfathered: boolean;
   status: string;
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: Date | null;
@@ -30,9 +51,10 @@ export async function getWorkspaceEntitlement(
 ): Promise<Entitlement | null> {
   const sub = await db.subscription.findUnique({ where: { workspaceId } });
   if (!sub) return null;
-  const grantsPro = sub.planId === "pro" && ACTIVE_STATUSES.has(sub.status);
+  const paid = ACTIVE_STATUSES.has(sub.status) ? toPaidPlanId(sub.planId) : null;
   return {
-    planId: grantsPro ? "pro" : "free",
+    planId: paid ?? "free",
+    grandfathered: paid !== null && isGrandfatheredPro(paid, sub.createdAt),
     status: sub.status,
     cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
     currentPeriodEnd: sub.currentPeriodEnd,
@@ -43,6 +65,8 @@ export async function getWorkspaceEntitlement(
 
 export interface UpgradeInput {
   workspaceId: string;
+  /** Which paid plan to grant. */
+  planId: PaidPlanId;
   status: string;
   dodoCustomerId?: string | null;
   dodoSubscriptionId?: string | null;
@@ -52,20 +76,32 @@ export interface UpgradeInput {
   eventAt?: Date | null;
 }
 
+/** The paid plan a workspace's subscription row currently records, if any. */
+export async function getRecordedPaidPlan(
+  db: Db,
+  workspaceId: string,
+): Promise<PaidPlanId | null> {
+  const sub = await db.subscription.findUnique({
+    where: { workspaceId },
+    select: { planId: true },
+  });
+  return sub ? toPaidPlanId(sub.planId) : null;
+}
+
 /** True when the incoming event is older than the last one applied. */
 function isStale(existingLastEventAt: Date | null, eventAt?: Date | null): boolean {
   return !!eventAt && !!existingLastEventAt && eventAt < existingLastEventAt;
 }
 
-/** Grant Pro (from a verified active/renewed/paid webhook). */
-export async function upgradeWorkspaceToPro(db: Db, input: UpgradeInput): Promise<void> {
+/** Grant a paid plan (from a verified active/renewed/paid/plan-changed webhook). */
+export async function grantPaidPlan(db: Db, input: UpgradeInput): Promise<void> {
   const existing = await db.subscription.findUnique({
     where: { workspaceId: input.workspaceId },
   });
   if (existing && isStale(existing.lastEventAt, input.eventAt)) return; // out-of-order guard
 
   const data = {
-    planId: "pro",
+    planId: input.planId,
     status: input.status,
     dodoCustomerId: input.dodoCustomerId ?? undefined,
     dodoSubscriptionId: input.dodoSubscriptionId ?? undefined,
@@ -79,7 +115,7 @@ export async function upgradeWorkspaceToPro(db: Db, input: UpgradeInput): Promis
     create: {
       workspaceId: input.workspaceId,
       provider: "dodo",
-      planId: "pro",
+      planId: input.planId,
       status: input.status,
       dodoCustomerId: input.dodoCustomerId ?? null,
       dodoSubscriptionId: input.dodoSubscriptionId ?? null,
@@ -273,7 +309,7 @@ export async function createCheckoutIntent(
     token: string;
     workspaceId: string;
     userId: string;
-    /** "pro" (base plan) | "website_addon". Defaults to "pro". */
+    /** The plan being bought: "pro" | "agency". Defaults to "pro". */
     kind?: string;
     ttlMinutes?: number;
   },
@@ -292,7 +328,7 @@ export async function createCheckoutIntent(
 
 export interface ConsumedIntent {
   workspaceId: string;
-  /** What was purchased: "pro" | "website_addon". */
+  /** What was purchased: "pro" | "agency" (legacy rows: "website_addon"). */
   kind: string;
 }
 

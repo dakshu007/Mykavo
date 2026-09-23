@@ -6,7 +6,7 @@ import { cancelSubscriptionAtPeriodEnd, dodoApiConfigured } from "@/lib/billing/
 import { logger } from "@/lib/logger";
 
 /**
- * Cancel the workspace's Pro subscription at the end of the current period.
+ * Cancel the workspace's paid (Pro or Agency) subscription at the end of the current period.
  * The actual downgrade happens when Dodo delivers the cancellation webhook;
  * we only mark cancelAtPeriodEnd so the UI reflects it immediately.
  */
@@ -17,7 +17,7 @@ export async function POST() {
   if (denied) return denied;
 
   const sub = await getWorkspaceSubscription(ctx.workspace.id);
-  if (!sub || sub.planId !== "pro" || !sub.dodoSubscriptionId) {
+  if (!sub || sub.planId === "free" || !sub.dodoSubscriptionId) {
     return NextResponse.json({ error: "No active subscription to cancel." }, { status: 400 });
   }
   if (!dodoApiConfigured()) {

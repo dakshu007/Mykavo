@@ -101,7 +101,7 @@ export async function PATCH(request: Request, { params }: Params) {
     }
   }
 
-  // Scheduled client report delivery is part of white-label reports (Pro).
+  // Scheduled client report delivery is part of white-label reports (Agency).
   // Clearing (cadence OFF / recipients []) is always allowed.
   if (
     (input.reportCadence && input.reportCadence !== "OFF") ||
@@ -110,7 +110,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const plan = await getWorkspacePlan(ctx.workspace.id);
     if (!plan.limits.whiteLabelReports) {
       return NextResponse.json(
-        { error: "Automatic client report emails are a Pro feature." },
+        { error: "Automatic client report emails are an Agency feature." },
         { status: 403 },
       );
     }

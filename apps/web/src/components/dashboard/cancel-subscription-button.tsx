@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-export function CancelSubscriptionButton({ apiCancel }: { apiCancel: boolean }) {
+export function CancelSubscriptionButton({
+  apiCancel,
+  planName,
+}: {
+  apiCancel: boolean;
+  planName: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,7 +26,7 @@ export function CancelSubscriptionButton({ apiCancel }: { apiCancel: boolean }) 
       return;
     }
     const ok = window.confirm(
-      "Cancel your Pro subscription? It stays active until the end of the current billing period.",
+      `Cancel your ${planName} subscription? It stays active until the end of the current billing period.`,
     );
     if (!ok) return;
     setLoading(true);

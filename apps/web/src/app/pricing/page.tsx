@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Pricing - Website Monitoring Plans from $0",
   description:
-    "Simple, transparent pricing for website change monitoring. Start free with one website, or go Pro at $20/month for 8 websites with 15 monitored pages each, daily scans and alerts.",
+    "Simple, transparent pricing for website change monitoring. Start free with one website. Pro is $20/month for 8 websites, Agency is $49/month for 30 websites with white-label client reports.",
   keywords: [
     "website monitoring pricing",
     "site monitoring tools pricing",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "MyKavo Pricing - Website Monitoring from $0",
     description:
-      "Free plan for one website. Pro at $20/month for 8 websites with 15 monitored pages each, daily scans and severity-ranked alerts.",
+      "Free plan for one website. Pro at $20/month for 8 websites. Agency at $49/month for 30 websites, white-label client reports and 15 team members.",
     url: "/pricing",
     type: "website",
   },
@@ -52,14 +52,33 @@ const comparisonRows: Array<{
   { label: "Scan frequency", value: (p) => (p.limits.scanFrequency === "DAILY" ? "Daily" : "Weekly") },
   { label: "History retention", value: (p) => (p.limits.historyDays >= 365 ? "1 year" : `${p.limits.historyDays} days`) },
   { label: "Email alerts", value: () => true },
-  { label: "Manual scans", value: (p) => p.limits.manualScans },
+  {
+    label: "Manual scans",
+    value: (p) => (p.limits.manualScans ? `${formatLimit(p.limits.manualScansPerDay)} a day` : false),
+  },
   { label: "Conversion element monitoring", value: (p) => p.limits.conversionElementMonitoring },
+  { label: "Post-deploy checks", value: (p) => p.limits.deployChecks },
+  { label: "White-label client reports", value: (p) => p.limits.whiteLabelReports },
+  { label: "Automatic client report emails", value: (p) => p.limits.whiteLabelReports },
+  {
+    label: "Team members",
+    value: (p) => (p.limits.maxMembers === 1 ? "Just you" : `Up to ${p.limits.maxMembers}`),
+  },
+  { label: "Site audit", value: (p) => `${formatLimit(p.limits.siteAuditPages)} pages per crawl` },
 ];
 
 const pricingFaqs = [
   {
+    q: "Should I pick Pro or Agency?",
+    a: "Pro fits freelancers and in-house teams looking after up to 8 websites. Agency is for teams running client websites: 30 websites, reports under your own brand that email themselves to clients, and room for 15 people.",
+  },
+  {
     q: "Can I change plans later?",
-    a: "Yes. Upgrades and downgrades take effect immediately, and limits adjust with your plan.",
+    a: "Yes. Upgrading from Pro to Agency applies straight away and you pay only the difference for the rest of the month. Moving from Agency back to Pro happens at the end of the billing period you have already paid for.",
+  },
+  {
+    q: "I'm already on Pro. Do I lose white-label reports?",
+    a: "No. Anyone who subscribed to Pro before Agency launched keeps white-label client reports and 5 team seats for as long as they keep that subscription.",
   },
   {
     q: "What counts as a monitored page?",
@@ -130,7 +149,7 @@ export default function PricingPage() {
           </h1>
           <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
             One missed regression costs more than a year of MyKavo. Start free with one website,
-            or go Pro for $20/month - 8 websites with 15 monitored pages each.
+            go Pro for $20/month, or run every client site on Agency for $49/month.
           </p>
         </div>
 
@@ -140,7 +159,7 @@ export default function PricingPage() {
         </div>
 
         {/* Plan cards */}
-        <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
+        <div className="mx-auto grid max-w-3xl gap-6 lg:max-w-6xl lg:grid-cols-3">
           {plans.map((plan) => {
             const pro = plan.highlighted;
             return (
@@ -179,7 +198,7 @@ export default function PricingPage() {
                   href="/signup"
                   className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                 >
-                  {pro ? "Start with Pro" : "Start free"}
+                  {plan.priceMonthlyUsd === 0 ? "Start free" : `Start with ${plan.name}`}
                 </Link>
               </div>
             );
@@ -192,7 +211,7 @@ export default function PricingPage() {
           <h2 className={`${fontDisplay} mb-8 text-center text-3xl text-[#151515] sm:text-4xl`}>
             Every plan, side by side.
           </h2>
-          <div className="mx-auto max-w-3xl overflow-x-auto rounded-2xl border border-[#151515] bg-white p-6 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
+          <div className="mx-auto max-w-4xl overflow-x-auto rounded-2xl border border-[#151515] bg-white p-6 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
             <table className="w-full min-w-130 text-left">
               <thead>
                 <tr className="border-b border-black/10">

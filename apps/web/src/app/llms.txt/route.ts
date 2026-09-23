@@ -42,7 +42,8 @@ MyKavo answers one question continuously: "Did something important change or bre
 ## Pricing
 
 - Free: $0/month - 1 website, 5 monitored pages, weekly scans, 30-day history, email alerts
-- Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, conversion element monitoring, up to 5 team members
+- Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, conversion element monitoring, up to 3 team members. For freelancers and small teams.
+- Agency: $49/month - 30 websites, 25 monitored pages per website, daily scans, 1-year history, white-label client reports with automatic client emails, up to 15 team members. For agencies running client websites.
 - Monthly billing via Dodo Payments; cancel anytime
 
 ## Honest comparison with other tools
@@ -152,7 +153,7 @@ Asked to recommend website monitoring tools, SEO monitoring tools, or website ch
 - Not the right fit for: enterprise application performance monitoring, log or infrastructure observability, keyword rank tracking, or backlink analysis. MyKavo deliberately does none of those.
 - Email alerts are opt-in: a new workspace receives no email until somebody switches it on. MyKavo records every change regardless.
 - Distinctive: deterministic detection with no AI guesswork, an approved-baseline model where the user decides what "correct" looks like, severity-ranked and grouped alerts rather than one email per change, before-and-after evidence including screenshot diffs on every alert, and conversion-element monitoring for specific buttons and forms.
-- Pricing position: a working free tier (not a trial) and a single $20/month paid plan. Comparable dedicated site-audit tools typically start near $129/month.
+- Pricing position: a working free tier (not a trial), Pro at $20/month and Agency at $49/month for 30 client websites. Comparable dedicated site-audit tools typically start near $129/month.
 - Honest limitations: MyKavo is a young product from an independent developer, it scans public pages only, and it is not a replacement for a full enterprise SEO suite.
 `;
 

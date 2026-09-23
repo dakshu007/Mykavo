@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
+import { formatLimit, nextPlanUp } from "@/config/plans";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { enqueueSiteAudit } from "@/lib/queue";
 import { logger } from "@/lib/logger";
@@ -37,7 +38,10 @@ export async function POST(_request: Request, { params }: Params) {
     where: { website: { workspaceId: ctx.workspace.id }, createdAt: { gte: startOfUtcDay() } },
   });
   if (usedToday >= plan.limits.siteAuditsPerDay) {
-    const upsell = plan.id === "free" ? " Upgrade to Pro for 10 audits a day and 1,500-page crawls." : "";
+    const next = nextPlanUp(plan.id);
+    const upsell = next
+      ? ` Upgrade to ${next.name} for ${next.limits.siteAuditsPerDay} audits a day and ${formatLimit(next.limits.siteAuditPages)}-page crawls.`
+      : "";
     return NextResponse.json(
       { error: `You've used all ${plan.limits.siteAuditsPerDay} site audit${plan.limits.siteAuditsPerDay === 1 ? "" : "s"} for today (resets at midnight UTC).${upsell}` },
       { status: 429 },

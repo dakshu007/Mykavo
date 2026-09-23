@@ -72,7 +72,10 @@ export {
 } from "./health";
 export {
   getWorkspaceEntitlement,
-  upgradeWorkspaceToPro,
+  getRecordedPaidPlan,
+  grantPaidPlan,
+  isGrandfatheredPro,
+  PRO_GRANDFATHER_CUTOFF,
   downgradeWorkspaceToFree,
   findWorkspaceByDodoSubscription,
   applyWebsiteAddon,
@@ -83,6 +86,7 @@ export {
   createCheckoutIntent,
   consumeCheckoutIntent,
   type Entitlement,
+  type PaidPlanId,
   type UpgradeInput,
   type WebsiteAddonInput,
   type ActiveWebsiteAddon,

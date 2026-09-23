@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
 import { BRAND_NAME_MAX_LENGTH, brandingUpdateSchema } from "./schema";
 
 /**
- * Workspace branding for white-label client reports (Pro, spec §37). Logos
+ * Workspace branding for white-label client reports (Agency, spec §37). Logos
  * follow the avatar pattern: bytes go to object storage under an unguessable
  * name, Postgres stores only the served /api/brand-logos/<name> path, and a
  * replaced or removed logo deletes the old object.
@@ -36,11 +36,11 @@ export async function POST(request: Request) {
   const denied = requireRole(ctx, "OWNER", "ADMIN");
   if (denied) return denied;
 
-  // Server-side plan gate (spec §39): white-label branding is Pro.
+  // Server-side plan gate (spec §39): white-label branding is Agency.
   const plan = await getWorkspacePlan(ctx.workspace.id);
   if (!plan.limits.whiteLabelReports) {
     return NextResponse.json(
-      { error: "White-label reports are a Pro feature. Upgrade to brand your client reports." },
+      { error: "White-label reports are an Agency feature. Upgrade to brand your client reports." },
       { status: 403 },
     );
   }

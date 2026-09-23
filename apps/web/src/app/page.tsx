@@ -30,7 +30,7 @@ import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
-import { plans } from "@/config/plans";
+import { getPlan, plans } from "@/config/plans";
 import { site } from "@/config/site";
 import { FEATURE_LIST, organizationNode, websiteNode } from "@/lib/seo/structured-data";
 
@@ -88,16 +88,14 @@ const jsonLd = {
       operatingSystem: "Web",
       description: site.description,
       url: site.url,
-      offers: [
-        { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
-        {
-          "@type": "Offer",
-          name: "Pro",
-          price: "20",
-          priceCurrency: "USD",
-          description: "8 websites with 15 monitored pages each, daily scans and alerts.",
-        },
-      ],
+      // Built from plans.ts so the markup can never quote a stale price.
+      offers: plans.map((plan) => ({
+        "@type": "Offer",
+        name: plan.name,
+        price: String(plan.priceMonthlyUsd),
+        priceCurrency: "USD",
+        description: plan.headline,
+      })),
       // Single source (lib/seo/structured-data) so this cannot fall behind
       // what MyKavo actually does - it did once, for five weeks.
       featureList: FEATURE_LIST,
@@ -106,6 +104,9 @@ const jsonLd = {
 };
 
 /* ---------------------------------- data --------------------------------- */
+
+const agencyPlan = getPlan("agency");
+
 
 const problems = [
   {
@@ -253,7 +254,7 @@ const faqs = [
   },
   {
     q: "How many websites can I monitor?",
-    a: "The free plan monitors 1 website with 5 pages. Pro is $20/month with 8 websites and 15 monitored pages per website - ideal for freelancers and teams managing several sites.",
+    a: "The free plan monitors 1 website with 5 pages. Pro is $20/month for 8 websites with 15 monitored pages each - ideal for freelancers and small teams. Agency is $49/month for 30 websites with 25 pages each, plus white-label client reports and up to 15 team members.",
   },
   {
     q: "Is it safe to point MyKavo at my site?",
@@ -587,6 +588,16 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
+                <p className="mt-8 text-sm text-[#6B6B60]">
+                  The Agency plan covers {agencyPlan.limits.websites} client websites for $
+                  {agencyPlan.priceMonthlyUsd}/month, with reports under your own brand.{" "}
+                  <Link
+                    href="/pricing"
+                    className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
+                  >
+                    Compare plans
+                  </Link>
+                </p>
               </div>
 
               <div className="rounded-2xl border border-[#151515] bg-[#FBFAF3] p-5 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
@@ -702,7 +713,7 @@ export default function HomePage() {
             <div className="mt-14">
               <ValueQuoteBanner />
             </div>
-            <div className="mx-auto mt-14 grid max-w-3xl gap-6 sm:grid-cols-2">
+            <div className="mx-auto mt-14 grid max-w-3xl gap-6 lg:max-w-none lg:grid-cols-3">
               {plans.map((plan) => {
                 const pro = plan.highlighted;
                 return (
@@ -741,7 +752,7 @@ export default function HomePage() {
                       href="/signup"
                       className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                     >
-                      {pro ? "Start with Pro" : "Start free"}
+                      {plan.priceMonthlyUsd === 0 ? "Start free" : `Start with ${plan.name}`}
                     </Link>
                   </div>
                 );

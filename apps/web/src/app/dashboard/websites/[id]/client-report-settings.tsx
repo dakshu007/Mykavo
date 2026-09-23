@@ -182,7 +182,7 @@ export function ClientReportSettings({
               ? brandingConfigured
                 ? "Reports carry your agency branding - update it in Settings."
                 : "Add your agency name, logo, and color in Settings to white-label this report."
-              : "Free reports include MyKavo branding. Upgrade to Pro to white-label them with your agency's name, logo, and color."}
+              : "Reports on this plan include MyKavo branding. Upgrade to Agency to white-label them with your agency's name, logo, and color, and email them to clients automatically."}
           </p>
 
           {isPro ? (

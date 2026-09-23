@@ -104,10 +104,14 @@ export function verifyDodoWebhook(
 
 /* ------------------------- event classification -------------------------- */
 
-/** Event types that grant Pro access (research §2). */
+/**
+ * Event types that grant paid access (research §2). plan_changed is how Dodo
+ * confirms a Pro <-> Agency switch, so it grants the new plan.
+ */
 const GRANT_EVENTS = new Set([
   "subscription.active",
   "subscription.renewed",
+  "subscription.plan_changed",
   "payment.succeeded",
 ]);
 
@@ -158,4 +162,30 @@ export function classifyDodoEvent(type: string, status: string): DodoEventAction
       status !== "active" &&
       status !== "pending");
   return revokes ? "revoke" : "noop";
+}
+
+/* ---------------------------- granted plan ------------------------------- */
+
+export type GrantedPlan = "pro" | "agency";
+
+/**
+ * Which paid plan a granting event is for. Pure and unit-tested.
+ *
+ *  1. The product on the event is the truth when we recognise it -
+ *     subscription.* events always carry it, and after a plan change it is
+ *     the only thing that says which plan the customer is on now.
+ *  2. Otherwise the server-issued checkout intent says what was bought.
+ *     payment.* events carry no product, and can arrive first.
+ *  3. Otherwise keep the plan already recorded, so a renewal payment never
+ *     quietly turns an Agency workspace back into Pro.
+ *  4. Otherwise Pro - the plan every subscription before Agency was on.
+ */
+export function resolveGrantedPlan(input: {
+  productPlan: GrantedPlan | null;
+  intentKind: string | null;
+  recordedPlan: GrantedPlan | null;
+}): GrantedPlan {
+  if (input.productPlan) return input.productPlan;
+  if (input.intentKind === "agency" || input.intentKind === "pro") return input.intentKind;
+  return input.recordedPlan ?? "pro";
 }

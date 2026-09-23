@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import {
   prisma,
   Prisma,
-  upgradeWorkspaceToPro,
+  grantPaidPlan,
+  getRecordedPaidPlan,
   downgradeWorkspaceToFree,
   findWorkspaceByDodoSubscription,
   consumeCheckoutIntent,
@@ -10,9 +11,10 @@ import {
 import {
   verifyDodoWebhook,
   classifyDodoEvent,
+  resolveGrantedPlan,
   DodoWebhookError,
 } from "@/lib/billing/webhook";
-import { DODO_WEBHOOK_SECRET } from "@/lib/billing/config";
+import { DODO_WEBHOOK_SECRET, planForProductId } from "@/lib/billing/config";
 import { logger } from "@/lib/logger";
 
 // The raw body is required for signature verification - never parse it first.
@@ -113,22 +115,31 @@ export async function POST(request: Request) {
 
       // Resolve the workspace. An existing subscription binding wins;
       // otherwise the server-issued checkout intent supplies it (never the
-      // client-editable metadata). Only the Pro plan exists - the former
-      // website add-on route was removed with the feature.
+      // client-editable metadata). The intent also says which plan was
+      // bought, for payment events that carry no product.
       let workspaceId: string | null = null;
+      let intentKind: string | null = null;
       if (subscriptionId) {
         workspaceId = await findWorkspaceByDodoSubscription(tx, subscriptionId);
       }
       if (!workspaceId && token) {
         const intent = await consumeCheckoutIntent(tx, token);
-        if (intent) workspaceId = intent.workspaceId;
+        if (intent) {
+          workspaceId = intent.workspaceId;
+          intentKind = intent.kind;
+        }
       }
       if (!workspaceId) return "unattributed" as const;
 
-      // --- Base Pro plan ---
       if (grants) {
-        await upgradeWorkspaceToPro(tx, {
+        const planId = resolveGrantedPlan({
+          productPlan: planForProductId(data.product_id),
+          intentKind,
+          recordedPlan: await getRecordedPaidPlan(tx, workspaceId),
+        });
+        await grantPaidPlan(tx, {
           workspaceId,
+          planId,
           status: "active",
           dodoCustomerId: data.customer?.customer_id ?? null,
           dodoSubscriptionId: subscriptionId,
@@ -136,7 +147,7 @@ export async function POST(request: Request) {
           cancelAtPeriodEnd: data.cancel_at_next_billing_date ?? false,
           eventAt,
         });
-        return "upgraded" as const;
+        return planId === "agency" ? ("granted-agency" as const) : ("granted-pro" as const);
       }
       if (revokes) {
         await downgradeWorkspaceToFree(tx, {

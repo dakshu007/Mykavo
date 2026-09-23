@@ -699,9 +699,11 @@ export function failureAlertEmail(data: FailureAlertData): { subject: string; ht
   return { subject, html: shell(inner), text };
 }
 
-// ---------- Pro renewal reminder (billing sweep) ----------
+// ---------- Paid-plan renewal reminder (billing sweep) ----------
 
 export interface RenewalReminderData {
+  /** "Pro" or "Agency". */
+  planName: string;
   /** Days until the current period ends (>= 0). */
   daysLeft: number;
   /** Human date the period ends, e.g. "August 16, 2026". */
@@ -724,14 +726,14 @@ export function renewalReminderEmail(data: RenewalReminderData): {
         ? "tomorrow"
         : `in ${data.daysLeft} days`;
   const subject = data.cancelAtPeriodEnd
-    ? `Your MyKavo Pro access ends ${inDays} - renew now`
-    : `Your MyKavo Pro plan renews ${inDays}`;
+    ? `Your MyKavo ${data.planName} access ends ${inDays} - renew now`
+    : `Your MyKavo ${data.planName} plan renews ${inDays}`;
   const lead = data.cancelAtPeriodEnd
-    ? `Your MyKavo subscription is about to expire - Pro access ends on ${data.renewsOn}. Renew now to keep daily scans, alerts and your full monitoring history.`
-    : `Heads up: your MyKavo Pro plan renews on ${data.renewsOn} for $${data.priceMonthlyUsd}. No action needed - this is just a reminder so the charge never surprises you.`;
+    ? `Your MyKavo subscription is about to expire - ${data.planName} access ends on ${data.renewsOn}. Renew now to keep daily scans, alerts and your full monitoring history.`
+    : `Heads up: your MyKavo ${data.planName} plan renews on ${data.renewsOn} for $${data.priceMonthlyUsd}. No action needed - this is just a reminder so the charge never surprises you.`;
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${data.cancelAtPeriodEnd ? "#e5484d" : "#8a8a7a"}">${data.cancelAtPeriodEnd ? "Subscription expiring" : "Upcoming renewal"}</p>
-    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${data.cancelAtPeriodEnd ? `Pro access ends ${esc(inDays)}` : `Pro renews ${esc(inDays)}`}</h1>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${data.cancelAtPeriodEnd ? `${esc(data.planName)} access ends ${esc(inDays)}` : `${esc(data.planName)} renews ${esc(inDays)}`}</h1>
     <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(lead)}</p>
     ${button(data.billingUrl, data.cancelAtPeriodEnd ? "Renew in Billing" : "Manage billing")}
     <p style="margin:20px 0 0;font-size:12px;color:#8a8f9c">You can change or cancel your plan anytime from the Billing page.</p>

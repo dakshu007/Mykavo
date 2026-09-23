@@ -148,7 +148,7 @@ export const ALTERNATIVES: Alternative[] = [
       },
       {
         q: "Which is cheaper?",
-        a: "Both have free tiers. MyKavo Pro is $20/month for 8 websites with 15 monitored pages each, daily scans, a year of history and 5 seats. Visualping's paid pricing is tiered by check volume and frequency; check their pricing page for the current figures, since they change more often than a comparison page can track.",
+        a: "Both have free tiers. MyKavo Pro is $20/month for 8 websites with 15 monitored pages each, daily scans, a year of history and 3 seats; Agency is $49/month for 30 websites. Visualping's paid pricing is tiered by check volume and frequency; check their pricing page for the current figures, since they change more often than a comparison page can track.",
       },
       {
         q: "Does MyKavo highlight what changed on a screenshot?",
@@ -232,7 +232,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Client-ready reporting",
         them: "Reporting available on higher plans.",
-        us: "White-label scheduled reports with your own branding, built for forwarding to a client.",
+        us: "White-label scheduled reports with your own branding on the Agency plan, built for forwarding to a client.",
       },
     ],
     whereTheyWin: [
@@ -443,7 +443,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Entry price",
         them: "Pro at $29/month. A free trial rather than a free plan.",
-        us: "Free plan (1 website, 5 pages, weekly, no card), then $20/month for 8 websites with 15 pages each.",
+        us: "Free plan (1 website, 5 pages, weekly, no card), then $20/month for 8 websites with 15 pages each, or $49/month for 30 websites.",
       },
     ],
     whereTheyWin: [

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { verifyDodoWebhook, classifyDodoEvent, DodoWebhookError } from "./webhook";
+import {
+  verifyDodoWebhook,
+  classifyDodoEvent,
+  resolveGrantedPlan,
+  DodoWebhookError,
+} from "./webhook";
 
 /** Sign a body the way Dodo (Standard Webhooks) does, for test fixtures. */
 function sign(rawBody: string, id: string, ts: number, secret: string): string {
@@ -139,5 +144,51 @@ describe("classifyDodoEvent", () => {
     expect(classifyDodoEvent("subscription.updated", "pending")).toBe("noop");
     expect(classifyDodoEvent("subscription.updated", "")).toBe("noop");
     expect(classifyDodoEvent("payment.failed", "failed")).toBe("noop");
+  });
+});
+
+describe("plan changes (Pro <-> Agency)", () => {
+  it("grants on subscription.plan_changed while active", () => {
+    expect(classifyDodoEvent("subscription.plan_changed", "active")).toBe("grant");
+  });
+
+  it("still revokes a plan_changed event that carries a dead status", () => {
+    expect(classifyDodoEvent("subscription.plan_changed", "on_hold")).toBe("revoke");
+  });
+});
+
+describe("resolveGrantedPlan", () => {
+  it("trusts a recognised product above everything else", () => {
+    expect(
+      resolveGrantedPlan({ productPlan: "agency", intentKind: "pro", recordedPlan: "pro" }),
+    ).toBe("agency");
+    // A scheduled downgrade lands as a Pro product on an Agency workspace.
+    expect(
+      resolveGrantedPlan({ productPlan: "pro", intentKind: null, recordedPlan: "agency" }),
+    ).toBe("pro");
+  });
+
+  it("falls back to the checkout intent when the event has no product (payment.*)", () => {
+    expect(
+      resolveGrantedPlan({ productPlan: null, intentKind: "agency", recordedPlan: null }),
+    ).toBe("agency");
+  });
+
+  it("keeps the recorded plan on a renewal payment, never demoting Agency to Pro", () => {
+    expect(
+      resolveGrantedPlan({ productPlan: null, intentKind: null, recordedPlan: "agency" }),
+    ).toBe("agency");
+  });
+
+  it("ignores legacy or unknown intent kinds", () => {
+    expect(
+      resolveGrantedPlan({ productPlan: null, intentKind: "website_addon", recordedPlan: null }),
+    ).toBe("pro");
+  });
+
+  it("defaults to Pro, the plan every pre-Agency subscription was on", () => {
+    expect(resolveGrantedPlan({ productPlan: null, intentKind: null, recordedPlan: null })).toBe(
+      "pro",
+    );
   });
 });

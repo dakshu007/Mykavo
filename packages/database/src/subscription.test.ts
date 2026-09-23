@@ -7,7 +7,9 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import {
   getWorkspaceEntitlement,
-  upgradeWorkspaceToPro,
+  grantPaidPlan,
+  isGrandfatheredPro,
+  PRO_GRANDFATHER_CUTOFF,
   downgradeWorkspaceToFree,
   findWorkspaceByDodoSubscription,
   applyWebsiteAddon,
@@ -47,10 +49,11 @@ describe("getWorkspaceEntitlement", () => {
   });
 });
 
-describe("upgradeWorkspaceToPro", () => {
+describe("grantPaidPlan", () => {
   it("creates a pro subscription and reports pro entitlement", async () => {
-    await upgradeWorkspaceToPro(prisma, {
+    await grantPaidPlan(prisma, {
       workspaceId,
+      planId: "pro",
       status: "active",
       dodoCustomerId: "cus_1",
       dodoSubscriptionId: "sub_1",
@@ -63,8 +66,9 @@ describe("upgradeWorkspaceToPro", () => {
 
   it("is idempotent - a repeated active event keeps a single pro subscription", async () => {
     for (const _ of [1, 2, 3]) {
-      await upgradeWorkspaceToPro(prisma, {
-        workspaceId,
+      await grantPaidPlan(prisma, {
+      workspaceId,
+      planId: "pro",
         status: "active",
         dodoSubscriptionId: "sub_dup",
       });
@@ -74,15 +78,54 @@ describe("upgradeWorkspaceToPro", () => {
   });
 
   it("a non-active status does not grant pro entitlement", async () => {
-    await upgradeWorkspaceToPro(prisma, { workspaceId, status: "on_hold" });
+    await grantPaidPlan(prisma, {
+      workspaceId,
+      planId: "pro", status: "on_hold" });
     // planId is pro but status isn't active → entitlement falls back to free.
     expect((await getWorkspaceEntitlement(prisma, workspaceId))?.planId).toBe("free");
   });
 });
 
+describe("Agency and grandfathered Pro", () => {
+  it("grants agency, and a later event can move the workspace between paid plans", async () => {
+    await grantPaidPlan(prisma, { workspaceId, planId: "agency", status: "active", dodoSubscriptionId: "sub_ag" });
+    expect((await getWorkspaceEntitlement(prisma, workspaceId))?.planId).toBe("agency");
+    await grantPaidPlan(prisma, { workspaceId, planId: "pro", status: "active", dodoSubscriptionId: "sub_ag" });
+    expect((await getWorkspaceEntitlement(prisma, workspaceId))?.planId).toBe("pro");
+    expect(await prisma.subscription.count({ where: { workspaceId } })).toBe(1);
+  });
+
+  it("marks Pro bought before the cutoff as grandfathered, and nothing else", async () => {
+    await grantPaidPlan(prisma, { workspaceId, planId: "pro", status: "active" });
+    const before = new Date(PRO_GRANDFATHER_CUTOFF.getTime() - 86_400_000);
+    await prisma.subscription.update({ where: { workspaceId }, data: { createdAt: before } });
+    expect((await getWorkspaceEntitlement(prisma, workspaceId))?.grandfathered).toBe(true);
+
+    // The same old row on Agency is simply Agency.
+    await grantPaidPlan(prisma, { workspaceId, planId: "agency", status: "active" });
+    expect((await getWorkspaceEntitlement(prisma, workspaceId))?.grandfathered).toBe(false);
+  });
+
+  it("does not grandfather a lapsed subscription", async () => {
+    await grantPaidPlan(prisma, { workspaceId, planId: "pro", status: "on_hold" });
+    const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+    expect(ent?.planId).toBe("free");
+    expect(ent?.grandfathered).toBe(false);
+  });
+
+  it("isGrandfatheredPro is Pro-only and strictly before the cutoff", () => {
+    const early = new Date(PRO_GRANDFATHER_CUTOFF.getTime() - 1);
+    expect(isGrandfatheredPro("pro", early)).toBe(true);
+    expect(isGrandfatheredPro("pro", PRO_GRANDFATHER_CUTOFF)).toBe(false);
+    expect(isGrandfatheredPro("agency", early)).toBe(false);
+  });
+});
+
 describe("downgradeWorkspaceToFree", () => {
   it("downgrades to free and resets daily scan frequency to weekly", async () => {
-    await upgradeWorkspaceToPro(prisma, { workspaceId, status: "active", dodoSubscriptionId: "sub_x" });
+    await grantPaidPlan(prisma, {
+      workspaceId,
+      planId: "pro", status: "active", dodoSubscriptionId: "sub_x" });
     const site = await prisma.website.create({
       data: {
         workspaceId,
@@ -104,7 +147,9 @@ describe("downgradeWorkspaceToFree", () => {
 
 describe("findWorkspaceByDodoSubscription", () => {
   it("maps a dodo subscription id back to its workspace", async () => {
-    await upgradeWorkspaceToPro(prisma, { workspaceId, status: "active", dodoSubscriptionId: "sub_find" });
+    await grantPaidPlan(prisma, {
+      workspaceId,
+      planId: "pro", status: "active", dodoSubscriptionId: "sub_find" });
     expect(await findWorkspaceByDodoSubscription(prisma, "sub_find")).toBe(workspaceId);
     expect(await findWorkspaceByDodoSubscription(prisma, "sub_missing")).toBeNull();
   });
@@ -115,8 +160,9 @@ describe("out-of-order event guard", () => {
     const t1 = new Date("2026-07-08T10:00:00Z");
     const t0 = new Date("2026-07-08T09:00:00Z");
     // Apply a newer upgrade first…
-    await upgradeWorkspaceToPro(prisma, {
+    await grantPaidPlan(prisma, {
       workspaceId,
+      planId: "pro",
       status: "active",
       dodoSubscriptionId: "sub_ooo",
       eventAt: t1,
@@ -129,7 +175,9 @@ describe("out-of-order event guard", () => {
   it("applies a downgrade that is newer than the last applied event", async () => {
     const t1 = new Date("2026-07-08T10:00:00Z");
     const t2 = new Date("2026-07-08T11:00:00Z");
-    await upgradeWorkspaceToPro(prisma, { workspaceId, status: "active", eventAt: t1 });
+    await grantPaidPlan(prisma, {
+      workspaceId,
+      planId: "pro", status: "active", eventAt: t1 });
     await downgradeWorkspaceToFree(prisma, { workspaceId, status: "cancelled", eventAt: t2 });
     expect((await getWorkspaceEntitlement(prisma, workspaceId))?.planId).toBe("free");
   });

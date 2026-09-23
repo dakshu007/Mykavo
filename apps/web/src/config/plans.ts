@@ -3,16 +3,22 @@
  * Never hardcode plan limits elsewhere - server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
- * MyKavo ships two plans: Free, and Pro at $20/month. Pro includes 8 websites
- * with 15 monitored pages each. "Unlimited" numeric limits use Infinity so
- * `count >= limit` is never true. (The former $6/mo website add-on was
- * removed 2026-07-17 - the WebsiteAddon table remains for historical rows
- * but nothing reads or grants it anymore.)
+ * MyKavo ships three plans: Free, Pro at $20/month and Agency at $49/month.
+ * Pro is 8 websites with 15 monitored pages each; Agency is 30 with 25 each,
+ * plus white-label client reports and a larger team. Prices live in
+ * @mykavo/shared (PLAN_PRICES_USD) because the worker quotes them in emails.
+ * "Unlimited" numeric limits use Infinity so `count >= limit` is never true.
+ * (The former $6/mo website add-on was removed 2026-07-17 - the WebsiteAddon
+ * table remains for historical rows but nothing reads or grants it anymore.)
+ *
+ * Pro subscriptions that started before Agency launched are grandfathered:
+ * resolvePlan() gives them back white-label reports and 5 seats, which Pro
+ * included when they bought it.
  */
 
-import { PLAN_HISTORY_DAYS } from "@mykavo/shared";
+import { PLAN_HISTORY_DAYS, PLAN_PRICES_USD, type PlanTier } from "@mykavo/shared";
 
-export type PlanId = "free" | "pro";
+export type PlanId = PlanTier;
 
 export type ScanFrequency = "WEEKLY" | "DAILY";
 
@@ -57,13 +63,15 @@ export interface Plan {
   };
   features: string[];
   highlighted?: boolean;
+  /** True for a Pro plan resolved with its pre-Agency inclusions. */
+  grandfathered?: boolean;
 }
 
 export const plans: Plan[] = [
   {
     id: "free",
     name: "Free",
-    priceMonthlyUsd: 0,
+    priceMonthlyUsd: PLAN_PRICES_USD.free,
     headline: "Start monitoring one important website.",
     limits: {
       websites: 1,
@@ -92,8 +100,8 @@ export const plans: Plan[] = [
   {
     id: "pro",
     name: "Pro",
-    priceMonthlyUsd: 20,
-    headline: "8 websites with 15 monitored pages each.",
+    priceMonthlyUsd: PLAN_PRICES_USD.pro,
+    headline: "For freelancers and small teams: 8 websites, checked daily.",
     highlighted: true,
     limits: {
       websites: 8,
@@ -103,8 +111,8 @@ export const plans: Plan[] = [
       manualScans: true,
       manualScansPerDay: 20,
       conversionElementMonitoring: true,
-      maxMembers: 5,
-      whiteLabelReports: true,
+      maxMembers: 3,
+      whiteLabelReports: false,
       deployChecks: true,
       siteAuditPages: 1500,
       siteAuditsPerDay: 10,
@@ -113,26 +121,88 @@ export const plans: Plan[] = [
       "8 websites",
       "15 monitored pages per website",
       "Daily scans",
-      "Manual scans",
+      "Manual scans - 20 a day",
       "Post-deploy checks",
       "Conversion element monitoring",
-      "White-label client reports",
-      "Automatic client report emails",
       "1-year history",
       "Site audits - 1,500 pages per crawl",
-      "Up to 5 team members",
+      "Up to 3 team members",
+      "Email alerts",
+    ],
+  },
+  {
+    id: "agency",
+    name: "Agency",
+    priceMonthlyUsd: PLAN_PRICES_USD.agency,
+    headline: "For agencies: 30 client websites, reports under your own brand.",
+    limits: {
+      websites: 30,
+      pagesPerWebsite: 25,
+      scanFrequency: "DAILY",
+      historyDays: PLAN_HISTORY_DAYS.agency,
+      manualScans: true,
+      manualScansPerDay: 100,
+      conversionElementMonitoring: true,
+      maxMembers: 15,
+      whiteLabelReports: true,
+      deployChecks: true,
+      // The crawler stops at 10 minutes, which lands near 2,000 pages - the
+      // worker caps audits there too. Never advertise more than it can crawl.
+      siteAuditPages: 2000,
+      siteAuditsPerDay: 25,
+    },
+    features: [
+      "30 websites",
+      "25 monitored pages per website",
+      "Daily scans",
+      "Manual scans - 100 a day",
+      "White-label client reports",
+      "Automatic client report emails",
+      "Post-deploy checks",
+      "Conversion element monitoring",
+      "1-year history",
+      "Site audits - 2,000 pages per crawl",
+      "Up to 15 team members",
       "Email alerts",
     ],
   },
 ];
 
 export const FREE_PLAN_ID: PlanId = "free";
+/** The plan a Free workspace is nudged towards first. */
 export const PAID_PLAN_ID: PlanId = "pro";
+export const AGENCY_PLAN_ID: PlanId = "agency";
 
 export function getPlan(id: PlanId): Plan {
   const plan = plans.find((p) => p.id === id);
   if (!plan) throw new Error(`Unknown plan: ${id}`);
   return plan;
+}
+
+/**
+ * A workspace's effective plan. Grandfathered Pro keeps what Pro included
+ * before Agency existed: white-label client reports (and their automatic
+ * emails) and 5 seats. Only Pro can be grandfathered.
+ */
+export function resolvePlan(id: PlanId, grandfathered = false): Plan {
+  const plan = getPlan(id);
+  if (id !== "pro" || !grandfathered) return plan;
+  return {
+    ...plan,
+    grandfathered: true,
+    limits: { ...plan.limits, whiteLabelReports: true, maxMembers: 5 },
+    features: [
+      ...plan.features.map((f) => (f === "Up to 3 team members" ? "Up to 5 team members" : f)),
+      "White-label client reports",
+      "Automatic client report emails",
+    ],
+  };
+}
+
+/** The next plan up, or null at the top. */
+export function nextPlanUp(id: PlanId): Plan | null {
+  const index = plans.findIndex((p) => p.id === id);
+  return index >= 0 ? (plans[index + 1] ?? null) : null;
 }
 
 /** Human display for a possibly-infinite limit. */

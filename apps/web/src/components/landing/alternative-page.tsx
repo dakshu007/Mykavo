@@ -106,7 +106,8 @@ export function AlternativePage({ alternative }: { alternative: Alternative }) {
       <ul className="not-prose my-6 space-y-2.5">
         {[
           "Free plan: 1 website, 5 monitored pages, weekly scans, 30-day history, no card",
-          "Pro at $20/month: 8 websites, 15 monitored pages each, daily scans, 1-year history, 5 seats",
+          "Pro at $20/month: 8 websites, 15 monitored pages each, daily scans, 1-year history, 3 seats",
+          "Agency at $49/month: 30 websites, 25 pages each, white-label client reports, 15 seats",
           "Site audit on every plan: 89 checks across 22 categories, with CSV export",
           "Every alert carries the previous and current value, and a screenshot diff for visual change",
         ].map((point) => (

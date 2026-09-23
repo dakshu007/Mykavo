@@ -39,7 +39,7 @@ export default async function EditPagesPage({
         <h1 className="text-2xl font-semibold tracking-tight text-ink">Monitored pages</h1>
         <p className="mt-1 text-sm text-ink-secondary">
           {pageBudget === Infinity
-            ? "Your Pro plan monitors unlimited pages on this website."
+            ? `Your ${plan.name} plan monitors unlimited pages on this website.`
             : `Your ${plan.name} plan can monitor up to ${pageBudget} page${pageBudget === 1 ? "" : "s"} on this website.`}
         </p>
       </div>

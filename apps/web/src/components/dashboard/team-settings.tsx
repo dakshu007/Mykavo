@@ -274,11 +274,11 @@ export function TeamSettings({
         (isFreePlan ? (
           <div className="rounded-tile bg-surface px-4 py-3.5">
             <p className="text-sm text-ink">
-              Team members are a Pro feature. Upgrade to invite up to 5 teammates with
-              Admin, Member, or Viewer roles.
+              Team members come with Pro and Agency. Invite teammates with Admin, Member,
+              or Viewer roles.
             </p>
             <ButtonLink href="/dashboard/billing" size="sm" className="mt-3">
-              Upgrade to Pro
+              See plans
             </ButtonLink>
           </div>
         ) : (

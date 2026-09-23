@@ -20,6 +20,7 @@ import {
 } from "@mykavo/scanner";
 import {
   computeNextScanAt,
+  includesConversionMonitoring,
   parseSelectorList,
   resolveScanOutcome,
   screenshotPrefix,
@@ -82,10 +83,10 @@ export async function runScanWebsiteJob(
   // differ on every scan forever. See packages/shared/src/ad-selectors.ts.
   const screenshotMasks = withDefaultAdMasks(parseSelectorList(website.screenshotMasks));
 
-  // Conversion element monitoring is Pro-only (spec §37). Gate here so a
+  // Conversion element monitoring is paid-only (spec §37). Gate here so a
   // downgraded workspace's configured elements simply stop being checked.
   const entitlement = await getWorkspaceEntitlement(prisma, website.workspaceId);
-  const conversionEnabled = entitlement?.planId === "pro";
+  const conversionEnabled = includesConversionMonitoring(entitlement?.planId ?? "free");
 
   await prisma.scan.update({
     where: { id: scanId },

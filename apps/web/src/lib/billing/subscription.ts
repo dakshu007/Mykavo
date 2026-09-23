@@ -5,10 +5,11 @@
  */
 
 import { prisma, getWorkspaceEntitlement } from "@mykavo/database";
-import { getPlan, type Plan } from "@/config/plans";
+import { resolvePlan, type Plan, type PlanId } from "@/config/plans";
 
 export interface WorkspaceSubscription {
-  planId: "free" | "pro";
+  planId: PlanId;
+  grandfathered: boolean;
   status: string;
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: Date | null;
@@ -19,7 +20,7 @@ export interface WorkspaceSubscription {
 /** Resolve a workspace's effective plan (features + limits). */
 export async function getWorkspacePlan(workspaceId: string): Promise<Plan> {
   const ent = await getWorkspaceEntitlement(prisma, workspaceId);
-  return getPlan(ent?.planId === "pro" ? "pro" : "free");
+  return resolvePlan(ent?.planId ?? "free", ent?.grandfathered ?? false);
 }
 
 export async function getWorkspaceSubscription(

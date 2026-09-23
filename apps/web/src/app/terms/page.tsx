@@ -21,7 +21,7 @@ export default function TermsPage() {
       eyebrowText="legal"
       title="Terms of Service"
       intro="These terms are a plain-English agreement between you and MyKavo. By creating an account or using the service, you agree to them. If anything here is unclear, email support@mykavo.app and we will explain it."
-      updated="July 17, 2026"
+      updated="September 23, 2026"
     >
       <h2>1. Who we are and what MyKavo does</h2>
       <p>
@@ -76,7 +76,7 @@ export default function TermsPage() {
       </p>
 
       <h2>4. Plans, billing and renewals</h2>
-      <p>MyKavo offers two plans:</p>
+      <p>MyKavo offers three plans:</p>
       <table>
         <thead>
           <tr>
@@ -96,6 +96,14 @@ export default function TermsPage() {
             <td>$20 / month</td>
             <td>8 websites, 15 monitored pages each, daily scans, 1-year history</td>
           </tr>
+          <tr>
+            <td>Agency</td>
+            <td>$49 / month</td>
+            <td>
+              30 websites, 25 monitored pages each, daily scans, 1-year history, white-label client
+              reports
+            </td>
+          </tr>
         </tbody>
       </table>
       <ul>
@@ -104,12 +112,17 @@ export default function TermsPage() {
           never sees or stores your card number.
         </li>
         <li>
-          Pro is billed monthly and renews automatically each month until you cancel. Current
-          pricing is always shown on the <Link href="/pricing">pricing page</Link>.
+          Paid plans are billed monthly and renew automatically each month until you cancel.
+          Current pricing is always shown on the <Link href="/pricing">pricing page</Link>.
+        </li>
+        <li>
+          Upgrading from Pro to Agency takes effect immediately and is charged pro rata for the
+          rest of the billing period. Moving from Agency to Pro takes effect at the end of the
+          current billing period.
         </li>
         <li>
           You can cancel anytime from the Billing page in your dashboard. Cancellation takes effect
-          at the end of the current billing period, and you keep Pro features until then.
+          at the end of the current billing period, and you keep your paid features until then.
         </li>
         <li>
           Refunds are handled case-by-case. If something went wrong, email{" "}
@@ -176,7 +189,7 @@ export default function TermsPage() {
         </li>
         <li>
           <strong>By us:</strong> we may suspend or terminate accounts that violate these terms,
-          abuse the service or infrastructure, or fail to pay for a Pro subscription. For anything
+          abuse the service or infrastructure, or fail to pay for a paid subscription. For anything
           other than serious abuse, we will attempt to contact you before taking action.
         </li>
         <li>

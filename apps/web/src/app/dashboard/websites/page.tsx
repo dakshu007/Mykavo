@@ -124,7 +124,7 @@ export default async function WebsitesPage({
                 href="/dashboard/billing"
                 className="rounded-full bg-surface px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:text-accent"
               >
-                {plan.id === "pro" ? "Add capacity" : `${plan.name} limit reached - upgrade`}
+                {plan.id === "agency" ? "Agency limit reached" : `${plan.name} limit reached - upgrade`}
               </Link>
             ) : (
               <Link

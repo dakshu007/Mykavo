@@ -42,3 +42,40 @@ export async function createCustomerPortalSession(customerId: string): Promise<s
   if (!data.link) throw new Error("Dodo portal returned no link");
   return data.link;
 }
+
+/**
+ * Move a subscription to another product. An upgrade applies now and bills
+ * the prorated difference, and stays on the old plan if that charge fails. A
+ * downgrade waits for the next billing date, so the customer keeps what they
+ * already paid for until the period ends. Dodo confirms either with a
+ * subscription.plan_changed webhook, which is what changes the entitlement.
+ */
+export async function changeSubscriptionPlan(
+  subscriptionId: string,
+  params: { productId: string; direction: "upgrade" | "downgrade" },
+): Promise<void> {
+  const body =
+    params.direction === "upgrade"
+      ? {
+          product_id: params.productId,
+          quantity: 1,
+          proration_billing_mode: "prorated_immediately",
+          effective_at: "immediately",
+          on_payment_failure: "prevent_change",
+        }
+      : {
+          product_id: params.productId,
+          quantity: 1,
+          proration_billing_mode: "do_not_bill",
+          effective_at: "next_billing_date",
+        };
+  const res = await fetch(`${dodoApiBase()}/subscriptions/${subscriptionId}/change-plan`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Dodo change-plan failed ${res.status}: ${detail.slice(0, 200)}`);
+  }
+}

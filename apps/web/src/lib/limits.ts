@@ -5,7 +5,7 @@
  */
 
 import { prisma } from "@mykavo/database";
-import { formatLimit, type Plan } from "@/config/plans";
+import { formatLimit, nextPlanUp, type Plan } from "@/config/plans";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
 import { hasSeatAvailable } from "@/lib/team";
 
@@ -79,10 +79,10 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
   if (limit === Infinity) return;
   const count = await prisma.website.count({ where: { workspaceId } });
   if (count >= limit) {
-    const hint =
-      plan.id === "pro"
-        ? "Remove a website you no longer monitor to free up a slot."
-        : "Upgrade to Pro to monitor more websites.";
+    const next = nextPlanUp(plan.id);
+    const hint = next
+      ? `Upgrade to ${next.name} to monitor up to ${formatLimit(next.limits.websites)}.`
+      : "Remove a website you no longer monitor to free up a slot, or email support@mykavo.app.";
     throw new LimitError(
       "WEBSITE_LIMIT",
       `Your ${plan.name} plan monitors up to ${formatLimit(limit)} website${limit === 1 ? "" : "s"}. ${hint}`,
@@ -94,7 +94,7 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
  * Throws LimitError when the workspace has no free seat for another member.
  * Seats = active members + pending (unaccepted, unexpired) invites, so a
  * standing invite can never overshoot the plan when accepted. Teams are a
- * Pro feature - Free is single-seat, which yields the upgrade message.
+ * paid feature - Free is single-seat, which yields the upgrade message.
  */
 export async function assertCanInviteMember(workspaceId: string): Promise<void> {
   const plan = await getWorkspacePlan(workspaceId);
@@ -106,10 +106,15 @@ export async function assertCanInviteMember(workspaceId: string): Promise<void> 
   ]);
   if (hasSeatAvailable(plan.limits.maxMembers, activeMembers, pendingInvites)) return;
 
+  const next = nextPlanUp(plan.id);
   const message =
     plan.id === "free"
-      ? "Team members are a Pro feature. Upgrade to Pro to invite up to 5 teammates."
-      : `Your ${plan.name} plan includes ${plan.limits.maxMembers} seats (members plus pending invites). Remove a member or revoke an invite to free one up.`;
+      ? `Team members come with a paid plan. Upgrade to ${next?.name ?? "Pro"} to invite up to ${next?.limits.maxMembers ?? 3} people.`
+      : `Your ${plan.name} plan includes ${plan.limits.maxMembers} seats (members plus pending invites). Remove a member or revoke an invite to free one up${
+          next && next.limits.maxMembers > plan.limits.maxMembers
+            ? `, or upgrade to ${next.name} for ${next.limits.maxMembers}.`
+            : "."
+        }`;
   throw new LimitError("MEMBER_LIMIT", message);
 }
 
@@ -126,8 +131,10 @@ export async function assertPageLimit(
   const plan = await getWorkspacePlan(workspaceId);
   if (plan.limits.pagesPerWebsite === Infinity) return;
   if (requestedCount > plan.limits.pagesPerWebsite) {
-    const upsell =
-      plan.id === "pro" ? "" : " Upgrade to Pro to monitor more pages per website.";
+    const next = nextPlanUp(plan.id);
+    const upsell = next
+      ? ` Upgrade to ${next.name} to monitor ${formatLimit(next.limits.pagesPerWebsite)} per website.`
+      : "";
     throw new LimitError(
       "PAGE_LIMIT",
       `Your ${plan.name} plan monitors up to ${formatLimit(plan.limits.pagesPerWebsite)} pages per website.${upsell}`,

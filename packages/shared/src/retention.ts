@@ -8,9 +8,11 @@
 export const PLAN_HISTORY_DAYS = {
   free: 30,
   pro: 365,
+  agency: 365,
 } as const;
 
 /** Retention window in days for a plan id (defaults to the free window). */
 export function historyDaysForPlan(planId: string): number {
+  if (planId === "agency") return PLAN_HISTORY_DAYS.agency;
   return planId === "pro" ? PLAN_HISTORY_DAYS.pro : PLAN_HISTORY_DAYS.free;
 }

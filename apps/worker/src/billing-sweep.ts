@@ -1,11 +1,12 @@
 /**
- * Daily billing sweep: remind Pro workspaces whose current period ends within
+ * Daily billing sweep: remind paid (Pro and Agency) workspaces whose current period ends within
  * the reminder window. One email per period - `renewalReminderSentAt` is
  * compared against the period window, so a new period naturally re-arms the
  * reminder without any reset job. The email goes to the workspace owner.
  */
 
 import { prisma } from "@mykavo/database";
+import { PLAN_NAMES, PLAN_PRICES_USD, toPlanTier } from "@mykavo/shared";
 import { sendEmail, renewalReminderEmail } from "@mykavo/email";
 import { logger } from "./logger";
 
@@ -21,7 +22,7 @@ export async function runBillingSweep(): Promise<void> {
 
   const due = await prisma.subscription.findMany({
     where: {
-      planId: "pro",
+      planId: { in: ["pro", "agency"] },
       status: "active",
       currentPeriodEnd: { gt: now, lte: windowEnd },
     },
@@ -51,7 +52,9 @@ export async function runBillingSweep(): Promise<void> {
         day: "numeric",
         year: "numeric",
       }),
-      priceMonthlyUsd: 20,
+      planName: PLAN_NAMES[toPlanTier(sub.planId)],
+      // Grandfathered Pro still pays the Pro price - only features differ.
+      priceMonthlyUsd: PLAN_PRICES_USD[toPlanTier(sub.planId)],
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
       billingUrl: `${appUrl()}/dashboard/billing`,
     });

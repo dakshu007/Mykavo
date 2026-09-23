@@ -16,6 +16,7 @@ import {
   buildReportModel,
   isClientReportDue,
   CLIENT_REPORT_WINDOW_DAYS,
+  includesClientReports,
   type ClientReportCadence,
 } from "@mykavo/shared";
 import { gatherRawData } from "./report";
@@ -63,7 +64,7 @@ export async function runClientReportSweep(now: Date = new Date()): Promise<void
   let failures = 0;
 
   // Entitlements resolved once per workspace, not once per website.
-  const proByWorkspace = new Map<string, boolean>();
+  const includedByWorkspace = new Map<string, boolean>();
 
   for (const website of candidates) {
     try {
@@ -78,14 +79,15 @@ export async function runClientReportSweep(now: Date = new Date()): Promise<void
         continue;
       }
 
-      // Delivery is part of white-label reports: Pro only, re-checked live.
-      let pro = proByWorkspace.get(website.workspaceId);
-      if (pro === undefined) {
+      // Delivery is part of white-label reports: Agency (and grandfathered
+      // Pro) only, re-checked live so a downgrade stops the emails.
+      let included = includedByWorkspace.get(website.workspaceId);
+      if (included === undefined) {
         const ent = await getWorkspaceEntitlement(prisma, website.workspaceId);
-        pro = ent?.planId === "pro";
-        proByWorkspace.set(website.workspaceId, pro);
+        included = ent ? includesClientReports(ent.planId, ent.grandfathered) : false;
+        includedByWorkspace.set(website.workspaceId, included);
       }
-      if (!pro) {
+      if (!included) {
         skipped++;
         continue;
       }

@@ -58,7 +58,7 @@ export function BrandingForm({
           href="/dashboard/billing"
           className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-[13px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
         >
-          Upgrade to Pro to white-label reports
+          Upgrade to Agency to white-label reports
         </Link>
       </div>
     );
