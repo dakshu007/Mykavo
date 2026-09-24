@@ -886,9 +886,7 @@
 			'<section class="mk-card mk-card-pad"><p class="mk-eyebrow">' + esc( __( 'Workspace', 'mykavo' ) ) + '</p>' +
 			'<p style="font-weight:650;font-size:15px">' + esc( o.workspace.name ) + '</p>' +
 			'<p class="mk-stat-foot">' + esc( sprintf( /* translators: %s: plan name. */ __( '%s plan', 'mykavo' ), o.workspace.plan.name ) ) + '</p>' +
-			( o.workspace.plan.id === 'free'
-				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + icon( 'external' ) + '</a></p>'
-				: '' ) +
+			'' +
 			'</section>';
 
 		return (

@@ -10,6 +10,7 @@ import { GoogleIcon } from "@/components/brand/integration-icons";
 const links = [
   { href: "/pricing", label: "Pricing" },
   { href: "/wordpress-plugin", label: "WordPress" },
+  { href: "/shopify-app", label: "Shopify" },
   { href: "/#android-app", label: "Android app" },
   { href: "/blog", label: "Blog" },
   { href: "/support", label: "Support" },

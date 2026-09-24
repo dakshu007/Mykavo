@@ -14,6 +14,14 @@
 
 	var root = document.getElementById( 'mykavo-app' );
 	var bridge = window.shopify;
+
+	// Opened outside the Shopify admin (a bookmark, a shared link): go to the
+	// app inside the store's admin, where it belongs.
+	var adminUrl = root && root.getAttribute( 'data-admin-url' );
+	if ( window.top === window.self && adminUrl && /^https:\/\/admin\.shopify\.com\//.test( adminUrl ) ) {
+		window.location.replace( adminUrl );
+		return;
+	}
 	// Read now: document.currentScript is only set while this file runs.
 	var self = document.currentScript;
 	var version = ( self && /[?&]v=([^&]+)/.exec( self.src ) || [] )[ 1 ] || '1';
@@ -119,7 +127,14 @@
 		if ( ! target ) {
 			return Promise.reject( new Error( 'Unknown request: ' + path ) );
 		}
-		return request( target[ 0 ], target[ 1 ], target[ 2 ] );
+		return request( target[ 0 ], target[ 1 ], target[ 2 ] ).then( function ( data ) {
+			// Shopify App Store apps must not send merchants to pay elsewhere
+			// from inside the app, so the screen never gets the billing link.
+			if ( data && data.links ) {
+				delete data.links.billing;
+			}
+			return data;
+		} );
 	};
 
 	/* -------------------------------------------------------------- start -- */

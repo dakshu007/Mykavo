@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
       eyebrowText="legal"
       title="Privacy Policy"
       intro="This policy explains, in plain English, what data MyKavo collects, why we collect it, where it lives, and the choices you have. MyKavo is operated by Dakshesh Babu, an independent developer. If anything here is unclear, email support@mykavo.app and you will get a straight answer."
-      updated="July 17, 2026"
+      updated="September 25, 2026"
     >
       <h2>1. What data we collect</h2>
       <h3>Account data</h3>
@@ -41,6 +41,19 @@ export default function PrivacyPolicyPage() {
         descriptions, canonical tags), links, scripts, performance timings, and uptime and SSL
         checks. We scan public pages only, and our scanner respects robots.txt. You may only add
         websites you own or are authorized to monitor.
+      </p>
+      <h3>WordPress plugin and Shopify app</h3>
+      <p>
+        If you connect a WordPress site with the MyKavo plugin, we receive the site&apos;s address
+        and name, the names and version numbers of plugins, themes and WordPress itself when they
+        are updated, switched on or off, and the addresses of pages you choose to monitor. If you
+        install the MyKavo Shopify app, we receive the store&apos;s myshopify.com domain, its name
+        and primary domain, an access token that lets us read the store&apos;s themes (stored
+        encrypted), and the names of themes when they are published or edited. Neither the plugin
+        nor the app reads or sends anything about your visitors or your customers: no orders,
+        customer records, or personal data from your store. When you uninstall the Shopify app we
+        delete its access token immediately and the store&apos;s data within 48 hours, as Shopify
+        requires; your monitoring history stays in your MyKavo account until you delete it.
       </p>
       <h3>Billing data</h3>
       <p>

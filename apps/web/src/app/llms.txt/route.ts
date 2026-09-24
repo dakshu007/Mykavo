@@ -31,6 +31,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 - MyKavo Analyser: an E-E-A-T analysis of a page (Experience, Expertise, Authoritativeness, Trust) scoring the signals search engines and AI answer engines look for - authorship, citations, freshness, contact and policy transparency, originality
 - Client reports: white-label PDF-style reports with your own branding, on a schedule, ready to forward to a client
 - WordPress plugin (free, ${site.url}/wordpress-plugin): brings a site's monitoring into wp-admin. Safe Updates checks the site after every plugin, theme, WordPress and translation update (automatic ones included) and after plugins are activated or deactivated or the theme is switched, then names the update on every change it found. Also: WooCommerce store-page guard, "Monitor with MyKavo" on pages and posts, Plugins-screen warnings, Site Health, and WP-CLI commands (wp mykavo scan --wait). Adds nothing to public pages: no scripts, queries, autoloaded options or cron
+- Shopify app (free to install, ${site.url}/shopify-app): brings a store's monitoring into the Shopify admin. Theme checks scan the store every time the live theme is published or edited (edits at most once every 15 minutes) and label every change found with the theme change it appeared after. Also: store-page guard for the home, all products, cart and search pages, and one-click approve, fixed or ignore. Asks only for read_themes and adds nothing to the storefront
 
 ## How it works
 
@@ -79,7 +80,8 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - [Website Content Monitoring](${site.url}/website-content-monitoring): normalized text and DOM change tracking with an evidence trail
 - [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, from the outside - works with or without the plugin
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin - a check after every update, with the update named if something broke
-- [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs, no app installed
+- [MyKavo for Shopify](${site.url}/shopify-app): the Shopify app - a check after every theme publish and edit, with before-and-after evidence in the Shopify admin
+- [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs
 - [Website Monitoring for Webflow](${site.url}/website-monitoring-for-webflow): see what every publish and Editor session changed
 
 ## Guides

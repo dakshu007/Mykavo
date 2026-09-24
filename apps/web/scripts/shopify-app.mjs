@@ -152,6 +152,14 @@ const JS_REPLACEMENTS = [
   [`return __( 'WordPress update', 'mykavo' );`, `return __( 'Theme change', 'mykavo' );`],
   [`esc( __( 'After an update', 'mykavo' ) ) + '</span>'`, `esc( __( 'After a theme change', 'mykavo' ) ) + '</span>'`],
   [`esc( __( 'Appeared after an update', 'mykavo' ) )`, `esc( __( 'Appeared after a theme change', 'mykavo' ) )`],
+  // No links to pay outside Shopify inside the app (App Store requirement);
+  // bootstrap.js also drops links.billing from the data.
+  [
+    `( o.workspace.plan.id === 'free'
+				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + icon( 'external' ) + '</a></p>'
+				: '' ) +`,
+    `'' +`,
+  ],
   // Store guard.
   [`'<span class="mk-fine">WooCommerce</span></div>'`, `'<span class="mk-fine">Shopify</span></div>'`],
   [

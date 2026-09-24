@@ -31,7 +31,7 @@ const faqs = [
   },
   {
     q: "Do I need to install a Shopify app?",
-    a: "No. MyKavo reads your public storefront pages from the outside, exactly like a shopper. Nothing is added to your theme, no app permissions, no impact on store speed or Shopify plan limits.",
+    a: "No. MyKavo reads your public storefront pages from the outside, exactly like a shopper, so monitoring works without installing anything. The optional MyKavo for Shopify app adds a check after every theme publish and edit and brings your changes into the Shopify admin. It asks only to read themes and adds nothing to your storefront.",
   },
   {
     q: "Can it watch my add-to-cart and checkout buttons?",
@@ -48,6 +48,7 @@ const faqs = [
 ];
 
 const related = [
+  { href: "/shopify-app", label: "MyKavo for Shopify: the app" },
   { href: "/website-monitoring-for-wordpress", label: "Website monitoring for WordPress" },
   { href: "/website-monitoring-for-webflow", label: "Website monitoring for Webflow" },
   { href: "/visual-regression-testing", label: "Visual regression testing explained" },
@@ -131,7 +132,9 @@ export default function ShopifyMonitoringPage() {
         </ol>
         <p>
           Works alongside your theme workflow: publish a new theme, review what actually changed
-          page by page, approve the new baseline in one click. See{" "}
+          page by page, approve the new baseline in one click. With the{" "}
+          <Link href="/shopify-app">MyKavo Shopify app</Link>, that check starts on its own the
+          moment the theme goes live. See{" "}
           <Link href="/pricing">plans</Link> - most stores fit Pro.
         </p>
 

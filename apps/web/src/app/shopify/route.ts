@@ -1,4 +1,4 @@
-import { isShopDomain } from "@/lib/integrations/shopify";
+import { adminAppUrl, isShopDomain } from "@/lib/integrations/shopify";
 import { shopifyConfig } from "@/lib/integrations/shopify-server";
 
 /**
@@ -12,7 +12,7 @@ import { shopifyConfig } from "@/lib/integrations/shopify-server";
  * leaves /shopify out of the site-wide X-Frame-Options: SAMEORIGIN.
  */
 
-const ASSET_VERSION = "1";
+const ASSET_VERSION = "2";
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -39,7 +39,7 @@ export function GET(request: Request) {
 <link rel="stylesheet" href="/shopify-app/app.css?v=${ASSET_VERSION}">
 </head>
 <body>
-<div class="mykavo-wrap"><div id="mykavo-app" class="mk" aria-live="polite"><div class="mk-boot" role="status">Loading MyKavo...</div></div></div>
+<div class="mykavo-wrap"><div id="mykavo-app" class="mk" aria-live="polite"${shop ? ` data-admin-url="${escapeHtml(adminAppUrl(shop, config.apiKey))}"` : ""}><div class="mk-boot" role="status">Loading MyKavo...</div></div></div>
 <script src="/shopify-app/bootstrap.js?v=${ASSET_VERSION}"></script>
 </body>
 </html>`

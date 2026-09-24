@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/website-content-monitoring",
     "/website-monitoring-for-wordpress",
     "/wordpress-plugin",
+    "/shopify-app",
     "/website-monitoring-for-shopify",
     "/website-monitoring-for-webflow",
     "/guides/how-to-monitor-website-changes",

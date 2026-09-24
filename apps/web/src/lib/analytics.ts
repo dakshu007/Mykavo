@@ -35,7 +35,9 @@ export type AnalyticsEvent =
   | "cta_clicked"
   // WordPress plugin page
   | "wp_plugin_viewed"
-  | "wp_plugin_downloaded";
+  | "wp_plugin_downloaded"
+  // Shopify app page
+  | "shopify_app_viewed";
 
 type EventProps = Record<string, string | number | boolean>;
 
