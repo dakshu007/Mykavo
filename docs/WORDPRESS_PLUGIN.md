@@ -5,6 +5,10 @@ wp-admin: status, changes with before-and-after screenshots, one-click decisions
 on-demand scans, scan history and monitored pages - and **Safe Updates**, a check
 after every plugin, theme and WordPress update.
 
+> **Versioning:** the plugin is submitted to WordPress.org as **1.0.0**. The
+> 1.1.0 / 1.2.0 / 1.3.0 labels below are internal pre-release milestones that
+> never shipped; the readme's changelog starts at 1.0.0.
+
 ## Safe Updates (1.1.0)
 
 Updates are the most common way a WordPress site breaks, and the hardest part is

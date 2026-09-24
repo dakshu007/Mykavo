@@ -14,7 +14,7 @@ export const updateItemSchema = z.object({
   name: z.string().trim().min(1).max(100),
   from: z.string().trim().max(40).nullable().optional(),
   to: z.string().trim().max(40).nullable().optional(),
-  // Plugin 1.3.0+. Older plugins only report updates.
+  // Optional: pre-release builds of the plugin only reported updates.
   action: z.enum(["update", "activate", "deactivate", "switch"]).optional(),
 });
 

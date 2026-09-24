@@ -5,7 +5,7 @@
  * plugin header and the published zip disagree.
  */
 
-export const WP_PLUGIN_VERSION = "1.3.0";
+export const WP_PLUGIN_VERSION = "1.0.0";
 
 /** Direct download, served by the site itself. */
 export const WP_PLUGIN_DOWNLOAD_PATH = "/downloads/mykavo-wordpress.zip";

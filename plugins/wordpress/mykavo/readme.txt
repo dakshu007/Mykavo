@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,41 +161,20 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Changelog ==
 
-= 1.3.0 =
-* New: Safe Updates also checks after a plugin is activated or deactivated and after a theme switch, and names the change.
-* New: WP-CLI commands - `wp mykavo status`, `changes`, `scan --wait`, `monitor`, `updates`, `safe-updates` and `disconnect`.
-* New: suggested privacy policy text in Settings > Privacy.
-* Tested with WordPress 7.1.
-
-= 1.2.0 =
-* New: WooCommerce store guard. See whether Shop, Cart, Checkout and My account are monitored, and add them in one click.
-* New: "Monitor with MyKavo" under every published page and post, and an address box on the Pages tab.
-* New: on the Plugins screen, plugins whose last update changed your site are flagged before you update them again.
-* New: Safe Updates reassurance on Dashboard > Updates.
-* New: MyKavo in Tools > Site Health (status test and Info section).
-* Improved: update verdicts are saved on your site, so older updates keep their result instead of just "Checked".
-* Improved: the Connect link stays valid for an hour, and an expired Connect button now explains itself instead of showing WordPress's "link expired" page.
-* Fixed: an address typed on the Pages tab is no longer cleared when the screen refreshes in the background.
-
-= 1.1.0 =
-* New: Safe Updates. After every plugin, theme, WordPress or translation update - including automatic updates - MyKavo checks your pages and tells you whether the update broke anything, and which update it was.
-* New: "After an update" labels on changes, and the responsible update named on each change.
-* New: "Review now" goes straight to the most important change.
-* Improved: scan history shows update checks with the update they verified.
-
 = 1.0.0 =
-* First release: overview, changes with before-and-after screenshots, one-click approve, ignore and fixed, new baselines, on-demand scans with live progress, scan history, monitored pages, admin menu badge and Dashboard widget.
+* First release.
+* Safe Updates: a check after every plugin, theme, WordPress and translation update (automatic updates included), and after plugins are activated or deactivated or the theme is switched, with the change named on everything it found.
+* Overview with one clear status, uptime, response time and SSL expiry.
+* Changes with before-and-after screenshots, exact old and new values, and one-click approve, fixed, ignore or accept as new baseline.
+* On-demand scans with live progress, scan history and monitored pages.
+* WooCommerce store guard for Shop, Cart, Checkout and My account.
+* "Monitor with MyKavo" under every published page and post.
+* Update warnings on the Plugins screen and a Safe Updates notice on Dashboard > Updates.
+* Site Health test and Info section, admin menu badge and Dashboard widget.
+* WP-CLI commands: `wp mykavo status`, `changes`, `scan --wait`, `monitor`, `updates`, `safe-updates` and `disconnect`.
+* Suggested privacy policy text.
 
 == Upgrade Notice ==
-
-= 1.3.0 =
-Checks after plugin activations, deactivations and theme switches, plus WP-CLI commands. Tested with WordPress 7.1.
-
-= 1.2.0 =
-WooCommerce store guard, "Monitor with MyKavo" on your pages, update warnings on the Plugins screen, and Site Health.
-
-= 1.1.0 =
-Adds Safe Updates: a check after every plugin, theme and WordPress update, with the update named if something broke.
 
 = 1.0.0 =
 First release.
