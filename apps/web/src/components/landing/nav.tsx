@@ -9,14 +9,19 @@ import { GoogleIcon } from "@/components/brand/integration-icons";
 
 const links = [
   { href: "/pricing", label: "Pricing" },
-  { href: "/wordpress-plugin", label: "WordPress" },
-  { href: "/shopify-app", label: "Shopify" },
-  { href: "/#android-app", label: "Android app" },
+  { href: "/#android-app", label: "Android" },
   { href: "/blog", label: "Blog" },
   { href: "/support", label: "Support" },
 ];
 
-const tools = [
+type MenuItem = { href: string; label: string; badge?: string };
+
+const integrations: MenuItem[] = [
+  { href: "/wordpress-plugin", label: "WordPress plugin" },
+  { href: "/shopify-app", label: "Shopify app", badge: "Coming soon" },
+];
+
+const tools: MenuItem[] = [
   { href: "/tools/competitor-analysis-tool", label: "Competitor Analysis" },
   { href: "/tools/website-change-detector", label: "Website Change Detector" },
   { href: "/tools/meta-tag-checker", label: "Meta Tag Checker" },
@@ -26,25 +31,29 @@ const tools = [
   { href: "/tools/script-detector", label: "Script Detector" },
 ];
 
-/**
- * Floating "island" navigation (ballpark.ing-style): a centered white pill
- * with an ink hairline and crisp offset shadow, hovering over the warm paper
- * canvas. Spark + wordmark left, links + Tools dropdown center, gold CTA
- * right. Collapses to a hamburger card on small screens.
- */
-export function LandingNav() {
-  const [open, setOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
-  const toolsRef = useRef<HTMLDivElement>(null);
+function SoonBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full bg-[#FFD400] px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-[#151515]">
+      {children}
+    </span>
+  );
+}
 
-  // Close the Tools dropdown on outside click or Escape.
+/**
+ * A header dropdown (Integrations, Tools): opens on hover or click, closes
+ * on outside click, Escape or mouse-leave.
+ */
+function NavMenu({ label, heading, items }: { label: string; heading: string; items: MenuItem[] }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (!toolsOpen) return;
+    if (!menuOpen) return;
     const onPointer = (e: PointerEvent) => {
-      if (!toolsRef.current?.contains(e.target as Node)) setToolsOpen(false);
+      if (!ref.current?.contains(e.target as Node)) setMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setToolsOpen(false);
+      if (e.key === "Escape") setMenuOpen(false);
     };
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -52,7 +61,64 @@ export function LandingNav() {
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [toolsOpen]);
+  }, [menuOpen]);
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setMenuOpen(true)}
+      onMouseLeave={() => setMenuOpen(false)}
+    >
+      <button
+        type="button"
+        // Open-only: hover already opens the menu, so a toggling click
+        // would immediately close it for mouse users. Touch devices get
+        // open-on-tap; closing is outside-tap, Escape, or mouse-leave.
+        onClick={() => setMenuOpen(true)}
+        aria-expanded={menuOpen}
+        aria-haspopup="menu"
+        className="flex items-center gap-1 rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
+      >
+        {label}
+        <ChevronDown
+          className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`}
+          aria-hidden
+        />
+      </button>
+      {menuOpen && (
+        <div role="menu" aria-label={heading} className="absolute left-1/2 top-full w-64 -translate-x-1/2 pt-2">
+          <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white p-1.5 shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
+            <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
+              {heading}
+            </p>
+            {items.map((t) => (
+              <Link
+                key={t.href}
+                href={t.href}
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
+              >
+                {t.label}
+                {t.badge && <SoonBadge>{t.badge}</SoonBadge>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Floating "island" navigation (ballpark.ing-style): a centered white pill
+ * with an ink hairline and crisp offset shadow, hovering over the warm paper
+ * canvas. Spark + wordmark left, links + Integrations and Tools dropdowns center, gold CTA
+ * right. Collapses to a hamburger card on small screens.
+ */
+export function LandingNav() {
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -67,7 +133,14 @@ export function LandingNav() {
         </Link>
 
         <nav aria-label="Main" className="hidden items-center lg:flex">
-          {links.map((l) => (
+          <Link
+            href="/pricing"
+            className="rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
+          >
+            Pricing
+          </Link>
+          <NavMenu label="Integrations" heading="Integrations" items={integrations} />
+          {links.slice(1).map((l) => (
             <Link
               key={l.label}
               href={l.href}
@@ -77,54 +150,7 @@ export function LandingNav() {
             </Link>
           ))}
 
-          {/* Tools dropdown - opens on hover or click */}
-          <div
-            ref={toolsRef}
-            className="relative"
-            onMouseEnter={() => setToolsOpen(true)}
-            onMouseLeave={() => setToolsOpen(false)}
-          >
-            <button
-              type="button"
-              // Open-only: hover already opens the menu, so a toggling click
-              // would immediately close it for mouse users. Touch devices get
-              // open-on-tap; closing is outside-tap, Escape, or mouse-leave.
-              onClick={() => setToolsOpen(true)}
-              aria-expanded={toolsOpen}
-              aria-haspopup="menu"
-              className="flex items-center gap-1 rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
-            >
-              Tools
-              <ChevronDown
-                className={`size-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`}
-                aria-hidden
-              />
-            </button>
-            {toolsOpen && (
-              <div
-                role="menu"
-                aria-label="Free tools"
-                className="absolute left-1/2 top-full w-64 -translate-x-1/2 pt-2"
-              >
-                <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white p-1.5 shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
-                  <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
-                    Free tools
-                  </p>
-                  {tools.map((t) => (
-                    <Link
-                      key={t.href}
-                      href={t.href}
-                      role="menuitem"
-                      onClick={() => setToolsOpen(false)}
-                      className="block rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
-                    >
-                      {t.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <NavMenu label="Tools" heading="Free tools" items={tools} />
         </nav>
 
         <div className="hidden items-center gap-1.5 lg:flex">
@@ -173,6 +199,20 @@ export function LandingNav() {
                 className="rounded-xl px-3 py-3 text-[15px] font-medium text-[#151515]/85 transition-colors hover:bg-[#151515]/[0.04]"
               >
                 {l.label}
+              </Link>
+            ))}
+            <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
+              Integrations
+            </p>
+            {integrations.map((t) => (
+              <Link
+                key={t.href}
+                href={t.href}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[#151515]/75 transition-colors hover:bg-[#151515]/[0.04]"
+              >
+                {t.label}
+                {t.badge && <SoonBadge>{t.badge}</SoonBadge>}
               </Link>
             ))}
             <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">

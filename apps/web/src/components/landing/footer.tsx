@@ -39,12 +39,13 @@ const columns = [
   {
     title: "Product",
     links: [
+      { href: "/whats-new-on-mykavo", label: "What's new", tag: "new" },
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#categories", label: "What it watches" },
       { href: "/preview", label: "Dashboard preview" },
       { href: "/wordpress-plugin", label: "WordPress plugin" },
-      { href: "/shopify-app", label: "Shopify app" },
-      { href: "/#android-app", label: "Android app (soon)" },
+      { href: "/shopify-app", label: "Shopify app", tag: "soon" },
+      { href: "/#android-app", label: "Android app" },
       { href: "/pricing", label: "Pricing" },
       { href: "/blog", label: "Blog" },
     ],
@@ -111,6 +112,21 @@ const columns = [
 ];
 
 /**
+ * The spark with a soft gold glow that breathes - marks "What's new" so the
+ * changelog catches the eye. Still under prefers-reduced-motion.
+ */
+function GlowingMark() {
+  return (
+    <span className="relative inline-flex size-5 items-center justify-center" aria-hidden>
+      <span className="absolute inset-[-4px] rounded-full bg-[#FFD400] opacity-70 blur-[6px] motion-safe:animate-pulse" />
+      <span className="relative inline-flex size-5 items-center justify-center rounded-full bg-[#FFD400] ring-1 ring-[#151515]/20">
+        <LogoMark size={12} className="text-[#151515]" />
+      </span>
+    </span>
+  );
+}
+
+/**
  * Light footer with link columns, closing on a giant half-clipped gold
  * wordmark (ballpark/branch-style) - the brand as the final beat of the page.
  */
@@ -166,9 +182,15 @@ export function LandingFooter() {
                   <li key={l.label}>
                     <Link
                       href={l.href}
-                      className="block text-sm leading-snug text-pretty text-[#151515]/75 transition-colors hover:text-[#151515]"
+                      className="inline-flex items-center gap-2 text-sm leading-snug text-pretty text-[#151515]/75 transition-colors hover:text-[#151515]"
                     >
                       {l.label}
+                      {l.tag === "new" && <GlowingMark />}
+                      {l.tag === "soon" && (
+                        <span className="rounded-full bg-[#FFD400] px-1.5 py-px font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-[#151515]">
+                          Soon
+                        </span>
+                      )}
                     </Link>
                   </li>
                 ))}

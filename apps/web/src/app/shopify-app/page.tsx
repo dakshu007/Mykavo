@@ -108,6 +108,10 @@ const steps = [
 
 const faqs = [
   {
+    q: "When can I install the app?",
+    a: "MyKavo for Shopify is built and coming soon to the Shopify App Store. Until it is listed, you can monitor any Shopify store from mykavo.app today - nothing to install - and the app will bring the same monitoring into your Shopify admin with automatic theme-change checks.",
+  },
+  {
     q: "Will the app slow down my store?",
     a: "No. It adds nothing to your storefront: no theme app extension, no script tags, no pixels. It runs only inside your Shopify admin, and the scanning happens on MyKavo's servers, the same way a shopper loads your pages.",
   },
@@ -239,6 +243,12 @@ export default function ShopifyAppPage() {
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-5 pb-16 pt-32 sm:pt-36 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
+            {!SHOPIFY_APP_STORE_URL && (
+              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#151515] shadow-[2px_2px_0_#151515]">
+                <span className="size-1.5 rounded-full bg-[#151515] motion-safe:animate-pulse" aria-hidden />
+                Coming soon
+              </p>
+            )}
             <p className={`${eyebrow} mb-4`}>{"// mykavo for shopify //"}</p>
             <h1 className={`${fontDisplay} text-4xl leading-[1.05] text-[#151515] sm:text-6xl`}>
               Change your theme
@@ -384,7 +394,7 @@ export default function ShopifyAppPage() {
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-24">
             <p className={`${eyebrow} mb-4 text-center`}>{"// set up in two minutes //"}</p>
             <h2 className={`${fontDisplay} text-center text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
-              Install, connect, done.
+              {SHOPIFY_APP_STORE_URL ? "Install, connect, done." : "Install, connect, done. Soon."}
             </h2>
             <ol className="mt-14 grid gap-4 md:grid-cols-3">
               {steps.map((s) => (
@@ -417,6 +427,9 @@ export default function ShopifyAppPage() {
         {/* Final CTA */}
         <section className="border-t border-[#151515] bg-[#151515]">
           <div className="mx-auto max-w-4xl px-5 py-20 text-center lg:px-8">
+            {!SHOPIFY_APP_STORE_URL && (
+              <p className={`${eyebrowOnDark} mb-4`}>{"// coming soon to the shopify app store //"}</p>
+            )}
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#E9EBDF] sm:text-5xl`}>
               Your next theme change,
               <br />
