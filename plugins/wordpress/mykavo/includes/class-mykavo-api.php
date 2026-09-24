@@ -42,12 +42,13 @@ final class MyKavo_API {
 	/**
 	 * An authenticated request to MyKavo.
 	 *
-	 * @param string     $method HTTP method.
-	 * @param string     $path   API path under /api/wp/v1.
-	 * @param array|null $body   JSON body.
+	 * @param string     $method  HTTP method.
+	 * @param string     $path    API path under /api/wp/v1.
+	 * @param array|null $body    JSON body.
+	 * @param int        $timeout Seconds before giving up.
 	 * @return array|WP_Error
 	 */
-	public static function request( $method, $path, $body = null ) {
+	public static function request( $method, $path, $body = null, $timeout = self::TIMEOUT ) {
 		$connection = MyKavo_Connection::get();
 		if ( null === $connection ) {
 			return new WP_Error( 'mykavo_not_connected', __( 'This site is not connected to MyKavo.', 'mykavo' ), array( 'status' => 401 ) );
@@ -55,7 +56,7 @@ final class MyKavo_API {
 
 		$args = array(
 			'method'  => $method,
-			'timeout' => self::TIMEOUT,
+			'timeout' => $timeout,
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $connection['token'],
 				'Accept'        => 'application/json',

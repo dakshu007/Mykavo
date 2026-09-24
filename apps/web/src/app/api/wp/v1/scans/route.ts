@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     take: 30,
   });
   return NextResponse.json(
-    { scans: scans.map((scan) => mapScanListItem(scan, ctx.website)) },
+    { scans: scans.map((scan) => ({ ...mapScanListItem(scan, ctx.website), note: scan.note })) },
     { headers: { "cache-control": "no-store" } },
   );
 }

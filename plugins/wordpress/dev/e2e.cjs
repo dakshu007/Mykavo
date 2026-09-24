@@ -108,6 +108,49 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     console.log('     toast:', await p.locator('.mk-toast').textContent());
   });
 
+  const probe = (q) => p.request.get(WP + '/wp-content/mu-plugins/probe/fake-update.php' + (q || ''));
+
+  await step('safe updates: an update is checked and attributed', async () => {
+    const r = await probe(); if (!(await r.text()).includes('simulated')) throw new Error('probe not mounted');
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
+    console.log('     entry:', (await p.locator('.mk-update-title').first().textContent()).trim(), '|', (await p.locator('.mk-verdict').first().textContent()).trim());
+    await p.screenshot({ path: OUT + '/20-updates-checking.png', fullPage: true });
+    await p.waitForSelector('.mk-update .mk-verdict-bad', { timeout: 90000 });
+    console.log('     verdict:', (await p.locator('.mk-verdict').first().textContent()).trim());
+    await p.screenshot({ path: OUT + '/21-updates-verdict.png', fullPage: true });
+    await p.click('[data-act="update-changes"]'); await p.waitForSelector('.mk-filter-note');
+    await p.waitForSelector('.mk-row'); console.log('     changes from that update:', await p.locator('.mk-row').count());
+    await p.screenshot({ path: OUT + '/22-update-changes.png', fullPage: true });
+    await p.click('.mk-row'); await p.waitForSelector('.mk-attrib'); await p.waitForTimeout(800);
+    console.log('     drawer says:', (await p.locator('.mk-attrib').textContent()).trim());
+    await p.screenshot({ path: OUT + '/23-drawer-attribution.png' });
+    await p.keyboard.press('Escape');
+  });
+
+  await step('safe updates: automatic updates are labelled', async () => {
+    await probe('?auto=1');
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
+    const meta = await p.locator('.mk-update').first().textContent();
+    if (!/Automatic/.test(meta)) throw new Error('not labelled automatic: ' + meta);
+    console.log('     newest entry:', (await p.locator('.mk-update-title').first().textContent()).trim());
+  });
+
+  await step('safe updates: switching checks off', async () => {
+    await p.click('[data-act="toggle-updates"]'); await p.waitForSelector('.mk-switch[aria-checked="false"]');
+    await probe();
+    await p.reload(); await p.waitForSelector('.mk-hero'); await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
+    console.log('     with checks off:', (await p.locator('.mk-verdict').first().textContent()).trim());
+    await p.click('[data-act="toggle-updates"]'); await p.waitForSelector('.mk-switch[aria-checked="true"]');
+  });
+
+  await step('overview shows the latest update', async () => {
+    await p.click('[data-tab="overview"]'); await p.waitForSelector('.mk-hero');
+    await p.waitForTimeout(600);
+    await p.screenshot({ path: OUT + '/24-overview-safe-updates.png', fullPage: true });
+  });
+
   await step('dashboard widget', async () => {
     await p.goto(WP + '/wp-admin/'); await p.waitForSelector('#mykavo_status');
     await p.waitForTimeout(800);

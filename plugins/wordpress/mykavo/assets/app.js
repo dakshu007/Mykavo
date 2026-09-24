@@ -36,6 +36,9 @@
 		scansError: null,
 		pages: null,
 		pagesError: null,
+		updates: null,
+		updatesError: null,
+		changesScan: null,
 		banner: bannerFromNotice( cfg.notice ),
 		menuOpen: false,
 		busy: '',
@@ -165,6 +168,7 @@
 			BASELINE: __( 'Baseline', 'mykavo' ),
 			SCHEDULED: __( 'Scheduled', 'mykavo' ),
 			MANUAL: __( 'Manual', 'mykavo' ),
+			DEPLOY: __( 'Update check', 'mykavo' ),
 		}[ trigger ] || trigger;
 	}
 
@@ -194,6 +198,10 @@
 		unplug: '<path d="m19 5 3-3"/><path d="m2 22 3-3"/><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="M7.5 13.5 10 11"/><path d="M10.5 16.5 13 14"/><path d="m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z"/>',
 		loader: '<path d="M21 12a9 9 0 1 1-6.22-8.56"/>',
 		clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+		shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+		plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+		brush: '<path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/>',
+		wp: '<circle cx="12" cy="12" r="10"/><path d="M3.5 8.5 8 20l3-8.5"/><path d="M9 8.5h5"/><path d="M11.5 8.5 16 20l4.5-11.5"/>',
 	};
 
 	function icon( name, cls ) {
@@ -311,7 +319,10 @@
 		state.changes = null;
 		state.changesError = null;
 		render();
-		return api( '/changes?status=' + state.changesStatus )
+		var query = state.changesScan
+			? '/changes?status=all&scan=' + encodeURIComponent( state.changesScan.id )
+			: '/changes?status=' + state.changesStatus;
+		return api( query )
 			.then( function ( data ) {
 				state.changes = data;
 				render();
@@ -324,8 +335,8 @@
 			} );
 	}
 
-	function loadScans() {
-		return api( '/scans' )
+	function loadScans( fresh ) {
+		return api( '/scans' + ( fresh ? '?fresh=1' : '' ) )
 			.then( function ( data ) {
 				state.scans = data;
 				render();
@@ -352,6 +363,27 @@
 			} );
 	}
 
+	function loadUpdates() {
+		return api( '/updates' )
+			.then( function ( data ) {
+				state.updates = data;
+				state.updatesError = null;
+				render();
+			} )
+			.catch( function ( err ) {
+				state.updatesError = errorMessage( err );
+				render();
+			} );
+	}
+
+	function setUpdateChecks( enabled ) {
+		api( '/updates', { method: 'POST', data: { enabled: enabled } } ).then( function ( data ) {
+			state.updates = data;
+			toast( enabled ? __( 'Update checks are on.', 'mykavo' ) : __( 'Update checks are off.', 'mykavo' ) );
+			render();
+		} );
+	}
+
 	/** While a scan runs, refresh quietly - only while the tab is visible. */
 	function schedulePoll() {
 		stopPolling();
@@ -372,7 +404,11 @@
 					state.scans = null;
 					state.pages = null;
 					toast( __( 'Scan finished.', 'mykavo' ) );
-					if ( state.tab !== 'overview' ) {
+					loadUpdates();
+					if ( state.tab === 'scans' || state.tab === 'updates' ) {
+						// Exactly one, uncached: a cached copy could still say "running".
+						loadScans( true );
+					} else if ( state.tab !== 'overview' ) {
 						loadTab();
 					}
 				}
@@ -394,6 +430,13 @@
 			loadScans();
 		} else if ( state.tab === 'pages' && ! state.pages ) {
 			loadPages();
+		} else if ( state.tab === 'updates' ) {
+			if ( ! state.updates ) {
+				loadUpdates();
+			}
+			if ( ! state.scans ) {
+				loadScans();
+			}
 		}
 	}
 
@@ -556,6 +599,7 @@
 			) ) +
 			'</p>' +
 			'<ul class="mk-benefits">' +
+			benefit( 'shield', __( 'Update without fear', 'mykavo' ), __( 'After every plugin, theme or WordPress update, MyKavo checks nothing broke - and names the update if something did.', 'mykavo' ) ) +
 			benefit( 'image', __( 'See exactly what changed', 'mykavo' ), __( 'Before-and-after screenshots and values for every change.', 'mykavo' ) ) +
 			benefit( 'alert', __( 'Only what matters', 'mykavo' ), __( 'Changes ranked Critical to Info. Ads and noise are filtered out.', 'mykavo' ) ) +
 			benefit( 'check', __( 'Approve in one click', 'mykavo' ), __( 'Accept intentional changes as the new baseline, ignore the rest.', 'mykavo' ) ) +
@@ -631,6 +675,7 @@
 		var list = [
 			[ 'overview', __( 'Overview', 'mykavo' ), '' ],
 			[ 'changes', __( 'Changes', 'mykavo' ), open > 0 ? '<span class="mk-count">' + esc( open > 99 ? '99+' : open ) + '</span>' : '' ],
+			[ 'updates', __( 'Safe Updates', 'mykavo' ), '' ],
 			[ 'scans', __( 'Scans', 'mykavo' ), '' ],
 			[ 'pages', __( 'Pages', 'mykavo' ), '' ],
 		];
@@ -712,8 +757,12 @@
 		var cap = o.capabilities || {};
 		var busy = state.busy === 'scan';
 		var disabled = busy || ! cap.canRunManualScan;
+		var first = ! scan && urgent > 0 && o.topChanges && o.topChanges[ 0 ];
+		var reviewBtn = first
+			? '<button type="button" class="mk-btn mk-btn-primary" data-act="open-change" data-id="' + esc( first.id ) + '">' + esc( __( 'Review now', 'mykavo' ) ) + icon( 'chevron' ) + '</button>'
+			: '';
 		var scanBtn =
-			'<button type="button" class="mk-btn mk-btn-dark" data-act="scan"' + ( disabled ? ' disabled' : '' ) +
+			'<button type="button" class="mk-btn' + ( reviewBtn ? '' : ' mk-btn-dark' ) + '" data-act="scan"' + ( disabled ? ' disabled' : '' ) +
 			( cap.manualScanBlockedReason ? ' title="' + esc( cap.manualScanBlockedReason ) + '"' : '' ) + '>' +
 			icon( busy ? 'loader' : 'refresh', busy ? 'mk-spin' : '' ) + esc( __( 'Run scan', 'mykavo' ) ) + '</button>';
 
@@ -733,7 +782,7 @@
 			'<div class="mk-hero-main"><span class="mk-hero-icon">' + icon( ic, ic === 'loader' ? 'mk-spin' : '' ) + '</span>' +
 			'<div style="min-width:0;flex:1"><p class="mk-eyebrow">' + esc( eyebrow ) + '</p><h2>' + esc( title ) + '</h2>' +
 			( sub ? '<p class="mk-hero-sub">' + esc( sub ) + '</p>' : '' ) + extra + '</div></div>' +
-			'<div class="mk-hero-side">' + scanBtn +
+			'<div class="mk-hero-side"><div class="mk-hero-actions">' + reviewBtn + scanBtn + '</div>' +
 			( ! disabled || ! cap.manualScanBlockedReason ? '' : '<span class="mk-hero-meta">' + esc( cap.manualScanBlockedReason ) + '</span>' ) +
 			( meta.length ? '<span class="mk-hero-meta">' + esc( meta.join( ' · ' ) ) + '</span>' : '' ) +
 			'</div></section>'
@@ -772,6 +821,7 @@
 			( c.pagePath ? '<code>' + esc( c.pagePath ) + '</code>' : '<span>' + esc( __( 'Site-wide', 'mykavo' ) ) + '</span>' ) +
 			'<span>' + esc( categoryLabel( c.category ) ) + '</span>' +
 			( c.status !== 'NEW' ? '<span class="mk-status">' + esc( statusLabel( c.status ) ) + '</span>' : '' ) +
+			( c.afterUpdate ? '<span class="mk-tag" title="' + esc( c.afterUpdate ) + '">' + icon( 'shield' ) + esc( __( 'After an update', 'mykavo' ) ) + '</span>' : '' ) +
 			'</span></span>' +
 			'<span class="mk-row-side">' + esc( rel( c.detectedAt ) ) + '</span>' +
 			icon( 'chevron', 'mk-row-chevron' ) +
@@ -837,14 +887,20 @@
 			'<div class="mk-grid">' +
 			hero( o ) +
 			stats( o ) +
-			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + breakdown + '</div><div class="mk-grid">' + recent + plan + '</div></div>' +
+			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + breakdown + '</div><div class="mk-grid">' + safeUpdatesCard() + recent + plan + '</div></div>' +
 			'</div>'
 		);
 	}
 
 	function changesView() {
+		var scanChip = state.changesScan
+			? '<div class="mk-filter-note">' + icon( 'shield' ) + '<span>' +
+				esc( sprintf( /* translators: %s: the update, e.g. "Updated WooCommerce 8.1 → 8.2". */ __( 'Found after: %s', 'mykavo' ), state.changesScan.note ) ) +
+				'</span><button type="button" class="mk-btn mk-btn-quiet mk-btn-sm" data-act="clear-scan-filter">' + esc( __( 'Show all changes', 'mykavo' ) ) + '</button></div>'
+			: '';
 		var toolbar =
-			'<div class="mk-toolbar">' +
+			scanChip +
+			'<div class="mk-toolbar"' + ( state.changesScan ? ' hidden' : '' ) + '>' +
 			'<div class="mk-seg" role="group" aria-label="' + esc( __( 'Status', 'mykavo' ) ) + '">' +
 			'<button type="button" data-act="changes-status" data-status="open" data-key="st-open" aria-pressed="' + ( state.changesStatus === 'open' ) + '">' + esc( __( 'Open', 'mykavo' ) ) + '</button>' +
 			'<button type="button" data-act="changes-status" data-status="all" data-key="st-all" aria-pressed="' + ( state.changesStatus === 'all' ) + '">' + esc( __( 'All', 'mykavo' ) ) + '</button>' +
@@ -895,7 +951,9 @@
 					: sprintf( /* translators: 1: pages scanned, 2: pages requested. */ __( '%1$d / %2$d', 'mykavo' ), s.pagesScanned, s.pagesRequested );
 				return (
 					'<tr><td title="' + esc( when( s.createdAt ) ) + '">' + esc( rel( s.completedAt || s.createdAt ) ) + '</td>' +
-					'<td>' + esc( triggerLabel( s.triggerType ) ) + '</td>' +
+					'<td>' + ( s.triggerType === 'DEPLOY' && s.note
+						? '<span class="mk-tag" title="' + esc( s.note ) + '">' + icon( 'shield' ) + esc( __( 'Update check', 'mykavo' ) ) + '</span><span class="mk-cell-note">' + esc( s.note ) + '</span>'
+						: esc( triggerLabel( s.triggerType ) ) ) + '</td>' +
 					'<td><span class="mk-status">' + esc( statusLabel( s.status ) ) + '</span></td>' +
 					'<td class="mk-num">' + esc( pages ) + '</td>' +
 					'<td class="mk-num">' + esc( s.changesDetected ) + '</td>' +
@@ -942,6 +1000,180 @@
 		);
 	}
 
+	/* ------------------------------------------------------- safe updates -- */
+
+	function scansById() {
+		var map = {};
+		var add = function ( list ) {
+			( list || [] ).forEach( function ( sc ) {
+				map[ sc.id ] = sc;
+			} );
+		};
+		// Overview last: it is the copy refreshed while a scan runs, so it wins
+		// over an older history list for the scans both contain.
+		add( state.scans && state.scans.scans );
+		add( state.overview && state.overview.recentScans );
+		return map;
+	}
+
+	function updateTitle( entry ) {
+		if ( entry.note ) {
+			return entry.note;
+		}
+		var items = entry.items || [];
+		if ( ! items.length ) {
+			return __( 'WordPress update', 'mykavo' );
+		}
+		var first = items[ 0 ];
+		var name = first.type === 'core' ? 'WordPress' : first.name;
+		var label = first.from && first.to ? name + ' ' + first.from + ' → ' + first.to : name + ( first.to ? ' ' + first.to : '' );
+		return items.length > 1
+			? sprintf( /* translators: 1: first update, 2: number of other updates. */ __( '%1$s and %2$d more', 'mykavo' ), label, items.length - 1 )
+			: label;
+	}
+
+	/** What happened after an update, in words and a tone. */
+	function verdict( entry, scans ) {
+		var reason = String( entry.reason || '' ).toUpperCase();
+		if ( reason === 'OFF' ) {
+			return { tone: 'quiet', text: __( 'Not checked - update checks were off', 'mykavo' ) };
+		}
+		if ( reason === 'PLAN' ) {
+			return { tone: 'quiet', text: __( 'Not checked - automatic update checks come with Pro', 'mykavo' ), upgrade: true };
+		}
+		if ( reason === 'NO_BASELINE' ) {
+			return { tone: 'quiet', text: __( 'Not checked - the first baseline was not ready yet', 'mykavo' ) };
+		}
+		if ( reason === 'QUOTA' ) {
+			return { tone: 'quiet', text: __( 'Not checked - today\'s scan limit was reached', 'mykavo' ) };
+		}
+		if ( reason === 'UNREACHABLE' ) {
+			return { tone: 'bad', text: __( 'Not checked - MyKavo could not be reached', 'mykavo' ) };
+		}
+		if ( ! entry.scan_id ) {
+			return { tone: 'quiet', text: entry.message || __( 'Not checked', 'mykavo' ) };
+		}
+		var scan = scans[ entry.scan_id ];
+		if ( ! scan ) {
+			// Older than the recent scan list: the check ran; details are in
+			// MyKavo's scan history.
+			return { tone: 'done', text: __( 'Checked', 'mykavo' ) };
+		}
+		if ( scan.status === 'QUEUED' || scan.status === 'RUNNING' ) {
+			return { tone: 'busy', text: __( 'Checking your pages now...', 'mykavo' ) };
+		}
+		if ( scan.status === 'FAILED' ) {
+			return { tone: 'bad', text: __( 'The check could not finish', 'mykavo' ) };
+		}
+		if ( ! scan.changesDetected ) {
+			return { tone: 'good', text: __( 'Verified - nothing changed', 'mykavo' ) };
+		}
+		return {
+			tone: scan.highestSeverity === 'CRITICAL' || scan.highestSeverity === 'HIGH' ? 'bad' : 'warn',
+			text: sprintf( _n( '%d change found after this update', '%d changes found after this update', scan.changesDetected, 'mykavo' ), scan.changesDetected ),
+			severity: scan.highestSeverity,
+			scanId: scan.id,
+		};
+	}
+
+	function verdictBadge( v ) {
+		var ic = { good: 'check', bad: 'alert', warn: 'eye', busy: 'loader', quiet: 'clock', done: 'check' }[ v.tone ];
+		return '<span class="mk-verdict mk-verdict-' + v.tone + '">' + icon( ic, v.tone === 'busy' ? 'mk-spin' : '' ) + esc( v.text ) + '</span>';
+	}
+
+	function itemIcon( type ) {
+		return type === 'theme' ? 'brush' : type === 'core' ? 'wp' : type === 'translation' ? 'file' : 'plug';
+	}
+
+	function updateEntry( entry, scans, compact ) {
+		var v = verdict( entry, scans );
+		var items = entry.items || [];
+		var billing = state.overview && state.overview.links ? safeUrl( state.overview.links.billing ) : '';
+		var actions = '';
+		if ( v.scanId ) {
+			actions = '<button type="button" class="mk-btn mk-btn-sm mk-btn-dark" data-act="update-changes" data-scan="' + esc( v.scanId ) + '" data-note="' + esc( updateTitle( entry ) ) + '">' + esc( __( 'Review changes', 'mykavo' ) ) + icon( 'chevron' ) + '</button>';
+		} else if ( v.upgrade && billing ) {
+			actions = '<a class="mk-btn mk-btn-sm mk-btn-primary" href="' + esc( billing ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Upgrade', 'mykavo' ) ) + icon( 'external' ) + '</a>';
+		}
+		return (
+			'<li class="mk-update">' +
+			'<span class="mk-update-icon">' + icon( itemIcon( items[ 0 ] && items[ 0 ].type ) ) + '</span>' +
+			'<div class="mk-update-main">' +
+			'<p class="mk-update-title">' + esc( updateTitle( entry ) ) + '</p>' +
+			'<p class="mk-row-meta"><span title="' + esc( when( new Date( entry.at * 1000 ).toISOString() ) ) + '">' + esc( rel( new Date( entry.at * 1000 ).toISOString() ) ) + '</span>' +
+			'<span class="mk-status">' + esc( entry.trigger === 'auto' ? __( 'Automatic', 'mykavo' ) : __( 'By an admin', 'mykavo' ) ) + '</span></p>' +
+			verdictBadge( v ) +
+			( ! compact && items.length > 1
+				? '<ul class="mk-update-items">' + items.map( function ( it ) {
+					var name = it.type === 'core' ? 'WordPress' : it.name;
+					return '<li>' + icon( itemIcon( it.type ) ) + '<span>' + esc( name ) + '</span><code>' + esc( it.from && it.to ? it.from + ' → ' + it.to : it.to || '' ) + '</code></li>';
+				} ).join( '' ) + '</ul>'
+				: '' ) +
+			'</div>' +
+			( actions ? '<div class="mk-update-side">' + actions + '</div>' : '' ) +
+			'</li>'
+		);
+	}
+
+	function updatesView() {
+		if ( state.updatesError && ! state.updates ) {
+			return errorBlock( state.updatesError, 'retry-updates' );
+		}
+		if ( ! state.updates ) {
+			return loadingBlock( 260 );
+		}
+		var on = !! state.updates.enabled;
+		var planOk = ! state.overview || state.overview.capabilities.updateChecks;
+		var billing = state.overview && state.overview.links ? safeUrl( state.overview.links.billing ) : '';
+		var scans = scansById();
+		var log = state.updates.log || [];
+
+		var intro =
+			'<section class="mk-card mk-safe">' +
+			'<div class="mk-safe-copy"><span class="mk-safe-icon">' + icon( 'shield' ) + '</span><div>' +
+			'<h2>' + esc( __( 'Update without fear', 'mykavo' ) ) + '</h2>' +
+			'<p>' + esc( __( 'Every time WordPress updates a plugin, theme or itself - including automatic updates overnight - MyKavo checks your pages against the approved baseline and tells you whether anything broke, and which update did it.', 'mykavo' ) ) + '</p>' +
+			'</div></div>' +
+			'<button type="button" class="mk-switch" role="switch" aria-checked="' + on + '" data-act="toggle-updates" data-key="toggle-updates">' +
+			'<span class="mk-switch-track"><span class="mk-switch-thumb"></span></span>' +
+			'<span>' + esc( on ? __( 'Checks on', 'mykavo' ) : __( 'Checks off', 'mykavo' ) ) + '</span></button>' +
+			'</section>';
+
+		var plan = planOk
+			? ''
+			: '<div class="mk-banner">' + icon( 'zap' ) + '<span>' + esc( __( 'Updates are listed here on every plan. Checking the site automatically after each one comes with Pro and Agency.', 'mykavo' ) ) + '</span>' +
+				( billing ? '<a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( billing ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'See plans', 'mykavo' ) ) + '</a>' : '' ) + '</div>';
+
+		var list = log.length
+			? '<ul class="mk-list mk-updates">' + log.map( function ( e ) {
+				return updateEntry( e, scans, false );
+			} ).join( '' ) + '</ul>'
+			: '<div class="mk-empty"><span class="mk-empty-icon">' + icon( 'shield' ) + '</span><strong>' + esc( __( 'No updates yet', 'mykavo' ) ) + '</strong><span>' +
+				esc( __( 'The next time a plugin, theme or WordPress updates, it appears here with a verdict.', 'mykavo' ) ) + '</span></div>';
+
+		return (
+			'<div class="mk-grid">' + intro + plan +
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Update history', 'mykavo' ) ) + '</h3>' +
+			'<span class="mk-fine">' + esc( __( 'Kept on this site. Last 30 updates.', 'mykavo' ) ) + '</span></div>' + list + '</section></div>'
+		);
+	}
+
+	function safeUpdatesCard() {
+		var latest = state.updates && state.updates.log && state.updates.log[ 0 ];
+		var body = latest
+			? '<ul class="mk-list mk-updates">' + updateEntry( latest, scansById(), true ) + '</ul>'
+			: '<div class="mk-card-pad" style="padding-top:14px"><p class="mk-stat-foot" style="font-size:13px">' +
+				esc( state.updates && ! state.updates.enabled
+					? __( 'Update checks are off.', 'mykavo' )
+					: __( 'The next time WordPress updates a plugin, theme or itself, MyKavo checks nothing broke.', 'mykavo' ) ) +
+				'</p></div>';
+		return (
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'shield', 'mk-title-icon' ) + esc( __( 'Safe Updates', 'mykavo' ) ) + '</h3>' +
+			'<button type="button" class="mk-link" style="border:0;background:none;cursor:pointer" data-act="tab" data-tab="updates">' + esc( latest ? __( 'History', 'mykavo' ) : __( 'How it works', 'mykavo' ) ) + icon( 'chevron' ) + '</button></div>' +
+			body + '</section>'
+		);
+	}
+
 	function render() {
 		var focusKey = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute( 'data-key' ) : null;
 
@@ -950,7 +1182,15 @@
 			return;
 		}
 
-		var view = state.tab === 'changes' ? changesView() : state.tab === 'scans' ? scansView() : state.tab === 'pages' ? pagesView() : overviewView();
+		var view = state.tab === 'changes'
+			? changesView()
+			: state.tab === 'updates'
+				? updatesView()
+				: state.tab === 'scans'
+					? scansView()
+					: state.tab === 'pages'
+						? pagesView()
+						: overviewView();
 		root.innerHTML = header() + banner() + tabs() + '<div role="tabpanel">' + view + '</div>' + footer();
 
 		if ( focusKey ) {
@@ -1030,7 +1270,11 @@
 				} ).join( '' ) + '</ul></div>'
 			: '';
 		var hasValues = ( c.previousValue !== null && c.previousValue !== undefined ) || ( c.currentValue !== null && c.currentValue !== undefined );
+		var found = c.foundBy && c.foundBy.triggerType === 'DEPLOY' && c.foundBy.note
+			? '<div class="mk-attrib">' + icon( 'shield' ) + '<div><b>' + esc( __( 'Appeared after an update', 'mykavo' ) ) + '</b><span>' + esc( c.foundBy.note ) + '</span></div></div>'
+			: '';
 		return (
+			found +
 			( c.description ? '<p style="color:var(--mk-ink-2);font-size:14px">' + esc( c.description ) + '</p>' : '' ) +
 			( hasValues
 				? '<div class="mk-section"><p class="mk-section-title">' + esc( __( 'What changed', 'mykavo' ) ) + '</p><div class="mk-values">' +
@@ -1153,6 +1397,10 @@
 			case 'tab':
 				state.tab = el.getAttribute( 'data-tab' );
 				state.menuOpen = false;
+				if ( state.tab === 'changes' && state.changesScan ) {
+					state.changesScan = null;
+					state.changes = null;
+				}
 				render();
 				loadTab();
 				break;
@@ -1206,6 +1454,24 @@
 				state.scans = null;
 				render();
 				loadScans();
+				break;
+			case 'toggle-updates':
+				setUpdateChecks( ! ( state.updates && state.updates.enabled ) );
+				break;
+			case 'update-changes':
+				state.changesScan = { id: el.getAttribute( 'data-scan' ), note: el.getAttribute( 'data-note' ) };
+				state.tab = 'changes';
+				loadChanges();
+				break;
+			case 'clear-scan-filter':
+				state.changesScan = null;
+				loadChanges();
+				break;
+			case 'retry-updates':
+				state.updatesError = null;
+				state.updates = null;
+				render();
+				loadUpdates();
 				break;
 			case 'retry-pages':
 				state.pagesError = null;
@@ -1262,5 +1528,6 @@
 	render();
 	if ( state.connected ) {
 		loadOverview( false );
+		loadUpdates();
 	}
 }() );

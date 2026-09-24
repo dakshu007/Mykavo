@@ -10,14 +10,17 @@ npm install --no-save playwright @wp-playground/cli
 node make-sample-shots.cjs          # sample before/after/diff screenshots
 node mock-server.cjs &              # stand-in mykavo.app on 127.0.0.1:9501
 
-# WordPress on 127.0.0.1:9400 with the plugin mounted and activated
-mkdir -p mu && echo "<?php define( 'MYKAVO_APP_URL', 'http://127.0.0.1:9501' );" > mu/mykavo-dev.php
+# WordPress on 127.0.0.1:9400 with the plugin mounted and activated.
+# probe/ goes in a mu-plugins SUBFOLDER, which WordPress does not auto-load:
+# the e2e test calls probe/fake-update.php to simulate a plugin update.
+mkdir -p mu/probe && echo "<?php define( 'MYKAVO_APP_URL', 'http://127.0.0.1:9501' );" > mu/mykavo-dev.php
+cp probe/fake-update.php mu/probe/
 npx wp-playground-cli server --port 9400 --php 8.3 --wp 6.8 \
   --mount ../mykavo:/wordpress/wp-content/plugins/mykavo \
   --mount ./mu:/wordpress/wp-content/mu-plugins \
   --blueprint ./blueprint.json &
 
-node e2e.cjs ./shots                # 18 steps; screenshots land in ./shots
+node e2e.cjs ./shots                # 23 steps; screenshots land in ./shots
 ```
 
 Log in as `admin` / `password` if you open it yourself.

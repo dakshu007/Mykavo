@@ -29,7 +29,8 @@ let scans = [
 let running = null;
 const pages = ['/', '/shop', '/shop/ethiopia-yirgacheffe', '/subscribe', '/about', '/cart', '/checkout', '/contact'];
 const isOpen = (c) => c.status === 'NEW' || c.status === 'REVIEWED';
-const listItem = (c) => ({ id: c.id, title: c.title, severity: c.severity, category: c.category, status: c.status, detectedAt: c.detectedAt, websiteId: 'web1', websiteName: 'Northwind Coffee', pagePath: c.pagePath });
+const scanOf = (c) => scans.find((s) => s.id === (c.scanId || 'scn0000000003')) || {};
+const listItem = (c) => ({ id: c.id, title: c.title, severity: c.severity, category: c.category, status: c.status, detectedAt: c.detectedAt, websiteId: 'web1', websiteName: 'Northwind Coffee', pagePath: c.pagePath, scanId: c.scanId || 'scn0000000003', afterUpdate: scanOf(c).triggerType === 'DEPLOY' ? scanOf(c).note : null });
 const rank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 };
 const scanItem = (s) => ({ ...s, websiteId: 'web1', websiteName: 'Northwind Coffee', websiteUrl: 'https://northwind-coffee.test' });
 
@@ -39,7 +40,9 @@ function tick() {
   running.scan.pagesScanned = Math.min(8, Math.floor(secs / 2.5));
   running.scan.status = 'RUNNING';
   if (running.scan.pagesScanned >= 8) {
-    Object.assign(running.scan, { status: 'COMPLETED', completedAt: new Date().toISOString(), changesDetected: 0 });
+    const deploy = running.scan.triggerType === 'DEPLOY';
+    Object.assign(running.scan, { status: 'COMPLETED', completedAt: new Date().toISOString(), changesDetected: deploy ? 1 : 0, highestSeverity: deploy ? 'CRITICAL' : null });
+    if (deploy) changes.unshift({ id: 'chg' + Date.now(), scanId: running.scan.id, title: 'Checkout button text changed', severity: 'CRITICAL', category: 'CONVERSION', status: 'NEW', detectedAt: new Date().toISOString(), pagePath: '/checkout', description: 'The monitored element "Place order" changed its text.', previousValue: 'Place order', currentValue: 'Proceed', images: true, diff: true });
     running = null;
   }
 }
@@ -59,7 +62,7 @@ function site() {
     topChanges: top,
     recentScans: scans.slice(0, 5).map(scanItem),
     scanInProgress: running ? { scanId: running.scan.id, status: running.scan.status, pagesRequested: 8, pagesScanned: running.scan.pagesScanned } : null,
-    capabilities: running ? { canRunManualScan: false, manualScanBlockedReason: 'A scan is already running.' } : { canRunManualScan: true, manualScanBlockedReason: null },
+    capabilities: running ? { canRunManualScan: false, manualScanBlockedReason: 'A scan is already running.', updateChecks: true } : { canRunManualScan: true, manualScanBlockedReason: null, updateChecks: true },
     links: { website: BASE + '/dashboard/websites/web1', changes: BASE + '/dashboard/changes', pages: BASE + '/dashboard/websites/web1/pages', notifications: BASE + '/dashboard/notifications', billing: BASE + '/dashboard/billing' },
   };
 }
@@ -112,7 +115,8 @@ http.createServer(async (req, res) => {
     if (rest === '/site') return json(res, 200, site());
     if (rest === '/changes') {
       const all = url.searchParams.get('status') === 'all';
-      const list = changes.filter((c) => all || isOpen(c)).map(listItem);
+      const scanFilter = url.searchParams.get('scan');
+      const list = changes.filter((c) => (all || isOpen(c)) && (!scanFilter || (c.scanId || 'scn0000000003') === scanFilter)).map(listItem);
       return json(res, 200, { changes: list, total: list.length });
     }
     let m = rest.match(/^\/changes\/(\w+)$/);
@@ -129,13 +133,25 @@ http.createServer(async (req, res) => {
         detectedAt: c.detectedAt, previousValue: c.previousValue, currentValue: c.currentValue, brokenLinks: c.brokenLinks || [],
         pageUrl: 'https://northwind-coffee.test' + c.pagePath, pageName: null, canUpdateBaseline: c.category !== 'LINKS',
         images: { before: c.images ? BASE + '/api/wp/v1/media?f=shot_before' : null, after: c.images ? BASE + '/api/wp/v1/media?f=shot_after' : null, diff: c.diff ? BASE + '/api/wp/v1/media?f=diff' : null },
-        dashboardUrl: BASE + '/dashboard/changes/' + c.id } });
+        dashboardUrl: BASE + '/dashboard/changes/' + c.id,
+        foundBy: { scanId: scanOf(c).id, triggerType: scanOf(c).triggerType, note: scanOf(c).note || null, at: scanOf(c).createdAt } } });
     }
     m = rest.match(/^\/changes\/(\w+)\/baseline$/);
     if (m && req.method === 'POST') {
       const c = changes.find((x) => x.id === m[1]);
       changes.filter((x) => x.pagePath === c.pagePath && isOpen(x)).forEach((x) => (x.status = 'APPROVED'));
       return json(res, 200, { baselineVersion: 4, approvedChanges: 2 });
+    }
+    if (rest === '/updates' && req.method === 'POST') {
+      const body = JSON.parse(await readBody(req) || '{}');
+      const it = (body.items || [])[0] || {};
+      const note = (body.trigger === 'auto' ? 'Auto-updated ' : 'Updated ') + (it.from && it.to ? `${it.name} ${it.from} → ${it.to}` : it.name) + ((body.items || []).length > 1 ? ` and ${body.items.length - 1} more` : '');
+      fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   update report: ${JSON.stringify(body)}\n`);
+      if (running) return json(res, 200, { note, scan: { id: running.scan.id, status: 'RUNNING' }, reason: 'BUSY' });
+      const scan = { id: 'scn' + Date.now(), status: 'QUEUED', triggerType: 'DEPLOY', note, createdAt: new Date().toISOString(), startedAt: null, completedAt: null, pagesRequested: 8, pagesScanned: 0, pagesFailed: 0, changesDetected: 0, highestSeverity: null };
+      scans.unshift(scan);
+      running = { scan, t0: Date.now() };
+      return json(res, 201, { note, scan: { id: scan.id, status: 'QUEUED' } });
     }
     if (rest === '/scans' && req.method === 'POST') {
       if (running) return json(res, 409, { error: 'A scan is already in progress for this website.', scanId: running.scan.id });

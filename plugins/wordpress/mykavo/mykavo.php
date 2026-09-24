@@ -3,7 +3,7 @@
  * Plugin Name:       MyKavo - Website Change Monitoring
  * Plugin URI:        https://mykavo.app
  * Description:       See what changed on your site, and whether it matters, without leaving WordPress. Visual, SEO, content, link and script changes with before-and-after screenshots. Adds nothing to the pages your visitors load.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            MyKavo
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MYKAVO_VERSION', '1.0.0' );
+define( 'MYKAVO_VERSION', '1.1.0' );
 define( 'MYKAVO_FILE', __FILE__ );
 define( 'MYKAVO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MYKAVO_URL', plugin_dir_url( __FILE__ ) );
@@ -34,11 +34,13 @@ if ( ! defined( 'MYKAVO_APP_URL' ) ) {
  * PERFORMANCE CONTRACT
  *
  * On the public site this plugin does nothing: no scripts, no styles, no
- * database queries, no remote requests, no autoloaded options. The only
- * hook registered on a front-end request is rest_api_init, which WordPress
- * fires solely for REST requests - and our routes there are admin-only.
- * Everything else loads inside wp-admin, and remote calls happen only while
- * an administrator is looking at a MyKavo screen.
+ * database queries, no remote requests, no autoloaded options. On a
+ * front-end request it only registers callbacks: rest_api_init (fires solely
+ * for REST requests, and our routes there are admin-only) and two update
+ * hooks that fire solely while WordPress is updating plugins, themes or
+ * core. Nothing is loaded until one of those actually runs. Everything else
+ * loads inside wp-admin, and remote calls happen only while an administrator
+ * is looking at a MyKavo screen - or once, right after an update.
  */
 if ( is_admin() ) {
 	require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
@@ -46,6 +48,28 @@ if ( is_admin() ) {
 	require_once MYKAVO_DIR . 'includes/class-mykavo-admin.php';
 	MyKavo_Admin::init();
 }
+
+/*
+ * Safe Updates. The class loads only when an update is actually running.
+ */
+add_filter(
+	'upgrader_pre_install',
+	static function ( $response, $hook_extra = array() ) {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-updates.php';
+		return MyKavo_Updates::remember_before( $response, $hook_extra );
+	},
+	10,
+	2
+);
+add_action(
+	'upgrader_process_complete',
+	static function ( $upgrader, $options = array() ) {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-updates.php';
+		MyKavo_Updates::collect( $upgrader, $options );
+	},
+	10,
+	2
+);
 
 register_activation_hook(
 	__FILE__,
@@ -59,6 +83,7 @@ add_action(
 	static function () {
 		require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-api.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-updates.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-rest.php';
 		MyKavo_Rest::register_routes();
 	}

@@ -86,9 +86,10 @@ export async function GET(request: Request) {
         .filter((c) => SEVERITY_RANK[c.severity] >= SEVERITY_RANK.LOW)
         .slice(0, 5)
         .map(mapChangeListItem),
-      recentScans: website.scans.map((scan) =>
-        mapScanListItem(scan, { name: website.name, url: website.url }),
-      ),
+      recentScans: website.scans.map((scan) => ({
+        ...mapScanListItem(scan, { name: website.name, url: website.url }),
+        note: scan.note,
+      })),
       scanInProgress: activeScan
         ? {
             scanId: activeScan.id,
@@ -97,12 +98,16 @@ export async function GET(request: Request) {
             pagesScanned: activeScan.pagesScanned,
           }
         : null,
-      capabilities: manualScanCapability({
-        scanInProgress: Boolean(activeScan),
-        monitoredPageCount: website.monitoredPages.length,
-        hasFinishedScan,
-        planAllowsManualScans: plan.limits.manualScans,
-      }),
+      capabilities: {
+        ...manualScanCapability({
+          scanInProgress: Boolean(activeScan),
+          monitoredPageCount: website.monitoredPages.length,
+          hasFinishedScan,
+          planAllowsManualScans: plan.limits.manualScans,
+        }),
+        /** Safe Updates: an automatic check after every WordPress update. */
+        updateChecks: plan.limits.deployChecks,
+      },
       links: {
         website: `${base}/dashboard/websites/${website.id}`,
         changes: `${base}/dashboard/changes?website=${website.id}`,

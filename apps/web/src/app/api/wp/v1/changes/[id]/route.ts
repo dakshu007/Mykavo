@@ -27,6 +27,7 @@ export async function GET(request: Request, { params }: Params) {
       monitoredPage: { select: { url: true, name: true } },
       previousSnapshot: { select: { id: true, screenshotStorageKey: true } },
       currentSnapshot: { select: { id: true, screenshotStorageKey: true, errorCode: true } },
+      scan: { select: { id: true, triggerType: true, note: true, createdAt: true } },
     },
   });
   if (!change) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -60,6 +61,13 @@ export async function GET(request: Request, { params }: Params) {
             : null,
         },
         dashboardUrl: `${base}/dashboard/changes/${change.id}`,
+        // Safe Updates attribution: the update whose check found this change.
+        foundBy: {
+          scanId: change.scan.id,
+          triggerType: change.scan.triggerType,
+          note: change.scan.note,
+          at: change.scan.createdAt.toISOString(),
+        },
       },
     },
     { headers: { "cache-control": "no-store" } },

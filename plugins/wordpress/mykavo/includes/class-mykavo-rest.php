@@ -59,6 +59,13 @@ final class MyKavo_Rest {
 						'enum'    => array( 'open', 'all' ),
 						'default' => 'open',
 					),
+					'scan'   => array(
+						'type'              => 'string',
+						'default'           => '',
+						'validate_callback' => static function ( $value ) {
+							return '' === $value || self::is_valid_id( $value );
+						},
+					),
 				),
 			)
 		);
@@ -113,6 +120,12 @@ final class MyKavo_Rest {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( __CLASS__, 'scans' ),
 					'permission_callback' => $admin,
+					'args'                => array(
+						'fresh' => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -129,6 +142,29 @@ final class MyKavo_Rest {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'pages' ),
 				'permission_callback' => $admin,
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/updates',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'updates' ),
+					'permission_callback' => $admin,
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'update_settings' ),
+					'permission_callback' => $admin,
+					'args'                => array(
+						'enabled' => array(
+							'type'     => 'boolean',
+							'required' => true,
+						),
+					),
+				),
 			)
 		);
 
@@ -188,6 +224,11 @@ final class MyKavo_Rest {
 	 */
 	public static function changes( WP_REST_Request $request ) {
 		$status = 'all' === $request->get_param( 'status' ) ? 'all' : 'open';
+		$scan   = (string) $request->get_param( 'scan' );
+		if ( '' !== $scan ) {
+			// One update's findings: rare and specific, so not cached.
+			return self::respond( MyKavo_API::request( 'GET', '/changes?status=all&scan=' . rawurlencode( $scan ) ) );
+		}
 		return self::respond( MyKavo_API::get( '/changes?status=' . $status, 'changes_' . $status, 60 ) );
 	}
 
@@ -232,9 +273,13 @@ final class MyKavo_Rest {
 	/**
 	 * Scan history.
 	 *
+	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public static function scans() {
+	public static function scans( WP_REST_Request $request ) {
+		if ( $request->get_param( 'fresh' ) ) {
+			delete_transient( 'mykavo_cache_scans' );
+		}
 		return self::respond( MyKavo_API::get( '/scans', 'scans', 30 ) );
 	}
 
@@ -256,6 +301,31 @@ final class MyKavo_Rest {
 	 */
 	public static function pages() {
 		return self::respond( MyKavo_API::get( '/pages', 'pages', 300 ) );
+	}
+
+	/**
+	 * Safe Updates log (kept on this site) and whether checks are on.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public static function updates() {
+		return rest_ensure_response(
+			array(
+				'enabled' => MyKavo_Updates::enabled(),
+				'log'     => MyKavo_Updates::log(),
+			)
+		);
+	}
+
+	/**
+	 * Switch update checks on or off.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function update_settings( WP_REST_Request $request ) {
+		MyKavo_Updates::set_enabled( (bool) $request->get_param( 'enabled' ) );
+		return self::updates();
 	}
 
 	/**

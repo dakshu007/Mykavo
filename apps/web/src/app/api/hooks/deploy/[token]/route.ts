@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@mykavo/database";
-import { getWorkspacePlan, assertScanAllowed, LimitError } from "@/lib/limits";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { enqueueScanWebsite } from "@/lib/queue";
+import { triggerWebsiteScan } from "@/lib/scans/trigger";
 import { logger } from "@/lib/logger";
 
 /**
@@ -62,77 +61,28 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   // Deploy checks are effectively on-demand scans - Pro only (spec §39),
-  // sharing the manual-scan daily quota and concurrency caps.
-  const plan = await getWorkspacePlan(website.workspaceId);
-  if (!plan.limits.deployChecks) {
-    return NextResponse.json(
-      { error: "Deploy checks are a Pro feature. Upgrade to verify deploys automatically." },
-      { status: 403 },
-    );
-  }
-  try {
-    await assertScanAllowed(website.workspaceId, plan, "MANUAL");
-  } catch (err) {
-    if (err instanceof LimitError) {
-      return NextResponse.json({ error: err.message }, { status: 429 });
-    }
-    throw err;
-  }
-
-  // A deploy check needs a baseline to compare against.
-  const hasFinishedScan = await prisma.scan.findFirst({
-    where: { websiteId: website.id, status: { in: ["COMPLETED", "PARTIAL"] } },
-    select: { id: true },
+  // sharing the manual-scan daily quota, the concurrency cap and the
+  // advisory-lock duplicate guard. One implementation for this hook, the
+  // dashboard and the WordPress plugin's Safe Updates.
+  const result = await triggerWebsiteScan({
+    workspaceId: website.workspaceId,
+    websiteId: website.id,
+    mode: "deploy",
+    note,
   });
-  if (!hasFinishedScan) {
+  if (!result.ok) {
     return NextResponse.json(
-      { error: "Run a baseline scan in the dashboard before using deploy checks." },
-      { status: 409 },
-    );
-  }
-
-  // Authoritative no-duplicate-scan guard (spec §40) - identical to the
-  // manual-scan route so hook and dashboard triggers can never race.
-  const created = await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${website.id})::int8)`;
-    const conflict = await tx.scan.findFirst({
-      where: { websiteId: website.id, status: { in: ["QUEUED", "RUNNING"] } },
-      select: { id: true },
-    });
-    if (conflict) return { conflictScanId: conflict.id };
-    const scan = await tx.scan.create({
-      data: { websiteId: website.id, triggerType: "DEPLOY", status: "QUEUED", note },
-    });
-    return { scan };
-  });
-  if ("conflictScanId" in created) {
-    return NextResponse.json(
-      { error: "A scan is already in progress for this website.", scanId: created.conflictScanId },
-      { status: 409 },
-    );
-  }
-  const scan = created.scan;
-
-  try {
-    await enqueueScanWebsite({ scanId: scan.id });
-  } catch (err) {
-    await prisma.scan.update({
-      where: { id: scan.id },
-      data: { status: "FAILED", errorCode: "ENQUEUE_FAILED" },
-    });
-    logger.error("failed to enqueue deploy check", { scanId: scan.id, websiteId: website.id }, err);
-    return NextResponse.json(
-      { error: "Could not queue the deploy check. Please try again." },
-      { status: 500 },
+      { error: result.error, ...(result.scanId ? { scanId: result.scanId } : {}) },
+      { status: result.status },
     );
   }
 
   logger.info("deploy check queued", {
-    scanId: scan.id,
+    scanId: result.scan.id,
     websiteId: website.id,
     workspaceId: website.workspaceId,
     ...(note ? { note } : {}),
   });
   // 202: accepted for async processing - the verdict arrives by notification.
-  return NextResponse.json({ scanId: scan.id, status: "QUEUED" }, { status: 202 });
+  return NextResponse.json({ scanId: result.scan.id, status: "QUEUED" }, { status: 202 });
 }

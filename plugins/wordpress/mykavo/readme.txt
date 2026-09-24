@@ -4,20 +4,29 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Know what changed on your site, and whether it matters. Before-and-after screenshots, SEO and broken-link alerts, inside WordPress. Zero front-end impact.
+Update without fear: after every plugin, theme or WordPress update, MyKavo checks nothing broke and names the update if something did. Zero front-end impact.
 
 == Description ==
 
-A plugin update, a theme tweak or a page builder change can quietly break your site: a checkout button disappears, a page is set to "noindex", links start returning 404. Usually a customer notices before you do.
+Updates are the number one way WordPress sites break. A plugin, theme or WordPress update - often an automatic one, overnight - quietly changes a layout, removes a checkout button or sets a page to "noindex". Usually a customer notices before you do, and nobody knows which update did it.
 
-MyKavo watches the pages that matter on your site and tells you when something important changes or breaks. This plugin brings that monitoring into your WordPress admin, so you can see what changed, how serious it is, and fix it or accept it without leaving WordPress.
+MyKavo fixes that. It watches the pages that matter on your site and tells you when something important changes or breaks. This plugin brings that monitoring into WordPress, and adds **Safe Updates**: every time WordPress updates anything, MyKavo checks your pages straight away and tells you whether the update broke something - and exactly which update it was.
+
+= Safe Updates =
+
+* **Every update is checked.** Plugins, themes, WordPress itself and translations, whether you clicked Update or WordPress did it automatically.
+* **A clear verdict.** "Verified - nothing changed", or "3 changes found after this update", with the before-and-after evidence one click away.
+* **The culprit, named.** Changes found after an update say so: "Appeared after: Updated WooCommerce 8.1.0 → 8.2.0".
+* **A history of every update**, with versions, kept on your site.
+* Update checks are included in the Pro and Agency plans. On the free plan, updates are still listed so you know what changed and when.
 
 = What you see in WordPress =
 
+* **Safe Updates:** a check and a verdict after every update, with the update named.
 * **One clear status.** "All clear", or exactly how many important changes need attention, at the top of the screen and as a badge in the admin menu.
 * **Before-and-after screenshots.** Drag a slider across the old and new version of a page, or switch to the highlighted differences.
 * **The exact values that changed.** Old and new title, meta description, robots tag, canonical URL, button text and more, side by side.
@@ -46,6 +55,7 @@ Many plugins get deleted because they make a site slower. MyKavo is built so tha
 * **No autoloaded options.** The connection is stored in a single option that WordPress only reads on MyKavo's own screens.
 * **No cron jobs and no custom tables.** The scanning runs on MyKavo's servers, not yours.
 * **Admin screens only.** Scripts load on the MyKavo screen alone (plus a 2 KB script for the Dashboard widget), using only libraries WordPress already includes.
+* **Update checks cost nothing extra.** The plugin notes versions while WordPress is updating, then sends one short report when the update finishes. Nothing runs between updates.
 * **Cached and time-limited.** Answers from MyKavo are cached for a minute, and every request has a short timeout.
 
 = Secure by design =
@@ -66,6 +76,7 @@ This plugin connects your site to MyKavo (https://mykavo.app), a website monitor
 **What is sent, and when:**
 
 * **When you press "Connect to MyKavo":** your browser is sent to mykavo.app with your site's address, its name, its WordPress admin address, the plugin and WordPress version numbers, and one-time security values for the connection. Your site's server then sends a one-time code and your site's address to mykavo.app to finish connecting.
+* **After WordPress updates plugins, themes, translations or itself:** your site's server sends the names and old and new version numbers of what was updated, and whether the update was automatic, so MyKavo can check the site. You can switch this off on the Safe Updates screen.
 * **While an administrator views a MyKavo screen:** your site's server requests this website's monitoring data from mykavo.app, and sends the actions you take (for example "approve this change" or "run a scan").
 * **Screenshots** of your pages are loaded by the administrator's browser directly from mykavo.app, using links that expire after 30 minutes.
 * **When you disconnect:** your site tells mykavo.app to revoke its key.
@@ -102,6 +113,14 @@ Administrators only (users who can manage options).
 
 Disconnecting revokes this site's key. Deleting the plugin removes everything it stored. Monitoring in your MyKavo account is not affected, and you can connect again at any time.
 
+= How do Safe Updates work? =
+
+When WordPress finishes updating anything, the plugin tells MyKavo what changed (for example "WooCommerce 8.1.0 → 8.2.0"). MyKavo scans your monitored pages against your approved baseline and reports back: nothing changed, or exactly what did. It works for automatic background updates too.
+
+= Do Safe Updates slow down updates? =
+
+No. The plugin reads version numbers while WordPress is already updating, and sends one small report at the end of the request. The scan itself runs on MyKavo's servers.
+
 = Can I connect several WordPress sites? =
 
 Yes. Install the plugin on each site and connect each one to its own website in MyKavo.
@@ -112,7 +131,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Screenshots ==
 
-1. Overview: one clear status, uptime and SSL, and what needs attention first.
+1. Overview: one clear status, uptime and SSL, what needs attention first, and the latest update check.
+7. Safe Updates: every update, with a verdict. "1 change found after this update".
+8. A change that appeared after an update, with the update named.
 2. A change, with a before-and-after slider over the page screenshots.
 3. Exactly what changed: old and new values side by side.
 4. All changes, filtered by status and severity.
@@ -121,10 +142,19 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Changelog ==
 
+= 1.1.0 =
+* New: Safe Updates. After every plugin, theme, WordPress or translation update - including automatic updates - MyKavo checks your pages and tells you whether the update broke anything, and which update it was.
+* New: "After an update" labels on changes, and the responsible update named on each change.
+* New: "Review now" goes straight to the most important change.
+* Improved: scan history shows update checks with the update they verified.
+
 = 1.0.0 =
 * First release: overview, changes with before-and-after screenshots, one-click approve, ignore and fixed, new baselines, on-demand scans with live progress, scan history, monitored pages, admin menu badge and Dashboard widget.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds Safe Updates: a check after every plugin, theme and WordPress update, with the update named if something broke.
 
 = 1.0.0 =
 First release.

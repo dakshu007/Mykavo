@@ -2,7 +2,36 @@
 
 The plugin in `plugins/wordpress/mykavo/` shows a site's MyKavo monitoring inside
 wp-admin: status, changes with before-and-after screenshots, one-click decisions,
-on-demand scans, scan history and monitored pages.
+on-demand scans, scan history and monitored pages - and **Safe Updates**, a check
+after every plugin, theme and WordPress update.
+
+## Safe Updates (1.1.0)
+
+Updates are the most common way a WordPress site breaks, and the hardest part is
+knowing which update did it. Safe Updates answers that:
+
+1. `upgrader_pre_install` notes each package's version **before** its files are
+   replaced; `upgrader_process_complete` collects what changed (plugins, themes,
+   core, translations) with old and new versions. Automatic background updates
+   are detected via `wp_doing_cron()` / `wp_maybe_auto_update`.
+2. At `shutdown`, one report per request goes to `POST /api/wp/v1/updates`,
+   however many packages a bulk or automatic update touched.
+3. MyKavo runs a **deploy check** (`triggerWebsiteScan` in `deploy` mode, the
+   same path as the CI deploy hook) with a note like
+   `Updated WooCommerce 8.1.0 → 8.2.0 and 2 more`. The worker's existing deploy
+   verdict notification names the update.
+4. The plugin keeps the last 30 updates locally (`mykavo_updates`, not
+   autoloaded) and shows each with its verdict: verified, N changes found (with
+   "Review changes" filtered to that scan), or why it was not checked (Free
+   plan, no baseline yet, daily quota, switched off, MyKavo unreachable).
+5. Every change carries the scan that found it; changes from an update check
+   are labelled "After an update" and the change panel names the update.
+
+Plan gate: deploy checks are Pro and Agency. On Free, updates are still listed
+(with an upgrade prompt), which is the upsell.
+
+The two update hooks are registered on every request but only load code when
+WordPress is actually updating; the e2e test still shows zero front-end cost.
 
 ## The performance contract
 
@@ -15,6 +44,9 @@ so it cannot:
 - **Options:** one option (`mykavo_connection`), stored with autoload off. Caches
   are transients with expiry, which WordPress also never autoloads.
 - **No cron, no custom tables.** Scanning runs on MyKavo's servers.
+- **Update hooks** (`upgrader_pre_install`, `upgrader_process_complete`) are
+  registered as closures and load `class-mykavo-updates.php` only when an update
+  runs. Options `mykavo_updates` and `mykavo_settings` are not autoloaded.
 - **wp-admin:** `app.js`/`app.css` load on the MyKavo screen only; a 2 KB script
   on the Dashboard when connected. Built on `wp-api-fetch` and `wp-i18n`, which
   WordPress already ships; no framework download.
@@ -76,8 +108,10 @@ WordPress with the plugin mounted; `dev/mock-server.cjs` stands in for mykavo.ap
 Chromium.
 
 Tested for 1.0.0 on WordPress 6.5.5 with PHP 8.3, and WordPress 6.2.6 (the
-minimum) with PHP 7.4 (the minimum): all 18 steps pass, including a 390px phone
-layout. WordPress Coding Standards and PHPCompatibilityWP (7.4+) report no issues.
+minimum) with PHP 7.4 (the minimum). 1.1.0: all 23 steps pass on both, including
+Safe Updates (a real upgrader sequence simulated by `dev/probe/fake-update.php`:
+versions captured, manual vs automatic, verdict, attribution, switch off) and a
+390px phone layout. WordPress Coding Standards and PHPCompatibilityWP (7.4+) report no issues.
 
 ## Releasing to WordPress.org
 
