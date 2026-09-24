@@ -5,7 +5,9 @@ describe("alert channels animation", () => {
   it("walks through scan, findings, grouping and delivery", () => {
     expect(alertFrameAt(2.2 + 1).label).toBe("Scanning northwind.coffee");
     expect(alertFrameAt(2.2 + 2).label).toBe("3 changes found");
-    expect(alertFrameAt(2.2 + 3.5).label).toBe("Grouped · 1 alert");
+    const grouping = alertFrameAt(2.2 + 3.5);
+    expect(grouping.group.o).toBeGreaterThan(0.9);
+    expect(grouping.labelO).toBeLessThan(0.1);
     const delivered = alertFrameAt(2.2 + 7);
     expect(delivered.label).toBe("Delivered to 4 channels");
     for (const card of delivered.cards) expect(card.ph).toBeGreaterThan(70);

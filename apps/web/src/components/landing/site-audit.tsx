@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, SearchCheck } from "lucide-react";
+import { SiteAuditAnimation } from "./site-audit-animation";
 import { eyebrow, fontDisplay } from "./style";
 
 /**
@@ -128,7 +129,7 @@ export function SiteAuditSection() {
         <div className="grid items-center gap-12 lg:grid-cols-2">
           {/* Report mock - leading on desktop so the "product shot" hits first */}
           <div className="order-2 lg:order-1">
-            <SiteAuditReportMock />
+            <SiteAuditAnimation />
             <p className="mt-4 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">
               Illustrative audit report
             </p>

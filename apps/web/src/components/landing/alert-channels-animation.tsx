@@ -92,7 +92,7 @@ export function alertFrameAt(t: number) {
   if (inC) {
     if (u >= 0.2 && u < 1.6) label = "Scanning northwind.coffee";
     else if (u >= 1.6 && u < 2.9) label = "3 changes found";
-    else if (u >= 2.9 && u < 3.9) label = "Grouped · 1 alert";
+    else if (u >= 2.9 && u < 3.9) label = "";
     else if (u >= 3.9 && u < 9.6) label = "Delivered to 4 channels";
   }
 
@@ -191,6 +191,8 @@ export function alertFrameAt(t: number) {
     pk,
     hub,
     label,
+    // The label steps aside while the grouped alert rises through it.
+    labelO: 1 - r(u, 2.7, 2.9) * (1 - r(u, 3.95, 4.15)),
     chips,
     group,
     gateShake,
@@ -382,7 +384,7 @@ export function AlertChannelsAnimation() {
 
         {/* Hub label */}
         <div style={abs({ left: 350, top: 366, width: 300, display: "flex", justifyContent: "center", opacity: a.hub.o })}>
-          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "#5f5e58", whiteSpace: "nowrap", textTransform: "uppercase" }}>{a.label}</div>
+          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "#5f5e58", whiteSpace: "nowrap", textTransform: "uppercase", opacity: a.labelO }}>{a.label}</div>
         </div>
 
         {/* Findings */}
@@ -390,9 +392,9 @@ export function AlertChannelsAnimation() {
           <div
             key={c.sev}
             style={abs({
-              left: 375,
+              left: 350,
               top: c.y,
-              width: 250,
+              width: 300,
               height: 26,
               boxSizing: "border-box",
               border: `1.5px solid ${c.bc}`,
