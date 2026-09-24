@@ -27,6 +27,8 @@ export type DocBlock =
   | { type: "h3"; text: string }
   | { type: "ul"; items: string[] }
   | { type: "note"; text: string }
+  /** A copyable snippet (SQL, shell). Shown as-is, never executed. */
+  | { type: "code"; language: string; text: string }
   | { type: "table"; head: string[]; rows: string[][] }
   /**
    * An ordered procedure. `name` becomes the HowTo name, so it must describe
@@ -53,7 +55,7 @@ export interface DocSection {
   articles: DocArticle[];
 }
 
-export const DOCS_UPDATED = "September 20, 2026";
+export const DOCS_UPDATED = "September 24, 2026";
 export const DOCS_PUBLISHED_ISO = "2026-09-20";
 
 export const DOC_SECTIONS: DocSection[] = [
@@ -522,6 +524,141 @@ export const DOC_SECTIONS: DocSection[] = [
           {
             q: "Which WordPress and PHP versions are supported?",
             a: "WordPress 6.2 or newer, tested up to 7.1, on PHP 7.4 or newer.",
+          },
+        ],
+      },
+      {
+        slug: "supabase",
+        title: "Supabase: check your site when content or code changes",
+        description:
+          "Use a Supabase Database Webhook, or a trigger with pg_net, to start a MyKavo check whenever content is published, and monitor the pages of apps built on Supabase.",
+        keywords: [
+          "supabase website monitoring",
+          "supabase database webhook",
+          "supabase pg_net webhook",
+          "monitor supabase app changes",
+        ],
+        capsule:
+          "MyKavo checks the public pages of sites and apps built on Supabase, and it can run a check the moment your data changes. Point a Supabase Database Webhook, or a trigger that calls pg_net, at your website's MyKavo deploy hook. When content is published, MyKavo compares every monitored page with its approved baseline and reports what changed.",
+        blocks: [
+          { type: "h2", text: "What the integration does" },
+          {
+            type: "ul",
+            items: [
+              "Content-driven sites often read pages straight from Supabase tables, so a single row can change what visitors see. The integration starts a MyKavo check when that happens, instead of waiting for the next scheduled scan.",
+              "The check compares every monitored page with its approved baseline: status codes, titles, meta descriptions, canonicals, robots tags, visible content, screenshots, scripts and the buttons and forms you marked as conversion elements.",
+              "The verdict goes to your alert channels: \"Deploy verified\" when nothing important changed, or the list of changes with before-and-after evidence.",
+            ],
+          },
+          {
+            type: "note",
+            text: "Deploy checks are part of the Pro and Agency plans, and each check counts toward the plan's daily on-demand scan quota. Trigger checks on meaningful events such as publishing, not on every row edit.",
+          },
+          {
+            type: "steps",
+            name: "Start a MyKavo check from a Supabase Database Webhook",
+            description: "Connect a Supabase table to MyKavo so that publishing content starts a check of the website.",
+            items: [
+              {
+                title: "Copy your deploy hook URL",
+                text: "In MyKavo open the website, go to Deploy checks and press Enable deploy checks. Copy the deploy hook URL. It is a secret: anyone with it can start checks for this website.",
+              },
+              {
+                title: "Create a Database Webhook in Supabase",
+                text: "In the Supabase dashboard open Database Webhooks and create a new webhook. Choose the table that holds your published content and the events that matter, usually Insert and Update.",
+              },
+              {
+                title: "Point it at MyKavo",
+                text: "Set the type to HTTP Request, the method to POST and the URL to your deploy hook URL. Keep the Content-Type header as application/json. MyKavo ignores the row data Supabase sends.",
+              },
+              {
+                title: "Publish something",
+                text: "Publish or update a row. The website's scan history in MyKavo shows a new deploy check within seconds, and the verdict arrives when it finishes.",
+              },
+            ],
+          },
+          { type: "h2", text: "Only on publish: a trigger with pg_net" },
+          {
+            type: "p",
+            text: "A Database Webhook fires on every matching event. To check only when a post goes live, call the hook from a trigger with the pg_net extension, and keep the URL in Supabase Vault rather than in your SQL. The example assumes a posts table with a boolean published column; adjust the names to your schema.",
+          },
+          {
+            type: "code",
+            language: "SQL",
+            text: `-- Once: enable pg_net and store the hook URL as a Vault secret.
+create extension if not exists pg_net;
+select vault.create_secret('https://mykavo.app/api/hooks/deploy/YOUR_TOKEN', 'mykavo_deploy_hook');
+
+create or replace function public.mykavo_check_on_publish()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  hook_url text;
+begin
+  select decrypted_secret into hook_url
+  from vault.decrypted_secrets
+  where name = 'mykavo_deploy_hook';
+
+  if hook_url is not null then
+    perform net.http_post(
+      url := hook_url,
+      body := jsonb_build_object('note', 'Content published in Supabase'),
+      headers := '{"Content-Type": "application/json"}'::jsonb
+    );
+  end if;
+  return new;
+end;
+$$;
+
+create trigger mykavo_check_on_publish
+after insert or update of published on public.posts
+for each row
+when (new.published is true)
+execute function public.mykavo_check_on_publish();`,
+          },
+          {
+            type: "p",
+            text: "The optional note (up to 140 characters) appears in the scan history and in the verdict, so you can tell which change started the check. pg_net sends the request asynchronously, so publishing is never slowed down or blocked by MyKavo.",
+          },
+          { type: "h2", text: "After you deploy code" },
+          {
+            type: "p",
+            text: "Front ends on Supabase are usually deployed from CI or a host such as Vercel or Netlify. Add one step after the deploy that sends a POST to the same deploy hook URL, for example with curl and a JSON body like {\"note\":\"v1.4.0\"}. The same check runs, labelled with your release.",
+          },
+          { type: "h2", text: "What to monitor on a Supabase app" },
+          {
+            type: "ul",
+            items: [
+              "Public pages rendered from your tables: the home page, listings and detail pages that bring in search traffic.",
+              "Sign-up and log-in pages, with the form and its submit button added as conversion elements, so a broken auth screen is a critical alert.",
+              "Pricing and checkout pages, and any page that loads analytics or payment scripts.",
+            ],
+          },
+          {
+            type: "p",
+            text: "MyKavo loads pages the way a signed-out visitor does. It does not sign in, so it cannot check pages behind authentication, and it never connects to your database: the only link is the webhook you create.",
+          },
+          { type: "h2", text: "Security" },
+          {
+            type: "ul",
+            items: [
+              "The deploy hook URL works for one website and can only start a check. It cannot read data or change settings.",
+              "If the URL leaks, regenerate it under Deploy checks. The old URL stops working immediately; update the Vault secret or webhook with the new one.",
+              "Repeated calls are rate limited, and a call that arrives while a check is already running does not start a second one.",
+            ],
+          },
+        ],
+        faqs: [
+          {
+            q: "Does MyKavo need access to my Supabase project?",
+            a: "No. MyKavo never connects to your database or API. Supabase calls MyKavo's deploy hook when your data changes, and MyKavo checks your public pages from the outside.",
+          },
+          {
+            q: "Will a bulk import start hundreds of checks?",
+            a: "No. The hook is rate limited and a check that is already running absorbs further calls. For bulk jobs, prefer a trigger that fires only when content is published, or call the hook once at the end of the job.",
           },
         ],
       },

@@ -100,6 +100,7 @@ const columns = [
       { href: "/about", label: "About" },
       { href: "/demo", label: "Book a demo" },
       { href: "/partners", label: "Partner program" },
+      { href: "/brand", label: "Brand assets" },
       { href: "/write-for-us", label: "Write for us" },
       { href: "/support", label: "Support" },
       { href: "/privacy", label: "Privacy Policy" },

@@ -48,6 +48,15 @@ function Block({ block }: { block: DocBlock }) {
           {block.text}
         </aside>
       );
+    case "code":
+      return (
+        <pre
+          className="not-prose my-6 overflow-x-auto rounded-xl border border-black/15 bg-[#151515] p-4 text-[13px] leading-6 text-[#E9EBDF]"
+          aria-label={`${block.language} example`}
+        >
+          <code>{block.text}</code>
+        </pre>
+      );
     case "table":
       return (
         <div className="not-prose my-8 overflow-x-auto rounded-xl border border-black/15">
