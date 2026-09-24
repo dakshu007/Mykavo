@@ -40,12 +40,19 @@ async function startBaseline(websiteId: string): Promise<string | null> {
   }
 }
 
-export function AddWebsiteWizard({ pageBudget }: { pageBudget: number }) {
+export function AddWebsiteWizard({
+  pageBudget,
+  initialUrl = "",
+}: {
+  pageBudget: number;
+  /** Prefill, e.g. from the WordPress plugin's "add this site" link. */
+  initialUrl?: string;
+}) {
   const router = useRouter();
 
   const [step, setStep] = useState<"url" | "select">("url");
   const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(initialUrl);
   const [websiteId, setWebsiteId] = useState("");
   const [pages, setPages] = useState<SelectablePage[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);

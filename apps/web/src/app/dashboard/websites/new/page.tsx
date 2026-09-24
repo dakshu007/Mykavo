@@ -6,7 +6,16 @@ import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { AddWebsiteWizard } from "./add-website-wizard";
 
-export default async function NewWebsitePage() {
+export default async function NewWebsitePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ url?: string }>;
+}) {
+  const { url: prefill } = await searchParams;
+  // Only a plain http(s) address is prefilled; the wizard still validates it
+  // (and the API runs the full SSRF check) before anything is fetched.
+  const initialUrl =
+    typeof prefill === "string" && /^https?:\/\/[^\s]{1,2000}$/i.test(prefill) ? prefill : "";
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
   const [plan, websiteLimit, websiteCount] = await Promise.all([
@@ -36,7 +45,7 @@ export default async function NewWebsitePage() {
             : `Your ${plan.name} plan monitors up to ${pageBudget} pages per website.`}
         </p>
       </div>
-      <AddWebsiteWizard pageBudget={pageBudget} />
+      <AddWebsiteWizard pageBudget={pageBudget} initialUrl={initialUrl} />
     </div>
   );
 }

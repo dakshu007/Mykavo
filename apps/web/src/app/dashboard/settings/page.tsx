@@ -4,6 +4,8 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { BrandingForm } from "@/components/dashboard/branding-form";
 import { TwoFactorCard } from "@/components/dashboard/two-factor-card";
+import { ConnectedSites, type ConnectedSiteView } from "@/components/dashboard/connected-sites";
+import { logger } from "@/lib/logger";
 import {
   TeamSettings,
   type PendingInviteView,
@@ -55,6 +57,30 @@ export default async function SettingsPage() {
       select: { brandName: true, brandLogoUrl: true, brandColor: true },
     }),
   ]);
+
+  // Tolerant of a deploy that lands before the site_connection migration:
+  // the card shows empty rather than taking Settings down with it.
+  const connectedSites: ConnectedSiteView[] = await prisma.siteConnection
+    .findMany({
+      where: { workspaceId: workspace.id, tokenHash: { not: null }, revokedAt: null },
+      include: { website: { select: { name: true } } },
+      orderBy: { connectedAt: "desc" },
+    })
+    .then((rows) =>
+      rows.map((c) => ({
+        id: c.id,
+        siteUrl: c.siteUrl,
+        siteName: c.siteName,
+        websiteName: c.website.name,
+        connectedAt: c.connectedAt?.toISOString() ?? null,
+        lastUsedAt: c.lastUsedAt?.toISOString() ?? null,
+        pluginVersion: c.pluginVersion,
+      })),
+    )
+    .catch((err: unknown) => {
+      logger.error("could not load site connections", { workspaceId: workspace.id }, err);
+      return [];
+    });
 
   const manager = canManageMembers(role);
   const members: TeamMemberView[] = memberRows.map((m) => ({
@@ -136,6 +162,11 @@ export default async function SettingsPage() {
           isPro={plan.limits.whiteLabelReports}
           canEdit={manager}
         />
+      </Card>
+
+      <Card>
+        <CardHeader title="WordPress sites" />
+        <ConnectedSites sites={connectedSites} canManage={manager} />
       </Card>
 
       <Card>

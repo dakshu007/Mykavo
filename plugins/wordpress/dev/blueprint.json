@@ -1,0 +1,7 @@
+{
+  "landingPage": "/wp-admin/",
+  "steps": [
+    { "step": "activatePlugin", "pluginPath": "mykavo/mykavo.php" },
+    { "step": "setSiteOptions", "options": { "blogname": "Northwind Coffee" } }
+  ]
+}

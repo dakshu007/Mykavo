@@ -1,0 +1,35 @@
+/* MyKavo Dashboard widget. Loaded on the WordPress Dashboard only, when connected. */
+.mkw-status {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 4px 0 12px;
+	font-size: 14px;
+}
+
+.mkw-dot {
+	width: 10px;
+	height: 10px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: #7a7d86;
+}
+
+.mkw-good .mkw-dot {
+	background: #1a7f47;
+	box-shadow: 0 0 0 4px #e3f5ea;
+}
+
+.mkw-warn .mkw-dot {
+	background: #c2530a;
+	box-shadow: 0 0 0 4px #fdf0e6;
+}
+
+.mkw-bad .mkw-dot {
+	background: #c8261c;
+	box-shadow: 0 0 0 4px #fdeceb;
+}
+
+.mkw-muted {
+	color: #646970;
+}

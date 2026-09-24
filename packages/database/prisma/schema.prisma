@@ -36,6 +36,7 @@ model User {
   changeNotes       ChangeNote[]       @relation("ChangeNoteAuthor")
   pushDevices       PushDevice[]
   decidedAppAccess  AppAccessRequest[] @relation("AppAccessDecider")
+  siteConnections   SiteConnection[]   @relation("SiteConnectionCreator")
 
   @@map("user")
 }
@@ -130,6 +131,7 @@ model Workspace {
   members              WorkspaceMember[]
   invites              WorkspaceInvite[]
   websites             Website[]
+  siteConnections      SiteConnection[]
   notificationChannels NotificationChannel[]
   notifications        Notification[]
   subscription         Subscription?
@@ -266,6 +268,7 @@ model Website {
   scans             Scan[]
   baselines         Baseline[]
   changeEvents      ChangeEvent[]
+  siteConnections   SiteConnection[]
   notifications     Notification[]
   performanceAudits PerformanceAudit[]
   healthChecks      HealthCheck[]
@@ -1158,4 +1161,44 @@ enum AppAccessStatus {
   PENDING
   APPROVED
   DECLINED
+}
+
+/// A website's link to a CMS plugin (the MyKavo WordPress plugin). Created
+/// when a workspace member approves the connection on mykavo.app; the plugin
+/// then trades a one-time code (PKCE, S256) for a site-scoped access token.
+/// Only SHA-256 hashes of the code and the token are stored - a database leak
+/// never yields a working credential.
+model SiteConnection {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// The one website this connection may read and act on. Deleting the
+  /// website deletes the connection, which is what should happen.
+  websiteId       String
+  website         Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  /// "wordpress" today; room for other CMS plugins later.
+  platform        String
+  /// The site's own home URL, as the plugin reported it.
+  siteUrl         String
+  siteName        String?
+  createdByUserId String?
+  createdByUser   User?     @relation("SiteConnectionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  /// One-time connect code (hash) + PKCE challenge; cleared once exchanged.
+  codeHash        String?   @unique
+  codeChallenge   String?
+  codeExpiresAt   DateTime?
+  /// Issued access token (hash) and a short prefix to recognise it by.
+  tokenHash       String?   @unique
+  tokenPrefix     String?
+  connectedAt     DateTime?
+  lastUsedAt      DateTime?
+  pluginVersion   String?
+  platformVersion String?
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([workspaceId])
+  @@index([websiteId])
+  @@map("site_connection")
 }
