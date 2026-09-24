@@ -70,6 +70,11 @@ export const CHANGELOG: ChangelogRelease[] = [
         kind: "new",
         text: "The full documentation and these release notes as one file for AI assistants, at /llms-full.txt.",
       },
+      {
+        kind: "new",
+        text: "A Site Audit page listing all 89 checks the crawler runs, by category.",
+        href: "/site-audit",
+      },
     ],
   },
   {

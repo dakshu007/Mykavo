@@ -57,6 +57,70 @@ function MockGauge() {
   );
 }
 
+/** The illustrative audit report card - shared by the home page section and /site-audit. */
+export function SiteAuditReportMock() {
+  return (
+    <div className="overflow-hidden rounded-2xl border-2 border-[#151515] bg-white shadow-[8px_8px_0_#FFD400,8px_8px_0_1px_#151515]">
+      <div className="flex items-center justify-between gap-3 border-b border-black/10 bg-[#FBFAF3] px-5 py-3">
+        <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#151515]">
+          <SearchCheck className="size-4" aria-hidden />
+          Site Audit
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6B6B60]">
+          1,247 pages crawled
+        </span>
+      </div>
+      <div className="grid gap-4 p-5 sm:grid-cols-[auto_1fr] sm:items-center">
+        <div className="flex flex-col items-center">
+          <MockGauge />
+          <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1f9d55]">
+            Health score
+          </p>
+        </div>
+        <div className="flex flex-wrap content-center gap-2">
+          {[
+            { label: "19 errors", bg: "#FDE5E5", fg: "#b42318" },
+            { label: "32 warnings", bg: "#FDF3E0", fg: "#b45309" },
+            { label: "72 notices", bg: "#E8ECFD", fg: "#3556f4" },
+          ].map((chip) => (
+            <span
+              key={chip.label}
+              className="rounded-full border border-black/10 px-3 py-1.5 text-[12px] font-bold"
+              style={{ backgroundColor: chip.bg, color: chip.fg }}
+            >
+              {chip.label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="border-t border-black/10">
+        {MOCK_ISSUES.map((issue) => (
+          <div
+            key={issue.label}
+            className="flex items-center justify-between gap-3 border-b border-black/[0.06] px-5 py-2.5 last:border-b-0"
+          >
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: SEVERITY_DOT[issue.severity] }}
+                aria-hidden
+              />
+              <span className="truncate text-[13px] font-medium text-[#151515]/85">{issue.label}</span>
+              <span
+                className="hidden shrink-0 rounded-full border border-black/15 bg-[#FBFAF3] px-2 py-0.5 font-mono text-[9.5px] font-semibold text-[#6B6B60] sm:inline"
+                title="Every issue ships with fix guidance"
+              >
+                how to fix ?
+              </span>
+            </span>
+            <span className="shrink-0 font-mono text-[12px] font-bold text-[#151515]">{issue.count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SiteAuditSection() {
   return (
     <section id="site-audit" className="border-y border-black/10 bg-[#F3F1E6]">
@@ -64,64 +128,7 @@ export function SiteAuditSection() {
         <div className="grid items-center gap-12 lg:grid-cols-2">
           {/* Report mock - leading on desktop so the "product shot" hits first */}
           <div className="order-2 lg:order-1">
-            <div className="overflow-hidden rounded-2xl border-2 border-[#151515] bg-white shadow-[8px_8px_0_#FFD400,8px_8px_0_1px_#151515]">
-              <div className="flex items-center justify-between gap-3 border-b border-black/10 bg-[#FBFAF3] px-5 py-3">
-                <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#151515]">
-                  <SearchCheck className="size-4" aria-hidden />
-                  Site Audit
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6B6B60]">
-                  1,247 pages crawled
-                </span>
-              </div>
-              <div className="grid gap-4 p-5 sm:grid-cols-[auto_1fr] sm:items-center">
-                <div className="flex flex-col items-center">
-                  <MockGauge />
-                  <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1f9d55]">
-                    Health score
-                  </p>
-                </div>
-                <div className="flex flex-wrap content-center gap-2">
-                  {[
-                    { label: "19 errors", bg: "#FDE5E5", fg: "#b42318" },
-                    { label: "32 warnings", bg: "#FDF3E0", fg: "#b45309" },
-                    { label: "72 notices", bg: "#E8ECFD", fg: "#3556f4" },
-                  ].map((chip) => (
-                    <span
-                      key={chip.label}
-                      className="rounded-full border border-black/10 px-3 py-1.5 text-[12px] font-bold"
-                      style={{ backgroundColor: chip.bg, color: chip.fg }}
-                    >
-                      {chip.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="border-t border-black/10">
-                {MOCK_ISSUES.map((issue) => (
-                  <div
-                    key={issue.label}
-                    className="flex items-center justify-between gap-3 border-b border-black/[0.06] px-5 py-2.5 last:border-b-0"
-                  >
-                    <span className="flex min-w-0 items-center gap-2.5">
-                      <span
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: SEVERITY_DOT[issue.severity] }}
-                        aria-hidden
-                      />
-                      <span className="truncate text-[13px] font-medium text-[#151515]/85">{issue.label}</span>
-                      <span
-                        className="hidden shrink-0 rounded-full border border-black/15 bg-[#FBFAF3] px-2 py-0.5 font-mono text-[9.5px] font-semibold text-[#6B6B60] sm:inline"
-                        title="Every issue ships with fix guidance"
-                      >
-                        how to fix ?
-                      </span>
-                    </span>
-                    <span className="shrink-0 font-mono text-[12px] font-bold text-[#151515]">{issue.count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SiteAuditReportMock />
             <p className="mt-4 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">
               Illustrative audit report
             </p>
@@ -173,6 +180,12 @@ export function SiteAuditSection() {
             >
               <SearchCheck className="size-4.5" aria-hidden />
               Audit your site free
+            </Link>
+            <Link
+              href="/site-audit"
+              className="ml-4 mt-7 inline-flex items-center gap-1 text-[14px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
+            >
+              How Site Audit works
             </Link>
           </div>
         </div>

@@ -43,6 +43,8 @@ const columns = [
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#categories", label: "What it watches" },
       { href: "/preview", label: "Dashboard preview" },
+      { href: "/site-audit", label: "Site Audit" },
+      { href: "/#client-reports", label: "Client reports" },
       { href: "/wordpress-plugin", label: "WordPress plugin" },
       { href: "/shopify-app", label: "Shopify app", tag: "soon" },
       { href: "/#android-app", label: "Android app" },

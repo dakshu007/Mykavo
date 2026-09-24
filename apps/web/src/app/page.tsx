@@ -26,6 +26,7 @@ import { AlertChannelsSection } from "@/components/landing/alert-channels";
 import { AppDownloadSection } from "@/components/landing/app-download";
 import { WordPressPluginSection } from "@/components/landing/wordpress-plugin";
 import { SiteAuditSection } from "@/components/landing/site-audit";
+import { ClientReportsSection } from "@/components/landing/client-reports";
 import { SearchConsoleSection } from "@/components/landing/search-console";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
@@ -656,6 +657,9 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Client reports - what an agency hands its client */}
+        <ClientReportsSection />
 
         {/* Site Audit - the Ahrefs-style crawl, priced for freelancers */}
         <SiteAuditSection />

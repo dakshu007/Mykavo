@@ -81,6 +81,7 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - [SEO Monitoring](${site.url}/seo-monitoring): alerts when titles, canonicals, robots meta, redirects, or indexability change, with before-and-after values
 - [Website Content Monitoring](${site.url}/website-content-monitoring): normalized text and DOM change tracking with an evidence trail
 - [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, from the outside - works with or without the plugin
+- [Site Audit](${site.url}/site-audit): the technical SEO crawl - every check listed, plan limits, how it works
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin - a check after every update, with the update named if something broke
 - [MyKavo for Shopify](${site.url}/shopify-app): the Shopify app, coming soon to the Shopify App Store - a check after every theme publish and edit, with before-and-after evidence in the Shopify admin
 - [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs
