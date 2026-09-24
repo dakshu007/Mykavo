@@ -157,6 +157,7 @@ export const FEATURE_LIST = [
   "Uptime and SSL monitoring",
   "Conversion element monitoring",
   "White-label client reports",
+  "WordPress plugin with a check after every update",
 ].join(", ");
 
 export interface BlogListItem {

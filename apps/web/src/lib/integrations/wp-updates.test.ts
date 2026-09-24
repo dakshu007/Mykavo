@@ -27,6 +27,27 @@ describe("buildUpdateNote", () => {
     ).toBe("Updated Astra 4.6 → 4.7 and 2 more");
   });
 
+  it("names activations, deactivations and theme switches", () => {
+    expect(buildUpdateNote([{ type: "plugin", name: "Rank Math", action: "activate" }], "manual")).toBe(
+      "Activated Rank Math",
+    );
+    expect(
+      buildUpdateNote(
+        [
+          { type: "plugin", name: "WP Rocket", action: "deactivate" },
+          { type: "plugin", name: "Autoptimize", action: "deactivate" },
+        ],
+        "manual",
+      ),
+    ).toBe("Deactivated WP Rocket and 1 more");
+    expect(buildUpdateNote([{ type: "theme", name: "Astra", action: "switch" }], "manual")).toBe(
+      "Switched theme to Astra",
+    );
+    expect(
+      buildUpdateNote([{ type: "plugin", name: "Forms", from: "1.0", to: "1.1", action: "update" }], "manual"),
+    ).toBe("Updated Forms 1.0 → 1.1");
+  });
+
   it("handles unknown versions and stays within the column", () => {
     expect(buildUpdateNote([{ type: "plugin", name: "Forms", to: null }], "manual")).toBe("Updated Forms");
     const long = buildUpdateNote([{ type: "plugin", name: "x".repeat(100), from: "1".repeat(40), to: "2".repeat(40) }], "auto");
@@ -45,6 +66,16 @@ describe("updateEventSchema", () => {
         trigger: "auto",
         items: Array.from({ length: 51 }, () => ({ type: "plugin", name: "x" })),
       }).success,
+    ).toBe(false);
+  });
+
+  it("accepts the action field and stays compatible with plugins that omit it", () => {
+    expect(
+      updateEventSchema.safeParse({ trigger: "manual", items: [{ type: "plugin", name: "x", action: "activate" }] }).success,
+    ).toBe(true);
+    expect(updateEventSchema.safeParse({ trigger: "manual", items: [{ type: "plugin", name: "x" }] }).success).toBe(true);
+    expect(
+      updateEventSchema.safeParse({ trigger: "manual", items: [{ type: "plugin", name: "x", action: "delete" }] }).success,
     ).toBe(false);
   });
 });

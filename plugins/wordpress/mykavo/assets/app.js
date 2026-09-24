@@ -1038,10 +1038,25 @@
 		}
 		var first = items[ 0 ];
 		var name = first.type === 'core' ? 'WordPress' : first.name;
-		var label = first.from && first.to ? name + ' ' + first.from + ' → ' + first.to : name + ( first.to ? ' ' + first.to : '' );
+		var label;
+		if ( first.action === 'activate' ) {
+			label = sprintf( /* translators: %s: plugin name. */ __( 'Activated %s', 'mykavo' ), name );
+		} else if ( first.action === 'deactivate' ) {
+			label = sprintf( /* translators: %s: plugin name. */ __( 'Deactivated %s', 'mykavo' ), name );
+		} else if ( first.action === 'switch' ) {
+			label = sprintf( /* translators: %s: theme name. */ __( 'Switched theme to %s', 'mykavo' ), name );
+		} else {
+			label = first.from && first.to ? name + ' ' + first.from + ' → ' + first.to : name + ( first.to ? ' ' + first.to : '' );
+		}
 		return items.length > 1
 			? sprintf( /* translators: 1: first update, 2: number of other updates. */ __( '%1$s and %2$d more', 'mykavo' ), label, items.length - 1 )
 			: label;
+	}
+
+	/** An update, rather than a plugin switched on or off or a theme switch. */
+	function isUpdate( entry ) {
+		var first = ( entry.items || [] )[ 0 ];
+		return ! first || ! first.action || first.action === 'update';
 	}
 
 	/** What happened after an update, in words and a tone. */
@@ -1091,7 +1106,9 @@
 		}
 		return {
 			tone: scan.highestSeverity === 'CRITICAL' || scan.highestSeverity === 'HIGH' ? 'bad' : 'warn',
-			text: sprintf( _n( '%d change found after this update', '%d changes found after this update', scan.changesDetected, 'mykavo' ), scan.changesDetected ),
+			text: isUpdate( entry )
+				? sprintf( _n( '%d change found after this update', '%d changes found after this update', scan.changesDetected, 'mykavo' ), scan.changesDetected )
+				: sprintf( _n( '%d change found after this change', '%d changes found after this change', scan.changesDetected, 'mykavo' ), scan.changesDetected ),
 			severity: scan.highestSeverity,
 			scanId: scan.id,
 		};
@@ -1153,7 +1170,7 @@
 			'<section class="mk-card mk-safe">' +
 			'<div class="mk-safe-copy"><span class="mk-safe-icon">' + icon( 'shield' ) + '</span><div>' +
 			'<h2>' + esc( __( 'Update without fear', 'mykavo' ) ) + '</h2>' +
-			'<p>' + esc( __( 'Every time WordPress updates a plugin, theme or itself - including automatic updates overnight - MyKavo checks your pages against the approved baseline and tells you whether anything broke, and which update did it.', 'mykavo' ) ) + '</p>' +
+			'<p>' + esc( __( 'Every time WordPress updates a plugin, theme or itself - including automatic updates overnight - and whenever a plugin is switched on or off or the theme changes, MyKavo checks your pages against the approved baseline and tells you whether anything broke, and which change did it.', 'mykavo' ) ) + '</p>' +
 			'</div></div>' +
 			'<button type="button" class="mk-switch" role="switch" aria-checked="' + on + '" data-act="toggle-updates" data-key="toggle-updates">' +
 			'<span class="mk-switch-track"><span class="mk-switch-thumb"></span></span>' +

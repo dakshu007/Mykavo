@@ -13,7 +13,10 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   const step = async (name, fn) => { try { await fn(); console.log('ok  ', name); } catch (e) { console.log('FAIL', name, e.message.split('\n')[0]); } };
 
   await step('log in', async () => {
-    await p.goto(WP + '/wp-login.php');
+    // A fresh Playground can take a while to answer its first request.
+    for (let i = 0; i < 3; i++) {
+      try { await p.goto(WP + '/wp-login.php', { timeout: 90000 }); await p.waitForSelector('#user_login', { timeout: 60000 }); break; } catch (e) { if (i === 2) throw e; }
+    }
     await p.fill('#user_login', 'admin'); await p.fill('#user_pass', 'password');
     await p.click('#wp-submit'); await p.waitForSelector('#wpadminbar', { timeout: 60000 });
   });
@@ -144,6 +147,25 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     await p.reload(); await p.waitForSelector('.mk-hero'); await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
     console.log('     with checks off:', (await p.locator('.mk-verdict').first().textContent()).trim());
     await p.click('[data-act="toggle-updates"]'); await p.waitForSelector('.mk-switch[aria-checked="true"]');
+  });
+
+  await step('safe updates: plugin activation and theme switch are checked', async () => {
+    const toggle = (d) => p.request.get(WP + '/wp-content/mu-plugins/probe/toggle.php?do=' + d);
+    for (const d of ['activate', 'deactivate', 'switch']) {
+      const r = await toggle(d); console.log('     ' + (await r.text()).trim());
+    }
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
+    const titles = (await p.locator('.mk-update-title').allTextContents()).slice(0, 3).map((t) => t.trim());
+    console.log('     newest:', titles.join(' | '));
+    if (!/Switched theme to/.test(titles[0]) || !/Deactivated Demo Shop/.test(titles[1]) || !/Activated Demo Shop/.test(titles[2])) throw new Error('not recorded');
+    await toggle('switch');
+  });
+
+  await step('wp-cli commands', async () => {
+    const out = await (await p.request.get(WP + '/wp-content/mu-plugins/probe/cli.php')).text();
+    console.log(out.split('\n').filter(Boolean).map((l) => '     ' + l.slice(0, 110)).slice(0, 14).join('\n'));
+    if (/stopped|Fatal|error:/.test(out) || !/success: Safe Updates is on/.test(out)) throw new Error('cli failed');
   });
 
   await step('overview shows the latest update', async () => {

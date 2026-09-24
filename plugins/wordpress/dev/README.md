@@ -21,7 +21,7 @@ npx wp-playground-cli server --port 9400 --php 8.3 --wp 6.8 \
   --mount ./mu:/wordpress/wp-content/mu-plugins \
   --blueprint ./blueprint.json &
 
-node e2e.cjs ./shots                # 29 steps; screenshots land in ./shots
+node e2e.cjs ./shots                # 31 steps; screenshots land in ./shots
 ```
 
 Log in as `admin` / `password` if you open it yourself.

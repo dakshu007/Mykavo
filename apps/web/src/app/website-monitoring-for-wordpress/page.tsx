@@ -31,11 +31,11 @@ const faqs = [
   },
   {
     q: "Does MyKavo need a WordPress plugin?",
-    a: "No. MyKavo monitors the rendered public pages from the outside, like a visitor does. Nothing is installed on the site, so it works on hardened installs, headless WordPress, and sites where you cannot add plugins - and it cannot slow the site down or conflict with anything.",
+    a: "No. MyKavo monitors the rendered public pages from the outside, like a visitor does, so it works on hardened installs, headless WordPress, and sites where you cannot add plugins. Where you can, the free MyKavo plugin adds Safe Updates - a check the moment any update finishes, with the update named on every change it found - and brings the dashboard into wp-admin. It adds nothing to the pages visitors load.",
   },
   {
     q: "Can it tell me if a plugin update broke my site?",
-    a: "Yes, that is the core use case. After an update, the next scan compares each monitored page against its baseline and flags what changed: a shifted layout, a missing form, a removed analytics script, new PHP warnings rendered into the page, or a page that now returns a 500.",
+    a: "Yes, that is the core use case. With the MyKavo plugin installed, the check runs the moment the update finishes and every change it finds names the update - \"Updated Elementor 3.29 → 3.30\". Without the plugin, the next scheduled scan compares each monitored page against its baseline and flags what changed: a shifted layout, a missing form, a removed analytics script, new PHP warnings rendered into the page, or a page that now returns a 500.",
   },
   {
     q: "Does it monitor WooCommerce checkouts?",
@@ -51,6 +51,7 @@ const related = [
   { href: "/guides/website-maintenance-checklist", label: "Website maintenance checklist" },
   { href: "/visual-regression-testing", label: "Visual regression testing without test code" },
   { href: "/guides/website-monitoring-checklist", label: "Website monitoring checklist" },
+  { href: "/wordpress-plugin", label: "The MyKavo WordPress plugin" },
   { href: "/website-monitoring-for-shopify", label: "Website monitoring for Shopify" },
 ];
 
@@ -70,7 +71,7 @@ export default function WordPressMonitoringPage() {
             that catches what updates break.
           </>
         }
-        intro="WordPress website monitoring watches your rendered pages for the damage plugin updates, theme changes, and client edits leave behind - broken layouts, lost SEO tags, missing forms, vanished tracking scripts - and alerts you with before-and-after proof. No plugin to install."
+        intro="WordPress website monitoring watches your rendered pages for the damage plugin updates, theme changes, and client edits leave behind - broken layouts, lost SEO tags, missing forms, vanished tracking scripts - and alerts you with before-and-after proof. It works from the outside with nothing installed, and a free plugin adds a check after every update."
       >
         <h2>The WordPress problem: your site changes without you</h2>
         <p>
@@ -118,12 +119,41 @@ export default function WordPressMonitoringPage() {
           </li>
         </ul>
 
+        <h2>The free WordPress plugin: Safe Updates</h2>
+        <p>
+          MyKavo works without touching the site. If you can install plugins,{" "}
+          <Link href="/wordpress-plugin">the MyKavo plugin</Link> goes further:
+        </p>
+        <ul>
+          <li>
+            <strong>A check after every update</strong> - plugins, themes, WordPress itself and
+            translations, automatic updates included, plus plugins switched on or off and theme
+            switches.
+          </li>
+          <li>
+            <strong>The culprit, named</strong> - every change found afterwards says which update it
+            appeared after.
+          </li>
+          <li>
+            <strong>Monitoring in wp-admin</strong> - status, changes with before-and-after
+            screenshots, one-click approve or ignore, a WooCommerce store guard, Site Health and
+            WP-CLI commands.
+          </li>
+          <li>
+            <strong>Zero front-end cost</strong> - no scripts, queries, autoloaded options or cron on
+            the pages your visitors load.
+          </li>
+        </ul>
+
         <h2>The agency workflow</h2>
         <ol>
           <li>Add each client site and let MyKavo discover pages via the sitemap.</li>
           <li>Approve baselines for the pages that matter: home, services, contact, checkout.</li>
           <li>Run your plugin/theme updates as usual (or let them auto-update).</li>
-          <li>MyKavo re-scans on schedule and compares against the approved baselines.</li>
+          <li>
+            MyKavo checks straight after each update with the plugin installed, and on schedule
+            either way, comparing against the approved baselines.
+          </li>
           <li>
             Get one severity-ranked alert per site with before-and-after evidence - fix what
             broke, approve what was intentional, and attach the weekly report to your maintenance

@@ -33,6 +33,34 @@ Plan gate: deploy checks are Pro and Agency. On Free, updates are still listed
 The two update hooks are registered on every request but only load code when
 WordPress is actually updating; the e2e test still shows zero front-end cost.
 
+## Plugin switches, theme switches and WP-CLI (1.3.0)
+
+- **Activations, deactivations and theme switches** are checked like updates.
+  `activated_plugin`, `deactivated_plugin` and `switch_theme` are closures in
+  `mykavo.php` that load `class-mykavo-updates.php` only when they fire; items
+  carry `action` (`update` | `activate` | `deactivate` | `switch`), which the
+  server accepts optionally (older plugins omit it) and turns into notes like
+  `Deactivated WP Rocket`. WordPress's own upgrader toggles plugins silently,
+  so an update is never double-reported. MyKavo's own activation and
+  deactivation are ignored.
+- **WP-CLI** (`includes/class-mykavo-cli.php`, loaded only under WP-CLI):
+  `wp mykavo status | changes | scan [--wait] | monitor <url>... | updates |
+  safe-updates <on|off> | disconnect`. `scan --wait` exits non-zero on a
+  Critical or High result, so `wp plugin update --all && wp mykavo scan --wait`
+  stops a maintenance script when an update broke something.
+- **Privacy policy text** for Settings > Privacy (`wp_add_privacy_policy_content`).
+- Tested up to WordPress 7.1. The official Plugin Check (PCP) reports no errors
+  or warnings (run in Playground on 7.1 against the plugin folder).
+
+## The website
+
+`apps/web/src/app/wordpress-plugin/page.tsx` is the plugin's page. It offers the
+zip from `apps/web/public/downloads/mykavo-wordpress.zip`, which `build.sh`
+copies there; `src/config/wordpress-plugin.ts` holds the version and tested
+range, and its test fails if they drift from the plugin header, the readme or
+the published zip. Screenshots are WebP copies of `wporg-assets/` in
+`public/wordpress/`.
+
 ## Working where WordPress admins already are (1.2.0)
 
 `includes/class-mykavo-integrations.php` hooks into existing wp-admin screens.
@@ -142,7 +170,10 @@ minimum) with PHP 7.4 (the minimum). 1.1.0: all 23 steps pass on both, including
 Safe Updates (a real upgrader sequence simulated by `dev/probe/fake-update.php`:
 versions captured, manual vs automatic, verdict, attribution, switch off) and a
 390px phone layout. WordPress Coding Standards and PHPCompatibilityWP (7.4+) report no issues.
-1.2.0: 29 steps pass on both, adding the WooCommerce store guard (with
+1.3.0: 31 steps pass on WordPress 7.1 / PHP 8.3 and 6.2.6 / PHP 7.4,
+adding plugin activation, deactivation and theme switch checks
+(`dev/probe/toggle.php`) and the WP-CLI commands (`dev/probe/cli.php`, a
+minimal WP_CLI stand-in). 1.2.0: 29 steps pass on both, adding the WooCommerce store guard (with
 `dev/woo-stub.php`), adding a page from the Pages tab, the "Monitor with
 MyKavo" row action, the Plugins-screen update warning (`dev/probe/offer-update.php`),
 the Updates-screen notice, Site Health, and the expired-Connect-button notice.
@@ -154,7 +185,9 @@ the Updates-screen notice, Site Health, and the expired-Connect-button notice.
 2. **Test on the current WordPress release** on a real site and set
    `Tested up to:` in `readme.txt` to that version.
 3. `plugins/wordpress/build.sh` builds `dist/mykavo-<version>.zip` (it refuses to
-   build if `Version` and `Stable tag` disagree).
+   build if `Version` and `Stable tag` disagree) and copies it to the website's
+   download. Bump `WP_PLUGIN_VERSION` in `apps/web/src/config/wordpress-plugin.ts`
+   with every release.
 4. **Submit** the zip at https://wordpress.org/plugins/developers/add/. Review
    usually takes one to a few weeks; reply to the reviewer's email from the same
    account.

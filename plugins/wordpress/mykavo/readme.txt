@@ -2,13 +2,13 @@
 Contributors: mykavo
 Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
-Tested up to: 6.8
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Update without fear: after every plugin, theme or WordPress update, MyKavo checks nothing broke and names the update if something did. Zero front-end impact.
+Know when an update breaks your site. MyKavo checks your pages after every plugin, theme and WordPress update. Zero front-end impact.
 
 == Description ==
 
@@ -19,6 +19,7 @@ MyKavo fixes that. It watches the pages that matter on your site and tells you w
 = Safe Updates =
 
 * **Every update is checked.** Plugins, themes, WordPress itself and translations, whether you clicked Update or WordPress did it automatically.
+* **Every plugin switch too.** Activating or deactivating a plugin, or switching theme, breaks sites as often as updates do. Those are checked the same way.
 * **A clear verdict.** "Verified - nothing changed", or "3 changes found after this update", with the before-and-after evidence one click away.
 * **The culprit, named.** Changes found after an update say so: "Appeared after: Updated WooCommerce 8.1.0 → 8.2.0".
 * **A history of every update**, with versions, kept on your site.
@@ -43,6 +44,7 @@ A broken cart or checkout loses sales every minute it stays broken. If WooCommer
 * **A small Dashboard widget** with the current status.
 * **Monitor any page from WordPress.** A "Monitor with MyKavo" link under every published page and post, or paste an address on the Pages tab.
 * **Site Health.** MyKavo's status appears in Tools > Site Health, and its details in the Info tab for support requests.
+* **WP-CLI.** `wp mykavo status`, `wp mykavo changes`, `wp mykavo scan --wait`, `wp mykavo monitor`, `wp mykavo updates` and more, for scripted maintenance runs.
 
 = What MyKavo detects =
 
@@ -83,8 +85,9 @@ This plugin connects your site to MyKavo (https://mykavo.app), a website monitor
 **What is sent, and when:**
 
 * **When you press "Connect to MyKavo":** your browser is sent to mykavo.app with your site's address, its name, its WordPress admin address, the plugin and WordPress version numbers, and one-time security values for the connection. Your site's server then sends a one-time code and your site's address to mykavo.app to finish connecting.
-* **After WordPress updates plugins, themes, translations or itself:** your site's server sends the names and old and new version numbers of what was updated, and whether the update was automatic, so MyKavo can check the site. You can switch this off on the Safe Updates screen.
-* **While an administrator views a MyKavo screen:** your site's server requests this website's monitoring data from mykavo.app, and sends the actions you take (for example "approve this change" or "run a scan").
+* **After WordPress updates plugins, themes, translations or itself, and after a plugin is activated or deactivated or the theme is switched:** your site's server sends the names and version numbers of what changed, and whether the update was automatic, so MyKavo can check the site. You can switch this off on the Safe Updates screen.
+* **When you add a page to monitoring** (the "Monitor with MyKavo" link, the Pages tab, the store guard or WP-CLI): the page's address and title.
+* **While an administrator views a MyKavo screen or runs a `wp mykavo` command:** your site's server requests this website's monitoring data from mykavo.app, and sends the actions you take (for example "approve this change" or "run a scan").
 * **Screenshots** of your pages are loaded by the administrator's browser directly from mykavo.app, using links that expire after 30 minutes.
 * **When you disconnect:** your site tells mykavo.app to revoke its key.
 
@@ -128,6 +131,14 @@ When WordPress finishes updating anything, the plugin tells MyKavo what changed 
 
 No. The plugin reads version numbers while WordPress is already updating, and sends one small report at the end of the request. The scan itself runs on MyKavo's servers.
 
+= Can I use it from the command line? =
+
+Yes. With WP-CLI: `wp mykavo status` shows the site's status, `wp mykavo changes` lists changes, and `wp plugin update --all && wp mykavo scan --wait` updates everything and then waits for MyKavo's verdict, exiting with an error if something important changed. Run `wp help mykavo` for every command.
+
+= Does it check after I activate or deactivate a plugin? =
+
+Yes. Switching a plugin on or off, or changing the theme, is checked the same way as an update, and named in the result: "Deactivated WP Rocket - 2 changes found".
+
 = Can I connect several WordPress sites? =
 
 Yes. Install the plugin on each site and connect each one to its own website in MyKavo.
@@ -139,7 +150,7 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 == Screenshots ==
 
 1. Overview: one clear status, uptime and SSL, what needs attention first, and the latest update check.
-7. Safe Updates: every update, with a verdict. "1 change found after this update".
+7. Safe Updates: every update, plugin switch and theme change, with a verdict and the change named.
 8. A change that appeared after an update, with the update named.
 2. A change, with a before-and-after slider over the page screenshots.
 3. Exactly what changed: old and new values side by side.
@@ -149,6 +160,12 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 9. WooCommerce store guard: see which store pages are monitored and add the rest in one click.
 
 == Changelog ==
+
+= 1.3.0 =
+* New: Safe Updates also checks after a plugin is activated or deactivated and after a theme switch, and names the change.
+* New: WP-CLI commands - `wp mykavo status`, `changes`, `scan --wait`, `monitor`, `updates`, `safe-updates` and `disconnect`.
+* New: suggested privacy policy text in Settings > Privacy.
+* Tested with WordPress 7.1.
 
 = 1.2.0 =
 * New: WooCommerce store guard. See whether Shop, Cart, Checkout and My account are monitored, and add them in one click.
@@ -170,6 +187,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * First release: overview, changes with before-and-after screenshots, one-click approve, ignore and fixed, new baselines, on-demand scans with live progress, scan history, monitored pages, admin menu badge and Dashboard widget.
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+Checks after plugin activations, deactivations and theme switches, plus WP-CLI commands. Tested with WordPress 7.1.
 
 = 1.2.0 =
 WooCommerce store guard, "Monitor with MyKavo" on your pages, update warnings on the Plugins screen, and Site Health.

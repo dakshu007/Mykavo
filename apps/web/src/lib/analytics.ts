@@ -32,7 +32,10 @@ export type AnalyticsEvent =
   | "waitlist_joined"
   | "tool_used"
   | "preview_viewed"
-  | "cta_clicked";
+  | "cta_clicked"
+  // WordPress plugin page
+  | "wp_plugin_viewed"
+  | "wp_plugin_downloaded";
 
 type EventProps = Record<string, string | number | boolean>;
 

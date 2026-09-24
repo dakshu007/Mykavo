@@ -24,6 +24,7 @@ import { CategoryTabs } from "@/components/landing/categories";
 import { WhatItIsSection } from "@/components/landing/what-it-is";
 import { AlertChannelsSection } from "@/components/landing/alert-channels";
 import { AppDownloadSection } from "@/components/landing/app-download";
+import { WordPressPluginSection } from "@/components/landing/wordpress-plugin";
 import { SiteAuditSection } from "@/components/landing/site-audit";
 import { SearchConsoleSection } from "@/components/landing/search-console";
 import { StickyCta } from "@/components/landing/sticky-cta";
@@ -464,6 +465,9 @@ export default function HomePage() {
 
         {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
         <AlertChannelsSection />
+
+        {/* WordPress plugin - Safe Updates, with its own page for the detail */}
+        <WordPressPluginSection />
 
         {/* Android app - web + mobile sync story (download paused: coming soon) */}
         <AppDownloadSection />

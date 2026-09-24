@@ -9,9 +9,10 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Records every plugin, theme, core and translation update - including the
- * automatic ones WordPress runs on its own - and asks MyKavo to check the
- * site right afterwards, so the owner learns whether the update broke
- * anything and exactly which update it was.
+ * automatic ones WordPress runs on its own - plus plugins being activated or
+ * deactivated and the theme being switched, and asks MyKavo to check the
+ * site right afterwards, so the owner learns whether it broke anything and
+ * exactly which change it was.
  *
  * Runs only inside an update. Versions are read BEFORE the files are
  * replaced (upgrader_pre_install), a whole batch is reported once at the end
@@ -134,7 +135,8 @@ final class MyKavo_Updates {
 				continue;
 			}
 			foreach ( isset( $entry['items'] ) ? (array) $entry['items'] : array() as $item ) {
-				if ( isset( $item['type'], $item['name'] ) && $type === $item['type'] && $name === $item['name'] ) {
+				$is_update = empty( $item['action'] ) || 'update' === $item['action'];
+				if ( $is_update && isset( $item['type'], $item['name'] ) && $type === $item['type'] && $name === $item['name'] ) {
 					return array(
 						'from'     => isset( $item['from'] ) ? $item['from'] : '',
 						'to'       => isset( $item['to'] ) ? $item['to'] : '',
@@ -175,6 +177,41 @@ final class MyKavo_Updates {
 			}
 		}
 		return $response;
+	}
+
+	/**
+	 * Action: a plugin was activated or deactivated. Switching plugins on and
+	 * off breaks sites as often as updating them (caching, SEO and page
+	 * builder plugins especially).
+	 *
+	 * @param string $file   Plugin basename.
+	 * @param string $action 'activate' or 'deactivate'.
+	 * @return void
+	 */
+	public static function plugin_toggled( $file, $action ) {
+		// Our own activation has nothing to check against yet, and our own
+		// deactivation is the owner turning MyKavo off.
+		if ( ! is_string( $file ) || plugin_basename( MYKAVO_FILE ) === $file ) {
+			return;
+		}
+		$data = self::plugin_data( $file );
+		if ( $data ) {
+			self::add( 'plugin', $action . ':plugin:' . $file, $data['Name'], $data['Version'], $action );
+			self::schedule();
+		}
+	}
+
+	/**
+	 * Action: the active theme was switched.
+	 *
+	 * @param string   $name  New theme name.
+	 * @param WP_Theme $theme New theme.
+	 * @return void
+	 */
+	public static function theme_switched( $name, $theme = null ) {
+		$version = ( $theme instanceof WP_Theme ) ? (string) $theme->get( 'Version' ) : '';
+		self::add( 'theme', 'switch:theme', (string) $name, $version, 'switch' );
+		self::schedule();
 	}
 
 	/**
@@ -230,10 +267,18 @@ final class MyKavo_Updates {
 				break;
 		}
 
+		self::schedule();
+	}
+
+	/**
+	 * Report once, at the end of the request, however many packages a bulk
+	 * or automatic update touched.
+	 *
+	 * @return void
+	 */
+	private static function schedule() {
 		if ( self::$pending && ! self::$scheduled ) {
 			self::$scheduled = true;
-			// One report per request, however many packages a bulk or
-			// automatic update touched.
 			add_action( 'shutdown', array( __CLASS__, 'report' ) );
 		}
 	}
@@ -277,10 +322,11 @@ final class MyKavo_Updates {
 					'items'   => array_map(
 						static function ( $item ) {
 							return array(
-								'type' => $item['type'],
-								'name' => $item['name'],
-								'from' => '' !== $item['from'] ? $item['from'] : null,
-								'to'   => '' !== $item['to'] ? $item['to'] : null,
+								'type'   => $item['type'],
+								'name'   => $item['name'],
+								'from'   => '' !== $item['from'] ? $item['from'] : null,
+								'to'     => '' !== $item['to'] ? $item['to'] : null,
+								'action' => $item['action'],
 							);
 						},
 						$items
@@ -319,20 +365,22 @@ final class MyKavo_Updates {
 	 * @param string $type Package type.
 	 * @param string $key  De-duplication key (also the "before" lookup).
 	 * @param string $name Display name.
-	 * @param string $to   New version, or ''.
+	 * @param string $to     New version, or ''.
+	 * @param string $action update, activate, deactivate or switch.
 	 * @return void
 	 */
-	private static function add( $type, $key, $name, $to ) {
+	private static function add( $type, $key, $name, $to, $action = 'update' ) {
 		$from = isset( self::$before[ $key ] ) ? (string) self::$before[ $key ] : '';
 		// Re-installing the same version is not an update worth a check.
-		if ( '' !== $from && $from === $to && 'translation' !== $type ) {
+		if ( 'update' === $action && '' !== $from && $from === $to && 'translation' !== $type ) {
 			return;
 		}
 		self::$pending[ $key ] = array(
-			'type' => $type,
-			'name' => substr( wp_strip_all_tags( $name ), 0, 100 ),
-			'from' => substr( $from, 0, 40 ),
-			'to'   => substr( (string) $to, 0, 40 ),
+			'type'   => $type,
+			'name'   => substr( wp_strip_all_tags( $name ), 0, 100 ),
+			'from'   => substr( $from, 0, 40 ),
+			'to'     => substr( (string) $to, 0, 40 ),
+			'action' => $action,
 		);
 	}
 

@@ -19,3 +19,9 @@ mkdir -p dist
 rm -f "dist/mykavo-$version.zip"
 zip -rq "dist/mykavo-$version.zip" mykavo -x '*.DS_Store'
 echo "Built dist/mykavo-$version.zip"
+
+# The copy mykavo.app/wordpress-plugin offers for download (until the plugin
+# is live on WordPress.org, and as a direct link after). The web app's test
+# checks this file and WP_PLUGIN_VERSION match the plugin.
+cp "dist/mykavo-$version.zip" ../../apps/web/public/downloads/mykavo-wordpress.zip
+echo "Copied to apps/web/public/downloads/mykavo-wordpress.zip"

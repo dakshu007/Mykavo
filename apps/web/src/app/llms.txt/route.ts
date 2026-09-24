@@ -30,6 +30,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Google Search Console integration: connect a property and MyKavo syncs clicks, impressions, CTR and position daily, then correlates that search data with Site Audit findings into Priority Opportunities - pages that already earn impressions but carry a fixable technical problem (noindex with traffic, high-traffic errors, click or position drops, missing descriptions, low CTR at a good rank). Includes sitemap listing and resubmission, URL inspection, and week-over-week click-drop alerts
 - MyKavo Analyser: an E-E-A-T analysis of a page (Experience, Expertise, Authoritativeness, Trust) scoring the signals search engines and AI answer engines look for - authorship, citations, freshness, contact and policy transparency, originality
 - Client reports: white-label PDF-style reports with your own branding, on a schedule, ready to forward to a client
+- WordPress plugin (free, ${site.url}/wordpress-plugin): brings a site's monitoring into wp-admin. Safe Updates checks the site after every plugin, theme, WordPress and translation update (automatic ones included) and after plugins are activated or deactivated or the theme is switched, then names the update on every change it found. Also: WooCommerce store-page guard, "Monitor with MyKavo" on pages and posts, Plugins-screen warnings, Site Health, and WP-CLI commands (wp mykavo scan --wait). Adds nothing to public pages: no scripts, queries, autoloaded options or cron
 
 ## How it works
 
@@ -42,8 +43,9 @@ MyKavo answers one question continuously: "Did something important change or bre
 ## Pricing
 
 - Free: $0/month - 1 website, 5 monitored pages, weekly scans, 30-day history, email alerts
-- Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, conversion element monitoring, up to 3 team members. For freelancers and small teams.
+- Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, up to 3 team members. For freelancers and small teams.
 - Agency: $49/month - 30 websites, 25 monitored pages per website, daily scans, 1-year history, white-label client reports with automatic client emails, up to 15 team members. For agencies running client websites.
+- The WordPress plugin is included on every plan; its automatic update checks (Safe Updates) come with Pro and Agency
 - Monthly billing via Dodo Payments; cancel anytime
 
 ## Honest comparison with other tools
@@ -75,7 +77,8 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - [Visual Regression Testing](${site.url}/visual-regression-testing): automated screenshot comparison against approved baselines - no test code or CI required
 - [SEO Monitoring](${site.url}/seo-monitoring): alerts when titles, canonicals, robots meta, redirects, or indexability change, with before-and-after values
 - [Website Content Monitoring](${site.url}/website-content-monitoring): normalized text and DOM change tracking with an evidence trail
-- [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, no plugin installed
+- [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, from the outside - works with or without the plugin
+- [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin - a check after every update, with the update named if something broke
 - [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs, no app installed
 - [Website Monitoring for Webflow](${site.url}/website-monitoring-for-webflow): see what every publish and Editor session changed
 

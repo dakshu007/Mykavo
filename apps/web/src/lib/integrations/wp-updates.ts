@@ -1,8 +1,9 @@
 /**
  * WordPress update events from the MyKavo plugin ("Safe Updates"). When a
- * plugin, theme or WordPress itself updates - by hand or automatically - the
- * plugin reports what changed, and MyKavo runs a deploy check against the
- * approved baseline so the owner learns whether the update broke anything.
+ * plugin, theme or WordPress itself updates - by hand or automatically - or a
+ * plugin is activated or deactivated, or the theme is switched, the plugin
+ * reports what changed, and MyKavo runs a deploy check against the approved
+ * baseline so the owner learns whether it broke anything.
  * Pure helpers; unit-tested.
  */
 
@@ -13,6 +14,8 @@ export const updateItemSchema = z.object({
   name: z.string().trim().min(1).max(100),
   from: z.string().trim().max(40).nullable().optional(),
   to: z.string().trim().max(40).nullable().optional(),
+  // Plugin 1.3.0+. Older plugins only report updates.
+  action: z.enum(["update", "activate", "deactivate", "switch"]).optional(),
 });
 
 export const updateEventSchema = z.object({
@@ -24,6 +27,19 @@ export type UpdateItem = z.infer<typeof updateItemSchema>;
 
 /** The scan note column is shown in emails and history - keep it short. */
 export const NOTE_MAX = 140;
+
+function describeAction(item: UpdateItem): string | null {
+  switch (item.action) {
+    case "activate":
+      return `Activated ${item.name}`;
+    case "deactivate":
+      return `Deactivated ${item.name}`;
+    case "switch":
+      return `Switched theme to ${item.name}`;
+    default:
+      return null;
+  }
+}
 
 function describe(item: UpdateItem): string {
   const name = item.type === "core" ? "WordPress" : item.name;
@@ -43,9 +59,9 @@ export function buildUpdateNote(items: UpdateItem[], trigger: "manual" | "auto")
     (a, b) => Number(a.type === "translation") - Number(b.type === "translation"),
   );
   const lead = trigger === "auto" ? "Auto-updated" : "Updated";
-  const first = describe(ordered[0]!);
+  const head = describeAction(ordered[0]!) ?? `${lead} ${describe(ordered[0]!)}`;
   const rest = ordered.length - 1;
-  let note = rest > 0 ? `${lead} ${first} and ${rest} more` : `${lead} ${first}`;
+  let note = rest > 0 ? `${head} and ${rest} more` : head;
   if (note.length > NOTE_MAX) note = `${note.slice(0, NOTE_MAX - 3)}...`;
   return note;
 }

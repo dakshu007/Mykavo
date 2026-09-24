@@ -31,6 +31,7 @@ final class MyKavo_Integrations {
 		add_filter( 'page_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
 		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
 		add_action( 'admin_post_mykavo_monitor', array( __CLASS__, 'monitor_post' ) );
+		add_action( 'admin_init', array( __CLASS__, 'privacy_policy' ) );
 	}
 
 	/* -------------------------------------------------------- update safety -- */
@@ -318,6 +319,22 @@ final class MyKavo_Integrations {
 			$text = is_string( $msg ) && '' !== $msg ? $msg : __( 'MyKavo could not add that page. Try again from the MyKavo screen.', 'mykavo' );
 		}
 		printf( '<div class="notice %1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $text ) );
+	}
+
+	/* -------------------------------------------------------------- privacy -- */
+
+	/**
+	 * Suggested text for Settings > Privacy > Policy Guide.
+	 *
+	 * @return void
+	 */
+	public static function privacy_policy() {
+		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+			return;
+		}
+		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'MyKavo collects nothing about your visitors. It adds no scripts, cookies or tracking to your public pages, so there is usually nothing to add to your privacy policy for it.', 'mykavo' ) . '</p>' .
+			'<p>' . esc_html__( 'This site uses MyKavo (https://mykavo.app) to monitor its public pages for changes. MyKavo loads those pages from its own servers, the same way a visitor would, and does not receive any information about the people who visit this site.', 'mykavo' ) . '</p>';
+		wp_add_privacy_policy_content( 'MyKavo', wp_kses_post( $content ) );
 	}
 
 	/* ---------------------------------------------------------- woocommerce -- */

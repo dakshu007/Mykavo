@@ -42,6 +42,7 @@ const columns = [
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#categories", label: "What it watches" },
       { href: "/preview", label: "Dashboard preview" },
+      { href: "/wordpress-plugin", label: "WordPress plugin" },
       { href: "/#android-app", label: "Android app (soon)" },
       { href: "/pricing", label: "Pricing" },
       { href: "/blog", label: "Blog" },

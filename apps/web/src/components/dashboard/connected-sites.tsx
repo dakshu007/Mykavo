@@ -43,8 +43,12 @@ export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[
   if (sites.length === 0) {
     return (
       <p className="text-sm text-ink-secondary">
-        No WordPress sites connected. Install the MyKavo plugin on a WordPress site and press
-        Connect to see its monitoring inside wp-admin.
+        No WordPress sites connected.{" "}
+        <a href="/wordpress-plugin" className="font-medium text-ink underline underline-offset-4">
+          Get the MyKavo plugin
+        </a>
+        , install it on a WordPress site and press Connect to see its monitoring inside wp-admin -
+        with a check after every update.
       </p>
     );
   }

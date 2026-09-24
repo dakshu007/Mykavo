@@ -129,7 +129,7 @@ export const DOC_SECTIONS: DocSection[] = [
           },
           {
             q: "Do I need to install anything on my website?",
-            a: "No. MyKavo visits your pages the way a browser does. There is no script to embed, no plugin to install and no DNS change.",
+            a: "No. MyKavo visits your pages the way a browser does. There is no script to embed and no DNS change. On WordPress there is an optional free plugin that checks the site after every update - see the WordPress plugin guide.",
           },
           {
             q: "Will MyKavo slow my site down?",
@@ -416,6 +416,8 @@ export const DOC_SECTIONS: DocSection[] = [
               ["Site audit pages per crawl", "150", "1,500", "2,000"],
               ["Uptime and SSL monitoring", "Included", "Included", "Included"],
               ["Email, Slack, Discord and webhook alerts", "Included", "Included", "Included"],
+              ["WordPress plugin", "Included", "Included", "Included"],
+              ["WordPress Safe Updates (a check after every update)", "-", "Included", "Included"],
             ],
           },
           { type: "h2", text: "Changing plans" },
@@ -432,6 +434,94 @@ export const DOC_SECTIONS: DocSection[] = [
           {
             type: "p",
             text: "Scans and change events older than your plan's retention window are deleted by a nightly sweep, along with their screenshots and diff images. Snapshots referenced by an approved baseline are protected from that sweep regardless of age - your reference point is never deleted out from under you.",
+          },
+        ],
+      },
+      {
+        slug: "wordpress-plugin",
+        title: "The WordPress plugin: install, connect and Safe Updates",
+        description:
+          "How to install and connect the MyKavo WordPress plugin, what Safe Updates checks, and what the plugin sends to MyKavo.",
+        keywords: [
+          "mykavo wordpress plugin",
+          "wordpress update broke site",
+          "check wordpress site after update",
+          "wordpress safe updates",
+        ],
+        capsule:
+          "The MyKavo WordPress plugin brings a site's monitoring into wp-admin and adds Safe Updates: when WordPress updates a plugin, theme, translation or itself, or a plugin is activated or deactivated, MyKavo checks the site straight away and names the update on every change it finds. It is free on every plan; automatic checks need Pro or Agency. It adds nothing to the pages visitors load.",
+        blocks: [
+          {
+            type: "steps",
+            name: "Install and connect the MyKavo WordPress plugin",
+            description: "Add the plugin to a WordPress site and link it to the site's website in MyKavo.",
+            items: [
+              {
+                title: "Download the plugin",
+                text: "Download the zip from mykavo.app/wordpress-plugin. Once the plugin is listed in the WordPress.org directory you can also search for MyKavo under Plugins > Add New.",
+              },
+              {
+                title: "Upload and activate it",
+                text: "In WordPress go to Plugins > Add New > Upload Plugin, choose the zip, install it and activate it. You need to be an administrator.",
+              },
+              {
+                title: "Connect",
+                text: "Open MyKavo in the admin menu and press Connect to MyKavo. Sign in, or create a free account, choose which MyKavo website this site is, and approve. If the site is not in MyKavo yet, the approval screen offers to add it first.",
+              },
+              {
+                title: "Check Safe Updates is on",
+                text: "Open the Safe Updates tab. The switch is on by default. From now on every update is listed there with a verdict.",
+              },
+            ],
+          },
+          { type: "h2", text: "What Safe Updates checks" },
+          {
+            type: "ul",
+            items: [
+              "Plugin, theme, WordPress and translation updates, whether you pressed Update or WordPress updated automatically.",
+              "A plugin being activated or deactivated, and the active theme being switched.",
+              "Several updates in one go (a bulk update, or the nightly automatic run) are reported once, as one check.",
+            ],
+          },
+          {
+            type: "p",
+            text: "When the update finishes the plugin tells MyKavo what changed, with the old and new versions, and MyKavo runs a deploy check: every monitored page is compared with its approved baseline. The result appears in the Safe Updates tab as \"Verified - nothing changed\" or \"3 changes found after this update\", and every change found is labelled with the update it appeared after. The same verdict goes to your email and chat alerts if you use them.",
+          },
+          {
+            type: "note",
+            text: "Automatic checks are part of Pro and Agency. On the Free plan every update is still listed, so you know what changed and when, but no check runs.",
+          },
+          { type: "h2", text: "Other things the plugin adds" },
+          {
+            type: "ul",
+            items: [
+              "The MyKavo screen: status, uptime, response time and SSL, changes with before-and-after screenshots, one-click approve, fixed or ignore, scan history and monitored pages.",
+              "A \"Monitor with MyKavo\" link under every published page and post, and an address box on the Pages tab.",
+              "With WooCommerce active, a store guard that shows whether Shop, Cart, Checkout and My account are monitored and adds the missing ones.",
+              "A warning on the Plugins screen for a plugin whose last update changed the site.",
+              "A MyKavo test in Tools > Site Health and a MyKavo section in its Info tab.",
+              "WP-CLI commands: wp mykavo status, changes, scan --wait, monitor, updates, safe-updates and disconnect.",
+            ],
+          },
+          { type: "h2", text: "Performance and privacy" },
+          {
+            type: "p",
+            text: "The plugin adds nothing to the pages visitors load: no scripts, styles, database queries or remote requests, no autoloaded options and no cron jobs. It sends MyKavo only the site's address when connecting, the names and versions of what was updated or switched on or off, the addresses of pages you choose to monitor, and the actions you take on the MyKavo screen. Nothing about visitors is sent. The connection key stays on your server and works for that one website only.",
+          },
+          { type: "h2", text: "Disconnecting" },
+          {
+            type: "p",
+            text: "Disconnect from the MyKavo screen's menu, from Settings > WordPress sites in the MyKavo dashboard, or by deleting the website in MyKavo. Deleting the plugin removes everything it stored on the site. Monitoring in your MyKavo account is not affected.",
+          },
+        ],
+        faqs: [
+          {
+            q: "Does the plugin slow WordPress down?",
+            a: "No. Nothing runs on the pages visitors load. The plugin works inside wp-admin and right after an update, and scanning happens on MyKavo's servers.",
+          },
+          {
+            q: "Which WordPress and PHP versions are supported?",
+            a: "WordPress 6.2 or newer, tested up to 7.1, on PHP 7.4 or newer.",
           },
         ],
       },

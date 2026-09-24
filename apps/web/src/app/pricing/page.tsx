@@ -58,6 +58,8 @@ const comparisonRows: Array<{
   },
   { label: "Conversion element monitoring", value: (p) => p.limits.conversionElementMonitoring },
   { label: "Post-deploy checks", value: (p) => p.limits.deployChecks },
+  { label: "WordPress plugin", value: () => true },
+  { label: "WordPress Safe Updates", value: (p) => p.limits.deployChecks },
   { label: "White-label client reports", value: (p) => p.limits.whiteLabelReports },
   { label: "Automatic client report emails", value: (p) => p.limits.whiteLabelReports },
   {
@@ -79,6 +81,10 @@ const pricingFaqs = [
   {
     q: "I'm already on Pro. Do I lose white-label reports?",
     a: "No. Anyone who subscribed to Pro before Agency launched keeps white-label client reports and 5 team seats for as long as they keep that subscription.",
+  },
+  {
+    q: "Is the WordPress plugin included?",
+    a: "Yes, on every plan including Free. It brings your monitoring into wp-admin. Safe Updates - an automatic check after every plugin, theme and WordPress update, and after plugins are switched on or off - is included in Pro and Agency.",
   },
   {
     q: "What counts as a monitored page?",

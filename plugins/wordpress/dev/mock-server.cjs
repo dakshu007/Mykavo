@@ -146,7 +146,8 @@ http.createServer(async (req, res) => {
     if (rest === '/updates' && req.method === 'POST') {
       const body = JSON.parse(await readBody(req) || '{}');
       const it = (body.items || [])[0] || {};
-      const note = (body.trigger === 'auto' ? 'Auto-updated ' : 'Updated ') + (it.from && it.to ? `${it.name} ${it.from} → ${it.to}` : it.name) + ((body.items || []).length > 1 ? ` and ${body.items.length - 1} more` : '');
+      const verb = { activate: 'Activated ', deactivate: 'Deactivated ', switch: 'Switched theme to ' }[it.action];
+      const note = (verb ? verb + it.name : (body.trigger === 'auto' ? 'Auto-updated ' : 'Updated ') + (it.from && it.to ? `${it.name} ${it.from} → ${it.to}` : it.name)) + ((body.items || []).length > 1 ? ` and ${body.items.length - 1} more` : '');
       fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   update report: ${JSON.stringify(body)}\n`);
       if (running) return json(res, 200, { note, scan: { id: running.scan.id, status: 'RUNNING' }, reason: 'BUSY' });
       const scan = { id: 'scn' + Date.now(), status: 'QUEUED', triggerType: 'DEPLOY', note, createdAt: new Date().toISOString(), startedAt: null, completedAt: null, pagesRequested: 8, pagesScanned: 0, pagesFailed: 0, changesDetected: 0, highestSeverity: null };
