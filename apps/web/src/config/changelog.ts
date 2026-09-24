@@ -61,6 +61,15 @@ export const CHANGELOG: ChangelogRelease[] = [
         text: "MyKavo for Shopify is built and coming soon to the Shopify App Store, with a check after every theme publish and edit.",
         href: "/shopify-app",
       },
+      {
+        kind: "improved",
+        text: "Blog posts end with related reading and a clearer look at what MyKavo catches.",
+        href: "/blog",
+      },
+      {
+        kind: "new",
+        text: "The full documentation and these release notes as one file for AI assistants, at /llms-full.txt.",
+      },
     ],
   },
   {

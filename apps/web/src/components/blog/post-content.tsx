@@ -42,12 +42,15 @@ export function PostContent({ content }: { content: string }) {
 function CtaBlock() {
   return (
     <aside className="my-8 rounded-tile border border-[#FFD400]/60 bg-[#FFD400]/10 px-6 py-8 text-center sm:px-8">
-      <p className="text-xl font-semibold tracking-tight text-ink">
-        Know what changed. Fix what matters.
+      <p className="text-2xl font-semibold leading-tight tracking-tight text-ink">
+        Website monitoring,
+        <br />
+        page by page.
       </p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">
-        MyKavo watches your websites for visual, SEO, link, script, and
-        performance changes - and alerts you before your customers notice.
+      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-ink-secondary">
+        MyKavo checks every page that matters for visual, SEO, link, script and
+        performance changes - and shows you exactly what changed, before your
+        customers notice.
       </p>
       <div className="mt-5">
         <Link

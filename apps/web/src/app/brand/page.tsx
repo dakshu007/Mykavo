@@ -2,6 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Download } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { site } from "@/config/site";
+import {
+  ORGANIZATION_ID,
+  WEBSITE_ID,
+  breadcrumbList,
+  jsonLdScript,
+  organizationNode,
+} from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "Brand Assets - MyKavo Logo and Colors",
@@ -26,9 +34,42 @@ const colors = [
   { name: "Paper", hex: "#FBFAF3" },
 ];
 
+function brandJsonLd() {
+  const url = `${site.url}/brand`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationNode(),
+      {
+        "@type": "WebPage",
+        "@id": `${url}#page`,
+        url,
+        name: "MyKavo brand assets",
+        description: metadata.description,
+        inLanguage: "en",
+        isPartOf: { "@id": WEBSITE_ID },
+        about: { "@id": ORGANIZATION_ID },
+        associatedMedia: assets.map((a) => ({
+          "@type": "ImageObject",
+          name: `MyKavo ${a.label.toLowerCase()}`,
+          contentUrl: `${site.url}/brand/${a.file}`,
+          encodingFormat: a.format === "SVG" ? "image/svg+xml" : "image/png",
+          copyrightHolder: { "@id": ORGANIZATION_ID },
+        })),
+      },
+    ],
+  };
+}
+
 export default function BrandPage() {
   return (
-    <MarketingPageShell
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(brandJsonLd()) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbList([{ name: "Brand assets", path: "/brand" }])) }}
+      />
+      <MarketingPageShell
       eyebrowText="brand"
       title="Brand assets"
       intro="The MyKavo logo, logomark and app icon for partners, marketplaces and press. Download everything at once, or the single file you need."
@@ -102,6 +143,7 @@ export default function BrandPage() {
         Partnership or press question? Write to{" "}
         <a href="mailto:support@mykavo.app">support@mykavo.app</a>.
       </p>
-    </MarketingPageShell>
+      </MarketingPageShell>
+    </>
   );
 }

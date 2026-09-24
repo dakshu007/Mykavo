@@ -5,7 +5,14 @@ import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { CHANGELOG, CHANGELOG_PATH, type ChangeKind } from "@/config/changelog";
-import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
+import { site } from "@/config/site";
+import {
+  ORGANIZATION_ID,
+  WEBSITE_ID,
+  breadcrumbList,
+  jsonLdScript,
+  organizationNode,
+} from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "What's New on MyKavo - Release Notes and Updates",
@@ -29,10 +36,56 @@ function formatDate(iso: string): string {
   });
 }
 
+/**
+ * CollectionPage + ItemList: an answer engine asked "what's new in MyKavo"
+ * or "does MyKavo have a WordPress plugin" gets every dated release from one
+ * fetch, each linked to its anchor on this page.
+ */
+function changelogJsonLd() {
+  const url = `${site.url}${CHANGELOG_PATH}`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationNode(),
+      {
+        "@type": "CollectionPage",
+        "@id": `${url}#page`,
+        url,
+        name: "What's new on MyKavo",
+        description: metadata.description,
+        inLanguage: "en",
+        isPartOf: { "@id": WEBSITE_ID },
+        about: { "@id": ORGANIZATION_ID },
+        publisher: { "@id": ORGANIZATION_ID },
+        dateModified: CHANGELOG[0]?.date,
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: CHANGELOG.length,
+          itemListOrder: "https://schema.org/ItemListOrderDescending",
+          itemListElement: CHANGELOG.map((release, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+              "@type": "CreativeWork",
+              "@id": `${url}#${release.date}`,
+              url: `${url}#${release.date}`,
+              name: release.title,
+              description: `${release.summary} ${release.items.map((i) => i.text).join(" ")}`,
+              datePublished: release.date,
+              author: { "@id": ORGANIZATION_ID },
+            },
+          })),
+        },
+      },
+    ],
+  };
+}
+
 export default function WhatsNewPage() {
   const [latest] = CHANGELOG;
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(changelogJsonLd()) }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

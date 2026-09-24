@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BlogCta } from "@/components/blog/blog-cta";
 import { PenLine, Rss } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
@@ -110,6 +111,9 @@ export default async function BlogIndexPage() {
         ) : (
           <BlogIndexList posts={indexPosts} />
         )}
+        <div className="mx-auto mt-16 max-w-5xl">
+          <BlogCta showMorePosts={false} />
+        </div>
       </main>
       <LandingFooter />
     </div>

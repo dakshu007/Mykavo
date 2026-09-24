@@ -1,4 +1,6 @@
 import { site, socials } from "@/config/site";
+import { CHANGELOG, CHANGELOG_PATH } from "@/config/changelog";
+import { allDocArticles } from "@/config/docs";
 
 /**
  * /llms.txt - the emerging convention that gives LLMs and AI search engines
@@ -80,7 +82,7 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - [Website Content Monitoring](${site.url}/website-content-monitoring): normalized text and DOM change tracking with an evidence trail
 - [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, from the outside - works with or without the plugin
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin - a check after every update, with the update named if something broke
-- [MyKavo for Shopify](${site.url}/shopify-app): the Shopify app - a check after every theme publish and edit, with before-and-after evidence in the Shopify admin
+- [MyKavo for Shopify](${site.url}/shopify-app): the Shopify app, coming soon to the Shopify App Store - a check after every theme publish and edit, with before-and-after evidence in the Shopify admin
 - [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs
 - [Website Monitoring for Webflow](${site.url}/website-monitoring-for-webflow): see what every publish and Editor session changed
 
@@ -100,6 +102,22 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 
 Each comparison page states plainly where the other category of tool is the better choice - MyKavo does not do rank tracking, backlink analysis, sub-minute uptime probing, multi-region checks, or pager escalation.
 
+## Integrations
+
+- WordPress plugin (${site.url}/wordpress-plugin): free, download from mykavo.app; in review for the WordPress.org directory
+- Shopify app (${site.url}/shopify-app): built, coming soon to the Shopify App Store. Until then any Shopify store can be monitored from mykavo.app with nothing installed
+- Supabase (${site.url}/docs/platform/supabase): a Database Webhook or a pg_net trigger calls the website's deploy hook, so publishing content starts a check. MyKavo never connects to the database
+- Post-deploy checks: one secret URL per website that CI, Netlify, Vercel or any script can POST to after a release; MyKavo replies "Deploy verified" or lists what changed
+- Alerts: email, Slack (Add to Slack), and the MyKavo Android app
+
+## What's new
+
+Release notes: ${site.url}${CHANGELOG_PATH}
+
+${CHANGELOG.slice(0, 3)
+  .map((r) => `- ${r.date} - ${r.title}: ${r.summary}`)
+  .join("\n")}
+
 ## Key pages
 
 - [Home](${site.url}/): product overview
@@ -107,6 +125,9 @@ Each comparison page states plainly where the other category of tool is the bett
 - [About](${site.url}/about): the story behind MyKavo
 - [Blog](${site.url}/blog): guides on website monitoring
 - [Support](${site.url}/support): help and contact
+- [What's new](${site.url}${CHANGELOG_PATH}): release notes, newest first
+- [Brand assets](${site.url}/brand): logo, logomark, app icon and colors
+- [Full text for AI agents](${site.url}/llms-full.txt): the documentation and release notes in one plain-text file
 ${socials.map((s) => `- [${s.label}](${s.href}): ${s.description}`).join("\n")}
 
 ## Documentation
@@ -114,15 +135,9 @@ ${socials.map((s) => `- [${s.label}](${s.href}): ${s.description}`).join("\n")}
 Public documentation, written to be checked rather than to persuade - it states limits as limits and names what MyKavo does not do:
 
 - [Documentation index](${site.url}/docs)
-- [Quick start: monitoring your first website](${site.url}/docs/getting-started/quick-start): the seven steps from a new account to an approved baseline
-- [Choosing which pages to monitor](${site.url}/docs/getting-started/choosing-pages-to-monitor)
-- [Reading a change and deciding what to do](${site.url}/docs/getting-started/reading-a-change)
-- [Every check MyKavo runs](${site.url}/docs/monitoring/what-mykavo-checks): the complete list of what is captured and compared, including the categories it deliberately omits
-- [How severity is decided](${site.url}/docs/monitoring/severity-levels): the five levels with worked examples
-- [Reducing false positives](${site.url}/docs/monitoring/reducing-false-positives): stabilization, ignored selectors, screenshot masks, baseline approval
-- [Plans and limits](${site.url}/docs/platform/plans-and-limits)
-- [How MyKavo crawls, and how it protects your network](${site.url}/docs/platform/how-mykavo-crawls): user agent, robots.txt, SSRF protections
-- [Your data, and what deletion actually deletes](${site.url}/docs/platform/your-data)
+${allDocArticles()
+  .map(({ section, article }) => `- [${article.title}](${site.url}/docs/${section.slug}/${article.slug}): ${article.description}`)
+  .join("\n")}
 
 ## Named product comparisons
 

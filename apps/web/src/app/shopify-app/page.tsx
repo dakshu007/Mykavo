@@ -151,6 +151,8 @@ const appJsonLd = {
       url: `${site.url}${SHOPIFY_APP_PAGE_PATH}`,
       description: metadata.description,
       screenshot: `${site.url}/shopify/theme-checks.webp`,
+      featureList: [...themePoints, ...features.map((f) => `${f.title}: ${f.desc}`)],
+      ...(SHOPIFY_APP_STORE_URL ? { installUrl: SHOPIFY_APP_STORE_URL } : { releaseNotes: "Coming soon to the Shopify App Store." }),
       publisher: { "@id": ORGANIZATION_ID },
       offers: plans.map((plan) => ({
         "@type": "Offer",

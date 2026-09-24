@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { GoogleIcon } from "@/components/brand/integration-icons";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { BlogCta } from "@/components/blog/blog-cta";
 import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -23,6 +23,32 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
   month: "long",
   day: "numeric",
 });
+
+/**
+ * Up to three other published posts for "Keep reading": posts sharing a tag
+ * first, then the most recent. Internal links between posts help readers
+ * and crawlers alike find the rest of the blog.
+ */
+async function getRelatedPosts(post: { id: string; tags: string[] }) {
+  const select = { id: true, slug: true, title: true, excerpt: true } as const;
+  const tagged =
+    post.tags.length > 0
+      ? await prisma.blogPost.findMany({
+          where: { status: "PUBLISHED", id: { not: post.id }, tags: { hasSome: post.tags } },
+          select,
+          orderBy: { publishedAt: "desc" },
+          take: 3,
+        })
+      : [];
+  if (tagged.length >= 3) return tagged;
+  const recent = await prisma.blogPost.findMany({
+    where: { status: "PUBLISHED", id: { notIn: [post.id, ...tagged.map((p) => p.id)] } },
+    select,
+    orderBy: { publishedAt: "desc" },
+    take: 3 - tagged.length,
+  });
+  return [...tagged, ...recent];
+}
 
 /** Only published posts are visible publicly - drafts 404. */
 async function getPublishedPost(slug: string) {
@@ -68,6 +94,7 @@ export default async function BlogPostPage({ params }: Params) {
   const post = await getPublishedPost(slug);
   if (!post) notFound();
 
+  const related = await getRelatedPosts(post).catch(() => []);
   const { segments, headings } = parsePost(post.content);
   const faqItems = collectFaqItems(segments);
   const readMinutes = readingTimeMinutes(post.content);
@@ -232,65 +259,32 @@ export default async function BlogPostPage({ params }: Params) {
                 </div>
               </aside>
 
-              {/*
-                End-of-post product CTA.
+              {related.length > 0 && (
+                <nav aria-label="Keep reading" className="mt-8">
+                  <h2 className={`${fontDisplay} text-2xl text-[#151515]`}>Keep reading</h2>
+                  <ul className="mt-4 grid gap-4 sm:grid-cols-3">
+                    {related.map((r) => (
+                      <li key={r.slug}>
+                        <Link
+                          href={`/blog/${r.slug}`}
+                          className="flex h-full flex-col rounded-2xl border border-black/10 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[4px_4px_0_#FFD400]"
+                        >
+                          <span className="text-[15px] font-semibold leading-snug text-[#151515]">{r.title}</span>
+                          {r.excerpt && (
+                            <span className="mt-2 line-clamp-3 text-[13.5px] leading-6 text-[#6B6B60]">{r.excerpt}</span>
+                          )}
+                          <span className="mt-auto inline-flex items-center gap-1 pt-4 text-[13px] font-semibold text-[#151515]">
+                            Read <ArrowRight className="size-3.5" aria-hidden />
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )}
 
-                The heading used to be the brand tagline, which reads well and
-                asks for nothing; it now names what the reader would actually
-                get. The secondary button used to be "More posts" - at the one
-                moment somebody has finished reading and is deciding, it sent
-                them back into the blog. That is a conversion leak at the
-                highest-intent point on the page, so the deeper-reading link is
-                still there, demoted to text below the buttons, and the second
-                button goes to pricing instead (which GA4 shows getting a tenth
-                of the homepage's views).
-              */}
-              <aside className="mt-8 rounded-[28px] border border-[#151515] bg-[#151515] px-7 py-12 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515] sm:px-10">
-                <h2 className={`${fontDisplay} text-3xl leading-tight text-[#E9EBDF] sm:text-4xl`}>
-                  Stop checking your pages{" "}
-                  <span className="text-[#FFD400]">by hand.</span>
-                </h2>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#9C9E93]">
-                  MyKavo watches the pages that matter and tells you the moment one changes or
-                  breaks - with before-and-after proof of exactly what moved.
-                </p>
-
-                <ul className="mx-auto mt-6 flex w-fit flex-col gap-2 text-left sm:flex-row sm:gap-5">
-                  {["Free forever plan", "No credit card", "Monitoring in minutes"].map((point) => (
-                    <li
-                      key={point}
-                      className="flex items-center gap-2 text-[13px] font-medium text-[#E9EBDF]"
-                    >
-                      <span className="size-1.5 rounded-full bg-[#FFD400]" aria-hidden />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mx-auto mt-7 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
-                  <Link
-                    href="/signup?provider=google"
-                    className="flex items-center gap-2.5 bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#FFF3B0]"
-                  >
-                    <GoogleIcon className="size-[18px]" />
-                    Continue with Google
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="bg-white/[0.06] px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-white/[0.12]"
-                  >
-                    Use email
-                  </Link>
-                </div>
-
-                <p className="mt-5 text-[13px] text-[#9C9E93]">
-                  Or{" "}
-                  <Link href="/blog" className="text-[#E9EBDF] underline underline-offset-4 hover:text-[#FFD400]">
-                    read more posts
-                  </Link>
-                  .
-                </p>
-              </aside>
+              {/* End-of-post product CTA - see components/blog/blog-cta.tsx. */}
+              <BlogCta />
             </article>
 
             {showTocRail && (

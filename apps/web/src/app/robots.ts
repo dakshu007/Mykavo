@@ -8,17 +8,26 @@ import { site } from "@/config/site";
  * product summary to cite.
  */
 const AI_CRAWLERS = [
+  // Training and search indexes
   "GPTBot",
   "OAI-SearchBot",
-  "ChatGPT-User",
   "ClaudeBot",
-  "Claude-Web",
+  "Claude-SearchBot",
   "anthropic-ai",
   "PerplexityBot",
   "Google-Extended",
   "Applebot-Extended",
+  "Amazonbot",
+  "Meta-ExternalAgent",
+  "DuckAssistBot",
   "cohere-ai",
   "CCBot",
+  // Agents fetching a page because a person asked them to
+  "ChatGPT-User",
+  "Claude-User",
+  "Claude-Web",
+  "Perplexity-User",
+  "MistralAI-User",
 ];
 
 export default function robots(): MetadataRoute.Robots {
@@ -32,5 +41,6 @@ export default function robots(): MetadataRoute.Robots {
       })),
     ],
     sitemap: `${site.url}/sitemap.xml`,
+    host: site.url,
   };
 }
