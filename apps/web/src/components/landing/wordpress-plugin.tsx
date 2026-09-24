@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { WP_PLUGIN_PAGE_PATH } from "@/config/wordpress-plugin";
 import { eyebrow, fontDisplay } from "./style";
 import { WpPluginDownload } from "./wp-plugin-download";
+import { WpUpdateAnimation } from "./wp-update-animation";
 
 const points = [
   "A check after every plugin, theme and WordPress update - automatic ones too",
@@ -54,17 +54,10 @@ export function WordPressPluginSection() {
           </div>
           <Link
             href={WP_PLUGIN_PAGE_PATH}
-            aria-label="MyKavo for WordPress"
-            className="block overflow-hidden rounded-2xl border border-[#151515] bg-white shadow-[8px_8px_0_#FFD400,8px_8px_0_1px_#151515] transition-transform hover:-translate-y-0.5"
+            aria-label="MyKavo for WordPress - see everything the plugin does"
+            className="block min-w-0 overflow-hidden rounded-[18px] border-2 border-[#151515] bg-[#FBFAF6] shadow-[10px_10px_0_#FFD400] transition-transform hover:-translate-y-0.5"
           >
-            <Image
-              src="/wordpress/safe-updates.webp"
-              alt="Safe Updates in WordPress: every update with a verdict, such as Verified - nothing changed"
-              width={1440}
-              height={1100}
-              sizes="(min-width: 1024px) 55vw, 100vw"
-              className="h-auto w-full"
-            />
+            <WpUpdateAnimation />
           </Link>
         </div>
       </div>
