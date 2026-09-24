@@ -94,7 +94,8 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const updated = await applyChangeAction(prisma, id, body.action);
-  logger.info("change action applied from wordpress", {
+  logger.info("change action applied from a connected site", {
+    platform: ctx.platform,
     workspaceId: ctx.workspaceId,
     changeId: id,
     action: body.action,

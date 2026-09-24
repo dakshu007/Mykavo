@@ -27,7 +27,10 @@ const nextConfig: NextConfig = {
     // empty array in production - the early return below short-circuited the
     // whole function - so the live site shipped with no HSTS, no CSP and no
     // clickjacking protection while dev had CORS. See src/lib/security-headers.
-    const secure = [{ source: "/:path*", headers: securityHeaders }];
+    // Every path except /shopify, the embedded Shopify app, which the
+    // Shopify admin must be able to frame. That route sends its own
+    // headers, with frame-ancestors limited to the store's admin.
+    const secure = [{ source: "/:path((?!shopify$).*)", headers: securityHeaders }];
     if (process.env.NODE_ENV === "production") return secure;
     return [
       ...secure,

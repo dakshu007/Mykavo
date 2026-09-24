@@ -1197,8 +1197,57 @@ model SiteConnection {
   revokedAt       DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  shopifyShop     ShopifyShop?
 
   @@index([workspaceId])
   @@index([websiteId])
   @@map("site_connection")
+}
+
+/// A Shopify store that installed the MyKavo Shopify app. Exists from install
+/// until Shopify's shop/redact; linked to one MyKavo website through a
+/// SiteConnection (platform "shopify") once a member approves the link.
+model ShopifyShop {
+  id               String              @id @default(cuid())
+  /// The store's permanent xxx.myshopify.com domain.
+  shop             String              @unique
+  /// Offline Admin API token, AES-256-GCM encrypted. Cleared on uninstall.
+  accessTokenEnc   String?
+  scope            String?
+  name             String?
+  /// The storefront address customers use, e.g. https://example.com
+  primaryDomain    String?
+  installedAt      DateTime?
+  uninstalledAt    DateTime?
+  /// Check the store after theme publishes and edits.
+  themeChecks      Boolean             @default(true)
+  lastThemeCheckAt DateTime?
+  siteConnectionId String?             @unique
+  siteConnection   SiteConnection?     @relation(fields: [siteConnectionId], references: [id], onDelete: SetNull)
+  themeEvents      ShopifyThemeEvent[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@map("shopify_shop")
+}
+
+/// A theme publish or edit on a connected store, and the check it started
+/// (or why it did not).
+model ShopifyThemeEvent {
+  id        String      @id @default(cuid())
+  shopId    String
+  shop      ShopifyShop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  /// "publish" or "update"
+  topic     String
+  themeId   String?
+  themeName String
+  scanId    String?
+  /// Why no check ran: OFF, THROTTLED, PLAN, QUOTA, NO_BASELINE...
+  reason    String?
+  /// X-Shopify-Webhook-Id - Shopify retries deliveries; one event per id.
+  webhookId String?     @unique
+  createdAt DateTime    @default(now())
+
+  @@index([shopId, createdAt])
+  @@map("shopify_theme_event")
 }

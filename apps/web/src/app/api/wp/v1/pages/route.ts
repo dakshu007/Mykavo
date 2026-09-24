@@ -101,7 +101,8 @@ export async function POST(request: Request) {
     skipDuplicates: true,
   });
 
-  logger.info("pages added from wordpress", {
+  logger.info("pages added from a connected site", {
+    platform: ctx.platform,
     workspaceId: ctx.workspaceId,
     websiteId: ctx.website.id,
     added: fresh.length,

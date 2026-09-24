@@ -1,10 +1,10 @@
 /**
- * MyKavo for WordPress - the admin screen.
+ * MyKavo for Shopify - the embedded admin screen.
  *
- * Plain JavaScript on top of two scripts WordPress already ships
- * (wp-api-fetch, wp-i18n): no framework download, so the screen opens fast.
- * It only ever talks to this site's own /wp-json/mykavo/v1 routes; the
- * MyKavo token stays on the server.
+ * GENERATED from the WordPress plugin's assets/app.js by
+ * apps/web/scripts/shopify-app.mjs - edit that script or the plugin, never
+ * this file. bootstrap.js supplies wp.i18n and wp.apiFetch stand-ins that
+ * talk to mykavo.app with the App Bridge session token.
  */
 ( function () {
 	'use strict';
@@ -169,7 +169,7 @@
 			BASELINE: __( 'Baseline', 'mykavo' ),
 			SCHEDULED: __( 'Scheduled', 'mykavo' ),
 			MANUAL: __( 'Manual', 'mykavo' ),
-			DEPLOY: __( 'Update check', 'mykavo' ),
+			DEPLOY: __( 'Theme check', 'mykavo' ),
 		}[ trigger ] || trigger;
 	}
 
@@ -382,7 +382,7 @@
 	function setUpdateChecks( enabled ) {
 		api( '/updates', { method: 'POST', data: { enabled: enabled } } ).then( function ( data ) {
 			state.updates = data;
-			toast( enabled ? __( 'Update checks are on.', 'mykavo' ) : __( 'Update checks are off.', 'mykavo' ) );
+			toast( enabled ? __( 'Theme checks are on.', 'mykavo' ) : __( 'Theme checks are off.', 'mykavo' ) );
 			render();
 		} );
 	}
@@ -545,10 +545,13 @@
 	}
 
 	function disconnect() {
-		// eslint-disable-next-line no-alert
-		if ( ! window.confirm( __( 'Disconnect this site from MyKavo? Monitoring keeps running in MyKavo; this screen just stops showing it until you connect again.', 'mykavo' ) ) ) {
+		if ( ! state.confirmDisconnect ) {
+			state.confirmDisconnect = true;
+			toast( __( 'Press Disconnect again to confirm. Monitoring keeps running in MyKavo.', 'mykavo' ) );
+			render();
 			return;
 		}
+		state.confirmDisconnect = false;
 		state.menuOpen = false;
 		api( '/disconnect', { method: 'POST' } ).then( function () {
 			state.connected = false;
@@ -556,9 +559,8 @@
 			state.changes = null;
 			state.scans = null;
 			state.pages = null;
-			state.banner = { tone: 'neutral', text: __( 'Disconnected from MyKavo.', 'mykavo' ) };
 			stopPolling();
-			render();
+			window.location.reload();
 		} );
 	}
 
@@ -600,21 +602,21 @@
 			'<p class="mk-welcome-lead">' +
 			esc( sprintf(
 				/* translators: %s: site name. */
-				__( 'MyKavo scans the pages that matter on %s and tells you when something important changes or breaks - with before-and-after screenshots, right here in WordPress.', 'mykavo' ),
-				site.name || __( 'your site', 'mykavo' )
+				__( 'MyKavo scans the pages that matter on %s and tells you when something important changes or breaks - with before-and-after screenshots, right here in Shopify.', 'mykavo' ),
+				site.name || __( 'your store', 'mykavo' )
 			) ) +
 			'</p>' +
 			'<ul class="mk-benefits">' +
-			benefit( 'shield', __( 'Update without fear', 'mykavo' ), __( 'After every plugin, theme or WordPress update, MyKavo checks nothing broke - and names the update if something did.', 'mykavo' ) ) +
+			benefit( 'shield', __( 'Change your theme without fear', 'mykavo' ), __( 'When your live theme is published or edited, MyKavo checks your store - and names the change if something broke.', 'mykavo' ) ) +
 			benefit( 'image', __( 'See exactly what changed', 'mykavo' ), __( 'Before-and-after screenshots and values for every change.', 'mykavo' ) ) +
 			benefit( 'alert', __( 'Only what matters', 'mykavo' ), __( 'Changes ranked Critical to Info. Ads and noise are filtered out.', 'mykavo' ) ) +
 			benefit( 'check', __( 'Approve in one click', 'mykavo' ), __( 'Accept intentional changes as the new baseline, ignore the rest.', 'mykavo' ) ) +
 			'</ul>' +
 			'<div class="mk-welcome-cta">' +
-			'<a class="mk-btn mk-btn-primary" href="' + esc( cfg.connectUrl ) + '">' + icon( 'link' ) + esc( __( 'Connect to MyKavo', 'mykavo' ) ) + '</a>' +
+			'<a class="mk-btn mk-btn-primary mk-connect" href="' + esc( cfg.connectUrl ) + '" target="_blank" rel="noopener">' + icon( 'link' ) + esc( __( 'Connect to MyKavo', 'mykavo' ) ) + '</a>' +
 			'<span class="mk-fine">' + esc( __( 'Free plan available. No card needed.', 'mykavo' ) ) + '</span>' +
 			'</div>' +
-			'<p class="mk-speed">' + icon( 'zap' ) + esc( __( 'Adds nothing to the pages your visitors load. Zero impact on site speed.', 'mykavo' ) ) + '</p>' +
+			'<p class="mk-speed">' + icon( 'zap' ) + esc( __( 'Adds nothing to your storefront. Zero impact on store speed.', 'mykavo' ) ) + '</p>' +
 			'</div>' +
 			'<div class="mk-welcome-art" aria-hidden="true"><div class="mk-preview">' +
 			'<div class="mk-preview-head"><span>' + esc( __( 'Needs attention', 'mykavo' ) ) + '</span><span>' + esc( __( 'Example', 'mykavo' ) ) + '</span></div>' +
@@ -634,8 +636,8 @@
 	function footer() {
 		return (
 			'<p class="mk-foot"><span>' +
-			esc( sprintf( /* translators: %s: plugin version. */ __( 'MyKavo for WordPress %s', 'mykavo' ), cfg.version || '' ) ) +
-			'</span><span>' + esc( __( 'Runs only in wp-admin. Your visitors never load it.', 'mykavo' ) ) + '</span></p>'
+			esc( __( 'MyKavo for Shopify', 'mykavo' ) ) +
+			'</span><span>' + esc( __( 'Runs only in your Shopify admin. Nothing is added to your storefront.', 'mykavo' ) ) + '</span></p>'
 		);
 	}
 
@@ -671,7 +673,7 @@
 			item( links.notifications, 'bell', __( 'Alert settings', 'mykavo' ) ) +
 			item( links.pages, 'layers', __( 'Choose monitored pages', 'mykavo' ) ) +
 			item( links.billing, 'zap', __( 'Plan and billing', 'mykavo' ) ) +
-			'<button type="button" class="is-danger" data-act="disconnect">' + icon( 'unplug' ) + esc( __( 'Disconnect this site', 'mykavo' ) ) + '</button>' +
+			'<button type="button" class="is-danger" data-act="disconnect">' + icon( 'unplug' ) + esc( state.confirmDisconnect ? __( 'Press again to disconnect', 'mykavo' ) : __( 'Disconnect this store', 'mykavo' ) ) + '</button>' +
 			'</div>'
 		);
 	}
@@ -681,7 +683,7 @@
 		var list = [
 			[ 'overview', __( 'Overview', 'mykavo' ), '' ],
 			[ 'changes', __( 'Changes', 'mykavo' ), open > 0 ? '<span class="mk-count">' + esc( open > 99 ? '99+' : open ) + '</span>' : '' ],
-			[ 'updates', __( 'Safe Updates', 'mykavo' ), '' ],
+			[ 'updates', __( 'Theme checks', 'mykavo' ), '' ],
 			[ 'scans', __( 'Scans', 'mykavo' ), '' ],
 			[ 'pages', __( 'Pages', 'mykavo' ), '' ],
 		];
@@ -827,7 +829,7 @@
 			( c.pagePath ? '<code>' + esc( c.pagePath ) + '</code>' : '<span>' + esc( __( 'Site-wide', 'mykavo' ) ) + '</span>' ) +
 			'<span>' + esc( categoryLabel( c.category ) ) + '</span>' +
 			( c.status !== 'NEW' ? '<span class="mk-status">' + esc( statusLabel( c.status ) ) + '</span>' : '' ) +
-			( c.afterUpdate ? '<span class="mk-tag" title="' + esc( c.afterUpdate ) + '">' + icon( 'shield' ) + esc( __( 'After an update', 'mykavo' ) ) + '</span>' : '' ) +
+			( c.afterUpdate ? '<span class="mk-tag" title="' + esc( c.afterUpdate ) + '">' + icon( 'shield' ) + esc( __( 'After a theme change', 'mykavo' ) ) + '</span>' : '' ) +
 			'</span></span>' +
 			'<span class="mk-row-side">' + esc( rel( c.detectedAt ) ) + '</span>' +
 			icon( 'chevron', 'mk-row-chevron' ) +
@@ -958,7 +960,7 @@
 				return (
 					'<tr><td title="' + esc( when( s.createdAt ) ) + '">' + esc( rel( s.completedAt || s.createdAt ) ) + '</td>' +
 					'<td>' + ( s.triggerType === 'DEPLOY' && s.note
-						? '<span class="mk-tag" title="' + esc( s.note ) + '">' + icon( 'shield' ) + esc( __( 'Update check', 'mykavo' ) ) + '</span><span class="mk-cell-note">' + esc( s.note ) + '</span>'
+						? '<span class="mk-tag" title="' + esc( s.note ) + '">' + icon( 'shield' ) + esc( __( 'Theme check', 'mykavo' ) ) + '</span><span class="mk-cell-note">' + esc( s.note ) + '</span>'
 						: esc( triggerLabel( s.triggerType ) ) ) + '</td>' +
 					'<td><span class="mk-status">' + esc( statusLabel( s.status ) ) + '</span></td>' +
 					'<td class="mk-num">' + esc( pages ) + '</td>' +
@@ -1037,7 +1039,7 @@
 		}
 		var items = entry.items || [];
 		if ( ! items.length ) {
-			return __( 'WordPress update', 'mykavo' );
+			return __( 'Theme change', 'mykavo' );
 		}
 		var first = items[ 0 ];
 		var name = first.type === 'core' ? 'WordPress' : first.name;
@@ -1066,10 +1068,10 @@
 	function verdict( entry, scans ) {
 		var reason = String( entry.reason || '' ).toUpperCase();
 		if ( reason === 'OFF' ) {
-			return { tone: 'quiet', text: __( 'Not checked - update checks were off', 'mykavo' ) };
+			return { tone: 'quiet', text: __( 'Not checked - theme checks were off', 'mykavo' ) };
 		}
 		if ( reason === 'PLAN' ) {
-			return { tone: 'quiet', text: __( 'Not checked - automatic update checks come with Pro', 'mykavo' ), upgrade: true };
+			return { tone: 'quiet', text: __( 'Not checked - automatic theme checks come with Pro', 'mykavo' ), upgrade: true };
 		}
 		if ( reason === 'NO_BASELINE' ) {
 			return { tone: 'quiet', text: __( 'Not checked - the first baseline was not ready yet', 'mykavo' ) };
@@ -1142,7 +1144,7 @@
 			'<div class="mk-update-main">' +
 			'<p class="mk-update-title">' + esc( updateTitle( entry ) ) + '</p>' +
 			'<p class="mk-row-meta"><span title="' + esc( when( new Date( entry.at * 1000 ).toISOString() ) ) + '">' + esc( rel( new Date( entry.at * 1000 ).toISOString() ) ) + '</span>' +
-			'<span class="mk-status">' + esc( entry.trigger === 'auto' ? __( 'Automatic', 'mykavo' ) : __( 'By an admin', 'mykavo' ) ) + '</span></p>' +
+			'</p>' +
 			verdictBadge( v ) +
 			( ! compact && items.length > 1
 				? '<ul class="mk-update-items">' + items.map( function ( it ) {
@@ -1172,8 +1174,8 @@
 		var intro =
 			'<section class="mk-card mk-safe">' +
 			'<div class="mk-safe-copy"><span class="mk-safe-icon">' + icon( 'shield' ) + '</span><div>' +
-			'<h2>' + esc( __( 'Update without fear', 'mykavo' ) ) + '</h2>' +
-			'<p>' + esc( __( 'Every time WordPress updates a plugin, theme or itself - including automatic updates overnight - and whenever a plugin is switched on or off or the theme changes, MyKavo checks your pages against the approved baseline and tells you whether anything broke, and which change did it.', 'mykavo' ) ) + '</p>' +
+			'<h2>' + esc( __( 'Change your theme without fear', 'mykavo' ) ) + '</h2>' +
+			'<p>' + esc( __( 'Every time your live theme is published or edited, MyKavo checks your store against the approved baseline and tells you whether anything broke - and which change did it. Edits are checked at most every 15 minutes while you work in the theme editor.', 'mykavo' ) ) + '</p>' +
 			'</div></div>' +
 			'<button type="button" class="mk-switch" role="switch" aria-checked="' + on + '" data-act="toggle-updates" data-key="toggle-updates">' +
 			'<span class="mk-switch-track"><span class="mk-switch-thumb"></span></span>' +
@@ -1182,20 +1184,20 @@
 
 		var plan = planOk
 			? ''
-			: '<div class="mk-banner">' + icon( 'zap' ) + '<span>' + esc( __( 'Updates are listed here on every plan. Checking the site automatically after each one comes with Pro and Agency.', 'mykavo' ) ) + '</span>' +
+			: '<div class="mk-banner">' + icon( 'zap' ) + '<span>' + esc( __( 'Theme changes are listed here on every plan. Checking the store automatically after each one comes with Pro and Agency.', 'mykavo' ) ) + '</span>' +
 				( billing ? '<a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( billing ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'See plans', 'mykavo' ) ) + '</a>' : '' ) + '</div>';
 
 		var list = log.length
 			? '<ul class="mk-list mk-updates">' + log.map( function ( e ) {
 				return updateEntry( e, scans, false );
 			} ).join( '' ) + '</ul>'
-			: '<div class="mk-empty"><span class="mk-empty-icon">' + icon( 'shield' ) + '</span><strong>' + esc( __( 'No updates yet', 'mykavo' ) ) + '</strong><span>' +
-				esc( __( 'The next time a plugin, theme or WordPress updates, it appears here with a verdict.', 'mykavo' ) ) + '</span></div>';
+			: '<div class="mk-empty"><span class="mk-empty-icon">' + icon( 'shield' ) + '</span><strong>' + esc( __( 'No theme changes yet', 'mykavo' ) ) + '</strong><span>' +
+				esc( __( 'The next time your live theme is published or edited, it appears here with a verdict.', 'mykavo' ) ) + '</span></div>';
 
 		return (
 			'<div class="mk-grid">' + intro + plan +
-			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Update history', 'mykavo' ) ) + '</h3>' +
-			'<span class="mk-fine">' + esc( __( 'Kept on this site. Last 30 updates.', 'mykavo' ) ) + '</span></div>' + list + '</section></div>'
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Theme changes', 'mykavo' ) ) + '</h3>' +
+			'<span class="mk-fine">' + esc( __( 'Last 30 changes.', 'mykavo' ) ) + '</span></div>' + list + '</section></div>'
 		);
 	}
 
@@ -1250,7 +1252,7 @@
 		var busy = state.busy === 'add-pages';
 		return (
 			'<section class="mk-card mk-store"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'lock', 'mk-title-icon' ) + esc( __( 'Protect your store', 'mykavo' ) ) + '</h3>' +
-			'<span class="mk-fine">WooCommerce</span></div>' +
+			'<span class="mk-fine">Shopify</span></div>' +
 			'<ul class="mk-store-list">' + woo.pages.map( function ( p ) {
 				var ok = monitored[ pathKey( p.url ) ];
 				return '<li class="' + ( ok ? 'is-on' : 'is-off' ) + '">' + icon( ok ? 'check' : 'alert' ) + '<span>' + esc( p.label ) + '</span><em>' +
@@ -1261,7 +1263,7 @@
 					'<button type="button" class="mk-btn mk-btn-primary mk-btn-sm" data-act="guard-store"' + ( busy ? ' disabled' : '' ) + '>' +
 					( busy ? icon( 'loader', 'mk-spin' ) : icon( 'shield' ) ) +
 					esc( sprintf( _n( 'Monitor %d store page', 'Monitor %d store pages', missing.length, 'mykavo' ), missing.length ) ) + '</button></div>'
-				: '<div class="mk-store-foot"><p class="mk-store-ok">' + icon( 'check' ) + esc( __( 'Your store pages are all monitored.', 'mykavo' ) ) + '</p></div>' ) +
+				: '<div class="mk-store-foot"><p class="mk-store-ok">' + icon( 'check' ) + esc( __( 'Your key store pages are all monitored.', 'mykavo' ) ) + '</p></div>' ) +
 			'</section>'
 		);
 	}
@@ -1272,11 +1274,11 @@
 			? '<ul class="mk-list mk-updates">' + updateEntry( latest, scansById(), true ) + '</ul>'
 			: '<div class="mk-card-pad" style="padding-top:14px"><p class="mk-stat-foot" style="font-size:13px">' +
 				esc( state.updates && ! state.updates.enabled
-					? __( 'Update checks are off.', 'mykavo' )
-					: __( 'The next time WordPress updates a plugin, theme or itself, MyKavo checks nothing broke.', 'mykavo' ) ) +
+					? __( 'Theme checks are off.', 'mykavo' )
+					: __( 'The next time your live theme is published or edited, MyKavo checks nothing broke.', 'mykavo' ) ) +
 				'</p></div>';
 		return (
-			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'shield', 'mk-title-icon' ) + esc( __( 'Safe Updates', 'mykavo' ) ) + '</h3>' +
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'shield', 'mk-title-icon' ) + esc( __( 'Theme checks', 'mykavo' ) ) + '</h3>' +
 			'<button type="button" class="mk-link" style="border:0;background:none;cursor:pointer" data-act="tab" data-tab="updates">' + esc( latest ? __( 'History', 'mykavo' ) : __( 'How it works', 'mykavo' ) ) + icon( 'chevron' ) + '</button></div>' +
 			body + '</section>'
 		);
@@ -1379,7 +1381,7 @@
 			: '';
 		var hasValues = ( c.previousValue !== null && c.previousValue !== undefined ) || ( c.currentValue !== null && c.currentValue !== undefined );
 		var found = c.foundBy && c.foundBy.triggerType === 'DEPLOY' && c.foundBy.note
-			? '<div class="mk-attrib">' + icon( 'shield' ) + '<div><b>' + esc( __( 'Appeared after an update', 'mykavo' ) ) + '</b><span>' + esc( c.foundBy.note ) + '</span></div></div>'
+			? '<div class="mk-attrib">' + icon( 'shield' ) + '<div><b>' + esc( __( 'Appeared after a theme change', 'mykavo' ) ) + '</b><span>' + esc( c.foundBy.note ) + '</span></div></div>'
 			: '';
 		return (
 			found +

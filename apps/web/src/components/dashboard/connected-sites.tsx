@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 
 export interface ConnectedSiteView {
   id: string;
+  platform: string;
   siteUrl: string;
   siteName: string | null;
   websiteName: string;
@@ -19,14 +20,15 @@ function shortDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-US", { dateStyle: "medium" });
 }
 
-/** WordPress sites connected through the MyKavo plugin, with a kill switch. */
+/** WordPress sites (plugin) and Shopify stores (app) connected to MyKavo, with a kill switch. */
 export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[]; canManage: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function disconnect(site: ConnectedSiteView) {
-    if (!window.confirm(`Disconnect ${site.siteUrl}? The plugin on that site stops working until it's connected again.`)) {
+    const what = site.platform === "shopify" ? "The MyKavo app in that store" : "The plugin on that site";
+    if (!window.confirm(`Disconnect ${site.siteUrl}? ${what} stops showing monitoring until it's connected again.`)) {
       return;
     }
     setBusy(site.id);
@@ -43,12 +45,12 @@ export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[
   if (sites.length === 0) {
     return (
       <p className="text-sm text-ink-secondary">
-        No WordPress sites connected.{" "}
+        Nothing connected yet.{" "}
         <a href="/wordpress-plugin" className="font-medium text-ink underline underline-offset-4">
-          Get the MyKavo plugin
-        </a>
-        , install it on a WordPress site and press Connect to see its monitoring inside wp-admin -
-        with a check after every update.
+          Get the MyKavo WordPress plugin
+        </a>{" "}
+        or install the MyKavo app on a Shopify store, then press Connect in it to see monitoring
+        right inside WordPress or Shopify - with a check after every update or theme change.
       </p>
     );
   }
@@ -61,6 +63,7 @@ export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-ink">{site.siteName ?? site.siteUrl}</p>
               <p className="truncate text-xs text-ink-faint">
+                {site.platform === "shopify" ? "Shopify" : "WordPress"} ·{" "}
                 <span className="font-mono">{site.siteUrl}</span> · {site.websiteName} · last used{" "}
                 {shortDate(site.lastUsedAt)}
                 {site.pluginVersion ? ` · plugin ${site.pluginVersion}` : ""}

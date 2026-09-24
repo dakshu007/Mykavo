@@ -3,7 +3,7 @@ import { prisma } from "@mykavo/database";
 import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/site-auth";
 import { logger } from "@/lib/logger";
 
-/** The plugin's Disconnect button: revoke this site's own token. */
+/** Disconnect from the plugin or the Shopify app: revoke this site's own connection. */
 export async function POST(request: Request) {
   const ctx = await authenticateSiteRequest(request);
   if (!ctx) return unauthorizedSite();
@@ -11,7 +11,8 @@ export async function POST(request: Request) {
     where: { id: ctx.connectionId },
     data: { revokedAt: new Date() },
   });
-  logger.info("wordpress connection disconnected from plugin", {
+  logger.info("site connection disconnected from the site", {
+    platform: ctx.platform,
     workspaceId: ctx.workspaceId,
     connectionId: ctx.connectionId,
   });

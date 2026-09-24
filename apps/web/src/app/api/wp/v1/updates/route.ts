@@ -16,6 +16,10 @@ import { logger } from "@/lib/logger";
 export async function POST(request: Request) {
   const ctx = await authenticateSiteRequest(request);
   if (!ctx) return unauthorizedSite();
+  // WordPress reports its own updates; Shopify theme changes arrive as webhooks.
+  if (ctx.platform !== "wordpress") {
+    return NextResponse.json({ error: "Not available for this connection." }, { status: 404 });
+  }
 
   const rl = rateLimit(`wp-updates:${ctx.connectionId}`, { limit: 20, windowMs: 60_000 });
   if (!rl.allowed) {

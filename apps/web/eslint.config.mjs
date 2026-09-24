@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated from the WordPress plugin (scripts/shopify-app.mjs), which
+    // follows WordPress coding standards and is linted there.
+    "public/shopify-app/app.js",
   ]),
 ]);
 

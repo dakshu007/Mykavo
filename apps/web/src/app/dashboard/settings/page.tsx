@@ -62,13 +62,16 @@ export default async function SettingsPage() {
   // the card shows empty rather than taking Settings down with it.
   const connectedSites: ConnectedSiteView[] = await prisma.siteConnection
     .findMany({
-      where: { workspaceId: workspace.id, tokenHash: { not: null }, revokedAt: null },
+      // connectedAt is set when a WordPress site finishes its handshake and
+      // when a Shopify store is linked; pending handshakes stay hidden.
+      where: { workspaceId: workspace.id, connectedAt: { not: null }, revokedAt: null },
       include: { website: { select: { name: true } } },
       orderBy: { connectedAt: "desc" },
     })
     .then((rows) =>
       rows.map((c) => ({
         id: c.id,
+        platform: c.platform,
         siteUrl: c.siteUrl,
         siteName: c.siteName,
         websiteName: c.website.name,
@@ -165,7 +168,7 @@ export default async function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader title="WordPress sites" />
+        <CardHeader title="WordPress and Shopify" />
         <ConnectedSites sites={connectedSites} canManage={manager} />
       </Card>
 

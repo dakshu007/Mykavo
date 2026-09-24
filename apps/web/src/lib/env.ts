@@ -176,6 +176,10 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   // hidden and customers paste an incoming-webhook URL instead.
   SLACK_CLIENT_ID: z.string().optional(),
   SLACK_CLIENT_SECRET: z.string().optional(),
+  // The MyKavo Shopify app (Client ID and secret from the Shopify Dev
+  // Dashboard). When either is unset the app's routes answer 503.
+  SHOPIFY_API_KEY: z.string().optional(),
+  SHOPIFY_API_SECRET: z.string().optional(),
   DODO_API_KEY: z.string().optional(),
   DODO_MODE: optionalStrictAtRuntime(z.enum(["test", "live"]), "DODO_MODE", ctxRef),
   });

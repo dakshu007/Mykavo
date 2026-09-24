@@ -47,7 +47,8 @@ export async function POST(request: Request, { params }: Params) {
     approvedByUserId: ctx.actingUserId ?? ctx.workspaceOwnerId,
   });
 
-  logger.info("baseline updated from wordpress", {
+  logger.info("baseline updated from a connected site", {
+    platform: ctx.platform,
     workspaceId: ctx.workspaceId,
     changeId: id,
     connectionId: ctx.connectionId,
