@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@mykavo/database";
 import { dispatchChannelMessage, validateChannelUrl } from "@mykavo/shared";
 import { getApiContext } from "@/lib/api-auth";
+import { appBaseUrl } from "@/lib/app-url";
 import {
   SLACK_STATE_COOKIE,
   SlackExchangeError,
@@ -26,9 +27,12 @@ import { logger } from "@/lib/logger";
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  // Always back to the canonical site: on Netlify, request.url can carry the
+  // per-deploy hostname, where the visitor has no session and lands on a
+  // login page that rejects the origin.
   const done = (result: string) => {
     const response = NextResponse.redirect(
-      new URL(`/dashboard/notifications?slack=${result}`, request.url),
+      `${appBaseUrl()}/dashboard/notifications?slack=${result}`,
     );
     response.cookies.delete({ name: SLACK_STATE_COOKIE, path: "/api/integrations/slack" });
     return response;
@@ -111,7 +115,7 @@ export async function GET(request: Request) {
 
   // Say hello in the channel so the customer sees it working immediately.
   // Best effort: the channel is saved either way, and "Send test" exists.
-  const appUrl = process.env.APP_URL ?? url.origin;
+  const appUrl = appBaseUrl();
   const hello = await dispatchChannelMessage(channel, {
     title: "MyKavo is connected",
     lines: [

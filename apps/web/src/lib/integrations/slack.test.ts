@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// app-url validates the whole server environment on import; the unit tests
+// only need the canonical base.
+vi.mock("@/lib/app-url", () => ({ appBaseUrl: () => "https://mykavo.app" }));
 import {
   SlackExchangeError,
   parseSlackAccessResponse,
@@ -129,6 +133,36 @@ describe("buildSlackAuthorizeUrl", () => {
     expect(url.searchParams.get("redirect_uri")).toBe(
       "https://mykavo.app/api/integrations/slack/callback",
     );
+    expect(url.searchParams.get("redirect_uri")).not.toContain("netlify.app");
     expect(url.searchParams.get("state")).toBe("the-state");
+  });
+});
+
+/**
+ * Regression guard. Add to Slack shipped building its redirects from
+ * request.url; on Netlify that is the per-deploy hostname
+ * (<id>--mykavo.netlify.app), so a successful install landed the customer on
+ * a login page for a domain they had no session on, which rejected them with
+ * "Invalid origin". Redirects back into the app must use appBaseUrl().
+ */
+describe("no route redirects to the request's own host", () => {
+  it("never builds a redirect from request.url", async () => {
+    const { readdirSync, readFileSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const root = fileURLToPath(new URL("../../app", import.meta.url));
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) walk(path);
+        else if (name === "route.ts") {
+          const source = readFileSync(path, "utf8");
+          if (/redirect\(\s*new URL\([^)]*request\.url/.test(source)) offenders.push(path);
+        }
+      }
+    };
+    walk(root);
+    expect(offenders).toEqual([]);
   });
 });

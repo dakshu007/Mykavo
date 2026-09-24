@@ -5,6 +5,7 @@ import { requireSession, getCurrentMembership } from "@/lib/session";
 import { canManageBilling } from "@/lib/team";
 import { buildCheckoutUrl, productIdForPlan, type PaidPlan } from "@/lib/billing/config";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
+import { appBaseUrl } from "@/lib/app-url";
 import { logger } from "@/lib/logger";
 
 /**
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
 
   const current = await getWorkspaceSubscription(workspace.id);
   if (current && current.planId !== "free") {
-    return NextResponse.redirect(new URL("/dashboard/billing", request.url));
+    return NextResponse.redirect(`${appBaseUrl()}/dashboard/billing`);
   }
 
   if (!productIdForPlan(plan)) {

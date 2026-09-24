@@ -16,7 +16,7 @@
 
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { site } from "@/config/site";
+import { appBaseUrl } from "@/lib/app-url";
 
 export const SLACK_STATE_COOKIE = "mykavo-slack-oauth";
 /** Long enough to pick a channel, short enough that a leaked link dies fast. */
@@ -40,8 +40,7 @@ export function slackInstallConfigured(): boolean {
 
 /** Must match a Redirect URL registered on the Slack app, exactly. */
 export function slackRedirectUri(): string {
-  const base = process.env.APP_URL ?? process.env.BETTER_AUTH_URL ?? site.url;
-  return `${base.replace(/\/$/, "")}/api/integrations/slack/callback`;
+  return `${appBaseUrl()}/api/integrations/slack/callback`;
 }
 
 export function buildSlackAuthorizeUrl(state: string): string {

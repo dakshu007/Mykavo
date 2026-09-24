@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiContext, requireRole } from "@/lib/api-auth";
+import { appBaseUrl } from "@/lib/app-url";
 import {
   SLACK_STATE_COOKIE,
   SLACK_STATE_TTL_MS,
@@ -16,15 +17,15 @@ import { logger } from "@/lib/logger";
  * current workspace, then hand the browser to Slack's consent screen, where
  * they pick the channel alerts should post to.
  */
-export async function GET(request: Request) {
+export async function GET() {
+  // Always the canonical site: on Netlify, request.url can carry the
+  // per-deploy hostname, where the visitor has no session.
   const back = (query: string) =>
-    NextResponse.redirect(new URL(`/dashboard/notifications?${query}`, request.url));
+    NextResponse.redirect(`${appBaseUrl()}/dashboard/notifications?${query}`);
 
   const ctx = await getApiContext();
   if (!ctx) {
-    return NextResponse.redirect(
-      new URL("/login?next=%2Fdashboard%2Fnotifications", request.url),
-    );
+    return NextResponse.redirect(`${appBaseUrl()}/login?next=%2Fdashboard%2Fnotifications`);
   }
   if (requireRole(ctx, "OWNER", "ADMIN", "MEMBER")) return back("slack=forbidden");
 
