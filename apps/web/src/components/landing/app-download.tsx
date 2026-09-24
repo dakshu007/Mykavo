@@ -1,14 +1,14 @@
 import { Apple, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
+import { AppSyncAnimation } from "./app-sync-animation";
 import { RequestAppButton } from "./request-app-dialog";
 import { eyebrowOnDark, fontDisplay } from "./style";
 
 /**
- * Android app showcase - a dark ink drama band where a CSS-drawn browser
- * window and phone exchange gold sync packets in both directions along a
- * dashed rail, with the same "change detected" chip popping up on BOTH
- * screens at the same moment (identical keyframe timing = the sync story
- * told visually). Pure CSS animation, fully paused for reduced-motion users.
+ * Android app showcase - a dark ink band. From tablet width up it plays the
+ * web <-> phone sync animation (app-sync-animation.tsx): a scan started on
+ * the web mirrors to the phone, a push arrives, the change is resolved on
+ * the phone and the web follows. Phones get a static phone mock instead.
  *
  * The APK is NOT offered to everyone. The app is not on a store yet, so
  * access is granted by hand: this section asks for a name and an address, the
@@ -45,37 +45,6 @@ function MockRow({ dot, label, value }: { dot: string; label: string; value: str
   );
 }
 
-/** CSS-drawn browser window - the web dashboard side of the sync story. */
-function BrowserMock() {
-  return (
-    <div className="w-72 shrink-0 overflow-hidden rounded-2xl border-2 border-[#151515] bg-white shadow-[8px_8px_0_rgba(255,212,0,0.9)]">
-      {/* Chrome bar */}
-      <div className="flex items-center gap-2 border-b border-black/10 bg-[#F3F1E6] px-3 py-2">
-        <span className="flex gap-1.5" aria-hidden>
-          <span className="size-2 rounded-full bg-[#151515]/20" />
-          <span className="size-2 rounded-full bg-[#151515]/20" />
-          <span className="size-2 rounded-full bg-[#151515]/20" />
-        </span>
-        <span className="ml-1 flex-1 rounded-full bg-white px-2.5 py-1 font-mono text-[9.5px] text-[#6B6B60]">
-          mykavo.app/dashboard
-        </span>
-      </div>
-      <div className="p-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[12px] font-semibold text-[#151515]">Overview</p>
-          <SyncedChip />
-        </div>
-        <div className="mt-2.5 overflow-hidden rounded-xl border border-black/10">
-          <MockRow dot="#e5484d" label="Canonical URL changed" value="/pricing" />
-          <MockRow dot="#f97316" label="CTA button missing" value="/signup" />
-          <MockRow dot="#16a34a" label="Uptime 100% · 2 sites" value="24h" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** CSS-drawn Android phone - complete with the app's floating island nav. */
 function PhoneMock() {
   return (
     <div className="w-52 shrink-0 overflow-hidden rounded-[2.2rem] border-2 border-[#151515] bg-white shadow-[8px_8px_0_rgba(255,212,0,0.9)]">
@@ -146,14 +115,6 @@ export function AppDownloadSection() {
   return (
     <section id="android-app" className="border-y border-[#151515] bg-[#151515]">
       <style>{`
-        @keyframes ad-travel {
-          from { stroke-dashoffset: 168; }
-          to { stroke-dashoffset: 0; }
-        }
-        @keyframes ad-travel-back {
-          from { stroke-dashoffset: 0; }
-          to { stroke-dashoffset: 168; }
-        }
         @keyframes ad-ring {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.6); opacity: 0; }
@@ -163,12 +124,10 @@ export function AppDownloadSection() {
           20%, 88% { opacity: 1; transform: none; }
           96%, 100% { opacity: 0; transform: translateY(3px) scale(0.92); }
         }
-        .ad-packet { animation: ad-travel 2.8s linear infinite; }
-        .ad-packet-back { animation: ad-travel-back 2.8s linear infinite; }
         .ad-pulse { animation: ad-ring 2.4s ease-out infinite; }
         .ad-pop { animation: ad-pop-kf 5.6s ease-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .ad-packet, .ad-packet-back, .ad-pulse, .ad-pop { animation: none; }
+          .ad-pulse, .ad-pop { animation: none; }
           .ad-pulse { opacity: 0; }
         }
       `}</style>
@@ -193,27 +152,10 @@ export function AppDownloadSection() {
           train, watch it land on the web seconds later. Monitor your sites from anywhere.
         </p>
 
-        {/* Desktop diagram: browser <-> spark <-> phone with two-way packets */}
-        <div className="mt-14 hidden items-center justify-center gap-0 md:flex">
-          <BrowserMock />
-          <div className="relative -mx-1 h-20 w-44 shrink-0 lg:w-56" aria-hidden>
-            <svg viewBox="0 0 224 80" className="absolute inset-0 size-full" fill="none">
-              {/* Static dashed rails */}
-              <path d="M 0 32 C 75 32 149 32 224 32" stroke="#E9EBDF" strokeOpacity="0.25" strokeWidth="1.5" strokeDasharray="3 6" />
-              <path d="M 0 48 C 75 48 149 48 224 48" stroke="#E9EBDF" strokeOpacity="0.25" strokeWidth="1.5" strokeDasharray="3 6" />
-              {/* Gold packets - top rail travels right, bottom rail travels left */}
-              <path d="M 0 32 C 75 32 149 32 224 32" className="ad-packet" stroke="#FFD400" strokeWidth="4" strokeLinecap="round" strokeDasharray="16 152" />
-              <path d="M 0 48 C 75 48 149 48 224 48" className="ad-packet-back" stroke="#FFD400" strokeWidth="4" strokeLinecap="round" strokeDasharray="16 152" />
-            </svg>
-            {/* Spark relay node at the middle of the rails */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <span className="ad-pulse absolute inset-0 rounded-full border-2 border-[#FFD400]" />
-              <span className="relative flex size-12 items-center justify-center rounded-full border border-[#151515] bg-white shadow-[4px_4px_0_#FFD400]">
-                <LogoMark size={24} />
-              </span>
-            </div>
-          </div>
-          <PhoneMock />
+        {/* Tablet and desktop: the web <-> phone sync animation. On phones the
+            full scene would shrink past readable, so they keep the phone mock. */}
+        <div className="mx-auto mt-14 hidden max-w-5xl md:block">
+          <AppSyncAnimation />
         </div>
 
         {/* Small screens: phone mock only, spark above */}
