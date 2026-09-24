@@ -72,6 +72,7 @@ describe("toEditorMarkdown", () => {
 describe("roundTripMarkdown - shortcode regions are byte-identical", () => {
   it.each([
     ["cta", "{{cta}}"],
+    ["wordpress cta", "{{cta-wordpress}}"],
     ["toc", "{{toc}}"],
     ["faq", FAQ_RAW],
     ["spaced cta", "{{ cta }}"],

@@ -22,8 +22,19 @@ const CONTENT_LINE_HEIGHT = 24;
 interface SlashMenuState {
   /** Index of the "/" character in the content string. */
   position: number;
+  /** What was typed after the "/" ("cta-wordpress"), used to filter. */
+  query: string;
   /** Pixel offset of the menu from the top of the textarea. */
   top: number;
+}
+
+/** Snippets whose command or label matches what was typed after "/". */
+export function filterSnippets(query: string): readonly BlockSnippet[] {
+  const q = query.toLowerCase();
+  if (!q) return BLOCK_SNIPPETS;
+  return BLOCK_SNIPPETS.filter(
+    (o) => o.command.startsWith(q) || o.label.toLowerCase().includes(q),
+  );
 }
 
 export function MarkdownEditor({
@@ -36,6 +47,7 @@ export function MarkdownEditor({
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
   const [slashIndex, setSlashIndex] = useState(0);
+  const options = slashMenu ? filterSnippets(slashMenu.query) : BLOCK_SNIPPETS;
 
   /**
    * Opens the "/" block menu when the caret sits right after a "/" that is
@@ -51,13 +63,21 @@ export function MarkdownEditor({
     const lineEnd = next.indexOf("\n", caret);
     const line = next.slice(lineStart, lineEnd === -1 ? next.length : lineEnd);
 
-    if (line === "/" && caret === lineStart + 1) {
+    // "/" alone on its line opens the menu; letters typed after it
+    // ("/cta-wordpress") keep it open and filter it.
+    const typed = /^\/([a-z-]*)$/i.exec(line);
+    if (typed && caret === lineStart + line.length) {
       const el = event.target;
       const row = next.slice(0, lineStart).split("\n").length - 1;
       const rawTop =
         CONTENT_PADDING_TOP + (row + 1) * CONTENT_LINE_HEIGHT - el.scrollTop + 4;
       const top = Math.min(Math.max(rawTop, 8), Math.max(el.clientHeight - 8, 8));
-      setSlashMenu({ position: lineStart, top });
+      const query = typed[1];
+      if (filterSnippets(query).length === 0) {
+        setSlashMenu(null);
+        return;
+      }
+      setSlashMenu({ position: lineStart, top, query });
       setSlashIndex(0);
     } else if (slashMenu) {
       setSlashMenu(null);
@@ -69,18 +89,16 @@ export function MarkdownEditor({
     switch (event.key) {
       case "ArrowDown":
         event.preventDefault();
-        setSlashIndex((index) => (index + 1) % BLOCK_SNIPPETS.length);
+        setSlashIndex((index) => (index + 1) % options.length);
         break;
       case "ArrowUp":
         event.preventDefault();
-        setSlashIndex(
-          (index) => (index - 1 + BLOCK_SNIPPETS.length) % BLOCK_SNIPPETS.length,
-        );
+        setSlashIndex((index) => (index - 1 + options.length) % options.length);
         break;
       case "Enter":
       case "Tab":
         event.preventDefault();
-        insertSnippet(BLOCK_SNIPPETS[slashIndex]);
+        insertSnippet(options[Math.min(slashIndex, options.length - 1)]);
         break;
       case "Escape":
         event.preventDefault();
@@ -89,11 +107,11 @@ export function MarkdownEditor({
     }
   }
 
-  /** Replaces the typed "/" with the block snippet and restores the caret. */
-  function insertSnippet(option: BlockSnippet) {
-    if (!slashMenu) return;
+  /** Replaces the typed "/command" with the block snippet and restores the caret. */
+  function insertSnippet(option: BlockSnippet | undefined) {
+    if (!slashMenu || !option) return;
     const before = value.slice(0, slashMenu.position);
-    const after = value.slice(slashMenu.position + 1);
+    const after = value.slice(slashMenu.position + 1 + slashMenu.query.length);
     onChange(before + option.snippet + after);
     setSlashMenu(null);
 
@@ -110,8 +128,8 @@ export function MarkdownEditor({
     <div className="grid gap-5 lg:grid-cols-2">
       <div>
         <p className="mb-1.5 text-[13px] text-ink-faint">
-          Markdown source. Type &quot;/&quot; on an empty line for blocks: CTA, FAQ,
-          table of contents.
+          Markdown source. Type &quot;/&quot; on an empty line for blocks: CTA,
+          WordPress plugin CTA (/cta-wordpress), FAQ, table of contents.
         </p>
         <div className="relative">
           <textarea
@@ -134,7 +152,7 @@ export function MarkdownEditor({
               style={{ top: slashMenu.top }}
               className="absolute left-4 z-10 w-76 max-w-[calc(100%-2rem)] overflow-hidden rounded-tile border border-line bg-card py-1 shadow-float"
             >
-              {BLOCK_SNIPPETS.map((option, index) => (
+              {options.map((option, index) => (
                 <button
                   key={option.command}
                   type="button"

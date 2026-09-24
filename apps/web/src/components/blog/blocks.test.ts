@@ -238,3 +238,19 @@ describe("readingTimeMinutes", () => {
     expect(readingTimeMinutes(Array(1000).fill("word").join(" "))).toBe(5);
   });
 });
+
+describe("cta-wordpress block", () => {
+  it("splits {{cta-wordpress}} into its own segment, separate from {{cta}}", () => {
+    const { segments } = parsePost("Intro.\n\n{{cta-wordpress}}\n\nMiddle.\n\n{{cta}}");
+    expect(segments.map((s) => s.type)).toEqual(["markdown", "cta-wordpress", "markdown", "cta"]);
+  });
+
+  it("tolerates spaces but not other text on the line", () => {
+    expect(parsePost("  {{ cta-wordpress }}  ").segments.map((s) => s.type)).toEqual(["cta-wordpress"]);
+    expect(parsePost("Use {{cta-wordpress}} here.").segments.map((s) => s.type)).toEqual(["markdown"]);
+  });
+
+  it("is offered in the editor's / menu as cta-wordpress", () => {
+    expect(BLOCK_SNIPPETS.map((o) => o.command)).toContain("cta-wordpress");
+  });
+});

@@ -6,7 +6,7 @@ import { TableKit } from "@tiptap/extension-table";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown, type MarkdownNodeSpec, type MarkdownStorage } from "tiptap-markdown";
 import { toEditorMarkdown } from "./markdown-roundtrip";
-import { CtaBlockNode, FaqBlockNode, TocBlockNode } from "./shortcode-nodes";
+import { CtaBlockNode, FaqBlockNode, TocBlockNode, WordpressCtaBlockNode } from "./shortcode-nodes";
 
 /**
  * Shared extension list for the visual blog editor. React-free so the same
@@ -77,6 +77,7 @@ export function buildEditorExtensions(options?: { placeholder?: string }): Exten
       transformCopiedText: false,
     }),
     CtaBlockNode,
+    WordpressCtaBlockNode,
     TocBlockNode,
     FaqBlockNode,
   ];

@@ -19,7 +19,7 @@ import { parseFaqItems, SHORTCODE_LINE_TOKENS } from "@/components/blog/blocks";
 
 export type ShortcodeSegment =
   | { type: "markdown"; text: string }
-  | { type: "cta" | "toc"; raw: string }
+  | { type: "cta" | "cta-wordpress" | "toc"; raw: string }
   | { type: "faq"; raw: string };
 
 /** Attribute names used by the placeholder <div> and the Tiptap nodes. */
@@ -43,7 +43,7 @@ export function decodeShortcodeRaw(encoded: string): string {
   }
 }
 
-const { cta, toc, faqOpen, faqClose, fence } = SHORTCODE_LINE_TOKENS;
+const { cta, ctaWordpress, toc, faqOpen, faqClose, fence } = SHORTCODE_LINE_TOKENS;
 
 /**
  * Splits post markdown into plain-markdown segments and shortcode regions.
@@ -82,6 +82,12 @@ export function splitShortcodeSegments(markdown: string): ShortcodeSegment[] {
         i += 1;
         continue;
       }
+      if (ctaWordpress.test(trimmed)) {
+        flush();
+        segments.push({ type: "cta-wordpress", raw: line });
+        i += 1;
+        continue;
+      }
       if (toc.test(trimmed)) {
         flush();
         segments.push({ type: "toc", raw: line });
@@ -116,7 +122,7 @@ export function splitShortcodeSegments(markdown: string): ShortcodeSegment[] {
 }
 
 /** Placeholder element consumed by the shortcode Tiptap nodes' parseHTML. */
-function shortcodePlaceholder(type: "cta" | "toc" | "faq", raw: string): string {
+function shortcodePlaceholder(type: "cta" | "cta-wordpress" | "toc" | "faq", raw: string): string {
   return `<div ${SHORTCODE_TYPE_ATTR}="${type}" ${SHORTCODE_RAW_ATTR}="${encodeShortcodeRaw(raw)}"></div>`;
 }
 

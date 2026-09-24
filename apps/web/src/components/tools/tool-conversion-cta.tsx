@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { GoogleIcon } from "@/components/brand/integration-icons";
+import { GoogleButton } from "@/components/landing/google-cta";
 import { fontDisplay } from "@/components/landing/style";
 
 /**
@@ -51,13 +51,7 @@ export function ToolConversionCta({
         </ul>
 
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Link
-            href="/signup?provider=google"
-            className="inline-flex h-12 items-center justify-center gap-2.5 rounded-full border border-[#151515] bg-white px-7 text-[15px] font-semibold text-[#151515] shadow-[4px_4px_0_#151515] transition-all hover:-translate-y-0.5 hover:shadow-[5px_6px_0_#151515] active:translate-y-0 active:shadow-[2px_2px_0_#151515]"
-          >
-            <GoogleIcon className="size-[18px]" />
-            Continue with Google
-          </Link>
+          <GoogleButton />
           <Link
             href="/signup"
             className="inline-flex h-12 items-center justify-center rounded-full border border-[#151515]/20 bg-white px-6 text-[14px] font-semibold text-[#151515] transition-colors hover:border-[#151515]/45"

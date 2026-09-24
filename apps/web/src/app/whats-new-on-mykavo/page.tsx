@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { GoogleButton } from "@/components/landing/google-cta";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
@@ -167,13 +168,15 @@ export default function WhatsNewPage() {
 
         <div className="mt-16 rounded-2xl border border-[#151515] bg-[#151515] p-8 text-center">
           <p className={`${fontDisplay} text-2xl text-[#E9EBDF] sm:text-3xl`}>Know what changed. Fix what matters.</p>
-          <Link
-            href="/signup"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515]"
-          >
-            Start monitoring free
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          <div className="mt-7 flex flex-col items-center gap-3">
+            <GoogleButton onDark />
+            <Link
+              href="/signup"
+              className="text-[13px] text-[#9C9E93] underline underline-offset-4 hover:text-[#E9EBDF]"
+            >
+              or sign up with email
+            </Link>
+          </div>
         </div>
       </main>
       <LandingFooter />

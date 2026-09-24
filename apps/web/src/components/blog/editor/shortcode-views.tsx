@@ -6,11 +6,12 @@ import {
   ReactNodeViewRenderer,
   type ReactNodeViewProps,
 } from "@tiptap/react";
-import { ListOrdered, MessageCircleQuestion, X, Zap } from "lucide-react";
+import { ListOrdered, MessageCircleQuestion, Plug, X, Zap } from "lucide-react";
 import {
   CtaBlockNode,
   FaqBlockNode,
   TocBlockNode,
+  WordpressCtaBlockNode,
 } from "@/lib/blog-editor/shortcode-nodes";
 import { joinFaqRaw, splitFaqRaw } from "@/lib/blog-editor/markdown-roundtrip";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,18 @@ function CtaChipView({ selected, deleteNode }: ReactNodeViewProps) {
       icon={<Zap className="size-4" aria-hidden />}
       title="MyKavo CTA"
       description="Start-free call to action"
+      onRemove={deleteNode}
+    />
+  );
+}
+
+function WordpressCtaChipView({ selected, deleteNode }: ReactNodeViewProps) {
+  return (
+    <ChipShell
+      selected={selected}
+      icon={<Plug className="size-4" aria-hidden />}
+      title="WordPress plugin CTA"
+      description="Try the free WordPress plugin"
       onRemove={deleteNode}
     />
   );
@@ -146,5 +159,6 @@ function withView(
 }
 
 export const CtaBlockWithView = withView(CtaBlockNode, CtaChipView);
+export const WordpressCtaBlockWithView = withView(WordpressCtaBlockNode, WordpressCtaChipView);
 export const TocBlockWithView = withView(TocBlockNode, TocChipView);
 export const FaqBlockWithView = withView(FaqBlockNode, FaqBlockView);

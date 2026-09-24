@@ -9,7 +9,7 @@ import {
 } from "./markdown-roundtrip";
 
 /**
- * Tiptap atom nodes for the MyKavo shortcode blocks ({{cta}}, {{toc}},
+ * Tiptap atom nodes for the MyKavo shortcode blocks ({{cta}}, {{cta-wordpress}}, {{toc}},
  * {{faq}}…{{/faq}}). Each node stores the EXACT raw markdown source of its
  * region in the `raw` attribute and serializes it back verbatim, so a load →
  * save round-trip is byte-identical for shortcode regions.
@@ -28,7 +28,7 @@ const serializeRaw: MarkdownNodeSpec["serialize"] = (state, node) => {
 
 function createShortcodeNode(options: {
   name: string;
-  type: "cta" | "toc" | "faq";
+  type: "cta" | "cta-wordpress" | "toc" | "faq";
   defaultRaw: string;
 }) {
   const { name, type, defaultRaw } = options;
@@ -81,6 +81,12 @@ export const CtaBlockNode = createShortcodeNode({
   name: "mykavoCta",
   type: "cta",
   defaultRaw: "{{cta}}",
+});
+
+export const WordpressCtaBlockNode = createShortcodeNode({
+  name: "mykavoCtaWordpress",
+  type: "cta-wordpress",
+  defaultRaw: "{{cta-wordpress}}",
 });
 
 export const TocBlockNode = createShortcodeNode({

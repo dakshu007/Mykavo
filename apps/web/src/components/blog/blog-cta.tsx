@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { GoogleIcon } from "@/components/brand/integration-icons";
+import { GoogleButton } from "@/components/landing/google-cta";
 import { fontDisplay } from "@/components/landing/style";
 
 /**
@@ -78,19 +78,13 @@ export function BlogCta({ showMorePosts = true }: { showMorePosts?: boolean }) {
             ))}
           </ul>
 
-          <div className="mx-auto mt-7 flex w-full max-w-xs flex-col overflow-hidden rounded-2xl border border-[#FFD400]/40 sm:w-fit sm:max-w-none sm:flex-row sm:rounded-full lg:mx-0">
-            <Link
-              href="/signup?provider=google"
-              className="flex items-center justify-center gap-2.5 bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#FFF3B0]"
-            >
-              <GoogleIcon className="size-[18px]" />
-              Continue with Google
-            </Link>
+          <div className="mt-8 flex flex-col items-center gap-3 lg:items-start">
+            <GoogleButton onDark />
             <Link
               href="/signup"
-              className="bg-white/[0.06] px-6 py-3.5 text-center text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-white/[0.12]"
+              className="text-[13px] text-[#9C9E93] underline underline-offset-4 transition-colors hover:text-[#E9EBDF]"
             >
-              Use email
+              or sign up with email
             </Link>
           </div>
 

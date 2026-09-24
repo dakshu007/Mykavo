@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { Check } from "lucide-react";
+import { GoogleButton } from "@/components/landing/google-cta";
+import { WpPluginDownload } from "@/components/landing/wp-plugin-download";
+import { WP_PLUGIN_PAGE_PATH, WP_PLUGIN_REQUIRES } from "@/config/wordpress-plugin";
 import { cn } from "@/lib/utils";
 import { parsePost, type FaqItem, type PostHeading } from "./blocks";
 import { BlogMarkdown } from "./markdown";
 
 /**
- * Renders a post's markdown plus its shortcode blocks ({{cta}}, {{toc}},
+ * Renders a post's markdown plus its shortcode blocks ({{cta}}, {{cta-wordpress}}, {{toc}},
  * {{faq}}…{{/faq}}) in author order. Used by both the public post page and
  * the editor live preview, so the preview shows exactly what readers see.
  */
@@ -24,6 +28,8 @@ export function PostContent({ content }: { content: string }) {
             );
           case "cta":
             return <CtaBlock key={index} />;
+          case "cta-wordpress":
+            return <WordpressCtaBlock key={index} />;
           case "toc":
             return <TocBlock key={index} headings={headings} />;
           case "faq":
@@ -52,15 +58,63 @@ function CtaBlock() {
         performance changes - and shows you exactly what changed, before your
         customers notice.
       </p>
-      <div className="mt-5">
-        <Link
-          href="/signup"
-          className="inline-flex items-center rounded-full bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] ring-1 ring-inset ring-black/15 transition-colors hover:bg-[#ffe14d]"
-        >
-          Start Monitoring Free
+      <div className="mt-6 flex flex-col items-center gap-3">
+        <GoogleButton size="md" />
+        <Link href="/signup" className="text-[12.5px] text-ink-secondary underline underline-offset-4 hover:text-ink">
+          or sign up with email
         </Link>
       </div>
-      <p className="mt-3 text-[12px] text-ink-faint">No credit card required</p>
+      <p className="mt-3 text-[12px] text-ink-faint">Free plan, no credit card required</p>
+    </aside>
+  );
+}
+
+const WP_CTA_POINTS = [
+  "A check after every plugin, theme and WordPress update",
+  "The update named when something broke",
+  "Nothing added to the pages your visitors load",
+];
+
+/**
+ * {{cta-wordpress}} - "Try the WordPress plugin" card for posts about
+ * WordPress. Theme-tokened like {{cta}} so it reads in the editor preview's
+ * dark theme too; the download button counts clicks with placement "blog".
+ */
+function WordpressCtaBlock() {
+  return (
+    <aside className="my-8 overflow-hidden rounded-tile border border-[#151515] bg-card text-left shadow-[5px_5px_0_#FFD400]">
+      <div className="px-6 py-7 sm:px-8">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-secondary">
+          Free WordPress plugin
+        </p>
+        <p className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-ink">
+          Update WordPress without fear.
+        </p>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-ink-secondary">
+          Try the MyKavo WordPress plugin: it checks your pages after every update and shows
+          exactly what changed, with before-and-after screenshots, right inside wp-admin.
+        </p>
+        <ul className="mt-4 space-y-2">
+          {WP_CTA_POINTS.map((point) => (
+            <li key={point} className="flex items-start gap-2.5 text-sm text-ink">
+              <Check className="mt-0.5 size-4 shrink-0 rounded-full bg-[#FFD400] p-0.5 text-[#151515]" aria-hidden />
+              {point}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <WpPluginDownload placement="blog" />
+          <Link
+            href={WP_PLUGIN_PAGE_PATH}
+            className="inline-flex items-center justify-center rounded-full border border-line px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:border-ink"
+          >
+            See how it works
+          </Link>
+        </div>
+        <p className="mt-4 text-[12px] text-ink-faint">
+          WordPress {WP_PLUGIN_REQUIRES.wordpress}+ · PHP {WP_PLUGIN_REQUIRES.php}+ · GPL · Free on every MyKavo plan
+        </p>
+      </div>
     </aside>
   );
 }

@@ -11,6 +11,7 @@ import {
   Search,
   ShieldCheck,
 } from "lucide-react";
+import { GoogleButton } from "@/components/landing/google-cta";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
@@ -208,7 +209,7 @@ function Check({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PrimaryCta() {
+function PrimaryCta({ onDark = false }: { onDark?: boolean }) {
   const className =
     "inline-flex items-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5";
   if (SHOPIFY_APP_STORE_URL) {
@@ -219,12 +220,7 @@ function PrimaryCta() {
       </a>
     );
   }
-  return (
-    <Link href="/signup" className={className}>
-      Start monitoring free
-      <ArrowRight className="size-4" aria-hidden />
-    </Link>
-  );
+  return <GoogleButton onDark={onDark} />;
 }
 
 export default function ShopifyAppPage() {
@@ -438,7 +434,7 @@ export default function ShopifyAppPage() {
               <span className="text-[#FFD400]">checked.</span>
             </h2>
             <div className="mt-9 flex justify-center">
-              <PrimaryCta />
+              <PrimaryCta onDark />
             </div>
             <p className="mt-6 text-sm text-[#E9EBDF]/70">
               On WordPress? See the <Link href="/wordpress-plugin" className="underline decoration-[#FFD400] underline-offset-4">MyKavo WordPress plugin</Link>.

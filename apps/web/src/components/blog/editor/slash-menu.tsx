@@ -11,6 +11,7 @@ import {
   ListOrdered,
   MessageCircleQuestion,
   Minus,
+  Plug,
   Table,
   TableOfContents,
   TextQuote,
@@ -126,6 +127,19 @@ export function buildSlashItems(actions: { insertImage: () => void }): SlashMenu
           .focus()
           .deleteRange(range)
           .insertContent({ type: "mykavoCta" })
+          .run(),
+    },
+    {
+      title: "WordPress plugin CTA",
+      description: "“Try the WordPress plugin” card with a download button.",
+      icon: Plug,
+      keywords: "cta-wordpress cta wordpress plugin wp download",
+      run: (editor, range) =>
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent({ type: "mykavoCtaWordpress" })
           .run(),
     },
     {

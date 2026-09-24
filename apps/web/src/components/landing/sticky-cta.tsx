@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { GoogleIcon } from "@/components/brand/integration-icons";
+import { GoogleButton } from "./google-cta";
 
 /**
- * Sticky split-pill CTA that floats at the bottom center once the visitor
- * scrolls past the hero - gold "Start free" segment + ink "How it works"
- * segment sharing one crisp ink-bordered capsule.
+ * Sticky CTA that floats at the bottom center once the visitor scrolls past
+ * the hero: the shared "Continue with Google" button, plus an ink "How it
+ * works" pill on wider screens.
  */
 export function StickyCta() {
   const [visible, setVisible] = useState(false);
@@ -25,17 +25,11 @@ export function StickyCta() {
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
       }`}
     >
-      <div className="flex overflow-hidden rounded-full border border-[#151515] shadow-[4px_4px_0_#151515]">
-        <Link
-          href="/signup?provider=google"
-          className="flex items-center gap-2 bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#FFF3B0]"
-        >
-          <GoogleIcon className="size-4" />
-          Continue with Google
-        </Link>
+      <div className="flex items-center gap-3">
+        <GoogleButton size="md" />
         <Link
           href="/#how-it-works"
-          className="border-l border-[#151515] bg-[#151515] px-6 py-3.5 text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
+          className="hidden h-11 items-center rounded-full border border-[#151515] bg-[#151515] px-6 text-[14px] font-semibold text-[#F5F5F0] shadow-[4px_4px_0_#FFD400] transition-colors hover:bg-[#2a2a2a] sm:inline-flex"
         >
           How it works
         </Link>
