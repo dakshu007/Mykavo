@@ -20,13 +20,13 @@ const EXAMPLES: Array<{
   {
     severity: "Critical",
     tone: "bg-[#FDE2E1] text-[#B42318]",
-    title: '"Add to cart" button is missing',
+    title: '"Add to cart" is missing',
     page: "/products/coffee",
   },
   {
     severity: "High",
     tone: "bg-[#FFE8D5] text-[#B54708]",
-    title: "Page changed from index to noindex",
+    title: "Page set to noindex",
     page: "/pricing",
   },
   {
