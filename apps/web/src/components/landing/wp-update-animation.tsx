@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useStageClock } from "./use-stage-clock";
 import { WP_PLUGIN_VERSION } from "@/config/wordpress-plugin";
 
 /**
@@ -310,47 +311,7 @@ function Tile({ src, label, alt, children }: { src: string; label: string; alt: 
 }
 
 export function WpUpdateAnimation() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [t, setT] = useState(0);
-  const [k, setK] = useState(1);
-
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const measure = () => setK(el.clientWidth / STAGE_W);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      const still = requestAnimationFrame(() => setT(STILL_T));
-      return () => {
-        cancelAnimationFrame(still);
-        ro.disconnect();
-      };
-    }
-
-    let visible = false;
-    const io = new IntersectionObserver((entries) => {
-      visible = entries[0]?.isIntersecting ?? false;
-    });
-    io.observe(el);
-
-    let raf = 0;
-    let last: number | null = null;
-    const step = (ts: number) => {
-      const dt = last == null ? 0 : Math.min(0.1, (ts - last) / 1000);
-      last = ts;
-      if (visible && !document.hidden) setT((v) => v + dt);
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      io.disconnect();
-    };
-  }, []);
+  const { wrapRef, t, k } = useStageClock(STAGE_W, STILL_T);
 
   const a = frameAt(t);
   const [th0, th1, th2, th3] = a.th;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useStageClock } from "./use-stage-clock";
 
 /**
  * The homepage Android animation: the web dashboard and the phone app,
@@ -60,9 +61,11 @@ export function syncFrameAt(t: number) {
 
   // Cursor and click on the web
   const cp = draw(u, 0.4, 1.3) * (1 - draw(u, 9.4, 10.6));
+  // After the click the cursor steps off the button so the progress label stays readable.
+  const off = enter(u, 1.7, 2.4) * (1 - draw(u, 9.4, 10.6));
   const cur = {
-    x: lerp(250, 352, cp),
-    y: lerp(300, 172, cp) - 24 * Math.sin(Math.PI * cp),
+    x: lerp(250, 352, cp) + 44 * off,
+    y: lerp(300, 172, cp) - 24 * Math.sin(Math.PI * cp) + 30 * off,
     o: ready,
     s: 1 - 0.16 * bell(u, 1.3, 1.55),
   };
@@ -244,47 +247,7 @@ function Stage({ children, k }: { children: ReactNode; k: number }) {
 }
 
 export function AppSyncAnimation() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [t, setT] = useState(0);
-  const [k, setK] = useState(1);
-
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const measure = () => setK(el.clientWidth / STAGE_W);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      const still = requestAnimationFrame(() => setT(STILL_T));
-      return () => {
-        cancelAnimationFrame(still);
-        ro.disconnect();
-      };
-    }
-
-    let visible = false;
-    const io = new IntersectionObserver((entries) => {
-      visible = entries[0]?.isIntersecting ?? false;
-    });
-    io.observe(el);
-
-    let raf = 0;
-    let last: number | null = null;
-    const step = (ts: number) => {
-      const dt = last == null ? 0 : Math.min(0.1, (ts - last) / 1000);
-      last = ts;
-      if (visible && !document.hidden) setT((v) => v + dt);
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      io.disconnect();
-    };
-  }, []);
+  const { wrapRef, t, k } = useStageClock(STAGE_W, STILL_T);
 
   const a = syncFrameAt(t);
 

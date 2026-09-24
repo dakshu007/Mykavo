@@ -5,14 +5,13 @@ import {
   WebhookIcon,
 } from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
+import { AlertChannelsAnimation } from "./alert-channels-animation";
 import { eyebrow, fontDisplay } from "./style";
 
 /**
- * Alert-channels showcase: a hub-and-spoke diagram with the MyKavo spark at
- * the center and the four delivery channels around it. Gold "alert packets"
- * travel outward along the connectors (pure CSS dash animation, paused for
- * reduced-motion users). Desktop shows the full diagram; small screens get
- * the hub above a 2x2 channel grid.
+ * Alert-channels showcase. From tablet width up it plays the delivery
+ * animation (alert-channels-animation.tsx); small screens get the hub above
+ * a 2x2 channel grid.
  */
 
 interface Channel {
@@ -20,11 +19,6 @@ interface Channel {
   name: string;
   desc: string;
   icon: (props: { className?: string }) => React.ReactElement;
-  /** Diagram card position (desktop). */
-  position: string;
-  /** Connector path from the hub to this card (880x400 viewBox). */
-  path: string;
-  delay: string;
 }
 
 const CHANNELS: Channel[] = [
@@ -35,36 +29,24 @@ const CHANNELS: Channel[] = [
     icon: ({ className }: { className?: string }) => (
       <Mail className={className} strokeWidth={1.8} />
     ),
-    position: "left-0 top-0",
-    path: "M 440 200 C 355 200 330 66 228 66",
-    delay: "0s",
   },
   {
     key: "slack",
     name: "Slack",
     desc: "Straight into your #alerts channel",
     icon: SlackIcon,
-    position: "right-0 top-0",
-    path: "M 440 200 C 525 200 550 66 652 66",
-    delay: "0.9s",
   },
   {
     key: "discord",
     name: "Discord",
     desc: "Pings where your team hangs out",
     icon: DiscordIcon,
-    position: "bottom-0 left-0",
-    path: "M 440 200 C 355 200 330 334 228 334",
-    delay: "1.8s",
   },
   {
     key: "webhook",
     name: "Webhook",
     desc: "Signed JSON to any endpoint",
     icon: WebhookIcon,
-    position: "bottom-0 right-0",
-    path: "M 440 200 C 525 200 550 334 652 334",
-    delay: "2.7s",
   },
 ];
 
@@ -105,18 +87,13 @@ export function AlertChannelsSection() {
   return (
     <section id="alert-channels" className="border-y border-black/10 bg-[#F3F1E6]">
       <style>{`
-        @keyframes ac-travel {
-          from { stroke-dashoffset: 156; }
-          to { stroke-dashoffset: 0; }
-        }
         @keyframes ac-ring {
           0% { transform: scale(1); opacity: 0.9; }
           100% { transform: scale(1.45); opacity: 0; }
         }
-        .ac-packet { animation: ac-travel 3.6s linear infinite; }
         .ac-pulse { animation: ac-ring 2.4s ease-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .ac-packet, .ac-pulse { animation: none; }
+          .ac-pulse { animation: none; }
           .ac-pulse { opacity: 0; }
         }
       `}</style>
@@ -141,45 +118,11 @@ export function AlertChannelsSection() {
           scan, gated by severity, with a send-test button on every channel.
         </p>
 
-        {/* Desktop diagram: hub + four channels + animated connectors */}
-        <div className="relative mx-auto mt-14 hidden h-100 max-w-220 md:block">
-          <svg
-            viewBox="0 0 880 400"
-            className="absolute inset-0 size-full"
-            aria-hidden
-            fill="none"
-          >
-            {CHANNELS.map((c) => (
-              <g key={c.key}>
-                {/* Static rail */}
-                <path d={c.path} stroke="#151515" strokeOpacity="0.18" strokeWidth="1.5" strokeDasharray="3 6" />
-                {/* Traveling gold packet */}
-                <path
-                  d={c.path}
-                  className="ac-packet"
-                  stroke="#FFD400"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeDasharray="14 142"
-                  style={{ animationDelay: c.delay }}
-                />
-              </g>
-            ))}
-          </svg>
-
-          {CHANNELS.map((c) => (
-            <ChannelCard key={c.key} channel={c} className={`absolute ${c.position}`} />
-          ))}
-
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Hub />
-          </div>
+        {/* Tablet and desktop: the delivery animation (scan, severity gate,
+            grouping, fan-out to each channel). Phones keep the static grid. */}
+        <div className="mx-auto mt-14 hidden max-w-5xl md:block">
+          <AlertChannelsAnimation />
         </div>
-
-        {/* Mono caption under the diagram */}
-        <p className="mt-10 hidden text-center font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60] md:block">
-          critical · high · medium - you choose what gets through
-        </p>
 
         {/* Small screens: hub above a 2x2 grid */}
         <div className="mt-12 flex flex-col items-center gap-8 md:hidden">
