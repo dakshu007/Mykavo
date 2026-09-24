@@ -210,9 +210,15 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     await p.locator('tr[data-slug="demo-shop"]').first().screenshot({ path: OUT + '/28-plugin-risk.png' });
   });
 
-  await step('updates screen notice', async () => {
+  await step('no MyKavo notice on the Updates screen; menu below core items', async () => {
     await p.goto(WP + '/wp-admin/update-core.php');
-    console.log('     notice:', (await p.locator('.notice', { hasText: 'Safe Updates' }).first().textContent()).trim().slice(0, 60));
+    const notices = await p.locator('.notice', { hasText: /MyKavo|Safe Updates/ }).count();
+    if (notices) throw new Error('MyKavo notice on the Updates screen');
+    const order = await p.evaluate(() => Array.from(document.querySelectorAll('#adminmenu > li.menu-top')).map((li) => li.id));
+    const mine = order.indexOf('toplevel_page_mykavo');
+    const settings = order.indexOf('menu-settings');
+    console.log('     menu position:', mine, 'settings at', settings);
+    if (mine < settings) throw new Error('MyKavo menu above Settings');
   });
 
   await step('site health test and info', async () => {

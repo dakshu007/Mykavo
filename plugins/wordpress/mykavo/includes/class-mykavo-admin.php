@@ -62,8 +62,7 @@ final class MyKavo_Admin {
 			'manage_options',
 			self::SLUG,
 			array( __CLASS__, 'render_page' ),
-			self::menu_icon(),
-			3
+			self::menu_icon()
 		);
 		add_action( 'load-' . self::$hook, array( __CLASS__, 'handle_return' ) );
 	}

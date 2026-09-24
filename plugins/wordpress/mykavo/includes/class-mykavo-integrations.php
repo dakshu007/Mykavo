@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Plugins screen and Updates screen warnings, Site Health, "Monitor with
+ * Plugins screen warnings, Site Health, "Monitor with
  * MyKavo" on the Pages and Posts lists, and WooCommerce checkout pages.
  *
  * Nothing here calls MyKavo while a screen renders: it reads the local
@@ -24,7 +24,6 @@ final class MyKavo_Integrations {
 	 */
 	public static function init() {
 		add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 3 );
-		add_action( 'admin_notices', array( __CLASS__, 'updates_screen_notice' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'monitor_result_notice' ) );
 		add_filter( 'site_status_tests', array( __CLASS__, 'site_health_tests' ) );
 		add_filter( 'debug_information', array( __CLASS__, 'debug_information' ) );
@@ -37,8 +36,8 @@ final class MyKavo_Integrations {
 	/* -------------------------------------------------------- update safety -- */
 
 	/**
-	 * Under each plugin with an update waiting: that MyKavo will check the
-	 * site afterwards, and what happened the last time this plugin updated.
+	 * Under a plugin with an update waiting, a warning when the last update of
+	 * that plugin changed the site. Nothing is added to any other row.
 	 *
 	 * @param array  $meta Row meta links.
 	 * @param string $file Plugin basename.
@@ -57,6 +56,8 @@ final class MyKavo_Integrations {
 		$name = isset( $data['Name'] ) ? (string) $data['Name'] : '';
 		$last = '' !== $name ? MyKavo_Updates::last_update_of( 'plugin', $name ) : null;
 
+		// Only when there is something worth knowing: this plugin's last
+		// update changed the site. No line on every other plugin.
 		if ( $last && null !== $last['changes'] && $last['changes'] > 0 ) {
 			$meta[] = '<span class="mykavo-risk" style="color:#b32d2e;font-weight:600">' . esc_html(
 				sprintf(
@@ -72,42 +73,8 @@ final class MyKavo_Integrations {
 					$last['to'] ? $last['to'] : '?'
 				)
 			) . '</span>';
-		} elseif ( MyKavo_Updates::enabled() ) {
-			$meta[] = '<span class="mykavo-safe" style="color:#1a7f47">' . esc_html__( 'MyKavo will check your site after this update.', 'mykavo' ) . '</span>';
 		}
 		return $meta;
-	}
-
-	/**
-	 * Dashboard > Updates: reassurance before pressing Update.
-	 *
-	 * @return void
-	 */
-	public static function updates_screen_notice() {
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || 'update-core' !== $screen->id || ! current_user_can( 'update_plugins' ) ) {
-			return;
-		}
-		$page = admin_url( 'admin.php?page=' . MyKavo_Admin::SLUG );
-		if ( ! MyKavo_Connection::is_connected() ) {
-			printf(
-				'<div class="notice notice-info"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
-				esc_html__( 'Worried an update will break something? MyKavo can check your site after every update and tell you exactly which one did it.', 'mykavo' ),
-				esc_url( $page ),
-				esc_html__( 'Connect MyKavo', 'mykavo' )
-			);
-			return;
-		}
-		if ( ! MyKavo_Updates::enabled() ) {
-			return;
-		}
-		printf(
-			'<div class="notice notice-success"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
-			esc_html__( 'Safe Updates is on.', 'mykavo' ),
-			esc_html__( 'After you update, MyKavo checks your pages and tells you whether anything broke.', 'mykavo' ),
-			esc_url( $page ),
-			esc_html__( 'Update history', 'mykavo' )
-		);
 	}
 
 	/* ---------------------------------------------------------- site health -- */

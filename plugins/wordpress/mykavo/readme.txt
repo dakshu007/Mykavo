@@ -1,5 +1,5 @@
 === MyKavo - Website Change Monitoring ===
-Contributors: mykavo
+Contributors: dakshu007
 Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
@@ -169,7 +169,7 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * On-demand scans with live progress, scan history and monitored pages.
 * WooCommerce store guard for Shop, Cart, Checkout and My account.
 * "Monitor with MyKavo" under every published page and post.
-* Update warnings on the Plugins screen and a Safe Updates notice on Dashboard > Updates.
+* A warning on the Plugins screen for a plugin whose last update changed your site.
 * Site Health test and Info section, admin menu badge and Dashboard widget.
 * WP-CLI commands: `wp mykavo status`, `changes`, `scan --wait`, `monitor`, `updates`, `safe-updates` and `disconnect`.
 * Suggested privacy policy text.

@@ -73,10 +73,7 @@ the update log), with no remote call, except the two explicit actions below.
 
 - **Plugins screen:** `plugin_row_meta` flags a plugin with an update waiting
   if the last *checked* update of that plugin changed the site
-  (`MyKavo_Updates::last_update_of`). Otherwise it says the update will be
-  checked.
-- **Dashboard > Updates:** a notice that Safe Updates is on (or an invitation to
-  connect).
+  (`MyKavo_Updates::last_update_of`). Nothing is added to other rows.
 - **Site Health:** a direct test (from the cached summary) and an Info section
   for support requests.
 - **Monitor with MyKavo:** a row action on published pages and posts
@@ -181,6 +178,18 @@ minimal WP_CLI stand-in). 1.2.0: 29 steps pass on both, adding the WooCommerce s
 `dev/woo-stub.php`), adding a page from the Pages tab, the "Monitor with
 MyKavo" row action, the Plugins-screen update warning (`dev/probe/offer-update.php`),
 the Updates-screen notice, Site Health, and the expired-Connect-button notice.
+
+## WordPress.org review notes
+
+The first review (September 2026) asked for: the text domain to match the
+slug (we asked for the slug `mykavo`, which the text domain already is),
+`dakshu007` in Contributors, a normal menu position (no explicit position, so
+MyKavo sits below the core items), ownership proof (DNS TXT record
+`wordpressorg-dakshu007-verification` on mykavo.app), and restraint with
+admin notices (Guideline 11). For that last one the plugin shows only a
+one-time, dismissible notice after activation on the Plugins screen, the
+per-plugin warning above, and the result of "Monitor with MyKavo"; there is
+no notice on Dashboard > Updates and no prompt to connect anywhere else.
 
 ## Releasing to WordPress.org
 
