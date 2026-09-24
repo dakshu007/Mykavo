@@ -83,6 +83,71 @@ final class MyKavo_Updates {
 		return is_array( $log ) ? array_values( $log ) : array();
 	}
 
+	/**
+	 * Record final verdicts from MyKavo's scan list into the local log, so an
+	 * update keeps its "nothing changed" / "3 changes" long after the scan
+	 * has scrolled out of the recent list.
+	 *
+	 * @param array $scans Scans from /api/wp/v1/scans.
+	 * @return void
+	 */
+	public static function absorb_results( array $scans ) {
+		$by_id = array();
+		foreach ( $scans as $scan ) {
+			if ( is_array( $scan ) && ! empty( $scan['id'] ) ) {
+				$by_id[ (string) $scan['id'] ] = $scan;
+			}
+		}
+		$log     = self::log();
+		$changed = false;
+		foreach ( $log as $i => $entry ) {
+			if ( empty( $entry['scan_id'] ) || ! empty( $entry['result'] ) || ! isset( $by_id[ $entry['scan_id'] ] ) ) {
+				continue;
+			}
+			$scan = $by_id[ $entry['scan_id'] ];
+			if ( ! in_array( $scan['status'], array( 'COMPLETED', 'PARTIAL', 'FAILED' ), true ) ) {
+				continue;
+			}
+			$log[ $i ]['result'] = array(
+				'status'   => sanitize_key( (string) $scan['status'] ),
+				'changes'  => isset( $scan['changesDetected'] ) ? (int) $scan['changesDetected'] : 0,
+				'severity' => isset( $scan['highestSeverity'] ) ? sanitize_key( (string) $scan['highestSeverity'] ) : '',
+			);
+			$changed             = true;
+		}
+		if ( $changed ) {
+			update_option( self::LOG, $log, false );
+		}
+	}
+
+	/**
+	 * What MyKavo found the last time a given package's update was checked,
+	 * from the log. Updates that were not checked are skipped.
+	 *
+	 * @param string $type Package type (plugin, theme).
+	 * @param string $name Display name as WordPress shows it.
+	 * @return array|null { from, to, at, changes|null, severity }
+	 */
+	public static function last_update_of( $type, $name ) {
+		foreach ( self::log() as $entry ) {
+			if ( empty( $entry['result'] ) ) {
+				continue;
+			}
+			foreach ( isset( $entry['items'] ) ? (array) $entry['items'] : array() as $item ) {
+				if ( isset( $item['type'], $item['name'] ) && $type === $item['type'] && $name === $item['name'] ) {
+					return array(
+						'from'     => isset( $item['from'] ) ? $item['from'] : '',
+						'to'       => isset( $item['to'] ) ? $item['to'] : '',
+						'at'       => isset( $entry['at'] ) ? (int) $entry['at'] : 0,
+						'changes'  => isset( $entry['result']['changes'] ) ? (int) $entry['result']['changes'] : null,
+						'severity' => isset( $entry['result']['severity'] ) ? (string) $entry['result']['severity'] : '',
+					);
+				}
+			}
+		}
+		return null;
+	}
+
 	/* ---------------------------------------------------------- the hooks -- */
 
 	/**

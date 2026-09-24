@@ -6,7 +6,8 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   const ctx = await b.newContext({ viewport: { width: 1440, height: 1000 } });
   const p = await ctx.newPage();
   const errors = [];
-  p.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push('console: ' + m.text()); });
+  p.on('response', (r) => { if (r.status() >= 400) errors.push(r.status() + ' ' + r.request().method() + ' ' + r.url().replace(WP, '')); });
   p.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   p.on('requestfailed', (r) => { if (!r.url().includes('favicon')) errors.push('failed: ' + r.url()); });
   const step = async (name, fn) => { try { await fn(); console.log('ok  ', name); } catch (e) { console.log('FAIL', name, e.message.split('\n')[0]); } };
@@ -116,7 +117,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
     console.log('     entry:', (await p.locator('.mk-update-title').first().textContent()).trim(), '|', (await p.locator('.mk-verdict').first().textContent()).trim());
     await p.screenshot({ path: OUT + '/20-updates-checking.png', fullPage: true });
-    await p.waitForSelector('.mk-update .mk-verdict-bad', { timeout: 90000 });
+    await p.waitForSelector('.mk-update:first-child .mk-verdict-bad', { timeout: 90000 });
     console.log('     verdict:', (await p.locator('.mk-verdict').first().textContent()).trim());
     await p.screenshot({ path: OUT + '/21-updates-verdict.png', fullPage: true });
     await p.click('[data-act="update-changes"]'); await p.waitForSelector('.mk-filter-note');
@@ -151,6 +152,56 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     await p.screenshot({ path: OUT + '/24-overview-safe-updates.png', fullPage: true });
   });
 
+  await step('woocommerce: store pages guarded in one click', async () => {
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-store');
+    console.log('     store pages not monitored:', await p.locator('.mk-store .is-off').count());
+    await p.screenshot({ path: OUT + '/25-store-guard.png', fullPage: true });
+    await p.click('[data-act="guard-store"]'); await p.waitForSelector('.mk-store-ok', { timeout: 30000 });
+    console.log('     after:', (await p.locator('.mk-store-ok').textContent()).trim(), '|', (await p.locator('.mk-toast').textContent()).trim());
+  });
+
+  await step('pages tab: monitor another page', async () => {
+    await p.click('[data-tab="pages"]'); await p.waitForSelector('.mk-add-page');
+    const before = await p.locator('.mk-list li').count();
+    await p.fill('#mk-add-url', WP + '/sample-page/'); await p.click('.mk-add-page button');
+    await p.waitForFunction((n) => document.querySelectorAll('.mk-list li').length > n, before, { timeout: 30000 });
+    console.log('     pages:', before, '->', await p.locator('.mk-list li').count());
+    await p.screenshot({ path: OUT + '/26-pages-add.png', fullPage: true });
+  });
+
+  await step('pages list: "Monitor with MyKavo" row action', async () => {
+    await p.evaluate(() => wp.apiFetch({ path: '/wp/v2/pages', method: 'POST', data: { title: 'Pricing', status: 'publish' } }));
+    await p.goto(WP + '/wp-admin/edit.php?post_type=page');
+    const row = p.locator('tr', { has: p.locator('a.row-title', { hasText: /^Pricing$/ }) }).first();
+    await row.hover(); await row.locator('.mykavo_monitor a').click();
+    await p.waitForSelector('.notice-success');
+    console.log('     notice:', (await p.locator('.notice-success p').first().textContent()).trim());
+    await p.screenshot({ path: OUT + '/27-row-action.png', clip: { x: 0, y: 0, width: 1440, height: 520 } });
+  });
+
+  await step('plugins screen: update risk from the last check', async () => {
+    await p.request.get(WP + '/wp-content/mu-plugins/probe/offer-update.php');
+    await p.goto(WP + '/wp-admin/plugins.php');
+    const risk = p.locator('.mykavo-risk, .mykavo-safe').first();
+    await risk.waitFor({ timeout: 15000 });
+    console.log('     demo shop row:', (await risk.textContent()).trim());
+    await p.locator('tr[data-slug="demo-shop"]').first().screenshot({ path: OUT + '/28-plugin-risk.png' });
+  });
+
+  await step('updates screen notice', async () => {
+    await p.goto(WP + '/wp-admin/update-core.php');
+    console.log('     notice:', (await p.locator('.notice', { hasText: 'Safe Updates' }).first().textContent()).trim().slice(0, 60));
+  });
+
+  await step('site health test and info', async () => {
+    await p.goto(WP + '/wp-admin/site-health.php');
+    const t = p.locator('.health-check-accordion-trigger', { hasText: /MyKavo|monitored pages/ }).first();
+    await t.waitFor({ timeout: 60000 });
+    console.log('     site health:', (await t.textContent()).replace(/\s+/g, ' ').trim());
+    await p.goto(WP + '/wp-admin/site-health.php?tab=debug');
+    await p.waitForSelector('#health-check-accordion-block-mykavo', { state: 'attached' });
+  });
+
   await step('dashboard widget', async () => {
     await p.goto(WP + '/wp-admin/'); await p.waitForSelector('#mykavo_status');
     await p.waitForTimeout(800);
@@ -176,6 +227,14 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     await p.screenshot({ path: OUT + '/18-menu.png', clip: { x: 900, y: 0, width: 540, height: 360 } });
     await p.click('[data-act="disconnect"]');
     await p.waitForSelector('.mk-welcome');
+  });
+
+  await step('an expired Connect button explains itself', async () => {
+    await p.goto(WP + '/wp-admin/admin-post.php?action=mykavo_connect&_wpnonce=stale');
+    await p.waitForSelector('.mk-welcome');
+    const text = (await p.locator('.mk-banner').first().textContent()).trim();
+    if (!/expired/.test(text)) throw new Error('no stale notice: ' + text);
+    console.log('     banner:', text);
   });
 
   console.log('errors:', errors.length ? errors : 'none');

@@ -307,6 +307,16 @@ export async function runScanWebsiteJob(
       stageFailures.push({ stage: "COMPARISON", code: "COMPARISON_FAILED" });
       logger.error("comparison failed", log, err);
     }
+    // Pages added after the first baseline (dashboard, WordPress plugin) have
+    // nothing to compare against yet. Their first good snapshot becomes
+    // version 1 so the next scan compares them. Pages that already have a
+    // baseline are untouched.
+    try {
+      const baselines = await createInitialBaselinesForScan(prisma, scanId);
+      if (baselines > 0) logger.info("baselines created for new pages", { ...log, baselines });
+    } catch (err) {
+      logger.error("baseline creation for new pages failed", log, err);
+    }
   }
 
   const outcome = resolveScanOutcome({

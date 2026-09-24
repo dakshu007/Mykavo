@@ -14,8 +14,8 @@ defined( 'ABSPATH' ) || exit;
 final class MyKavo_Connection {
 
 	const OPTION        = 'mykavo_connection';
-	const HANDSHAKE_TTL = 900;
 	const SUMMARY_KEY   = 'mykavo_summary';
+	const HANDSHAKE_TTL = 3600; // An hour to sign up, add the website and approve.
 
 	/**
 	 * The saved connection, or null when this site is not connected.
@@ -82,7 +82,7 @@ final class MyKavo_Connection {
 	 * @return void
 	 */
 	public static function flush_cache() {
-		foreach ( array( 'site', 'pages', 'scans', 'changes_open', 'changes_all' ) as $key ) {
+		foreach ( array( 'site', 'pages', 'scans', 'changes_open', 'changes_all', 'pages_urls' ) as $key ) {
 			delete_transient( 'mykavo_cache_' . $key );
 		}
 	}
@@ -91,7 +91,7 @@ final class MyKavo_Connection {
 
 	/**
 	 * Start a connect handshake for the current user: a CSRF state and a PKCE
-	 * verifier, kept server-side for 15 minutes.
+	 * verifier, kept server-side for an hour.
 	 *
 	 * @return array{state:string,challenge:string}
 	 */

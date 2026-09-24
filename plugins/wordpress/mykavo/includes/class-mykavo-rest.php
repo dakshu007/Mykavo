@@ -139,9 +139,28 @@ final class MyKavo_Rest {
 			self::NS,
 			'/pages',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'pages' ),
-				'permission_callback' => $admin,
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'pages' ),
+					'permission_callback' => $admin,
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'add_pages' ),
+					'permission_callback' => $admin,
+					'args'                => array(
+						'urls' => array(
+							'type'     => 'array',
+							'required' => true,
+							'items'    => array(
+								'type'   => 'string',
+								'format' => 'uri',
+							),
+							'minItems' => 1,
+							'maxItems' => 20,
+						),
+					),
+				),
 			)
 		);
 
@@ -304,11 +323,41 @@ final class MyKavo_Rest {
 	}
 
 	/**
-	 * Safe Updates log (kept on this site) and whether checks are on.
+	 * Start monitoring pages picked in WordPress (WooCommerce guard, Pages tab).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function add_pages( WP_REST_Request $request ) {
+		$pages = array();
+		foreach ( (array) $request->get_param( 'urls' ) as $url ) {
+			$pages[] = array( 'url' => esc_url_raw( (string) $url ) );
+		}
+		$result = MyKavo_API::request( 'POST', '/pages', array( 'pages' => $pages ) );
+		MyKavo_Connection::flush_cache();
+		return self::respond( $result );
+	}
+
+	/**
+	 * Safe Updates log (kept on this site) and whether checks are on. Final
+	 * verdicts are copied into the log so they survive the recent-scan list.
 	 *
 	 * @return WP_REST_Response
 	 */
 	public static function updates() {
+		$pending = false;
+		foreach ( MyKavo_Updates::log() as $entry ) {
+			if ( ! empty( $entry['scan_id'] ) && empty( $entry['result'] ) ) {
+				$pending = true;
+				break;
+			}
+		}
+		if ( $pending ) {
+			$scans = MyKavo_API::get( '/scans', 'scans', 30 );
+			if ( ! is_wp_error( $scans ) && isset( $scans['scans'] ) && is_array( $scans['scans'] ) ) {
+				MyKavo_Updates::absorb_results( $scans['scans'] );
+			}
+		}
 		return rest_ensure_response(
 			array(
 				'enabled' => MyKavo_Updates::enabled(),

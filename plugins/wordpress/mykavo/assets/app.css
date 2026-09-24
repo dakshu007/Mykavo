@@ -1889,3 +1889,114 @@
 		white-space: normal;
 	}
 }
+
+/* ------------------------------------------------------ store + pages -- */
+
+.mk-store-list {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+	padding: 14px 22px 4px;
+	list-style: none;
+}
+
+.mk-store-list li {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 9px 12px;
+	border-radius: var(--mk-radius-sm);
+	background: var(--mk-paper);
+	font-size: 13.5px;
+	font-weight: 600;
+}
+
+.mk-store-list svg {
+	width: 15px;
+	height: 15px;
+	flex-shrink: 0;
+}
+
+.mk-store-list em {
+	margin-left: auto;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 600;
+}
+
+.mk-store-list .is-on {
+	color: var(--mk-good);
+}
+
+.mk-store-list .is-on span {
+	color: var(--mk-ink);
+}
+
+.mk-store-list .is-off {
+	color: var(--mk-crit);
+}
+
+.mk-store-list .is-off span {
+	color: var(--mk-ink);
+}
+
+.mk-store-foot {
+	padding: 12px 22px 20px;
+}
+
+.mk-store-foot p {
+	margin-bottom: 12px !important;
+	color: var(--mk-ink-2);
+	font-size: 13px;
+}
+
+.mk-store-ok {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin-bottom: 0 !important;
+	color: var(--mk-good) !important;
+	font-weight: 600;
+}
+
+.mk-store-ok svg {
+	width: 15px;
+	height: 15px;
+}
+
+.mk-add-wrap {
+	padding: 14px 22px;
+	border-bottom: 1px solid var(--mk-line-2);
+}
+
+.mk-add-page {
+	display: flex;
+	gap: 8px;
+}
+
+.mk-add-page input {
+	flex: 1;
+	min-width: 0;
+	height: 34px;
+	padding: 0 12px;
+	border: 1px solid var(--mk-line);
+	border-radius: 999px;
+	background: var(--mk-card);
+	font-size: 13px;
+}
+
+.mk-add-page input:focus {
+	border-color: var(--mk-ink);
+	outline: none;
+	box-shadow: none;
+}
+
+.mk-add-tip {
+	margin-top: 8px !important;
+	color: var(--mk-ink-3);
+	font-size: 12px;
+}
+
+.mk-add-tip .mk-link {
+	font-size: 12px;
+}

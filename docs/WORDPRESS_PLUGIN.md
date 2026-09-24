@@ -33,6 +33,36 @@ Plan gate: deploy checks are Pro and Agency. On Free, updates are still listed
 The two update hooks are registered on every request but only load code when
 WordPress is actually updating; the e2e test still shows zero front-end cost.
 
+## Working where WordPress admins already are (1.2.0)
+
+`includes/class-mykavo-integrations.php` hooks into existing wp-admin screens.
+Everything is `is_admin()` only and reads local data (the summary transient and
+the update log), with no remote call, except the two explicit actions below.
+
+- **Plugins screen:** `plugin_row_meta` flags a plugin with an update waiting
+  if the last *checked* update of that plugin changed the site
+  (`MyKavo_Updates::last_update_of`). Otherwise it says the update will be
+  checked.
+- **Dashboard > Updates:** a notice that Safe Updates is on (or an invitation to
+  connect).
+- **Site Health:** a direct test (from the cached summary) and an Info section
+  for support requests.
+- **Monitor with MyKavo:** a row action on published pages and posts
+  (`admin-post.php?action=mykavo_monitor`, nonce + `manage_options`). It sends
+  `POST /api/wp/v1/pages`, which adds same-origin pages only, within plan page
+  limits.
+- **WooCommerce store guard:** when WooCommerce is active, the overview shows
+  whether Shop, Cart, Checkout and My account are monitored and adds the missing
+  ones in one click (same endpoint).
+- **Saved verdicts:** when `/updates` is read, final scan results are copied
+  into the update log, so an old update keeps "Verified - nothing changed" or
+  "N changes found" after the scan leaves the recent list.
+
+Pages added after a website's first baseline get their own version-1 baseline
+on the next scan that captures them. The worker does this after comparison
+(`createInitialBaselinesForScan` only touches pages without any baseline), so
+pages added from the dashboard benefit too.
+
 ## The performance contract
 
 The reason people delete plugins is that they slow sites down. This one is built
@@ -64,7 +94,7 @@ MyKavo options and no cron events.
 OAuth's authorization-code flow with PKCE (RFC 7636):
 
 1. **Connect** (admin-post, nonce + `manage_options`) creates a `state` and a
-   PKCE verifier, kept in a per-user transient for 15 minutes, and sends the
+   PKCE verifier, kept in a per-user transient for an hour, and sends the
    admin to `mykavo.app/connect/wordpress` with the S256 challenge.
 2. A signed-in MyKavo member (not a Viewer) picks which website this is and
    approves. `POST /api/wp/v1/connect/approve` re-validates everything: the
@@ -91,7 +121,7 @@ MyKavo dashboard, or deleting the website (the row cascades).
 | Crypto, validation, signed media | `src/lib/integrations/site-connection.ts` (+ tests) |
 | Token auth | `src/lib/integrations/site-auth.ts` |
 | Consent screen | `src/app/(auth)/connect/wordpress/page.tsx` |
-| API | `src/app/api/wp/v1/*` (connect, site, changes, scans, pages, media, disconnect) |
+| API | `src/app/api/wp/v1/*` (connect, site, changes, scans, pages (GET, POST), updates, media, disconnect) |
 | Scan trigger shared with the dashboard | `src/lib/scans/trigger.ts` |
 | Dashboard management | `src/components/dashboard/connected-sites.tsx`, `src/app/api/site-connections/[id]` |
 
@@ -112,6 +142,10 @@ minimum) with PHP 7.4 (the minimum). 1.1.0: all 23 steps pass on both, including
 Safe Updates (a real upgrader sequence simulated by `dev/probe/fake-update.php`:
 versions captured, manual vs automatic, verdict, attribution, switch off) and a
 390px phone layout. WordPress Coding Standards and PHPCompatibilityWP (7.4+) report no issues.
+1.2.0: 29 steps pass on both, adding the WooCommerce store guard (with
+`dev/woo-stub.php`), adding a page from the Pages tab, the "Monitor with
+MyKavo" row action, the Plugins-screen update warning (`dev/probe/offer-update.php`),
+the Updates-screen notice, Site Health, and the expired-Connect-button notice.
 
 ## Releasing to WordPress.org
 

@@ -39,6 +39,7 @@
 		updates: null,
 		updatesError: null,
 		changesScan: null,
+		addUrl: '',
 		banner: bannerFromNotice( cfg.notice ),
 		menuOpen: false,
 		busy: '',
@@ -234,6 +235,8 @@
 				return { tone: 'neutral', text: __( 'Connection cancelled. Nothing was changed.', 'mykavo' ) };
 			case 'expired':
 				return { tone: 'bad', text: __( 'That connect link expired. Press Connect to try again.', 'mykavo' ) };
+			case 'stale':
+				return { tone: 'neutral', text: __( 'That Connect button had been open a long time and expired. Press Connect again - it only takes a moment.', 'mykavo' ) };
 			case 'failed':
 				return { tone: 'bad', text: __( 'Could not finish connecting to MyKavo. Check that this server can make outbound HTTPS requests, then try again.', 'mykavo' ) };
 			default:
@@ -887,7 +890,7 @@
 			'<div class="mk-grid">' +
 			hero( o ) +
 			stats( o ) +
-			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + breakdown + '</div><div class="mk-grid">' + safeUpdatesCard() + recent + plan + '</div></div>' +
+			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + breakdown + '</div><div class="mk-grid">' + storeCard() + safeUpdatesCard() + recent + plan + '</div></div>' +
 			'</div>'
 		);
 	}
@@ -972,15 +975,24 @@
 			return loadingBlock( 240 );
 		}
 		var links = ( state.overview && state.overview.links ) || {};
+		var pagesUrl = cfg.pagesUrl ? safeUrl( new URL( cfg.pagesUrl, window.location.href ).toString() ) : '';
+		var adder =
+			'<div class="mk-add-wrap"><form class="mk-add-page" data-form="add-page">' +
+			'<label class="mk-visually-hidden" for="mk-add-url">' + esc( __( 'Page address', 'mykavo' ) ) + '</label>' +
+			'<input id="mk-add-url" data-key="add-url" type="url" required placeholder="' + esc( ( ( cfg.site && cfg.site.url ) || 'https://' ) + 'contact/' ) + '" value="' + esc( state.addUrl || '' ) + '">' +
+			'<button type="submit" class="mk-btn mk-btn-dark mk-btn-sm"' + ( state.busy === 'add-pages' ? ' disabled' : '' ) + '>' + esc( __( 'Monitor this page', 'mykavo' ) ) + '</button>' +
+			'</form>' +
+			( pagesUrl ? '<p class="mk-add-tip">' + esc( __( 'Tip: every page in your Pages list now has a "Monitor with MyKavo" link.', 'mykavo' ) ) + ' <a class="mk-link" href="' + esc( pagesUrl ) + '">' + esc( __( 'Open Pages', 'mykavo' ) ) + '</a></p>' : '' ) +
+			'</div>';
 		var head =
 			'<div class="mk-card-head"><h3 class="mk-card-title">' + esc( sprintf( _n( '%d monitored page', '%d monitored pages', state.pages.pages.length, 'mykavo' ), state.pages.pages.length ) ) + '</h3>' +
 			( safeUrl( links.pages ) ? '<a class="mk-link" href="' + esc( safeUrl( links.pages ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Change pages', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
 			'</div>';
 		if ( ! state.pages.pages.length ) {
-			return '<section class="mk-card">' + head + '<div class="mk-empty"><span>' + esc( __( 'No pages are monitored yet.', 'mykavo' ) ) + '</span></div></section>';
+			return '<section class="mk-card">' + head + adder + '<div class="mk-empty"><span>' + esc( __( 'No pages are monitored yet.', 'mykavo' ) ) + '</span></div></section>';
 		}
 		return (
-			'<section class="mk-card">' + head + '<ul class="mk-list">' +
+			'<section class="mk-card">' + head + adder + '<ul class="mk-list">' +
 			state.pages.pages.map( function ( p ) {
 				var url = safeUrl( p.url );
 				return (
@@ -1054,6 +1066,15 @@
 			return { tone: 'quiet', text: entry.message || __( 'Not checked', 'mykavo' ) };
 		}
 		var scan = scans[ entry.scan_id ];
+		if ( ! scan && entry.result ) {
+			// A verdict this site saved before the scan left the recent list.
+			scan = {
+				id: entry.scan_id,
+				status: String( entry.result.status || '' ).toUpperCase(),
+				changesDetected: entry.result.changes || 0,
+				highestSeverity: String( entry.result.severity || '' ).toUpperCase() || null,
+			};
+		}
 		if ( ! scan ) {
 			// Older than the recent scan list: the check ran; details are in
 			// MyKavo's scan history.
@@ -1155,6 +1176,73 @@
 			'<div class="mk-grid">' + intro + plan +
 			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Update history', 'mykavo' ) ) + '</h3>' +
 			'<span class="mk-fine">' + esc( __( 'Kept on this site. Last 30 updates.', 'mykavo' ) ) + '</span></div>' + list + '</section></div>'
+		);
+	}
+
+	function pathKey( value ) {
+		try {
+			var u = new URL( String( value ) );
+			return u.host.replace( /^www\./, '' ) + ( u.pathname.replace( /\/+$/, '' ) || '/' );
+		} catch ( e ) {
+			return String( value || '' );
+		}
+	}
+
+	function addPages( urls, doneText ) {
+		state.busy = 'add-pages';
+		render();
+		return api( '/pages', { method: 'POST', data: { urls: urls } } )
+			.then( function ( data ) {
+				toast( data && data.added
+					? sprintf( _n( '%d page added. Its baseline is recorded on the next scan.', '%d pages added. Their baselines are recorded on the next scan.', data.added, 'mykavo' ), data.added )
+					: doneText || __( 'That page is already monitored.', 'mykavo' ) );
+				state.addUrl = '';
+				loadPages();
+				loadOverview( true );
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					state.banner = { tone: 'bad', text: errorMessage( err ) };
+				}
+			} )
+			.then( function () {
+				state.busy = '';
+				render();
+			} );
+	}
+
+	/** WooCommerce: are the pages that take money monitored? */
+	function storeCard() {
+		var woo = cfg.woo;
+		if ( ! woo || ! woo.pages || ! woo.pages.length ) {
+			return '';
+		}
+		if ( ! state.pages ) {
+			return state.pagesError ? '' : loadingBlock( 120 );
+		}
+		var monitored = {};
+		state.pages.pages.forEach( function ( p ) {
+			monitored[ pathKey( p.url ) ] = true;
+		} );
+		var missing = woo.pages.filter( function ( p ) {
+			return ! monitored[ pathKey( p.url ) ];
+		} );
+		var busy = state.busy === 'add-pages';
+		return (
+			'<section class="mk-card mk-store"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'lock', 'mk-title-icon' ) + esc( __( 'Protect your store', 'mykavo' ) ) + '</h3>' +
+			'<span class="mk-fine">WooCommerce</span></div>' +
+			'<ul class="mk-store-list">' + woo.pages.map( function ( p ) {
+				var ok = monitored[ pathKey( p.url ) ];
+				return '<li class="' + ( ok ? 'is-on' : 'is-off' ) + '">' + icon( ok ? 'check' : 'alert' ) + '<span>' + esc( p.label ) + '</span><em>' +
+					esc( ok ? __( 'Monitored', 'mykavo' ) : __( 'Not monitored', 'mykavo' ) ) + '</em></li>';
+			} ).join( '' ) + '</ul>' +
+			( missing.length
+				? '<div class="mk-store-foot"><p>' + esc( __( 'A broken cart or checkout costs sales every minute. Monitor them so you hear about it first.', 'mykavo' ) ) + '</p>' +
+					'<button type="button" class="mk-btn mk-btn-primary mk-btn-sm" data-act="guard-store"' + ( busy ? ' disabled' : '' ) + '>' +
+					( busy ? icon( 'loader', 'mk-spin' ) : icon( 'shield' ) ) +
+					esc( sprintf( _n( 'Monitor %d store page', 'Monitor %d store pages', missing.length, 'mykavo' ), missing.length ) ) + '</button></div>'
+				: '<div class="mk-store-foot"><p class="mk-store-ok">' + icon( 'check' ) + esc( __( 'Your store pages are all monitored.', 'mykavo' ) ) + '</p></div>' ) +
+			'</section>'
 		);
 	}
 
@@ -1394,6 +1482,13 @@
 		}
 		var act = el.getAttribute( 'data-act' );
 		switch ( act ) {
+			case 'guard-store':
+				if ( cfg.woo && cfg.woo.pages ) {
+					addPages( cfg.woo.pages.map( function ( p ) {
+						return p.url;
+					} ), __( 'Your store pages are already monitored.', 'mykavo' ) );
+				}
+				break;
 			case 'tab':
 				state.tab = el.getAttribute( 'data-tab' );
 				state.menuOpen = false;
@@ -1507,6 +1602,28 @@
 		}
 	}
 
+	// Background refreshes redraw the screen; keep what the admin is typing.
+	root.addEventListener( 'input', function ( e ) {
+		if ( e.target && e.target.id === 'mk-add-url' ) {
+			state.addUrl = e.target.value;
+		}
+	} );
+	root.addEventListener( 'submit', function ( e ) {
+		var form = e.target.closest && e.target.closest( '[data-form="add-page"]' );
+		if ( ! form ) {
+			return;
+		}
+		e.preventDefault();
+		var input = form.querySelector( 'input' );
+		var url = safeUrl( input ? input.value.trim() : '' );
+		if ( ! url ) {
+			state.banner = { tone: 'bad', text: __( 'Enter the full page address, starting with https://', 'mykavo' ) };
+			render();
+			return;
+		}
+		state.addUrl = input.value;
+		addPages( [ url ] );
+	} );
 	root.addEventListener( 'click', onClick );
 	root.addEventListener( 'keydown', onKey );
 	drawerHost.addEventListener( 'click', onClick );
@@ -1529,5 +1646,8 @@
 	if ( state.connected ) {
 		loadOverview( false );
 		loadUpdates();
+		if ( cfg.woo && cfg.woo.pages && cfg.woo.pages.length ) {
+			loadPages();
+		}
 	}
 }() );

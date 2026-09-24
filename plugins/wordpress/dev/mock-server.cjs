@@ -27,6 +27,7 @@ let scans = [
   { id: 'scn0000000001', status: 'PARTIAL', triggerType: 'BASELINE', createdAt: ago(60 * 49), startedAt: ago(60 * 49), completedAt: ago(60 * 49 - 4), pagesRequested: 8, pagesScanned: 7, pagesFailed: 1, changesDetected: 0, highestSeverity: null },
 ];
 let running = null;
+const addedPages = [];
 const pages = ['/', '/shop', '/shop/ethiopia-yirgacheffe', '/subscribe', '/about', '/cart', '/checkout', '/contact'];
 const isOpen = (c) => c.status === 'NEW' || c.status === 'REVIEWED';
 const scanOf = (c) => scans.find((s) => s.id === (c.scanId || 'scn0000000003')) || {};
@@ -161,8 +162,19 @@ http.createServer(async (req, res) => {
       return json(res, 201, { scan: { id: scan.id, status: scan.status } });
     }
     if (rest === '/scans') { tick(); return json(res, 200, { scans: scans.map(scanItem) }); }
+    if (rest === '/pages' && req.method === 'POST') {
+      const body = JSON.parse(await readBody(req) || '{}');
+      const urls = (body.pages || []).map((x) => String(x.url));
+      if (!urls.length || urls.length > 20) return json(res, 400, { error: 'Invalid request.' });
+      const fresh = urls.filter((u) => !addedPages.includes(u));
+      addedPages.push(...fresh);
+      fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   pages added: ${JSON.stringify(fresh)}\n`);
+      return json(res, fresh.length ? 201 : 200, { added: fresh.length, alreadyMonitored: urls.length - fresh.length });
+    }
     if (rest === '/pages') {
-      return json(res, 200, { pages: pages.map((p, i) => ({ id: 'pg' + i, url: 'https://northwind-coffee.test' + p, name: null, enabled: true, baselineVersion: i === 2 ? 3 : 1, baselineApprovedAt: ago(60 * 49), openChanges: changes.filter((c) => c.pagePath === p && isOpen(c)).length })) });
+      const list = pages.map((p, i) => ({ id: 'pg' + i, url: 'https://northwind-coffee.test' + p, name: null, enabled: true, baselineVersion: i === 2 ? 3 : 1, baselineApprovedAt: ago(60 * 49), openChanges: changes.filter((c) => c.pagePath === p && isOpen(c)).length }));
+      addedPages.forEach((u, i) => list.push({ id: 'pga' + i, url: u, name: null, enabled: true, baselineVersion: null, baselineApprovedAt: null, openChanges: 0 }));
+      return json(res, 200, { pages: list });
     }
     if (rest === '/disconnect') return json(res, 200, { ok: true });
   }

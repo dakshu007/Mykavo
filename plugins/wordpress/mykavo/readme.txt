@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,12 @@ MyKavo fixes that. It watches the pages that matter on your site and tells you w
 * **A clear verdict.** "Verified - nothing changed", or "3 changes found after this update", with the before-and-after evidence one click away.
 * **The culprit, named.** Changes found after an update say so: "Appeared after: Updated WooCommerce 8.1.0 → 8.2.0".
 * **A history of every update**, with versions, kept on your site.
+* **Know before you press Update.** On the Plugins screen, a plugin whose last update changed things on your site is flagged: "Last time this plugin updated, 2 things changed on your site."
 * Update checks are included in the Pro and Agency plans. On the free plan, updates are still listed so you know what changed and when.
+
+= Built for WooCommerce stores =
+
+A broken cart or checkout loses sales every minute it stays broken. If WooCommerce is active, MyKavo shows whether your Shop, Cart, Checkout and My account pages are monitored, and adds the missing ones in one click.
 
 = What you see in WordPress =
 
@@ -36,6 +41,8 @@ MyKavo fixes that. It watches the pages that matter on your site and tells you w
 * **Uptime, response time and SSL expiry** at a glance.
 * **Scan history and monitored pages**, with a link to each page.
 * **A small Dashboard widget** with the current status.
+* **Monitor any page from WordPress.** A "Monitor with MyKavo" link under every published page and post, or paste an address on the Pages tab.
+* **Site Health.** MyKavo's status appears in Tools > Site Health, and its details in the Info tab for support requests.
 
 = What MyKavo detects =
 
@@ -139,8 +146,19 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 4. All changes, filtered by status and severity.
 5. Scan history.
 6. Connect in two clicks. Nothing is added to your public pages.
+9. WooCommerce store guard: see which store pages are monitored and add the rest in one click.
 
 == Changelog ==
+
+= 1.2.0 =
+* New: WooCommerce store guard. See whether Shop, Cart, Checkout and My account are monitored, and add them in one click.
+* New: "Monitor with MyKavo" under every published page and post, and an address box on the Pages tab.
+* New: on the Plugins screen, plugins whose last update changed your site are flagged before you update them again.
+* New: Safe Updates reassurance on Dashboard > Updates.
+* New: MyKavo in Tools > Site Health (status test and Info section).
+* Improved: update verdicts are saved on your site, so older updates keep their result instead of just "Checked".
+* Improved: the Connect link stays valid for an hour, and an expired Connect button now explains itself instead of showing WordPress's "link expired" page.
+* Fixed: an address typed on the Pages tab is no longer cleared when the screen refreshes in the background.
 
 = 1.1.0 =
 * New: Safe Updates. After every plugin, theme, WordPress or translation update - including automatic updates - MyKavo checks your pages and tells you whether the update broke anything, and which update it was.
@@ -152,6 +170,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * First release: overview, changes with before-and-after screenshots, one-click approve, ignore and fixed, new baselines, on-demand scans with live progress, scan history, monitored pages, admin menu badge and Dashboard widget.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+WooCommerce store guard, "Monitor with MyKavo" on your pages, update warnings on the Plugins screen, and Site Health.
 
 = 1.1.0 =
 Adds Safe Updates: a check after every plugin, theme and WordPress update, with the update named if something broke.

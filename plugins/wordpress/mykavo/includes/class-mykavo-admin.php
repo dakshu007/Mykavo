@@ -135,6 +135,8 @@ final class MyKavo_Admin {
 				admin_url( 'admin-post.php' )
 			),
 			'appUrl'     => MYKAVO_APP_URL,
+			'woo'        => MyKavo_Integrations::woocommerce_pages(),
+			'pagesUrl'   => admin_url( 'edit.php?post_type=page' ),
 			'notice'     => $notice,
 			'version'    => MYKAVO_VERSION,
 		);
@@ -174,7 +176,14 @@ final class MyKavo_Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to connect this site.', 'mykavo' ), 403 );
 		}
-		check_admin_referer( 'mykavo_connect' );
+		// A Connect button left open for a day carries an expired nonce.
+		// Send the admin back to a fresh screen instead of WordPress's bare
+		// "The link you followed has expired" page.
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'mykavo_connect' ) ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=' . self::SLUG . '&mykavo_notice=stale' ) );
+			exit;
+		}
 
 		$handshake = MyKavo_Connection::begin_handshake();
 		$url       = add_query_arg(
