@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
 import { PartnerLockup } from "@/components/landing/partner-lockup";
+import { ShopifyAdminAnimation } from "@/components/landing/shopify-admin-animation";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
@@ -285,13 +286,13 @@ export default function ShopifyAppPage() {
                 : "Coming to the Shopify App Store · Monitor any store from mykavo.app today"}
             </p>
           </div>
-          <div className="mx-auto mt-14 max-w-5xl">
-            <Shot
-              src="/shopify/overview.webp"
-              alt="MyKavo inside the Shopify admin: store status, uptime, response time, SSL, the changes that need attention first, and which store pages are monitored"
-              priority
-              className="shadow-[10px_10px_0_#FFD400,10px_10px_0_1px_#151515]"
-            />
+          {/* A theme publish, inside the Shopify admin: check, verdict,
+              evidence, fixed. */}
+          <div className="mx-auto mt-16 max-w-6xl">
+            <ShopifyAdminAnimation />
+            <p className="mt-6 text-center font-mono text-[11px] uppercase tracking-[0.16em] text-[#6B6B60]">
+              Illustrative store · the MyKavo screens and wording are the app&apos;s own
+            </p>
           </div>
         </section>
 

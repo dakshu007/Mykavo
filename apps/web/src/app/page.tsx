@@ -21,6 +21,7 @@ import { ValueQuoteBanner } from "@/components/value-quote";
 import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
 import { BeforeAfterTimeline } from "@/components/landing/before-after";
+import { AgencyBoardAnimation } from "@/components/landing/agency-board-animation";
 import { IntegrationsMarquee } from "@/components/landing/integrations-marquee";
 import { CategoryTabs } from "@/components/landing/categories";
 import { WhatItIsSection } from "@/components/landing/what-it-is";
@@ -518,37 +519,10 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#151515] bg-[#FBFAF3] p-5 shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
-                <div className="space-y-2.5">
-                  {([
-                    { site: "aurora-outdoor.com", state: "3 critical changes", tone: "gold" },
-                    { site: "meridianlegal.co", state: "2 high changes", tone: "ink" },
-                    { site: "bloomandroot.shop", state: "Healthy", tone: "quiet" },
-                    { site: "northwinddental.com", state: "Healthy", tone: "quiet" },
-                  ] as Array<{ site: string; state: string; tone: "gold" | "ink" | "quiet" }>).map((row) => (
-                    <div
-                      key={row.site}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-black/10 bg-white px-5 py-4"
-                    >
-                      <span className="min-w-0 truncate font-mono text-[13px] text-[#151515]/85">
-                        {row.site}
-                      </span>
-                      <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                          row.tone === "gold"
-                            ? "border border-black/15 bg-[#FFD400] text-[#151515]"
-                            : row.tone === "ink"
-                              ? "bg-[#151515] text-[#F5F5F0]"
-                              : "border border-black/15 bg-white text-[#151515]/70"
-                        }`}
-                      >
-                        {row.state}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-4 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">
-                  Illustrative dashboard state
+              <div>
+                <AgencyBoardAnimation />
+                <p className="mt-6 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">
+                  Illustrative dashboard · invented client sites
                 </p>
               </div>
             </div>
