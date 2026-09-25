@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { GoogleCta } from "./google-cta";
 import { LandingUrlInput } from "./url-input";
-import { DashboardMock } from "./dashboard-mock";
+import { HeroStoryAnimation } from "./hero-story-animation";
 import { fontDisplay } from "./style";
 
 /**
@@ -96,7 +96,13 @@ export function LandingHero() {
           Free plan · No credit card · Monitoring in minutes
         </p>
 
-        <DashboardMock />
+        {/* How MyKavo works, as one loop: baseline, scan, compare, alert, resolve. */}
+        <div className="relative mx-auto mt-14 max-w-5xl">
+          <HeroStoryAnimation />
+          <p className="mt-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[#6B6B60]">
+            Illustrative example · how every scan works
+          </p>
+        </div>
       </div>
     </section>
   );
