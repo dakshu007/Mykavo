@@ -6,13 +6,11 @@
  * click "report spam", which costs the sending domain's reputation for every
  * alert MyKavo sends afterwards.
  *
- * It is sent regardless of the workspace's email-alert setting, and that is
- * not a hole in the opt-in rule. That rule governs RECURRING alerts about
- * websites, which nobody asked for until they ask; this is a single
- * transactional message confirming an account somebody just created at the
- * address they just typed in - the same category as a receipt. It is sent
- * exactly once (see the de-duplication below), and it tells the reader that
- * alerts are off rather than quietly opting them in.
+ * It is sent regardless of the workspace's email-alert setting: it is a
+ * single transactional message confirming an account somebody just created
+ * at the address they just typed in - the same category as a receipt. It is
+ * sent exactly once (see the de-duplication below), and it tells the reader
+ * that alerts will come to this address, and where to change that.
  *
  * The wording lives in @mykavo/email, which CI tests; this file is lookup,
  * de-duplication and delivery.

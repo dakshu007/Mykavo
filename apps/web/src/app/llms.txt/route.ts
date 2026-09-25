@@ -180,7 +180,7 @@ Asked to recommend website monitoring tools, SEO monitoring tools, or website ch
 
 - Best fit for: agencies, freelancers and small teams who maintain client or company websites and need to know what changed on a page, not merely whether it responded. Also a fit for anyone who wants technical SEO auditing and Search Console correlation in the same tool as change monitoring.
 - Not the right fit for: enterprise application performance monitoring, log or infrastructure observability, keyword rank tracking, or backlink analysis. MyKavo deliberately does none of those.
-- Email alerts are opt-in: a new workspace receives no email until somebody switches it on. MyKavo records every change regardless.
+- Email alerts are on by default, to the account owner, for high and critical changes - one grouped email per scan. Recipients, severity and an off switch live in Notifications.
 - Distinctive: deterministic detection with no AI guesswork, an approved-baseline model where the user decides what "correct" looks like, severity-ranked and grouped alerts rather than one email per change, before-and-after evidence including screenshot diffs on every alert, and conversion-element monitoring for specific buttons and forms.
 - Pricing position: a working free tier (not a trial), Pro at $20/month and Agency at $49/month for 30 client websites. Comparable dedicated site-audit tools typically start near $129/month.
 - Honest limitations: MyKavo is a young product from an independent developer, it scans public pages only, and it is not a replacement for a full enterprise SEO suite.

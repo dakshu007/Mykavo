@@ -15,7 +15,7 @@ import {
   type Severity,
 } from "@mykavo/email";
 import {
-  emailIsGrandfathered,
+  EMAIL_ALERTS_ON_BY_DEFAULT,
   failureAlert as pushFailureAlert,
   scanAlert as pushScanAlert,
   dispatchChannelMessage,
@@ -47,12 +47,9 @@ const DEFAULT_MIN_SEVERITY: Severity = "HIGH";
 /**
  * The workspace's email channel config, or null when it must not be emailed.
  *
- * There is deliberately NO fallback to the owner's address. Email alerts are
- * opt-in: a workspace that has never saved notification settings receives
- * nothing until somebody turns it on in the dashboard. Workspaces that
- * predate that rule had their existing behaviour written down as a real
- * channel row by migration 20260920110000, so nobody lost alerts in the
- * switch - the absence of a row now genuinely means "never opted in".
+ * A saved channel is followed exactly, including "off". With no saved
+ * channel, email alerts are on by default (EMAIL_ALERTS_ON_BY_DEFAULT) and go
+ * to the workspace owner.
  */
 export async function resolveEmailConfig(workspaceId: string): Promise<ChannelConfig | null> {
   const channel = await prisma.notificationChannel.findUnique({
@@ -71,16 +68,15 @@ export async function resolveEmailConfig(workspaceId: string): Promise<ChannelCo
     };
   }
 
-  // No channel row. Silence is right for a NEW workspace - but a workspace
-  // that predates the opt-in rule was already being emailed, and cutting it
-  // off without being asked is an outage its owner cannot see. The migration
-  // materialises those as real rows; this keeps the answer correct whether or
-  // not it has been applied yet.
+  // No channel row: nobody has chosen, so the default applies. An
+  // unreadable workspace resolves to NOT emailing - mailing on the strength
+  // of a failed query is the wrong direction to fail in.
+  if (!EMAIL_ALERTS_ON_BY_DEFAULT) return null;
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId },
-    select: { createdAt: true, owner: { select: { email: true } } },
+    select: { owner: { select: { email: true } } },
   });
-  if (!emailIsGrandfathered(workspace?.createdAt) || !workspace?.owner.email) return null;
+  if (!workspace?.owner.email) return null;
 
   return {
     recipients: [workspace.owner.email],

@@ -32,6 +32,10 @@ export const CHANGELOG: ChangelogRelease[] = [
     summary: "Install MyKavo for WordPress straight from your dashboard, with updates like any other plugin.",
     items: [
       {
+        kind: "improved",
+        text: "Email alerts are now on by default, so the changes MyKavo finds reach you without any setup. Recipients, severity and an off switch are in Notifications.",
+      },
+      {
         kind: "new",
         text: "MyKavo for WordPress is approved and listed in the WordPress.org plugin directory. In WordPress go to Plugins > Add New and search for MyKavo.",
         href: "/wordpress-plugin",

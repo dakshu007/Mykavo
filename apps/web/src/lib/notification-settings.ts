@@ -1,5 +1,5 @@
 import { prisma } from "@mykavo/database";
-import { emailIsGrandfathered } from "@mykavo/shared";
+import { EMAIL_ALERTS_ON_BY_DEFAULT } from "@mykavo/shared";
 
 /**
  * Effective email notification settings for a workspace. Mirrors the worker's
@@ -20,30 +20,20 @@ export async function getEmailSettings(
   workspaceId: string,
   ownerEmail: string,
 ): Promise<EmailSettings> {
-  const [channel, workspace] = await Promise.all([
-    prisma.notificationChannel.findUnique({
-      where: { workspaceId_type: { workspaceId, type: "EMAIL" } },
-    }),
-    prisma.workspace.findUnique({ where: { id: workspaceId }, select: { createdAt: true } }),
-  ]);
+  const channel = await prisma.notificationChannel.findUnique({
+    where: { workspaceId_type: { workspaceId, type: "EMAIL" } },
+  });
 
   if (!channel) {
-    // OPT-IN for anything new: no email until somebody turns it on, with the
-    // owner's address pre-filled so that is one toggle away. Mailing people
-    // who never asked is how a monitoring product trains its own customers to
-    // filter it into a folder they stop reading.
-    //
-    // Workspaces that predate the rule keep what they already had, and the
-    // switch shows ON to match - a dashboard claiming alerts are off while
-    // the worker is still sending them is worse than either state alone.
-    // Mirrors emailIsGrandfathered in the worker; same shared rule.
-    const grandfathered = emailIsGrandfathered(workspace?.createdAt);
+    // Nobody has chosen yet: alerts are on by default and go to the owner.
+    // The switch shows exactly that, so the dashboard and the worker (same
+    // shared rule) never disagree about what this workspace receives.
     return {
       recipients: [ownerEmail],
       minSeverity: "HIGH",
       failureAlerts: true,
       weeklyReports: true,
-      enabled: grandfathered,
+      enabled: EMAIL_ALERTS_ON_BY_DEFAULT,
       configured: false,
     };
   }

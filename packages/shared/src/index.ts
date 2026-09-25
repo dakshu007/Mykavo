@@ -14,7 +14,7 @@ export * from "./performance";
 export * from "./gsc";
 export * from "./scan-outcome";
 export * from "./artifact-keys";
-export { EMAIL_OPT_IN_SINCE, emailIsGrandfathered } from "./notifications";
+export { EMAIL_ALERTS_ON_BY_DEFAULT } from "./notifications";
 export * from "./traffic-drop";
 export * from "./platform-fingerprint";
 export * from "./tech-stack";

@@ -116,14 +116,12 @@ export function deriveOnboarding(counts: OnboardingCounts): OnboardingState {
     },
     {
       id: "add-alert-channel",
-      // NOT "get alerts beyond email": new workspaces are opt-in, so email
-      // itself is off until somebody turns it on
-      // (apps/web/src/lib/notification-settings.ts). Copy implying email
-      // already works would leave a new account waiting for mail that was
-      // never going to arrive.
+      // Email alerts are on by default (EMAIL_ALERTS_ON_BY_DEFAULT), so this
+      // step is about reaching the team where it works, not about switching
+      // alerts on.
       title: "Choose where alerts reach you",
       description:
-        "Turn on email, or add Slack, Discord or a webhook - alerts are off until you pick one.",
+        "Alerts already come to your email. Add Slack, Discord or a webhook to reach your team too.",
       href: "/dashboard/notifications",
       done: counts.extraChannels > 0,
       // Optional on purpose. Requiring a third-party integration to finish

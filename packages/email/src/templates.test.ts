@@ -518,15 +518,16 @@ describe("welcomeEmail", () => {
    * anything, conclude the product does not work. This email is the one
    * message guaranteed to arrive before that happens, so it must say so.
    */
-  it("warns that email alerts are off, and links to the switch", () => {
+  it("says alerts come to this address, and links to the switch", () => {
     const mail = welcomeEmail(data);
-    expect(mail.text).toContain("Email alerts are off until you turn them on");
+    expect(mail.text).toContain("ALERTS COME TO THIS ADDRESS");
+    expect(mail.text).not.toContain("off until you turn them on");
     expect(mail.text).toContain(data.alertsUrl);
     expect(mail.html).toContain(data.alertsUrl);
   });
 
-  it("frames the default as a promise rather than a missing feature", () => {
-    expect(welcomeEmail(data).text).toContain("we do not mail anyone who did not ask");
+  it("promises one email per scan, not one per change", () => {
+    expect(welcomeEmail(data).text).toContain("one email per scan, never one per change");
   });
 
   it("says why they are getting it", () => {

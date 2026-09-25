@@ -773,11 +773,10 @@ export interface WelcomeEmailData {
  * Sent on ACCOUNT CREATION, not on sign-in - a "welcome back" on every login
  * is the fastest way into somebody's spam filter.
  *
- * It also has to say that email alerts are OFF. New workspaces are opt-in
- * (apps/web/src/lib/notification-settings.ts), which is the right default -
- * but it means somebody can add a website, watch the baseline finish, and
- * then never hear anything, concluding MyKavo does not work. This is the one
- * message guaranteed to reach them before that happens.
+ * It also says where alerts will go. Email alerts are on by default, to
+ * this address (EMAIL_ALERTS_ON_BY_DEFAULT in @mykavo/shared), so the reader
+ * should know to expect them - and where the switch is if they would rather
+ * route them to a teammate, Slack, or nowhere.
  */
 export function welcomeEmail(data: WelcomeEmailData): {
   subject: string;
@@ -821,8 +820,8 @@ export function welcomeEmail(data: WelcomeEmailData): {
     ${button(data.addWebsiteUrl, "Add your first website")}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Adding a website starts its baseline scan straight away - you will see the first results in a couple of minutes. <a href="${esc(data.docsUrl)}" style="color:#3556f4;text-decoration:none">How MyKavo works</a></p>
     <div style="margin:22px 0 0;background:#f4f6fb;border-radius:12px;padding:14px 16px">
-      <p style="margin:0 0 4px;font-size:14px;font-weight:600">One thing to switch on</p>
-      <p style="margin:0;font-size:13px;color:#5c6270">Email alerts are off until you turn them on - we do not mail anyone who did not ask for it. <a href="${esc(data.alertsUrl)}" style="color:#3556f4;text-decoration:none">Turn on alerts</a> so the changes MyKavo finds actually reach you.</p>
+      <p style="margin:0 0 4px;font-size:14px;font-weight:600">Alerts come to this address</p>
+      <p style="margin:0;font-size:13px;color:#5c6270">When MyKavo finds a high or critical change, the alert lands here - one email per scan, never one per change. <a href="${esc(data.alertsUrl)}" style="color:#3556f4;text-decoration:none">Change where alerts go</a> to add a teammate or Slack, or switch email off.</p>
     </div>
     <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">You are receiving this because an account was created with this address. Just reply if you get stuck - a real person reads it.</p>
   `;
@@ -836,12 +835,149 @@ export function welcomeEmail(data: WelcomeEmailData): {
     `Adding a website starts its baseline scan straight away - you will see the first ` +
     `results in a couple of minutes.\n` +
     `How MyKavo works: ${data.docsUrl}\n\n` +
-    `ONE THING TO SWITCH ON\n` +
-    `Email alerts are off until you turn them on - we do not mail anyone who did not ` +
-    `ask for it. Turn them on so the changes MyKavo finds actually reach you:\n` +
+    `ALERTS COME TO THIS ADDRESS\n` +
+    `When MyKavo finds a high or critical change, the alert lands here - one email per ` +
+    `scan, never one per change. Change where alerts go (add a teammate or Slack, or ` +
+    `switch email off):\n` +
     `${data.alertsUrl}\n\n` +
     `You are receiving this because an account was created with this address. ` +
     `Just reply if you get stuck - a real person reads it.`;
+
+  return { subject, html: shell(inner), text };
+}
+
+// ---------- Activation: first website nudge ----------
+
+export interface FirstWebsiteNudgeData {
+  /** Already made presentable by the caller. May be empty. */
+  name: string;
+  addWebsiteUrl: string;
+  docsUrl: string;
+}
+
+/** Subject line, exported because the worker de-duplicates on it. */
+export const FIRST_WEBSITE_NUDGE_SUBJECT = "Your MyKavo account is ready - add your first website";
+
+/**
+ * Sent once, a day or more after signup, to an account that has not added a
+ * website. An account with no website is not a user yet: MyKavo has nothing
+ * to watch and so can never send the alert that shows what it is for.
+ *
+ * One reminder, and it says so. A sequence of "still there?" mails is how a
+ * sending domain earns a spam-folder reputation that then swallows the real
+ * alerts.
+ */
+export function firstWebsiteNudgeEmail(data: FirstWebsiteNudgeData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = FIRST_WEBSITE_NUDGE_SUBJECT;
+  const first = data.name.trim().split(/\s+/)[0] ?? "";
+  const hi = first ? `Hi ${esc(first)},` : "Hi,";
+  const hiText = first ? `Hi ${first},` : "Hi,";
+
+  const catches = [
+    "A page that starts returning 404 or 500",
+    "A noindex tag or canonical change that quietly drops you from Google",
+    "An analytics or payment script that disappears after a deploy",
+    "A signup or checkout button that goes missing",
+  ];
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">One step left</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Add your first website</h1>
+    <p style="margin:0 0 14px;font-size:14px;color:#5c6270">${hi} your MyKavo account is set up, but it is not watching anything yet. Adding a website takes about a minute: paste the URL, pick the pages that matter, and MyKavo records a baseline. After that you hear from us only when something important changes, like:</p>
+    <ul style="margin:0 0 22px;padding-left:18px;font-size:14px;color:#16181d">
+      ${catches.map((c) => `<li style="margin:0 0 6px">${esc(c)}</li>`).join("")}
+    </ul>
+    ${button(data.addWebsiteUrl, "Add your first website")}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">New to it? <a href="${esc(data.docsUrl)}" style="color:#3556f4;text-decoration:none">How MyKavo works</a> takes two minutes to read.</p>
+    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">This is the only reminder we will send. If something got in the way, just reply - a real person reads it.</p>
+  `;
+
+  const text =
+    `${hiText} your MyKavo account is set up, but it is not watching anything yet.\n\n` +
+    `Adding a website takes about a minute: paste the URL, pick the pages that matter, ` +
+    `and MyKavo records a baseline. After that you hear from us only when something ` +
+    `important changes, like:\n\n` +
+    catches.map((c) => `- ${c}`).join("\n") +
+    `\n\nAdd your first website: ${data.addWebsiteUrl}\n` +
+    `How MyKavo works: ${data.docsUrl}\n\n` +
+    `This is the only reminder we will send. If something got in the way, just reply - ` +
+    `a real person reads it.`;
+
+  return { subject, html: shell(inner), text };
+}
+
+// ---------- Activation: baseline ready ----------
+
+export interface BaselineReadyData {
+  websiteName: string;
+  websiteHost: string;
+  pagesScanned: number;
+  /** Dashboard link to the website. */
+  websiteUrl: string;
+  /** e.g. "Tuesday, September 30" - null when no scan is scheduled. */
+  nextScan: string | null;
+  /** "daily" | "weekly" | ... - how often it is scanned. */
+  frequency: string;
+  /** Where alerts for this workspace go right now. */
+  alertRecipients: string[];
+  alertsUrl: string;
+}
+
+/** Every baseline-ready subject starts with this; the worker de-duplicates on it. */
+export const BASELINE_READY_SUBJECT_PREFIX = "Baseline ready for";
+
+/**
+ * Sent once per website, when its first baseline scan finishes. Baseline
+ * scans create no change events and so send no alert - which left people
+ * adding a site, closing the tab, and never learning that it worked. This
+ * closes that loop: what was captured, when MyKavo looks again, and where
+ * the alert will land if something changes.
+ */
+export function baselineReadyEmail(data: BaselineReadyData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `${BASELINE_READY_SUBJECT_PREFIX} ${data.websiteHost} - MyKavo is now watching`;
+  const pagesWord = `${data.pagesScanned} page${data.pagesScanned === 1 ? "" : "s"}`;
+  const recipients = data.alertRecipients.join(", ");
+
+  const rows: [string, string][] = [
+    ["Baseline", `${pagesWord} captured and approved`],
+    ["Scans", data.nextScan ? `${data.frequency}, next on ${data.nextScan}` : data.frequency],
+    ["Alerts go to", recipients],
+  ];
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#1f9d55">Monitoring is on</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)} has a baseline</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">MyKavo recorded the known-good state of ${esc(pagesWord)} on ${esc(data.websiteHost)}. Every scan from now on is compared against it, and you hear from us when something important changes.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 24px;border-collapse:collapse">
+      ${rows
+        .map(
+          ([k, v]) => `<tr>
+        <td style="padding:9px 0;border-top:1px solid #e4e7ee;font-size:13px;color:#5c6270;width:120px;vertical-align:top">${esc(k)}</td>
+        <td style="padding:9px 0;border-top:1px solid #e4e7ee;font-size:14px;font-weight:500">${esc(v)}</td>
+      </tr>`,
+        )
+        .join("")}
+    </table>
+    ${button(data.websiteUrl, "See the baseline")}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Want alerts in Slack too, or somewhere else? <a href="${esc(data.alertsUrl)}" style="color:#3556f4;text-decoration:none">Change where alerts go</a>.</p>
+  `;
+
+  const text =
+    `${data.websiteName} has a baseline - monitoring is on.\n\n` +
+    `MyKavo recorded the known-good state of ${pagesWord} on ${data.websiteHost}. ` +
+    `Every scan from now on is compared against it, and you hear from us when something ` +
+    `important changes.\n\n` +
+    rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
+    `\n\nSee the baseline: ${data.websiteUrl}\n` +
+    `Change where alerts go: ${data.alertsUrl}`;
 
   return { subject, html: shell(inner), text };
 }

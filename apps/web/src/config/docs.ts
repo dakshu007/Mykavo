@@ -106,7 +106,7 @@ export const DOC_SECTIONS: DocSection[] = [
               },
               {
                 title: "Turn on alerts and let it run",
-                text: "Email alerts are off until you enable them in Notifications - MyKavo will monitor and record changes either way, but it will not email you until you ask it to. Scans then run weekly on Free and daily on Pro, and you can run one manually at any time.",
+                text: "Email alerts are on by default and go to your account's address - one summary per scan, for high and critical changes. Change the recipients, the severity, or switch email off in Notifications. Scans then run weekly on Free and daily on Pro, and you can run one manually at any time.",
               },
             ],
           },

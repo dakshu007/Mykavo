@@ -35,7 +35,7 @@ const supportFaqs = [
   },
   {
     q: "How do MyKavo alerts work?",
-    a: "Every detected change gets a severity level: Info, Low, Medium, High, or Critical. Critical and High changes - a page returning 404, a noindex tag appearing, an analytics script disappearing - are the ones that trigger email alerts once you have switched email on in Notifications. Email is off until you enable it: MyKavo records every change either way, it just will not mail you about them uninvited. Rather than one email per change, MyKavo groups everything found in a scan into a single summary email per website, so a deploy touching twenty pages produces one readable alert instead of twenty.",
+    a: "Every detected change gets a severity level: Info, Low, Medium, High, or Critical. Critical and High changes - a page returning 404, a noindex tag appearing, an analytics script disappearing - are the ones that trigger email alerts. Email alerts are on by default and go to your account's address; you can change the recipients, raise or lower the severity, or switch email off in Notifications. Rather than one email per change, MyKavo groups everything found in a scan into a single summary email per website, so a deploy touching twenty pages produces one readable alert instead of twenty.",
   },
   {
     q: "How do I cancel my MyKavo subscription?",
