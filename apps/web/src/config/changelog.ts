@@ -27,6 +27,18 @@ export const CHANGELOG_PATH = "/whats-new-on-mykavo";
 
 export const CHANGELOG: ChangelogRelease[] = [
   {
+    date: "2026-09-25",
+    title: "MyKavo is in the WordPress.org plugin directory",
+    summary: "Install MyKavo for WordPress straight from your dashboard, with updates like any other plugin.",
+    items: [
+      {
+        kind: "new",
+        text: "MyKavo for WordPress is approved and listed in the WordPress.org plugin directory. In WordPress go to Plugins > Add New and search for MyKavo.",
+        href: "/wordpress-plugin",
+      },
+    ],
+  },
+  {
     date: "2026-09-24",
     title: "The WordPress plugin, a Supabase integration and brand assets",
     summary:

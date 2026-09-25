@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
-import { WpPluginDownload } from "@/components/landing/wp-plugin-download";
+import { WpPluginInstall } from "@/components/landing/wp-plugin-download";
 import { WP_PLUGIN_PAGE_PATH, WP_PLUGIN_REQUIRES } from "@/config/wordpress-plugin";
 import { cn } from "@/lib/utils";
 import { parsePost, type FaqItem, type PostHeading } from "./blocks";
@@ -103,7 +103,7 @@ function WordpressCtaBlock() {
           ))}
         </ul>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <WpPluginDownload placement="blog" />
+          <WpPluginInstall placement="blog" />
           <Link
             href={WP_PLUGIN_PAGE_PATH}
             className="inline-flex items-center justify-center rounded-full border border-line px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:border-ink"

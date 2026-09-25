@@ -55,7 +55,7 @@ export interface DocSection {
   articles: DocArticle[];
 }
 
-export const DOCS_UPDATED = "September 24, 2026";
+export const DOCS_UPDATED = "September 25, 2026";
 export const DOCS_PUBLISHED_ISO = "2026-09-20";
 
 export const DOC_SECTIONS: DocSection[] = [
@@ -459,12 +459,12 @@ export const DOC_SECTIONS: DocSection[] = [
             description: "Add the plugin to a WordPress site and link it to the site's website in MyKavo.",
             items: [
               {
-                title: "Download the plugin",
-                text: "Download the zip from mykavo.app/wordpress-plugin. Once the plugin is listed in the WordPress.org directory you can also search for MyKavo under Plugins > Add New.",
+                title: "Install the plugin",
+                text: "In WordPress go to Plugins > Add New, search for MyKavo, and install MyKavo - Website Change Monitoring. It is listed at wordpress.org/plugins/mykavo. You need to be an administrator.",
               },
               {
-                title: "Upload and activate it",
-                text: "In WordPress go to Plugins > Add New > Upload Plugin, choose the zip, install it and activate it. You need to be an administrator.",
+                title: "Activate it",
+                text: "Activate the plugin. To install it by hand instead, download the zip from mykavo.app/wordpress-plugin and upload it under Plugins > Add New > Upload Plugin - it is the same plugin.",
               },
               {
                 title: "Connect",

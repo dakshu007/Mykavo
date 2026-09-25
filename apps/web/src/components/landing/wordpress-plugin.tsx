@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { WP_PLUGIN_PAGE_PATH } from "@/config/wordpress-plugin";
 import { eyebrow, fontDisplay } from "./style";
-import { WpPluginDownload } from "./wp-plugin-download";
+import { WpPluginInstall } from "./wp-plugin-download";
 import { WpUpdateAnimation } from "./wp-update-animation";
 
 const points = [
@@ -42,7 +42,7 @@ export function WordPressPluginSection() {
               ))}
             </ul>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <WpPluginDownload placement="homepage" />
+              <WpPluginInstall placement="homepage" />
               <Link
                 href={WP_PLUGIN_PAGE_PATH}
                 className="inline-flex items-center gap-2 px-2 py-3 text-sm font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"

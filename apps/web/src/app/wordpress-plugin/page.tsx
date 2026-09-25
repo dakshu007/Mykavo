@@ -17,11 +17,12 @@ import {
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
-import { WpPluginDownload } from "@/components/landing/wp-plugin-download";
+import { WpPluginDownload, WpPluginInstall } from "@/components/landing/wp-plugin-download";
 import { TrackOnView } from "@/components/track-on-view";
 import { plans } from "@/config/plans";
 import { site } from "@/config/site";
 import {
+  WP_PLUGIN_DIRECTORY_URL,
   WP_PLUGIN_DOWNLOAD_PATH,
   WP_PLUGIN_PAGE_PATH,
   WP_PLUGIN_REQUIRES,
@@ -147,7 +148,7 @@ const steps = [
   {
     step: "01",
     title: "Install",
-    desc: "Download the zip, then in WordPress go to Plugins → Add New → Upload Plugin and activate it.",
+    desc: "In WordPress go to Plugins → Add New, search for MyKavo, then install and activate it.",
   },
   {
     step: "02",
@@ -180,7 +181,7 @@ const faqs = [
   },
   {
     q: "Is it on WordPress.org?",
-    a: "It is on its way to the WordPress.org plugin directory. Until it is listed, download it here and upload it under Plugins → Add New → Upload Plugin. It is the same plugin, released under the GPL.",
+    a: "Yes. MyKavo is in the WordPress.org plugin directory, so you can install it from Plugins → Add New and get updates like any other plugin. You can also download the zip here and upload it under Plugins → Add New → Upload Plugin - it is the same plugin, released under the GPL.",
   },
   {
     q: "What does the plugin send to MyKavo?",
@@ -209,6 +210,8 @@ const pluginJsonLd = {
       operatingSystem: `WordPress ${WP_PLUGIN_REQUIRES.wordpress}+`,
       softwareVersion: WP_PLUGIN_VERSION,
       downloadUrl: `${site.url}${WP_PLUGIN_DOWNLOAD_PATH}`,
+      installUrl: WP_PLUGIN_DIRECTORY_URL,
+      sameAs: [WP_PLUGIN_DIRECTORY_URL],
       url: `${site.url}${WP_PLUGIN_PAGE_PATH}`,
       license: "https://www.gnu.org/licenses/gpl-2.0.html",
       description: metadata.description,
@@ -309,7 +312,7 @@ export default function WordPressPluginPage() {
               your visitors load.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <WpPluginDownload placement="hero" />
+              <WpPluginInstall placement="hero" />
               <Link
                 href="/signup"
                 className="inline-flex items-center gap-2 rounded-full border border-[#151515] bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#F3F1E6]"
@@ -318,7 +321,10 @@ export default function WordPressPluginPage() {
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>
-            <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-[#6B6B60]">
+            <div className="mt-5 text-[#151515]">
+              <WpPluginDownload placement="hero" variant="text" />
+            </div>
+            <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[#6B6B60]">
               Free plugin · WordPress {WP_PLUGIN_REQUIRES.wordpress} to {WP_PLUGIN_REQUIRES.testedUpTo} · PHP{" "}
               {WP_PLUGIN_REQUIRES.php}+ · GPL
             </p>
@@ -583,8 +589,9 @@ export default function WordPressPluginPage() {
               </div>
             ))}
           </div>
-          <div className="mt-12 flex justify-center">
-            <WpPluginDownload placement="install" />
+          <div className="mt-12 flex flex-col items-center gap-4 text-[#151515]">
+            <WpPluginInstall placement="install" />
+            <WpPluginDownload placement="install" variant="text" />
           </div>
         </section>
 
@@ -697,7 +704,7 @@ export default function WordPressPluginPage() {
               Install the plugin before it lands, and find out what it changed the moment it does.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <WpPluginDownload placement="footer_cta" />
+              <WpPluginInstall placement="footer_cta" />
               <Link
                 href="/website-monitoring-for-wordpress"
                 className="inline-flex items-center gap-2 rounded-full border border-white/25 px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:border-[#FFD400]"
