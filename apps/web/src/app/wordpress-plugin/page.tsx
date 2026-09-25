@@ -19,6 +19,7 @@ import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { WpPluginInstall, WpPluginRepoLink } from "@/components/landing/wp-plugin-download";
 import { WpUpdateAnimation } from "@/components/landing/wp-update-animation";
+import { PartnerLockup } from "@/components/landing/partner-lockup";
 import { TrackOnView } from "@/components/track-on-view";
 import { plans } from "@/config/plans";
 import { site } from "@/config/site";
@@ -294,6 +295,7 @@ export default function WordPressPluginPage() {
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-5 pb-16 pt-32 sm:pt-36 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
+            <PartnerLockup partner="wordpress" className="mb-7" />
             <p className={`${eyebrow} mb-4`}>{"// mykavo for wordpress //"}</p>
             <h1 className={`${fontDisplay} text-4xl leading-[1.05] text-[#151515] sm:text-6xl`}>
               Update WordPress

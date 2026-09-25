@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { SHOPIFY_APP_PAGE_PATH } from "@/config/shopify-app";
 import { WP_PLUGIN_PAGE_PATH } from "@/config/wordpress-plugin";
 import { eyebrow, fontDisplay } from "./style";
+import { PartnerLockup, PartnerLogo } from "./partner-lockup";
 import { WpPluginInstall } from "./wp-plugin-download";
 import { WpUpdateAnimation } from "./wp-update-animation";
 
@@ -19,6 +21,7 @@ export function WordPressPluginSection() {
       <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
           <div>
+            <PartnerLockup partner="wordpress" className="mb-7" />
             <p className={`${eyebrow} mb-4`}>{"// for wordpress //"}</p>
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
               Update WordPress
@@ -60,6 +63,32 @@ export function WordPressPluginSection() {
             <WpUpdateAnimation />
           </Link>
         </div>
+
+        {/* Shopify, next in line */}
+        <Link
+          href={SHOPIFY_APP_PAGE_PATH}
+          className="group mt-14 flex flex-col gap-5 rounded-2xl border border-black/10 bg-[#FBFAF3] p-6 transition-all hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[5px_5px_0_#151515] sm:flex-row sm:items-center sm:justify-between sm:px-8"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-7">
+            <PartnerLogo partner="shopify" className="h-9 w-auto self-start sm:self-center" />
+            <div>
+              <p className="flex flex-wrap items-center gap-2.5 text-[16px] font-semibold text-[#151515]">
+                MyKavo for Shopify
+                <span className="rounded-full border border-[#151515] bg-[#FFD400] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em]">
+                  Coming soon
+                </span>
+              </p>
+              <p className="mt-1 max-w-xl text-[14px] leading-6 text-[#6B6B60]">
+                A check after every theme publish and edit, with before-and-after evidence in your
+                Shopify admin. Nothing added to your storefront.
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4">
+            See the Shopify app
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </span>
+        </Link>
       </div>
     </section>
   );

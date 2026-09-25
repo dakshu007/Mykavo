@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
+import { PartnerLockup } from "@/components/landing/partner-lockup";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
@@ -241,6 +242,9 @@ export default function ShopifyAppPage() {
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-5 pb-16 pt-32 sm:pt-36 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
+            <div>
+              <PartnerLockup partner="shopify" className="mb-7" />
+            </div>
             {!SHOPIFY_APP_STORE_URL && (
               <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#151515] shadow-[2px_2px_0_#151515]">
                 <span className="size-1.5 rounded-full bg-[#151515] motion-safe:animate-pulse" aria-hidden />
