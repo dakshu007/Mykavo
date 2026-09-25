@@ -28,13 +28,18 @@ export const CHANGELOG_PATH = "/whats-new-on-mykavo";
 export const CHANGELOG: ChangelogRelease[] = [
   {
     date: "2026-09-25",
-    title: "MyKavo is in the WordPress.org plugin directory",
+    title: "MyKavo on WordPress.org, and a page for the Android app",
     summary: "Install MyKavo for WordPress straight from your dashboard, with updates like any other plugin.",
     items: [
       {
         kind: "new",
         text: "MyKavo for WordPress is approved and listed in the WordPress.org plugin directory. In WordPress go to Plugins > Add New and search for MyKavo.",
         href: "/wordpress-plugin",
+      },
+      {
+        kind: "new",
+        text: "A home for the Android app: a tour of all five tabs, what you can do from your phone, and how to get early access.",
+        href: "/android-app",
       },
     ],
   },
@@ -117,7 +122,7 @@ export const CHANGELOG: ChangelogRelease[] = [
         text: "Visual diff images now highlight only what actually changed. Adding one menu item no longer paints the whole page red.",
       },
       { kind: "improved", text: "Ads from common ad networks are masked automatically, so rotating ad slots no longer trigger visual changes." },
-      { kind: "new", text: "The MyKavo Android app is available by request, with access approved in batches.", href: "/#android-app" },
+      { kind: "new", text: "The MyKavo Android app is available by request, with access approved in batches.", href: "/android-app" },
       { kind: "improved", text: "A simpler first run: one guided path from adding a website to an approved baseline." },
       { kind: "improved", text: "Sign up with Google in one click, and a welcome email that explains how to switch alerts on." },
     ],
@@ -222,7 +227,7 @@ export const CHANGELOG: ChangelogRelease[] = [
     title: "The MyKavo Android app",
     summary: "Your monitoring, in your pocket.",
     items: [
-      { kind: "new", text: "The MyKavo Android app, kept in sync with the web dashboard.", href: "/#android-app" },
+      { kind: "new", text: "The MyKavo Android app, kept in sync with the web dashboard.", href: "/android-app" },
     ],
   },
   {

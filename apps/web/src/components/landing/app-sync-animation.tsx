@@ -235,9 +235,9 @@ function Stage({ children, k }: { children: ReactNode; k: number }) {
         height: STAGE_H,
         transformOrigin: "0 0",
         transform: `scale(${k})`,
-        backgroundColor: "#1b1b1b",
-        backgroundImage: "radial-gradient(#2c2c2a 1px,transparent 1.2px)",
-        backgroundSize: "20px 20px",
+        // Transparent: the scene sits straight on the ink section around it,
+        // rather than on a lighter panel that reads as a box.
+        backgroundColor: "transparent",
         color: INK,
       })}
     >

@@ -38,7 +38,9 @@ export type AnalyticsEvent =
   | "wp_plugin_downloaded"
   | "wp_plugin_directory_clicked"
   // Shopify app page
-  | "shopify_app_viewed";
+  | "shopify_app_viewed"
+  // Android app page
+  | "android_app_viewed";
 
 type EventProps = Record<string, string | number | boolean>;
 

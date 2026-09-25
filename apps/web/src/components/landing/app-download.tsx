@@ -1,4 +1,6 @@
-import { Apple, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
+import Link from "next/link";
+import { Apple, ArrowRight, RefreshCw, ShieldCheck, Smartphone } from "lucide-react";
+import { ANDROID_APP_PAGE_PATH } from "@/config/android-app";
 import { LogoMark } from "@/components/brand/logo";
 import { AppSyncAnimation } from "./app-sync-animation";
 import { RequestAppButton } from "./request-app-dialog";
@@ -45,7 +47,30 @@ function MockRow({ dot, label, value }: { dot: string; label: string; value: str
   );
 }
 
-function PhoneMock() {
+/** Keyframes for the phone mock's pulse ring and synced chip. Render once per page. */
+export function PhoneMockStyles() {
+  return (
+    <style>{`
+      @keyframes ad-ring {
+        0% { transform: scale(1); opacity: 0.9; }
+        100% { transform: scale(1.6); opacity: 0; }
+      }
+      @keyframes ad-pop-kf {
+        0%, 12% { opacity: 0; transform: translateY(3px) scale(0.92); }
+        20%, 88% { opacity: 1; transform: none; }
+        96%, 100% { opacity: 0; transform: translateY(3px) scale(0.92); }
+      }
+      .ad-pulse { animation: ad-ring 2.4s ease-out infinite; }
+      .ad-pop { animation: ad-pop-kf 5.6s ease-out infinite; }
+      @media (prefers-reduced-motion: reduce) {
+        .ad-pulse, .ad-pop { animation: none; }
+        .ad-pulse { opacity: 0; }
+      }
+    `}</style>
+  );
+}
+
+export function PhoneMock() {
   return (
     <div className="w-52 shrink-0 overflow-hidden rounded-[2.2rem] border-2 border-[#151515] bg-white shadow-[8px_8px_0_rgba(255,212,0,0.9)]">
       {/* Status bar + camera dot */}
@@ -114,23 +139,7 @@ const trust = [
 export function AppDownloadSection() {
   return (
     <section id="android-app" className="border-y border-[#151515] bg-[#151515]">
-      <style>{`
-        @keyframes ad-ring {
-          0% { transform: scale(1); opacity: 0.9; }
-          100% { transform: scale(1.6); opacity: 0; }
-        }
-        @keyframes ad-pop-kf {
-          0%, 12% { opacity: 0; transform: translateY(3px) scale(0.92); }
-          20%, 88% { opacity: 1; transform: none; }
-          96%, 100% { opacity: 0; transform: translateY(3px) scale(0.92); }
-        }
-        .ad-pulse { animation: ad-ring 2.4s ease-out infinite; }
-        .ad-pop { animation: ad-pop-kf 5.6s ease-out infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .ad-pulse, .ad-pop { animation: none; }
-          .ad-pulse { opacity: 0; }
-        }
-      `}</style>
+      <PhoneMockStyles />
       <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
         <p className={`${eyebrowOnDark} mb-4 text-center`}>{"// in your pocket //"}</p>
         <h2
@@ -179,6 +188,13 @@ export function AppDownloadSection() {
         <div className="mt-10 flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             <RequestAppButton />
+            <Link
+              href={ANDROID_APP_PAGE_PATH}
+              className="inline-flex items-center gap-2 rounded-full border border-[#E9EBDF]/25 px-5 py-3 text-[13px] font-medium text-[#E9EBDF] transition-colors hover:border-[#FFD400]"
+            >
+              See the app
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#E9EBDF]/25 px-5 py-3 text-[13px] font-medium text-[#9C9E93]">
               <Apple className="size-4" aria-hidden />
               iOS coming soon

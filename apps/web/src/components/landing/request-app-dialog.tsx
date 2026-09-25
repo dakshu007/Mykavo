@@ -39,9 +39,12 @@ const TRIGGER_CLASS: Record<TriggerVariant, string> = {
 export function RequestAppButton({
   variant = "hero",
   label = "Request the Android app",
+  source = "landing",
 }: {
   variant?: TriggerVariant;
   label?: string;
+  /** Where the request came from, stored with it (short, lowercase). */
+  source?: string;
 } = {}) {
   const ref = useRef<HTMLDialogElement>(null);
   const formId = useId();
@@ -86,7 +89,7 @@ export function RequestAppButton({
         body: JSON.stringify({
           name: String(data.get("name") ?? ""),
           email: String(data.get("email") ?? ""),
-          source: "landing",
+          source,
           company_website_url: String(data.get("company_website_url") ?? ""),
         }),
       });

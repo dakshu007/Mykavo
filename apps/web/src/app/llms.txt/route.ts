@@ -83,6 +83,7 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, from the outside - works with or without the plugin
 - [Site Audit](${site.url}/site-audit): the technical SEO crawl - every check listed, plan limits, how it works
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin - a check after every update, with the update named if something broke
+- [MyKavo for Android](${site.url}/android-app): the Android app - push alerts for critical and high changes, triage and approve changes, run scans and add websites, live-synced with the web dashboard. Free on every plan, early access by request
 - [MyKavo for Shopify](${site.url}/shopify-app): the Shopify app, coming soon to the Shopify App Store - a check after every theme publish and edit, with before-and-after evidence in the Shopify admin
 - [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs
 - [Website Monitoring for Webflow](${site.url}/website-monitoring-for-webflow): see what every publish and Editor session changed
@@ -106,6 +107,7 @@ Each comparison page states plainly where the other category of tool is the bett
 ## Integrations
 
 - WordPress plugin (${site.url}/wordpress-plugin): free, listed in the WordPress.org plugin directory at https://wordpress.org/plugins/mykavo/ (search "MyKavo" under Plugins > Add New)
+- Android app (${site.url}/android-app): free on every plan; early access by request (same email as the MyKavo account), then downloaded from the dashboard. Android 7.0+. iOS coming soon
 - Shopify app (${site.url}/shopify-app): built, coming soon to the Shopify App Store. Until then any Shopify store can be monitored from mykavo.app with nothing installed
 - Supabase (${site.url}/docs/platform/supabase): a Database Webhook or a pg_net trigger calls the website's deploy hook, so publishing content starts a check. MyKavo never connects to the database
 - Post-deploy checks: one secret URL per website that CI, Netlify, Vercel or any script can POST to after a release; MyKavo replies "Deploy verified" or lists what changed

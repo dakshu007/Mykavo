@@ -9,7 +9,7 @@ import { GoogleIcon } from "@/components/brand/integration-icons";
 
 const links = [
   { href: "/pricing", label: "Pricing" },
-  { href: "/#android-app", label: "Android" },
+  { href: "/android-app", label: "Android" },
   { href: "/blog", label: "Blog" },
   { href: "/support", label: "Support" },
 ];
@@ -46,6 +46,18 @@ function SoonBadge({ children }: { children: React.ReactNode }) {
 function NavMenu({ label, heading, items }: { label: string; heading: string; items: MenuItem[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // A short grace period before a hover-close, so crossing the gap between
+  // the button and the panel (or a wobbly mouse) never makes it flicker.
+  const closeTimer = useRef<number | undefined>(undefined);
+  const openNow = () => {
+    window.clearTimeout(closeTimer.current);
+    setMenuOpen(true);
+  };
+  const closeSoon = () => {
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setMenuOpen(false), 140);
+  };
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -67,27 +79,37 @@ function NavMenu({ label, heading, items }: { label: string; heading: string; it
     <div
       ref={ref}
       className="relative"
-      onMouseEnter={() => setMenuOpen(true)}
-      onMouseLeave={() => setMenuOpen(false)}
+      onMouseEnter={openNow}
+      onMouseLeave={closeSoon}
     >
       <button
         type="button"
         // Open-only: hover already opens the menu, so a toggling click
         // would immediately close it for mouse users. Touch devices get
         // open-on-tap; closing is outside-tap, Escape, or mouse-leave.
-        onClick={() => setMenuOpen(true)}
+        onClick={openNow}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         className="flex items-center gap-1 rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
       >
         {label}
         <ChevronDown
-          className={`size-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`}
+          className={`size-3.5 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
           aria-hidden
         />
       </button>
-      {menuOpen && (
-        <div role="menu" aria-label={heading} className="absolute left-1/2 top-full w-64 -translate-x-1/2 pt-2">
+      {/* Always mounted so it can animate both ways. The top padding is the
+          gap below the nav pill (the button sits ~10px above the pill's
+          edge); being padding, it is also the hover bridge across that gap. */}
+      <div
+        role="menu"
+        aria-label={heading}
+        className={`absolute left-1/2 top-full w-64 origin-top -translate-x-1/2 pt-[22px] transition-[opacity,translate,scale,visibility] duration-200 ease-out motion-reduce:transition-none ${
+          menuOpen
+            ? "visible translate-y-0 scale-100 opacity-100"
+            : "pointer-events-none invisible -translate-y-1.5 scale-[0.97] opacity-0"
+        }`}
+      >
           <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white p-1.5 shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
             <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
               {heading}
@@ -105,8 +127,7 @@ function NavMenu({ label, heading, items }: { label: string; heading: string; it
               </Link>
             ))}
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

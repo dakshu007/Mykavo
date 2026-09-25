@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Smartphone, X } from "lucide-react";
 import { RequestAppButton } from "./request-app-dialog";
+import { ANDROID_APP_PAGE_PATH } from "@/config/android-app";
 
 /**
  * "MyKavo for Android is here" - the standing announcement, on every
@@ -60,7 +62,9 @@ export function AppAnnouncement() {
     }
   }
 
-  if (state === "hidden") return null;
+  const pathname = usePathname();
+  // The Android page is the announcement, so it would only cover its own hero.
+  if (state === "hidden" || pathname === ANDROID_APP_PAGE_PATH) return null;
 
   return (
     <div

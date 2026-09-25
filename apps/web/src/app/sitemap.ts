@@ -31,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/website-monitoring-for-wordpress",
     "/wordpress-plugin",
     "/shopify-app",
+    "/android-app",
     "/brand",
     "/site-audit",
     "/whats-new-on-mykavo",
