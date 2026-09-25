@@ -19,6 +19,7 @@ import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { WpPluginInstall, WpPluginRepoLink } from "@/components/landing/wp-plugin-download";
 import { WpUpdateAnimation } from "@/components/landing/wp-update-animation";
+import { WpNightShiftAnimation } from "@/components/landing/wp-night-shift-animation";
 import { PartnerLockup } from "@/components/landing/partner-lockup";
 import { TrackOnView } from "@/components/track-on-view";
 import { plans } from "@/config/plans";
@@ -332,15 +333,13 @@ export default function WordPressPluginPage() {
               {WP_PLUGIN_REQUIRES.php}+ · GPL
             </p>
           </div>
-          <div className="mx-auto mt-14 max-w-5xl">
-            <Shot
-              src="/wordpress/overview.webp"
-              alt="The MyKavo screen in wp-admin: overall status, uptime, response time, SSL, and the changes that need attention first"
-              width={1440}
-              height={1000}
-              priority
-              className="shadow-[10px_10px_0_#FFD400,10px_10px_0_1px_#151515]"
-            />
+          {/* One night in wp-admin: updates, the check, the verdict, and the
+              warning next time. */}
+          <div className="mx-auto mt-16 max-w-6xl">
+            <WpNightShiftAnimation />
+            <p className="mt-6 text-center font-mono text-[11px] uppercase tracking-[0.16em] text-[#6B6B60]">
+              Illustrative night · the screens and wording are the plugin&apos;s own
+            </p>
           </div>
         </section>
 
