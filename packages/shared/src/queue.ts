@@ -32,6 +32,13 @@ export const SITE_AUDIT_QUEUE = "site-audit";
  */
 export const PUSH_TEST_QUEUE = "push-test";
 /**
+ * Hourly activation pass: the "baseline ready" confirmation and the one-time
+ * "add your first website" reminder. Budgeted against the email plan's daily
+ * and monthly limits (see apps/worker/src/email-budget.ts) so reminders only
+ * ever spend what real alerts do not need.
+ */
+export const ACTIVATION_SWEEP_QUEUE = "activation-sweep";
+/**
  * "Somebody just signed up." Goes to the platform operator, not to a customer.
  *
  * Enqueued from the signup hook rather than sent there: the hook runs inside

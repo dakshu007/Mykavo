@@ -4,6 +4,7 @@ export * from "./link-check";
 export * from "./script-services";
 export * from "./channels";
 export * from "./queue";
+export * from "./email-budget";
 export * from "./schedule";
 export * from "./retention";
 export * from "./plan-tier";

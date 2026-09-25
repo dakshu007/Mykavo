@@ -17,6 +17,7 @@ import {
   REPORT_SWEEP_QUEUE,
   AUDIT_SWEEP_QUEUE,
   BILLING_SWEEP_QUEUE,
+  ACTIVATION_SWEEP_QUEUE,
   CLIENT_REPORT_SWEEP_QUEUE,
   SITE_AUDIT_QUEUE,
   GSC_SYNC_QUEUE,
@@ -47,6 +48,7 @@ import { runHealthSweep } from "./health";
 import { runReportSweep } from "./report";
 import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
+import { runActivationSweep } from "./activation-email";
 import { runClientReportSweep } from "./client-report";
 import { runSiteAuditJob } from "./site-audit";
 import { runGscSync, runGscSweep } from "./gsc-sync";
@@ -59,6 +61,7 @@ const HEALTH_CRON = process.env.HEALTH_CRON ?? "*/5 * * * *"; // every 5 minutes
 const REPORT_CRON = process.env.REPORT_CRON ?? "0 8 * * 1"; // Mondays 08:00 UTC
 const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 const BILLING_CRON = process.env.BILLING_CRON ?? "0 9 * * *"; // daily 09:00 UTC
+const ACTIVATION_CRON = process.env.ACTIVATION_CRON ?? "20 * * * *"; // hourly at :20
 const CLIENT_REPORT_CRON = process.env.CLIENT_REPORT_CRON ?? "30 8 * * *"; // daily 08:30 UTC
 const GSC_CRON = process.env.GSC_CRON ?? "0 7 * * *"; // daily 07:00 UTC
 // A registration changes once a year; weekly is already far more often than
@@ -174,6 +177,14 @@ async function main() {
     await runBillingSweep();
   });
   await boss.schedule(BILLING_SWEEP_QUEUE, BILLING_CRON);
+
+  // Activation: "baseline ready" + the one-time "add your first website"
+  // reminder, spending only the email budget alerts leave over.
+  await boss.createQueue(ACTIVATION_SWEEP_QUEUE, { expireInSeconds: 20 * 60 }).catch(() => {});
+  await boss.work(ACTIVATION_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+    await runActivationSweep();
+  });
+  await boss.schedule(ACTIVATION_SWEEP_QUEUE, ACTIVATION_CRON);
 
   // Google Search Console: on-demand syncs + a daily sweep.
   await boss.createQueue(GSC_SYNC_QUEUE, { retryLimit: 1, expireInSeconds: 10 * 60 }).catch(() => {});
