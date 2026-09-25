@@ -20,6 +20,7 @@ import { LandingNav } from "@/components/landing/nav";
 import { ValueQuoteBanner } from "@/components/value-quote";
 import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
+import { BeforeAfterTimeline } from "@/components/landing/before-after";
 import { IntegrationsMarquee } from "@/components/landing/integrations-marquee";
 import { CategoryTabs } from "@/components/landing/categories";
 import { WhatItIsSection } from "@/components/landing/what-it-is";
@@ -131,24 +132,6 @@ const problems = [
     time: "Fri 17:58",
     source: "client edit",
     text: "A client edits the homepage - and blames your agency when it breaks.",
-  },
-];
-
-const beforeAfter = [
-  {
-    label: "Finding out a page broke",
-    before: "An angry client email, days later",
-    after: "One grouped alert, minutes after the scan",
-  },
-  {
-    label: "Re-checking pages after a deploy",
-    before: "Hours of clicking through every page",
-    after: "Automatic on every scheduled scan",
-  },
-  {
-    label: "Proving what actually changed",
-    before: "Guesswork and screenshots from memory",
-    after: "Stored before-and-after evidence",
   },
 ];
 
@@ -482,88 +465,13 @@ export default function HomePage() {
             agency argument rather than up top: it is an ROI case, and four
             consecutive explain-the-product sections before the first feature
             was three too many. */}
-        {/* Before / after MyKavo - v7-style stat pairs */}
         <section className="border-y border-black/10 bg-[#F3F1E6]">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
             <p className={`${eyebrow} mb-4 text-center`}>{"// before & after //"}</p>
             <DisplayHeading>
               Your week, <span className="text-[#6B6B60]">with and without it.</span>
             </DisplayHeading>
-            <div className="mx-auto mt-14 max-w-4xl space-y-4">
-              {beforeAfter.map((row) => (
-                <div
-                  key={row.label}
-                  className="grid overflow-hidden rounded-2xl border border-[#151515] bg-white shadow-[5px_5px_0_#151515] md:grid-cols-[1.1fr_1fr_1fr]"
-                >
-                  <div className="flex items-center border-b border-black/10 p-6 md:border-b-0 md:border-r">
-                    <p className={`${fontDisplay} text-[19px] leading-snug text-[#151515]`}>{row.label}</p>
-                  </div>
-                  <div className="border-b border-black/10 p-6 md:border-b-0 md:border-r">
-                    <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#6B6B60]">
-                      Before
-                    </p>
-                    <p className="mt-2 text-[14.5px] leading-6 text-[#151515]/60 line-through decoration-[#151515]/30">
-                      {row.before}
-                    </p>
-                  </div>
-                  <div className="bg-[#FFF7CC] p-6">
-                    <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#151515]">
-                      With MyKavo
-                    </p>
-                    <p className="mt-2 text-[14.5px] font-semibold leading-6 text-[#151515]">{row.after}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Evidence card - the before/after diff every change stores */}
-            <div className="mx-auto mt-14 max-w-3xl overflow-hidden rounded-2xl border border-black/10 bg-white">
-              <div className="grid divide-y divide-black/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                <div className="p-7">
-                  <p className={`${eyebrow} mb-4`}>Baseline · approved</p>
-                  <dl className="space-y-3 font-mono text-[13px]">
-                    {[
-                      ["title", "Aurora Outdoor - Tents & Camping Gear"],
-                      ["robots", "index, follow"],
-                      ["status", "200 OK"],
-                    ].map(([k, v]) => (
-                      <div key={k}>
-                        <dt className="text-[#6B6B60]">{k}</dt>
-                        <dd className="mt-1 rounded-lg bg-[#F3F1E6] px-2.5 py-1.5 text-[#151515]">{v}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-                <div className="p-7">
-                  <p className={`${eyebrow} mb-4`}>Current scan · today</p>
-                  <dl className="space-y-3 font-mono text-[13px]">
-                    {([
-                      ["title", "Home", true],
-                      ["robots", "noindex, nofollow", true],
-                      ["status", "200 OK", false],
-                    ] as Array<[string, string, boolean]>).map(([k, v, changed]) => (
-                      <div key={k}>
-                        <dt className="text-[#6B6B60]">{k}</dt>
-                        <dd
-                          className={`mt-1 rounded-lg px-2.5 py-1.5 text-[#151515] ${
-                            changed
-                              ? "border border-[#151515]/20 bg-[#FFD400] font-semibold"
-                              : "bg-[#F3F1E6]"
-                          }`}
-                        >
-                          {v}
-                          {changed ? " ⚠" : ""}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              </div>
-              <div className="border-t border-black/10 bg-[#151515] px-7 py-4 text-sm text-[#9C9E93]">
-                <span className="font-semibold text-[#FFD400]">Critical:</span> page changed from
-                index to noindex - MyKavo alerts you within one scan cycle.
-              </div>
-            </div>
+            <BeforeAfterTimeline />
           </div>
         </section>
 
