@@ -20,6 +20,7 @@ import { LandingNav } from "@/components/landing/nav";
 import { ValueQuoteBanner } from "@/components/value-quote";
 import { LandingHero } from "@/components/landing/hero";
 import { SignalMarquee } from "@/components/landing/marquee";
+import { IntegrationsMarquee } from "@/components/landing/integrations-marquee";
 import { CategoryTabs } from "@/components/landing/categories";
 import { WhatItIsSection } from "@/components/landing/what-it-is";
 import { AlertChannelsSection } from "@/components/landing/alert-channels";
@@ -363,6 +364,10 @@ export default function HomePage() {
       <main>
         {/* Hero - badge, headline, URL input, browser-frame dashboard mock */}
         <LandingHero />
+
+        {/* Works with - what MyKavo connects to and the platforms it monitors,
+            each logo labelled and linked to its proof. Never "trusted by". */}
+        <IntegrationsMarquee />
 
         {/* What MyKavo IS - the plain definition, before any feature. Readers
             kept saying the page never states what the product actually is;

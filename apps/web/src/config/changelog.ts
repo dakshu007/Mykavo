@@ -41,6 +41,11 @@ export const CHANGELOG: ChangelogRelease[] = [
         text: "A home for the Android app: a tour of all five tabs, what you can do from your phone, and how to get early access.",
         href: "/android-app",
       },
+      {
+        kind: "new",
+        text: "Deploy checks docs for GitHub Actions, Netlify and Vercel: start a check the moment a release goes out.",
+        href: "/docs/platform/deploy-checks",
+      },
     ],
   },
   {

@@ -528,6 +528,110 @@ export const DOC_SECTIONS: DocSection[] = [
         ],
       },
       {
+        slug: "deploy-checks",
+        title: "Deploy checks: Vercel, Netlify and GitHub Actions",
+        description:
+          "Start a MyKavo check the moment a deploy finishes - from a GitHub Actions step, a Netlify deploy notification or a Vercel webhook - and get a verdict on what the release changed.",
+        keywords: [
+          "post deploy website check",
+          "vercel deploy monitoring",
+          "netlify deploy notification webhook",
+          "github actions website regression check",
+          "check website after deploy",
+        ],
+        capsule:
+          "A deploy check scans a website the moment a release goes out. Your pipeline sends a POST to the website's deploy hook URL, MyKavo compares every monitored page with its approved baseline, and the verdict arrives in your alert channels: \"Deploy verified\" when nothing important changed, or the changes with before-and-after evidence.",
+        blocks: [
+          { type: "h2", text: "How deploy checks work" },
+          {
+            type: "ul",
+            items: [
+              "Each website has its own deploy hook URL. Anything that can send an HTTP POST can start a check: a CI step, a hosting provider's deploy notification, a script.",
+              "The check is a full scan of the website's monitored pages against their approved baselines, the same as a scheduled scan, labelled as a deploy in the scan history.",
+              "An optional JSON body like {\"note\":\"v2.4.1\"} labels the check with your release (up to 140 characters). Any other body is ignored, so a provider's own payload is fine.",
+            ],
+          },
+          {
+            type: "note",
+            text: "Deploy checks are part of the Pro and Agency plans, and each check counts toward the plan's daily on-demand scan quota. Call the hook for production deploys, not for every preview.",
+          },
+          {
+            type: "steps",
+            name: "Turn on deploy checks for a website",
+            description: "Get the deploy hook URL that your pipeline will call.",
+            items: [
+              {
+                title: "Enable deploy checks",
+                text: "In MyKavo open the website, go to Deploy checks and press Enable deploy checks.",
+              },
+              {
+                title: "Copy the deploy hook URL",
+                text: "Copy the URL and store it as a secret in your CI or hosting provider. Anyone with it can start checks for this website, so keep it out of your repository.",
+              },
+            ],
+          },
+          { type: "h2", text: "GitHub Actions" },
+          {
+            type: "p",
+            text: "Save the URL as a repository secret named MYKAVO_DEPLOY_HOOK (Settings > Secrets and variables > Actions), then add a step after the step that deploys to production. It only runs when the deploy succeeded, and labels the check with the short commit hash.",
+          },
+          {
+            type: "code",
+            language: "YAML",
+            text: `- name: Check the site with MyKavo
+  if: success()
+  env:
+    MYKAVO_DEPLOY_HOOK: \${{ secrets.MYKAVO_DEPLOY_HOOK }}
+  run: |
+    curl -fsS -X POST "$MYKAVO_DEPLOY_HOOK" \\
+      -H "Content-Type: application/json" \\
+      -d "{\\"note\\":\\"\${GITHUB_SHA::7}\\"}"`,
+          },
+          {
+            type: "p",
+            text: "The same one-line curl works in any CI system - GitLab CI, CircleCI, Bitbucket Pipelines, Jenkins - after the production deploy step.",
+          },
+          { type: "h2", text: "Netlify" },
+          {
+            type: "p",
+            text: "In your Netlify site open the deploy notification settings and add an outgoing webhook for the Deploy succeeded event, with your deploy hook URL as the URL to notify. Netlify posts its deploy details as JSON; MyKavo ignores them and starts the check. If the site also builds deploy previews or branch deploys, they send the event too - each one starts a check of your production pages, so for busy sites prefer a step in your build or CI that runs only for production.",
+          },
+          { type: "h2", text: "Vercel" },
+          {
+            type: "p",
+            text: "If you deploy to production from CI with the Vercel CLI, add the curl step from the GitHub Actions example right after the production deploy command. On plans that include webhooks you can instead add a webhook in your Vercel team settings for the deployment succeeded event on your project, pointing at the deploy hook URL. Webhook events also fire for preview deployments, so the CI step is the better fit when you deploy previews often.",
+          },
+          { type: "h2", text: "What the verdict looks like" },
+          {
+            type: "ul",
+            items: [
+              "Nothing important changed: a \"Deploy verified\" notification, and the check appears in the scan history with your note.",
+              "Something changed: the changes are listed by severity, each with previous and current values and before-and-after screenshots, and the check carries your note so you know which release it followed.",
+              "Expected changes from the release can be approved in one go, which updates the baselines for the next deploy.",
+            ],
+          },
+          { type: "h2", text: "Security and limits" },
+          {
+            type: "ul",
+            items: [
+              "The deploy hook URL works for one website and can only start a check. It cannot read data or change settings.",
+              "If the URL leaks, regenerate it under Deploy checks. The old URL stops working immediately.",
+              "Repeated calls are rate limited, and a call that arrives while a check is already running does not start a second one.",
+            ],
+          },
+        ],
+        faqs: [
+          {
+            q: "Does MyKavo need access to my repository or hosting account?",
+            a: "No. Your pipeline calls MyKavo's deploy hook, and MyKavo checks your public pages from the outside. It never connects to GitHub, Vercel or Netlify.",
+          },
+          {
+            q: "Which pages does a deploy check scan?",
+            a: "The website's monitored pages - the same pages as a scheduled scan - compared against their approved baselines.",
+          },
+        ],
+      },
+      {
         slug: "supabase",
         title: "Supabase: check your site when content or code changes",
         description:
