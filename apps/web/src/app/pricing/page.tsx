@@ -190,7 +190,7 @@ export default function PricingPage() {
                   <span className={`${fontDisplay} text-5xl`}>
                     ${plan.priceMonthlyUsd}
                   </span>
-                  <span className="text-sm text-[#151515]/55"> / month</span>
+                  <span className="text-sm text-[#151515]/70"> / month</span>
                 </p>
                 <ul className="mt-7 flex-1 space-y-3">
                   {plan.features.map((f) => (

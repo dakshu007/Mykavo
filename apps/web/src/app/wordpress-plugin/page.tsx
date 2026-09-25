@@ -633,7 +633,7 @@ export default function WordPressPluginPage() {
                     <h3 className={`${fontDisplay} text-2xl text-[#151515]`}>{plan.name}</h3>
                     <p className="mt-3">
                       <span className={`${fontDisplay} text-4xl text-[#151515]`}>${plan.priceMonthlyUsd}</span>
-                      <span className="text-sm text-[#151515]/55"> / month</span>
+                      <span className="text-sm text-[#151515]/70"> / month</span>
                     </p>
                     <dl className="mt-6 flex-1 space-y-2.5">
                       {rows.map(([label, v]) => (

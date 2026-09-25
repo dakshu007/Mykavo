@@ -145,7 +145,7 @@ export function BeforeAfterTimeline() {
             ].map((s) => (
               <div key={s.k} className="min-w-[120px] rounded-2xl border border-black/10 bg-[#FBFAF3] px-4 py-3">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6B6B60]">{s.k}</p>
-                <p className={`mt-1 flex items-center gap-1.5 text-[15px] font-semibold ${s.good ? "text-[#151515]" : "text-[#E5484D]"}`}>
+                <p className={`mt-1 flex items-center gap-1.5 text-[15px] font-semibold ${s.good ? "text-[#151515]" : "text-[#C4262C]"}`}>
                   {s.good ? <Check className="size-4 text-[#16A34A]" aria-hidden /> : <X className="size-4" aria-hidden />}
                   {s.v}
                 </p>
@@ -238,7 +238,7 @@ export function BeforeAfterTimeline() {
                   aria-hidden={mode !== m}
                   className={`ba-fade absolute inset-x-0 top-0 flex items-start gap-2 text-[14px] leading-6 ${
                     mode === m ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-                  } ${m === "with" ? "text-[#151515]" : "text-[#151515]/55"}`}
+                  } ${m === "with" ? "text-[#151515]" : "text-[#151515]/75"}`}
                   style={{ transitionDelay: mode === m ? `${120 + i * 80}ms` : "0ms" }}
                 >
                   <span

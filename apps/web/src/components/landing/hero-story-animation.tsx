@@ -28,10 +28,14 @@ import { useStageClock } from "./use-stage-clock";
 const GOLD = "#FFD400";
 const INK = "#151515";
 const RED = "#E5484D";
+/** Red dark enough for white text on it (WCAG AA). */
+const RED_INK = "#C4262C";
 const GREEN = "#16A34A";
 const MONO = "var(--font-geist-mono), ui-monospace, monospace";
 
 export const HERO_CYCLE = 16;
+/** Shown until the clock starts (after page load): the approved baseline, fully drawn. */
+const FIRST_FRAME_T = 2.6;
 /** Reduced-motion still: the alert, with everything it found. */
 const STILL_T = 10.8;
 
@@ -157,6 +161,16 @@ export function heroFrameAt(t: number) {
 export type HeroFrame = ReturnType<typeof heroFrameAt>;
 
 const abs = (s: CSSProperties): CSSProperties => ({ position: "absolute", ...s });
+
+/**
+ * Text badges scale in rather than fade: a half-transparent label has
+ * half its contrast, and an accessibility audit can land on that frame.
+ */
+const badgeIn = (p: number): CSSProperties => ({
+  display: "inline-block",
+  transform: `scale(${p})`,
+  visibility: p > 0.01 ? "visible" : "hidden",
+});
 
 /* ------------------------------ step rail ------------------------------ */
 
@@ -337,11 +351,11 @@ function Browser({ f, w, h }: { f: HeroFrame; w: number; h: number }) {
                   height: (small ? 30 : 36) + 12,
                   borderRadius: 12,
                   border: `2px dashed ${RED}`,
-                  background: "rgba(229,72,77,0.07)",
-                  opacity: f.diffO,
+                  background: `rgba(229,72,77,${0.07 * f.diffO})`,
+                  borderColor: `rgba(229,72,77,${f.diffO})`,
                 })}
               >
-                <span style={abs({ left: 8, top: -11, background: RED, color: "#fff", fontFamily: MONO, fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 5 })}>
+                <span style={abs({ left: 8, top: -11, ...badgeIn(f.diffO), background: RED_INK, color: "#fff", fontFamily: MONO, fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 5 })}>
                   MISSING
                 </span>
               </div>
@@ -468,7 +482,7 @@ function Browser({ f, w, h }: { f: HeroFrame; w: number; h: number }) {
           whiteSpace: "nowrap",
         })}
       >
-        <span style={{ color: "#6B6B60" }}>&lt;head&gt;</span>
+        <span style={{ color: "#9C9E93" }}>&lt;head&gt;</span>
         <span>
           &lt;meta name=<span style={{ color: "#E9EBDF" }}>&quot;robots&quot;</span> content=
           <span style={{ position: "relative", display: "inline-block" }}>
@@ -479,8 +493,8 @@ function Browser({ f, w, h }: { f: HeroFrame; w: number; h: number }) {
         <span
           style={{
             marginLeft: "auto",
-            opacity: f.diffO,
-            background: RED,
+            ...badgeIn(f.diffO),
+            background: RED_INK,
             color: "#fff",
             fontSize: 9,
             fontWeight: 700,
@@ -741,7 +755,7 @@ const LABEL =
 function Landscape() {
   const W = 1080;
   const H = 660;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T);
+  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_FRAME_T);
   const f = heroFrameAt(t);
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
@@ -764,7 +778,7 @@ function Landscape() {
 function Portrait() {
   const W = 400;
   const H = 860;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T);
+  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_FRAME_T);
   const f = heroFrameAt(t);
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>

@@ -80,7 +80,8 @@ describe("content security policy", () => {
     }
   });
 
-  it("upgrades any stray http subresource", () => {
-    expect(csp).toContain("upgrade-insecure-requests");
+  it("keeps enforce-only directives out of the report-only policy", () => {
+    // Ignored there by browsers, with a console warning on every page load.
+    expect(csp).not.toContain("upgrade-insecure-requests");
   });
 });

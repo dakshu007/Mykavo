@@ -20,11 +20,16 @@ const appSans = DM_Sans({
 
 // Heading font: every h1/h2 site-wide renders in Poppins (globals.css base
 // rule); the landing/blog display style shares this variable.
+//
+// Only the weights headings actually use. Every weight and style here is a
+// separate preloaded file, and on a phone those preloads compete with first
+// paint: 400 and the four italic files cost five extra downloads on every
+// page for a handful of italic words, which the browser can slant instead.
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["500", "600", "700"],
+  style: ["normal"],
 });
 
 const geistMono = Geist_Mono({
@@ -105,18 +110,24 @@ export default function RootLayout({
             out with data-lenis-prevent. */}
         <SmoothScroll />
         {children}
-        {/* Google tag (gtag.js) - production only */}
+        {/* Google tag (gtag.js) - production only.
+            lazyOnload: analytics waits until the page has loaded and the
+            browser is idle, so it never competes with first paint.
+            Google signals and ad personalisation are off: they add
+            doubleclick.net third-party cookies (a Lighthouse best-practices
+            failure and a privacy cost) for advertising features MyKavo does
+            not use. Page views and events are unaffected. */}
         {process.env.NODE_ENV === "production" && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
             />
-            <Script id="ga-gtag" strategy="afterInteractive">
+            <Script id="ga-gtag" strategy="lazyOnload">
               {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${GA_MEASUREMENT_ID}');`}
+gtag('config', '${GA_MEASUREMENT_ID}', { allow_google_signals: false, allow_ad_personalization_signals: false });`}
             </Script>
           </>
         )}

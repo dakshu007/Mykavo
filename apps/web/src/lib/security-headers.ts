@@ -57,8 +57,15 @@ const CSP_DIRECTIVES = [
   // Clickjacking: the modern equivalent of X-Frame-Options, which is also
   // sent below for older browsers.
   "frame-ancestors 'self'",
-  "upgrade-insecure-requests",
 ].join("; ");
+
+/**
+ * Directives that only mean something in an ENFORCING policy. Browsers ignore
+ * upgrade-insecure-requests in a report-only header and log a console warning
+ * on every page load saying so - which Lighthouse counts against Best
+ * Practices. Add these when the header switches to Content-Security-Policy.
+ */
+export const CSP_ENFORCE_ONLY_DIRECTIVES = ["upgrade-insecure-requests"];
 
 export const CSP_REPORT_PATH = "/api/csp-report";
 
