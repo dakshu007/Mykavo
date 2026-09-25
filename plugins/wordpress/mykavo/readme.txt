@@ -150,13 +150,13 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 == Screenshots ==
 
 1. Overview: one clear status, uptime and SSL, what needs attention first, and the latest update check.
-7. Safe Updates: every update, plugin switch and theme change, with a verdict and the change named.
-8. A change that appeared after an update, with the update named.
-2. A change, with a before-and-after slider over the page screenshots.
-3. Exactly what changed: old and new values side by side.
-4. All changes, filtered by status and severity.
-5. Scan history.
-6. Connect in two clicks. Nothing is added to your public pages.
+2. Safe Updates: every update, plugin switch and theme change, with a verdict and the change named.
+3. A change that appeared after an update, with the update named.
+4. A change, with a before-and-after slider over the page screenshots.
+5. Exactly what changed: old and new values side by side.
+6. All changes, filtered by status and severity.
+7. Scan history.
+8. Connect in two clicks. Nothing is added to your public pages.
 9. WooCommerce store guard: see which store pages are monitored and add the rest in one click.
 
 == Changelog ==
