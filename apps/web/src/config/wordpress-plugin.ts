@@ -10,7 +10,13 @@ export const WP_PLUGIN_VERSION = "1.0.0";
 /** The listing in the WordPress.org plugin directory - the main way to install. */
 export const WP_PLUGIN_DIRECTORY_URL = "https://wordpress.org/plugins/mykavo/";
 
-/** Direct download, served by the site itself (the same zip, for manual installs). */
+/** The zip WordPress.org serves for the current stable version. */
+export const WP_PLUGIN_DIRECTORY_ZIP_URL = "https://downloads.wordpress.org/plugin/mykavo.zip";
+
+/**
+ * The copy of the zip the site itself serves. No longer linked from the site
+ * (installs go through WordPress.org) but kept so older links keep working.
+ */
 export const WP_PLUGIN_DOWNLOAD_PATH = "/downloads/mykavo-wordpress.zip";
 
 /** The marketing page. */

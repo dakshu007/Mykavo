@@ -17,13 +17,14 @@ import {
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
-import { WpPluginDownload, WpPluginInstall } from "@/components/landing/wp-plugin-download";
+import { WpPluginInstall, WpPluginRepoLink } from "@/components/landing/wp-plugin-download";
+import { WpUpdateAnimation } from "@/components/landing/wp-update-animation";
 import { TrackOnView } from "@/components/track-on-view";
 import { plans } from "@/config/plans";
 import { site } from "@/config/site";
 import {
   WP_PLUGIN_DIRECTORY_URL,
-  WP_PLUGIN_DOWNLOAD_PATH,
+  WP_PLUGIN_DIRECTORY_ZIP_URL,
   WP_PLUGIN_PAGE_PATH,
   WP_PLUGIN_REQUIRES,
   WP_PLUGIN_VERSION,
@@ -181,7 +182,7 @@ const faqs = [
   },
   {
     q: "Is it on WordPress.org?",
-    a: "Yes. MyKavo is in the WordPress.org plugin directory, so you can install it from Plugins → Add New and get updates like any other plugin. You can also download the zip here and upload it under Plugins → Add New → Upload Plugin - it is the same plugin, released under the GPL.",
+    a: "Yes. MyKavo is in the WordPress.org plugin directory, so you can install it from Plugins → Add New and get updates like any other plugin. The listing is at wordpress.org/plugins/mykavo, where you can also download the zip and upload it under Plugins → Add New → Upload Plugin. It is released under the GPL.",
   },
   {
     q: "What does the plugin send to MyKavo?",
@@ -209,7 +210,7 @@ const pluginJsonLd = {
       applicationSubCategory: "WordPress plugin",
       operatingSystem: `WordPress ${WP_PLUGIN_REQUIRES.wordpress}+`,
       softwareVersion: WP_PLUGIN_VERSION,
-      downloadUrl: `${site.url}${WP_PLUGIN_DOWNLOAD_PATH}`,
+      downloadUrl: WP_PLUGIN_DIRECTORY_ZIP_URL,
       installUrl: WP_PLUGIN_DIRECTORY_URL,
       sameAs: [WP_PLUGIN_DIRECTORY_URL],
       url: `${site.url}${WP_PLUGIN_PAGE_PATH}`,
@@ -322,7 +323,7 @@ export default function WordPressPluginPage() {
               </Link>
             </div>
             <div className="mt-5 text-[#151515]">
-              <WpPluginDownload placement="hero" variant="text" />
+              <WpPluginRepoLink placement="hero" />
             </div>
             <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[#6B6B60]">
               Free plugin · WordPress {WP_PLUGIN_REQUIRES.wordpress} to {WP_PLUGIN_REQUIRES.testedUpTo} · PHP{" "}
@@ -385,6 +386,12 @@ export default function WordPressPluginPage() {
                 Automatic checks come with Pro and Agency. On Free, every update is still listed.
               </p>
             </div>
+            <div className="min-w-0 overflow-hidden rounded-[18px] border-2 border-[#151515] bg-[#FBFAF6] shadow-[10px_10px_0_#FFD400]">
+              <WpUpdateAnimation />
+            </div>
+          </div>
+          <div className="mx-auto mt-16 max-w-4xl">
+            <p className={`${eyebrow} mb-4 text-center`}>{"// the update history, in wp-admin //"}</p>
             <Shot
               src="/wordpress/safe-updates.webp"
               alt="Safe Updates history in WordPress: each update, plugin switch and theme change with a verdict such as Verified - nothing changed, or 2 changes found"
@@ -591,7 +598,7 @@ export default function WordPressPluginPage() {
           </div>
           <div className="mt-12 flex flex-col items-center gap-4 text-[#151515]">
             <WpPluginInstall placement="install" />
-            <WpPluginDownload placement="install" variant="text" />
+            <WpPluginRepoLink placement="install" />
           </div>
         </section>
 

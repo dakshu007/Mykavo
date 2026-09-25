@@ -464,7 +464,7 @@ export const DOC_SECTIONS: DocSection[] = [
               },
               {
                 title: "Activate it",
-                text: "Activate the plugin. To install it by hand instead, download the zip from mykavo.app/wordpress-plugin and upload it under Plugins > Add New > Upload Plugin - it is the same plugin.",
+                text: "Activate the plugin. To install it by hand instead, download the zip from wordpress.org/plugins/mykavo and upload it under Plugins > Add New > Upload Plugin - it is the same plugin.",
               },
               {
                 title: "Connect",
