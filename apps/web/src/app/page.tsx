@@ -551,7 +551,7 @@ export default function HomePage() {
         {/* Site Audit - the Ahrefs-style crawl, priced for freelancers */}
         <SiteAuditSection />
 
-        {/* Search Console correlation - dark band, animated merge diagram */}
+        {/* Search Console correlation - dark band, connect -> drop -> why -> priorities */}
         <SearchConsoleSection />
 
         {/* Free tools */}
