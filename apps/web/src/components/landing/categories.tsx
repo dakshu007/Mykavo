@@ -12,17 +12,20 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { CategoryScene, type SceneKey } from "./category-scenes";
 import { fontDisplay } from "./style";
 
 /**
  * Playground-style category tabs: eight pills, one for every change category
- * MyKavo watches. The active tab swaps a demo panel showing a real example
- * alert for that category - baseline value, current value, and the severity
- * MyKavo would assign. Static data, instant switching, no network.
+ * MyKavo watches. The active tab plays that category's animation
+ * (category-scenes.tsx) - the page is fine, the change happens, MyKavo
+ * catches it - ending on baseline vs current and the severity MyKavo
+ * assigns. The tour advances by itself, with the active pill filling up as
+ * a timer; hover or focus pauses it. Static data, no network.
  */
 
 interface Category {
-  key: string;
+  key: SceneKey;
   name: string;
   icon: LucideIcon;
   headline: string;
@@ -124,7 +127,7 @@ const CATEGORIES: Category[] = [
     field: "Page weight · /booking",
     before: "1.4 MB · 38 requests",
     after: "2.0 MB · 61 requests",
-    footnote: "A +38% weight jump after a deploy is a regression, not a redesign.",
+    footnote: "A +43% weight jump after a deploy is a regression, not a redesign.",
   },
   {
     key: "conversion",
@@ -147,10 +150,10 @@ const SEVERITY_CHIP: Record<Category["severity"], string> = {
   MEDIUM: "bg-white text-[#151515] border border-black/15",
 };
 
-const ROTATE_MS = 7000;
+const ROTATE_MS = 8500;
 
 export function CategoryTabs() {
-  const [activeKey, setActiveKey] = useState("seo");
+  const [activeKey, setActiveKey] = useState<SceneKey>("availability");
   const [paused, setPaused] = useState(false);
   const active = CATEGORIES.find((c) => c.key === activeKey) ?? CATEGORIES[2];
 
@@ -190,12 +193,20 @@ export function CategoryTabs() {
               aria-selected={selected}
               aria-controls="category-panel"
               onClick={() => setActiveKey(c.key)}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
+              className={`relative flex items-center gap-2 overflow-hidden rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
                 selected
                   ? "border-[#151515] bg-[#FFD400] text-[#151515] shadow-[3px_3px_0_#151515]"
-                  : "border-[#151515]/15 bg-white text-[#151515]/70 hover:border-[#151515]/40 hover:text-[#151515]"
+                  : "border-[#151515]/15 bg-white text-[#151515]/70 hover:-translate-y-0.5 hover:border-[#151515]/40 hover:text-[#151515]"
               }`}
             >
+              {selected && (
+                <span
+                  key={c.key}
+                  aria-hidden
+                  className="cat-timer absolute bottom-0 left-0 h-[3px] bg-[#151515]"
+                  style={{ animationPlayState: paused ? "paused" : "running" }}
+                />
+              )}
               <c.icon className="size-4" aria-hidden />
               {c.name}
             </button>
@@ -208,49 +219,59 @@ export function CategoryTabs() {
         id="category-panel"
         role="tabpanel"
         aria-labelledby={`category-tab-${active.key}`}
-        className="mx-auto mt-8 max-w-4xl overflow-hidden rounded-2xl border border-[#151515] bg-white shadow-[6px_6px_0_#151515]"
+        className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-[22px] border border-[#151515] bg-white shadow-[8px_8px_0_#151515]"
       >
-        <div className="grid md:grid-cols-2">
+        <div className="grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
           {/* Story side */}
-          <div className="flex flex-col justify-center p-7 sm:p-9">
-            <span
-              className={`w-fit rounded-full px-3 py-1 font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] ${SEVERITY_CHIP[active.severity]}`}
-            >
-              {active.severity}
-            </span>
-            <h3 className={`${fontDisplay} mt-4 text-[26px] leading-tight text-[#151515] sm:text-3xl`}>
+          <div key={active.key} className="cat-story flex flex-col justify-center p-7 sm:p-10">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-xl border border-[#151515] bg-[#FFD400] shadow-[2px_2px_0_#151515]">
+                <active.icon className="size-5 text-[#151515]" aria-hidden />
+              </span>
+              <span
+                className={`w-fit rounded-full px-3 py-1 font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] ${SEVERITY_CHIP[active.severity]}`}
+              >
+                {active.severity}
+              </span>
+            </div>
+            <h3 className={`${fontDisplay} mt-5 text-[28px] leading-tight text-[#151515] sm:text-[34px]`}>
               {active.headline}
             </h3>
-            <p className="mt-3 text-[14.5px] leading-7 text-[#6B6B60]">{active.blurb}</p>
-          </div>
-
-          {/* Before / after side */}
-          <div className="border-t border-black/10 bg-[#F7F6EE] p-7 sm:p-9 md:border-l md:border-t-0">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]">
+            <p className="mt-3 text-[15px] leading-7 text-[#6B6B60]">{active.blurb}</p>
+            <p className="mt-6 border-l-2 border-[#FFD400] pl-4 text-[13.5px] leading-6 text-[#151515]/80">
+              {active.footnote}
+            </p>
+            <p className="mt-6 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">
               {active.field}
             </p>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-xl border border-black/10 bg-white p-4">
-                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6B6B60]">
-                  Baseline · approved
-                </p>
-                <p className="mt-1.5 break-words font-mono text-[13px] text-[#151515]">
-                  {active.before}
-                </p>
-              </div>
-              <div className="rounded-xl border border-[#151515] bg-[#FFD400] p-4 shadow-[3px_3px_0_#151515]">
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#151515]/60">
-                  Current scan · changed ⚠
-                </p>
-                <p className="mt-1.5 break-words font-mono text-[13px] font-semibold text-[#151515]">
-                  {active.after}
-                </p>
-              </div>
-            </div>
-            <p className="mt-4 text-[12.5px] leading-6 text-[#6B6B60]">{active.footnote}</p>
+          </div>
+
+          {/* The animation */}
+          <div className="relative border-t border-black/10 bg-[#F7F6EE] bg-[radial-gradient(rgba(21,21,21,0.07)_1px,transparent_1.2px)] [background-size:18px_18px] p-3 sm:p-5 md:border-l md:border-t-0">
+            <CategoryScene
+              key={active.key}
+              scene={active.key}
+              before={active.before}
+              after={active.after}
+              severity={active.severity}
+              label={`${active.name} example: ${active.headline}. Baseline ${active.before}, current scan ${active.after}, severity ${active.severity}.`}
+            />
           </div>
         </div>
       </div>
+      <style>{`
+        @keyframes cat-timer { from { width: 0%; } to { width: 100%; } }
+        .cat-timer { animation: cat-timer ${ROTATE_MS}ms linear forwards; }
+        @keyframes cat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .cat-story > * { animation: cat-in 450ms ease-out both; }
+        .cat-story > *:nth-child(2) { animation-delay: 60ms; }
+        .cat-story > *:nth-child(3) { animation-delay: 120ms; }
+        .cat-story > *:nth-child(4) { animation-delay: 180ms; }
+        @media (prefers-reduced-motion: reduce) {
+          .cat-timer { display: none; }
+          .cat-story > * { animation: none; }
+        }
+      `}</style>
     </div>
   );
 }
