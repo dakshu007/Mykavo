@@ -169,12 +169,22 @@ function TocBlock({ headings }: { headings: PostHeading[] }) {
  * Sticky right-rail ToC card for the public post page (hidden below lg by
  * the caller; only shown when the post has at least two headings).
  */
-export function PostTocRail({ headings }: { headings: PostHeading[] }) {
+export function PostTocRail({
+  headings,
+  sticky = true,
+}: {
+  headings: PostHeading[];
+  /** False when the caller already wraps the rail in its own sticky column. */
+  sticky?: boolean;
+}) {
   return (
     <nav
       aria-label="Table of contents"
       data-lenis-prevent
-        className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-card bg-card p-6 shadow-card"
+      className={cn(
+        "overflow-y-auto rounded-card bg-card p-6 shadow-card",
+        sticky ? "sticky top-24 max-h-[calc(100vh-8rem)]" : "max-h-[calc(100vh-24rem)]",
+      )}
     >
       <p className="label-micro">Table of contents</p>
       <TocList headings={headings} className="mt-3" />

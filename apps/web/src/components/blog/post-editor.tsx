@@ -436,8 +436,9 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
           Tags
         </label>
         <p className="mt-1 text-[13px] text-ink-faint">
-          Shown on the blog and searchable by readers. Press Enter or comma to add - up to{" "}
-          {MAX_TAGS}.
+          Short topics readers see, like &quot;WordPress&quot; or &quot;SEO&quot; - put search phrases
+          in the keyword fields instead. Tags longer than three words stay hidden on the post. Press
+          Enter or comma to add - up to {MAX_TAGS}.
         </p>
         {tags.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-2">

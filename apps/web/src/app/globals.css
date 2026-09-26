@@ -422,6 +422,29 @@
     padding: 0.1em 0.4em;
     color: var(--fx-ink);
   }
+  /* Section links: headings clear the floating nav when jumped to, and
+     offer a "#" link on hover/focus to share that section. */
+  .blog-prose h2[id],
+  .blog-prose h3[id] {
+    scroll-margin-top: 6.5rem;
+  }
+  .blog-prose .heading-anchor {
+    margin-left: 0.4em;
+    font-weight: 500;
+    color: var(--fx-ink-faint);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+  .blog-prose h2:hover .heading-anchor,
+  .blog-prose h3:hover .heading-anchor,
+  .blog-prose .heading-anchor:focus-visible {
+    opacity: 1;
+  }
+  .blog-prose .heading-anchor:hover {
+    color: var(--fx-accent);
+    background-color: transparent;
+  }
   /* The public post: a warm chip that belongs on the paper canvas. */
   .blog-reader .blog-prose :not(pre) > code {
     background-color: #fff6cc;

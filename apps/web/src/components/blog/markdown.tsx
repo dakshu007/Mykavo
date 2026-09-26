@@ -23,12 +23,24 @@ export function BlogMarkdown({
 }) {
   const components: Components | undefined = headingIds
     ? {
-        h2: ({ node, children }) => (
-          <h2 id={idForLine(headingIds, node?.position?.start.line)}>{children}</h2>
-        ),
-        h3: ({ node, children }) => (
-          <h3 id={idForLine(headingIds, node?.position?.start.line)}>{children}</h3>
-        ),
+        h2: ({ node, children }) => {
+          const id = idForLine(headingIds, node?.position?.start.line);
+          return (
+            <h2 id={id}>
+              {children}
+              <HeadingAnchor id={id} />
+            </h2>
+          );
+        },
+        h3: ({ node, children }) => {
+          const id = idForLine(headingIds, node?.position?.start.line);
+          return (
+            <h3 id={id}>
+              {children}
+              <HeadingAnchor id={id} />
+            </h3>
+          );
+        },
       }
     : undefined;
 
@@ -38,6 +50,16 @@ export function BlogMarkdown({
         {content}
       </ReactMarkdown>
     </div>
+  );
+}
+
+/** "#" link to a section, shown on hover or focus, for sharing that section. */
+function HeadingAnchor({ id }: { id: string | undefined }) {
+  if (!id) return null;
+  return (
+    <a href={`#${id}`} className="heading-anchor" aria-label="Link to this section">
+      #
+    </a>
   );
 }
 

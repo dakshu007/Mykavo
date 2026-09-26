@@ -3,7 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { BlogCta } from "@/components/blog/blog-cta";
-import { GoogleCta } from "@/components/landing/google-cta";
+import { GoogleButton } from "@/components/landing/google-cta";
+import { ShareButtons } from "@/components/blog/share-buttons";
+import { ReadingProgress } from "@/components/blog/reading-progress";
+import { PostTool } from "@/components/blog/post-tool";
+import { authorFor } from "@/config/authors";
+import { displayTags, showUpdated } from "@/lib/blog-display";
+import { toolForPost } from "@/lib/blog-tools";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
 import { SummarizeWithAi } from "@/components/blog/summarize-with-ai";
 import { livePostWhere } from "@/lib/blog-schedule";
@@ -14,7 +20,7 @@ import { fontSans, fontDisplay, gold } from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
 import { PostContent, PostTocRail } from "@/components/blog/post-content";
 import { site } from "@/config/site";
-import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
+import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
 // Dynamic on purpose: publishing from the dashboard must be visible
 // immediately, without a redeploy. ISR + revalidatePath is a future optimization.
@@ -103,7 +109,14 @@ export default async function BlogPostPage({ params }: Params) {
   const faqItems = collectFaqItems(segments);
   const readMinutes = readingTimeMinutes(post.content);
   const showTocRail = headings.length >= 2;
-  const authorInitial = post.authorName.trim().charAt(0).toUpperCase() || "F";
+  const author = authorFor(post.authorName);
+  const authorName = author?.name ?? post.authorName;
+  const authorInitial = authorName.trim().charAt(0).toUpperCase() || "M";
+  const tags = displayTags(post.tags);
+  const updated = showUpdated(post.publishedAt, post.updatedAt);
+  const tool = toolForPost(post);
+  const postUrl = `${site.url}/blog/${post.slug}`;
+  const shareImage = `${postUrl}/opengraph-image`;
 
   const jsonLdKeywords = [post.primaryKeyword, post.secondaryKeyword, ...post.tags]
     .filter((keyword): keyword is string => Boolean(keyword))
@@ -123,7 +136,19 @@ export default async function BlogPostPage({ params }: Params) {
     ...(post.excerpt ? { abstract: post.excerpt } : {}),
     datePublished: post.publishedAt?.toISOString(),
     dateModified: post.updatedAt.toISOString(),
-    author: { "@type": "Person", name: post.authorName },
+    // A real, verifiable person where there is one (E-E-A-T); the
+    // organisation for team posts - never a Person named "MyKavo Team".
+    author: author
+      ? {
+          "@type": "Person",
+          name: author.name,
+          jobTitle: author.role,
+          url: author.url,
+          worksFor: { "@id": ORGANIZATION_ID },
+          ...(author.image ? { image: author.image.startsWith("http") ? author.image : `${site.url}${author.image}` } : {}),
+          ...(author.sameAs.length > 0 ? { sameAs: author.sameAs } : {}),
+        }
+      : { "@type": "Organization", "@id": ORGANIZATION_ID, name: site.name, url: site.url },
     publisher: {
       "@type": "Organization",
       name: site.name,
@@ -132,7 +157,7 @@ export default async function BlogPostPage({ params }: Params) {
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": `${site.url}/blog/${post.slug}` },
     url: `${site.url}/blog/${post.slug}`,
-    image: [`${site.url}/opengraph-image.png`],
+    image: [shareImage],
     inLanguage: "en",
     isAccessibleForFree: true,
     wordCount,
@@ -177,9 +202,10 @@ export default async function BlogPostPage({ params }: Params) {
         dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd) }}
       />
       <LandingNav />
+      <ReadingProgress />
       <main>
         {/* Hero band on the warm paper canvas */}
-        <section className="mx-auto w-full max-w-[1440px] px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
+        <section className="mx-auto w-full max-w-[1440px] px-5 pb-10 pt-28 sm:pt-32 lg:px-8">
           {/* Back to the index. The arrow slides out left and a fresh one
               slides in from the right on hover - CSS only, still a plain link,
               and motion-reduce keeps it static. */}
@@ -199,45 +225,65 @@ export default async function BlogPostPage({ params }: Params) {
             </span>
             All posts
           </Link>
-          <div className="mx-auto mt-10 max-w-3xl text-center">
+          <div className="mx-auto mt-6 max-w-3xl text-center">
             <span
               style={{ backgroundColor: gold }}
-              className="inline-flex items-center rounded-full border border-black/15 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#151515]"
+              className="inline-flex items-center rounded-full border border-black/15 px-3 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#151515]"
             >
               Blog
             </span>
             <h1
-              className={`${fontDisplay} mt-6 text-4xl leading-[1.05] tracking-[-0.01em] text-[#151515] sm:text-5xl lg:text-6xl`}
+              className={`${fontDisplay} mt-4 text-[34px] leading-[1.08] tracking-[-0.01em] text-[#151515] sm:text-5xl lg:text-[54px]`}
             >
               {post.title}
             </h1>
-            <p className="mt-6 text-sm text-[#6B6B60]">
-              By <span className="font-medium text-[#151515]">{post.authorName}</span>
+            <p className="mt-5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[#6B6B60]">
+              <span
+                aria-hidden
+                className="mr-1 flex size-7 items-center justify-center rounded-full border border-[#151515] bg-[#FFD400] text-[12px] font-bold text-[#151515]"
+              >
+                {authorInitial}
+              </span>
+              By{" "}
+              <a href="#author" className="font-medium text-[#151515] underline-offset-4 hover:underline">
+                {authorName}
+              </a>
               {post.publishedAt && (
                 <>
-                  <span aria-hidden> · </span>
+                  <span aria-hidden>·</span>
                   <time dateTime={post.publishedAt.toISOString()}>
                     {dateFormat.format(post.publishedAt)}
                   </time>
                 </>
               )}
-              <span aria-hidden> · </span>
+              {updated && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>
+                    Updated{" "}
+                    <time dateTime={post.updatedAt.toISOString()}>{dateFormat.format(post.updatedAt)}</time>
+                  </span>
+                </>
+              )}
+              <span aria-hidden>·</span>
               {readMinutes} min read
             </p>
-            {post.tags.length > 0 && (
-              <ul className="mt-4 flex flex-wrap justify-center gap-1.5">
-                {post.tags.map((tag) => (
+            {tags.length > 0 && (
+              <ul className="mt-3 flex flex-wrap justify-center gap-1.5">
+                {tags.map((tag) => (
                   <li
                     key={tag}
-                    className="rounded-full border border-[#151515]/15 bg-[#FFD400]/25 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#151515]"
+                    className="rounded-full border border-[#151515]/15 bg-[#FFD400]/25 px-2.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#151515]"
                   >
                     {tag}
                   </li>
                 ))}
               </ul>
             )}
-            <GoogleCta size="md" className="mt-8" />
-            <p className="mt-2 text-[12px] text-[#6B6B60]">Free plan · No credit card required</p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+              <GoogleButton size="md" />
+              <span className="text-[12.5px] text-[#6B6B60]">Free plan · No credit card required</span>
+            </div>
           </div>
         </section>
 
@@ -259,21 +305,62 @@ export default async function BlogPostPage({ params }: Params) {
                 <PostContent content={post.content} />
               </div>
 
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className="text-sm font-semibold text-[#151515]">Share this post</span>
+                <ShareButtons url={postUrl} title={post.title} />
+              </div>
+
+              {tool && <PostTool tool={tool} />}
+
               {/* Author bio */}
-              <aside className="mt-8 rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-8">
-                <div className="flex items-center gap-4">
-                  <span
-                    aria-hidden
-                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-lg font-semibold text-accent"
-                  >
-                    {authorInitial}
-                  </span>
+              <aside
+                id="author"
+                aria-label="About the author"
+                className="mt-8 scroll-mt-28 rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-8"
+              >
+                <div className="flex items-start gap-4">
+                  {author?.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- a small, fixed-size avatar
+                    <img
+                      src={author.image}
+                      alt=""
+                      width={56}
+                      height={56}
+                      className="size-14 shrink-0 rounded-full border-2 border-[#151515] object-cover"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden
+                      className="flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-[#151515] bg-[#FFD400] text-xl font-bold text-[#151515]"
+                    >
+                      {authorInitial}
+                    </span>
+                  )}
                   <div className="min-w-0">
-                    <p className="text-[15px] font-semibold text-ink">{post.authorName}</p>
-                    <p className="mt-0.5 text-sm leading-6 text-ink-secondary">
-                      Team MyKavo - writing about website monitoring, SEO, and catching
-                      regressions before customers do.
+                    <p className="label-micro">Written by</p>
+                    <p className="mt-0.5 text-[16px] font-semibold text-ink">{authorName}</p>
+                    {author && <p className="text-sm text-ink-secondary">{author.role}</p>}
+                    <p className="mt-2 text-sm leading-6 text-ink-secondary">
+                      {author
+                        ? author.bio
+                        : "Team MyKavo - writing about website monitoring, SEO, and catching regressions before customers do."}
                     </p>
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                      <Link href="/about" className="text-ink underline decoration-[#FFD400] decoration-2 underline-offset-4">
+                        About MyKavo
+                      </Link>
+                      {author?.sameAs.map((href) => (
+                        <a
+                          key={href}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer me"
+                          className="text-ink underline decoration-[#FFD400] decoration-2 underline-offset-4"
+                        >
+                          {href.includes("linkedin.com") ? "LinkedIn" : href.includes("x.com") || href.includes("twitter.com") ? "X" : href.includes("github.com") ? "GitHub" : "Profile"}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </aside>
@@ -306,11 +393,29 @@ export default async function BlogPostPage({ params }: Params) {
               <BlogCta />
             </article>
 
-            {showTocRail && (
-              <aside className="hidden w-72 shrink-0 lg:block">
-                <PostTocRail headings={headings} />
-              </aside>
-            )}
+            <aside className="hidden w-72 shrink-0 lg:block">
+              <div className="sticky top-24 space-y-4">
+                {showTocRail && <PostTocRail headings={headings} sticky={false} />}
+                {/* Signup stays in reach for the whole read, not just at the top. */}
+                <div className="rounded-card border-2 border-[#151515] bg-white p-5 text-[#151515] shadow-[5px_5px_0_#FFD400]">
+                  <p className="text-[15px] font-semibold leading-snug">Catch this on your own site</p>
+                  <p className="mt-1.5 text-[13px] leading-5 text-[#6B6B60]">
+                    MyKavo watches your pages and tells you when something important changes or breaks.
+                  </p>
+                  <GoogleButton size="md" className="mt-4 w-full" />
+                  <Link
+                    href="/signup"
+                    className="mt-2.5 block text-center text-[12.5px] text-[#6B6B60] underline underline-offset-4 hover:text-[#151515]"
+                  >
+                    or sign up with email
+                  </Link>
+                </div>
+                <div className="rounded-card bg-card p-5 shadow-card">
+                  <p className="label-micro mb-3">Share this post</p>
+                  <ShareButtons url={postUrl} title={post.title} compact />
+                </div>
+              </div>
+            </aside>
           </div>
         </section>
       </main>
