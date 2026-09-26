@@ -1,9 +1,8 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { prisma } from "@mykavo/database";
 import { livePostWhere } from "@/lib/blog-schedule";
 import { authorFor } from "@/config/authors";
+import { loadOgFonts } from "@/lib/og-fonts";
 
 /**
  * The share card for one post - what LinkedIn, X, WhatsApp and Slack show,
@@ -15,6 +14,9 @@ import { authorFor } from "@/config/authors";
 export const alt = "MyKavo blog post";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+/** Cached for an hour: the card changes only when the title does, and the
+ *  blog index uses it as every post's thumbnail. */
+export const revalidate = 3600;
 
 const PAPER = "#FBFAF3";
 const INK = "#151515";
@@ -22,27 +24,6 @@ const GOLD = "#FFD400";
 const DIM = "#6B6B60";
 
 type Params = { params: Promise<{ slug: string }> };
-
-/**
- * The site's display face, so the card matches the page. Poppins (SIL OFL,
- * licence in assets/fonts/OFL.txt). If the files cannot be read the card
- * still renders in the default face rather than failing the share.
- */
-async function loadFonts() {
-  try {
-    const dir = join(process.cwd(), "assets/fonts");
-    const [bold, medium] = await Promise.all([
-      readFile(join(dir, "Poppins-Bold.ttf")),
-      readFile(join(dir, "Poppins-Medium.ttf")),
-    ]);
-    return [
-      { name: "Poppins", data: bold, weight: 700 as const, style: "normal" as const },
-      { name: "Poppins", data: medium, weight: 500 as const, style: "normal" as const },
-    ];
-  } catch {
-    return undefined;
-  }
-}
 
 function Mark({ size: s }: { size: number }) {
   return (
@@ -61,7 +42,7 @@ function Mark({ size: s }: { size: number }) {
 
 export default async function Image({ params }: Params) {
   const { slug } = await params;
-  const fonts = await loadFonts();
+  const fonts = await loadOgFonts();
   const post = await prisma.blogPost
     .findFirst({
       where: { slug, ...livePostWhere() },

@@ -8,7 +8,9 @@ import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { card, eyebrow, fontSans, fontDisplay } from "@/components/landing/style";
 import { readingTimeMinutes } from "@/components/blog/blocks";
-import { BlogIndexList } from "@/components/blog/blog-index-list";
+import { BlogIndexList, type BlogTopic } from "@/components/blog/blog-index-list";
+import { authorFor } from "@/config/authors";
+import { displayTags } from "@/lib/blog-display";
 import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
 // Dynamic on purpose: a post published from the dashboard must be visible
@@ -31,7 +33,29 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-export default async function BlogIndexPage() {
+/**
+ * The topics worth offering as filters: every displayable tag, grouped
+ * case-insensitively (first spelling wins), most-used first. A topic with a
+ * single post is still a topic once there are few of them; the list is
+ * capped so the row stays one glance long.
+ */
+function topicsOf(posts: readonly { tags: readonly string[] }[]): BlogTopic[] {
+  const byKey = new Map<string, BlogTopic>();
+  for (const post of posts) {
+    for (const tag of displayTags(post.tags)) {
+      const key = tag.toLowerCase();
+      const hit = byKey.get(key);
+      if (hit) hit.count += 1;
+      else byKey.set(key, { label: tag, count: 1 });
+    }
+  }
+  return [...byKey.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)).slice(0, 7);
+}
+
+type Props = { searchParams: Promise<{ topic?: string }> };
+
+export default async function BlogIndexPage({ searchParams }: Props) {
+  const { topic: topicParam } = await searchParams;
   const posts = await prisma.blogPost.findMany({
     where: livePostWhere(),
     orderBy: { publishedAt: "desc" },
@@ -52,12 +76,16 @@ export default async function BlogIndexPage() {
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
-    authorName: post.authorName,
+    authorName: authorFor(post.authorName)?.name ?? post.authorName,
     publishedAtIso: post.publishedAt?.toISOString() ?? null,
     publishedAtLabel: post.publishedAt ? dateFormat.format(post.publishedAt) : null,
     readMinutes: readingTimeMinutes(post.content),
-    tags: post.tags,
+    tags: displayTags(post.tags),
   }));
+  const topics = topicsOf(posts);
+  // /blog?topic=WordPress opens filtered - only for a topic that exists.
+  const initialTopic =
+    topics.find((t) => topicParam && t.label.toLowerCase() === topicParam.toLowerCase())?.label ?? null;
 
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
@@ -74,24 +102,32 @@ export default async function BlogIndexPage() {
         }}
       />
       <LandingNav />
-      <main className="mx-auto w-full max-w-[1440px] px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
-        <div className="mx-auto mb-14 max-w-2xl text-center">
+      <main className="mx-auto w-full max-w-[1440px] px-5 pb-24 pt-28 sm:pt-32 lg:px-8">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
           <p className={`${eyebrow} mb-4`}>{"// blog //"}</p>
-          <h1 className={`${fontDisplay} text-4xl leading-[1.05] tracking-[-0.01em] sm:text-6xl`}>
-            Notes on keeping
-            <br />
-            <span className="italic">websites working.</span>
+          <h1 className={`${fontDisplay} text-4xl leading-[1.05] tracking-[-0.01em] sm:text-[56px]`}>
+            Notes on keeping{" "}
+            <span className="relative inline-block whitespace-nowrap">
+              <span aria-hidden className="absolute inset-x-[-4px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]" />
+              <span className="relative">websites working.</span>
+            </span>
           </h1>
-          <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
-            Change detection, regression monitoring, SEO health, and lessons from watching
-            websites break - and fixing them before anyone notices.
+          <p className="mx-auto mt-5 max-w-xl text-[15px] leading-7 text-[#6B6B60]">
+            Practical guides on change detection, WordPress and deploy regressions, and SEO
+            health - from watching websites break, and catching it before anyone notices.
           </p>
-          <Link
-            href="/blog/feed.xml"
-            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#6B6B60] transition-colors hover:text-[#151515]"
-          >
-            <Rss className="size-3.5" aria-hidden /> RSS feed
-          </Link>
+          <p className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[13px] text-[#6B6B60]">
+            <span>
+              {posts.length} {posts.length === 1 ? "guide" : "guides"}
+            </span>
+            <span aria-hidden>·</span>
+            <Link
+              href="/blog/feed.xml"
+              className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-[#151515]"
+            >
+              <Rss className="size-3.5" aria-hidden /> RSS feed
+            </Link>
+          </p>
         </div>
 
         {posts.length === 0 ? (
@@ -110,7 +146,7 @@ export default async function BlogIndexPage() {
             </Link>
           </div>
         ) : (
-          <BlogIndexList posts={indexPosts} />
+          <BlogIndexList posts={indexPosts} topics={topics} initialTopic={initialTopic} />
         )}
         <div className="mx-auto mt-16 max-w-5xl">
           <BlogCta showMorePosts={false} />
