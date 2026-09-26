@@ -10,7 +10,9 @@ import { track } from "@/lib/analytics";
  * 1. ON THIS DEVICE, with the browser's built-in AI (Chrome's Summarizer API,
  *    Gemini Nano). The model runs locally; the post text never leaves the
  *    reader's machine and no request reaches us or anyone else. Shown only
- *    where the browser actually supports it - feature-detected, never assumed.
+ *    when the model is ALREADY on the device ("available"): a reader will
+ *    not sit through a multi-gigabyte model download to summarize one post,
+ *    so "downloadable" is treated the same as unsupported.
  *
  * 2. IN AN ASSISTANT the reader already uses - ChatGPT, Claude, Perplexity,
  *    Gemini - opened in a new tab with a prompt pointing at this post's
@@ -28,7 +30,6 @@ interface SummarizerOptions {
   sharedContext?: string;
   expectedInputLanguages?: string[];
   outputLanguage?: string;
-  monitor?: (m: EventTarget) => void;
 }
 
 interface SummarizerInstance {
@@ -81,7 +82,6 @@ function toPoints(summary: string): string[] {
 export function SummarizeWithAi({ url }: { url: string }) {
   const [local, setLocal] = useState<Availability | "checking">("checking");
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
   const [points, setPoints] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -114,26 +114,15 @@ export function SummarizeWithAi({ url }: { url: string }) {
     track("blog_ai_summary", { provider: "on_device" });
     let summarizer: SummarizerInstance | null = null;
     try {
-      summarizer = await api.create({
-        ...OPTIONS,
-        monitor(m) {
-          m.addEventListener("downloadprogress", (e) => {
-            const loaded = (e as Event & { loaded?: number }).loaded;
-            if (typeof loaded === "number") setProgress(loaded);
-          });
-        },
-      });
-      setProgress(null);
+      summarizer = await api.create(OPTIONS);
       const input = await fitToQuota(summarizer, body);
       const summary = await summarizer.summarize(input, { context: document.title });
       setPoints(toPoints(summary));
-      setLocal("available");
     } catch {
       setError("Your browser could not summarize this post on this device. The assistants below still work.");
     } finally {
       summarizer?.destroy();
       setBusy(false);
-      setProgress(null);
     }
   }
 
@@ -151,7 +140,7 @@ export function SummarizeWithAi({ url }: { url: string }) {
 
   const pill =
     "inline-flex h-9 items-center gap-1.5 rounded-full border border-[#151515]/15 bg-white px-3.5 text-[13px] font-semibold text-[#151515] transition-all hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[2px_2px_0_#151515] motion-reduce:hover:translate-y-0";
-  const showLocal = local === "available" || local === "downloadable" || local === "downloading";
+  const showLocal = local === "available";
 
   return (
     <section aria-label="Summarize this post" className="mb-8 rounded-2xl border border-black/10 bg-white/70 p-5 text-[#151515] sm:p-6">
@@ -166,11 +155,7 @@ export function SummarizeWithAi({ url }: { url: string }) {
               className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#151515] bg-[#FFD400] px-3.5 text-[13px] font-semibold text-[#151515] shadow-[2px_2px_0_#151515] transition-all hover:-translate-y-0.5 disabled:opacity-70 motion-reduce:hover:translate-y-0"
             >
               {busy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Cpu className="size-3.5" aria-hidden />}
-              {busy && progress !== null
-                ? `Downloading model ${Math.round(progress * 100)}%`
-                : busy
-                  ? "Summarizing…"
-                  : "On this device"}
+              {busy ? "Summarizing…" : "On this device"}
             </button>
           )}
           {assistants.map((a) => (
@@ -195,7 +180,7 @@ export function SummarizeWithAi({ url }: { url: string }) {
         {copied
           ? "Prompt copied - paste it into Gemini."
           : showLocal
-            ? `"On this device" runs your browser's built-in AI${local === "downloadable" ? " (a one-time model download first)" : ""} - the text never leaves your computer. The others open in a new tab.`
+            ? `"On this device" uses your browser's built-in AI - instant, and the text never leaves your computer. The others open in a new tab.`
             : "Opens the assistant in a new tab with a link to this post."}
       </p>
 
