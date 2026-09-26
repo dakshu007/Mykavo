@@ -84,5 +84,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Database unavailable (e.g. build without DB) - serve the static routes.
   }
 
+  try {
+    const authors = await prisma.blogAuthor.findMany({ select: { slug: true, updatedAt: true } });
+    for (const a of authors) {
+      entries.push({
+        url: `${site.url}/blog/author/${a.slug}`,
+        lastModified: a.updatedAt,
+        changeFrequency: "monthly",
+        priority: 0.5,
+      });
+    }
+  } catch {
+    // No blog_author table yet (migration applied by hand) - skip.
+  }
+
   return entries;
 }

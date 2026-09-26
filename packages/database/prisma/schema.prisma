@@ -949,6 +949,33 @@ model BlogPost {
   @@map("blog_post")
 }
 
+/// A blog author's public profile (E-E-A-T): who wrote a post, what they
+/// know, and where to verify them. Posts refer to authors by NAME
+/// (BlogPost.authorName, case-insensitive) rather than a foreign key, so this
+/// table adds nothing to blog_post and the blog keeps working even before the
+/// migration that creates it has been applied.
+model BlogAuthor {
+  id          String   @id @default(cuid())
+  /// URL segment for /blog/author/<slug>.
+  slug        String   @unique
+  /// Exactly as written in a post's author field.
+  name        String   @unique
+  role        String?
+  bio         String?
+  /// /api/blog-images/<name> or an absolute https URL.
+  imageUrl    String?
+  linkedinUrl String?
+  xUrl        String?
+  githubUrl   String?
+  websiteUrl  String?
+  /// Short, verifiable facts: "Built 40+ WordPress sites for clients".
+  highlights  String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("blog_author")
+}
+
 // ---------- Waitlist (migrated from Phase 0 file store) ----------
 
 model WaitlistEntry {

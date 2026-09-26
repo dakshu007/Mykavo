@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, PenLine, Plus } from "lucide-react";
+import { ExternalLink, PenLine, Plus, UserRound } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { requireSession } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
@@ -67,9 +67,14 @@ export default async function DashboardBlogPage() {
       <CardHeader
         title="Blog posts"
         action={
-          <ButtonLink href="/dashboard/blog/new" size="sm">
-            <Plus className="size-4" aria-hidden /> New Post
-          </ButtonLink>
+          <div className="flex items-center gap-2">
+            <ButtonLink href="/dashboard/blog/authors" size="sm" variant="secondary">
+              <UserRound className="size-4" aria-hidden /> Authors
+            </ButtonLink>
+            <ButtonLink href="/dashboard/blog/new" size="sm">
+              <Plus className="size-4" aria-hidden /> New Post
+            </ButtonLink>
+          </div>
         }
       />
       <div className="overflow-x-auto">

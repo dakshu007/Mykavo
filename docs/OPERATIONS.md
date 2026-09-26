@@ -14,6 +14,11 @@
 >
 > Then re-run `enable-rls.ts`: `pending_artifact_deletion` is a new table.
 
+> **2026-09-26: `20260926090000_blog_author`** adds the `blog_author` table
+> behind Dashboard > Blog > Authors (with RLS enabled in the migration itself).
+> The blog works without it - posts fall back to the static profile in
+> `apps/web/src/config/authors.ts` - but the Authors screen asks for it.
+
 Runbook notes for things that are configured or run by hand rather than on a
 schedule. Scheduled work (scans, retention, health, reports) lives in the
 worker and needs nothing from you.

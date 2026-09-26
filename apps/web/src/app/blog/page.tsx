@@ -9,7 +9,7 @@ import { LandingFooter } from "@/components/landing/footer";
 import { card, eyebrow, fontSans, fontDisplay } from "@/components/landing/style";
 import { readingTimeMinutes } from "@/components/blog/blocks";
 import { BlogIndexList, type BlogTopic } from "@/components/blog/blog-index-list";
-import { authorFor } from "@/config/authors";
+import { authorNameResolver } from "@/lib/blog-authors-server";
 import { displayTags } from "@/lib/blog-display";
 import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
@@ -72,11 +72,12 @@ export default async function BlogIndexPage({ searchParams }: Props) {
 
   // Serialized for the client list - dates preformatted so SSR and the
   // visitor's browser render the same label regardless of timezone.
+  const displayAuthor = await authorNameResolver();
   const indexPosts = posts.map((post) => ({
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
-    authorName: authorFor(post.authorName)?.name ?? post.authorName,
+    authorName: displayAuthor(post.authorName),
     publishedAtIso: post.publishedAt?.toISOString() ?? null,
     publishedAtLabel: post.publishedAt ? dateFormat.format(post.publishedAt) : null,
     readMinutes: readingTimeMinutes(post.content),

@@ -60,7 +60,14 @@ type SaveResponse = {
 const fieldClass =
   "w-full rounded-field border border-line bg-card px-4 py-3 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none";
 
-export function BlogPostEditor({ post }: { post?: EditorPost }) {
+export function BlogPostEditor({
+  post,
+  authors = [],
+}: {
+  post?: EditorPost;
+  /** Names of authors with a profile (Dashboard > Blog > Authors). */
+  authors?: string[];
+}) {
   const router = useRouter();
 
   const [title, setTitle] = useState(post?.title ?? "");
@@ -421,10 +428,26 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
                 <input
                   id="post-author"
                   type="text"
+                  list="post-author-options"
                   value={authorName}
                   onChange={(e) => setAuthorName(e.target.value)}
                   className={fieldClass}
                 />
+                <datalist id="post-author-options">
+                  {authors.map((a) => (
+                    <option key={a} value={a} />
+                  ))}
+                </datalist>
+                <p className="mt-1.5 text-[13px] text-ink-faint">
+                  {authors.some((a) => a.toLowerCase() === authorName.trim().toLowerCase())
+                    ? "Matches an author profile - the post shows their photo, bio and links."
+                    : "Pick an author profile so the post shows their photo, bio and links. "}
+                  {!authors.some((a) => a.toLowerCase() === authorName.trim().toLowerCase()) && (
+                    <Link href="/dashboard/blog/authors" className="font-medium text-accent hover:text-primary-hover">
+                      Manage authors
+                    </Link>
+                  )}
+                </p>
               </div>
             </div>
           </details>

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { prisma } from "@mykavo/database";
 import { livePostWhere } from "@/lib/blog-schedule";
-import { authorFor } from "@/config/authors";
+import { authorNameResolver } from "@/lib/blog-authors-server";
 import { loadOgFonts } from "@/lib/og-fonts";
 
 /**
@@ -51,7 +51,7 @@ export default async function Image({ params }: Params) {
     .catch(() => null);
 
   const title = post?.title ?? "The MyKavo blog";
-  const author = post ? (authorFor(post.authorName)?.name ?? post.authorName) : "MyKavo";
+  const author = post ? (await authorNameResolver())(post.authorName) : "MyKavo";
   const minutes = post ? Math.max(1, Math.ceil(post.content.split(/\s+/).filter(Boolean).length / 200)) : null;
   // Long titles step down so they never overflow three lines.
   const fontSize = title.length > 90 ? 56 : title.length > 60 ? 66 : 76;

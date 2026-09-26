@@ -7,7 +7,8 @@ import { GoogleButton } from "@/components/landing/google-cta";
 import { ShareButtons } from "@/components/blog/share-buttons";
 import { ReadingProgress } from "@/components/blog/reading-progress";
 import { PostTool } from "@/components/blog/post-tool";
-import { authorFor } from "@/config/authors";
+import { resolveAuthor } from "@/lib/blog-authors-server";
+import { AuthorBox } from "@/components/blog/author-box";
 import { displayTags, showUpdated } from "@/lib/blog-display";
 import { toolForPost } from "@/lib/blog-tools";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
@@ -109,7 +110,7 @@ export default async function BlogPostPage({ params }: Params) {
   const faqItems = collectFaqItems(segments);
   const readMinutes = readingTimeMinutes(post.content);
   const showTocRail = headings.length >= 2;
-  const author = authorFor(post.authorName);
+  const author = await resolveAuthor(post.authorName);
   const authorName = author?.name ?? post.authorName;
   const authorInitial = authorName.trim().charAt(0).toUpperCase() || "M";
   const tags = displayTags(post.tags);
@@ -142,11 +143,12 @@ export default async function BlogPostPage({ params }: Params) {
       ? {
           "@type": "Person",
           name: author.name,
-          jobTitle: author.role,
+          ...(author.role ? { jobTitle: author.role } : {}),
+          ...(author.bio ? { description: author.bio } : {}),
           url: author.url,
           worksFor: { "@id": ORGANIZATION_ID },
-          ...(author.image ? { image: author.image.startsWith("http") ? author.image : `${site.url}${author.image}` } : {}),
-          ...(author.sameAs.length > 0 ? { sameAs: author.sameAs } : {}),
+          ...(author.image ? { image: author.image } : {}),
+          ...(author.links.length > 0 ? { sameAs: author.links.map((l) => l.href) } : {}),
         }
       : { "@type": "Organization", "@id": ORGANIZATION_ID, name: site.name, url: site.url },
     publisher: {
@@ -238,12 +240,23 @@ export default async function BlogPostPage({ params }: Params) {
               {post.title}
             </h1>
             <p className="mt-5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[#6B6B60]">
-              <span
-                aria-hidden
-                className="mr-1 flex size-7 items-center justify-center rounded-full border border-[#151515] bg-[#FFD400] text-[12px] font-bold text-[#151515]"
-              >
-                {authorInitial}
-              </span>
+              {author?.image ? (
+                // eslint-disable-next-line @next/next/no-img-element -- small byline avatar
+                <img
+                  src={author.image}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="mr-1 size-7 rounded-full border border-[#151515] object-cover"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="mr-1 flex size-7 items-center justify-center rounded-full border border-[#151515] bg-[#FFD400] text-[12px] font-bold text-[#151515]"
+                >
+                  {authorInitial}
+                </span>
+              )}
               By{" "}
               <a href="#author" className="font-medium text-[#151515] underline-offset-4 hover:underline">
                 {authorName}
@@ -318,51 +331,22 @@ export default async function BlogPostPage({ params }: Params) {
                 aria-label="About the author"
                 className="mt-8 scroll-mt-28 rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-8"
               >
-                <div className="flex items-start gap-4">
-                  {author?.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- a small, fixed-size avatar
-                    <img
-                      src={author.image}
-                      alt=""
-                      width={56}
-                      height={56}
-                      className="size-14 shrink-0 rounded-full border-2 border-[#151515] object-cover"
-                    />
-                  ) : (
-                    <span
-                      aria-hidden
-                      className="flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-[#151515] bg-[#FFD400] text-xl font-bold text-[#151515]"
-                    >
-                      {authorInitial}
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="label-micro">Written by</p>
-                    <p className="mt-0.5 text-[16px] font-semibold text-ink">{authorName}</p>
-                    {author && <p className="text-sm text-ink-secondary">{author.role}</p>}
-                    <p className="mt-2 text-sm leading-6 text-ink-secondary">
-                      {author
-                        ? author.bio
-                        : "Team MyKavo - writing about website monitoring, SEO, and catching regressions before customers do."}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
-                      <Link href="/about" className="text-ink underline decoration-[#FFD400] decoration-2 underline-offset-4">
-                        About MyKavo
-                      </Link>
-                      {author?.sameAs.map((href) => (
-                        <a
-                          key={href}
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer me"
-                          className="text-ink underline decoration-[#FFD400] decoration-2 underline-offset-4"
-                        >
-                          {href.includes("linkedin.com") ? "LinkedIn" : href.includes("x.com") || href.includes("twitter.com") ? "X" : href.includes("github.com") ? "GitHub" : "Profile"}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                {author ? (
+                  <AuthorBox author={author} showPageLink={author.url.includes("/blog/author/")} />
+                ) : (
+                  <AuthorBox
+                    author={{
+                      name: authorName,
+                      role: null,
+                      bio: "Team MyKavo - writing about website monitoring, SEO, and catching regressions before customers do.",
+                      image: null,
+                      url: `${site.url}/about`,
+                      links: [],
+                      highlights: [],
+                    }}
+                    showPageLink={false}
+                  />
+                )}
               </aside>
 
               {related.length > 0 && (

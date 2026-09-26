@@ -4,6 +4,7 @@ import { prisma } from "@mykavo/database";
 import { requireSession } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { BlogPostEditor } from "@/components/blog/post-editor";
+import { authorNames } from "@/lib/blog-authors-server";
 
 export const metadata: Metadata = { title: "Edit Post" };
 
@@ -39,6 +40,7 @@ export default async function EditBlogPostPage({
   return (
     <BlogPostEditor
       post={{ ...post, publishedAt: post.publishedAt?.toISOString() ?? null }}
+      authors={await authorNames()}
     />
   );
 }
