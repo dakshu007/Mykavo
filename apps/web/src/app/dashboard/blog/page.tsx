@@ -9,6 +9,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ButtonLink } from "@/components/ui/button";
 import { PostStatusBadge } from "@/components/blog/status-badge";
+import { postDisplayStatus } from "@/lib/blog-schedule";
 import { DeletePostButton } from "@/components/blog/delete-post-button";
 
 export const metadata: Metadata = { title: "Blog" };
@@ -19,7 +20,22 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
+/** One clock read per request (module-level fn keeps the compiler happy). */
+function requestNow(): number {
+  return Date.now();
+}
+
+const scheduleFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "UTC",
+  timeZoneName: "short",
+});
+
 export default async function DashboardBlogPage() {
+  const now = requestNow();
   const session = await requireSession();
   if (!isBlogAdmin(session.user.email)) notFound();
 
@@ -84,17 +100,21 @@ export default async function DashboardBlogPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3.5">
-                  <PostStatusBadge status={post.status} />
+                  <PostStatusBadge status={postDisplayStatus(post.status, post.publishedAt, now)} />
                 </td>
                 <td className="px-4 py-3.5 text-sm text-ink-secondary">
                   {dateFormat.format(post.updatedAt)}
                 </td>
                 <td className="px-4 py-3.5 text-sm text-ink-secondary">
-                  {post.publishedAt ? dateFormat.format(post.publishedAt) : "-"}
+                  {post.publishedAt
+                    ? postDisplayStatus(post.status, post.publishedAt, now) === "SCHEDULED"
+                      ? `Goes live ${scheduleFormat.format(post.publishedAt)}`
+                      : dateFormat.format(post.publishedAt)
+                    : "-"}
                 </td>
                 <td className="py-3.5 pl-4">
                   <div className="flex items-center justify-end gap-1">
-                    {post.status === "PUBLISHED" && (
+                    {postDisplayStatus(post.status, post.publishedAt, now) === "PUBLISHED" && (
                       <Link
                         href={`/blog/${post.slug}`}
                         target="_blank"

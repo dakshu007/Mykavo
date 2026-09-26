@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ExternalLink, Loader2, X } from "lucide-react";
+import { ArrowLeft, CalendarClock, ExternalLink, Loader2, X } from "lucide-react";
 import { ContentEditor } from "@/components/blog/content-editor";
 import { PostStatusBadge } from "@/components/blog/status-badge";
 import { slugify } from "@/lib/slugify";
 import { cn } from "@/lib/utils";
+import { postDisplayStatus } from "@/lib/blog-schedule";
 
 export interface EditorPost {
   id: string;
@@ -31,6 +32,23 @@ const MAX_TAGS = 12;
 /** UTC calendar day of an ISO timestamp, as the value for <input type="date">. */
 function isoToDateInput(iso: string | null): string {
   return iso ? iso.slice(0, 10) : "";
+}
+
+/** A timestamp in the admin's own timezone, e.g. "Sep 27, 9:00 AM". */
+function localWhen(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** "YYYY-MM-DDTHH:mm" in local time, the value format of datetime-local. */
+function toLocalInput(ms: number): string {
+  const d = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 type SaveResponse = {
@@ -65,11 +83,25 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
     post?.status ?? "DRAFT",
   );
 
-  const [saving, setSaving] = useState<"DRAFT" | "PUBLISHED" | null>(null);
+  const [saving, setSaving] = useState<"DRAFT" | "PUBLISHED" | "SCHEDULE" | null>(null);
+  // The clock the "scheduled or live?" question is asked against. Read once
+  // on mount and again after every save, never during render.
+  const [now, setNow] = useState(() => Date.now());
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  // Default suggestion: tomorrow, 9:00 local.
+  const [scheduleAt, setScheduleAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return toLocalInput(d.getTime());
+  });
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const isPublished = savedStatus === "PUBLISHED";
+  const displayStatus = postDisplayStatus(savedStatus, publishedAtIso, now);
+  const isScheduled = displayStatus === "SCHEDULED";
+  const isLive = displayStatus === "PUBLISHED";
   const canSave = title.trim().length > 0 && slug.trim().length > 0 && !saving;
 
   function handleTitleChange(value: string) {
@@ -114,8 +146,36 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
     return publishedDate;
   }
 
-  async function save(nextStatus: "DRAFT" | "PUBLISHED") {
-    setSaving(nextStatus);
+  /**
+   * "Publish" means now. The date field is for back-dating, so a future date
+   * left in it (say, from a cancelled schedule) must not quietly re-schedule
+   * the post - scheduling has its own control.
+   */
+  function publishNowPayload(): string | null {
+    const value = publishedAtPayload();
+    if (value && Date.parse(value) > Date.now()) return new Date().toISOString();
+    return value;
+  }
+
+  function schedule() {
+    const when = new Date(scheduleAt).getTime();
+    if (!scheduleAt || Number.isNaN(when)) {
+      setError("Pick a date and time to schedule this post.");
+      return;
+    }
+    if (when <= Date.now() + 60_000) {
+      setError("Pick a time in the future - or use Publish to go live now.");
+      return;
+    }
+    void save("PUBLISHED", new Date(when).toISOString(), "SCHEDULE");
+  }
+
+  async function save(
+    nextStatus: "DRAFT" | "PUBLISHED",
+    publishedAtOverride?: string | null,
+    busy: "DRAFT" | "PUBLISHED" | "SCHEDULE" = nextStatus,
+  ) {
+    setSaving(busy);
     setError(null);
     setNotice(null);
     try {
@@ -134,7 +194,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
           primaryKeyword,
           secondaryKeyword,
           tags,
-          publishedAt: publishedAtPayload(),
+          publishedAt: publishedAtOverride !== undefined ? publishedAtOverride : publishedAtPayload(),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as SaveResponse;
@@ -146,21 +206,34 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
       }
 
       setSavedStatus(data.post.status);
+      const savedAt = Date.now();
+      setNow(savedAt);
       if (data.post.publishedAt !== undefined) {
         setPublishedAtIso(data.post.publishedAt);
         setPublishedDate(isoToDateInput(data.post.publishedAt));
       }
+      const scheduledFor =
+        data.post.status === "PUBLISHED" &&
+        data.post.publishedAt &&
+        Date.parse(data.post.publishedAt) > savedAt
+          ? data.post.publishedAt
+          : null;
+      if (scheduledFor) setScheduleOpen(false);
       if (!post) {
         router.replace(`/dashboard/blog/${data.post.id}/edit`);
         router.refresh();
         return;
       }
       setNotice(
-        nextStatus === "PUBLISHED"
-          ? "Published - live on /blog."
-          : isPublished
-            ? "Unpublished - back to draft."
-            : "Draft saved.",
+        scheduledFor
+          ? `Scheduled - goes live on /blog ${localWhen(scheduledFor)}.`
+          : nextStatus === "PUBLISHED"
+            ? "Published - live on /blog."
+            : isScheduled
+              ? "Schedule cancelled - back to draft."
+              : isPublished
+                ? "Unpublished - back to draft."
+                : "Draft saved.",
       );
       router.refresh();
     } catch {
@@ -180,8 +253,11 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
           <ArrowLeft className="size-4" aria-hidden /> All posts
         </Link>
         <div className="flex items-center gap-3">
-          <PostStatusBadge status={savedStatus} />
-          {post && isPublished && (
+          <PostStatusBadge status={displayStatus} />
+          {isScheduled && publishedAtIso && (
+            <span className="text-sm text-ink-secondary">Goes live {localWhen(publishedAtIso)}</span>
+          )}
+          {post && isLive && (
             <Link
               href={`/blog/${post.slug}`}
               target="_blank"
@@ -231,16 +307,20 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
 
           <div>
             <label htmlFor="post-excerpt" className="mb-1.5 block text-sm font-medium text-ink">
-              Excerpt <span className="font-normal text-ink-faint">(optional)</span>
+              In short <span className="font-normal text-ink-faint">(excerpt)</span>
             </label>
             <textarea
               id="post-excerpt"
-              rows={2}
+              rows={3}
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
-              placeholder="One or two sentences shown on the blog index and in search results."
+              placeholder="Answer the post's question in 2-3 plain sentences."
               className={fieldClass}
             />
+            <p className="mt-1.5 text-[13px] text-ink-faint">
+              Shown in an &quot;In short&quot; box at the top of the post, on the blog index and in
+              search results. Write the answer, not a teaser - that is the part AI answers quote.
+            </p>
           </div>
 
           <div>
@@ -256,7 +336,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
             />
             <p className="mt-1.5 text-[13px] text-ink-faint">
               Shown on the post and used for ordering. Leave empty to stamp it automatically on
-              first publish.
+              first publish. To publish later, use Schedule below.
             </p>
           </div>
 
@@ -409,7 +489,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
       <ContentEditor value={content} onChange={setContent} />
 
       <div className="flex flex-wrap items-center gap-3">
-        {isPublished ? (
+        {isLive ? (
           <>
             <button
               type="button"
@@ -430,7 +510,7 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
               Unpublish
             </button>
           </>
-        ) : (
+        ) : isScheduled ? (
           <>
             <button
               type="button"
@@ -439,7 +519,55 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
               className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {saving === "PUBLISHED" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              Update
+            </button>
+            <button
+              type="button"
+              onClick={() => save("PUBLISHED", new Date().toISOString(), "SCHEDULE")}
+              disabled={!canSave}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-card px-6 text-sm font-medium text-ink transition-colors hover:border-ink-faint disabled:opacity-60"
+            >
+              {saving === "SCHEDULE" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              Publish now
+            </button>
+            <button
+              type="button"
+              onClick={() => setScheduleOpen((open) => !open)}
+              aria-expanded={scheduleOpen}
+              disabled={!canSave}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-card px-6 text-sm font-medium text-ink transition-colors hover:border-ink-faint disabled:opacity-60"
+            >
+              <CalendarClock className="size-4" aria-hidden /> Reschedule
+            </button>
+            <button
+              type="button"
+              onClick={() => save("DRAFT")}
+              disabled={!canSave}
+              className="inline-flex h-11 items-center gap-2 px-3 text-sm font-medium text-ink-secondary transition-colors hover:text-ink disabled:opacity-60"
+            >
+              {saving === "DRAFT" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              Cancel schedule
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => save("PUBLISHED", publishNowPayload())}
+              disabled={!canSave}
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+            >
+              {saving === "PUBLISHED" && <Loader2 className="size-4 animate-spin" aria-hidden />}
               Publish
+            </button>
+            <button
+              type="button"
+              onClick={() => setScheduleOpen((open) => !open)}
+              aria-expanded={scheduleOpen}
+              disabled={!canSave}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-card px-6 text-sm font-medium text-ink transition-colors hover:border-ink-faint disabled:opacity-60"
+            >
+              <CalendarClock className="size-4" aria-hidden /> Schedule
             </button>
             <button
               type="button"
@@ -451,6 +579,36 @@ export function BlogPostEditor({ post }: { post?: EditorPost }) {
               Save draft
             </button>
           </>
+        )}
+        {scheduleOpen && !isLive && (
+          <div className="flex w-full flex-wrap items-end gap-3 rounded-tile border border-line bg-card p-4">
+            <div>
+              <label htmlFor="post-schedule-at" className="mb-1.5 block text-sm font-medium text-ink">
+                Go live at
+              </label>
+              <input
+                id="post-schedule-at"
+                type="datetime-local"
+                value={scheduleAt}
+                min={toLocalInput(now)}
+                onChange={(e) => setScheduleAt(e.target.value)}
+                className={cn(fieldClass, "max-w-64")}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={schedule}
+              disabled={!canSave}
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+            >
+              {saving === "SCHEDULE" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              Schedule post
+            </button>
+            <p className="w-full text-[13px] text-ink-faint">
+              Your local time. The post appears on /blog, the RSS feed and the sitemap at that
+              moment on its own - nothing else to do.
+            </p>
+          </div>
         )}
         {error && (
           <p className="text-sm text-critical-strong" role="alert">

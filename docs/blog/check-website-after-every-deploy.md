@@ -1,7 +1,7 @@
 ---
 slug: check-website-after-every-deploy
 title: "How to Check Your Website Automatically After Every Deploy"
-excerpt: "Tests pass, the deploy goes green, and the pricing page is still broken. Here is how to add a post-deploy website check to GitHub Actions, Netlify or Vercel that compares your live pages with an approved baseline."
+excerpt: "To check a website after every deploy, start a scan from your pipeline - a GitHub Actions step, a Netlify deploy notification or a Vercel webhook - that compares the live pages with an approved baseline. Tests prove the code works; a post-deploy check proves the pages people see still have their titles, scripts, links and buttons."
 seoTitle: "Check Your Website After Every Deploy (GitHub Actions, Netlify, Vercel)"
 seoDescription: "Add a post-deploy check to GitHub Actions, Netlify or Vercel that compares live pages with an approved baseline and alerts you when a release changed something important."
 primaryKeyword: "check website after deploy"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AnswerCapsule } from "@/components/landing/answer-capsule";
 import {
   Apple,
   ArrowRight,
@@ -333,6 +334,18 @@ export default function AndroidAppPage() {
             </div>
           </div>
         </section>
+
+        <AnswerCapsule
+          className="mx-auto max-w-4xl px-5 pt-16 lg:px-8 lg:pt-20"
+          question="What is the MyKavo Android app?"
+          answer="The MyKavo Android app puts your website monitoring on your phone: push alerts for critical and high-severity changes, plus the tools to review changes, run and approve scans, add websites and pause monitoring. It is free on every MyKavo plan, including Free, and available by request while it is in Google Play review."
+          facts={[
+            { label: "Price", value: "Free on every plan" },
+            { label: "Alerts", value: "Push for critical and high-severity changes" },
+            { label: "Availability", value: "By request - Google Play listing coming" },
+            { label: "iPhone", value: "Coming later; the web dashboard works on phones" },
+          ]}
+        />
 
         {/* Tour of the five tabs */}
         <section className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">

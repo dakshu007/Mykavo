@@ -1,7 +1,7 @@
 ---
 slug: accidental-noindex-how-to-detect
 title: "Accidental noindex: How to Catch It Before Google Drops Your Pages"
-excerpt: "One setting, one plugin update or one staging config left behind can add noindex to live pages, and Google removes them from search. Here is how accidental noindex happens, how to check for it, and how to get alerted the moment it appears."
+excerpt: "Accidental noindex happens when a live page picks up a noindex robots tag - often from a staging setting, an SEO plugin change or a theme update - and Google then drops it from search. Check the page source or Search Console's URL Inspection, and use a monitor that alerts you the moment a page changes from index to noindex."
 seoTitle: "Accidental noindex: How to Detect It Before Google Drops Pages"
 seoDescription: "How accidental noindex happens (WordPress settings, staging configs, SEO plugin updates, X-Robots-Tag), how to check any page, and how to get alerted when a page flips to noindex."
 primaryKeyword: "accidental noindex"

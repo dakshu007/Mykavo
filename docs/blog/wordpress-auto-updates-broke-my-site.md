@@ -1,7 +1,7 @@
 ---
 slug: wordpress-auto-updates-broke-my-site
 title: "WordPress Auto-Updates Broke My Site: How to Keep Them On, Safely"
-excerpt: "Automatic plugin updates keep WordPress secure, and sometimes they quietly break a page overnight. Here is how to keep auto-updates on and still find out, within minutes, which update broke what."
+excerpt: "Yes - an automatic plugin, theme or core update can quietly change or break a live WordPress page overnight, with no error you would notice. Keep auto-updates on for security, and pair them with a check that compares your key pages with a known-good baseline after each update, so you learn within minutes which update broke what."
 seoTitle: "WordPress Auto-Update Broke My Site? Keep Updates On, Safely"
 seoDescription: "Why WordPress auto-updates break sites, why turning them off is the wrong fix, and a safe update routine that tells you which update broke which page."
 primaryKeyword: "wordpress auto update broke site"

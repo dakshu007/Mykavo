@@ -1,3 +1,4 @@
+import { livePostWhere } from "@/lib/blog-schedule";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BlogCta } from "@/components/blog/blog-cta";
@@ -32,7 +33,7 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
 
 export default async function BlogIndexPage() {
   const posts = await prisma.blogPost.findMany({
-    where: { status: "PUBLISHED" },
+    where: livePostWhere(),
     orderBy: { publishedAt: "desc" },
     select: {
       slug: true,

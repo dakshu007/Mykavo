@@ -1,7 +1,7 @@
 ---
 slug: monthly-website-report-for-clients
 title: "What to Put in a Monthly Website Report for Clients (With Template)"
-excerpt: "Clients renew retainers they can see. A good monthly website report shows what was checked, what was caught and fixed, and how the site performed - in a page they can read in a minute. Here is what to include, and a template."
+excerpt: "A good monthly website report shows a client what was checked, what changed or broke and how it was fixed, plus uptime and performance, on one page they can read in a minute. Lead with outcomes rather than raw data, and send it as a live link so it is always current."
 seoTitle: "Monthly Website Report for Clients: What to Include + Template"
 seoDescription: "What agencies should put in a monthly website maintenance report for clients - uptime, speed, changes caught, SSL, Lighthouse scores - plus a copy-ready template and how to automate it."
 primaryKeyword: "monthly website report for clients"

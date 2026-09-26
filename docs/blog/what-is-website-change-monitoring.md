@@ -1,7 +1,7 @@
 ---
 slug: what-is-website-change-monitoring
 title: "What Is Website Change Monitoring? A Plain-English Guide"
-excerpt: "Website change monitoring saves how your important pages should look, re-checks them on a schedule, and alerts you when something that matters changes. Here is how it works and how it differs from uptime monitoring and SEO crawlers."
+excerpt: "Website change monitoring saves an approved baseline of your important pages, re-checks them on a schedule, and alerts you when something that matters changes - a page that errors, a noindex tag, a changed title or canonical, a missing script or button. Uptime monitoring asks whether a page loads; change monitoring asks whether it is still right."
 seoTitle: "What Is Website Change Monitoring? How It Works (2026 Guide)"
 seoDescription: "Website change monitoring explained: baselines, scheduled scans, what changes it detects, how it differs from uptime monitoring and SEO crawlers, and how to choose a tool."
 primaryKeyword: "website change monitoring"

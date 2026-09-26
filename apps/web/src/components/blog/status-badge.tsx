@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 
 const styles = {
   DRAFT: { chip: "bg-info-soft text-info", dot: "bg-info", label: "Draft" },
+  SCHEDULED: { chip: "bg-warning-soft text-warning-strong", dot: "bg-warning", label: "Scheduled" },
   PUBLISHED: { chip: "bg-success-soft text-success-strong", dot: "bg-success", label: "Published" },
 } as const;
 

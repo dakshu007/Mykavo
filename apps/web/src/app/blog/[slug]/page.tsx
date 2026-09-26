@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { BlogCta } from "@/components/blog/blog-cta";
+import { GoogleCta } from "@/components/landing/google-cta";
+import { AnswerCapsule } from "@/components/landing/answer-capsule";
+import { livePostWhere } from "@/lib/blog-schedule";
 import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -34,7 +37,7 @@ async function getRelatedPosts(post: { id: string; tags: string[] }) {
   const tagged =
     post.tags.length > 0
       ? await prisma.blogPost.findMany({
-          where: { status: "PUBLISHED", id: { not: post.id }, tags: { hasSome: post.tags } },
+          where: { ...livePostWhere(), id: { not: post.id }, tags: { hasSome: post.tags } },
           select,
           orderBy: { publishedAt: "desc" },
           take: 3,
@@ -42,7 +45,7 @@ async function getRelatedPosts(post: { id: string; tags: string[] }) {
       : [];
   if (tagged.length >= 3) return tagged;
   const recent = await prisma.blogPost.findMany({
-    where: { status: "PUBLISHED", id: { notIn: [post.id, ...tagged.map((p) => p.id)] } },
+    where: { ...livePostWhere(), id: { notIn: [post.id, ...tagged.map((p) => p.id)] } },
     select,
     orderBy: { publishedAt: "desc" },
     take: 3 - tagged.length,
@@ -50,10 +53,10 @@ async function getRelatedPosts(post: { id: string; tags: string[] }) {
   return [...tagged, ...recent];
 }
 
-/** Only published posts are visible publicly - drafts 404. */
+/** Only live posts are visible publicly - drafts and scheduled posts 404. */
 async function getPublishedPost(slug: string) {
   return prisma.blogPost.findFirst({
-    where: { slug, status: "PUBLISHED" },
+    where: { slug, ...livePostWhere() },
   });
 }
 
@@ -116,6 +119,7 @@ export default async function BlogPostPage({ params }: Params) {
     "@type": "BlogPosting",
     headline: post.title,
     description: post.seoDescription ?? post.excerpt ?? undefined,
+    ...(post.excerpt ? { abstract: post.excerpt } : {}),
     datePublished: post.publishedAt?.toISOString(),
     dateModified: post.updatedAt.toISOString(),
     author: { "@type": "Person", name: post.authorName },
@@ -175,11 +179,24 @@ export default async function BlogPostPage({ params }: Params) {
       <main>
         {/* Hero band on the warm paper canvas */}
         <section className="mx-auto w-full max-w-[1440px] px-5 pb-14 pt-32 sm:pt-36 lg:px-8">
+          {/* Back to the index. The arrow slides out left and a fresh one
+              slides in from the right on hover - CSS only, still a plain link,
+              and motion-reduce keeps it static. */}
           <Link
             href="/blog"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6B6B60] transition-colors hover:text-[#151515]"
+            className="group inline-flex items-center gap-2.5 rounded-full border border-[#151515]/15 bg-white/80 py-1.5 pl-1.5 pr-4 text-sm font-semibold text-[#151515] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[3px_3px_0_#151515] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#151515] active:translate-y-0 active:shadow-[1px_1px_0_#151515] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            <ArrowLeft className="size-4" aria-hidden /> All posts
+            <span className="relative flex size-8 items-center justify-center overflow-hidden rounded-full bg-[#151515] text-[#FFD400] transition-colors duration-200 group-hover:bg-[#FFD400] group-hover:text-[#151515]">
+              <ArrowLeft
+                className="size-4 transition-transform duration-300 ease-out group-hover:-translate-x-[180%] motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                aria-hidden
+              />
+              <ArrowLeft
+                className="absolute size-4 translate-x-[180%] transition-transform duration-300 ease-out group-hover:translate-x-0 motion-reduce:hidden"
+                aria-hidden
+              />
+            </span>
+            All posts
           </Link>
           <div className="mx-auto mt-10 max-w-3xl text-center">
             <span
@@ -218,15 +235,8 @@ export default async function BlogPostPage({ params }: Params) {
                 ))}
               </ul>
             )}
-            <div className="mt-8">
-              <Link
-                href="/signup"
-                className="rounded-full border border-[#151515] bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-colors hover:bg-[#ffe14d]"
-              >
-                Start free
-              </Link>
-            </div>
-            <p className="mt-3 text-[12px] text-[#6B6B60]">* No credit card required</p>
+            <GoogleCta size="md" className="mt-8" />
+            <p className="mt-2 text-[12px] text-[#6B6B60]">Free plan · No credit card required</p>
           </div>
         </section>
 
@@ -236,6 +246,10 @@ export default async function BlogPostPage({ params }: Params) {
         <section className="blog-reader mx-auto w-full max-w-[1440px] px-5 pb-20 lg:px-8">
           <div className="flex justify-center gap-10">
             <article className="w-full min-w-0 max-w-5xl">
+              {/* The post's answer, stated up front - the excerpt, written as
+                  a self-contained answer, is what AI answers and readers in
+                  a hurry both want first. */}
+              {post.excerpt && <AnswerCapsule answer={post.excerpt} className="mb-8" />}
               <div className="rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-10">
                 <PostContent content={post.content} />
               </div>

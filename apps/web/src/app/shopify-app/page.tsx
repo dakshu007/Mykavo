@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { AnswerCapsule } from "@/components/landing/answer-capsule";
 import {
   ArrowRight,
   Bell,
@@ -295,6 +296,18 @@ export default function ShopifyAppPage() {
             </p>
           </div>
         </section>
+
+        <AnswerCapsule
+          className="mx-auto max-w-4xl px-5 pb-16 lg:px-8"
+          question="What is MyKavo for Shopify?"
+          answer="MyKavo for Shopify brings MyKavo website monitoring into your Shopify admin. When a theme is published or edited, it checks your store pages against their approved baseline and shows which theme change broke what - a missing Add to cart button, a page that errors, a script that disappeared. It is coming soon to the Shopify App Store; any Shopify store can be monitored from mykavo.app today."
+          facts={[
+            { label: "Status", value: "Coming soon to the Shopify App Store" },
+            { label: "Permissions", value: "read_themes only - no orders or customers" },
+            { label: "Storefront cost", value: "None - no scripts, pixels or theme code" },
+            { label: "Theme-change checks", value: "Pro and Agency plans" },
+          ]}
+        />
 
         {/* Zero storefront cost */}
         <section className="border-y border-[#151515] bg-[#151515]">

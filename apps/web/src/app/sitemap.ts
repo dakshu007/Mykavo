@@ -1,3 +1,4 @@
+import { livePostWhere } from "@/lib/blog-schedule";
 import type { MetadataRoute } from "next";
 import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
@@ -67,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const posts = await prisma.blogPost.findMany({
-      where: { status: "PUBLISHED" },
+      where: livePostWhere(),
       select: { slug: true, updatedAt: true },
       orderBy: { publishedAt: "desc" },
     });

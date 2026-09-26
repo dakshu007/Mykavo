@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { AnswerCapsule } from "@/components/landing/answer-capsule";
 import {
   ArrowRight,
   Bell,
@@ -342,6 +343,18 @@ export default function WordPressPluginPage() {
             </p>
           </div>
         </section>
+
+        <AnswerCapsule
+          className="mx-auto max-w-4xl px-5 pb-16 lg:px-8"
+          question="What is the MyKavo WordPress plugin?"
+          answer="MyKavo for WordPress is a free plugin, listed on WordPress.org, that connects your site to MyKavo website monitoring. It records every plugin, theme and core update, and with Safe Updates (Pro and Agency) checks your key pages against their approved baseline right after each one - so wp-admin shows what changed and which update caused it."
+          facts={[
+            { label: "Price", value: "Free plugin, and a free MyKavo plan" },
+            { label: "Front-end cost", value: "None - no scripts, styles or queries on your pages" },
+            { label: "Works with", value: "Any theme, page builder and WooCommerce" },
+            { label: "Install", value: "Plugins > Add New > search \"MyKavo\"" },
+          ]}
+        />
 
         {/* Zero front-end cost */}
         <section className="border-y border-[#151515] bg-[#151515]">

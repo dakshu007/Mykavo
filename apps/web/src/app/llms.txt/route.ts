@@ -1,3 +1,4 @@
+import { livePostWhere } from "@/lib/blog-schedule";
 import { prisma } from "@mykavo/database";
 import { site, socials } from "@/config/site";
 import { CHANGELOG, CHANGELOG_PATH } from "@/config/changelog";
@@ -194,7 +195,7 @@ export const dynamic = "force-dynamic";
 async function latestGuides(): Promise<string> {
   try {
     const posts = await prisma.blogPost.findMany({
-      where: { status: "PUBLISHED" },
+      where: livePostWhere(),
       select: { slug: true, title: true, excerpt: true },
       orderBy: { publishedAt: "desc" },
       take: 30,

@@ -1,3 +1,4 @@
+import { livePostWhere } from "@/lib/blog-schedule";
 import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
 
@@ -17,7 +18,7 @@ function xmlEscape(text: string): string {
 /** RSS 2.0 feed of published posts - small SEO/distribution win. */
 export async function GET() {
   const posts = await prisma.blogPost.findMany({
-    where: { status: "PUBLISHED" },
+    where: livePostWhere(),
     orderBy: { publishedAt: "desc" },
     take: 50,
     select: {
