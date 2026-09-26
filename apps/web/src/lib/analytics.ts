@@ -37,6 +37,7 @@ export type AnalyticsEvent =
   | "wp_plugin_viewed"
   | "wp_plugin_downloaded"
   | "wp_plugin_directory_clicked"
+  | "blog_ai_summary"
   // Shopify app page
   | "shopify_app_viewed"
   // Android app page

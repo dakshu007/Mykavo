@@ -313,6 +313,10 @@
     --fx-ink-inverse: #ffffff;
     --fx-ink-hover: #000000;
     --fx-line: #e4e7ee;
+    /* Inline code chips. Unpinned, this followed the visitor's dark theme
+       (#232833) under pinned dark ink - dark text on a dark chip. */
+    --fx-info: #666c7a;
+    --fx-info-soft: #eef0f3;
     --fx-panel: #16181d;
     --fx-primary: #ffd400;
     --fx-primary-hover: #e6bf00;
@@ -413,9 +417,16 @@
     font-family: var(--font-mono);
     font-size: 0.85em;
     background-color: var(--fx-info-soft);
+    border: 1px solid var(--fx-line);
     border-radius: 6px;
-    padding: 0.15em 0.4em;
+    padding: 0.1em 0.4em;
     color: var(--fx-ink);
+  }
+  /* The public post: a warm chip that belongs on the paper canvas. */
+  .blog-reader .blog-prose :not(pre) > code {
+    background-color: #fff6cc;
+    border-color: rgb(21 21 21 / 12%);
+    color: #151515;
   }
   .blog-prose pre {
     margin: 1.4em 0;

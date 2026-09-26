@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { BlogCta } from "@/components/blog/blog-cta";
 import { GoogleCta } from "@/components/landing/google-cta";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
+import { SummarizeWithAi } from "@/components/blog/summarize-with-ai";
 import { livePostWhere } from "@/lib/blog-schedule";
 import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
@@ -250,7 +251,11 @@ export default async function BlogPostPage({ params }: Params) {
                   a self-contained answer, is what AI answers and readers in
                   a hurry both want first. */}
               {post.excerpt && <AnswerCapsule answer={post.excerpt} className="mb-8" />}
-              <div className="rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-10">
+              <SummarizeWithAi url={`${site.url}/blog/${post.slug}`} />
+              <div
+                data-post-body
+                className="rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-10"
+              >
                 <PostContent content={post.content} />
               </div>
 
