@@ -8,6 +8,7 @@ import { isBlogAdmin } from "@/lib/blog-admin";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ButtonLink } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 
 export const metadata: Metadata = { title: "Blog authors" };
 
@@ -19,17 +20,21 @@ async function loadAuthors() {
         prisma.blogPost.count({ where: { authorName: { equals: a.name, mode: "insensitive" } } }),
       ),
     );
-    return { ok: true as const, authors: authors.map((a, i) => ({ ...a, posts: counts[i] })) };
-  } catch {
-    // The blog_author table arrives with a migration applied by hand.
-    return { ok: false as const, authors: [] };
+    return { ok: true as const, authors: authors.map((a, i) => ({ ...a, posts: counts[i] })), error: null };
+  } catch (err) {
+    // The blog_author table arrives with a migration applied by hand. The
+    // real error is shown (this page is blog-admin only) - "missing table"
+    // and "no permission" need different fixes.
+    const error = err instanceof Error ? err.message.split("\n").filter(Boolean).slice(-2).join(" ") : String(err);
+    logger.error("blog authors could not be loaded", { error });
+    return { ok: false as const, authors: [], error };
   }
 }
 
 export default async function BlogAuthorsPage() {
   const session = await requireSession();
   if (!isBlogAdmin(session.user.email)) notFound();
-  const { ok, authors } = await loadAuthors();
+  const { ok, authors, error } = await loadAuthors();
 
   const back = (
     <Link href="/dashboard/blog" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-ink-secondary hover:text-ink">
@@ -48,6 +53,11 @@ export default async function BlogAuthorsPage() {
             <code className="font-mono text-[13px]">20260926090000_blog_author</code> (see docs/OPERATIONS.md), then reload.
             Posts keep working in the meantime.
           </p>
+          {error && (
+            <p className="mt-3 rounded-tile bg-surface px-4 py-3 font-mono text-[12px] leading-5 text-ink-secondary">
+              Database said: {error}
+            </p>
+          )}
         </Card>
       </div>
     );
