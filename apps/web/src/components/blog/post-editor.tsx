@@ -28,6 +28,8 @@ export interface EditorPost {
 }
 
 const MAX_TAGS = 12;
+/** Select value for "type a name that has no profile". */
+const CUSTOM_AUTHOR = "__custom__";
 
 /** UTC calendar day of an ISO timestamp, as the value for <input type="date">. */
 function isoToDateInput(iso: string | null): string {
@@ -76,7 +78,15 @@ export function BlogPostEditor({
   const [slugTouched, setSlugTouched] = useState(Boolean(post));
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [content, setContent] = useState(post?.content ?? "");
-  const [authorName, setAuthorName] = useState(post?.authorName ?? "MyKavo Team");
+  const [authorName, setAuthorName] = useState(
+    // A new post starts with the first author profile, when there is one.
+    post?.authorName ?? authors[0] ?? "MyKavo Team",
+  );
+  const [customAuthor, setCustomAuthor] = useState(false);
+  const matchedAuthor = authors.find((a) => a.toLowerCase() === authorName.trim().toLowerCase());
+  // An existing byline that matches no profile ("Dakshesh - Founder (MyKavo)")
+  // shows as "Other name" with its text, so nothing is changed until chosen.
+  const authorOption = !customAuthor && matchedAuthor ? matchedAuthor : CUSTOM_AUTHOR;
   const [seoTitle, setSeoTitle] = useState(post?.seoTitle ?? "");
   const [seoDescription, setSeoDescription] = useState(post?.seoDescription ?? "");
   const [primaryKeyword, setPrimaryKeyword] = useState(post?.primaryKeyword ?? "");
@@ -347,9 +357,58 @@ export function BlogPostEditor({
             </p>
           </div>
 
+          <div>
+            <label htmlFor="post-author" className="mb-1.5 block text-sm font-medium text-ink">
+              Author
+            </label>
+            {authors.length > 0 && (
+              <select
+                id="post-author"
+                value={authorOption}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === CUSTOM_AUTHOR) {
+                    setCustomAuthor(true);
+                    setAuthorName("");
+                  } else {
+                    setCustomAuthor(false);
+                    setAuthorName(v);
+                  }
+                }}
+                className={cn(fieldClass, "max-w-md")}
+              >
+                {authors.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+                <option value={CUSTOM_AUTHOR}>Other name (no profile)…</option>
+              </select>
+            )}
+            {(authors.length === 0 || authorOption === CUSTOM_AUTHOR) && (
+              <input
+                id={authors.length === 0 ? "post-author" : "post-author-custom"}
+                type="text"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                placeholder="Author name"
+                aria-label="Author name"
+                className={cn(fieldClass, "max-w-md", authors.length > 0 && "mt-2")}
+              />
+            )}
+            <p className="mt-1.5 text-[13px] text-ink-faint">
+              {matchedAuthor
+                ? "The post shows this author's photo, bio and links. "
+                : "Without a profile the post shows the name only. "}
+              <Link href="/dashboard/blog/authors" className="font-medium text-accent hover:text-primary-hover">
+                {authors.length === 0 ? "Add an author profile" : "Manage authors"}
+              </Link>
+            </p>
+          </div>
+
           <details className="group rounded-tile border border-line px-4 py-3">
             <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-ink [&::-webkit-details-marker]:hidden">
-              SEO &amp; author
+              SEO
               <span className="text-ink-faint transition-transform group-open:rotate-45">+</span>
             </summary>
             <div className="mt-4 space-y-4">
@@ -417,37 +476,6 @@ export function BlogPostEditor({
                   onChange={(e) => setSeoDescription(e.target.value)}
                   className={fieldClass}
                 />
-              </div>
-              <div>
-                <label
-                  htmlFor="post-author"
-                  className="mb-1.5 block text-sm font-medium text-ink"
-                >
-                  Author name
-                </label>
-                <input
-                  id="post-author"
-                  type="text"
-                  list="post-author-options"
-                  value={authorName}
-                  onChange={(e) => setAuthorName(e.target.value)}
-                  className={fieldClass}
-                />
-                <datalist id="post-author-options">
-                  {authors.map((a) => (
-                    <option key={a} value={a} />
-                  ))}
-                </datalist>
-                <p className="mt-1.5 text-[13px] text-ink-faint">
-                  {authors.some((a) => a.toLowerCase() === authorName.trim().toLowerCase())
-                    ? "Matches an author profile - the post shows their photo, bio and links."
-                    : "Pick an author profile so the post shows their photo, bio and links. "}
-                  {!authors.some((a) => a.toLowerCase() === authorName.trim().toLowerCase()) && (
-                    <Link href="/dashboard/blog/authors" className="font-medium text-accent hover:text-primary-hover">
-                      Manage authors
-                    </Link>
-                  )}
-                </p>
               </div>
             </div>
           </details>
