@@ -1,5 +1,5 @@
-import { prisma } from "@mykavo/database";
-import { isLifecycleSubject } from "@mykavo/email";
+import { isMissingTableError, prisma } from "@mykavo/database";
+import { LIFECYCLE_KEYS, isLifecycleSubject } from "@mykavo/email";
 import { logger } from "@/lib/logger";
 
 /**
@@ -16,6 +16,30 @@ import { logger } from "@/lib/logger";
 
 const ID_RE = /^[a-z0-9]{20,40}$/i;
 
+type Row = { recipient: string; subject: string } | null;
+
+/**
+ * The notification, if it is a lifecycle email. Recognised by the send log
+ * (Admin > Automations lets subjects be edited) or, for emails sent before
+ * the log existed, by their original subject.
+ */
+async function findLifecycleNotification(id: string): Promise<Row> {
+  let n: (NonNullable<Row> & { automationSend?: { automationKey: string } | null }) | null;
+  try {
+    n = await prisma.notification.findUnique({
+      where: { id },
+      select: { recipient: true, subject: true, automationSend: { select: { automationKey: true } } },
+    });
+  } catch (err) {
+    if (!isMissingTableError(err)) throw err;
+    n = await prisma.notification.findUnique({ where: { id }, select: { recipient: true, subject: true } });
+  }
+  if (!n) return null;
+  const key = n.automationSend?.automationKey;
+  const lifecycle = key ? (LIFECYCLE_KEYS as string[]).includes(key) : isLifecycleSubject(n.subject);
+  return lifecycle ? { recipient: n.recipient, subject: n.subject } : null;
+}
+
 export type OptOutResult = "ok" | "invalid" | "error";
 
 export async function optOutByNotificationId(
@@ -24,11 +48,8 @@ export async function optOutByNotificationId(
 ): Promise<OptOutResult> {
   if (!notificationId || !ID_RE.test(notificationId)) return "invalid";
   try {
-    const n = await prisma.notification.findUnique({
-      where: { id: notificationId },
-      select: { recipient: true, subject: true },
-    });
-    if (!n || !isLifecycleSubject(n.subject)) return "invalid";
+    const n = await findLifecycleNotification(notificationId);
+    if (!n) return "invalid";
     const email = n.recipient.trim().toLowerCase();
     await prisma.emailOptOut.upsert({ where: { email }, create: { email, source }, update: {} });
     logger.info("lifecycle email opt-out", { source });
@@ -43,8 +64,7 @@ export async function optOutByNotificationId(
 export async function isUnsubscribableNotification(notificationId: string | undefined): Promise<boolean> {
   if (!notificationId || !ID_RE.test(notificationId)) return false;
   try {
-    const n = await prisma.notification.findUnique({ where: { id: notificationId }, select: { subject: true } });
-    return Boolean(n && isLifecycleSubject(n.subject));
+    return Boolean(await findLifecycleNotification(notificationId));
   } catch {
     return false;
   }

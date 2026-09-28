@@ -4,7 +4,11 @@
  *   Day 3  - with a website: what MyKavo saw so far (real scan and change
  *            counts). Without one: the two-minute setup, with the videos.
  *   Day 6  - the Android app, for accounts with a website and no app yet.
- *   Day 10 - Pro at 15% off (code PRO17), for Free accounts with a website.
+ *   Day 10 - Pro at a discount (default 15% with code PRO17), for Free
+ *            accounts with a website.
+ *
+ * Each step can be switched off, re-worded, and moved to another day in
+ * Admin > Automations; the Day 10 code and percent live there too.
  *
  * Which step an account is due is decided by decideLifecycleStep in
  * @mykavo/shared (windows, stop rules, one email a day); this file gathers
@@ -21,49 +25,49 @@
  * sent.
  */
 
-import { getWorkspaceEntitlement, prisma } from "@mykavo/database";
+import { getWorkspaceEntitlement, prisma, recordAutomationSend } from "@mykavo/database";
 import {
-  DAY10_OFFER_SUBJECT,
-  DAY3_SETUP_SUBJECT,
-  DAY3_STATS_SUBJECT_PREFIX,
-  DAY6_ANDROID_SUBJECT,
+  LIFECYCLE_KEYS,
   LIFECYCLE_SUBJECT_PREFIXES,
-  day10OfferEmail,
-  day3SetupEmail,
-  day3StatsEmail,
-  day6AndroidEmail,
   lifecycleHeaders,
+  lifecycleSendDays,
+  matchesLegacySubject,
+  renderAutomation,
   sendEmail,
+  type AutomationData,
+  type AutomationKey,
 } from "@mykavo/email";
 import {
-  LIFECYCLE_MAX_AGE_DAYS,
-  LIFECYCLE_MIN_AGE_DAYS,
   PLAN_PRICES_USD,
   decideLifecycleStep,
   displayPersonName,
+  lifecycleMaxAgeDays,
+  lifecycleMinAgeDays,
   type LifecycleStep,
 } from "@mykavo/shared";
+import type { Automations } from "./automation-settings";
 import { resolveEmailConfig } from "./notify";
 import { logger } from "./logger";
 
 const appBase = (process.env.APP_URL ?? "https://mykavo.app").replace(/\/+$/, "");
 const DAY_MS = 24 * 60 * 60 * 1000;
 const GAP_MS = 700;
-/** The Dodo discount code for the Day 10 offer. Create it in Dodo first. */
-const OFFER_CODE = process.env.LIFECYCLE_OFFER_CODE ?? "PRO17";
-const OFFER_PRICE = Math.round(PLAN_PRICES_USD.pro * 0.85);
-/** Candidates examined per sweep; signups in a 11-day window, so small. */
+/** Candidates examined per sweep; signups in a ~11-day window, so small. */
 const MAX_CANDIDATES = 500;
 
 const pause = () => new Promise((resolve) => setTimeout(resolve, GAP_MS));
-const lifecycleWhere = { OR: LIFECYCLE_SUBJECT_PREFIXES.map((p) => ({ subject: { startsWith: p } })) };
 
-type Mail = { subject: string; html: string; text: string };
+const STEP_KEY: Record<LifecycleStep, AutomationKey> = {
+  DAY3_STATS: "day3_stats",
+  DAY3_SETUP: "day3_setup",
+  DAY6_ANDROID: "day6_android",
+  DAY10_OFFER: "day10_offer",
+};
 
-async function renderStep(
+async function stepData(
   step: LifecycleStep,
   ctx: { name: string; email: string; workspaceId: string; unsubscribeUrl: string },
-): Promise<Mail> {
+): Promise<AutomationData> {
   const { name, unsubscribeUrl } = ctx;
   switch (step) {
     case "DAY3_STATS": {
@@ -76,57 +80,88 @@ async function renderStep(
         prisma.changeEvent.count({ where: { ...websiteFilter, status: "NEW" } }),
         prisma.changeEvent.count({ where: { ...websiteFilter, status: "NEW", severity: { in: ["HIGH", "CRITICAL"] } } }),
       ]);
-      return day3StatsEmail({
-        name,
-        websitesCount,
-        pagesMonitored,
-        scansCompleted,
-        changesFound,
-        openChanges,
-        urgentChanges,
-        dashboardUrl: `${appBase}/dashboard`,
-        changesUrl: `${appBase}/dashboard/changes`,
-        unsubscribeUrl,
-      });
+      return {
+        key: "day3_stats",
+        data: {
+          name,
+          websitesCount,
+          pagesMonitored,
+          scansCompleted,
+          changesFound,
+          openChanges,
+          urgentChanges,
+          dashboardUrl: `${appBase}/dashboard`,
+          changesUrl: `${appBase}/dashboard/changes`,
+          unsubscribeUrl,
+        },
+      };
     }
     case "DAY3_SETUP":
-      return day3SetupEmail({
-        name,
-        addWebsiteUrl: `${appBase}/dashboard/websites/new`,
-        tutorialsUrl: `${appBase}/video-tutorials`,
-        unsubscribeUrl,
-      });
+      return {
+        key: "day3_setup",
+        data: { name, addWebsiteUrl: `${appBase}/dashboard/websites/new`, tutorialsUrl: `${appBase}/video-tutorials`, unsubscribeUrl },
+      };
     case "DAY6_ANDROID": {
       const config = await resolveEmailConfig(ctx.workspaceId);
-      return day6AndroidEmail({
-        name,
-        androidUrl: `${appBase}/android-app`,
-        alertEmail: config?.recipients[0] ?? ctx.email,
-        notificationsUrl: `${appBase}/dashboard/notifications`,
-        unsubscribeUrl,
-      });
+      return {
+        key: "day6_android",
+        data: {
+          name,
+          androidUrl: `${appBase}/android-app`,
+          alertEmail: config?.recipients[0] ?? ctx.email,
+          notificationsUrl: `${appBase}/dashboard/notifications`,
+          unsubscribeUrl,
+        },
+      };
     }
     case "DAY10_OFFER":
-      return day10OfferEmail({
-        name,
-        code: OFFER_CODE,
-        price: OFFER_PRICE,
-        regularPrice: PLAN_PRICES_USD.pro,
-        upgradeUrl: `${appBase}/dashboard/billing`,
-        unsubscribeUrl,
-      });
+      // Code, percent, price and day come from the saved settings.
+      return {
+        key: "day10_offer",
+        data: { name, regularPrice: PLAN_PRICES_USD.pro, upgradeUrl: `${appBase}/dashboard/billing`, unsubscribeUrl },
+      };
   }
 }
 
-export async function sendLifecycleEmails(budget: number): Promise<number> {
+/** Lifecycle emails already sent to a workspace, with the automation that sent each. */
+async function lifecycleHistory(workspaceId: string, a: Automations): Promise<{ key: AutomationKey | null; subject: string; sentAt: Date | null }[]> {
+  const legacy = LIFECYCLE_SUBJECT_PREFIXES.map((p) => ({ subject: { startsWith: p } }));
+  const base = { workspaceId, channelType: "EMAIL" as const, status: "SENT" as const };
+  if (!a.ready) {
+    const rows = await prisma.notification.findMany({ where: { ...base, OR: legacy }, select: { subject: true, sentAt: true } });
+    return rows.map((r) => ({ ...r, key: null }));
+  }
+  const rows = await prisma.notification.findMany({
+    where: {
+      ...base,
+      OR: [...legacy, { automationSend: { is: { automationKey: { in: LIFECYCLE_KEYS }, isTest: false } } }],
+    },
+    select: { subject: true, sentAt: true, automationSend: { select: { automationKey: true, isTest: true } } },
+  });
+  return rows.map((r) => ({
+    subject: r.subject,
+    sentAt: r.sentAt,
+    key: r.automationSend && !r.automationSend.isTest ? (r.automationSend.automationKey as AutomationKey) : null,
+  }));
+}
+
+export async function sendLifecycleEmails(budget: number, a: Automations): Promise<number> {
   if (budget <= 0) return 0;
+  if (!LIFECYCLE_KEYS.some((k) => a.settings[k].enabled)) return 0;
   const now = new Date();
+  const sendDays = lifecycleSendDays(a.settings);
+  const enabled = {
+    DAY3_STATS: a.settings.day3_stats.enabled,
+    DAY3_SETUP: a.settings.day3_setup.enabled,
+    DAY6_ANDROID: a.settings.day6_android.enabled,
+    DAY10_OFFER: a.settings.day10_offer.enabled,
+  };
 
   const users = await prisma.user.findMany({
     where: {
       createdAt: {
-        gte: new Date(now.getTime() - LIFECYCLE_MAX_AGE_DAYS * DAY_MS),
-        lte: new Date(now.getTime() - LIFECYCLE_MIN_AGE_DAYS * DAY_MS),
+        gte: new Date(now.getTime() - lifecycleMaxAgeDays(sendDays) * DAY_MS),
+        lte: new Date(now.getTime() - lifecycleMinAgeDays(sendDays) * DAY_MS),
       },
       ownedWorkspaces: { some: {} },
     },
@@ -157,13 +192,10 @@ export async function sendLifecycleEmails(budget: number): Promise<number> {
       getWorkspaceEntitlement(prisma, workspaceId),
       resolveEmailConfig(workspaceId),
       prisma.appAccessRequest.findUnique({ where: { email }, select: { id: true } }),
-      prisma.notification.findMany({
-        where: { workspaceId, channelType: "EMAIL", status: "SENT", ...lifecycleWhere },
-        select: { subject: true, sentAt: true },
-      }),
+      lifecycleHistory(workspaceId, a),
     ]);
 
-    const sentWith = (prefix: string) => history.some((h) => h.subject.startsWith(prefix));
+    const alreadySent = (key: AutomationKey) => history.some((h) => h.key === key || matchesLegacySubject(key, h.subject));
     const lastSent = history.reduce<Date | null>((m, h) => (h.sentAt && (!m || h.sentAt > m) ? h.sentAt : m), null);
 
     const step = decideLifecycleStep({
@@ -174,22 +206,33 @@ export async function sendLifecycleEmails(budget: number): Promise<number> {
       optedOut: Boolean(optOut),
       emailOff: !emailConfig,
       hasAndroidApp: Boolean(appRequest) || user._count.pushDevices > 0,
-      sentDay3: sentWith(DAY3_STATS_SUBJECT_PREFIX) || sentWith(DAY3_SETUP_SUBJECT),
-      sentDay6: sentWith(DAY6_ANDROID_SUBJECT),
-      sentDay10: sentWith(DAY10_OFFER_SUBJECT),
+      sentDay3: alreadySent("day3_stats") || alreadySent("day3_setup"),
+      sentDay6: alreadySent("day6_android"),
+      sentDay10: alreadySent("day10_offer"),
       lastLifecycleSentAt: lastSent,
+      sendDays,
+      enabled,
     });
     if (!step) continue;
 
     const ctx = { name: displayPersonName(user.name, user.email), email, workspaceId, unsubscribeUrl: "" };
     // The subject never depends on the unsubscribe link, so render once to
     // learn it, record the row, then render with the row's own link.
-    const draft = await renderStep(step, ctx);
-    const row = await prisma.notification.create({
-      data: { workspaceId, channelType: "EMAIL", recipient: user.email, subject: draft.subject, status: "PENDING" },
-      select: { id: true },
+    // The row and its send-log entry are written together: a row the log
+    // does not know about could not be recognised as sent next hour.
+    const data = await stepData(step, ctx);
+    const draft = renderAutomation(data, a.settings);
+    const recipient = user.email;
+    const row = await prisma.$transaction(async (tx) => {
+      const created = await tx.notification.create({
+        data: { workspaceId, channelType: "EMAIL", recipient, subject: draft.subject, status: "PENDING" },
+        select: { id: true },
+      });
+      await recordAutomationSend(tx, { notificationId: created.id, automationKey: STEP_KEY[step] }, a.ready);
+      return created;
     });
-    const mail = await renderStep(step, { ...ctx, unsubscribeUrl: `${appBase}/unsubscribe?n=${row.id}` });
+    const unsubscribeUrl = `${appBase}/unsubscribe?n=${row.id}`;
+    const mail = renderAutomation({ ...data, data: { ...data.data, unsubscribeUrl } } as AutomationData, a.settings);
     const result = await sendEmail({
       to: [user.email],
       subject: mail.subject,

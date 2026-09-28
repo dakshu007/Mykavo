@@ -92,3 +92,10 @@ export {
   type ActiveWebsiteAddon,
   type ConsumedIntent,
 } from "./subscription";
+export {
+  automationSentWhere,
+  isMissingTableError,
+  loadAutomationRows,
+  recordAutomationSend,
+  type LegacySubject,
+} from "./automations";

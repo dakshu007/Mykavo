@@ -19,6 +19,7 @@ import {
   UserPlus,
   Smartphone,
   MailQuestion,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
@@ -52,6 +53,7 @@ const ICONS: Record<NavItemId, LucideIcon> = {
   users: UserPlus,
   usage: Gauge,
   "app-requests": MailQuestion,
+  automations: Workflow,
   app: Smartphone,
 };
 

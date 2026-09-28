@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const findUnique = vi.fn();
 const upsert = vi.fn();
 vi.mock("@mykavo/database", () => ({
+  isMissingTableError: (e: unknown) => e instanceof Error && e.message.includes("P2021"),
   prisma: {
     notification: { findUnique: (...a: unknown[]) => findUnique(...a) },
     emailOptOut: { upsert: (...a: unknown[]) => upsert(...a) },
@@ -54,5 +55,20 @@ describe("lifecycle email opt-out", () => {
     expect(await isUnsubscribableNotification(ID)).toBe(true);
     findUnique.mockResolvedValue({ subject: "Welcome to MyKavo - start monitoring your website" });
     expect(await isUnsubscribableNotification(ID)).toBe(false);
+  });
+
+  it("trusts the send log over the subject, so edited subjects still unsubscribe", async () => {
+    findUnique.mockResolvedValue({ recipient: "a@b.com", subject: "A subject an admin rewrote", automationSend: { automationKey: "day6_android" } });
+    expect(await optOutByNotificationId(ID, "one_click")).toBe("ok");
+    // A welcome email whose subject was edited to look like a lifecycle one still is not.
+    findUnique.mockResolvedValue({ recipient: "a@b.com", subject: "Get your MyKavo alerts on your phone", automationSend: { automationKey: "welcome" } });
+    expect(await optOutByNotificationId(ID, "one_click")).toBe("invalid");
+  });
+
+  it("falls back to subjects before the send-log table exists", async () => {
+    findUnique
+      .mockRejectedValueOnce(new Error("P2021 table does not exist"))
+      .mockResolvedValueOnce({ recipient: "a@b.com", subject: "Get your MyKavo alerts on your phone" });
+    expect(await optOutByNotificationId(ID, "one_click")).toBe("ok");
   });
 });

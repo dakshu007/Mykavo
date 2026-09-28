@@ -32,7 +32,7 @@ const all = [
   day3StatsEmail(stats),
   day3SetupEmail({ name: "Ana", addWebsiteUrl: "https://mykavo.app/dashboard/websites/new", tutorialsUrl: "https://mykavo.app/video-tutorials", unsubscribeUrl: UNSUB }),
   day6AndroidEmail({ name: "Ana", androidUrl: "https://mykavo.app/android-app", alertEmail: "ana@example.com", notificationsUrl: "https://mykavo.app/dashboard/notifications", unsubscribeUrl: UNSUB }),
-  day10OfferEmail({ name: "Ana", code: "PRO17", price: 17, regularPrice: 20, upgradeUrl: "https://mykavo.app/dashboard/billing", unsubscribeUrl: UNSUB }),
+  day10OfferEmail({ name: "Ana", code: "PRO17", percent: 15, price: 17, regularPrice: 20, days: 10, upgradeUrl: "https://mykavo.app/dashboard/billing", unsubscribeUrl: UNSUB }),
 ];
 
 describe("lifecycle emails", () => {

@@ -24,13 +24,12 @@
  * email, so a crash between send and record costs at most one repeat.
  */
 
-import { prisma } from "@mykavo/database";
+import { prisma, recordAutomationSend, type Prisma } from "@mykavo/database";
 import {
-  BASELINE_READY_SUBJECT_PREFIX,
   FIRST_WEBSITE_NUDGE_SUBJECT,
+  LIFECYCLE_KEYS,
   LIFECYCLE_SUBJECT_PREFIXES,
-  baselineReadyEmail,
-  firstWebsiteNudgeEmail,
+  renderAutomation,
   sendEmail,
 } from "@mykavo/email";
 import {
@@ -39,6 +38,7 @@ import {
   emailLimitsFromEnv,
   type EmailUsage,
 } from "@mykavo/shared";
+import { loadAutomations, sentBy, type Automations } from "./automation-settings";
 import { resolveEmailConfig } from "./notify";
 import { sendLifecycleEmails } from "./lifecycle-email";
 import { logger } from "./logger";
@@ -51,7 +51,7 @@ const GAP_MS = 700;
 const pause = () => new Promise((resolve) => setTimeout(resolve, GAP_MS));
 
 /** Emails sent so far today and this month (UTC), read from the ledger. */
-async function currentUsage(): Promise<EmailUsage> {
+async function currentUsage(a: Automations): Promise<EmailUsage> {
   const now = new Date();
   const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -68,7 +68,11 @@ async function currentUsage(): Promise<EmailUsage> {
         OR: [
           { subject: FIRST_WEBSITE_NUDGE_SUBJECT },
           ...LIFECYCLE_SUBJECT_PREFIXES.map((p) => ({ subject: { startsWith: p } })),
-        ],
+          // Edited subjects are only recognisable through the send log.
+          ...(a.ready
+            ? [{ automationSend: { is: { automationKey: { in: ["first_website", ...LIFECYCLE_KEYS] }, isTest: false } } }]
+            : []),
+        ] satisfies Prisma.NotificationWhereInput[],
       },
     }),
   ]);
@@ -83,8 +87,8 @@ function hostOf(url: string): string {
   }
 }
 
-async function sendBaselineReady(budget: number): Promise<number> {
-  if (budget <= 0) return 0;
+async function sendBaselineReady(budget: number, a: Automations): Promise<number> {
+  if (budget <= 0 || !a.settings.baseline_ready.enabled) return 0;
   const scans = await prisma.scan.findMany({
     where: {
       triggerType: "BASELINE",
@@ -93,7 +97,7 @@ async function sendBaselineReady(budget: number): Promise<number> {
       completedAt: { gte: new Date(Date.now() - 3 * DAY_MS) },
       website: {
         notifications: {
-          none: { subject: { startsWith: BASELINE_READY_SUBJECT_PREFIX }, status: "SENT" },
+          none: { status: "SENT", ...sentBy("baseline_ready", a) },
         },
       },
     },
@@ -129,25 +133,32 @@ async function sendBaselineReady(budget: number): Promise<number> {
     if (!owner || !config) continue; // email switched off
 
     const host = hostOf(site.url);
-    const mail = baselineReadyEmail({
-      websiteName: site.name,
-      websiteHost: host,
-      pagesScanned: scan.pagesScanned,
-      websiteUrl: `${appBase}/dashboard/websites/${site.id}`,
-      nextScan: site.nextScanAt
-        ? site.nextScanAt.toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            timeZone: "UTC",
-          })
-        : null,
-      frequency: site.scanFrequency === "DAILY" ? "Daily" : "Weekly",
-      alertRecipients: config.recipients,
-      alertsUrl: `${appBase}/dashboard/notifications`,
-    });
+    const mail = renderAutomation(
+      {
+        key: "baseline_ready",
+        data: {
+          websiteName: site.name,
+          websiteHost: host,
+          pagesScanned: scan.pagesScanned,
+          websiteUrl: `${appBase}/dashboard/websites/${site.id}`,
+          nextScan: site.nextScanAt
+            ? site.nextScanAt.toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                timeZone: "UTC",
+              })
+            : null,
+          frequency: site.scanFrequency === "DAILY" ? "Daily" : "Weekly",
+          alertRecipients: config.recipients,
+          alertsUrl: `${appBase}/dashboard/notifications`,
+        },
+      },
+      a.settings,
+    );
     const result = await sendEmail({ to: [owner], subject: mail.subject, html: mail.html, text: mail.text });
-    await prisma.notification.create({
+    const row = await prisma.notification.create({
+      select: { id: true },
       data: {
         workspaceId: site.workspaceId,
         websiteId: site.id,
@@ -160,6 +171,7 @@ async function sendBaselineReady(budget: number): Promise<number> {
         errorMessage: result.error ?? null,
       },
     });
+    await recordAutomationSend(prisma, { notificationId: row.id, automationKey: "baseline_ready" }, a.ready);
     if (!result.ok) {
       // Most likely the provider's quota or rate limit - stop rather than
       // hammer it; the next hourly run picks up where this left off.
@@ -172,8 +184,8 @@ async function sendBaselineReady(budget: number): Promise<number> {
   return sent;
 }
 
-async function sendFirstWebsiteNudges(budget: number): Promise<number> {
-  if (budget <= 0) return 0;
+async function sendFirstWebsiteNudges(budget: number, a: Automations): Promise<number> {
+  if (budget <= 0 || !a.settings.first_website.enabled) return 0;
   const users = await prisma.user.findMany({
     where: {
       createdAt: { lte: new Date(Date.now() - DAY_MS) },
@@ -181,7 +193,7 @@ async function sendFirstWebsiteNudges(budget: number): Promise<number> {
         some: {},
         every: {
           websites: { none: {} },
-          notifications: { none: { subject: FIRST_WEBSITE_NUDGE_SUBJECT, status: "SENT" } },
+          notifications: { none: { status: "SENT", ...sentBy("first_website", a) } },
           notificationChannels: { none: { type: "EMAIL", enabled: false } },
         },
       },
@@ -202,13 +214,20 @@ async function sendFirstWebsiteNudges(budget: number): Promise<number> {
     const workspaceId = user.ownedWorkspaces[0]?.id;
     if (!workspaceId || !user.email) continue;
 
-    const mail = firstWebsiteNudgeEmail({
-      name: displayPersonName(user.name, user.email),
-      addWebsiteUrl: `${appBase}/dashboard/websites/new`,
-      docsUrl: `${appBase}/docs`,
-    });
+    const mail = renderAutomation(
+      {
+        key: "first_website",
+        data: {
+          name: displayPersonName(user.name, user.email),
+          addWebsiteUrl: `${appBase}/dashboard/websites/new`,
+          docsUrl: `${appBase}/docs`,
+        },
+      },
+      a.settings,
+    );
     const result = await sendEmail({ to: [user.email], subject: mail.subject, html: mail.html, text: mail.text });
-    await prisma.notification.create({
+    const row = await prisma.notification.create({
+      select: { id: true },
       data: {
         workspaceId,
         channelType: "EMAIL",
@@ -219,6 +238,7 @@ async function sendFirstWebsiteNudges(budget: number): Promise<number> {
         errorMessage: result.error ?? null,
       },
     });
+    await recordAutomationSend(prisma, { notificationId: row.id, automationKey: "first_website" }, a.ready);
     if (!result.ok) {
       logger.warn("first-website reminder failed, stopping this run", { userId: user.id, error: result.error });
       break;
@@ -231,20 +251,22 @@ async function sendFirstWebsiteNudges(budget: number): Promise<number> {
 
 export async function runActivationSweep(): Promise<void> {
   const limits = emailLimitsFromEnv(process.env);
+  // Admin > Automations: on/off, wording and timing for everything below.
+  const automations = await loadAutomations();
 
-  const before = await currentUsage();
-  const baselineReady = await sendBaselineReady(emailAllowance("ACTIVATION", limits, before));
+  const before = await currentUsage(automations);
+  const baselineReady = await sendBaselineReady(emailAllowance("ACTIVATION", limits, before), automations);
 
   // Re-read: the baseline emails just spent some of the same budget.
-  const after = await currentUsage();
-  const reminders = await sendFirstWebsiteNudges(emailAllowance("REMINDER", limits, after));
+  const after = await currentUsage(automations);
+  const reminders = await sendFirstWebsiteNudges(emailAllowance("REMINDER", limits, after), automations);
 
   // Day 3 / 6 / 10 series, from what reminders left of the REMINDER share.
   // A failure here (for instance the email_opt_out migration not applied
   // yet) must not undo the emails above, so it is contained and logged.
   let lifecycle = 0;
   try {
-    lifecycle = await sendLifecycleEmails(emailAllowance("REMINDER", limits, await currentUsage()));
+    lifecycle = await sendLifecycleEmails(emailAllowance("REMINDER", limits, await currentUsage(automations)), automations);
   } catch (err) {
     logger.error("lifecycle emails skipped this run", { error: err instanceof Error ? err.message : String(err) });
   }

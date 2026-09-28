@@ -16,15 +16,13 @@
  * de-duplication and delivery.
  */
 
-import { prisma } from "@mykavo/database";
-import { sendEmail, welcomeEmail } from "@mykavo/email";
+import { prisma, recordAutomationSend } from "@mykavo/database";
+import { renderAutomation, sendEmail } from "@mykavo/email";
 import { displayPersonName } from "@mykavo/shared";
+import { loadAutomations, sentBy } from "./automation-settings";
 import { logger } from "./logger";
 
 const appBase = (process.env.APP_URL ?? "https://mykavo.app").replace(/\/+$/, "");
-
-/** Recorded on the Notification row, and the key this job de-duplicates on. */
-export const WELCOME_SUBJECT = "Welcome to MyKavo - start monitoring your website";
 
 export async function runWelcomeEmailJob(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -53,6 +51,13 @@ export async function runWelcomeEmailJob(userId: string): Promise<void> {
     return;
   }
 
+  // Switched off in Admin > Automations: nothing to send, and not an error.
+  const automations = await loadAutomations();
+  if (!automations.settings.welcome.enabled) {
+    logger.info("welcome email is switched off in Automations", { userId });
+    return;
+  }
+
   // De-duplicate. pg-boss retries a job whose process died after the send but
   // before the ack, and a second "welcome" is a small but avoidable
   // embarrassment. The ledger is the Notification table rather than a new
@@ -64,8 +69,8 @@ export async function runWelcomeEmailJob(userId: string): Promise<void> {
     where: {
       workspaceId,
       channelType: "EMAIL",
-      subject: WELCOME_SUBJECT,
       status: "SENT",
+      ...sentBy("welcome", automations),
     },
     select: { id: true },
   });
@@ -74,15 +79,21 @@ export async function runWelcomeEmailJob(userId: string): Promise<void> {
     return;
   }
 
-  const mail = welcomeEmail({
-    // Whatever is stored may be junk - rows predating the signup name check
-    // can hold anything - so the same fallback the admin list uses decides
-    // what this email calls them.
-    name: displayPersonName(user.name, user.email),
-    addWebsiteUrl: `${appBase}/dashboard/websites/new`,
-    alertsUrl: `${appBase}/dashboard/notifications`,
-    docsUrl: `${appBase}/docs`,
-  });
+  const mail = renderAutomation(
+    {
+      key: "welcome",
+      data: {
+        // Whatever is stored may be junk - rows predating the signup name
+        // check can hold anything - so the same fallback the admin list uses
+        // decides what this email calls them.
+        name: displayPersonName(user.name, user.email),
+        addWebsiteUrl: `${appBase}/dashboard/websites/new`,
+        alertsUrl: `${appBase}/dashboard/notifications`,
+        docsUrl: `${appBase}/docs`,
+      },
+    },
+    automations.settings,
+  );
 
   const result = await sendEmail({
     to: [user.email],
@@ -91,7 +102,8 @@ export async function runWelcomeEmailJob(userId: string): Promise<void> {
     text: mail.text,
   });
 
-  await prisma.notification.create({
+  const row = await prisma.notification.create({
+    select: { id: true },
     data: {
       workspaceId,
       channelType: "EMAIL",
@@ -102,6 +114,8 @@ export async function runWelcomeEmailJob(userId: string): Promise<void> {
       errorMessage: result.error ?? null,
     },
   });
+
+  await recordAutomationSend(prisma, { notificationId: row.id, automationKey: "welcome" }, automations.ready);
 
   if (!result.ok) {
     // Thrown, not swallowed: pg-boss retries this queue, and a transient

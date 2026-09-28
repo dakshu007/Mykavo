@@ -4,6 +4,8 @@
  * styles anyway. All interpolated values are HTML-escaped.
  */
 
+import { DEFAULT_COPY, fillPlaceholders, firstNameOf, pick, type EmailCopy } from "./copy";
+
 export type Severity = "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export interface ChangeLine {
@@ -88,6 +90,16 @@ function shellBranded(inner: string, brandName: string | null): string {
       Sent via MyKavo website monitoring
     </div>
   </div></body></html>`;
+}
+
+/** Editable intro text as paragraphs: blank line = new paragraph, newline = line break. */
+function paragraphs(text: string, style: string): string {
+  return text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p style="${style}">${esc(p).replace(/\n/g, "<br/>")}</p>`)
+    .join("");
 }
 
 function button(url: string, text: string): string {
@@ -778,15 +790,23 @@ export interface WelcomeEmailData {
  * should know to expect them - and where the switch is if they would rather
  * route them to a teammate, Slack, or nowhere.
  */
-export function welcomeEmail(data: WelcomeEmailData): {
+export function welcomeEmail(
+  data: WelcomeEmailData,
+  copy: EmailCopy = {},
+): {
   subject: string;
   html: string;
   text: string;
 } {
-  const subject = "Welcome to MyKavo - start monitoring your website";
-  const first = data.name.trim().split(/\s+/)[0] ?? "";
-  const greeting = first ? `Welcome, ${esc(first)}` : "Welcome to MyKavo";
-  const greetingText = first ? `Welcome, ${first}` : "Welcome to MyKavo";
+  const d = DEFAULT_COPY.welcome;
+  const first = firstNameOf(data.name);
+  const vars = { firstName: first };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const headingRaw = pick(copy.heading, d.heading);
+  // The default greeting has a nameless form of its own; "Welcome" alone reads cut off.
+  const heading = !first && headingRaw === d.heading ? "Welcome to MyKavo" : fillPlaceholders(headingRaw, vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
 
   const steps: [string, string][] = [
     ["Add a website", "MyKavo finds your pages from robots.txt and your sitemap."],
@@ -814,10 +834,10 @@ export function welcomeEmail(data: WelcomeEmailData): {
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Welcome aboard</p>
-    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${greeting}</h1>
-    <p style="margin:0 0 22px;font-size:14px;color:#5c6270">Your account is ready. MyKavo watches the websites you care about and tells you when something important changes or breaks - so you hear it from us rather than from a client.</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 22px;font-size:14px;color:#5c6270")}
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 24px">${stepsHtml}</table>
-    ${button(data.addWebsiteUrl, "Add your first website")}
+    ${button(data.addWebsiteUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Adding a website starts its baseline scan straight away - you will see the first results in a couple of minutes. <a href="${esc(data.docsUrl)}" style="color:#3556f4;text-decoration:none">How MyKavo works</a></p>
     <div style="margin:22px 0 0;background:#f4f6fb;border-radius:12px;padding:14px 16px">
       <p style="margin:0 0 4px;font-size:14px;font-weight:600">Alerts come to this address</p>
@@ -827,11 +847,9 @@ export function welcomeEmail(data: WelcomeEmailData): {
   `;
 
   const text =
-    `${greetingText}\n\n` +
-    `Your account is ready. MyKavo watches the websites you care about and tells you when ` +
-    `something important changes or breaks.\n\n` +
+    `${heading}\n\n${intro}\n\n` +
     steps.map(([title, body], i) => `${i + 1}. ${title} - ${body}`).join("\n") +
-    `\n\nAdd your first website: ${data.addWebsiteUrl}\n\n` +
+    `\n\n${cta}: ${data.addWebsiteUrl}\n\n` +
     `Adding a website starts its baseline scan straight away - you will see the first ` +
     `results in a couple of minutes.\n` +
     `How MyKavo works: ${data.docsUrl}\n\n` +
@@ -867,15 +885,20 @@ export const FIRST_WEBSITE_NUDGE_SUBJECT = "Your MyKavo account is ready - add y
  * earns a spam-folder reputation that then swallows the real alerts. The
  * only follow-up is the Day 3 setup email, which carries an unsubscribe.
  */
-export function firstWebsiteNudgeEmail(data: FirstWebsiteNudgeData): {
+export function firstWebsiteNudgeEmail(
+  data: FirstWebsiteNudgeData,
+  copy: EmailCopy = {},
+): {
   subject: string;
   html: string;
   text: string;
 } {
-  const subject = FIRST_WEBSITE_NUDGE_SUBJECT;
-  const first = data.name.trim().split(/\s+/)[0] ?? "";
-  const hi = first ? `Hi ${esc(first)},` : "Hi,";
-  const hiText = first ? `Hi ${first},` : "Hi,";
+  const d = DEFAULT_COPY.first_website;
+  const vars = { firstName: firstNameOf(data.name) };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
 
   const catches = [
     "A page that starts returning 404 or 500",
@@ -886,23 +909,20 @@ export function firstWebsiteNudgeEmail(data: FirstWebsiteNudgeData): {
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">One step left</p>
-    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Add your first website</h1>
-    <p style="margin:0 0 14px;font-size:14px;color:#5c6270">${hi} your MyKavo account is set up, but it is not watching anything yet. Adding a website takes about a minute: paste the URL, pick the pages that matter, and MyKavo records a baseline. After that you hear from us only when something important changes, like:</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
     <ul style="margin:0 0 22px;padding-left:18px;font-size:14px;color:#16181d">
       ${catches.map((c) => `<li style="margin:0 0 6px">${esc(c)}</li>`).join("")}
     </ul>
-    ${button(data.addWebsiteUrl, "Add your first website")}
+    ${button(data.addWebsiteUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">New to it? <a href="${esc(data.docsUrl)}" style="color:#3556f4;text-decoration:none">How MyKavo works</a> takes two minutes to read.</p>
     <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">If something got in the way, just reply - a real person reads it.</p>
   `;
 
   const text =
-    `${hiText} your MyKavo account is set up, but it is not watching anything yet.\n\n` +
-    `Adding a website takes about a minute: paste the URL, pick the pages that matter, ` +
-    `and MyKavo records a baseline. After that you hear from us only when something ` +
-    `important changes, like:\n\n` +
+    `${intro}\n\n` +
     catches.map((c) => `- ${c}`).join("\n") +
-    `\n\nAdd your first website: ${data.addWebsiteUrl}\n` +
+    `\n\n${cta}: ${data.addWebsiteUrl}\n` +
     `How MyKavo works: ${data.docsUrl}\n\n` +
     `If something got in the way, just reply - a real person reads it.`;
 
@@ -936,13 +956,21 @@ export const BASELINE_READY_SUBJECT_PREFIX = "Baseline ready for";
  * closes that loop: what was captured, when MyKavo looks again, and where
  * the alert will land if something changes.
  */
-export function baselineReadyEmail(data: BaselineReadyData): {
+export function baselineReadyEmail(
+  data: BaselineReadyData,
+  copy: EmailCopy = {},
+): {
   subject: string;
   html: string;
   text: string;
 } {
-  const subject = `${BASELINE_READY_SUBJECT_PREFIX} ${data.websiteHost} - MyKavo is now watching`;
   const pagesWord = `${data.pagesScanned} page${data.pagesScanned === 1 ? "" : "s"}`;
+  const d = DEFAULT_COPY.baseline_ready;
+  const vars = { website: data.websiteHost, websiteName: data.websiteName, pages: pagesWord };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
   const recipients = data.alertRecipients.join(", ");
 
   const rows: [string, string][] = [
@@ -953,8 +981,8 @@ export function baselineReadyEmail(data: BaselineReadyData): {
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#1f9d55">Monitoring is on</p>
-    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)} has a baseline</h1>
-    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">MyKavo recorded the known-good state of ${esc(pagesWord)} on ${esc(data.websiteHost)}. Every scan from now on is compared against it, and you hear from us when something important changes.</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 20px;font-size:14px;color:#5c6270")}
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 24px;border-collapse:collapse">
       ${rows
         .map(
@@ -965,17 +993,14 @@ export function baselineReadyEmail(data: BaselineReadyData): {
         )
         .join("")}
     </table>
-    ${button(data.websiteUrl, "See the baseline")}
+    ${button(data.websiteUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Want alerts in Slack too, or somewhere else? <a href="${esc(data.alertsUrl)}" style="color:#3556f4;text-decoration:none">Change where alerts go</a>.</p>
   `;
 
   const text =
-    `${data.websiteName} has a baseline - monitoring is on.\n\n` +
-    `MyKavo recorded the known-good state of ${pagesWord} on ${data.websiteHost}. ` +
-    `Every scan from now on is compared against it, and you hear from us when something ` +
-    `important changes.\n\n` +
+    `${heading} - monitoring is on.\n\n${intro}\n\n` +
     rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
-    `\n\nSee the baseline: ${data.websiteUrl}\n` +
+    `\n\n${cta}: ${data.websiteUrl}\n` +
     `Change where alerts go: ${data.alertsUrl}`;
 
   return { subject, html: shell(inner), text };
@@ -1099,11 +1124,6 @@ function lifecycleTextFooter(unsubscribeUrl: string): string {
   return `\n\n--\nYou are getting this because you created a MyKavo account. Website alerts are separate and are not affected.\nUnsubscribe from these emails: ${unsubscribeUrl}`;
 }
 
-function greeting(name: string): { html: string; text: string } {
-  const first = name.trim().split(/\s+/)[0] ?? "";
-  return first ? { html: `Hi ${esc(first)},`, text: `Hi ${first},` } : { html: "Hi,", text: "Hi," };
-}
-
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export interface Day3StatsData {
@@ -1122,9 +1142,12 @@ export interface Day3StatsData {
 }
 
 /** Day 3 with a website: their real numbers, and a reason to open the dashboard. */
-export function day3StatsEmail(d: Day3StatsData): { subject: string; html: string; text: string } {
-  const subject = `${DAY3_STATS_SUBJECT_PREFIX}: ${plural(d.scansCompleted, "scan")}, ${plural(d.changesFound, "change")} found`;
-  const hi = greeting(d.name);
+export function day3StatsEmail(d: Day3StatsData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const def = DEFAULT_COPY.day3_stats;
+  const vars = { firstName: firstNameOf(d.name), scans: plural(d.scansCompleted, "scan"), changes: plural(d.changesFound, "change") };
+  const subject = fillPlaceholders(pick(copy.subject, def.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, def.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, def.intro), vars);
   const rows: [string, string][] = [
     ["Websites watched", String(d.websitesCount)],
     ["Pages monitored", String(d.pagesMonitored)],
@@ -1135,12 +1158,13 @@ export function day3StatsEmail(d: Day3StatsData): { subject: string; html: strin
   const lead = hasOpen
     ? `${plural(d.openChanges, "change")} ${d.openChanges === 1 ? "is" : "are"} waiting for your review${d.urgentChanges > 0 ? `, ${d.urgentChanges} of them rated High or Critical` : ""}. Each one shows the before and after, so it takes seconds to tell an intended edit from a regression.`
     : "Nothing important has changed so far. That is what a healthy site looks like in MyKavo: quiet until something needs you.";
-  const cta = hasOpen ? button(d.changesUrl, "Review changes") : button(d.dashboardUrl, "Open your dashboard");
+  const ctaUrl = hasOpen ? d.changesUrl : d.dashboardUrl;
+  const cta = fillPlaceholders(pick(copy.buttonLabel, hasOpen ? "Review changes" : "Open your dashboard"), vars);
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Your first days</p>
-    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Here is what MyKavo saw</h1>
-    <p style="margin:0 0 18px;font-size:14px;color:#5c6270">${hi.html} MyKavo has been watching since you set it up.</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 18px;font-size:14px;color:#5c6270")}
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;border-collapse:collapse">
       ${rows
         .map(
@@ -1152,12 +1176,12 @@ export function day3StatsEmail(d: Day3StatsData): { subject: string; html: strin
         .join("")}
     </table>
     <p style="margin:0 0 22px;font-size:14px;color:#16181d">${esc(lead)}</p>
-    ${cta}
+    ${button(ctaUrl, cta)}
   `;
   const text =
-    `${hi.text} MyKavo has been watching since you set it up.\n\n` +
+    `${intro}\n\n` +
     rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
-    `\n\n${lead}\n\n${hasOpen ? `Review changes: ${d.changesUrl}` : `Open your dashboard: ${d.dashboardUrl}`}` +
+    `\n\n${lead}\n\n${cta}: ${ctaUrl}` +
     lifecycleTextFooter(d.unsubscribeUrl);
   return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
 }
@@ -1170,8 +1194,13 @@ export interface Day3SetupData {
 }
 
 /** Day 3 without a website: the three steps, and the video walkthroughs. */
-export function day3SetupEmail(d: Day3SetupData): { subject: string; html: string; text: string } {
-  const hi = greeting(d.name);
+export function day3SetupEmail(d: Day3SetupData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const def = DEFAULT_COPY.day3_setup;
+  const vars = { firstName: firstNameOf(d.name) };
+  const subject = fillPlaceholders(pick(copy.subject, def.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, def.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, def.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, def.buttonLabel ?? ""), vars);
   const steps = [
     "Paste your website's address.",
     "Pick the pages that matter: home, pricing, checkout, signup.",
@@ -1179,21 +1208,21 @@ export function day3SetupEmail(d: Day3SetupData): { subject: string; html: strin
   ];
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Two minutes</p>
-    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Your first baseline takes 2 minutes</h1>
-    <p style="margin:0 0 14px;font-size:14px;color:#5c6270">${hi.html} your account is ready, but MyKavo has nothing to watch yet. Here is all it takes:</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
     <ol style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">
-      ${steps.map((s) => `<li style="margin:0 0 6px">${esc(s)}</li>`).join("")}
+      ${steps.map((st) => `<li style="margin:0 0 6px">${esc(st)}</li>`).join("")}
     </ol>
-    ${button(d.addWebsiteUrl, "Add your website")}
+    ${button(d.addWebsiteUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Prefer to watch first? <a href="${esc(d.tutorialsUrl)}" style="color:#3556f4;text-decoration:none">Short video walkthroughs</a> show every step.</p>
     <p style="margin:12px 0 0;font-size:13px;color:#5c6270">Stuck on something? Just reply - a real person reads it.</p>
   `;
   const text =
-    `${hi.text} your account is ready, but MyKavo has nothing to watch yet. Here is all it takes:\n\n` +
-    steps.map((s, i) => `${i + 1}. ${s}`).join("\n") +
-    `\n\nAdd your website: ${d.addWebsiteUrl}\nVideo walkthroughs: ${d.tutorialsUrl}\n\nStuck on something? Just reply - a real person reads it.` +
+    `${intro}\n\n` +
+    steps.map((st, i) => `${i + 1}. ${st}`).join("\n") +
+    `\n\n${cta}: ${d.addWebsiteUrl}\nVideo walkthroughs: ${d.tutorialsUrl}\n\nStuck on something? Just reply - a real person reads it.` +
     lifecycleTextFooter(d.unsubscribeUrl);
-  return { subject: DAY3_SETUP_SUBJECT, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+  return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
 }
 
 export interface Day6AndroidData {
@@ -1206,8 +1235,13 @@ export interface Day6AndroidData {
 }
 
 /** Day 6: alerts on the phone - the Android app and email alerts. */
-export function day6AndroidEmail(d: Day6AndroidData): { subject: string; html: string; text: string } {
-  const hi = greeting(d.name);
+export function day6AndroidEmail(d: Day6AndroidData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const def = DEFAULT_COPY.day6_android;
+  const vars = { firstName: firstNameOf(d.name) };
+  const subject = fillPlaceholders(pick(copy.subject, def.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, def.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, def.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, def.buttonLabel ?? ""), vars);
   const points = [
     "Push alerts the moment a High or Critical change is found",
     "Review changes and their before-and-after screenshots on your phone",
@@ -1215,34 +1249,50 @@ export function day6AndroidEmail(d: Day6AndroidData): { subject: string; html: s
   ];
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">MyKavo for Android</p>
-    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Your alerts, on your phone</h1>
-    <p style="margin:0 0 14px;font-size:14px;color:#5c6270">${hi.html} a broken checkout at 2 AM should not wait until you open your laptop. The MyKavo Android app brings your monitoring with you:</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
     <ul style="margin:0 0 22px;padding-left:18px;font-size:14px;color:#16181d">
-      ${points.map((p) => `<li style="margin:0 0 6px">${esc(p)}</li>`).join("")}
+      ${points.map((pt) => `<li style="margin:0 0 6px">${esc(pt)}</li>`).join("")}
     </ul>
-    ${button(d.androidUrl, "Request the Android app")}
+    ${button(d.androidUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">It is free on every plan. While it is in Google Play review, access is approved in batches. Until then, email alerts already reach you at <strong>${esc(d.alertEmail)}</strong> - <a href="${esc(d.notificationsUrl)}" style="color:#3556f4;text-decoration:none">change where alerts go</a>.</p>
   `;
   const text =
-    `${hi.text} a broken checkout at 2 AM should not wait until you open your laptop. The MyKavo Android app brings your monitoring with you:\n\n` +
-    points.map((p) => `- ${p}`).join("\n") +
-    `\n\nRequest the Android app: ${d.androidUrl}\n\nIt is free on every plan. While it is in Google Play review, access is approved in batches. Until then, email alerts already reach you at ${d.alertEmail}. Change where alerts go: ${d.notificationsUrl}` +
+    `${intro}\n\n` +
+    points.map((pt) => `- ${pt}`).join("\n") +
+    `\n\n${cta}: ${d.androidUrl}\n\nIt is free on every plan. While it is in Google Play review, access is approved in batches. Until then, email alerts already reach you at ${d.alertEmail}. Change where alerts go: ${d.notificationsUrl}` +
     lifecycleTextFooter(d.unsubscribeUrl);
-  return { subject: DAY6_ANDROID_SUBJECT, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+  return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
 }
 
 export interface Day10OfferData {
   name: string;
   code: string;
+  /** Discount in percent, e.g. 15. */
+  percent: number;
   price: number;
   regularPrice: number;
+  /** Days since signup when it is sent. */
+  days: number;
   upgradeUrl: string;
   unsubscribeUrl: string;
 }
 
-/** Day 10: Pro at 15% off with a real code. No fake countdown. */
-export function day10OfferEmail(d: Day10OfferData): { subject: string; html: string; text: string } {
-  const hi = greeting(d.name);
+/** Day 10: Pro at a discount with a real code. No fake countdown. */
+export function day10OfferEmail(d: Day10OfferData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const def = DEFAULT_COPY.day10_offer;
+  const vars = {
+    firstName: firstNameOf(d.name),
+    percent: String(d.percent),
+    price: String(d.price),
+    regularPrice: String(d.regularPrice),
+    code: d.code,
+    days: String(d.days),
+  };
+  const subject = fillPlaceholders(pick(copy.subject, def.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, def.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, def.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, def.buttonLabel ?? ""), vars);
   const compare: [string, string, string][] = [
     ["Websites", "1", "8"],
     ["Pages per website", "5", "15"],
@@ -1253,8 +1303,8 @@ export function day10OfferEmail(d: Day10OfferData): { subject: string; html: str
   ];
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">An offer for you</p>
-    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">MyKavo Pro for $${d.price} a month</h1>
-    <p style="margin:0 0 18px;font-size:14px;color:#5c6270">${hi.html} you have been on MyKavo for ten days. If one website checked once a week is not enough, Pro watches up to 8 websites every day - and for you it is 15% off: <strong>$${d.price} a month instead of $${d.regularPrice}</strong>.</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 18px;font-size:14px;color:#5c6270")}
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;border-collapse:collapse;font-size:13px">
       <tr><td style="padding:8px 0;color:#9aa1b1"></td><td style="padding:8px 0;color:#9aa1b1;text-align:right">Free</td><td style="padding:8px 0;color:#3556f4;font-weight:600;text-align:right">Pro</td></tr>
       ${compare
@@ -1268,13 +1318,13 @@ export function day10OfferEmail(d: Day10OfferData): { subject: string; html: str
         .join("")}
     </table>
     <p style="margin:0 0 22px;font-size:14px;color:#16181d">Your code: <span style="display:inline-block;padding:4px 10px;border:1px dashed #3556f4;border-radius:8px;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:0.08em">${esc(d.code)}</span> - enter it at checkout.</p>
-    ${button(d.upgradeUrl, `Upgrade to Pro for $${d.price}`)}
+    ${button(d.upgradeUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Happy on Free? That is fine - it stays free, and your monitoring keeps running. Questions about plans? Just reply.</p>
   `;
   const text =
-    `${hi.text} you have been on MyKavo for ten days. If one website checked once a week is not enough, Pro watches up to 8 websites every day - and for you it is 15% off: $${d.price} a month instead of $${d.regularPrice}.\n\n` +
+    `${intro}\n\n` +
     compare.map(([k, a, b]) => `${k}: Free ${a} / Pro ${b}`).join("\n") +
-    `\n\nYour code: ${d.code} - enter it at checkout.\nUpgrade to Pro: ${d.upgradeUrl}\n\nHappy on Free? That is fine - it stays free, and your monitoring keeps running.` +
+    `\n\nYour code: ${d.code} - enter it at checkout.\n${cta}: ${d.upgradeUrl}\n\nHappy on Free? That is fine - it stays free, and your monitoring keeps running.` +
     lifecycleTextFooter(d.unsubscribeUrl);
-  return { subject: DAY10_OFFER_SUBJECT, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+  return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
 }

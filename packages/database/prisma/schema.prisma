@@ -799,6 +799,8 @@ model Notification {
   errorCode    String?
   errorMessage String?
   createdAt    DateTime                @default(now())
+  /// Set when an automated email (Admin > Automations) produced this row.
+  automationSend EmailAutomationSend?
 
   @@index([workspaceId, createdAt(sort: Desc)])
   @@map("notification")
@@ -1297,3 +1299,40 @@ model ShopifyThemeEvent {
   @@index([shopId, createdAt])
   @@map("shopify_theme_event")
 }
+
+/// Admin > Automations: what an operator changed about one automated email.
+/// No row means "as shipped" - every field falls back to the code default.
+model EmailAutomation {
+  /// One of AUTOMATION_KEYS in @mykavo/email.
+  key            String   @id
+  enabled        Boolean  @default(true)
+  subject        String?
+  heading        String?
+  intro          String?
+  buttonLabel    String?
+  /// Lifecycle steps only: days after signup.
+  sendOnDay      Int?
+  /// Day 10 offer only.
+  offerCode      String?
+  offerPercent   Int?
+  updatedByEmail String?
+  updatedAt      DateTime @updatedAt
+
+  @@map("email_automation")
+}
+
+/// Which automation sent a Notification. Subjects are editable, so this -
+/// not the subject - is what de-duplication, stats and unsubscribe rely on.
+model EmailAutomationSend {
+  id             String       @id @default(cuid())
+  automationKey  String
+  notificationId String       @unique
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  /// Test sends from the admin: shown apart, never de-duplicate anything.
+  isTest         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([automationKey, createdAt(sort: Desc)])
+  @@map("email_automation_send")
+}
+

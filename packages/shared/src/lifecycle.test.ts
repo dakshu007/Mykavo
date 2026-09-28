@@ -65,4 +65,19 @@ describe("lifecycle series", () => {
   it("sends a missed day 3 before moving on, while its window is still open", () => {
     expect(decideLifecycleStep(base({ signedUpAt: daysAgo(6.5) }))).toBe("DAY3_STATS");
   });
+
+  it("follows send days chosen in the admin, keeping a 4-day window", () => {
+    const sendDays = { day3: 2, day6: 5, day10: 8 };
+    expect(decideLifecycleStep(base({ signedUpAt: daysAgo(2.1), sendDays }))).toBe("DAY3_STATS");
+    expect(decideLifecycleStep(base({ signedUpAt: daysAgo(8.2), sentDay3: true, sentDay6: true, sendDays }))).toBe("DAY10_OFFER");
+    expect(decideLifecycleStep(base({ signedUpAt: daysAgo(12.1), sentDay3: true, sentDay6: true, sendDays }))).toBeNull();
+  });
+
+  it("skips a step switched off in the admin without marking it sent", () => {
+    expect(decideLifecycleStep(base({ enabled: { DAY3_STATS: false } }))).toBeNull();
+    expect(decideLifecycleStep(base({ hasWebsite: false, enabled: { DAY3_STATS: false } }))).toBe("DAY3_SETUP");
+    const day6 = base({ signedUpAt: daysAgo(6.5), sentDay3: true, enabled: { DAY6_ANDROID: false } });
+    expect(decideLifecycleStep(day6)).toBeNull();
+    expect(decideLifecycleStep({ ...day6, enabled: {} })).toBe("DAY6_ANDROID");
+  });
 });

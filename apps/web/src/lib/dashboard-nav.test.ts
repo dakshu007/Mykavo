@@ -78,7 +78,7 @@ describe("dashboardNav - operator entries", () => {
     const admin = dashboardNav({ ...live, isPlatformAdmin: true }).find(
       (g) => g.id === "admin",
     );
-    expect(admin?.items.map((i) => i.id)).toEqual(["users", "app-requests", "usage"]);
+    expect(admin?.items.map((i) => i.id)).toEqual(["users", "app-requests", "automations", "usage"]);
   });
 
   it("keeps the two privileges independent", () => {
@@ -88,6 +88,7 @@ describe("dashboardNav - operator entries", () => {
       "blog",
       "users",
       "app-requests",
+      "automations",
       "usage",
     ]);
   });
@@ -141,6 +142,7 @@ describe("dashboardNav - the Android app download", () => {
   it("never shows the approval queue to a non-admin", () => {
     const ids = flattenNav(dashboardNav({ ...live, appApproved: true })).map((i) => i.id);
     expect(ids).not.toContain("app-requests");
+    expect(ids).not.toContain("automations");
   });
 });
 
