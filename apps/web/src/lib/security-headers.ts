@@ -18,6 +18,8 @@ const GTM = "https://www.googletagmanager.com";
 const GA = "https://*.google-analytics.com";
 const GA_ANALYTICS = "https://*.analytics.google.com";
 const DODO_CHECKOUT = "https://checkout.dodopayments.com";
+/** /video-tutorials plays videos in YouTube's privacy-enhanced player. */
+const YOUTUBE_EMBED = "https://www.youtube-nocookie.com";
 
 /**
  * The CSP is shipped REPORT-ONLY first. A policy that is wrong by one
@@ -44,7 +46,7 @@ const CSP_DIRECTIVES = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   `connect-src 'self' ${GA} ${GA_ANALYTICS} ${GTM}`,
-  `frame-src 'self' ${DODO_CHECKOUT}`,
+  `frame-src 'self' ${DODO_CHECKOUT} ${YOUTUBE_EMBED}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   // No <object>/<embed>/<applet> anywhere in this app.

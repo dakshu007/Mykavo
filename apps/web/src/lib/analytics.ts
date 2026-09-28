@@ -41,7 +41,9 @@ export type AnalyticsEvent =
   // Shopify app page
   | "shopify_app_viewed"
   // Android app page
-  | "android_app_viewed";
+  | "android_app_viewed"
+  // Video tutorials page
+  | "tutorial_played";
 
 type EventProps = Record<string, string | number | boolean>;
 

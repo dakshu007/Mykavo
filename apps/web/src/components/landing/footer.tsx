@@ -81,6 +81,7 @@ const columns = [
     links: [
       { href: "/docs", label: "Documentation" },
       { href: "/docs/getting-started/quick-start", label: "Quick start" },
+      { href: "/video-tutorials", label: "Video tutorials" },
       { href: "/guides/how-to-monitor-website-changes", label: "Monitor website changes" },
       { href: "/guides/website-monitoring-checklist", label: "Monitoring checklist" },
       { href: "/guides/website-maintenance-checklist", label: "Maintenance checklist" },
