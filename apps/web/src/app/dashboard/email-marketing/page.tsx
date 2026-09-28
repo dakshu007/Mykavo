@@ -214,8 +214,8 @@ export default async function EmailMarketingPage() {
           action={<SyncNowButton disabled={!o.configured} />}
         />
         <p className="-mt-2 mb-4 text-[13px] text-ink-secondary">
-          MyKavo keeps four Brevo lists up to date in a &quot;MyKavo&quot; folder - every hour for new signups and unsubscribes, and
-          fully once a day. Your other Brevo lists are never touched.
+          MyKavo keeps four Brevo lists up to date in a &quot;MyKavo&quot; folder - Sync now at any time, and the worker every hour for
+          new signups and unsubscribes and fully once a day. Your other Brevo lists are never touched.
         </p>
         {o.errors.audiences && <p className="mb-3 text-[13px] text-critical-strong">Brevo: {o.errors.audiences}</p>}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

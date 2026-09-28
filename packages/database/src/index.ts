@@ -99,3 +99,11 @@ export {
   recordAutomationSend,
   type LegacySubject,
 } from "./automations";
+export {
+  finishBrevoSyncLog,
+  loadMarketingContacts,
+  marketingName,
+  saveMarketingOptOuts,
+  startBrevoSyncLog,
+  type MarketingContact,
+} from "./marketing-contacts";

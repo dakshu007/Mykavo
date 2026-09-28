@@ -130,3 +130,4 @@ export {
   type PushResult,
   type SyncContact,
 } from "./brevo-sync";
+export { INCREMENTAL_WINDOW_MS, runBrevoSyncWith, type BrevoSyncResult, type BrevoSyncStore } from "./brevo-run";

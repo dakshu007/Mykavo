@@ -4,26 +4,36 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw } from "lucide-react";
 
-/** Queue a full Brevo contact sync; the worker runs it within a minute or so. */
+/** Run a full Brevo contact sync now and say what it did. */
 export function SyncNowButton({ disabled }: { disabled?: boolean }) {
   const router = useRouter();
-  const [state, setState] = useState<"idle" | "busy" | "queued" | "error">("idle");
+  const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [error, setError] = useState("");
+  const [summary, setSummary] = useState("");
 
   async function sync() {
     setState("busy");
     setError("");
     try {
       const res = await fetch("/api/admin/email-marketing/sync", { method: "POST" });
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        contacts?: number;
+        blocklisted?: number;
+        pulledUnsubscribes?: number;
+      };
       if (!res.ok) {
-        setError(body.error ?? "Could not start the sync.");
+        setError(body.error ?? "The sync failed.");
         setState("error");
         return;
       }
-      setState("queued");
-      // The worker picks it up shortly; refresh to show the new log line.
-      setTimeout(() => router.refresh(), 8000);
+      setSummary(
+        `Synced ${body.contacts ?? 0} contacts` +
+          (body.blocklisted ? `, ${body.blocklisted} unsubscribed kept blocked` : "") +
+          (body.pulledUnsubscribes ? `, ${body.pulledUnsubscribes} new unsubscribes from Brevo` : ""),
+      );
+      setState("done");
+      router.refresh();
     } catch {
       setError("Network error - try again.");
       setState("error");
@@ -32,7 +42,8 @@ export function SyncNowButton({ disabled }: { disabled?: boolean }) {
 
   return (
     <div className="flex items-center gap-2">
-      {state === "queued" && <span className="text-[12px] text-success-strong">Queued - the worker runs it in a moment</span>}
+      {state === "busy" && <span className="text-[12px] text-ink-secondary">Syncing with Brevo…</span>}
+      {state === "done" && <span className="text-[12px] text-success-strong">{summary}</span>}
       {state === "error" && <span className="max-w-64 text-[12px] text-critical-strong">{error}</span>}
       <button
         onClick={() => void sync()}

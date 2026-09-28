@@ -62,8 +62,6 @@ export const ADMIN_SIGNUP_QUEUE = "admin-signup";
  * fail it.
  */
 export const WELCOME_EMAIL_QUEUE = "welcome-email";
-/** Sync MyKavo accounts to Brevo's contact lists (Admin > Email marketing). */
-export const BREVO_SYNC_QUEUE = "brevo-sync";
 
 export interface ScanWebsiteJob {
   scanId: string;
@@ -105,10 +103,4 @@ export interface AdminSignupJob {
  */
 export interface WelcomeEmailJob {
   userId: string;
-}
-
-export interface BrevoSyncJob {
-  kind: "full" | "incremental";
-  /** The admin who pressed "Sync now", for the sync log. */
-  requestedByEmail?: string;
 }
