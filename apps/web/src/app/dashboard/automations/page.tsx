@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Workflow } from "lucide-react";
 import { requireSession } from "@/lib/session";
@@ -32,9 +33,20 @@ export default async function AutomationsPage() {
           icon={Workflow}
           title="Automations"
           action={
-            <span className="rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-accent">
-              Admin only
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="hidden rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-accent sm:inline">
+                Admin only
+              </span>
+              <Link
+                href="/dashboard/automations/flows"
+                className="inline-flex h-9 items-center gap-2 rounded-full bg-[#0f1115] px-4 text-[13px] font-semibold text-white shadow-card transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <span className="inline-flex size-5 items-center justify-center rounded-md bg-primary text-primary-contrast">
+                  <Workflow className="size-3" aria-hidden />
+                </span>
+                Check flow
+              </Link>
+            </div>
           }
         />
         <p className="text-[13px] text-ink-secondary">

@@ -65,6 +65,11 @@ describe("lifecycle email opt-out", () => {
     expect(await optOutByNotificationId(ID, "one_click")).toBe("invalid");
   });
 
+  it("honours custom emails from Automation Tool flows", async () => {
+    findUnique.mockResolvedValue({ recipient: "a@b.com", subject: "Anything", automationSend: { automationKey: "flow:cm1flow:s1" } });
+    expect(await optOutByNotificationId(ID, "one_click")).toBe("ok");
+  });
+
   it("falls back to subjects before the send-log table exists", async () => {
     findUnique
       .mockRejectedValueOnce(new Error("P2021 table does not exist"))

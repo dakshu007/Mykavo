@@ -1328,3 +1328,39 @@ export function day10OfferEmail(d: Day10OfferData, copy: EmailCopy = {}): { subj
     lifecycleTextFooter(d.unsubscribeUrl);
   return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
 }
+
+// ---------- Custom emails from the Automation Tool ----------
+
+export interface FlowCustomEmailData {
+  name: string;
+  subject: string;
+  heading: string;
+  /** Plain text; a blank line starts a paragraph. */
+  body: string;
+  /** Empty for no button. */
+  buttonLabel: string;
+  /** Absolute. */
+  buttonUrl: string;
+  unsubscribeUrl: string;
+}
+
+/**
+ * An email written in the Automation Tool. Plain text in, escaped on the
+ * way out - an admin can change the words but not inject markup - and it
+ * always carries the unsubscribe footer, because a custom flow email is
+ * optional mail by definition.
+ */
+export function flowCustomEmail(d: FlowCustomEmailData): { subject: string; html: string; text: string } {
+  const vars = { firstName: firstNameOf(d.name) };
+  const subject = fillPlaceholders(d.subject, vars);
+  const heading = fillPlaceholders(d.heading, vars);
+  const body = fillPlaceholders(d.body, vars);
+  const cta = fillPlaceholders(d.buttonLabel, vars).trim();
+  const inner = `
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(body, "margin:0 0 16px;font-size:14px;color:#5c6270")}
+    ${cta ? `<div style="margin-top:22px">${button(d.buttonUrl, cta)}</div>` : ""}
+  `;
+  const text = `${heading}\n\n${body}` + (cta ? `\n\n${cta}: ${d.buttonUrl}` : "") + lifecycleTextFooter(d.unsubscribeUrl);
+  return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+}

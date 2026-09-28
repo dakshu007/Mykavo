@@ -25,6 +25,8 @@ export {
   day3SetupEmail,
   day6AndroidEmail,
   day10OfferEmail,
+  flowCustomEmail,
+  type FlowCustomEmailData,
   lifecycleHeaders,
   isLifecycleSubject,
   LIFECYCLE_SUBJECT_PREFIXES,

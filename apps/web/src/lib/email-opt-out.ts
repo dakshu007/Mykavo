@@ -36,7 +36,10 @@ async function findLifecycleNotification(id: string): Promise<Row> {
   }
   if (!n) return null;
   const key = n.automationSend?.automationKey;
-  const lifecycle = key ? (LIFECYCLE_KEYS as string[]).includes(key) : isLifecycleSubject(n.subject);
+  // Lifecycle emails, and custom emails from Automation Tool flows.
+  const lifecycle = key
+    ? (LIFECYCLE_KEYS as string[]).includes(key) || key.startsWith("flow:")
+    : isLifecycleSubject(n.subject);
   return lifecycle ? { recipient: n.recipient, subject: n.subject } : null;
 }
 

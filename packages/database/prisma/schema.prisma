@@ -37,6 +37,7 @@ model User {
   pushDevices       PushDevice[]
   decidedAppAccess  AppAccessRequest[] @relation("AppAccessDecider")
   siteConnections   SiteConnection[]   @relation("SiteConnectionCreator")
+  automationRuns    AutomationFlowRun[]
 
   @@map("user")
 }
@@ -1334,5 +1335,68 @@ model EmailAutomationSend {
 
   @@index([automationKey, createdAt(sort: Desc)])
   @@map("email_automation_send")
+}
+
+/// MyKavo Automation Tool: an email flow built in Admin > Automations.
+/// `definition` is a FlowDefinition (@mykavo/shared flows.ts): a tree of
+/// wait / decision / send-email steps, validated before it is saved.
+model AutomationFlow {
+  id             String              @id @default(cuid())
+  name           String
+  /// "DRAFT" | "ACTIVE" | "PAUSED"
+  status         String              @default("DRAFT")
+  /// "signup" | "first_website"
+  trigger        String
+  definition     Json
+  /// Set on every activation: only events after it enrol accounts, so a
+  /// flow never back-fills old accounts.
+  activatedAt    DateTime?
+  createdByEmail String?
+  updatedByEmail String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  runs           AutomationFlowRun[]
+  events         AutomationFlowEvent[]
+
+  @@map("automation_flow")
+}
+
+/// One account going through one flow.
+model AutomationFlowRun {
+  id            String    @id @default(cuid())
+  flowId        String
+  flow          AutomationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// "ACTIVE" | "COMPLETED" | "STOPPED"
+  status        String    @default("ACTIVE")
+  /// The step to process next; null once finished.
+  currentStepId String?
+  nextRunAt     DateTime  @default(now())
+  enrolledAt    DateTime  @default(now())
+  finishedAt    DateTime?
+  /// Why a run stopped early, in words.
+  stopReason    String?
+
+  @@unique([flowId, userId])
+  @@index([status, nextRunAt])
+  @@map("automation_flow_run")
+}
+
+/// What happened at each step, for the builder's counts and activity log.
+model AutomationFlowEvent {
+  id        String   @id @default(cuid())
+  flowId    String
+  flow      AutomationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  runId     String
+  stepId    String?
+  /// "enrolled" | "sent" | "skipped" | "failed" | "waiting" | "completed" | "stopped"
+  kind      String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([flowId, createdAt(sort: Desc)])
+  @@index([flowId, stepId, kind])
+  @@map("automation_flow_event")
 }
 

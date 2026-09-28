@@ -14,6 +14,8 @@
  *   3. The Day 3 / 6 / 10 lifecycle series (see lifecycle-email.ts), for
  *      accounts 3 to 14 days old only.
  *
+ *   4. Flows built in Admin > Automations (see flow-engine.ts).
+ *
  * Both are budgeted (@mykavo/shared email-budget): the email plan has a hard
  * daily and monthly cap, and a reminder that uses up the day's quota would
  * make the next CRITICAL alert fail. Reminders only spend what alerts leave
@@ -40,6 +42,7 @@ import {
 } from "@mykavo/shared";
 import { loadAutomations, sentBy, type Automations } from "./automation-settings";
 import { resolveEmailConfig } from "./notify";
+import { runFlows } from "./flow-engine";
 import { sendLifecycleEmails } from "./lifecycle-email";
 import { logger } from "./logger";
 
@@ -70,7 +73,11 @@ async function currentUsage(a: Automations): Promise<EmailUsage> {
           ...LIFECYCLE_SUBJECT_PREFIXES.map((p) => ({ subject: { startsWith: p } })),
           // Edited subjects are only recognisable through the send log.
           ...(a.ready
-            ? [{ automationSend: { is: { automationKey: { in: ["first_website", ...LIFECYCLE_KEYS] }, isTest: false } } }]
+            ? [
+                { automationSend: { is: { automationKey: { in: ["first_website", ...LIFECYCLE_KEYS] }, isTest: false } } },
+                // Emails from the Automation Tool's flows.
+                { automationSend: { is: { automationKey: { startsWith: "flow:" }, isTest: false } } },
+              ]
             : []),
         ] satisfies Prisma.NotificationWhereInput[],
       },
@@ -271,13 +278,22 @@ export async function runActivationSweep(): Promise<void> {
     logger.error("lifecycle emails skipped this run", { error: err instanceof Error ? err.message : String(err) });
   }
 
+  // Flows built in the Automation Tool, from what is left of the same share.
+  let flows = 0;
+  try {
+    flows = await runFlows(emailAllowance("REMINDER", limits, await currentUsage(automations)), automations);
+  } catch (err) {
+    logger.error("automation flows skipped this run", { error: err instanceof Error ? err.message : String(err) });
+  }
+
   logger.info("activation sweep finished", {
     baselineReady,
     reminders,
     lifecycle,
-    sentToday: after.sentToday + reminders + lifecycle,
+    flows,
+    sentToday: after.sentToday + reminders + lifecycle + flows,
     dailyLimit: limits.daily,
-    sentThisMonth: after.sentThisMonth + reminders + lifecycle,
+    sentThisMonth: after.sentThisMonth + reminders + lifecycle + flows,
     monthlyLimit: limits.monthly,
   });
 }

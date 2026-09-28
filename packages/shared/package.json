@@ -10,7 +10,8 @@
     "./ssrf": "./src/ssrf.ts",
     "./channels": "./src/channels.ts",
     "./stabilization": "./src/stabilization.ts",
-    "./script-services": "./src/script-services.ts"
+    "./script-services": "./src/script-services.ts",
+    "./flows": "./src/flows.ts"
   },
   "scripts": {
     "test": "vitest run"
