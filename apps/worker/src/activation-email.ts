@@ -11,6 +11,9 @@
  *      to an owner whose workspaces have no website. This one does reach
  *      existing accounts, newest first, a few a day.
  *
+ *   3. The Day 3 / 6 / 10 lifecycle series (see lifecycle-email.ts), for
+ *      accounts 3 to 14 days old only.
+ *
  * Both are budgeted (@mykavo/shared email-budget): the email plan has a hard
  * daily and monthly cap, and a reminder that uses up the day's quota would
  * make the next CRITICAL alert fail. Reminders only spend what alerts leave
@@ -25,6 +28,7 @@ import { prisma } from "@mykavo/database";
 import {
   BASELINE_READY_SUBJECT_PREFIX,
   FIRST_WEBSITE_NUDGE_SUBJECT,
+  LIFECYCLE_SUBJECT_PREFIXES,
   baselineReadyEmail,
   firstWebsiteNudgeEmail,
   sendEmail,
@@ -36,6 +40,7 @@ import {
   type EmailUsage,
 } from "@mykavo/shared";
 import { resolveEmailConfig } from "./notify";
+import { sendLifecycleEmails } from "./lifecycle-email";
 import { logger } from "./logger";
 
 const appBase = (process.env.APP_URL ?? "https://mykavo.app").replace(/\/+$/, "");
@@ -54,8 +59,17 @@ async function currentUsage(): Promise<EmailUsage> {
   const [sentToday, sentThisMonth, remindersToday] = await Promise.all([
     prisma.notification.count({ where: { ...sent, sentAt: { gte: dayStart } } }),
     prisma.notification.count({ where: { ...sent, sentAt: { gte: monthStart } } }),
+    // Every optional reminder shares one daily cap: the first-website nudge
+    // and the Day 3 / 6 / 10 lifecycle series.
     prisma.notification.count({
-      where: { ...sent, subject: FIRST_WEBSITE_NUDGE_SUBJECT, sentAt: { gte: dayStart } },
+      where: {
+        ...sent,
+        sentAt: { gte: dayStart },
+        OR: [
+          { subject: FIRST_WEBSITE_NUDGE_SUBJECT },
+          ...LIFECYCLE_SUBJECT_PREFIXES.map((p) => ({ subject: { startsWith: p } })),
+        ],
+      },
     }),
   ]);
   return { sentToday, sentThisMonth, remindersToday };
@@ -225,12 +239,23 @@ export async function runActivationSweep(): Promise<void> {
   const after = await currentUsage();
   const reminders = await sendFirstWebsiteNudges(emailAllowance("REMINDER", limits, after));
 
+  // Day 3 / 6 / 10 series, from what reminders left of the REMINDER share.
+  // A failure here (for instance the email_opt_out migration not applied
+  // yet) must not undo the emails above, so it is contained and logged.
+  let lifecycle = 0;
+  try {
+    lifecycle = await sendLifecycleEmails(emailAllowance("REMINDER", limits, await currentUsage()));
+  } catch (err) {
+    logger.error("lifecycle emails skipped this run", { error: err instanceof Error ? err.message : String(err) });
+  }
+
   logger.info("activation sweep finished", {
     baselineReady,
     reminders,
-    sentToday: after.sentToday + reminders,
+    lifecycle,
+    sentToday: after.sentToday + reminders + lifecycle,
     dailyLimit: limits.daily,
-    sentThisMonth: after.sentThisMonth + reminders,
+    sentThisMonth: after.sentThisMonth + reminders + lifecycle,
     monthlyLimit: limits.monthly,
   });
 }

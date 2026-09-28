@@ -863,9 +863,9 @@ export const FIRST_WEBSITE_NUDGE_SUBJECT = "Your MyKavo account is ready - add y
  * website. An account with no website is not a user yet: MyKavo has nothing
  * to watch and so can never send the alert that shows what it is for.
  *
- * One reminder, and it says so. A sequence of "still there?" mails is how a
- * sending domain earns a spam-folder reputation that then swallows the real
- * alerts.
+ * Not a sequence of "still there?" mails - that is how a sending domain
+ * earns a spam-folder reputation that then swallows the real alerts. The
+ * only follow-up is the Day 3 setup email, which carries an unsubscribe.
  */
 export function firstWebsiteNudgeEmail(data: FirstWebsiteNudgeData): {
   subject: string;
@@ -893,7 +893,7 @@ export function firstWebsiteNudgeEmail(data: FirstWebsiteNudgeData): {
     </ul>
     ${button(data.addWebsiteUrl, "Add your first website")}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">New to it? <a href="${esc(data.docsUrl)}" style="color:#3556f4;text-decoration:none">How MyKavo works</a> takes two minutes to read.</p>
-    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">This is the only reminder we will send. If something got in the way, just reply - a real person reads it.</p>
+    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">If something got in the way, just reply - a real person reads it.</p>
   `;
 
   const text =
@@ -904,8 +904,7 @@ export function firstWebsiteNudgeEmail(data: FirstWebsiteNudgeData): {
     catches.map((c) => `- ${c}`).join("\n") +
     `\n\nAdd your first website: ${data.addWebsiteUrl}\n` +
     `How MyKavo works: ${data.docsUrl}\n\n` +
-    `This is the only reminder we will send. If something got in the way, just reply - ` +
-    `a real person reads it.`;
+    `If something got in the way, just reply - a real person reads it.`;
 
   return { subject, html: shell(inner), text };
 }
@@ -1042,4 +1041,240 @@ export function appAccessApprovedEmail(data: AppAccessApprovedData): {
     `a real person reads it.`;
 
   return { subject, html: shell(inner), text };
+}
+
+// ---------- Lifecycle series: Day 3 / 6 / 10 ----------
+//
+// Retention emails for new accounts, sent by the worker's activation sweep.
+// Unlike alerts they are optional mail, so every one carries a visible
+// unsubscribe link and the one-click List-Unsubscribe headers that Gmail and
+// Yahoo require of bulk senders. Unsubscribing stops only this series -
+// website alerts are separate.
+
+/** Day 3, for an account with a website: what MyKavo saw so far. */
+export const DAY3_STATS_SUBJECT_PREFIX = "Your first days with MyKavo";
+/** Day 3, for an account without a website yet. */
+export const DAY3_SETUP_SUBJECT = "Your first MyKavo baseline takes 2 minutes";
+/** Day 6: the Android app and alerts on the phone. */
+export const DAY6_ANDROID_SUBJECT = "Get your MyKavo alerts on your phone";
+/** Day 10: the Pro offer. */
+export const DAY10_OFFER_SUBJECT = "15% off MyKavo Pro: $17 a month for 8 websites";
+
+/** Every lifecycle email's subject starts with one of these (dedupe + budget counting). */
+export const LIFECYCLE_SUBJECT_PREFIXES = [
+  DAY3_STATS_SUBJECT_PREFIX,
+  DAY3_SETUP_SUBJECT,
+  DAY6_ANDROID_SUBJECT,
+  DAY10_OFFER_SUBJECT,
+] as const;
+
+export function isLifecycleSubject(subject: string): boolean {
+  return LIFECYCLE_SUBJECT_PREFIXES.some((p) => subject.startsWith(p));
+}
+
+/** One-click unsubscribe headers (RFC 8058) for a lifecycle email. */
+export function lifecycleHeaders(unsubscribeUrl: string): Record<string, string> {
+  return {
+    "List-Unsubscribe": `<${unsubscribeUrl}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
+}
+
+function lifecycleShell(inner: string, unsubscribeUrl: string): string {
+  return `<!doctype html><html><body style="margin:0;background:#eceef4;padding:24px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#16181d">
+  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden">
+    <div style="padding:24px 28px;border-bottom:1px solid #e4e7ee">
+      <span style="display:inline-block;font-size:17px;font-weight:600;letter-spacing:-0.01em">MyKavo</span>
+    </div>
+    <div style="padding:28px">${inner}</div>
+    <div style="padding:20px 28px;border-top:1px solid #e4e7ee;font-size:12px;line-height:1.6;color:#9aa1b1">
+      Know what changed. Fix what matters.<br/>
+      You are getting this because you created a MyKavo account. Website alerts are separate and are not affected.
+      <a href="${esc(unsubscribeUrl)}" style="color:#9aa1b1;text-decoration:underline">Unsubscribe from these emails</a>.
+    </div>
+  </div></body></html>`;
+}
+
+function lifecycleTextFooter(unsubscribeUrl: string): string {
+  return `\n\n--\nYou are getting this because you created a MyKavo account. Website alerts are separate and are not affected.\nUnsubscribe from these emails: ${unsubscribeUrl}`;
+}
+
+function greeting(name: string): { html: string; text: string } {
+  const first = name.trim().split(/\s+/)[0] ?? "";
+  return first ? { html: `Hi ${esc(first)},`, text: `Hi ${first},` } : { html: "Hi,", text: "Hi," };
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+export interface Day3StatsData {
+  name: string;
+  websitesCount: number;
+  pagesMonitored: number;
+  scansCompleted: number;
+  changesFound: number;
+  /** Changes still waiting for review. */
+  openChanges: number;
+  /** Open changes rated High or Critical. */
+  urgentChanges: number;
+  dashboardUrl: string;
+  changesUrl: string;
+  unsubscribeUrl: string;
+}
+
+/** Day 3 with a website: their real numbers, and a reason to open the dashboard. */
+export function day3StatsEmail(d: Day3StatsData): { subject: string; html: string; text: string } {
+  const subject = `${DAY3_STATS_SUBJECT_PREFIX}: ${plural(d.scansCompleted, "scan")}, ${plural(d.changesFound, "change")} found`;
+  const hi = greeting(d.name);
+  const rows: [string, string][] = [
+    ["Websites watched", String(d.websitesCount)],
+    ["Pages monitored", String(d.pagesMonitored)],
+    ["Scans completed", String(d.scansCompleted)],
+    ["Changes found", String(d.changesFound)],
+  ];
+  const hasOpen = d.openChanges > 0;
+  const lead = hasOpen
+    ? `${plural(d.openChanges, "change")} ${d.openChanges === 1 ? "is" : "are"} waiting for your review${d.urgentChanges > 0 ? `, ${d.urgentChanges} of them rated High or Critical` : ""}. Each one shows the before and after, so it takes seconds to tell an intended edit from a regression.`
+    : "Nothing important has changed so far. That is what a healthy site looks like in MyKavo: quiet until something needs you.";
+  const cta = hasOpen ? button(d.changesUrl, "Review changes") : button(d.dashboardUrl, "Open your dashboard");
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Your first days</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Here is what MyKavo saw</h1>
+    <p style="margin:0 0 18px;font-size:14px;color:#5c6270">${hi.html} MyKavo has been watching since you set it up.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;border-collapse:collapse">
+      ${rows
+        .map(
+          ([k, v]) => `<tr>
+        <td style="padding:9px 0;border-top:1px solid #e4e7ee;font-size:13px;color:#5c6270">${esc(k)}</td>
+        <td style="padding:9px 0;border-top:1px solid #e4e7ee;font-size:15px;font-weight:600;text-align:right">${esc(v)}</td>
+      </tr>`,
+        )
+        .join("")}
+    </table>
+    <p style="margin:0 0 22px;font-size:14px;color:#16181d">${esc(lead)}</p>
+    ${cta}
+  `;
+  const text =
+    `${hi.text} MyKavo has been watching since you set it up.\n\n` +
+    rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
+    `\n\n${lead}\n\n${hasOpen ? `Review changes: ${d.changesUrl}` : `Open your dashboard: ${d.dashboardUrl}`}` +
+    lifecycleTextFooter(d.unsubscribeUrl);
+  return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+}
+
+export interface Day3SetupData {
+  name: string;
+  addWebsiteUrl: string;
+  tutorialsUrl: string;
+  unsubscribeUrl: string;
+}
+
+/** Day 3 without a website: the three steps, and the video walkthroughs. */
+export function day3SetupEmail(d: Day3SetupData): { subject: string; html: string; text: string } {
+  const hi = greeting(d.name);
+  const steps = [
+    "Paste your website's address.",
+    "Pick the pages that matter: home, pricing, checkout, signup.",
+    "MyKavo records a baseline. From then on you only hear from us when something important changes.",
+  ];
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Two minutes</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Your first baseline takes 2 minutes</h1>
+    <p style="margin:0 0 14px;font-size:14px;color:#5c6270">${hi.html} your account is ready, but MyKavo has nothing to watch yet. Here is all it takes:</p>
+    <ol style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">
+      ${steps.map((s) => `<li style="margin:0 0 6px">${esc(s)}</li>`).join("")}
+    </ol>
+    ${button(d.addWebsiteUrl, "Add your website")}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Prefer to watch first? <a href="${esc(d.tutorialsUrl)}" style="color:#3556f4;text-decoration:none">Short video walkthroughs</a> show every step.</p>
+    <p style="margin:12px 0 0;font-size:13px;color:#5c6270">Stuck on something? Just reply - a real person reads it.</p>
+  `;
+  const text =
+    `${hi.text} your account is ready, but MyKavo has nothing to watch yet. Here is all it takes:\n\n` +
+    steps.map((s, i) => `${i + 1}. ${s}`).join("\n") +
+    `\n\nAdd your website: ${d.addWebsiteUrl}\nVideo walkthroughs: ${d.tutorialsUrl}\n\nStuck on something? Just reply - a real person reads it.` +
+    lifecycleTextFooter(d.unsubscribeUrl);
+  return { subject: DAY3_SETUP_SUBJECT, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+}
+
+export interface Day6AndroidData {
+  name: string;
+  androidUrl: string;
+  /** Where email alerts go today. */
+  alertEmail: string;
+  notificationsUrl: string;
+  unsubscribeUrl: string;
+}
+
+/** Day 6: alerts on the phone - the Android app and email alerts. */
+export function day6AndroidEmail(d: Day6AndroidData): { subject: string; html: string; text: string } {
+  const hi = greeting(d.name);
+  const points = [
+    "Push alerts the moment a High or Critical change is found",
+    "Review changes and their before-and-after screenshots on your phone",
+    "Run a scan, approve a new baseline or pause monitoring from anywhere",
+  ];
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">MyKavo for Android</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Your alerts, on your phone</h1>
+    <p style="margin:0 0 14px;font-size:14px;color:#5c6270">${hi.html} a broken checkout at 2 AM should not wait until you open your laptop. The MyKavo Android app brings your monitoring with you:</p>
+    <ul style="margin:0 0 22px;padding-left:18px;font-size:14px;color:#16181d">
+      ${points.map((p) => `<li style="margin:0 0 6px">${esc(p)}</li>`).join("")}
+    </ul>
+    ${button(d.androidUrl, "Request the Android app")}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">It is free on every plan. While it is in Google Play review, access is approved in batches. Until then, email alerts already reach you at <strong>${esc(d.alertEmail)}</strong> - <a href="${esc(d.notificationsUrl)}" style="color:#3556f4;text-decoration:none">change where alerts go</a>.</p>
+  `;
+  const text =
+    `${hi.text} a broken checkout at 2 AM should not wait until you open your laptop. The MyKavo Android app brings your monitoring with you:\n\n` +
+    points.map((p) => `- ${p}`).join("\n") +
+    `\n\nRequest the Android app: ${d.androidUrl}\n\nIt is free on every plan. While it is in Google Play review, access is approved in batches. Until then, email alerts already reach you at ${d.alertEmail}. Change where alerts go: ${d.notificationsUrl}` +
+    lifecycleTextFooter(d.unsubscribeUrl);
+  return { subject: DAY6_ANDROID_SUBJECT, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+}
+
+export interface Day10OfferData {
+  name: string;
+  code: string;
+  price: number;
+  regularPrice: number;
+  upgradeUrl: string;
+  unsubscribeUrl: string;
+}
+
+/** Day 10: Pro at 15% off with a real code. No fake countdown. */
+export function day10OfferEmail(d: Day10OfferData): { subject: string; html: string; text: string } {
+  const hi = greeting(d.name);
+  const compare: [string, string, string][] = [
+    ["Websites", "1", "8"],
+    ["Pages per website", "5", "15"],
+    ["Scans", "Weekly", "Daily"],
+    ["History", "30 days", "1 year"],
+    ["Post-deploy checks", "-", "Included"],
+    ["Checkout and signup button monitoring", "-", "Included"],
+  ];
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">An offer for you</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">MyKavo Pro for $${d.price} a month</h1>
+    <p style="margin:0 0 18px;font-size:14px;color:#5c6270">${hi.html} you have been on MyKavo for ten days. If one website checked once a week is not enough, Pro watches up to 8 websites every day - and for you it is 15% off: <strong>$${d.price} a month instead of $${d.regularPrice}</strong>.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;border-collapse:collapse;font-size:13px">
+      <tr><td style="padding:8px 0;color:#9aa1b1"></td><td style="padding:8px 0;color:#9aa1b1;text-align:right">Free</td><td style="padding:8px 0;color:#3556f4;font-weight:600;text-align:right">Pro</td></tr>
+      ${compare
+        .map(
+          ([k, a, b]) => `<tr>
+        <td style="padding:8px 0;border-top:1px solid #e4e7ee;color:#5c6270">${esc(k)}</td>
+        <td style="padding:8px 0;border-top:1px solid #e4e7ee;text-align:right">${esc(a)}</td>
+        <td style="padding:8px 0;border-top:1px solid #e4e7ee;text-align:right;font-weight:600">${esc(b)}</td>
+      </tr>`,
+        )
+        .join("")}
+    </table>
+    <p style="margin:0 0 22px;font-size:14px;color:#16181d">Your code: <span style="display:inline-block;padding:4px 10px;border:1px dashed #3556f4;border-radius:8px;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:0.08em">${esc(d.code)}</span> - enter it at checkout.</p>
+    ${button(d.upgradeUrl, `Upgrade to Pro for $${d.price}`)}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Happy on Free? That is fine - it stays free, and your monitoring keeps running. Questions about plans? Just reply.</p>
+  `;
+  const text =
+    `${hi.text} you have been on MyKavo for ten days. If one website checked once a week is not enough, Pro watches up to 8 websites every day - and for you it is 15% off: $${d.price} a month instead of $${d.regularPrice}.\n\n` +
+    compare.map(([k, a, b]) => `${k}: Free ${a} / Pro ${b}`).join("\n") +
+    `\n\nYour code: ${d.code} - enter it at checkout.\nUpgrade to Pro: ${d.upgradeUrl}\n\nHappy on Free? That is fine - it stays free, and your monitoring keeps running.` +
+    lifecycleTextFooter(d.unsubscribeUrl);
+  return { subject: DAY10_OFFER_SUBJECT, html: lifecycleShell(inner, d.unsubscribeUrl), text };
 }

@@ -10,6 +10,12 @@ export interface EmailMessage {
   subject: string;
   html: string;
   text?: string;
+  /**
+   * Extra headers, e.g. List-Unsubscribe / List-Unsubscribe-Post for the
+   * lifecycle emails (Gmail and Yahoo require one-click unsubscribe on bulk
+   * mail). Transactional alerts do not set any.
+   */
+  headers?: Record<string, string>;
 }
 
 export interface SendResult {
@@ -102,6 +108,7 @@ export async function sendEmail(message: EmailMessage): Promise<SendResult> {
         subject: message.subject,
         html: message.html,
         text: message.text,
+        ...(message.headers ? { headers: message.headers } : {}),
       }),
     });
     if (!res.ok) {

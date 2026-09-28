@@ -949,6 +949,25 @@ model BlogPost {
   @@map("blog_post")
 }
 
+/// Addresses that unsubscribed from MyKavo's lifecycle and offer emails (the
+/// Day 3 / 6 / 10 series). Alerts about monitored websites are NOT affected:
+/// those are controlled per workspace in Notifications.
+///
+/// A separate table rather than a column on "user" on purpose: migrations
+/// are applied by hand, and a new column Prisma selects on every user query
+/// would take sign-in down in the window before the SQL runs. A missing
+/// table only stops the lifecycle emails, which fail closed.
+model EmailOptOut {
+  id        String   @id @default(cuid())
+  /// Lowercased.
+  email     String   @unique
+  /// "unsubscribe_link" | "one_click" - how it was requested.
+  source    String
+  createdAt DateTime @default(now())
+
+  @@map("email_opt_out")
+}
+
 /// A blog author's public profile (E-E-A-T): who wrote a post, what they
 /// know, and where to verify them. Posts refer to authors by NAME
 /// (BlogPost.authorName, case-insensitive) rather than a foreign key, so this

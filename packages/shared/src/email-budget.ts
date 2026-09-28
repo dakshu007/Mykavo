@@ -13,8 +13,9 @@
  *
  *   ALERTS     - never budgeted here; they always send.
  *   ACTIVATION - "baseline ready": up to 80% of the day, 85% of the month.
- *   REMINDER   - "add your first website": up to 50% of the day, 60% of the
- *                month, and never more than `reminderDailyCap` in one day.
+ *   REMINDER   - "add your first website" and the Day 3 / 6 / 10 lifecycle
+ *                series: up to 50% of the day, 60% of the month, and never
+ *                more than `reminderDailyCap` in one day between them.
  *
  * Pure, so the arithmetic is tested without a database.
  */
