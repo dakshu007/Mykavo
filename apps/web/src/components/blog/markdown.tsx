@@ -1,6 +1,7 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { EXTERNAL_LINK_REL, isExternalHref } from "@/lib/outbound-links";
 
 /**
  * Shared markdown renderer for the public blog and the CMS live preview.
@@ -21,28 +22,43 @@ export function BlogMarkdown({
   className?: string;
   headingIds?: Record<number, string>;
 }) {
-  const components: Components | undefined = headingIds
-    ? {
-        h2: ({ node, children }) => {
-          const id = idForLine(headingIds, node?.position?.start.line);
-          return (
-            <h2 id={id}>
-              {children}
-              <HeadingAnchor id={id} />
-            </h2>
-          );
-        },
-        h3: ({ node, children }) => {
-          const id = idForLine(headingIds, node?.position?.start.line);
-          return (
-            <h3 id={id}>
-              {children}
-              <HeadingAnchor id={id} />
-            </h3>
-          );
-        },
-      }
-    : undefined;
+  const components: Components = {
+    // Links out of the site are nofollowed: see lib/outbound-links.
+    a: ({ node, href, children, ...rest }) => {
+      void node; // react-markdown's AST node, not an <a> attribute
+      return isExternalHref(href) ? (
+        <a {...rest} href={href} target="_blank" rel={EXTERNAL_LINK_REL}>
+          {children}
+        </a>
+      ) : (
+        <a {...rest} href={href}>
+          {children}
+        </a>
+      );
+    },
+    ...(headingIds
+      ? {
+          h2: ({ node, children }) => {
+            const id = idForLine(headingIds, node?.position?.start.line);
+            return (
+              <h2 id={id}>
+                {children}
+                <HeadingAnchor id={id} />
+              </h2>
+            );
+          },
+          h3: ({ node, children }) => {
+            const id = idForLine(headingIds, node?.position?.start.line);
+            return (
+              <h3 id={id}>
+                {children}
+                <HeadingAnchor id={id} />
+              </h3>
+            );
+          },
+        }
+      : {}),
+  };
 
   return (
     <div className={cn("blog-prose", className)}>

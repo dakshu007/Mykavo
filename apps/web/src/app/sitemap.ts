@@ -4,6 +4,7 @@ import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
 import { ALTERNATIVES } from "@/config/alternatives";
 import { DOC_SECTIONS, allDocArticles } from "@/config/docs";
+import { getChannelVideos } from "@/lib/youtube";
 
 // Dynamic so newly published blog posts appear without a redeploy.
 export const dynamic = "force-dynamic";
@@ -36,7 +37,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/brand",
     "/site-audit",
     "/whats-new-on-mykavo",
-    "/video-tutorials",
     "/website-monitoring-for-shopify",
     "/website-monitoring-for-webflow",
     "/guides/how-to-monitor-website-changes",
@@ -66,6 +66,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "weekly",
     priority: route === "" ? 1 : 0.8,
   }));
+
+  // Listed only once the channel has a video: until then the page is
+  // noindexed, and a noindexed URL in the sitemap is a Search Console error.
+  if ((await getChannelVideos()).length > 0) {
+    entries.push({ url: `${site.url}/video-tutorials`, changeFrequency: "weekly", priority: 0.7 });
+  }
 
   try {
     const posts = await prisma.blogPost.findMany({

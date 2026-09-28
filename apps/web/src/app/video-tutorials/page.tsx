@@ -21,12 +21,23 @@ const PATH = "/video-tutorials";
 // Re-read the channel every 30 minutes: a new upload appears here on its own.
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "MyKavo Video Tutorials - Website Monitoring Walkthroughs",
-  description:
-    "Short video walkthroughs of MyKavo: adding a website, approving a baseline, reading change alerts, before-and-after comparisons, SEO and visual monitoring, and more.",
-  alternates: { canonical: PATH },
-};
+const DESCRIPTION =
+  "Short video walkthroughs of MyKavo: adding a website, approving a baseline, reading change alerts, before-and-after comparisons, SEO and visual monitoring, and more.";
+
+/**
+ * Until the channel has a public video this page is an empty shell, and an
+ * indexed page with no content is exactly the thin page Google's spam
+ * updates demote - so it asks not to be indexed until the first upload.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const videos = await getChannelVideos();
+  return {
+    title: "MyKavo Video Tutorials - Website Monitoring Walkthroughs",
+    description: DESCRIPTION,
+    alternates: { canonical: PATH },
+    ...(videos.length === 0 ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -51,7 +62,7 @@ function videosJsonLd(videos: YouTubeVideo[]) {
         "@id": `${url}#page`,
         url,
         name: "MyKavo video tutorials",
-        description: metadata.description,
+        description: DESCRIPTION,
         inLanguage: "en",
         isPartOf: { "@id": WEBSITE_ID },
         about: { "@id": ORGANIZATION_ID },

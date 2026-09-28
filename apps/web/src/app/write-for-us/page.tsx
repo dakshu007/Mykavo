@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: "Do you accept links in guest posts?",
-    a: "One relevant link to your own site in the author bio, always. Links inside the body are fine where they genuinely support a point, and they are nofollowed if they are commercial. We do not sell links or accept paid placements, so please do not ask - it wastes your time and ours.",
+    a: "One relevant link to your own site in the author bio, always. Links inside the body are fine where they genuinely support a point. As Google asks for contributed content, every link to another site - in the body or the bio - is nofollowed. We do not sell links or accept paid placements, so please do not ask - it wastes your time and ours.",
   },
   {
     q: "How long should a guest post be?",

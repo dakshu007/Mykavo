@@ -62,7 +62,7 @@ export function AuthorBox({
               key={l.href}
               href={l.href}
               target="_blank"
-              rel="noopener noreferrer me"
+              rel="nofollow noopener noreferrer me"
               className="inline-flex h-8 items-center rounded-full border border-[#151515]/15 bg-white px-3 text-[12.5px] font-semibold text-[#151515] transition-colors hover:border-[#151515]"
             >
               {l.label}
