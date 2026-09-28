@@ -1,12 +1,19 @@
 /**
  * Sending one automated email, and reading what optional email an account
- * already got. Shared by the lifecycle series and the Automation Tool's
+ * already got. Optional (unsubscribable) email goes through the promotional
+ * provider - Brevo once configured - and everything else through Resend. Shared by the lifecycle series and the Automation Tool's
  * flow engine, so both record sends the same way and both respect the same
  * one-optional-email-a-day spacing.
  */
 
 import { prisma, recordAutomationSend } from "@mykavo/database";
-import { LIFECYCLE_KEYS, LIFECYCLE_SUBJECT_PREFIXES, lifecycleHeaders, sendEmail } from "@mykavo/email";
+import {
+  LIFECYCLE_KEYS,
+  LIFECYCLE_SUBJECT_PREFIXES,
+  lifecycleHeaders,
+  sendEmail,
+  sendMarketingEmail,
+} from "@mykavo/email";
 import type { Automations } from "./automation-settings";
 import { appBase } from "./automation-data";
 
@@ -78,13 +85,18 @@ export async function sendAutomatedEmail(input: {
     return created;
   });
   const mail = input.unsubscribable ? input.render(`${appBase}/unsubscribe?n=${row.id}`) : draft;
-  const result = await sendEmail({
+  const message = {
     to: [input.to],
     subject: mail.subject,
     html: mail.html,
     text: mail.text,
     headers: input.unsubscribable ? lifecycleHeaders(`${appBase}/api/email/unsubscribe?n=${row.id}`) : undefined,
-  });
+  };
+  // Optional mail goes out on the promotional stream (Brevo when set up);
+  // anything an account needs stays on Resend.
+  const result = input.unsubscribable
+    ? await sendMarketingEmail(message, [input.key.startsWith("flow:") ? "flow" : "lifecycle"])
+    : await sendEmail(message);
   await prisma.notification.update({
     where: { id: row.id },
     data: { status: result.ok ? "SENT" : "FAILED", sentAt: result.ok ? new Date() : null, errorMessage: result.error ?? null },

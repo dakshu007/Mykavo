@@ -13,6 +13,8 @@ import {
   ADMIN_SIGNUP_QUEUE,
   WELCOME_EMAIL_QUEUE,
   ARTIFACT_PURGE_QUEUE,
+  BREVO_SYNC_QUEUE,
+  type BrevoSyncJob,
   type PushTestJob,
   type AdminSignupJob,
   type WelcomeEmailJob,
@@ -143,4 +145,12 @@ export async function enqueuePushTest(job: PushTestJob): Promise<string | null> 
 export async function enqueueGscSync(job: GscSyncJob): Promise<string | null> {
   const boss = await getBoss();
   return boss.send(GSC_SYNC_QUEUE, { ...job });
+}
+
+/** Ask the worker to sync accounts to Brevo now (Admin > Email marketing). */
+export async function enqueueBrevoSync(job: BrevoSyncJob): Promise<void> {
+  const boss = await getBoss();
+  await boss.createQueue(BREVO_SYNC_QUEUE, { retryLimit: 0 }).catch(() => {});
+  // One pending sync is enough: a second click while one waits adds nothing.
+  await boss.send(BREVO_SYNC_QUEUE, { ...job }, { singletonKey: "brevo-sync" });
 }

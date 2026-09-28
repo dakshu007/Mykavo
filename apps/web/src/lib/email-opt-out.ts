@@ -1,5 +1,5 @@
 import { isMissingTableError, prisma } from "@mykavo/database";
-import { LIFECYCLE_KEYS, isLifecycleSubject } from "@mykavo/email";
+import { LIFECYCLE_KEYS, brevoBlocklist, brevoConfigured, isLifecycleSubject } from "@mykavo/email";
 import { logger } from "@/lib/logger";
 
 /**
@@ -56,6 +56,16 @@ export async function optOutByNotificationId(
     const email = n.recipient.trim().toLowerCase();
     await prisma.emailOptOut.upsert({ where: { email }, create: { email, source }, update: {} });
     logger.info("lifecycle email opt-out", { source });
+    // Brevo too, straight away, so no campaign reaches them either. Best
+    // effort: MyKavo's own record above is what every send checks, and the
+    // hourly contact sync blocklists anyone this misses.
+    if (brevoConfigured()) {
+      await brevoBlocklist(email).catch((err: unknown) =>
+        logger.warn("brevo blocklist failed; the contact sync will retry", {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+    }
     return "ok";
   } catch (err) {
     logger.error("lifecycle email opt-out failed", { error: err instanceof Error ? err.message : String(err) });

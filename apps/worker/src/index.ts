@@ -26,6 +26,8 @@ import {
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
   WELCOME_EMAIL_QUEUE,
+  BREVO_SYNC_QUEUE,
+  type BrevoSyncJob,
   type PushTestJob,
   type AdminSignupJob,
   type WelcomeEmailJob,
@@ -34,6 +36,7 @@ import {
   type SiteAuditJob,
   type GscSyncJob,
 } from "@mykavo/shared";
+import { runBrevoSync } from "./brevo-sync";
 import { logger } from "./logger";
 import { sendTestPush } from "./push";
 import { runScanWebsiteJob } from "./scan-website";
@@ -277,6 +280,13 @@ async function main() {
   await boss.createQueue(WELCOME_EMAIL_QUEUE, { retryLimit: 3 }).catch(() => {});
   await boss.work<WelcomeEmailJob>(WELCOME_EMAIL_QUEUE, { batchSize: 1 }, async ([job]) => {
     await runWelcomeEmailJob(job.data.userId);
+  });
+
+  // "Sync now" in Admin > Email marketing. One at a time; no retries - the
+  // hourly sweep syncs anyway, and a failed run is in the sync log.
+  await boss.createQueue(BREVO_SYNC_QUEUE, { retryLimit: 0 }).catch(() => {});
+  await boss.work<BrevoSyncJob>(BREVO_SYNC_QUEUE, { batchSize: 1 }, async ([job]) => {
+    await runBrevoSync(job.data.kind, job.data.requestedByEmail);
   });
 
   // Self-monitoring. Deliberately NOT a pg-boss schedule: pg-boss fetches its

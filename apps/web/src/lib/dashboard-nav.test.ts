@@ -78,7 +78,7 @@ describe("dashboardNav - operator entries", () => {
     const admin = dashboardNav({ ...live, isPlatformAdmin: true }).find(
       (g) => g.id === "admin",
     );
-    expect(admin?.items.map((i) => i.id)).toEqual(["users", "app-requests", "automations", "usage"]);
+    expect(admin?.items.map((i) => i.id)).toEqual(["users", "app-requests", "automations", "email-marketing", "usage"]);
   });
 
   it("keeps the two privileges independent", () => {
@@ -89,6 +89,7 @@ describe("dashboardNav - operator entries", () => {
       "users",
       "app-requests",
       "automations",
+      "email-marketing",
       "usage",
     ]);
   });
@@ -143,6 +144,7 @@ describe("dashboardNav - the Android app download", () => {
     const ids = flattenNav(dashboardNav({ ...live, appApproved: true })).map((i) => i.id);
     expect(ids).not.toContain("app-requests");
     expect(ids).not.toContain("automations");
+    expect(ids).not.toContain("email-marketing");
   });
 });
 

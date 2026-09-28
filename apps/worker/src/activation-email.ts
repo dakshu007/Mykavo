@@ -31,17 +31,23 @@ import {
   FIRST_WEBSITE_NUDGE_SUBJECT,
   LIFECYCLE_KEYS,
   LIFECYCLE_SUBJECT_PREFIXES,
+  brevoAccount,
+  brevoConfigured,
+  marketingProvider,
   renderAutomation,
+  sendCreditsLeft,
   sendEmail,
 } from "@mykavo/email";
 import {
   displayPersonName,
   emailAllowance,
   emailLimitsFromEnv,
+  type EmailLimits,
   type EmailUsage,
 } from "@mykavo/shared";
 import { loadAutomations, sentBy, type Automations } from "./automation-settings";
 import { resolveEmailConfig } from "./notify";
+import { fullSyncDue, runBrevoSync } from "./brevo-sync";
 import { runFlows } from "./flow-engine";
 import { sendLifecycleEmails } from "./lifecycle-email";
 import { logger } from "./logger";
@@ -52,16 +58,39 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const GAP_MS = 700;
 
 const pause = () => new Promise((resolve) => setTimeout(resolve, GAP_MS));
+/** Brevo credits left untouched each day, for campaigns and test sends. */
+const BREVO_CREDIT_RESERVE = 20;
 
-/** Emails sent so far today and this month (UTC), read from the ledger. */
+/**
+ * Emails sent so far today and this month (UTC), read from the ledger.
+ *
+ * sentToday / sentThisMonth are what counts against RESEND's cap: once
+ * promotional mail goes through Brevo, it is left out, so the Day 3 / 6 / 10
+ * series and flow emails no longer eat into the quota alerts rely on.
+ */
 async function currentUsage(a: Automations): Promise<EmailUsage> {
   const now = new Date();
   const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const sent = { channelType: "EMAIL" as const, status: "SENT" as const };
-  const [sentToday, sentThisMonth, remindersToday] = await Promise.all([
+  // Optional mail: the lifecycle series and flow emails.
+  const promotional: Prisma.NotificationWhereInput = {
+    OR: [
+      ...LIFECYCLE_SUBJECT_PREFIXES.map((p) => ({ subject: { startsWith: p } })),
+      ...(a.ready
+        ? [
+            { automationSend: { is: { automationKey: { in: LIFECYCLE_KEYS } } } },
+            { automationSend: { is: { automationKey: { startsWith: "flow:" } } } },
+          ]
+        : []),
+    ],
+  };
+  const onBrevo = marketingProvider() === "brevo";
+  const [allToday, allThisMonth, promoToday, promoThisMonth, remindersToday] = await Promise.all([
     prisma.notification.count({ where: { ...sent, sentAt: { gte: dayStart } } }),
     prisma.notification.count({ where: { ...sent, sentAt: { gte: monthStart } } }),
+    onBrevo ? prisma.notification.count({ where: { ...sent, sentAt: { gte: dayStart }, ...promotional } }) : 0,
+    onBrevo ? prisma.notification.count({ where: { ...sent, sentAt: { gte: monthStart }, ...promotional } }) : 0,
     // Every optional reminder shares one daily cap: the first-website nudge
     // and the Day 3 / 6 / 10 lifecycle series.
     prisma.notification.count({
@@ -83,7 +112,28 @@ async function currentUsage(a: Automations): Promise<EmailUsage> {
       },
     }),
   ]);
-  return { sentToday, sentThisMonth, remindersToday };
+  return { sentToday: allToday - promoToday, sentThisMonth: allThisMonth - promoThisMonth, remindersToday };
+}
+
+/**
+ * How many optional (promotional) emails may go out now. On Resend, the
+ * REMINDER share of Resend's cap, as before. On Brevo, what Brevo says is
+ * left of today's credits - campaigns spend the same credits - capped by the
+ * daily reminder ceiling either way. If Brevo cannot be asked, nothing is
+ * sent this hour rather than guessing.
+ */
+async function promotionalAllowance(limits: EmailLimits, usage: EmailUsage): Promise<number> {
+  if (marketingProvider() !== "brevo") return emailAllowance("REMINDER", limits, usage);
+  let credits: number;
+  try {
+    credits = sendCreditsLeft(await brevoAccount()) ?? Number.MAX_SAFE_INTEGER;
+  } catch (err) {
+    logger.warn("could not read Brevo credits; holding promotional email this run", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return 0;
+  }
+  return Math.max(0, Math.min(credits - BREVO_CREDIT_RESERVE, limits.reminderDailyCap - usage.remindersToday));
 }
 
 function hostOf(url: string): string {
@@ -258,6 +308,18 @@ async function sendFirstWebsiteNudges(budget: number, a: Automations): Promise<n
 
 export async function runActivationSweep(): Promise<void> {
   const limits = emailLimitsFromEnv(process.env);
+
+  // Brevo contacts first, so a campaign unsubscribe is known before any
+  // optional email below is sent. Contained: a Brevo outage must not stop
+  // the alerts-adjacent emails in this sweep.
+  if (brevoConfigured()) {
+    try {
+      await runBrevoSync((await fullSyncDue()) ? "full" : "incremental");
+    } catch {
+      // Logged by runBrevoSync.
+    }
+  }
+
   // Admin > Automations: on/off, wording and timing for everything below.
   const automations = await loadAutomations();
 
@@ -273,7 +335,7 @@ export async function runActivationSweep(): Promise<void> {
   // yet) must not undo the emails above, so it is contained and logged.
   let lifecycle = 0;
   try {
-    lifecycle = await sendLifecycleEmails(emailAllowance("REMINDER", limits, await currentUsage(automations)), automations);
+    lifecycle = await sendLifecycleEmails(await promotionalAllowance(limits, await currentUsage(automations)), automations);
   } catch (err) {
     logger.error("lifecycle emails skipped this run", { error: err instanceof Error ? err.message : String(err) });
   }
@@ -281,7 +343,7 @@ export async function runActivationSweep(): Promise<void> {
   // Flows built in the Automation Tool, from what is left of the same share.
   let flows = 0;
   try {
-    flows = await runFlows(emailAllowance("REMINDER", limits, await currentUsage(automations)), automations);
+    flows = await runFlows(await promotionalAllowance(limits, await currentUsage(automations)), automations);
   } catch (err) {
     logger.error("automation flows skipped this run", { error: err instanceof Error ? err.message : String(err) });
   }

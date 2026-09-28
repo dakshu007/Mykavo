@@ -1400,3 +1400,24 @@ model AutomationFlowEvent {
   @@map("automation_flow_event")
 }
 
+/// One run of the Brevo contact sync (Admin > Email marketing): accounts
+/// pushed to Brevo's lists, and Brevo unsubscribes pulled back.
+model BrevoSyncRun {
+  id                 String    @id @default(cuid())
+  /// "full" | "incremental"
+  kind               String
+  /// "RUNNING" | "OK" | "FAILED"
+  status             String    @default("RUNNING")
+  startedAt          DateTime  @default(now())
+  finishedAt         DateTime?
+  contacts           Int       @default(0)
+  blocklisted        Int       @default(0)
+  removed            Int       @default(0)
+  pulledUnsubscribes Int       @default(0)
+  error              String?
+  requestedByEmail   String?
+
+  @@index([startedAt(sort: Desc)])
+  @@map("brevo_sync_run")
+}
+

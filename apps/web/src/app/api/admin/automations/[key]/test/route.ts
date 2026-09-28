@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, recordAutomationSend } from "@mykavo/database";
-import { AUTOMATIONS, lifecycleHeaders, sendEmail, validateSettings } from "@mykavo/email";
+import { AUTOMATIONS, lifecycleHeaders, sendEmail, sendMarketingEmail, validateSettings } from "@mykavo/email";
 import { displayPersonName } from "@mykavo/shared";
 import { automationRequest, readJson } from "@/lib/automations-api";
 import { appBase, loadSettings, renderPreview } from "@/lib/automations-admin";
@@ -28,15 +28,18 @@ export async function POST(request: Request, { params }: Params) {
 
   const mail = renderPreview(req.key, settings, result.settings, displayPersonName(req.name, req.email));
   const subject = `[Test] ${mail.subject}`;
-  const sent = await sendEmail({
+  const unsubscribable = AUTOMATIONS[req.key].unsubscribable;
+  const message = {
     to: [req.email],
     subject,
     html: mail.html,
     text: mail.text,
     // The sample unsubscribe link does nothing; the header is here so the
     // test looks exactly like the real email in the inbox.
-    headers: AUTOMATIONS[req.key].unsubscribable ? lifecycleHeaders(`${appBase}/api/email/unsubscribe?n=preview`) : undefined,
-  });
+    headers: unsubscribable ? lifecycleHeaders(`${appBase}/api/email/unsubscribe?n=preview`) : undefined,
+  };
+  // Through the same provider the real email uses (Brevo for optional mail).
+  const sent = unsubscribable ? await sendMarketingEmail(message, ["test"]) : await sendEmail(message);
 
   // Recorded so it counts against the email budget like any other send.
   const member = await prisma.workspaceMember.findFirst({

@@ -20,7 +20,7 @@ export interface EmailMessage {
 
 export interface SendResult {
   ok: boolean;
-  provider: "console" | "resend" | "noop";
+  provider: "console" | "resend" | "noop" | "brevo";
   id?: string;
   error?: string;
 }

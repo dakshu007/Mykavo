@@ -1364,3 +1364,51 @@ export function flowCustomEmail(d: FlowCustomEmailData): { subject: string; html
   const text = `${heading}\n\n${body}` + (cta ? `\n\n${cta}: ${d.buttonUrl}` : "") + lifecycleTextFooter(d.unsubscribeUrl);
   return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
 }
+
+// ---------- Campaigns sent through Brevo ----------
+
+export interface CampaignEmailData {
+  heading: string;
+  /** Plain text; a blank line starts a paragraph. {firstName} is filled per contact. */
+  body: string;
+  buttonLabel: string;
+  /** Absolute. */
+  buttonUrl: string;
+}
+
+const FIRST_NAME_SLOT = "\u0000FIRSTNAME\u0000";
+
+/** Brevo's per-contact first name, for campaign subjects and preview text. */
+export function toBrevoTags(line: string): string {
+  return line.replace(/\{firstName\}/g, '{{ contact.FIRSTNAME | default : "there" }}');
+}
+
+/**
+ * A campaign in the MyKavo look. For Brevo, {firstName} becomes Brevo's own
+ * contact tag and the footer link Brevo's unsubscribe tag, which Brevo fills
+ * per recipient when it sends; for the admin preview, a real name and a dead
+ * link. The text is escaped first and the tags put in after, so an admin can
+ * change words but not inject markup.
+ */
+export function campaignEmail(d: CampaignEmailData, mode: { kind: "brevo" } | { kind: "preview"; firstName: string }): string {
+  const vars = { firstName: FIRST_NAME_SLOT };
+  const fill = (s: string) => {
+    const html = esc(fillPlaceholders(s, vars));
+    const name = mode.kind === "brevo" ? '{{ contact.FIRSTNAME | default : "there" }}' : esc(mode.firstName || "there");
+    return html.split(FIRST_NAME_SLOT).join(name);
+  };
+  const paras = d.body
+    .replace(/\r\n/g, "\n")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p style="margin:0 0 16px;font-size:14px;color:#5c6270">${fill(p).replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+  const cta = d.buttonLabel.trim();
+  const inner = `
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${fill(d.heading)}</h1>
+    ${paras}
+    ${cta ? `<div style="margin-top:22px">${button(d.buttonUrl, fillPlaceholders(cta, { firstName: mode.kind === "preview" ? mode.firstName : "" }))}</div>` : ""}
+  `;
+  return lifecycleShell(inner, mode.kind === "brevo" ? "{{ unsubscribe }}" : "#");
+}

@@ -42,6 +42,7 @@ export type NavItemId =
   | "usage"
   | "app-requests"
   | "automations"
+  | "email-marketing"
   | "app";
 
 export interface NavItem {
@@ -151,6 +152,7 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
         short: "Requests",
       },
       { id: "automations", href: "/dashboard/automations", label: "Automations" },
+      { id: "email-marketing", href: "/dashboard/email-marketing", label: "Email marketing", short: "Marketing" },
       { id: "usage", href: "/dashboard/usage", label: "All Usage" },
     );
   }
