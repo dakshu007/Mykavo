@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { marketingProvider, sendCreditsLeft, sendMarketingEmail, sendViaBrevo } from "./brevo";
-import { membership, pushContacts, type Audience, type AudienceKey, type SyncContact } from "./brevo-sync";
+import { addContactNow, membership, pushContacts, type Audience, type AudienceKey, type SyncContact } from "./brevo-sync";
 import { campaignEmail, toBrevoTags } from "./templates";
 
 type Call = { url: string; method: string; body: unknown; key: string | null };
@@ -140,5 +140,29 @@ describe("campaign subject lines", () => {
   it("personalise {firstName} with Brevo's contact tag", () => {
     expect(toBrevoTags("{firstName}, news")).toBe('{{ contact.FIRSTNAME | default : "there" }}, news');
     expect(toBrevoTags("No name here")).toBe("No name here");
+  });
+});
+
+describe("adding a signup straight away", () => {
+  it("creates the contact in All, Free and No website, with its fields", async () => {
+    respond = (c) => {
+      if (c.url.includes("/contacts/folders?")) return { status: 200, body: { folders: [{ id: 12, name: "MyKavo" }] } };
+      if (c.url.includes("/contacts/folders/12/lists")) {
+        return {
+          status: 200,
+          body: { lists: [["MyKavo · All users", 13], ["MyKavo · Free plan", 14], ["MyKavo · Paid plans", 15], ["MyKavo · No website yet", 16]].map(([name, id]) => ({ name, id })) },
+        };
+      }
+      return { status: 201, body: { id: 1 } };
+    };
+    expect(await addContactNow(contact({ email: "new@x.co", websites: 0 }))).toBe(true);
+    const create = calls.find((c) => c.method === "POST" && c.url.endsWith("/v3/contacts"));
+    expect(create?.body).toMatchObject({ email: "new@x.co", listIds: [13, 14, 16], updateEnabled: true, attributes: { FIRSTNAME: "Ana", MYKAVO_PLAN: "free" } });
+  });
+
+  it("waits for the first sync when the lists do not exist yet", async () => {
+    respond = () => ({ status: 200, body: { folders: [] } });
+    expect(await addContactNow(contact({}))).toBe(false);
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
   });
 });

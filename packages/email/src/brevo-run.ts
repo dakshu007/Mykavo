@@ -24,8 +24,7 @@ export interface BrevoSyncResult {
 export const INCREMENTAL_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 export async function runBrevoSyncWith(store: BrevoSyncStore, kind: "full" | "incremental"): Promise<BrevoSyncResult> {
-  await ensureAttributes();
-  const audiences = await ensureAudiences();
+  const [, audiences] = await Promise.all([ensureAttributes(), ensureAudiences()]);
   const since = kind === "incremental" ? new Date(Date.now() - INCREMENTAL_WINDOW_MS) : null;
 
   // Unsubscribes first: someone who opted out in a campaign must not be

@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { isMissingTableError } from "./automations";
-import { getWorkspaceEntitlement } from "./subscription";
+import { planIdFromSubscription } from "./subscription";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -58,7 +58,14 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
       name: true,
       email: true,
       createdAt: true,
-      ownedWorkspaces: { select: { id: true, _count: { select: { websites: true } } }, orderBy: { createdAt: "asc" }, take: 1 },
+      // Plan and website count come with the user in this one query: the
+      // admin's "Sync now" runs inside a short-lived web request, and a
+      // query per account would not finish in time.
+      ownedWorkspaces: {
+        select: { id: true, subscription: { select: { planId: true, status: true } }, _count: { select: { websites: true } } },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+      },
     },
   });
 
@@ -67,7 +74,7 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
     const ws = u.ownedWorkspaces[0];
     if (!ws || !u.email) continue;
     const email = u.email.trim().toLowerCase();
-    const plan = (await getWorkspaceEntitlement(db, ws.id))?.planId ?? "free";
+    const plan = planIdFromSubscription(ws.subscription);
     out.push({
       email,
       userId: u.id,

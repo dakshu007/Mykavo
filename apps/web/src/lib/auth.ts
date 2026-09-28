@@ -10,6 +10,7 @@ import { validateSignupEmail, EMAIL_VALIDATION_MESSAGES } from "@/lib/email-vali
 import { checkPersonName, NAME_REJECTION_MESSAGES } from "@mykavo/shared";
 import { recordSignupToSheet } from "@/lib/signup-sheet";
 import { enqueueAdminSignupAlert, enqueueWelcomeEmail } from "@/lib/queue";
+import { addSignupToBrevo } from "@/lib/brevo-signup";
 
 /**
  * Whether Google sign-in is configured. Drives the "Continue with Google"
@@ -136,6 +137,10 @@ export const auth = betterAuth({
           // every visit, which is how a welcome becomes spam. Queued and
           // error-swallowing for the same reason as the line above.
           await enqueueWelcomeEmail({ userId: user.id });
+
+          // Into Brevo's lists right away, for campaigns. Capped and
+          // error-swallowing: it can never slow or fail the signup.
+          await addSignupToBrevo(user);
         },
       },
     },

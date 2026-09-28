@@ -34,6 +34,12 @@ export function isGrandfatheredPro(planId: string, subscriptionCreatedAt: Date):
   return planId === "pro" && subscriptionCreatedAt < PRO_GRANDFATHER_CUTOFF;
 }
 
+/** The plan a subscription row grants right now: a paid plan while active, otherwise Free. */
+export function planIdFromSubscription(sub: { planId: string; status: string } | null): "free" | PaidPlanId {
+  if (!sub || !ACTIVE_STATUSES.has(sub.status)) return "free";
+  return toPaidPlanId(sub.planId) ?? "free";
+}
+
 export interface Entitlement {
   planId: "free" | PaidPlanId;
   /** Pro bought before Agency existed - keeps the features it included then. */
@@ -51,7 +57,8 @@ export async function getWorkspaceEntitlement(
 ): Promise<Entitlement | null> {
   const sub = await db.subscription.findUnique({ where: { workspaceId } });
   if (!sub) return null;
-  const paid = ACTIVE_STATUSES.has(sub.status) ? toPaidPlanId(sub.planId) : null;
+  const planId = planIdFromSubscription(sub);
+  const paid = planId === "free" ? null : planId;
   return {
     planId: paid ?? "free",
     grandfathered: paid !== null && isGrandfatheredPro(paid, sub.createdAt),

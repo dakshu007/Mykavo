@@ -117,6 +117,7 @@ export {
   AUDIENCES,
   AUDIENCE_DESCRIPTIONS,
   AUDIENCE_KEYS,
+  addContactNow,
   blocklistedContacts,
   contactAttributes,
   ensureAttributes,

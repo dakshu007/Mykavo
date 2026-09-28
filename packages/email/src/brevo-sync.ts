@@ -84,11 +84,13 @@ export function contactAttributes(c: SyncContact): Record<string, string | numbe
 const alreadyExists = (err: unknown) => err instanceof BrevoError && err.status === 400;
 
 export async function ensureAttributes(): Promise<void> {
-  for (const a of ATTRIBUTES) {
-    await brevo(`/contacts/attributes/normal/${a.name}`, { method: "POST", body: { type: a.type } }).catch((err) => {
-      if (!alreadyExists(err)) throw err;
-    });
-  }
+  await Promise.all(
+    ATTRIBUTES.map((a) =>
+      brevo(`/contacts/attributes/normal/${a.name}`, { method: "POST", body: { type: a.type } }).catch((err) => {
+        if (!alreadyExists(err)) throw err;
+      }),
+    ),
+  );
 }
 
 type ListRow = { id: number; name: string; uniqueSubscribers?: number; totalSubscribers?: number };
@@ -175,16 +177,16 @@ export async function pushContacts(contacts: SyncContact[], audiences: Record<Au
     const key = membership(c).join(",");
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }
-  for (const [key, group] of groups) {
-    await importContacts(group, key.split(",").map((k) => audiences[k as AudienceKey].id), false);
-  }
-  if (optedOut.length) await importContacts(optedOut, [audiences.all.id], true);
-
-  // Out of the segment lists they have left (Free -> Paid, first website added).
-  for (const key of ["free", "paid", "no_website"] as const) {
-    const leaving = active.filter((c) => !membership(c).includes(key)).map((c) => c.email);
-    if (leaving.length) await removeFromList(audiences[key].id, leaving);
-  }
+  // Independent calls, run together: "Sync now" runs inside a short web request.
+  await Promise.all([
+    ...[...groups].map(([key, group]) => importContacts(group, key.split(",").map((k) => audiences[k as AudienceKey].id), false)),
+    ...(optedOut.length ? [importContacts(optedOut, [audiences.all.id], true)] : []),
+    // Out of the segment lists they have left (Free -> Paid, first website added).
+    ...(["free", "paid", "no_website"] as const).map((key) => {
+      const leaving = active.filter((c) => !membership(c).includes(key)).map((c) => c.email);
+      return leaving.length ? removeFromList(audiences[key].id, leaving) : Promise.resolve();
+    }),
+  ]);
   return { contacts: active.length, blocklisted: optedOut.length };
 }
 
@@ -193,22 +195,21 @@ export async function pushContacts(contacts: SyncContact[], audiences: Record<Au
  * MyKavo account (deleted accounts must stop getting campaigns).
  */
 export async function pruneContacts(audiences: Record<AudienceKey, Audience>, keep: Set<string>): Promise<number> {
-  let removed = 0;
-  for (const a of Object.values(audiences)) {
-    const stale: string[] = [];
-    for (let offset = 0; ; offset += 500) {
-      const page = await brevo<{ contacts?: { email?: string }[]; count?: number }>(`/contacts/lists/${a.id}/contacts`, {
-        query: { limit: 500, offset },
-      });
-      for (const c of page.contacts ?? []) if (c.email && !keep.has(c.email.toLowerCase())) stale.push(c.email);
-      if ((page.contacts?.length ?? 0) < 500) break;
-    }
-    if (stale.length) {
-      await removeFromList(a.id, stale);
-      removed += stale.length;
-    }
+  const perList = await Promise.all(Object.values(audiences).map((a) => pruneList(a, keep)));
+  return perList.reduce((n, x) => n + x, 0);
+}
+
+async function pruneList(a: Audience, keep: Set<string>): Promise<number> {
+  const stale: string[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const page = await brevo<{ contacts?: { email?: string }[]; count?: number }>(`/contacts/lists/${a.id}/contacts`, {
+      query: { limit: 500, offset },
+    });
+    for (const c of page.contacts ?? []) if (c.email && !keep.has(c.email.toLowerCase())) stale.push(c.email);
+    if ((page.contacts?.length ?? 0) < 500) break;
   }
-  return removed;
+  if (stale.length) await removeFromList(a.id, stale);
+  return stale.length;
 }
 
 /** Addresses in the MyKavo lists that Brevo has blocklisted (optionally only recently changed ones). */
@@ -220,4 +221,25 @@ export async function blocklistedContacts(allListId: number, since?: Date): Prom
     if (page.contacts.length < 500) break;
   }
   return out;
+}
+
+/**
+ * Add one new account to its lists straight away (called at signup), so it
+ * is in Brevo before the next sync. Does nothing if the MyKavo lists have
+ * not been created yet - the first sync creates them and adds everyone.
+ */
+export async function addContactNow(c: SyncContact): Promise<boolean> {
+  const audiences = await findAudiences();
+  if (!audiences) return false;
+  await brevo("/contacts", {
+    method: "POST",
+    body: {
+      email: c.email,
+      attributes: contactAttributes(c),
+      listIds: membership(c).map((k) => audiences[k].id),
+      updateEnabled: true,
+      ...(c.optedOut ? { emailBlacklisted: true } : {}),
+    },
+  });
+  return true;
 }
