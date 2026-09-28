@@ -36,7 +36,12 @@ export function marketingName(name: string | null): { firstName: string; lastNam
  * signed up, added a website or unsubscribed since then.
  */
 export async function loadMarketingContacts(db: Db, since: Date | null): Promise<MarketingContact[]> {
-  const optOuts = await db.emailOptOut.findMany({ select: { email: true, createdAt: true } });
+  // Before the email_opt_out migration nobody can have unsubscribed through
+  // MyKavo (there was nowhere to record it), so a missing table means none.
+  const optOuts = await db.emailOptOut.findMany({ select: { email: true, createdAt: true } }).catch((err: unknown) => {
+    if (isMissingTableError(err)) return [];
+    throw err;
+  });
   const optedOut = new Set(optOuts.map((o) => o.email.toLowerCase()));
   const recentlyOptedOut = since ? optOuts.filter((o) => o.createdAt >= since).map((o) => o.email) : [];
 
@@ -92,8 +97,15 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
 /** Record addresses Brevo unsubscribed. Returns how many were new. */
 export async function saveMarketingOptOuts(db: Db, emails: string[], source: string): Promise<number> {
   if (!emails.length) return 0;
-  const res = await db.emailOptOut.createMany({ data: emails.map((email) => ({ email, source })), skipDuplicates: true });
-  return res.count;
+  try {
+    const res = await db.emailOptOut.createMany({ data: emails.map((email) => ({ email, source })), skipDuplicates: true });
+    return res.count;
+  } catch (err) {
+    // No table yet: those addresses stay blocklisted in Brevo, and the first
+    // full sync after the migration pulls them all again.
+    if (isMissingTableError(err)) return 0;
+    throw err;
+  }
 }
 
 /** Start a brevo_sync_run row; null when the table does not exist yet. */
