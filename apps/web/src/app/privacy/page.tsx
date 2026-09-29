@@ -64,8 +64,9 @@ export default function PrivacyPolicyPage() {
       </p>
       <h3>Analytics and product emails</h3>
       <p>
-        We use Google Analytics 4 on our public marketing pages (not inside the app dashboard) to
-        understand how visitors find and use the site. When you sign up, your name and email may
+        We use Google Analytics 4 and Microsoft Clarity on our public marketing pages (not inside
+        the app dashboard) to understand how visitors find and use the site. Clarity records
+        anonymised heatmaps and session replays of those public pages, with typed input masked. When you sign up, your name and email may
         also be added to a private mailing list so we can send occasional product updates. You can
         opt out of these emails at any time by contacting{" "}
         <a href="mailto:support@mykavo.app">support@mykavo.app</a>.
@@ -145,8 +146,8 @@ export default function PrivacyPolicyPage() {
       <h2>4. Cookies</h2>
       <p>
         MyKavo uses essential session cookies to keep you signed in, stores your theme preference
-        in your browser&apos;s localStorage, and loads Google Analytics cookies on public marketing
-        pages only. That is the full list - no advertising cookies, no third-party trackers inside
+        in your browser&apos;s localStorage, and loads Google Analytics and Microsoft Clarity
+        cookies on public marketing pages only. That is the full list - no advertising cookies, no third-party trackers inside
         the app. The details are in our <Link href="/cookies">Cookie Policy</Link>.
       </p>
 

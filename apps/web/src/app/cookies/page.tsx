@@ -5,7 +5,7 @@ import { MarketingPageShell } from "@/components/landing/page-shell";
 export const metadata: Metadata = {
   title: "Cookie Policy - How MyKavo Uses Cookies",
   description:
-    "Plain-English explanation of the cookies MyKavo uses: essential session cookies for signing in, a theme preference, and Google Analytics on marketing pages only. No advertising cookies, no cross-site tracking, no data selling.",
+    "Plain-English explanation of the cookies MyKavo uses: essential session cookies for signing in, a theme preference, and Google Analytics and Microsoft Clarity on marketing pages only. No advertising cookies, no data selling.",
   keywords: [
     "MyKavo cookie policy",
     "website monitoring cookies",
@@ -79,6 +79,18 @@ export default function CookiePolicyPage() {
               you use after signing in has no analytics cookies at all.
             </td>
           </tr>
+          <tr>
+            <td>Analytics</td>
+            <td>Microsoft Clarity cookies (_clck, _clsk, and Microsoft&apos;s MUID)</td>
+            <td>
+              Heatmaps and anonymised session recordings that show where visitors click and
+              scroll, so we can find confusing parts of our pages
+            </td>
+            <td>
+              Public marketing pages only. Not loaded in the dashboard, on client reports or on
+              sign-in pages, and the dashboard is masked from it.
+            </td>
+          </tr>
         </tbody>
       </table>
 
@@ -107,11 +119,19 @@ export default function CookiePolicyPage() {
         _ga. We use this data only in aggregate; we do not use it to build advertising profiles,
         and it is not present anywhere inside the signed-in dashboard.
       </p>
+      <p>
+        On the same public pages we also use Microsoft Clarity, which records anonymised
+        heatmaps and session replays - where people click, scroll and get stuck - so we can
+        improve the pages. Clarity masks what visitors type, and we do not load it in the
+        dashboard, on client reports or on sign-in pages. It sets cookies named _clck and _clsk,
+        and Microsoft may set its own MUID cookie. Microsoft processes this data under its{" "}
+        <a href="https://privacy.microsoft.com/privacystatement">privacy statement</a>.
+      </p>
 
       <h2>What we do not do</h2>
       <ul>
         <li>No advertising cookies and no advertising networks of any kind.</li>
-        <li>No cross-site tracking or retargeting pixels.</li>
+        <li>No retargeting pixels, and no tracking of any kind inside the signed-in app.</li>
         <li>No selling or renting of your data to anyone, ever.</li>
         <li>No analytics cookies inside the dashboard where you manage your websites.</li>
       </ul>

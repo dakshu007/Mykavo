@@ -56,7 +56,9 @@ export default async function DashboardLayout({
   const appApproved = canDownloadApp(appStatus);
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
+    // data-clarity-mask: if Clarity is already running (a visitor came in from a
+    // public page without a reload), it masks everything in the signed-in app.
+    <div data-clarity-mask="True" className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
       <CommandPalette
         isBlogAdmin={isBlogAdmin(session.user.email)}
         isPlatformAdmin={isPlatformAdmin(session.user.email)}

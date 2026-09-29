@@ -18,6 +18,12 @@ const GTM = "https://www.googletagmanager.com";
 const GA = "https://*.google-analytics.com";
 const GA_ANALYTICS = "https://*.analytics.google.com";
 const DODO_CHECKOUT = "https://checkout.dodopayments.com";
+/**
+ * Microsoft Clarity on public pages. Scripts come from exactly two hosts (the
+ * tag and the bundle it loads); only the data collector varies by subdomain.
+ */
+const CLARITY = "https://www.clarity.ms https://scripts.clarity.ms";
+const CLARITY_COLLECT = "https://*.clarity.ms https://c.bing.com";
 /** /video-tutorials plays videos in YouTube's privacy-enhanced player. */
 const YOUTUBE_EMBED = "https://www.youtube-nocookie.com";
 
@@ -39,13 +45,13 @@ const YOUTUBE_EMBED = "https://www.youtube-nocookie.com";
  */
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${GTM} https://www.google-analytics.com`,
+  `script-src 'self' 'unsafe-inline' ${GTM} https://www.google-analytics.com ${CLARITY}`,
   // Next.js and Tailwind both emit inline styles; there is no nonce-free
   // alternative, and injected CSS is a far smaller prize than injected JS.
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' ${GA} ${GA_ANALYTICS} ${GTM}`,
+  `connect-src 'self' ${GA} ${GA_ANALYTICS} ${GTM} ${CLARITY_COLLECT}`,
   `frame-src 'self' ${DODO_CHECKOUT} ${YOUTUBE_EMBED}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Clarity } from "@/components/analytics/clarity";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
 import { site } from "@/config/site";
@@ -129,6 +130,8 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${GA_MEASUREMENT_ID}', { allow_google_signals: false, allow_ad_personalization_signals: false });`}
             </Script>
+            {/* Microsoft Clarity: public pages only - see components/analytics/clarity.tsx. */}
+            <Clarity />
           </>
         )}
       </body>
