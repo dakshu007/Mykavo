@@ -84,11 +84,16 @@ export async function getMarketingOverview(): Promise<MarketingOverview> {
     }
   };
 
+  const audiencesP = guard("audiences", findAudiences);
   const [account, report, audiences, campaigns, senders, domains, accounts, optedOut, syncs] = await Promise.all([
     guard("account", brevoAccount),
     guard("report", () => brevoReport(30)),
-    guard("audiences", findAudiences),
-    guard("campaigns", () => brevoCampaigns(30)),
+    audiencesP,
+    // Free Brevo plans cannot tag campaigns, so MyKavo's are also recognised by its lists.
+    guard("campaigns", async () => {
+      const lists = await audiencesP;
+      return brevoCampaigns(30, lists ? Object.values(lists).map((a) => a.id) : []);
+    }),
     guard("senders", brevoSenders),
     guard("senders", brevoDomains),
     prisma.user.count({ where: { ownedWorkspaces: { some: {} } } }),

@@ -25,5 +25,5 @@ export default async function NewCampaignPage() {
     subscribers: found?.[k].subscribers ?? 0,
   }));
   const firstName = displayPersonName(session.user.name, session.user.email).split(/\s+/)[0] ?? "";
-  return <CampaignComposer audiences={audiences} adminEmail={session.user.email} adminFirstName={firstName} />;
+  return <CampaignComposer audiences={audiences} adminFirstName={firstName} />;
 }

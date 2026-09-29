@@ -224,7 +224,10 @@ export interface BrevoCampaign {
   stats: BrevoCampaignStats | null;
 }
 
-type RawCampaign = Omit<BrevoCampaign, "stats"> & { statistics?: { globalStats?: Partial<BrevoCampaignStats> } };
+type RawCampaign = Omit<BrevoCampaign, "stats"> & {
+  statistics?: { globalStats?: Partial<BrevoCampaignStats> };
+  recipients?: { lists?: number[] };
+};
 
 function toCampaign(c: RawCampaign): BrevoCampaign {
   const g = c.statistics?.globalStats;
@@ -252,12 +255,20 @@ function toCampaign(c: RawCampaign): BrevoCampaign {
   };
 }
 
-/** Recent campaigns MyKavo created (tagged "mykavo"); the account may hold other brands' too. */
-export async function brevoCampaigns(limit = 50): Promise<BrevoCampaign[]> {
+/**
+ * Recent campaigns MyKavo created; the account may hold other brands' too.
+ * A MyKavo campaign is tagged "mykavo" where the Brevo plan allows campaign
+ * tags, and on plans that do not (Free), it is the one sent to the MyKavo
+ * lists (`mykavoListIds`).
+ */
+export async function brevoCampaigns(limit = 50, mykavoListIds: number[] = []): Promise<BrevoCampaign[]> {
   const data = await brevo<{ campaigns?: RawCampaign[] }>("/emailCampaigns", {
     query: { limit, sort: "desc", statistics: "globalStats", excludeHtmlContent: true },
   });
-  return (data.campaigns ?? []).filter((c) => c.tag === MYKAVO_CAMPAIGN_TAG).map(toCampaign);
+  const ours = new Set(mykavoListIds);
+  return (data.campaigns ?? [])
+    .filter((c) => c.tag === MYKAVO_CAMPAIGN_TAG || (c.recipients?.lists ?? []).some((id) => ours.has(id)))
+    .map(toCampaign);
 }
 
 export const MYKAVO_CAMPAIGN_TAG = "mykavo";
@@ -270,20 +281,28 @@ export async function brevoCreateCampaign(input: {
   listIds: number[];
   replyTo?: string;
 }): Promise<number> {
-  const data = await brevo<{ id: number }>("/emailCampaigns", {
-    method: "POST",
-    body: {
-      name: input.name,
-      subject: input.subject,
-      previewText: input.previewText || undefined,
-      sender: marketingSender(),
-      htmlContent: input.htmlContent,
-      recipients: { listIds: input.listIds },
-      tag: MYKAVO_CAMPAIGN_TAG,
-      ...(input.replyTo ? { replyTo: input.replyTo } : {}),
-    },
-  });
-  return data.id;
+  const body = {
+    name: input.name,
+    subject: input.subject,
+    previewText: input.previewText || undefined,
+    sender: marketingSender(),
+    htmlContent: input.htmlContent,
+    recipients: { listIds: input.listIds },
+    ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+  };
+  try {
+    return (await brevo<{ id: number }>("/emailCampaigns", { method: "POST", body: { ...body, tag: MYKAVO_CAMPAIGN_TAG } })).id;
+  } catch (err) {
+    // Brevo's Free plan refuses campaign tags ("405: You are not allowed to
+    // avail tag option"). The campaign is still MyKavo's by its lists.
+    if (!(err instanceof BrevoError && campaignTagRefused(err))) throw err;
+    return (await brevo<{ id: number }>("/emailCampaigns", { method: "POST", body })).id;
+  }
+}
+
+/** Brevo turned down the campaign tag itself (a plan limit), not the campaign. */
+export function campaignTagRefused(err: BrevoError): boolean {
+  return err.status === 405 || /\btag\b/i.test(err.message);
 }
 
 /** Replace a draft campaign's content and audience (same fields as create). */

@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { BrevoError, brevoConfigured, brevoSchedule, brevoSendNow, brevoSendTest } from "@mykavo/email";
+import { BrevoError, brevoConfigured, brevoSchedule, brevoSendNow } from "@mykavo/email";
 import { adminRequest, readJson } from "@/lib/automations-api";
 import { logger } from "@/lib/logger";
 
 /**
- * Act on a saved campaign: send a test to the signed-in admin (and only to
- * them), send it now, or schedule it. Platform admins only. The composer
- * asks for confirmation, with the audience size, before "send".
+ * Act on a saved campaign: send it now, or schedule it. Platform admins
+ * only. The composer asks for confirmation, with the audience size, before
+ * "send". Test sends go through ../test (no saved campaign needed).
  */
 
 type Params = { params: Promise<{ id: string }> };
 
 const schema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("test") }),
   z.object({ action: z.literal("send"), confirm: z.literal(true) }),
   z.object({ action: z.literal("schedule"), scheduledAt: z.string().datetime({ offset: true }) }),
 ]);
@@ -30,10 +29,6 @@ export async function POST(request: Request, { params }: Params) {
 
   const action = parsed.data;
   try {
-    if (action.action === "test") {
-      await brevoSendTest(id, [req.email]);
-      return NextResponse.json({ ok: true, sentTo: req.email });
-    }
     if (action.action === "schedule") {
       const at = new Date(action.scheduledAt);
       if (at.getTime() < Date.now() + 5 * 60_000) {

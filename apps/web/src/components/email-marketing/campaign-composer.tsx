@@ -42,17 +42,15 @@ function Field({ id, label, hint, error, children }: { id: string; label: string
 }
 
 /**
- * Write a campaign, see it exactly as it will look, test it on yourself,
- * then send or schedule it through Brevo. Sending asks first, with the
+ * Write a campaign, see it exactly as it will look, send a test to the
+ * team's test inbox, then send or schedule it through Brevo. Sending asks first, with the
  * number of people it will reach.
  */
 export function CampaignComposer({
   audiences,
-  adminEmail,
   adminFirstName,
 }: {
   audiences: ComposerAudience[];
-  adminEmail: string;
   adminFirstName: string;
 }) {
   const named = (s: string) => s.replace(/\{firstName\}/g, adminFirstName || "there");
@@ -129,7 +127,31 @@ export function CampaignComposer({
     }
   }
 
-  async function act(action: "test" | "send" | "schedule") {
+  /** Send the email as it stands to the team's test inbox - no draft needed. */
+  async function sendTest() {
+    setBusy("test");
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/email-marketing/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const body = (await res.json().catch(() => ({}))) as { sentTo?: string; error?: string; errors?: Errors };
+      if (!res.ok) {
+        setErrors(body.errors ?? {});
+        setMessage({ tone: "error", text: body.error ?? "Could not send the test." });
+      } else {
+        setErrors({});
+        setMessage({ tone: "ok", text: `Test sent to ${body.sentTo ?? "the test inbox"}.` });
+      }
+    } catch {
+      setMessage({ tone: "error", text: "Network error - try again." });
+    }
+    setBusy(null);
+  }
+
+  async function act(action: "send" | "schedule") {
     const id = await save();
     if (!id) return;
     setBusy(action);
@@ -139,18 +161,12 @@ export function CampaignComposer({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(
-          action === "send"
-            ? { action, confirm: true }
-            : action === "schedule"
-              ? { action, scheduledAt: new Date(scheduleAt).toISOString() }
-              : { action },
+          action === "send" ? { action, confirm: true } : { action, scheduledAt: new Date(scheduleAt).toISOString() },
         ),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         setMessage({ tone: "error", text: body.error ?? "Brevo did not accept that." });
-      } else if (action === "test") {
-        setMessage({ tone: "ok", text: `Test sent to ${adminEmail}.` });
       } else {
         router.push("/dashboard/email-marketing");
         router.refresh();
@@ -240,11 +256,11 @@ export function CampaignComposer({
                 {busy === "save" ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save draft
               </button>
               <button
-                onClick={() => void act("test")}
+                onClick={() => void sendTest()}
                 disabled={busy !== null}
                 className="inline-flex h-10 items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium text-ink hover:bg-line/60 disabled:opacity-60"
               >
-                {busy === "test" ? <Loader2 className="size-4 animate-spin" /> : <TestTube2 className="size-4" />} Send me a test
+                {busy === "test" ? <Loader2 className="size-4 animate-spin" /> : <TestTube2 className="size-4" />} Send a test
               </button>
               <button
                 onClick={() => setConfirm(true)}

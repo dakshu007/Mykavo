@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { marketingProvider, sendCreditsLeft, sendMarketingEmail, sendViaBrevo } from "./brevo";
+import { brevoCampaigns, brevoCreateCampaign, marketingProvider, sendCreditsLeft, sendMarketingEmail, sendViaBrevo } from "./brevo";
 import { addContactNow, membership, pushContacts, type Audience, type AudienceKey, type SyncContact } from "./brevo-sync";
 import { campaignEmail, toBrevoTags } from "./templates";
 
@@ -164,5 +164,48 @@ describe("adding a signup straight away", () => {
     respond = () => ({ status: 200, body: { folders: [] } });
     expect(await addContactNow(contact({}))).toBe(false);
     expect(calls.some((c) => c.method === "POST")).toBe(false);
+  });
+});
+
+describe("campaigns on Brevo plans without campaign tags", () => {
+  const input = { name: "Founder note", subject: "Hi", previewText: "", htmlContent: "<p>x</p>", listIds: [13] };
+
+  it("tags the campaign when the plan allows it", async () => {
+    respond = () => ({ status: 201, body: { id: 7 } });
+    expect(await brevoCreateCampaign(input)).toBe(7);
+    expect(calls).toHaveLength(1);
+    expect((calls[0].body as { tag?: string }).tag).toBe("mykavo");
+  });
+
+  it("creates it untagged when Brevo refuses the tag (Free plan)", async () => {
+    respond = (c) =>
+      (c.body as { tag?: string }).tag
+        ? { status: 405, body: { code: "method_not_allowed", message: "You are not allowed to avail tag option for your campaign" } }
+        : { status: 201, body: { id: 8 } };
+    expect(await brevoCreateCampaign(input)).toBe(8);
+    expect(calls).toHaveLength(2);
+    expect((calls[1].body as { tag?: string }).tag).toBeUndefined();
+    expect((calls[1].body as { recipients: unknown }).recipients).toEqual({ listIds: [13] });
+  });
+
+  it("does not retry other failures", async () => {
+    respond = () => ({ status: 400, body: { code: "invalid_parameter", message: "sender is invalid" } });
+    await expect(brevoCreateCampaign(input)).rejects.toThrow("sender is invalid");
+    expect(calls).toHaveLength(1);
+  });
+
+  it("lists MyKavo's campaigns by tag or by the MyKavo lists, never other brands'", async () => {
+    respond = () => ({
+      status: 200,
+      body: {
+        campaigns: [
+          { id: 1, name: "tagged", status: "sent", tag: "mykavo", createdAt: "2026-09-01" },
+          { id: 2, name: "untagged, our list", status: "draft", createdAt: "2026-09-02", recipients: { lists: [15] } },
+          { id: 3, name: "other brand", status: "sent", createdAt: "2026-09-03", recipients: { lists: [4] } },
+        ],
+      },
+    });
+    const ids = (await brevoCampaigns(30, [13, 14, 15, 16])).map((c) => c.id);
+    expect(ids).toEqual([1, 2]);
   });
 });
