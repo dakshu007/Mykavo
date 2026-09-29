@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { AUDIENCE_KEYS, campaignEmail, type AudienceKey } from "@mykavo/email";
+import {
+  AUDIENCE_KEYS,
+  campaignEmail,
+  fromBrevoTags,
+  readCampaignSource,
+  type AudienceKey,
+  type BrevoCampaignDetail,
+} from "@mykavo/email";
 import { isSafeButtonUrl } from "@mykavo/shared";
 import { env } from "@/lib/env";
 
@@ -48,4 +55,47 @@ export function renderCampaign(input: CampaignInput, mode: Parameters<typeof cam
     { heading: input.heading, body: input.body, buttonLabel: input.buttonLabel, buttonUrl: absoluteButtonUrl(input.buttonUrl) },
     mode,
   );
+}
+
+/** The composer's fields, as a saved draft reopens them. */
+export interface CampaignForm {
+  name: string;
+  subject: string;
+  previewText: string;
+  heading: string;
+  body: string;
+  buttonLabel: string;
+  buttonUrl: string;
+  audience: AudienceKey;
+}
+
+/** Back from an absolute app link to the path the composer shows. */
+export function relativeButtonUrl(url: string): string {
+  const base = appBase();
+  if (url === base) return "/";
+  return url.startsWith(`${base}/`) ? url.slice(base.length) : url;
+}
+
+/**
+ * A Brevo campaign as composer fields, or null when its content is not a
+ * MyKavo campaign the composer can reopen. The audience is whichever MyKavo
+ * list it goes to.
+ */
+export function campaignFormFromBrevo(
+  c: BrevoCampaignDetail,
+  listIdByAudience: Record<AudienceKey, number>,
+): CampaignForm | null {
+  const source = readCampaignSource(c.htmlContent);
+  if (!source) return null;
+  const audience = AUDIENCE_KEYS.find((k) => c.listIds.includes(listIdByAudience[k])) ?? "all";
+  return {
+    name: c.name,
+    subject: fromBrevoTags(c.subject),
+    previewText: fromBrevoTags(c.previewText),
+    heading: source.heading,
+    body: source.body,
+    buttonLabel: source.buttonLabel,
+    buttonUrl: source.buttonUrl ? relativeButtonUrl(source.buttonUrl) : "/dashboard",
+    audience,
+  };
 }

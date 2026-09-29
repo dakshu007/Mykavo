@@ -14,7 +14,7 @@ export interface ComposerAudience {
   subscribers: number;
 }
 
-type Form = {
+export type Form = {
   name: string;
   subject: string;
   previewText: string;
@@ -49,13 +49,16 @@ function Field({ id, label, hint, error, children }: { id: string; label: string
 export function CampaignComposer({
   audiences,
   adminFirstName,
+  initial,
 }: {
   audiences: ComposerAudience[];
   adminFirstName: string;
+  /** A saved Brevo draft to reopen; omitted for a new campaign. */
+  initial?: { id: number; form: Form };
 }) {
   const named = (s: string) => s.replace(/\{firstName\}/g, adminFirstName || "there");
   const router = useRouter();
-  const [form, setForm] = useState<Form>({
+  const [form, setForm] = useState<Form>(initial?.form ?? {
     name: "",
     subject: "",
     previewText: "",
@@ -67,8 +70,8 @@ export function CampaignComposer({
   });
   const [errors, setErrors] = useState<Errors>({});
   const [html, setHtml] = useState("");
-  const [campaignId, setCampaignId] = useState<number | null>(null);
-  const [savedJson, setSavedJson] = useState("");
+  const [campaignId, setCampaignId] = useState<number | null>(initial?.id ?? null);
+  const [savedJson, setSavedJson] = useState(initial ? JSON.stringify(initial.form) : "");
   const [busy, setBusy] = useState<null | "save" | "test" | "send" | "schedule">(null);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [confirm, setConfirm] = useState(false);
@@ -186,7 +189,7 @@ export function CampaignComposer({
           <Link href="/dashboard/email-marketing" className="inline-flex items-center gap-1.5 text-[13px] text-ink-secondary hover:text-ink">
             <ArrowLeft className="size-3.5" aria-hidden /> Email marketing
           </Link>
-          <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-ink">New campaign</h1>
+          <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-ink">{initial ? "Edit campaign" : "New campaign"}</h1>
         </div>
         {campaignId && <span className="text-[12px] text-ink-faint">Draft #{campaignId} in Brevo{dirty ? " · unsaved changes" : ""}</span>}
       </div>

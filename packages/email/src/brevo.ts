@@ -273,6 +273,34 @@ export async function brevoCampaigns(limit = 50, mykavoListIds: number[] = []): 
 
 export const MYKAVO_CAMPAIGN_TAG = "mykavo";
 
+export interface BrevoCampaignDetail {
+  id: number;
+  name: string;
+  subject: string;
+  previewText: string;
+  status: string;
+  tag?: string;
+  htmlContent: string;
+  listIds: number[];
+  scheduledAt?: string;
+}
+
+/** One campaign with its content, for reopening a draft. */
+export async function brevoCampaign(id: number): Promise<BrevoCampaignDetail> {
+  const c = await brevo<Partial<BrevoCampaignDetail> & { recipients?: { lists?: number[] } }>(`/emailCampaigns/${id}`);
+  return {
+    id: c.id ?? id,
+    name: c.name ?? "",
+    subject: c.subject ?? "",
+    previewText: c.previewText ?? "",
+    status: c.status ?? "",
+    tag: c.tag,
+    htmlContent: c.htmlContent ?? "",
+    listIds: c.recipients?.lists ?? [],
+    scheduledAt: c.scheduledAt,
+  };
+}
+
 export async function brevoCreateCampaign(input: {
   name: string;
   subject: string;

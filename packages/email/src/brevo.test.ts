@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { brevoCampaigns, brevoCreateCampaign, marketingProvider, sendCreditsLeft, sendMarketingEmail, sendViaBrevo } from "./brevo";
 import { addContactNow, membership, pushContacts, type Audience, type AudienceKey, type SyncContact } from "./brevo-sync";
-import { campaignEmail, toBrevoTags } from "./templates";
+import { campaignEmail, fromBrevoTags, readCampaignSource, toBrevoTags } from "./templates";
 
 type Call = { url: string; method: string; body: unknown; key: string | null };
 let calls: Call[] = [];
@@ -207,5 +207,46 @@ describe("campaigns on Brevo plans without campaign tags", () => {
     });
     const ids = (await brevoCampaigns(30, [13, 14, 15, 16])).map((c) => c.id);
     expect(ids).toEqual([1, 2]);
+  });
+});
+
+describe("reopening a saved campaign", () => {
+  const data = {
+    heading: "Thanks for trying MyKavo",
+    body: "Hi {firstName},\n\nOne question: what's the site you'd <hate> to break?\nJust reply.\n\nDakshesh",
+    buttonLabel: "Open MyKavo",
+    buttonUrl: "https://mykavo.app/dashboard",
+  };
+
+  it("reads the composer's fields back from the campaign HTML", () => {
+    const html = campaignEmail(data, { kind: "brevo" });
+    expect(readCampaignSource(html)).toEqual(data);
+  });
+
+  it("rebuilds drafts saved before the fields were embedded", () => {
+    const legacy = campaignEmail(data, { kind: "brevo" }).replace(/<!--mykavo-campaign:[^>]*-->/, "");
+    expect(readCampaignSource(legacy)).toEqual(data);
+  });
+
+  it("still reads a draft Brevo re-serialised (spacing, attribute order)", () => {
+    const legacy = campaignEmail(data, { kind: "brevo" })
+      .replace(/<!--mykavo-campaign:[^>]*-->/, "")
+      .replace(/color:#5c6270/g, "color: #5c6270")
+      .replace(/<a href="([^"]*)" style="([^"]*)">/, '<a style="$2" href="$1">');
+    expect(readCampaignSource(legacy)).toEqual(data);
+  });
+
+  it("is null for HTML that is not a MyKavo campaign", () => {
+    expect(readCampaignSource("<html><body><p>Hello</p></body></html>")).toBeNull();
+  });
+
+  it("keeps the fields out of what readers see", () => {
+    const html = campaignEmail(data, { kind: "brevo" });
+    expect(html).toMatch(/<!--mykavo-campaign:[A-Za-z0-9_-]+--><\/body>/);
+    expect(html.replace(/<!--[\s\S]*?-->/g, "")).not.toContain("mykavo-campaign");
+  });
+
+  it("turns Brevo's name tag back into {firstName}", () => {
+    expect(fromBrevoTags(toBrevoTags("Hi {firstName}, a question for {firstName}"))).toBe("Hi {firstName}, a question for {firstName}");
   });
 });

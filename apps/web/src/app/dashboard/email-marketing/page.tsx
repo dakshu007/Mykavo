@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ArrowRight, Check, Circle, Megaphone, Plus, Send, ShieldCheck, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Circle, Megaphone, Pencil, Plus, Send, ShieldCheck, Users } from "lucide-react";
 import { requireSession } from "@/lib/session";
 import { isPlatformAdmin } from "@/lib/platform-admin";
 import { getMarketingOverview, type MarketingOverview } from "@/lib/email-marketing";
@@ -289,8 +289,22 @@ export default async function EmailMarketingPage() {
                 {o.campaigns.map((c) => (
                   <tr key={c.id}>
                     <td className="px-2 py-2.5">
-                      <p className="font-medium text-ink">{c.name}</p>
-                      <p className="truncate text-[12px] text-ink-secondary">{c.subject}</p>
+                      {c.status === "draft" ? (
+                        <Link href={`/dashboard/email-marketing/${c.id}`} className="group block">
+                          <p className="flex items-center gap-2 font-medium text-ink group-hover:text-accent">
+                            {c.name}
+                            <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-ink">
+                              <Pencil className="size-3" aria-hidden /> Edit
+                            </span>
+                          </p>
+                          <p className="truncate text-[12px] text-ink-secondary">{c.subject}</p>
+                        </Link>
+                      ) : (
+                        <>
+                          <p className="font-medium text-ink">{c.name}</p>
+                          <p className="truncate text-[12px] text-ink-secondary">{c.subject}</p>
+                        </>
+                      )}
                     </td>
                     <td className="px-2 py-2.5">
                       <span

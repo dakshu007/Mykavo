@@ -1378,9 +1378,75 @@ export interface CampaignEmailData {
 
 const FIRST_NAME_SLOT = "\u0000FIRSTNAME\u0000";
 
+const BREVO_FIRST_NAME = '{{ contact.FIRSTNAME | default : "there" }}';
+
 /** Brevo's per-contact first name, for campaign subjects and preview text. */
 export function toBrevoTags(line: string): string {
-  return line.replace(/\{firstName\}/g, '{{ contact.FIRSTNAME | default : "there" }}');
+  return line.replace(/\{firstName\}/g, BREVO_FIRST_NAME);
+}
+
+/** The reverse of toBrevoTags, for loading a saved campaign back into the composer. */
+export function fromBrevoTags(line: string): string {
+  return line.split(BREVO_FIRST_NAME).join("{firstName}");
+}
+
+/** What the composer wrote, carried inside a Brevo campaign so a draft can be reopened. */
+export interface CampaignSource {
+  heading: string;
+  body: string;
+  buttonLabel: string;
+  buttonUrl: string;
+}
+
+const SOURCE_MARK = "mykavo-campaign:";
+
+/** An HTML comment holding the composer's fields - invisible in every inbox. */
+function campaignSourceComment(src: CampaignSource): string {
+  return `<!--${SOURCE_MARK}${Buffer.from(JSON.stringify(src), "utf8").toString("base64url")}-->`;
+}
+
+const unesc = (s: string) =>
+  s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+
+/**
+ * The composer's fields from a Brevo campaign's HTML: from the embedded
+ * comment when there is one, otherwise read back out of the MyKavo campaign
+ * template (drafts saved before the comment existed). null when neither fits.
+ */
+export function readCampaignSource(html: string): CampaignSource | null {
+  const mark = html.match(/<!--mykavo-campaign:([A-Za-z0-9_-]+)-->/);
+  if (mark) {
+    try {
+      const v = JSON.parse(Buffer.from(mark[1], "base64url").toString("utf8")) as Partial<CampaignSource>;
+      if (typeof v.heading === "string" && typeof v.body === "string") {
+        return {
+          heading: v.heading,
+          body: v.body,
+          buttonLabel: typeof v.buttonLabel === "string" ? v.buttonLabel : "",
+          buttonUrl: typeof v.buttonUrl === "string" ? v.buttonUrl : "",
+        };
+      }
+    } catch {
+      // Fall through to reading the template.
+    }
+  }
+  const text = (s: string) => fromBrevoTags(unesc(s.replace(/<br\s*\/?>/g, "\n")));
+  const heading = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
+  if (!heading) return null;
+  // Matched loosely: Brevo may re-serialise the HTML it stores (spacing, attribute order).
+  const paras = [...html.matchAll(/<p\b[^>]*color:\s*#5c6270[^>]*>([\s\S]*?)<\/p>/gi)].map((m) => text(m[1]));
+  const cta = html.match(/<a\b(?=[^>]*background:\s*#3556f4)[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/i);
+  return {
+    heading: text(heading[1]).trim(),
+    body: paras.join("\n\n"),
+    buttonLabel: cta ? unesc(cta[2]) : "",
+    buttonUrl: cta ? unesc(cta[1]) : "",
+  };
 }
 
 /**
@@ -1410,5 +1476,9 @@ export function campaignEmail(d: CampaignEmailData, mode: { kind: "brevo" } | { 
     ${paras}
     ${cta ? `<div style="margin-top:22px">${button(d.buttonUrl, fillPlaceholders(cta, { firstName: mode.kind === "preview" ? mode.firstName : "" }))}</div>` : ""}
   `;
-  return lifecycleShell(inner, mode.kind === "brevo" ? "{{ unsubscribe }}" : "#");
+  if (mode.kind !== "brevo") return lifecycleShell(inner, "#");
+  return lifecycleShell(inner, "{{ unsubscribe }}").replace(
+    "</body>",
+    `${campaignSourceComment({ heading: d.heading, body: d.body, buttonLabel: d.buttonLabel, buttonUrl: d.buttonUrl })}</body>`,
+  );
 }
