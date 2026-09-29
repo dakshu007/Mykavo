@@ -56,7 +56,7 @@ export function WhatItIsSection() {
           <p className={`${eyebrow} mb-4`}>{"// what mykavo is //"}</p>
           <h2
             id="what-it-is-heading"
-            className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}
+            className={`${fontDisplay} text-[2rem] leading-[1.06] text-[#151515] min-[360px]:text-4xl sm:text-5xl`}
           >
             MyKavo is{" "}
             {/*

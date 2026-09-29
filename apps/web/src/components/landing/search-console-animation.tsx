@@ -3,7 +3,7 @@
 import { useId, type CSSProperties, type ReactNode } from "react";
 import { BarChart3, Check, MousePointer2, RefreshCw, TrendingDown } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
-import { useStageClock } from "./use-stage-clock";
+import { stageClip, useStageClock } from "./use-stage-clock";
 
 /**
  * The homepage Search Console animation, in five labelled steps:
@@ -717,14 +717,14 @@ const frameShell = (f: GscFrame, w: number, h: number): CSSProperties => ({
 function Landscape() {
   const W = 1080;
   const H = 614;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
   const f = gscFrameAt(t);
   const winW = 1068;
   const winH = 484;
   const pad = 18;
   const leftW = 580;
   return (
-    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
+    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0" })}>
         <Rail f={f} compact={false} />
         <Caption f={f} compact={false} />
@@ -768,13 +768,13 @@ function RangePills() {
 function Portrait() {
   const W = 400;
   const H = 804;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
   const f = gscFrameAt(t);
   const winW = 388;
   const winH = 640;
   const pad = 12;
   return (
-    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
+    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0" })}>
         <Rail f={f} compact />
         <div style={{ height: 110 }}>

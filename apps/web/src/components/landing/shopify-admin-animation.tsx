@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
-import { useStageClock } from "./use-stage-clock";
+import { stageClip, useStageClock } from "./use-stage-clock";
 
 /**
  * The /shopify-app hero animation: a theme publish, inside the Shopify
@@ -489,10 +489,10 @@ const LABEL =
 function Landscape() {
   const W = 1080;
   const H = 610;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
   const f = shopFrameAt(t);
   return (
-    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
+    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK, opacity: f.fade })}>
         <Rail f={f} compact={false} />
         <Caption f={f} compact={false} />
@@ -507,10 +507,10 @@ function Landscape() {
 function Portrait() {
   const W = 400;
   const H = 660;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
   const f = shopFrameAt(t);
   return (
-    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
+    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK, opacity: f.fade })}>
         <Rail f={f} compact />
         <div style={{ height: 100 }}>

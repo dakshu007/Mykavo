@@ -108,8 +108,8 @@ export default function BestWebsiteMonitoringToolsPage() {
 
   return (
     <>
-      {jsonLdScript(faqJsonLd(faqs))}
-      {jsonLdScript(itemListJsonLd)}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd(faqs)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(itemListJsonLd) }} />
 
       <MarketingPageShell
         eyebrowText="comparison"

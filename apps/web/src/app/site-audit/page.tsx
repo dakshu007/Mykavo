@@ -180,10 +180,10 @@ export default function SiteAuditPage() {
       <main>
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-5 pb-16 pt-32 sm:pt-36 lg:px-8">
-          <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div>
               <p className={`${eyebrow} mb-4`}>{"// site audit //"}</p>
-              <h1 className={`${fontDisplay} text-4xl leading-[1.05] sm:text-5xl`}>
+              <h1 className={`${fontDisplay} text-[2rem] leading-[1.05] min-[360px]:text-4xl sm:text-5xl`}>
                 Every technical issue.
                 <br />
                 <span className="relative inline-block whitespace-nowrap">

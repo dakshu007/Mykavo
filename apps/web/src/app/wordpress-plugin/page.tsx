@@ -442,7 +442,7 @@ export default function WordPressPluginPage() {
               button text and more.
             </p>
             <div className="mt-14 grid gap-6 lg:grid-cols-2">
-              <figure>
+              <figure className="min-w-0">
                 <Shot
                   src="/wordpress/before-after.webp"
                   alt="A change in WordPress with a before-and-after slider across the page screenshots"
@@ -453,7 +453,7 @@ export default function WordPressPluginPage() {
                   Drag across the old and new page, or switch to the highlighted differences.
                 </figcaption>
               </figure>
-              <figure>
+              <figure className="min-w-0">
                 <Shot
                   src="/wordpress/values.webp"
                   alt="A change showing the old and new values side by side"

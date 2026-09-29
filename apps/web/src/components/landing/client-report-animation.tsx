@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { ArrowRight, CalendarClock, Check, FileDown, Inbox, MousePointer2 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
-import { useStageClock } from "./use-stage-clock";
+import { stageClip, useStageClock } from "./use-stage-clock";
 
 /**
  * The client reports animation, in three steps:
@@ -408,10 +408,10 @@ const LABEL =
   "Animation: a monthly client report. 1, Build: the report assembles - 99.98% uptime, 412 ms average response, 7 changes caught, 30 scans, SSL valid, Lighthouse scores 91, 98, 100 and 96. 2, Brand: the agency picks its colour and logo, and the MyKavo report becomes a Northstar Studio report. 3, Deliver: the report is scheduled monthly, lands in the client's inbox as a PDF and is opened.";
 
 export function ClientReportAnimation() {
-  const { wrapRef, t, k } = useStageClock(W, STILL_T);
+  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T);
   const f = reportFrameAt(t);
   return (
-    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
+    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK, opacity: f.fade })}>
         <Rail f={f} />
         <InboxPanel f={f} />

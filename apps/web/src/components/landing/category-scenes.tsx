@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { ArrowRight, Check, Globe, X } from "lucide-react";
-import { useStageClock } from "./use-stage-clock";
+import { stageClip, useStageClock } from "./use-stage-clock";
 
 /**
  * One small animation per change category, for the "what MyKavo watches"
@@ -583,10 +583,10 @@ export function CategoryScene({
   severity: string;
   label: string;
 }) {
-  const { wrapRef, t, k } = useStageClock(SCENE_W, 12);
+  const { wrapRef, t, k, fitted } = useStageClock(SCENE_W, 12);
   const Scene = SCENES[scene];
   return (
-    <div ref={wrapRef} role="img" aria-label={label} style={{ position: "relative", width: "100%", aspectRatio: `${SCENE_W} / ${SCENE_H}` }}>
+    <div ref={wrapRef} role="img" aria-label={label} style={{ position: "relative", width: "100%", aspectRatio: `${SCENE_W} / ${SCENE_H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: SCENE_W, height: SCENE_H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK })}>
         <Scene t={t} />
         <Verdict t={t} before={before} after={after} severity={severity} />

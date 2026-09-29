@@ -313,7 +313,7 @@ function Phone({ active }: { active: TabKey }) {
   const tab = TABS.find((t) => t.key === active) ?? TABS[0];
   return (
     <div className="relative mx-auto w-[272px] shrink-0 sm:w-[300px]">
-      <div aria-hidden className="absolute -inset-10 rounded-full bg-[radial-gradient(closest-side,rgba(255,212,0,0.35),transparent)] blur-2xl" />
+      <div aria-hidden className="absolute -inset-x-6 -inset-y-10 rounded-full bg-[radial-gradient(closest-side,rgba(255,212,0,0.35),transparent)] blur-2xl sm:-inset-10" />
       <div className="relative overflow-hidden rounded-[2.6rem] border-[3px] border-[#151515] bg-[#FBFAF3] shadow-[10px_10px_0_#FFD400,10px_10px_0_2px_#151515]">
         <div className="flex items-center justify-between px-6 pt-3">
           <span className="font-mono text-[10px] font-semibold">9:41</span>

@@ -4,7 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Bell, Check, Globe, Mail, RotateCw, Smartphone, X } from "lucide-react";
 import { SlackIcon } from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
-import { useStageClock } from "./use-stage-clock";
+import { stageClip, useStageClock } from "./use-stage-clock";
 
 /**
  * The hero animation: how MyKavo works, in one loop.
@@ -755,10 +755,10 @@ const LABEL =
 function Landscape() {
   const W = 1080;
   const H = 660;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_FRAME_T);
+  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_FRAME_T);
   const f = heroFrameAt(t);
   return (
-    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
+    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <Stage w={W} h={H} k={k}>
         <div style={{ opacity: f.fade, height: "100%" }}>
           <Rail f={f} compact={false} />
@@ -778,10 +778,10 @@ function Landscape() {
 function Portrait() {
   const W = 400;
   const H = 860;
-  const { wrapRef, t, k } = useStageClock(W, STILL_T, FIRST_FRAME_T);
+  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_FRAME_T);
   const f = heroFrameAt(t);
   return (
-    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}` }}>
+    <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <Stage w={W} h={H} k={k}>
         <div style={{ opacity: f.fade, height: "100%" }}>
           <Rail f={f} compact />

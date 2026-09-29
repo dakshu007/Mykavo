@@ -12,6 +12,12 @@ import { useEffect, useRef, useState } from "react";
  * - advance `t` while the wrapper is on screen and the tab is visible,
  * - jump to one still frame (`stillT`) when the visitor prefers reduced motion.
  *
+ * `k` is 1 until the wrapper has been measured (the server cannot know the
+ * screen width), so the full-size stage would stick out past the wrapper
+ * until hydration - on a phone that widened the whole page and let it scroll
+ * sideways. Wrappers use `stageClip(fitted)` to clip the stage until then,
+ * and stay unclipped afterwards so edge shadows still show.
+ *
  * Performance, because these run on the landing page that Lighthouse and
  * every first-time visitor judge us by:
  *
@@ -53,11 +59,15 @@ export function useStageClock(stageWidth: number, stillT: number, startAt = 0) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState(startAt);
   const [k, setK] = useState(1);
+  const [fitted, setFitted] = useState(false);
 
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const measure = () => setK(el.clientWidth / stageWidth);
+    const measure = () => {
+      setK(el.clientWidth / stageWidth);
+      setFitted(true);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -103,5 +113,10 @@ export function useStageClock(stageWidth: number, stillT: number, startAt = 0) {
     };
   }, [stageWidth, stillT, startAt]);
 
-  return { wrapRef, t, k };
+  return { wrapRef, t, k, fitted };
+}
+
+/** Wrapper overflow for a stage: clipped until `k` has been measured. */
+export function stageClip(fitted: boolean): "hidden" | undefined {
+  return fitted ? undefined : "hidden";
 }
