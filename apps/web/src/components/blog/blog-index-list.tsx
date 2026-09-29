@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Search, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { card, fontDisplay } from "@/components/landing/style";
 import { cn } from "@/lib/utils";
 import { coverPalette } from "@/lib/blog-cover";
@@ -81,6 +81,91 @@ function Meta({ post }: { post: BlogIndexPost }) {
   );
 }
 
+/**
+ * The topic chips. On phones they sit in one swipeable row: no scrollbar,
+ * the edge that has more chips behind it fades out, and a small arrow
+ * button slides the row along. From lg up they simply wrap.
+ */
+function TopicRail({ activeKey, children }: { activeKey: string; children: React.ReactNode }) {
+  const railRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: true, end: false });
+
+  const measure = useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setEdges({ start: el.scrollLeft <= 2, end: el.scrollLeft >= max - 2 });
+  }, []);
+
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el) return;
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  // Bring the chosen topic to the middle of the row - horizontally only, so
+  // the page itself never jumps.
+  useEffect(() => {
+    const el = railRef.current;
+    const chip = el?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!el || !chip || el.scrollWidth <= el.clientWidth) return;
+    const left = chip.offsetLeft - (el.clientWidth - chip.offsetWidth) / 2;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollTo({ left: Math.max(0, left), behavior: reduce ? "auto" : "smooth" });
+  }, [activeKey]);
+
+  const nudge = (dir: 1 | -1) => {
+    const el = railRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: reduce ? "auto" : "smooth" });
+  };
+
+  const arrow =
+    "absolute top-1/2 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#151515] bg-white text-[#151515] shadow-[2px_2px_0_#151515] transition-all duration-200 active:translate-x-px active:translate-y-[calc(-50%+1px)] active:shadow-none lg:hidden";
+
+  return (
+    <div className="relative -mx-5 lg:mx-0">
+      <div
+        ref={railRef}
+        onScroll={measure}
+        role="group"
+        aria-label="Filter by topic"
+        style={
+          {
+            "--fade-l": edges.start ? "0px" : "40px",
+            "--fade-r": edges.end ? "0px" : "56px",
+          } as React.CSSProperties
+        }
+        className="flex snap-x gap-2 overflow-x-auto scroll-px-5 px-5 py-1 [mask-image:linear-gradient(to_right,transparent,#000_var(--fade-l),#000_calc(100%_-_var(--fade-r)),transparent)] [scrollbar-width:none] lg:flex-wrap lg:overflow-visible lg:px-0 lg:[mask-image:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {children}
+      </div>
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden
+        onClick={() => nudge(-1)}
+        className={cn(arrow, "left-2", edges.start && "pointer-events-none scale-75 opacity-0")}
+      >
+        <ChevronLeft className="size-4" strokeWidth={2.5} />
+      </button>
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden
+        onClick={() => nudge(1)}
+        className={cn(arrow, "right-2", edges.end && "pointer-events-none scale-75 opacity-0")}
+      >
+        <ChevronRight className="size-4" strokeWidth={2.5} />
+      </button>
+    </div>
+  );
+}
+
 export function BlogIndexList({
   posts,
   topics,
@@ -129,10 +214,15 @@ export function BlogIndexList({
 
   const chip = (active: boolean) =>
     cn(
-      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-all",
+      "inline-flex h-9 shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-full border pl-3.5 pr-1.5 text-[13px] font-semibold transition-all active:scale-[0.97] motion-reduce:active:scale-100",
       active
         ? "border-[#151515] bg-[#151515] text-white shadow-[2px_2px_0_#FFD400]"
         : "border-[#151515]/15 bg-white text-[#151515] hover:border-[#151515]",
+    );
+  const count = (active: boolean) =>
+    cn(
+      "inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-bold tabular-nums",
+      active ? "bg-[#FFD400] text-[#151515]" : "bg-[#151515]/[0.06] text-[#151515]/70",
     );
 
   return (
@@ -140,9 +230,9 @@ export function BlogIndexList({
       {/* Filters: topics on the left, search on the right */}
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         {topics.length > 0 && (
-          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0" role="group" aria-label="Filter by topic">
+          <TopicRail activeKey={topic ?? ""}>
             <button type="button" onClick={() => chooseTopic(null)} className={chip(!topic)} aria-pressed={!topic}>
-              All <span className="opacity-60">{posts.length}</span>
+              All <span className={count(!topic)}>{posts.length}</span>
             </button>
             {topics.map((t) => {
               const active = topic !== null && sameTopic(topic, t.label);
@@ -154,13 +244,13 @@ export function BlogIndexList({
                   className={chip(active)}
                   aria-pressed={active}
                 >
-                  {t.label} <span className="opacity-60">{t.count}</span>
+                  {t.label} <span className={count(active)}>{t.count}</span>
                 </button>
               );
             })}
-          </div>
+          </TopicRail>
         )}
-        <div className="relative w-full shrink-0 lg:w-80">
+        <div className="relative order-first w-full shrink-0 lg:order-none lg:w-80">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#6B6B60]" aria-hidden />
           <input
             type="search"
