@@ -57,7 +57,8 @@ export default async function SiteAuditPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Site Audit</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             Technical SEO crawl - up to {formatLimit(plan.limits.siteAuditPages)} pages per
-            audit on your {plan.name} plan, {plan.limits.siteAuditsPerDay}/day.
+            audit on your {plan.name} plan,{" "}
+            {plan.limits.siteAuditsPerDay === Infinity ? "as many a day as you like" : `${plan.limits.siteAuditsPerDay}/day`}.
           </p>
         </div>
       </div>

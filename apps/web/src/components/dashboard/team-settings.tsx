@@ -141,7 +141,9 @@ export function TeamSettings({
   return (
     <div className="space-y-5">
       <p className="text-[13px] text-ink-secondary">
-        {used} of {maxMembers} seat{maxMembers === 1 ? "" : "s"} used
+        {maxMembers === Infinity
+          ? `${used} seat${used === 1 ? "" : "s"} used - unlimited`
+          : `${used} of ${maxMembers} seat${maxMembers === 1 ? "" : "s"} used`}
         {invites.length > 0 && (
           <span className="text-ink-faint"> (pending invites hold a seat)</span>
         )}

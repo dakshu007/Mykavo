@@ -92,6 +92,7 @@ export {
   type ActiveWebsiteAddon,
   type ConsumedIntent,
 } from "./subscription";
+export { isPlatformAdminEmail, platformAdminEmails } from "./platform-admin";
 export {
   automationSentWhere,
   isMissingTableError,

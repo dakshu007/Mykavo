@@ -133,7 +133,7 @@ export default async function BillingPage({
         <div className="flex flex-wrap items-baseline gap-3">
           <p className="text-3xl font-semibold tracking-tight text-ink">{plan.name}</p>
           <p className="text-sm text-ink-secondary">
-            ${plan.priceMonthlyUsd}/month
+            {plan.unlimited ? "Admin workspace - no charge" : `$${plan.priceMonthlyUsd}/month`}
           </p>
           {isPaid && (
             <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
@@ -182,7 +182,12 @@ export default async function BillingPage({
 
         <FeatureList features={plan.features} />
 
-        {isPaid ? (
+        {plan.unlimited && !subscription?.dodoSubscriptionId ? (
+          <p className="mt-6 text-[13px] text-ink-secondary">
+            This workspace belongs to a MyKavo admin, so it runs on Agency with no limits and
+            nothing to pay. Nothing is billed through Dodo Payments.
+          </p>
+        ) : isPaid ? (
           dodoApiConfigured() ? (
             <div className="mt-6 flex flex-wrap gap-3">
               <a

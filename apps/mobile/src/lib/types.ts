@@ -56,11 +56,12 @@ export interface MeResponse {
   plan: {
     id: PlanId;
     name: string;
+    /** null = unlimited (JSON has no Infinity). */
     limits: {
-      websites: number;
-      pagesPerSite: number;
+      websites: number | null;
+      pagesPerSite: number | null;
       scanFrequency: "WEEKLY" | "DAILY";
-      seats: number;
+      seats: number | null;
     };
   };
 }

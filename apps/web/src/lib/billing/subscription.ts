@@ -10,6 +10,7 @@ import { resolvePlan, type Plan, type PlanId } from "@/config/plans";
 export interface WorkspaceSubscription {
   planId: PlanId;
   grandfathered: boolean;
+  unlimited: boolean;
   status: string;
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: Date | null;
@@ -20,7 +21,7 @@ export interface WorkspaceSubscription {
 /** Resolve a workspace's effective plan (features + limits). */
 export async function getWorkspacePlan(workspaceId: string): Promise<Plan> {
   const ent = await getWorkspaceEntitlement(prisma, workspaceId);
-  return resolvePlan(ent?.planId ?? "free", ent?.grandfathered ?? false);
+  return resolvePlan(ent?.planId ?? "free", ent?.grandfathered ?? false, ent?.unlimited ?? false);
 }
 
 export async function getWorkspaceSubscription(

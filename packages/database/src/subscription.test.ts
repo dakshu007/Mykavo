@@ -47,6 +47,40 @@ describe("getWorkspaceEntitlement", () => {
   it("returns null (Free) when no subscription exists", async () => {
     expect(await getWorkspaceEntitlement(prisma, workspaceId)).toBeNull();
   });
+
+  describe("platform admin's workspace", () => {
+    const saved = { admin: process.env.ADMIN_EMAILS };
+    afterAll(() => {
+      if (saved.admin === undefined) delete process.env.ADMIN_EMAILS;
+      else process.env.ADMIN_EMAILS = saved.admin;
+    });
+
+    it("resolves to unlimited Agency with no subscription", async () => {
+      process.env.ADMIN_EMAILS = `someone@else.test, ${RUN.toUpperCase()}@TEST.LOCAL`;
+      const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+      expect(ent?.planId).toBe("agency");
+      expect(ent?.unlimited).toBe(true);
+      expect(ent?.dodoSubscriptionId).toBeNull();
+    });
+
+    it("keeps a real subscription's billing details", async () => {
+      process.env.ADMIN_EMAILS = `${RUN}@test.local`;
+      await grantPaidPlan(prisma, { workspaceId, planId: "pro", status: "active", dodoSubscriptionId: `sub_${RUN}` });
+      const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+      expect(ent?.planId).toBe("agency");
+      expect(ent?.unlimited).toBe(true);
+      expect(ent?.dodoSubscriptionId).toBe(`sub_${RUN}`);
+    });
+
+    it("does not apply to anyone else", async () => {
+      process.env.ADMIN_EMAILS = "someone@else.test";
+      expect(await getWorkspaceEntitlement(prisma, workspaceId)).toBeNull();
+      await grantPaidPlan(prisma, { workspaceId, planId: "pro", status: "active", dodoSubscriptionId: `sub2_${RUN}` });
+      const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+      expect(ent?.planId).toBe("pro");
+      expect(ent?.unlimited).toBe(false);
+    });
+  });
 });
 
 describe("grantPaidPlan", () => {

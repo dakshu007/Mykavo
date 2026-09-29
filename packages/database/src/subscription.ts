@@ -9,6 +9,7 @@
  */
 
 import type { PrismaClient, Prisma } from "@prisma/client";
+import { isPlatformAdminEmail, platformAdminEmails } from "./platform-admin";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -44,6 +45,12 @@ export interface Entitlement {
   planId: "free" | PaidPlanId;
   /** Pro bought before Agency existed - keeps the features it included then. */
   grandfathered: boolean;
+  /**
+   * The platform admin's own workspaces: Agency with every numeric limit
+   * lifted, and no charge. Decided by the owner's email being on ADMIN_EMAILS
+   * - never stored, so nothing a customer or a webhook writes can grant it.
+   */
+  unlimited: boolean;
   status: string;
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: Date | null;
@@ -51,17 +58,46 @@ export interface Entitlement {
   dodoSubscriptionId: string | null;
 }
 
+/** True when the workspace's owner is a platform admin (ADMIN_EMAILS). */
+async function ownedByPlatformAdmin(db: Db, workspaceId: string): Promise<boolean> {
+  // No allowlist configured: skip the lookup entirely.
+  if (platformAdminEmails().length === 0) return false;
+  const ws = await db.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { owner: { select: { email: true } } },
+  });
+  return isPlatformAdminEmail(ws?.owner.email);
+}
+
 export async function getWorkspaceEntitlement(
   db: Db,
   workspaceId: string,
 ): Promise<Entitlement | null> {
-  const sub = await db.subscription.findUnique({ where: { workspaceId } });
+  const [sub, admin] = await Promise.all([
+    db.subscription.findUnique({ where: { workspaceId } }),
+    ownedByPlatformAdmin(db, workspaceId),
+  ]);
+  if (admin) {
+    // A real subscription, if the admin ever bought one, keeps its billing
+    // details so it can still be managed or cancelled.
+    return {
+      planId: "agency",
+      grandfathered: false,
+      unlimited: true,
+      status: sub?.status ?? "active",
+      cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
+      currentPeriodEnd: sub?.currentPeriodEnd ?? null,
+      dodoCustomerId: sub?.dodoCustomerId ?? null,
+      dodoSubscriptionId: sub?.dodoSubscriptionId ?? null,
+    };
+  }
   if (!sub) return null;
   const planId = planIdFromSubscription(sub);
   const paid = planId === "free" ? null : planId;
   return {
     planId: paid ?? "free",
     grandfathered: paid !== null && isGrandfatheredPro(paid, sub.createdAt),
+    unlimited: false,
     status: sub.status,
     cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
     currentPeriodEnd: sub.currentPeriodEnd,

@@ -19,6 +19,8 @@ import { isPlatformAdmin } from "@/lib/platform-admin";
  *
  * Read-only; implements MeResponse in apps/mobile/src/lib/types.ts.
  */
+const finiteOrNull = (n: number): number | null => (Number.isFinite(n) ? n : null);
+
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,11 +66,12 @@ export async function GET() {
     plan: {
       id: plan.id,
       name: plan.name,
+      // JSON has no Infinity: an unlimited limit goes out as null.
       limits: {
-        websites: plan.limits.websites,
-        pagesPerSite: plan.limits.pagesPerWebsite,
+        websites: finiteOrNull(plan.limits.websites),
+        pagesPerSite: finiteOrNull(plan.limits.pagesPerWebsite),
         scanFrequency: plan.limits.scanFrequency,
-        seats: plan.limits.maxMembers,
+        seats: finiteOrNull(plan.limits.maxMembers),
       },
     },
   });

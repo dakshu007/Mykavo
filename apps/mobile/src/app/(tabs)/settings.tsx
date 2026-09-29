@@ -297,10 +297,12 @@ export default function SettingsScreen() {
 
   const { user, workspaces, plan } = data;
   const limitRows = [
-    `Up to ${plan.limits.websites} website${plan.limits.websites === 1 ? "" : "s"}`,
-    `${plan.limits.pagesPerSite} pages per site`,
+    plan.limits.websites === null
+      ? "Unlimited websites"
+      : `Up to ${plan.limits.websites} website${plan.limits.websites === 1 ? "" : "s"}`,
+    plan.limits.pagesPerSite === null ? "Unlimited pages per site" : `${plan.limits.pagesPerSite} pages per site`,
     plan.limits.scanFrequency === "DAILY" ? "Daily scans" : "Weekly scans",
-    `${plan.limits.seats} seat${plan.limits.seats === 1 ? "" : "s"}`,
+    plan.limits.seats === null ? "Unlimited seats" : `${plan.limits.seats} seat${plan.limits.seats === 1 ? "" : "s"}`,
   ];
 
   return (

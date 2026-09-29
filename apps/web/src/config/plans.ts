@@ -65,6 +65,8 @@ export interface Plan {
   highlighted?: boolean;
   /** True for a Pro plan resolved with its pre-Agency inclusions. */
   grandfathered?: boolean;
+  /** True for the platform admin's own workspace: Agency, no numeric limits, no charge. */
+  unlimited?: boolean;
 }
 
 export const plans: Plan[] = [
@@ -187,7 +189,8 @@ export function getPlan(id: PlanId): Plan {
  * before Agency existed: white-label client reports (and their automatic
  * emails) and 5 seats. Only Pro can be grandfathered.
  */
-export function resolvePlan(id: PlanId, grandfathered = false): Plan {
+export function resolvePlan(id: PlanId, grandfathered = false, unlimited = false): Plan {
+  if (unlimited) return unlimitedAgencyPlan();
   const plan = getPlan(id);
   if (id !== "pro" || !grandfathered) return plan;
   return {
@@ -198,6 +201,44 @@ export function resolvePlan(id: PlanId, grandfathered = false): Plan {
       ...plan.features.map((f) => (f === "Up to 3 team members" ? "Up to 5 team members" : f)),
       "White-label client reports",
       "Automatic client report emails",
+    ],
+  };
+}
+
+/**
+ * The platform admin's own workspace (owner on ADMIN_EMAILS): everything in
+ * Agency with the numeric limits lifted. Scans stay daily and site audits keep
+ * Agency's crawl size - those are what the worker can actually do per run.
+ */
+export function unlimitedAgencyPlan(): Plan {
+  const agency = getPlan("agency");
+  return {
+    ...agency,
+    name: "Agency (Unlimited)",
+    headline: "Admin workspace: every Agency feature, no limits.",
+    unlimited: true,
+    limits: {
+      ...agency.limits,
+      websites: Infinity,
+      pagesPerWebsite: Infinity,
+      manualScansPerDay: Infinity,
+      maxMembers: Infinity,
+      siteAuditsPerDay: Infinity,
+    },
+    features: [
+      "Unlimited websites",
+      "Unlimited monitored pages",
+      "Daily scans",
+      "Unlimited manual scans",
+      "White-label client reports",
+      "Automatic client report emails",
+      "Post-deploy checks",
+      "WordPress Safe Updates - a check after every update",
+      "Conversion element monitoring",
+      "1-year history",
+      `Site audits - ${agency.limits.siteAuditPages.toLocaleString("en-US")} pages per crawl, unlimited a day`,
+      "Unlimited team members",
+      "Email alerts",
     ],
   };
 }

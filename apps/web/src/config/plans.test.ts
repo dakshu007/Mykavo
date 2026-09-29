@@ -91,6 +91,31 @@ describe("plans config", () => {
   });
 });
 
+describe("unlimited Agency (admin workspace)", () => {
+  it("keeps every Agency feature and lifts the numeric limits", () => {
+    const plan = resolvePlan("free", false, true);
+    const agency = getPlan("agency");
+    expect(plan.id).toBe("agency");
+    expect(plan.unlimited).toBe(true);
+    expect(plan.name).toBe("Agency (Unlimited)");
+    for (const key of ["websites", "pagesPerWebsite", "manualScansPerDay", "maxMembers", "siteAuditsPerDay"] as const) {
+      expect(plan.limits[key], key).toBe(Infinity);
+    }
+    expect(plan.limits.whiteLabelReports).toBe(true);
+    expect(plan.limits.conversionElementMonitoring).toBe(true);
+    // What the worker can actually do per run stays as Agency has it.
+    expect(plan.limits.scanFrequency).toBe(agency.limits.scanFrequency);
+    expect(plan.limits.siteAuditPages).toBe(agency.limits.siteAuditPages);
+    expect(plan.limits.historyDays).toBe(agency.limits.historyDays);
+  });
+
+  it("does not leak into the shared Agency config", () => {
+    resolvePlan("agency", false, true);
+    expect(getPlan("agency").limits.websites).toBe(30);
+    expect(getPlan("agency").unlimited).toBeUndefined();
+  });
+});
+
 describe("grandfathered Pro", () => {
   it("keeps white-label reports and 5 seats, at the Pro price and limits", () => {
     const legacy = resolvePlan("pro", true);
