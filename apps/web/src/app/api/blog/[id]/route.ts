@@ -3,6 +3,7 @@ import { Prisma, prisma } from "@mykavo/database";
 import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { blogPostInputSchema } from "@/lib/blog-validation";
 import { logger } from "@/lib/logger";
+import { revalidateBlog } from "@/lib/blog-revalidate";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -73,6 +74,7 @@ export async function PATCH(request: Request, { params }: Params) {
       status: post.status,
       userId: gate.userId,
     });
+    revalidateBlog();
     return NextResponse.json({ post });
   } catch (err) {
     if (isSlugConflict(err)) {
@@ -96,5 +98,6 @@ export async function DELETE(_request: Request, { params }: Params) {
 
   await prisma.blogPost.delete({ where: { id } });
   logger.info("blog post deleted", { postId: id, userId: gate.userId });
+  revalidateBlog();
   return NextResponse.json({ ok: true });
 }

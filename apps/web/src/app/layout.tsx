@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Clarity } from "@/components/analytics/clarity";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import { NavigationProgress } from "@/components/navigation-progress";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
 import { site } from "@/config/site";
 import "./globals.css";
@@ -110,6 +111,8 @@ export default function RootLayout({
             prefers-reduced-motion and on touch; inner scroll containers opt
             out with data-lenis-prevent. */}
         <SmoothScroll />
+        {/* Instant feedback on every internal link click, site-wide. */}
+        <NavigationProgress />
         {children}
         {/* Google tag (gtag.js) - production only.
             lazyOnload: analytics waits until the page has loaded and the

@@ -169,15 +169,24 @@ function TopicRail({ activeKey, children }: { activeKey: string; children: React
 export function BlogIndexList({
   posts,
   topics,
-  initialTopic,
 }: {
   posts: BlogIndexPost[];
   topics: BlogTopic[];
-  initialTopic: string | null;
 }) {
   const [query, setQuery] = useState("");
-  const [topic, setTopic] = useState<string | null>(initialTopic);
+  const [topic, setTopic] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // /blog?topic=WordPress opens filtered - only for a topic that exists. Read
+  // here rather than on the server so the page itself stays cacheable: a
+  // server read of the query string made every visit render from scratch.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("topic");
+    if (!wanted) return;
+    const match = topics.find((t) => sameTopic(t.label, wanted));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from the address bar after hydration
+    if (match) setTopic(match.label);
+  }, [topics]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();

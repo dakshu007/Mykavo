@@ -16,8 +16,15 @@ import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structu
  * An author's page: who they are and everything they have written. The
  * page Google's author guidance and AI answer engines look for - a stable
  * URL that the posts' Person markup points at.
+ *
+ * Cached per author on first visit and regenerated at most every two
+ * minutes; dashboard edits revalidate it on the spot (lib/blog-revalidate.ts).
  */
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
+
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return [];
+}
 
 type Params = { params: Promise<{ slug: string }> };
 

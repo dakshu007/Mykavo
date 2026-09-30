@@ -4,6 +4,7 @@ import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { authorInputSchema } from "@/lib/blog-authors";
 import { logger } from "@/lib/logger";
 import { isNameConflict, uniqueAuthorSlug } from "@/lib/blog-authors-server";
+import { revalidateBlog } from "@/lib/blog-revalidate";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -27,6 +28,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const slug = parsed.data.name === existing.name ? existing.slug : await uniqueAuthorSlug(parsed.data.name, id);
     const author = await prisma.blogAuthor.update({ where: { id }, data: { ...parsed.data, slug } });
     logger.info("blog author updated", { authorId: id, userId: gate.userId });
+    revalidateBlog();
     return NextResponse.json({ author });
   } catch (err) {
     if (isNameConflict(err)) {
@@ -45,5 +47,6 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!existing) return NextResponse.json({ error: "Author not found." }, { status: 404 });
   await prisma.blogAuthor.delete({ where: { id } });
   logger.info("blog author deleted", { authorId: id, userId: gate.userId });
+  revalidateBlog();
   return NextResponse.json({ ok: true });
 }

@@ -3,6 +3,7 @@ import { Prisma, prisma } from "@mykavo/database";
 import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { blogPostInputSchema } from "@/lib/blog-validation";
 import { logger } from "@/lib/logger";
+import { revalidateBlog } from "@/lib/blog-revalidate";
 
 function isSlugConflict(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
       status: post.status,
       userId: gate.userId,
     });
+    revalidateBlog();
     return NextResponse.json({ post }, { status: 201 });
   } catch (err) {
     if (isSlugConflict(err)) {

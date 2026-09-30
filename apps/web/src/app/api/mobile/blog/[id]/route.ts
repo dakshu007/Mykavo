@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@mykavo/database";
 import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { logger } from "@/lib/logger";
+import { revalidateBlog } from "@/lib/blog-revalidate";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -66,6 +67,7 @@ export async function PATCH(request: Request, { params }: Params) {
     postId: post.id,
     status,
   });
+  revalidateBlog();
 
   return NextResponse.json({
     id: post.id,

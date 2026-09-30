@@ -4,6 +4,7 @@ import { getBlogAdminGate } from "@/lib/blog-admin-server";
 import { authorInputSchema } from "@/lib/blog-authors";
 import { logger } from "@/lib/logger";
 import { isNameConflict, uniqueAuthorSlug } from "@/lib/blog-authors-server";
+import { revalidateBlog } from "@/lib/blog-revalidate";
 
 /** Every author - CMS admins only. */
 export async function GET() {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
       data: { ...parsed.data, slug: await uniqueAuthorSlug(parsed.data.name) },
     });
     logger.info("blog author created", { authorId: author.id, userId: gate.userId });
+    revalidateBlog();
     return NextResponse.json({ author }, { status: 201 });
   } catch (err) {
     if (isNameConflict(err)) {

@@ -23,9 +23,17 @@ import { PostContent, PostTocRail } from "@/components/blog/post-content";
 import { site } from "@/config/site";
 import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
-// Dynamic on purpose: publishing from the dashboard must be visible
-// immediately, without a redeploy. ISR + revalidatePath is a future optimization.
-export const dynamic = "force-dynamic";
+// Cached per slug on first visit and served from the CDN after that,
+// regenerated at most every two minutes; dashboard edits revalidate it on the
+// spot (lib/blog-revalidate.ts). Was force-dynamic: every visit rendered from
+// scratch on a serverless function, often a cold one.
+export const revalidate = 120;
+
+// No slugs at build time - each page is rendered on its first request and
+// then cached. Unknown slugs still 404 (notFound below).
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return [];
+}
 
 type Params = { params: Promise<{ slug: string }> };
 

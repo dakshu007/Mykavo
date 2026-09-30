@@ -13,9 +13,13 @@ import { authorNameResolver } from "@/lib/blog-authors-server";
 import { displayTags } from "@/lib/blog-display";
 import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
-// Dynamic on purpose: a post published from the dashboard must be visible
-// immediately, without a redeploy. ISR + revalidatePath is a future optimization.
-export const dynamic = "force-dynamic";
+// Cached and served from the CDN, regenerated at most every two minutes.
+// Publishing, editing or deleting a post from the dashboard revalidates it on
+// the spot (lib/blog-revalidate.ts), so new posts still appear immediately;
+// the timer only covers scheduled posts going live.
+// This page used to be force-dynamic, and every click on "Blog" waited on a
+// cold serverless function and the database - several seconds of nothing.
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -52,23 +56,38 @@ function topicsOf(posts: readonly { tags: readonly string[] }[]): BlogTopic[] {
   return [...byKey.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)).slice(0, 7);
 }
 
-type Props = { searchParams: Promise<{ topic?: string }> };
+async function livePosts() {
+  const query = () =>
+    prisma.blogPost.findMany({
+      where: livePostWhere(),
+      orderBy: { publishedAt: "desc" },
+      select: {
+        slug: true,
+        title: true,
+        excerpt: true,
+        authorName: true,
+        publishedAt: true,
+        content: true,
+        tags: true,
+      },
+    });
+  try {
+    return await query();
+  } catch (err) {
+    // This page is prerendered during `next build`. If the database is out of
+    // reach from the build machine, ship the page and let the first visit
+    // regenerate it, rather than failing the whole deploy. At runtime a
+    // database error still surfaces as an error - never as an empty blog.
+    if (process.env.NEXT_PHASE === "phase-production-build") {
+      console.warn("[blog] database unreachable at build time; /blog will fill in on its first regeneration", err);
+      return [];
+    }
+    throw err;
+  }
+}
 
-export default async function BlogIndexPage({ searchParams }: Props) {
-  const { topic: topicParam } = await searchParams;
-  const posts = await prisma.blogPost.findMany({
-    where: livePostWhere(),
-    orderBy: { publishedAt: "desc" },
-    select: {
-      slug: true,
-      title: true,
-      excerpt: true,
-      authorName: true,
-      publishedAt: true,
-      content: true,
-      tags: true,
-    },
-  });
+export default async function BlogIndexPage() {
+  const posts = await livePosts();
 
   // Serialized for the client list - dates preformatted so SSR and the
   // visitor's browser render the same label regardless of timezone.
@@ -84,9 +103,6 @@ export default async function BlogIndexPage({ searchParams }: Props) {
     tags: displayTags(post.tags),
   }));
   const topics = topicsOf(posts);
-  // /blog?topic=WordPress opens filtered - only for a topic that exists.
-  const initialTopic =
-    topics.find((t) => topicParam && t.label.toLowerCase() === topicParam.toLowerCase())?.label ?? null;
 
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
@@ -147,7 +163,7 @@ export default async function BlogIndexPage({ searchParams }: Props) {
             </Link>
           </div>
         ) : (
-          <BlogIndexList posts={indexPosts} topics={topics} initialTopic={initialTopic} />
+          <BlogIndexList posts={indexPosts} topics={topics} />
         )}
         <div className="mx-auto mt-16 max-w-5xl">
           <BlogCta showMorePosts={false} />
