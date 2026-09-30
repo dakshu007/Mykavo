@@ -14,7 +14,7 @@
 
 import type { Scan } from "@mykavo/database";
 import { prisma } from "@mykavo/database";
-import { getWorkspacePlan, assertScanAllowed, LimitError } from "@/lib/limits";
+import { getWorkspacePlan, assertScanAllowed, LimitError, recordBaselineUse } from "@/lib/limits";
 import { enqueueScanWebsite } from "@/lib/queue";
 import { logger } from "@/lib/logger";
 
@@ -144,6 +144,7 @@ export async function triggerWebsiteScan(params: {
     };
   }
   const scan = created.scan;
+  if (triggerType === "BASELINE") await recordBaselineUse(workspaceId, scan.id);
 
   try {
     await enqueueScanWebsite({ scanId: scan.id });

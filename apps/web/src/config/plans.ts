@@ -37,6 +37,12 @@ export interface Plan {
     manualScans: boolean;
     /** Max user-triggered scans per UTC day (0 when manualScans is false). */
     manualScansPerDay: number;
+    /**
+     * Baseline scans per rolling 24 hours, counted per workspace and kept even
+     * when the website is deleted - so deleting and re-adding a site cannot
+     * be used as a free re-scan button.
+     */
+    baselineScansPer24h: number;
     conversionElementMonitoring: boolean;
     /**
      * Workspace seats: active members + pending invites. Teams are a Pro
@@ -82,6 +88,7 @@ export const plans: Plan[] = [
       historyDays: PLAN_HISTORY_DAYS.free,
       manualScans: false,
       manualScansPerDay: 0,
+      baselineScansPer24h: 2,
       conversionElementMonitoring: false,
       maxMembers: 1,
       whiteLabelReports: false,
@@ -113,6 +120,7 @@ export const plans: Plan[] = [
       historyDays: PLAN_HISTORY_DAYS.pro,
       manualScans: true,
       manualScansPerDay: 20,
+      baselineScansPer24h: 30,
       conversionElementMonitoring: true,
       maxMembers: 3,
       whiteLabelReports: false,
@@ -146,6 +154,7 @@ export const plans: Plan[] = [
       historyDays: PLAN_HISTORY_DAYS.agency,
       manualScans: true,
       manualScansPerDay: 100,
+      baselineScansPer24h: 100,
       conversionElementMonitoring: true,
       maxMembers: 15,
       whiteLabelReports: true,
@@ -222,6 +231,7 @@ export function unlimitedAgencyPlan(): Plan {
       websites: Infinity,
       pagesPerWebsite: Infinity,
       manualScansPerDay: Infinity,
+      baselineScansPer24h: Infinity,
       maxMembers: Infinity,
       siteAuditsPerDay: Infinity,
     },

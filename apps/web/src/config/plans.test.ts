@@ -190,4 +190,10 @@ describe("no component hardcodes a plan number", () => {
       .replace(/className="[^"]*"/g, "");
     expect(copy).not.toMatch(/\b(?:25|100|2500|500|50)\b/);
   });
+
+  it("caps baseline scans per 24h so re-adding a site is not a free re-scan", () => {
+    expect(getPlan("free").limits.baselineScansPer24h).toBe(2);
+    expect(getPlan("pro").limits.baselineScansPer24h).toBeGreaterThanOrEqual(getPlan("pro").limits.websites);
+    expect(getPlan("agency").limits.baselineScansPer24h).toBeGreaterThanOrEqual(getPlan("agency").limits.websites);
+  });
 });

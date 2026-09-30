@@ -136,6 +136,7 @@ model Workspace {
   websites             Website[]
   siteConnections      SiteConnection[]
   apiKeys              ApiKey[]
+  scanQuotaUses        ScanQuotaUse[]
   notificationChannels NotificationChannel[]
   notifications        Notification[]
   subscription         Subscription?
@@ -348,6 +349,7 @@ model Scan {
   id              String          @id @default(cuid())
   websiteId       String
   website         Website         @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  quotaUses       ScanQuotaUse[]
   status          ScanStatus      @default(QUEUED)
   triggerType     ScanTriggerType
   startedAt       DateTime?
@@ -1511,4 +1513,22 @@ model ActivityEvent {
   @@index([userId, createdAt(sort: Desc)])
   @@index([type, createdAt(sort: Desc)])
   @@map("activity_event")
+}
+
+/// Scans counted against a plan quota, kept per workspace so the count
+/// survives deleting the website (whose scans cascade away). Today: baseline
+/// scans, so deleting and re-adding a site is not a free re-scan.
+model ScanQuotaUse {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// Null once the scan (or its website) is deleted - it still counts.
+  scanId      String?
+  scan        Scan?     @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  /// "baseline"
+  kind        String
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, kind, createdAt])
+  @@map("scan_quota_use")
 }
