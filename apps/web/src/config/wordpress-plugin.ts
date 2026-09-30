@@ -5,7 +5,7 @@
  * plugin header and the published zip disagree.
  */
 
-export const WP_PLUGIN_VERSION = "1.0.0";
+export const WP_PLUGIN_VERSION = "1.1.0";
 
 /** The listing in the WordPress.org plugin directory - the main way to install. */
 export const WP_PLUGIN_DIRECTORY_URL = "https://wordpress.org/plugins/mykavo/";

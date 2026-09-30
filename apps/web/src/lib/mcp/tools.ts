@@ -2,6 +2,7 @@ import { OPEN_STATUSES, prisma, type ChangeSeverity, type Prisma } from "@mykavo
 import { AUDIT_CHECKS } from "@mykavo/seo-audit";
 import { appBaseUrl } from "@/lib/app-url";
 import type { ApiKeyContext } from "./api-keys";
+import { loadAiCrawlerVisits } from "@/lib/ai-crawler-visits";
 import { ToolInputError, textResult, type McpTool } from "./protocol";
 
 /**
@@ -381,6 +382,42 @@ export const MCP_TOOLS: McpTool<ApiKeyContext>[] = [
       return textResult(
         `${site.name}: health ${audit.healthScore ?? "-"}/100 from ${audit.pagesCrawled} pages - ${audit.errorCount} errors, ${audit.warningCount} warnings, ${audit.noticeCount} notices.`,
         { completedAt: iso(audit.completedAt), topIssues: top, link: `${appBaseUrl()}/dashboard/site-audit` },
+      );
+    },
+  },
+  {
+    name: "get_ai_crawler_visits",
+    title: "Get AI crawler visits",
+    description:
+      "Which AI systems (ChatGPT, Claude, Perplexity, Meta AI and others) visited a website's pages, as counted by the MyKavo WordPress plugin: visits per crawler, why it visits (AI search answers, a person asking, training), last seen, the pages AI reads most, and error responses served to AI crawlers.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        website: { ...websiteArg, description: "Website id, name or domain." },
+        days: { type: "number", description: "Days back, 1-30. Default 30." },
+      },
+      required: ["website"],
+      additionalProperties: false,
+    },
+    run: async (args, ctx) => {
+      const site = await resolveWebsite(ctx.workspaceId, args.website);
+      if (!site) throw new ToolInputError("website is required.");
+      const days = intArg(args, "days", 30, 1, 30);
+      const { summary, wordpress } = await loadAiCrawlerVisits(site.id, days);
+      if (summary.total === 0) {
+        return textResult(
+          wordpress
+            ? `No AI crawler visits recorded for ${site.name} in the last ${days} days. Counting needs MyKavo WordPress plugin 1.1.0 or later (connected plugin: ${wordpress.pluginVersion ?? "unknown"}); totals arrive once a day.`
+            : `No AI crawler visits recorded for ${site.name}. Visits are counted by the MyKavo WordPress plugin, which is not connected to this website.`,
+        );
+      }
+      return textResult(
+        `${site.name}: ${summary.total} AI crawler visits in the last ${days} days from ${summary.crawlers.length} crawler${summary.crawlers.length === 1 ? "" : "s"}, ${summary.answerHits} of them for AI answers; ${summary.errors} got an error response. Counts exclude pages served from a page cache or CDN.`,
+        {
+          crawlers: summary.crawlers,
+          pagesReadMost: summary.pages,
+          daily: summary.daily.filter((d) => d.hits > 0),
+        },
       );
     },
   },

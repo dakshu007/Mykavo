@@ -103,6 +103,12 @@ http.createServer(async (req, res) => {
     return json(res, 200, { token: TOKEN, website: { id: 'web1', name: 'Northwind Coffee', url: 'https://northwind-coffee.test' }, workspace: { name: 'Northwind Studio' }, dashboardUrl: BASE + '/dashboard/websites/web1' });
   }
 
+  if (url.pathname === '/api/wp/v1/ai-bots' && req.method === 'POST') {
+    if (!/^Bearer mkv_wp_/.test(req.headers.authorization || '')) return json(res, 401, { error: 'unauthorized' });
+    const body = JSON.parse((await readBody(req)) || '{}');
+    fs.writeFileSync(path.join(__dirname, 'media', 'ai-bots.json'), JSON.stringify({ userAgent: req.headers['user-agent'], body }, null, 2));
+    return json(res, 200, { stored: (body.days || []).reduce((n, d) => n + d.agents.length, 0) });
+  }
   if (url.pathname === '/api/wp/v1/media') {
     const file = { shot_before: 'before.png', shot_after: 'after.png', diff: 'diff.png' }[url.searchParams.get('f')];
     if (!file) { res.writeHead(404); return res.end(); }

@@ -3,7 +3,7 @@
  * Plugin Name:       MyKavo - Website Change Monitoring
  * Plugin URI:        https://mykavo.app/wordpress-plugin
  * Description:       See what changed on your site, and whether it matters, without leaving WordPress. Visual, SEO, content, link and script changes with before-and-after screenshots. Adds nothing to the pages your visitors load.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            MyKavo
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MYKAVO_VERSION', '1.0.0' );
+define( 'MYKAVO_VERSION', '1.1.0' );
 define( 'MYKAVO_FILE', __FILE__ );
 define( 'MYKAVO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MYKAVO_URL', plugin_dir_url( __FILE__ ) );
@@ -41,7 +41,12 @@ if ( ! defined( 'MYKAVO_APP_URL' ) ) {
  * three that fire solely when a plugin is switched on or off or the theme
  * changes. Nothing is loaded until one of those actually runs. Everything else
  * loads inside wp-admin, and remote calls happen only while an administrator
- * is looking at a MyKavo screen - or once, right after an update.
+ * is looking at a MyKavo screen - or once, right after an update, and once a
+ * day from WP-Cron to share AI crawler totals.
+ *
+ * The one thing that runs on every public request is a single string match
+ * on the User-Agent header, to spot AI crawlers. Human visitors stop there:
+ * no query, no file loaded. See "AI crawler visits" below.
  */
 if ( is_admin() ) {
 	require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
@@ -49,7 +54,15 @@ if ( is_admin() ) {
 	require_once MYKAVO_DIR . 'includes/class-mykavo-admin.php';
 	require_once MYKAVO_DIR . 'includes/class-mykavo-updates.php';
 	require_once MYKAVO_DIR . 'includes/class-mykavo-integrations.php';
+	require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
 	MyKavo_Admin::init();
+	add_action(
+		'admin_init',
+		static function () {
+			MyKavo_Bots::install();
+			MyKavo_Bots::ensure_schedule();
+		}
+	);
 	MyKavo_Integrations::init();
 }
 
@@ -104,6 +117,27 @@ add_action(
 	2
 );
 
+/*
+ * AI crawler visits. Counts requests from ChatGPT, Claude, Perplexity and
+ * other AI crawlers - by User-Agent only: no IP addresses, no cookies, and
+ * nothing at all about human visitors, who never get past this match. For a
+ * crawler request the recorder loads and adds one counter update once the
+ * response is complete.
+ */
+if ( ! is_admin() && isset( $_SERVER['HTTP_USER_AGENT'] ) && is_string( $_SERVER['HTTP_USER_AGENT'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only matched against fixed tokens.
+	if ( preg_match( '/OAI-SearchBot|ChatGPT-User|GPTBot|Claude-SearchBot|Claude-User|ClaudeBot|PerplexityBot|Perplexity-User|Amazonbot|DuckAssistBot|Meta-ExternalAgent|MistralAI-User|CCBot|Bytespider/i', $_SERVER['HTTP_USER_AGENT'], $mykavo_bot ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- as above.
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		MyKavo_Bots::track( $mykavo_bot[0] );
+	}
+}
+add_action(
+	'mykavo_bots_daily',
+	static function () {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		MyKavo_Bots::daily();
+	}
+);
+
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
 	require_once MYKAVO_DIR . 'includes/class-mykavo-api.php';
@@ -116,6 +150,17 @@ register_activation_hook(
 	__FILE__,
 	static function () {
 		set_transient( 'mykavo_just_activated', 1, MINUTE_IN_SECONDS * 10 );
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		MyKavo_Bots::install();
+		MyKavo_Bots::ensure_schedule();
+	}
+);
+
+register_deactivation_hook(
+	__FILE__,
+	static function () {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		MyKavo_Bots::unschedule();
 	}
 );
 
@@ -126,6 +171,7 @@ add_action(
 		require_once MYKAVO_DIR . 'includes/class-mykavo-api.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-updates.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-integrations.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-rest.php';
 		MyKavo_Rest::register_routes();
 	}

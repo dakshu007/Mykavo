@@ -61,6 +61,36 @@ export const HIGH_IMPACT_AI_AGENTS = new Set([
   "Perplexity-User",
 ]);
 
+/**
+ * AI crawlers the WordPress plugin counts visits from, by the token each one
+ * sends in its User-Agent header. Differs from AI_CRAWLERS: Google-Extended
+ * and Applebot-Extended are robots.txt tokens only (those companies crawl as
+ * Googlebot and Applebot), and Bytespider identifies itself but has no
+ * robots.txt opt-out worth alerting on.
+ */
+export const AI_VISIT_AGENTS: readonly AiCrawler[] = [
+  { agent: "OAI-SearchBot", owner: "ChatGPT search", purpose: "search" },
+  { agent: "ChatGPT-User", owner: "ChatGPT", purpose: "user" },
+  { agent: "GPTBot", owner: "OpenAI", purpose: "training" },
+  { agent: "Claude-SearchBot", owner: "Claude search", purpose: "search" },
+  { agent: "Claude-User", owner: "Claude", purpose: "user" },
+  { agent: "ClaudeBot", owner: "Anthropic", purpose: "training" },
+  { agent: "PerplexityBot", owner: "Perplexity", purpose: "search" },
+  { agent: "Perplexity-User", owner: "Perplexity", purpose: "user" },
+  { agent: "Amazonbot", owner: "Amazon", purpose: "search" },
+  { agent: "DuckAssistBot", owner: "DuckDuckGo", purpose: "search" },
+  { agent: "Meta-ExternalAgent", owner: "Meta AI", purpose: "training" },
+  { agent: "MistralAI-User", owner: "Mistral", purpose: "user" },
+  { agent: "CCBot", owner: "Common Crawl", purpose: "training" },
+  { agent: "Bytespider", owner: "ByteDance", purpose: "training" },
+];
+
+/** The canonical AI_VISIT_AGENTS entry for a name, case-insensitively. */
+export function aiVisitAgent(name: string): AiCrawler | undefined {
+  const lower = name.toLowerCase();
+  return AI_VISIT_AGENTS.find((c) => c.agent.toLowerCase() === lower);
+}
+
 interface Group {
   agents: string[];
   rules: Array<{ allow: boolean; path: string }>;

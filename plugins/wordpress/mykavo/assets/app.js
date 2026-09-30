@@ -38,6 +38,8 @@
 		pagesError: null,
 		updates: null,
 		updatesError: null,
+		bots: null,
+		botsError: null,
 		changesScan: null,
 		addUrl: '',
 		banner: bannerFromNotice( cfg.notice ),
@@ -202,6 +204,7 @@
 		shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
 		plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
 		brush: '<path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/>',
+		bot: '<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
 		wp: '<circle cx="12" cy="12" r="10"/><path d="M3.5 8.5 8 20l3-8.5"/><path d="M9 8.5h5"/><path d="M11.5 8.5 16 20l4.5-11.5"/>',
 	};
 
@@ -387,6 +390,27 @@
 		} );
 	}
 
+	function loadBots() {
+		return api( '/bots' )
+			.then( function ( data ) {
+				state.bots = data;
+				state.botsError = null;
+				render();
+			} )
+			.catch( function ( err ) {
+				state.botsError = errorMessage( err );
+				render();
+			} );
+	}
+
+	function setBotCounting( enabled ) {
+		api( '/bots', { method: 'POST', data: { enabled: enabled } } ).then( function ( data ) {
+			state.bots = data;
+			toast( enabled ? __( 'Counting AI crawler visits.', 'mykavo' ) : __( 'AI crawler counting is off.', 'mykavo' ) );
+			render();
+		} );
+	}
+
 	/** While a scan runs, refresh quietly - only while the tab is visible. */
 	function schedulePoll() {
 		stopPolling();
@@ -438,6 +462,8 @@
 			loadScans();
 		} else if ( state.tab === 'pages' && ! state.pages ) {
 			loadPages();
+		} else if ( state.tab === 'bots' ) {
+			loadBots();
 		} else if ( state.tab === 'updates' ) {
 			if ( ! state.updates ) {
 				loadUpdates();
@@ -682,6 +708,7 @@
 			[ 'overview', __( 'Overview', 'mykavo' ), '' ],
 			[ 'changes', __( 'Changes', 'mykavo' ), open > 0 ? '<span class="mk-count">' + esc( open > 99 ? '99+' : open ) + '</span>' : '' ],
 			[ 'updates', __( 'Safe Updates', 'mykavo' ), '' ],
+			[ 'bots', __( 'AI crawlers', 'mykavo' ), '' ],
 			[ 'scans', __( 'Scans', 'mykavo' ), '' ],
 			[ 'pages', __( 'Pages', 'mykavo' ), '' ],
 		];
@@ -893,7 +920,7 @@
 			'<div class="mk-grid">' +
 			hero( o ) +
 			stats( o ) +
-			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + breakdown + '</div><div class="mk-grid">' + storeCard() + safeUpdatesCard() + recent + plan + '</div></div>' +
+			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + breakdown + '</div><div class="mk-grid">' + storeCard() + safeUpdatesCard() + aiBotsCard() + recent + plan + '</div></div>' +
 			'</div>'
 		);
 	}
@@ -1282,6 +1309,157 @@
 		);
 	}
 
+	/* ------------------------------------------------------- AI crawlers -- */
+
+	function utcDay( offsetDays ) {
+		return new Date( Date.now() - ( offsetDays || 0 ) * 86400000 ).toISOString().slice( 0, 10 );
+	}
+
+	function dayLabel( day ) {
+		if ( day === utcDay( 0 ) ) {
+			return __( 'Today', 'mykavo' );
+		}
+		if ( day === utcDay( 1 ) ) {
+			return __( 'Yesterday', 'mykavo' );
+		}
+		var d = new Date( day + 'T00:00:00Z' );
+		return isNaN( d.getTime() ) ? day : d.toLocaleDateString( locale, { month: 'short', day: 'numeric', timeZone: 'UTC' } );
+	}
+
+	function purposeLabel( purpose ) {
+		return {
+			search: __( 'Reads pages for AI search answers', 'mykavo' ),
+			user: __( 'Opens a page a person asked about', 'mykavo' ),
+			training: __( 'Collects training data', 'mykavo' ),
+		}[ purpose ] || '';
+	}
+
+	function num( n ) {
+		return ( Number( n ) || 0 ).toLocaleString( locale );
+	}
+
+	function aiBotsCard() {
+		var b = state.bots;
+		if ( ! b ) {
+			return '';
+		}
+		var top = ( b.agents || [] ).slice( 0, 3 );
+		var body = ! b.enabled
+			? '<p class="mk-stat-foot" style="font-size:13px">' + esc( __( 'Counting is off.', 'mykavo' ) ) + '</p>'
+			: ! b.total
+				? '<p class="mk-stat-foot" style="font-size:13px">' + esc( __( 'No AI crawler visits counted yet. ChatGPT, Claude and Perplexity usually show up within a few days.', 'mykavo' ) ) + '</p>'
+				: '<p class="mk-bots-total"><b>' + esc( num( b.total ) ) + '</b> ' + esc( __( 'visits in 30 days', 'mykavo' ) ) + '</p>' +
+					'<ul class="mk-bots-mini">' + top.map( function ( a ) {
+						return '<li><span>' + esc( a.owner ) + ' <em>' + esc( a.agent ) + '</em></span><b>' + esc( num( a.hits ) ) + '</b></li>';
+					} ).join( '' ) + '</ul>';
+		return (
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'bot', 'mk-title-icon' ) + esc( __( 'AI crawlers', 'mykavo' ) ) + '</h3>' +
+			'<button type="button" class="mk-link" style="border:0;background:none;cursor:pointer" data-act="tab" data-tab="bots">' + esc( __( 'Details', 'mykavo' ) ) + icon( 'chevron' ) + '</button></div>' +
+			'<div class="mk-card-pad" style="padding-top:12px">' + body + '</div></section>'
+		);
+	}
+
+	function botsView() {
+		if ( state.botsError && ! state.bots ) {
+			return errorBlock( state.botsError, 'retry-bots' );
+		}
+		if ( ! state.bots ) {
+			return loadingBlock( 260 );
+		}
+		var b = state.bots;
+		var on = !! b.enabled;
+		var intro =
+			'<section class="mk-card mk-safe">' +
+			'<div class="mk-safe-copy"><span class="mk-safe-icon">' + icon( 'bot' ) + '</span><div>' +
+			'<h2>' + esc( __( 'Which AI reads your site', 'mykavo' ) ) + '</h2>' +
+			'<p>' + esc( __( 'ChatGPT, Claude, Perplexity and other AI systems send crawlers to read your pages before they quote or recommend them. MyKavo counts those visits - by crawler name only: no IP addresses, no cookies, nothing about human visitors.', 'mykavo' ) ) + '</p>' +
+			'</div></div>' +
+			'<button type="button" class="mk-switch" role="switch" aria-checked="' + on + '" data-act="toggle-bots" data-key="toggle-bots">' +
+			'<span class="mk-switch-track"><span class="mk-switch-thumb"></span></span>' +
+			'<span>' + esc( on ? __( 'Counting on', 'mykavo' ) : __( 'Counting off', 'mykavo' ) ) + '</span></button>' +
+			'</section>';
+
+		if ( ! b.ready ) {
+			return '<div class="mk-grid">' + intro + '<div class="mk-banner">' + icon( 'alert' ) + '<span>' +
+				esc( __( 'MyKavo could not create its small visit-count table in this site\'s database. Your hosting may not allow new tables. It retries once a day.', 'mykavo' ) ) + '</span></div></div>';
+		}
+
+		var foot =
+			'<p class="mk-fine mk-bots-note">' +
+			esc( __( 'Counts visits that reach this site\'s server. Pages served straight from a page cache or CDN may not be counted, so real numbers can be higher. Crawlers are identified by the name they send.', 'mykavo' ) ) +
+			( b.sentAt ? ' ' + esc( sprintf( /* translators: %s: relative time, e.g. "3 hours ago". */ __( 'Daily totals are shared with your MyKavo dashboard (last sent %s).', 'mykavo' ), rel( b.sentAt ) ) ) : ' ' + esc( __( 'Daily totals are shared with your MyKavo dashboard once a day.', 'mykavo' ) ) ) +
+			'</p>';
+
+		if ( ! b.total ) {
+			return '<div class="mk-grid">' + intro +
+				'<section class="mk-card"><div class="mk-empty"><span class="mk-empty-icon">' + icon( 'bot' ) + '</span><strong>' +
+				esc( on ? __( 'No AI crawler visits yet', 'mykavo' ) : __( 'Counting is off', 'mykavo' ) ) + '</strong><span>' +
+				esc( on
+					? __( 'Visits appear here as they happen. ChatGPT, Claude and Perplexity usually show up within a few days. If none ever do, check that robots.txt does not block them.', 'mykavo' )
+					: __( 'Switch counting on to see which AI systems read your site.', 'mykavo' ) ) +
+				'</span></div></section>' + foot + '</div>';
+		}
+
+		var answerHits = 0;
+		( b.agents || [] ).forEach( function ( a ) {
+			if ( a.purpose !== 'training' ) {
+				answerHits += a.hits;
+			}
+		} );
+		var stats =
+			'<div class="mk-stats">' +
+			stat( 'activity', __( 'AI crawler visits', 'mykavo' ), num( b.total ), '', __( 'Last 30 days', 'mykavo' ) ) +
+			stat( 'eye', __( 'For AI answers', 'mykavo' ), num( answerHits ), '', __( 'Search and "read this page" visits', 'mykavo' ) ) +
+			stat( 'bot', __( 'Crawlers seen', 'mykavo' ), b.agents.length, '', __( 'Different AI crawlers', 'mykavo' ) ) +
+			stat( 'alert', __( 'Errors served', 'mykavo' ), num( b.errors ), '', __( 'Visits that got a 4xx or 5xx', 'mykavo' ) ) +
+			'</div>';
+
+		var max = 1;
+		b.daily.forEach( function ( d ) {
+			max = Math.max( max, d.hits );
+		} );
+		var chart =
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Visits per day', 'mykavo' ) ) + '</h3>' +
+			'<span class="mk-fine">' + esc( __( 'Last 30 days (UTC)', 'mykavo' ) ) + '</span></div>' +
+			'<div class="mk-bars" role="img" aria-label="' + esc( sprintf( /* translators: %s: number of visits. */ __( '%s AI crawler visits over the last 30 days', 'mykavo' ), num( b.total ) ) ) + '">' +
+			b.daily.map( function ( d ) {
+				var h = d.hits ? Math.max( 4, Math.round( ( d.hits / max ) * 100 ) ) : 0;
+				return '<span class="mk-bar' + ( d.hits ? '' : ' is-zero' ) + '" style="height:' + ( d.hits ? h : 3 ) + '%" title="' + esc( dayLabel( d.day ) + ': ' + num( d.hits ) ) + '"></span>';
+			} ).join( '' ) +
+			'</div></section>';
+
+		var crawlers =
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Crawlers', 'mykavo' ) ) + '</h3></div>' +
+			'<div class="mk-table-wrap"><table class="mk-table"><thead><tr>' +
+			'<th>' + esc( __( 'Crawler', 'mykavo' ) ) + '</th><th>' + esc( __( 'Why it visits', 'mykavo' ) ) + '</th>' +
+			'<th class="mk-num">' + esc( __( 'Visits', 'mykavo' ) ) + '</th><th class="mk-num">' + esc( __( 'Errors', 'mykavo' ) ) + '</th><th>' + esc( __( 'Last seen', 'mykavo' ) ) + '</th>' +
+			'</tr></thead><tbody>' +
+			b.agents.map( function ( a ) {
+				return '<tr><td><b>' + esc( a.owner ) + '</b><span class="mk-cell-note"><code>' + esc( a.agent ) + '</code></span></td>' +
+					'<td>' + esc( purposeLabel( a.purpose ) ) + '</td>' +
+					'<td class="mk-num">' + esc( num( a.hits ) ) + '</td>' +
+					'<td class="mk-num' + ( a.errors ? ' mk-bad' : '' ) + '">' + esc( num( a.errors ) ) + '</td>' +
+					'<td>' + esc( dayLabel( a.lastSeen ) ) + '</td></tr>';
+			} ).join( '' ) +
+			'</tbody></table></div></section>';
+
+		var pages =
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Pages AI reads most', 'mykavo' ) ) + '</h3>' +
+			'<span class="mk-fine">' + esc( __( 'Last 30 days', 'mykavo' ) ) + '</span></div>' +
+			'<div class="mk-table-wrap"><table class="mk-table"><thead><tr>' +
+			'<th>' + esc( __( 'Page', 'mykavo' ) ) + '</th><th class="mk-num">' + esc( __( 'Visits', 'mykavo' ) ) + '</th><th class="mk-num">' + esc( __( 'Errors', 'mykavo' ) ) + '</th><th>' + esc( __( 'By', 'mykavo' ) ) + '</th>' +
+			'</tr></thead><tbody>' +
+			b.pages.map( function ( p ) {
+				return '<tr><td><code class="mk-path">' + esc( p.path ) + '</code></td>' +
+					'<td class="mk-num">' + esc( num( p.hits ) ) + '</td>' +
+					'<td class="mk-num' + ( p.errors ? ' mk-bad' : '' ) + '">' + esc( num( p.errors ) ) + '</td>' +
+					'<td class="mk-cell-agents">' + esc( p.agents.join( ', ' ) ) + '</td></tr>';
+			} ).join( '' ) +
+			'</tbody></table></div></section>';
+
+		return '<div class="mk-grid">' + intro + stats + chart + crawlers + pages + foot + '</div>';
+	}
+
 	function render() {
 		var focusKey = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute( 'data-key' ) : null;
 
@@ -1292,6 +1470,8 @@
 
 		var view = state.tab === 'changes'
 			? changesView()
+			: state.tab === 'bots'
+				? botsView()
 			: state.tab === 'updates'
 				? updatesView()
 				: state.tab === 'scans'
@@ -1570,6 +1750,15 @@
 				render();
 				loadScans();
 				break;
+			case 'toggle-bots':
+				setBotCounting( ! ( state.bots && state.bots.enabled ) );
+				break;
+			case 'retry-bots':
+				state.botsError = null;
+				state.bots = null;
+				render();
+				loadBots();
+				break;
 			case 'toggle-updates':
 				setUpdateChecks( ! ( state.updates && state.updates.enabled ) );
 				break;
@@ -1666,6 +1855,7 @@
 	if ( state.connected ) {
 		loadOverview( false );
 		loadUpdates();
+		loadBots();
 		if ( cfg.woo && cfg.woo.pages && cfg.woo.pages.length ) {
 			loadPages();
 		}

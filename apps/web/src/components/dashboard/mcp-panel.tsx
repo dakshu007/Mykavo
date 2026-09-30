@@ -245,7 +245,7 @@ export function McpPanel({
             "What changed on my sites this week?",
             "Show the critical changes on example.com and what caused them.",
             "Summarise the latest site audit for example.com - what should I fix first?",
-            "Did any scan fail recently?",
+            "Which AI crawlers read example.com this month?",
             "Is any site blocking ChatGPT or Claude in robots.txt?",
           ].map((q) => (
             <li key={q} className="rounded-tile bg-surface px-3.5 py-2.5 text-[13px] text-ink">

@@ -299,7 +299,7 @@ final class MyKavo_Integrations {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
 			return;
 		}
-		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'MyKavo collects nothing about your visitors. It adds no scripts, cookies or tracking to your public pages, so there is usually nothing to add to your privacy policy for it.', 'mykavo' ) . '</p>' .
+		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'MyKavo collects nothing about your visitors. It adds no scripts, cookies or tracking to your public pages, so there is usually nothing to add to your privacy policy for it. It counts visits from AI crawlers such as GPTBot or ClaudeBot by the name they send - never IP addresses or anything about people.', 'mykavo' ) . '</p>' .
 			'<p>' . esc_html__( 'This site uses MyKavo (https://mykavo.app) to monitor its public pages for changes. MyKavo loads those pages from its own servers, the same way a visitor would, and does not receive any information about the people who visit this site.', 'mykavo' ) . '</p>';
 		wp_add_privacy_policy_content( 'MyKavo', wp_kses_post( $content ) );
 	}

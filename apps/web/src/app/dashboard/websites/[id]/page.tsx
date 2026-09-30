@@ -54,6 +54,8 @@ import { loadPlatformStack } from "@/lib/platform-stack";
 import { PlatformStackPanel } from "@/components/dashboard/platform-stack";
 import { DomainExpiryPanel } from "@/components/dashboard/domain-expiry";
 import { DeployHookSettings } from "./deploy-hook-settings";
+import { loadAiCrawlerVisits } from "@/lib/ai-crawler-visits";
+import { AiCrawlerVisitsPanel } from "@/components/dashboard/ai-crawler-visits";
 
 /** Time windows for the health queries - one clock read per request. */
 function healthWindows(windowDays: number): {
@@ -146,7 +148,16 @@ export default async function WebsiteDetailPage({
   // Loaded after the ownership check rather than in the batch above: it is
   // keyed by websiteId alone, and a workspace boundary is not something to hold
   // open on the assumption that a later notFound() will catch it.
-  const platformStack = await loadPlatformStack(website.id);
+  const [platformStack, aiVisits] = await Promise.all([
+    loadPlatformStack(website.id),
+    loadAiCrawlerVisits(website.id),
+  ]);
+  // Shown when there are counts, a WordPress connection that can send them,
+  // or a WordPress site that could (then it invites installing the plugin).
+  const showAiVisits =
+    aiVisits.summary.total > 0 ||
+    aiVisits.wordpress !== null ||
+    platformStack?.fingerprint.platform === "wordpress";
 
   const sslDaysLeft = latestHealth?.sslValidTo
     ? daysUntil(latestHealth.sslValidTo, now)
@@ -356,6 +367,12 @@ export default async function WebsiteDetailPage({
       {website.domainCheckedAt && (
         <Card>
           <DomainExpiryPanel domain={website} />
+        </Card>
+      )}
+
+      {showAiVisits && (
+        <Card>
+          <AiCrawlerVisitsPanel data={aiVisits} />
         </Card>
       )}
 

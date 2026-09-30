@@ -103,6 +103,11 @@ const JS_REPLACEMENTS = [
     `esc( __( 'Disconnect this site', 'mykavo' ) )`,
     `esc( state.confirmDisconnect ? __( 'Press again to disconnect', 'mykavo' ) : __( 'Disconnect this store', 'mykavo' ) )`,
   ],
+  // AI crawler counting is WordPress-only: the Shopify app has no way to see
+  // requests to the storefront, so no tab, no overview card, no load.
+  [`\n\t\t\t[ 'bots', __( 'AI crawlers', 'mykavo' ), '' ],`, ``],
+  [`safeUpdatesCard() + aiBotsCard() + recent`, `safeUpdatesCard() + recent`],
+  [`loadUpdates();\n\t\tloadBots();\n\t\tif ( cfg.woo`, `loadUpdates();\n\t\tif ( cfg.woo`],
   // Theme checks instead of Safe Updates.
   [`[ 'updates', __( 'Safe Updates', 'mykavo' ), '' ]`, `[ 'updates', __( 'Theme checks', 'mykavo' ), '' ]`],
   [

@@ -63,6 +63,8 @@ final class MyKavo_Connection {
 			update_option( self::OPTION, $value, false );
 		}
 		self::flush_cache();
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		MyKavo_Bots::ensure_schedule();
 	}
 
 	/**
@@ -74,6 +76,8 @@ final class MyKavo_Connection {
 		delete_option( self::OPTION );
 		self::flush_cache();
 		delete_transient( self::SUMMARY_KEY );
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		MyKavo_Bots::unschedule();
 	}
 
 	/**

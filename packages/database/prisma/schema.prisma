@@ -281,6 +281,7 @@ model Website {
   gscDaily          GscDaily[]
   gscDimensionRows  GscDimensionRow[]
   siteAudits        SiteAudit[]
+  aiCrawlerVisits   AiCrawlerVisit[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -1446,4 +1447,26 @@ model ApiKey {
 
   @@index([workspaceId])
   @@map("api_key")
+}
+
+/// AI crawler visits to a website, one row per UTC day and crawler, as
+/// counted by the MyKavo WordPress plugin (by User-Agent; no visitor data).
+/// The plugin re-sends recent days, and each send replaces the day's row.
+model AiCrawlerVisit {
+  id        String   @id @default(cuid())
+  websiteId String
+  website   Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  day       DateTime @db.Date
+  /// Canonical crawler name, e.g. "GPTBot" (see AI_VISIT_AGENTS).
+  agent     String
+  hits      Int
+  /// Visits answered with a 4xx or 5xx status.
+  errors    Int      @default(0)
+  /// Most-visited paths that day: [{ path, hits, errors }], at most 10.
+  topPaths  Json     @default("[]")
+  updatedAt DateTime @updatedAt
+
+  @@unique([websiteId, day, agent])
+  @@index([websiteId, day])
+  @@map("ai_crawler_visit")
 }

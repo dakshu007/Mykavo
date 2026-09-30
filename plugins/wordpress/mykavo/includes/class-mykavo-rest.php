@@ -189,6 +189,29 @@ final class MyKavo_Rest {
 
 		register_rest_route(
 			self::NS,
+			'/bots',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'bots' ),
+					'permission_callback' => $admin,
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'bots_settings' ),
+					'permission_callback' => $admin,
+					'args'                => array(
+						'enabled' => array(
+							'type'     => 'boolean',
+							'required' => true,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
 			'/disconnect',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -375,6 +398,26 @@ final class MyKavo_Rest {
 	public static function update_settings( WP_REST_Request $request ) {
 		MyKavo_Updates::set_enabled( (bool) $request->get_param( 'enabled' ) );
 		return self::updates();
+	}
+
+	/**
+	 * AI crawler visits over the last 30 days, counted on this site.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public static function bots() {
+		return rest_ensure_response( MyKavo_Bots::summary() );
+	}
+
+	/**
+	 * Switch AI crawler counting on or off.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function bots_settings( WP_REST_Request $request ) {
+		MyKavo_Bots::set_enabled( (bool) $request->get_param( 'enabled' ) );
+		return self::bots();
 	}
 
 	/**

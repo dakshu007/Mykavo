@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
   MEDIA_TTL_MS,
+  pluginVersionFromUserAgent,
   TOKEN_PREFIX,
   bareHost,
   buildReturnUrl,
@@ -122,5 +123,15 @@ describe("signed media links", () => {
     expect(verifyMediaParams(p, SECRET, NOW + MEDIA_TTL_MS + 1)).toBeNull();
     const far = { ...p, exp: String(NOW + 10 * MEDIA_TTL_MS) };
     expect(verifyMediaParams(far, SECRET, NOW)).toBeNull();
+  });
+});
+
+describe("pluginVersionFromUserAgent", () => {
+  it("reads the version the plugin sends and ignores everything else", () => {
+    expect(pluginVersionFromUserAgent("MyKavo-WordPress/1.1.0; https://example.com/")).toBe("1.1.0");
+    expect(pluginVersionFromUserAgent("MyKavo-WordPress/1.1.0")).toBe("1.1.0");
+    expect(pluginVersionFromUserAgent("Mozilla/5.0 MyKavo-WordPress/9.9.9")).toBeNull();
+    expect(pluginVersionFromUserAgent("MyKavo-WordPress/<script>")).toBeNull();
+    expect(pluginVersionFromUserAgent(null)).toBeNull();
   });
 });

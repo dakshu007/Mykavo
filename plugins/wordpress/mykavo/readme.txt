@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,16 @@ MyKavo fixes that. It watches the pages that matter on your site and tells you w
 * **A history of every update**, with versions, kept on your site.
 * **Know before you press Update.** On the Plugins screen, a plugin whose last update changed things on your site is flagged: "Last time this plugin updated, 2 things changed on your site."
 * Update checks are included in the Pro and Agency plans. On the free plan, updates are still listed so you know what changed and when.
+
+= See which AI reads your site =
+
+ChatGPT, Claude, Perplexity and other AI systems send crawlers to read your pages before they quote or recommend them. The **AI crawlers** screen shows:
+
+* **Who visits.** Visits from OAI-SearchBot, ChatGPT-User, GPTBot, Claude-SearchBot, Claude-User, ClaudeBot, PerplexityBot, Perplexity-User, Amazonbot, DuckAssistBot, Meta-ExternalAgent, MistralAI-User, CCBot and Bytespider, and why each one visits (AI search answers, a person asking about your page, or training).
+* **Which pages AI reads most**, and visits per day for the last 30 days.
+* **Errors served to AI.** Pages that answered a crawler with 404 or 5xx - pages AI cannot quote.
+
+Crawlers are counted by the name they send in the User-Agent header. No IP addresses, no cookies and nothing about human visitors are ever recorded. You can switch counting off on that screen.
 
 = Built for WooCommerce stores =
 
@@ -60,9 +70,10 @@ A broken cart or checkout loses sales every minute it stays broken. If WooCommer
 
 Many plugins get deleted because they make a site slower. MyKavo is built so that cannot happen:
 
-* **Nothing on the public site.** No scripts, no styles, no database queries and no remote requests on the pages your visitors load.
+* **Nothing on the public site.** No scripts, no styles, no database queries and no remote requests on the pages your visitors load. The only thing that runs is one text match on the User-Agent header to spot AI crawlers; human visitors stop there.
+* **AI crawler counting is one counter update.** A request from an AI crawler adds one row update to a small table, after the page has been built. Rows older than 35 days are deleted.
 * **No autoloaded options.** The connection is stored in a single option that WordPress only reads on MyKavo's own screens.
-* **No cron jobs and no custom tables.** The scanning runs on MyKavo's servers, not yours.
+* **One small daily job.** Once a day, WP-Cron sends the AI crawler totals to MyKavo. The scanning itself runs on MyKavo's servers, not yours.
 * **Admin screens only.** Scripts load on the MyKavo screen alone (plus a 2 KB script for the Dashboard widget), using only libraries WordPress already includes.
 * **Update checks cost nothing extra.** The plugin notes versions while WordPress is updating, then sends one short report when the update finishes. Nothing runs between updates.
 * **Cached and time-limited.** Answers from MyKavo are cached for a minute, and every request has a short timeout.
@@ -89,9 +100,10 @@ This plugin connects your site to MyKavo (https://mykavo.app), a website monitor
 * **When you add a page to monitoring** (the "Monitor with MyKavo" link, the Pages tab, the store guard or WP-CLI): the page's address and title.
 * **While an administrator views a MyKavo screen or runs a `wp mykavo` command:** your site's server requests this website's monitoring data from mykavo.app, and sends the actions you take (for example "approve this change" or "run a scan").
 * **Screenshots** of your pages are loaded by the administrator's browser directly from mykavo.app, using links that expire after 30 minutes.
+* **Once a day, while connected (WP-Cron):** the AI crawler totals for the last 14 days - for each day and crawler name, the number of visits, how many got an error, and the paths of the 10 most-visited pages. No IP addresses or visitor data. You can switch this off on the AI crawlers screen.
 * **When you disconnect:** your site tells mykavo.app to revoke its key.
 
-Nothing is sent when visitors view your site, and nothing about your visitors is ever sent. MyKavo scans your public pages from its own servers, the same way a visitor would.
+Nothing is sent when visitors view your site, and nothing about your human visitors is ever recorded or sent. MyKavo scans your public pages from its own servers, the same way a visitor would.
 
 * Terms of service: https://mykavo.app/terms
 * Privacy policy: https://mykavo.app/privacy
@@ -109,7 +121,11 @@ If your site isn't in MyKavo yet, the approval screen offers to add it first; it
 
 = Will this slow down my website? =
 
-No. The plugin does nothing on the pages your visitors load: no scripts, styles, queries or remote requests. It only runs inside wp-admin, on its own screens. The scanning happens on MyKavo's servers.
+No. The plugin adds no scripts, styles, queries or remote requests to the pages your visitors load. The only public-side work is a text match on the User-Agent header; when the visitor is an AI crawler, one counter is updated after the page is built. Everything else runs inside wp-admin, and the scanning happens on MyKavo's servers.
+
+= Why does it count AI crawlers? =
+
+AI search is a growing way people find websites. If ChatGPT, Claude or Perplexity never read your pages, they cannot cite them. The AI crawlers screen shows which ones do, which pages they read, and which pages give them errors. It records crawler names only - never IP addresses or anything about people - and you can switch it off.
 
 = Do I need a MyKavo account? =
 
@@ -161,6 +177,10 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Changelog ==
 
+= 1.1.0 =
+* New: AI crawlers screen - which AI systems (ChatGPT, Claude, Perplexity and more) read your site, which pages they read most, visits per day, and errors served to them. Also shown in your MyKavo dashboard.
+* Crawler names only: no IP addresses, cookies or visitor data. Can be switched off.
+
 = 1.0.0 =
 * First release.
 * Safe Updates: a check after every plugin, theme, WordPress and translation update (automatic updates included), and after plugins are activated or deactivated or the theme is switched, with the change named on everything it found.
@@ -175,6 +195,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * Suggested privacy policy text.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+See which AI systems read your site: the new AI crawlers screen.
 
 = 1.0.0 =
 First release.

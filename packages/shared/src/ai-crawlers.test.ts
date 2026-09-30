@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockedAiCrawlers, robotsBlocksAgent } from "./ai-crawlers";
+import { aiVisitAgent, blockedAiCrawlers, robotsBlocksAgent } from "./ai-crawlers";
 
 const agents = (content: string | null) => blockedAiCrawlers(content).map((c) => c.agent);
 
@@ -50,5 +50,13 @@ describe("blockedAiCrawlers", () => {
   it("names exactly the crawlers a typical 'block AI bots' rule set blocks", () => {
     const robots = "User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: CCBot\nDisallow: /\n\nUser-agent: *\nAllow: /";
     expect(agents(robots)).toEqual(["GPTBot", "ClaudeBot", "CCBot"]);
+  });
+});
+
+describe("aiVisitAgent", () => {
+  it("resolves User-Agent tokens case-insensitively to the canonical name", () => {
+    expect(aiVisitAgent("gptbot")?.agent).toBe("GPTBot");
+    expect(aiVisitAgent("meta-externalagent")?.owner).toBe("Meta AI");
+    expect(aiVisitAgent("Googlebot")).toBeUndefined();
   });
 });

@@ -7,6 +7,9 @@
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
+require_once __DIR__ . '/includes/class-mykavo-bots.php';
+MyKavo_Bots::uninstall();
+
 delete_option( 'mykavo_connection' );
 delete_option( 'mykavo_updates' );
 delete_option( 'mykavo_settings' );

@@ -198,3 +198,9 @@ export function verifyMediaParams(
   if (now > exp || exp - now > MEDIA_TTL_MS + 60_000) return null;
   return safeEqual(sig, mediaMac(kind, id, exp, secret)) ? { kind, id } : null;
 }
+
+/** "MyKavo-WordPress/1.1.0; https://example.com/" -> "1.1.0". */
+export function pluginVersionFromUserAgent(ua: string | null): string | null {
+  const m = /^MyKavo-WordPress\/(\d{1,3}(?:\.\d{1,3}){1,3})(?:;|$)/.exec(ua ?? "");
+  return m ? m[1] : null;
+}

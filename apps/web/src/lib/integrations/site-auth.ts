@@ -13,7 +13,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@mykavo/database";
-import { TOKEN_PREFIX, sha256Hex } from "@/lib/integrations/site-connection";
+import { TOKEN_PREFIX, pluginVersionFromUserAgent, sha256Hex } from "@/lib/integrations/site-connection";
 import { looksLikeJwt, verifySessionToken } from "@/lib/integrations/shopify";
 
 export interface SiteContext {
@@ -45,6 +45,7 @@ export async function authenticateSiteRequest(request: Request): Promise<SiteCon
       id: true,
       revokedAt: true,
       lastUsedAt: true,
+      pluginVersion: true,
       createdByUserId: true,
       workspace: { select: { id: true, name: true, ownerId: true } },
       website: { select: { id: true, name: true, url: true } },
@@ -53,10 +54,16 @@ export async function authenticateSiteRequest(request: Request): Promise<SiteCon
   if (!connection || connection.revokedAt) return null;
 
   const now = Date.now();
-  if (!connection.lastUsedAt || now - connection.lastUsedAt.getTime() > LAST_USED_WRITE_INTERVAL_MS) {
+  // The plugin names its version in every request; keep it current after updates.
+  const reported = pluginVersionFromUserAgent(request.headers.get("user-agent"));
+  const versionChanged = reported !== null && reported !== connection.pluginVersion;
+  if (versionChanged || !connection.lastUsedAt || now - connection.lastUsedAt.getTime() > LAST_USED_WRITE_INTERVAL_MS) {
     // Fire-and-forget: a failed timestamp write must never fail the request.
     void prisma.siteConnection
-      .update({ where: { id: connection.id }, data: { lastUsedAt: new Date(now) } })
+      .update({
+        where: { id: connection.id },
+        data: { lastUsedAt: new Date(now), ...(versionChanged ? { pluginVersion: reported } : {}) },
+      })
       .catch(() => undefined);
   }
 

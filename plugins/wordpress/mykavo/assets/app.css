@@ -2000,3 +2000,83 @@
 .mk-add-tip .mk-link {
 	font-size: 12px;
 }
+
+/* AI crawlers */
+
+.mk-bars {
+	display: flex;
+	align-items: flex-end;
+	gap: 3px;
+	height: 120px;
+	padding: 18px 22px 20px;
+}
+
+.mk-bar {
+	flex: 1 1 0;
+	min-width: 3px;
+	border-radius: 3px 3px 0 0;
+	background: var(--mk-ink);
+}
+
+.mk-bar.is-zero {
+	background: var(--mk-line);
+}
+
+.mk-bad {
+	color: var(--mk-crit);
+	font-weight: 650;
+}
+
+.mk-path {
+	display: inline-block;
+	max-width: 420px;
+	overflow: hidden;
+	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: bottom;
+}
+
+.mk-cell-agents {
+	color: var(--mk-ink-2);
+	font-size: 12px;
+}
+
+.mk-bots-note {
+	padding: 0 4px;
+	line-height: 1.55;
+}
+
+.mk-bots-total {
+	color: var(--mk-ink-2);
+	font-size: 13px;
+}
+
+.mk-bots-total b {
+	color: var(--mk-ink);
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+.mk-bots-mini {
+	margin: 10px 0 0 !important;
+	padding: 0;
+	list-style: none;
+}
+
+.mk-bots-mini li {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0;
+	padding: 6px 0;
+	border-top: 1px solid var(--mk-line-2);
+	font-size: 13px;
+}
+
+.mk-bots-mini em {
+	color: var(--mk-ink-3);
+	font-size: 12px;
+	font-style: normal;
+}
