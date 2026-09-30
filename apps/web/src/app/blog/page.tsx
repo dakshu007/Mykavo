@@ -13,13 +13,14 @@ import { authorNameResolver } from "@/lib/blog-authors-server";
 import { displayTags } from "@/lib/blog-display";
 import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
-// Cached and served from the CDN, regenerated at most every two minutes.
+// Cached and served from the CDN, regenerated at most every 30 seconds.
 // Publishing, editing or deleting a post from the dashboard revalidates it on
 // the spot (lib/blog-revalidate.ts), so new posts still appear immediately;
-// the timer only covers scheduled posts going live.
+// the timer covers scheduled posts going live and the first regeneration
+// after a deploy (see livePosts).
 // This page used to be force-dynamic, and every click on "Blog" waited on a
 // cold serverless function and the database - several seconds of nothing.
-export const revalidate = 120;
+export const revalidate = 30;
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -56,6 +57,13 @@ function topicsOf(posts: readonly { tags: readonly string[] }[]): BlogTopic[] {
   return [...byKey.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)).slice(0, 7);
 }
 
+/**
+ * Live posts, plus whether they could not be read. `unavailable` is true only
+ * during `next build`: Netlify keeps DATABASE_URL out of the build, so the
+ * prerendered copy of this page has no posts. It says "loading" rather than
+ * "no posts yet", regenerates on the first visit after 30 seconds, and the
+ * deploy workflow makes that first visit itself right after going live.
+ */
 async function livePosts() {
   const query = () =>
     prisma.blogPost.findMany({
@@ -72,22 +80,22 @@ async function livePosts() {
       },
     });
   try {
-    return await query();
+    return { posts: await query(), unavailable: false };
   } catch (err) {
     // This page is prerendered during `next build`. If the database is out of
     // reach from the build machine, ship the page and let the first visit
     // regenerate it, rather than failing the whole deploy. At runtime a
     // database error still surfaces as an error - never as an empty blog.
     if (process.env.NEXT_PHASE === "phase-production-build") {
-      console.warn("[blog] database unreachable at build time; /blog will fill in on its first regeneration", err);
-      return [];
+      console.warn("[blog] database not available at build time; /blog fills in on its first regeneration");
+      return { posts: [], unavailable: true };
     }
     throw err;
   }
 }
 
 export default async function BlogIndexPage() {
-  const posts = await livePosts();
+  const { posts, unavailable } = await livePosts();
 
   // Serialized for the client list - dates preformatted so SSR and the
   // visitor's browser render the same label regardless of timezone.
@@ -150,10 +158,13 @@ export default async function BlogIndexPage() {
         {posts.length === 0 ? (
           <div className={`${card} mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center shadow-[5px_5px_0_#FFD400]`}>
             <PenLine className="mb-4 size-7 text-[#151515]" aria-hidden />
-            <h2 className={`${fontDisplay} text-2xl text-[#151515]`}>No posts yet.</h2>
+            <h2 className={`${fontDisplay} text-2xl text-[#151515]`}>
+              {unavailable ? "The latest guides are loading." : "No posts yet."}
+            </h2>
             <p className="mt-2 max-w-sm text-sm leading-6 text-[#6B6B60]">
-              We&apos;re writing our first guides on website change monitoring. Check back soon -
-              or start monitoring in the meantime.
+              {unavailable
+                ? "Refresh in a moment to see every guide."
+                : "We're writing our first guides on website change monitoring. Check back soon - or start monitoring in the meantime."}
             </p>
             <Link
               href="/signup"

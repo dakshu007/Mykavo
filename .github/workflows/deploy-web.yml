@@ -141,3 +141,22 @@ jobs:
             --filter web \
             --site "$NETLIFY_SITE_ID" \
             --message "GitHub Actions: ${GITHUB_SHA}"
+
+      # /blog is prerendered at build time without database access (Netlify
+      # keeps DATABASE_URL out of the build), so the deployed copy has no
+      # posts. It regenerates on the first request after 30 seconds: make that
+      # request here, so no visitor is the one who sees the placeholder.
+      # Never fails the deploy - the page also heals on its own.
+      - name: Regenerate the blog index
+        continue-on-error: true
+        run: |
+          sleep 35
+          for attempt in 1 2 3 4 5 6; do
+            body=$(curl -fsS --max-time 30 "https://mykavo.app/blog" || true)
+            if [ -n "$body" ] && ! grep -q "The latest guides are loading" <<<"$body"; then
+              echo "Blog index is live with posts."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::warning::/blog still shows the build-time placeholder; it will regenerate on the next visit."
