@@ -371,3 +371,62 @@ export async function brevoSchedule(campaignId: number, scheduledAt: string): Pr
 export async function sendMarketingEmail(message: EmailMessage, tags: string[] = []): Promise<SendResult> {
   return marketingProvider() === "brevo" ? sendViaBrevo(message, tags) : sendEmail(message);
 }
+
+/* ------------------------------------------------------------------ */
+/* Per-person engagement (admin reports)                              */
+/* ------------------------------------------------------------------ */
+
+/** One transactional-email event from Brevo's log (sent through /smtp/email). */
+export interface BrevoEmailEvent {
+  email: string;
+  /** "requests" | "delivered" | "opened" | "clicks" | "hardBounces" | "softBounces" | "unsubscribed" | ... */
+  event: string;
+  date: string;
+  subject?: string;
+  tag?: string;
+}
+
+/**
+ * Brevo's event log for emails MyKavo sent through the transactional API -
+ * the lifecycle series and Automation Tool flows. Newest first, capped at
+ * `max` events so a report can never page forever.
+ */
+export async function brevoEmailEvents(opts: { days: number; max?: number }): Promise<BrevoEmailEvent[]> {
+  const max = opts.max ?? 10_000;
+  const limit = 2500;
+  const out: BrevoEmailEvent[] = [];
+  for (let offset = 0; offset < max; offset += limit) {
+    const page = await brevo<{ events?: BrevoEmailEvent[] }>("/smtp/statistics/events", {
+      query: { limit, offset, days: opts.days, sort: "desc" },
+    });
+    const events = page.events ?? [];
+    out.push(...events);
+    if (events.length < limit) break;
+  }
+  return out;
+}
+
+export interface BrevoContactCampaignStats {
+  sent: { campaignId: number; at: string }[];
+  opened: { campaignId: number; at: string }[];
+  clicked: { campaignId: number }[];
+}
+
+/** Which campaigns one address was sent, opened and clicked. Null when Brevo has no such contact. */
+export async function brevoContactCampaignStats(email: string): Promise<BrevoContactCampaignStats | null> {
+  try {
+    const s = await brevo<{
+      messagesSent?: { campaignId: number; eventTime: string }[];
+      opened?: { campaignId: number; eventTime: string }[];
+      clicked?: { campaignId: number }[];
+    }>(`/contacts/${encodeURIComponent(email)}/campaignStats`);
+    return {
+      sent: (s.messagesSent ?? []).map((m) => ({ campaignId: m.campaignId, at: m.eventTime })),
+      opened: (s.opened ?? []).map((m) => ({ campaignId: m.campaignId, at: m.eventTime })),
+      clicked: (s.clicked ?? []).map((m) => ({ campaignId: m.campaignId })),
+    };
+  } catch (err) {
+    if (err instanceof BrevoError && err.status === 404) return null;
+    throw err;
+  }
+}

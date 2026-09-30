@@ -7,6 +7,7 @@ import { isPlatformAdmin } from "@/lib/platform-admin";
 import { getMarketingOverview, type MarketingOverview } from "@/lib/email-marketing";
 import { Card, CardHeader } from "@/components/ui/card";
 import { SyncNowButton } from "@/components/email-marketing/sync-now-button";
+import { CampaignPeopleSection } from "@/components/dashboard/engagement-sections";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -328,6 +329,8 @@ export default async function EmailMarketingPage() {
           </div>
         )}
       </Card>
+
+      {onBrevo && <CampaignPeopleSection />}
 
       <p className="flex items-center gap-2 text-[12px] text-ink-faint">
         <AlertTriangle className="size-3.5" aria-hidden />

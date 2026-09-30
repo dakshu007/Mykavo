@@ -1,4 +1,4 @@
-import { marketingName, prisma } from "@mykavo/database";
+import { isInternalEmail, marketingName, prisma } from "@mykavo/database";
 import { addContactNow, brevoConfigured } from "@mykavo/email";
 import { logger } from "@/lib/logger";
 
@@ -12,6 +12,8 @@ import { logger } from "@/lib/logger";
 export async function addSignupToBrevo(user: { id: string; email: string; name: string; createdAt: Date }): Promise<void> {
   if (!brevoConfigured()) return;
   const email = user.email.trim().toLowerCase();
+  // The team's own test and admin accounts are not an audience.
+  if (isInternalEmail(email)) return;
   try {
     const optedOut = Boolean(await prisma.emailOptOut.findUnique({ where: { email }, select: { id: true } }).catch(() => null));
     await Promise.race([

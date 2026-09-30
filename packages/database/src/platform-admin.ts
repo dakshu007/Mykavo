@@ -28,3 +28,19 @@ export function isPlatformAdminEmail(email: string | null | undefined, env: Env 
   if (!email) return false;
   return platformAdminEmails(env).includes(email.trim().toLowerCase());
 }
+
+/**
+ * The team's own addresses, not customers: the platform admins, anything at
+ * the company's own domain (INTERNAL_EMAIL_DOMAINS, default mykavo.app - the
+ * test accounts live there), and MARKETING_EXCLUDE_EMAILS. They are kept out
+ * of the Brevo marketing lists and out of the engagement reports, so the
+ * numbers are about real users only.
+ */
+export function isInternalEmail(email: string | null | undefined, env: Env = process.env): boolean {
+  if (!email) return false;
+  const e = email.trim().toLowerCase();
+  if (isPlatformAdminEmail(e, env)) return true;
+  if (parseEmails(env.MARKETING_EXCLUDE_EMAILS).includes(e)) return true;
+  const domains = parseEmails(env.INTERNAL_EMAIL_DOMAINS ?? "mykavo.app");
+  return domains.some((d) => e.endsWith(`@${d.replace(/^@/, "")}`));
+}

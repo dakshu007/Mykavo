@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { isMissingTableError } from "./automations";
-import { isPlatformAdminEmail } from "./platform-admin";
+import { isInternalEmail } from "./platform-admin";
 import { planIdFromSubscription } from "./subscription";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -80,8 +80,10 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
     const ws = u.ownedWorkspaces[0];
     if (!ws || !u.email) continue;
     const email = u.email.trim().toLowerCase();
-    // The admin's own workspace runs on Agency (see getWorkspaceEntitlement).
-    const plan = isPlatformAdminEmail(email) ? "agency" : planIdFromSubscription(ws.subscription);
+    // The team's own accounts are not an audience. Leaving them out here also
+    // makes the full sync's prune take them OUT of the lists.
+    if (isInternalEmail(email)) continue;
+    const plan = planIdFromSubscription(ws.subscription);
     out.push({
       email,
       userId: u.id,

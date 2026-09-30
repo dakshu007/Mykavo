@@ -7,6 +7,7 @@ import { isPlatformAdmin } from "@/lib/platform-admin";
 import { getAutomationsOverview } from "@/lib/automations-admin";
 import { Card, CardHeader } from "@/components/ui/card";
 import { AutomationsList } from "@/components/dashboard/automations-list";
+import { AutomationPeopleSection } from "@/components/dashboard/engagement-sections";
 
 export const metadata: Metadata = {
   title: "Automations",
@@ -71,6 +72,8 @@ export default async function AutomationsPage() {
       </Card>
 
       <AutomationsList overview={overview} />
+
+      <AutomationPeopleSection />
     </div>
   );
 }
