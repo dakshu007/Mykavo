@@ -55,7 +55,8 @@ export function parseChangeFilters(params: ChangeFilterParams): ParsedChangeFilt
     category: CHANGE_CATEGORIES.includes(params.category as ChangeCategory)
       ? (params.category as ChangeCategory)
       : undefined,
-    websiteId: params.website || undefined,
+    // "all" is the Changes page's explicit every-site view, not a website id.
+    websiteId: params.website && params.website !== "all" ? params.website : undefined,
     showResolved: params.status === "all",
   };
 }

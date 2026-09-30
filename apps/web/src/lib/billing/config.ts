@@ -42,6 +42,24 @@ const CHECKOUT_BASE =
     ? "https://checkout.dodopayments.com/buy"
     : "https://test.checkout.dodopayments.com/buy");
 
+/**
+ * The autopay limit Indian cards register with the bank, in rupees.
+ *
+ * Dodo's default is Rs 15,000 - the RBI no-extra-authentication ceiling - and
+ * customers read that as "MyKavo may take Rs 15,000 from my account". The
+ * bank registers max(this floor, the actual charge), so a lower floor still
+ * bills correctly. Rs 6,000 covers Agency ($49 plus GST, with room for the
+ * exchange rate), so a Pro customer who upgrades to Agency later is not
+ * declined for going over the limit they first approved.
+ *
+ * Indian cards only: UPI AutoPay under Rs 15,000 always shows Rs 15,000 - an
+ * NPCI rule no merchant can change.
+ */
+export const DODO_MANDATE_FLOOR_INR = (() => {
+  const raw = Number(process.env.DODO_MANDATE_FLOOR_INR ?? 6000);
+  return Number.isFinite(raw) && raw >= 500 && raw <= 15000 ? Math.round(raw) : 6000;
+})();
+
 /** Whether the checkout button can be shown (product configured). */
 export const billingEnabled = Boolean(DODO_PRODUCT_ID);
 
@@ -67,6 +85,10 @@ const appUrl = process.env.APP_URL ?? process.env.BETTER_AUTH_URL ?? site.url;
  * `redirect_url` (research §4). `metadata_kind` is informational only.
  * Null when the product is unconfigured.
  */
+export function checkoutRedirectUrl(): string {
+  return `${appUrl}/dashboard/billing?checkout=success`;
+}
+
 export function buildCheckoutUrl(params: {
   checkoutToken: string;
   email: string;
@@ -80,6 +102,6 @@ export function buildCheckoutUrl(params: {
   url.searchParams.set("email", params.email);
   url.searchParams.set("metadata_checkoutToken", params.checkoutToken);
   url.searchParams.set("metadata_kind", plan);
-  url.searchParams.set("redirect_url", `${appUrl}/dashboard/billing?checkout=success`);
+  url.searchParams.set("redirect_url", checkoutRedirectUrl());
   return url.toString();
 }

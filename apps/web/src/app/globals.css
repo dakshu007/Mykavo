@@ -294,6 +294,36 @@
   color: var(--fx-ink-faint);
 }
 
+/*
+ * A scroll area that does not look like one until it matters: no track, and a
+ * thin rounded thumb that only appears while the pointer is over the area.
+ * The top and bottom edges fade, so a clipped item reads as "more below"
+ * instead of being cut in half. Used by the dashboard sidebar, whose grey
+ * always-on scrollbar looked like a stray divider next to the nav.
+ */
+@utility scroll-quiet {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+  &:hover,
+  &:focus-within {
+    scrollbar-color: color-mix(in oklab, var(--fx-ink-faint) 45%, transparent) transparent;
+  }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: transparent;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--fx-ink-faint) 45%, transparent);
+  }
+}
+
 /* Hand-rolled typography for blog markdown (react-markdown output). */
 @layer components {
   /* Public blog reading surface - always LIGHT for readability, regardless

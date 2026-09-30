@@ -15,6 +15,7 @@ import {
   DodoWebhookError,
 } from "@/lib/billing/webhook";
 import { DODO_WEBHOOK_SECRET, planForProductId } from "@/lib/billing/config";
+import { notifyPaymentProblem, paymentProblemKind } from "@/lib/billing/payment-notice";
 import { logger } from "@/lib/logger";
 
 // The raw body is required for signature verification - never parse it first.
@@ -81,6 +82,13 @@ export async function POST(request: Request) {
   // this encodes). Ignored/noop events return BEFORE the transaction so they
   // can never consume the one-time checkout token or touch entitlements.
   const action = classifyDodoEvent(type, status);
+
+  // A declined charge or a paused plan: tell the owner, before the
+  // entitlement change below (the email names the plan they paid for).
+  const problem = paymentProblemKind(type, status);
+  if (problem && webhookId) {
+    await notifyPaymentProblem({ webhookId, kind: problem, subscriptionId });
+  }
   if (action === "ignored" || action === "noop") {
     logger.info(`dodo webhook ${action}`, { webhookId, type, status });
     return NextResponse.json({ ok: true, result: action });

@@ -303,6 +303,14 @@ export default async function BillingPage({
           <p className="-mt-3 text-center text-[13px] text-ink-faint">
             Secure checkout by Dodo Payments. Cancel anytime.
           </p>
+          {/* Indian cards and UPI show an autopay LIMIT at checkout, and a
+              large one reads like a charge. Say what it is before they see it. */}
+          <div className="rounded-card border border-line bg-card px-4 py-3 text-[13px] leading-5 text-ink-secondary">
+            <span className="font-semibold text-ink">Paying from India?</span> Your bank asks you to
+            approve an autopay limit. That is a ceiling, never the charge: you are only billed your
+            plan&apos;s price each month, and your bank notifies you before every debit. UPI AutoPay
+            always shows ₹15,000 for any amount under it - that limit is set by NPCI, not by MyKavo.
+          </div>
         </>
       )}
 

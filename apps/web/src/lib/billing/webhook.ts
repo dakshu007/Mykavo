@@ -189,3 +189,18 @@ export function resolveGrantedPlan(input: {
   if (input.intentKind === "agency" || input.intentKind === "pro") return input.intentKind;
   return input.recordedPlan ?? "pro";
 }
+
+/* --------------------------- payment problems ---------------------------- */
+
+export type PaymentProblemKind = "failed" | "on_hold";
+
+/**
+ * Which "your payment didn't go through" email a Dodo event calls for, if
+ * any (see payment-notice.ts). Pure.
+ */
+export function paymentProblemKind(type: string, status: string): PaymentProblemKind | null {
+  if (type === "payment.failed") return "failed";
+  if (type === "subscription.on_hold") return "on_hold";
+  if (type.startsWith("subscription.") && status === "on_hold") return "on_hold";
+  return null;
+}

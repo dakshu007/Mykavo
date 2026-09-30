@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessagesSquare, Plus, Send, Trash2, Webhook } from "lucide-react";
+import { Plus, Send, Trash2 } from "lucide-react";
 import type { WebhookChannelType } from "@mykavo/shared";
 import type { AlertChannelView } from "@/lib/notification-channels";
-import { SlackIcon } from "@/components/brand/integration-icons";
+import { DiscordIcon, SlackIcon, WebhookIcon } from "@/components/brand/integration-icons";
 import { cn } from "@/lib/utils";
 
 /** What the Add to Slack callback reported, keyed by its ?slack= value. */
@@ -52,10 +52,24 @@ const TYPE_META: Record<
   },
 };
 
-function TypeIcon({ type, className }: { type: WebhookChannelType; className?: string }) {
-  if (type === "SLACK") return <SlackIcon className={className} />;
-  if (type === "DISCORD") return <MessagesSquare className={className} aria-hidden />;
-  return <Webhook className={className} aria-hidden />;
+/**
+ * The service's own logo on a small white tile. Brand marks keep their
+ * official colours (see integration-icons.tsx), and the tile keeps them
+ * legible in dark mode, where Discord's blurple and the webhook mark's slate
+ * would otherwise sink into the card.
+ */
+function TypeIcon({ type, size = "md" }: { type: WebhookChannelType; size?: "sm" | "md" }) {
+  const Mark = type === "SLACK" ? SlackIcon : type === "DISCORD" ? DiscordIcon : WebhookIcon;
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center bg-white ring-1 ring-black/8",
+        size === "sm" ? "size-5 rounded-md" : "size-9 rounded-[10px] shadow-[0_1px_2px_rgb(21_21_21/10%)]",
+      )}
+    >
+      <Mark className={size === "sm" ? "size-3.5" : "size-5"} />
+    </span>
+  );
 }
 
 export function AlertChannels({
@@ -142,7 +156,7 @@ export function AlertChannels({
         <ul className="divide-y divide-line rounded-field border border-line">
           {initial.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <TypeIcon type={c.type} className="size-4.5 shrink-0 text-ink-secondary" />
+              <TypeIcon type={c.type} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-ink">{TYPE_META[c.type].label}</p>
                 {c.destination ? (
@@ -216,13 +230,13 @@ export function AlertChannels({
                 type="button"
                 onClick={() => setType(t)}
                 className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium transition-colors",
+                  "inline-flex h-9 items-center gap-2 rounded-full border pl-2 pr-4 text-[13px] font-medium transition-colors",
                   type === t
                     ? "border-accent bg-primary-soft text-accent"
                     : "border-line text-ink-secondary hover:text-ink",
                 )}
               >
-                <TypeIcon type={t} className="size-3.5" />
+                <TypeIcon type={t} size="sm" />
                 {TYPE_META[t].label}
               </button>
             ))}

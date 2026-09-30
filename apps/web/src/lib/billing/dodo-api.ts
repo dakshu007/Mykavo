@@ -4,7 +4,7 @@
  * the mode-specific base URL. No SDK - plain fetch (research §5).
  */
 
-import { dodoApiBase, DODO_API_KEY } from "./config";
+import { dodoApiBase, DODO_API_KEY, DODO_MANDATE_FLOOR_INR } from "./config";
 
 function authHeaders(): HeadersInit {
   return {
@@ -77,5 +77,48 @@ export async function changeSubscriptionPlan(
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     throw new Error(`Dodo change-plan failed ${res.status}: ${detail.slice(0, 200)}`);
+  }
+}
+
+/**
+ * Create a hosted checkout session and return its URL.
+ *
+ * Used instead of the static /buy link because only a session can carry
+ * mandate_min_amount_inr_paise - the autopay limit an Indian card registers
+ * (see DODO_MANDATE_FLOOR_INR). Metadata is the same as the static link's,
+ * so the webhook attributes the payment exactly as before.
+ */
+export async function createCheckoutSession(params: {
+  productId: string;
+  email: string;
+  metadata: Record<string, string>;
+  returnUrl: string;
+}): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const res = await fetch(`${dodoApiBase()}/checkouts`, {
+      method: "POST",
+      headers: authHeaders(),
+      signal: controller.signal,
+      body: JSON.stringify({
+        product_cart: [{ product_id: params.productId, quantity: 1 }],
+        customer: { email: params.email },
+        metadata: params.metadata,
+        return_url: params.returnUrl,
+        mandate_min_amount_inr_paise: DODO_MANDATE_FLOOR_INR * 100,
+      }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`Dodo checkout session failed ${res.status}: ${detail.slice(0, 200)}`);
+    }
+    const data = (await res.json()) as { checkout_url?: string };
+    if (!data.checkout_url || !data.checkout_url.startsWith("https://")) {
+      throw new Error("Dodo checkout session returned no checkout_url");
+    }
+    return data.checkout_url;
+  } finally {
+    clearTimeout(timer);
   }
 }

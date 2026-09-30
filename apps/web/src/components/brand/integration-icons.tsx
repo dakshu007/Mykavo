@@ -47,24 +47,24 @@ export function DiscordIcon({ className = "" }: { className?: string }) {
 }
 
 /**
- * The webhook trefoil, in the mark's own magenta and slate.
+ * The webhook mark: three nodes, each with a hook reaching for the next -
+ * one magenta, two charcoal, as in the widely used webhooks logo.
  *
  * Drawn from primitives rather than copied path data: webhooks are a protocol
- * rather than a company, so there is no single official file to reproduce, and
- * a hand-built trefoil cannot silently render as a broken path.
+ * rather than a company, so there is no single official file to reproduce.
+ * The geometry is generated (three-fold symmetric, hooks curving inward).
  */
 export function WebhookIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden focusable="false">
-      <g fill="none" stroke="#3E4C59" strokeWidth="2" strokeLinecap="round">
-        <path d="M8.6 9.4 5.9 14.2" stroke="#E1245D" />
-        <path d="M12.1 7.6 15 12.6" />
-        <path d="M8.2 17.4h5.9" />
+      <g fill="none" strokeWidth="3" strokeLinecap="round">
+        <path d="M12.00 4.90Q10.93 10.85 7.55 12.60" stroke="#C73A63" />
+        <path d="M18.84 16.75Q14.22 12.85 14.39 9.05" stroke="#4B4B4B" />
+        <path d="M5.16 16.75Q10.85 14.70 14.05 16.75" stroke="#4B4B4B" />
       </g>
-      <circle cx="10.4" cy="6.6" r="2.9" fill="none" stroke="#E1245D" strokeWidth="2" />
-      <circle cx="6.1" cy="17.4" r="2.6" fill="#3E4C59" />
-      <circle cx="17.9" cy="17.4" r="2.6" fill="#3E4C59" />
-      <circle cx="10.4" cy="6.6" r="1.6" fill="#3E4C59" />
+      <circle cx="12.00" cy="4.90" r="3.1" fill="#C73A63" />
+      <circle cx="18.84" cy="16.75" r="3.1" fill="#4B4B4B" />
+      <circle cx="5.16" cy="16.75" r="3.1" fill="#4B4B4B" />
     </svg>
   );
 }

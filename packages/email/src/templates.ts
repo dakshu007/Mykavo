@@ -755,6 +755,48 @@ export function renewalReminderEmail(data: RenewalReminderData): {
   return { subject, html: shell(inner), text };
 }
 
+// ---------- Payment problem (a renewal or charge did not go through) ----------
+
+export interface PaymentProblemData {
+  planName: string;
+  /** "failed": a charge was declined and may be retried. "on_hold": the plan was paused. */
+  kind: "failed" | "on_hold";
+  billingUrl: string;
+}
+
+/**
+ * Sent when Dodo reports a failed charge or puts the subscription on hold.
+ * Before this, a declined renewal moved the workspace to Free without a word.
+ * The most common Indian cause is an autopay limit below the charge, so the
+ * email says so plainly and points at the one fix: update the payment method.
+ */
+export function paymentProblemEmail(data: PaymentProblemData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject =
+    data.kind === "on_hold"
+      ? `Action needed: your MyKavo ${data.planName} plan is paused`
+      : `Your MyKavo ${data.planName} payment didn't go through`;
+  const lead =
+    data.kind === "on_hold"
+      ? `We couldn't collect the payment for your ${data.planName} plan, so it is paused and your workspace is on the Free plan for now. Nothing is lost - your websites, baselines and history are all still there.`
+      : `We tried to collect the payment for your ${data.planName} plan and your bank declined it. We'll try again, but it is quickest to fix it now.`;
+  const why =
+    "The usual reasons: the card expired, the autopay limit on the card or UPI mandate is lower than the charge, or the bank flagged it. Updating the payment method in Billing sets things right in a minute.";
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#e5484d">${data.kind === "on_hold" ? "Plan paused" : "Payment declined"}</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(subject)}</h1>
+    <p style="margin:0 0 12px;font-size:14px;color:#5c6270">${esc(lead)}</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(why)}</p>
+    ${button(data.billingUrl, "Update payment method")}
+    <p style="margin:20px 0 0;font-size:12px;color:#8a8f9c">You are only ever charged your plan's price. Questions? Just reply to this email.</p>
+  `;
+  const text = `${subject}\n\n${lead}\n\n${why}\n\nBilling: ${data.billingUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
 // ---------- Welcome (sent once, when an account is created) ----------
 
 export interface WelcomeEmailData {

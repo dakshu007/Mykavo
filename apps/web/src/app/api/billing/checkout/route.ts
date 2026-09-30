@@ -3,7 +3,13 @@ import { randomBytes } from "node:crypto";
 import { prisma, createCheckoutIntent } from "@mykavo/database";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { canManageBilling } from "@/lib/team";
-import { buildCheckoutUrl, productIdForPlan, type PaidPlan } from "@/lib/billing/config";
+import {
+  buildCheckoutUrl,
+  checkoutRedirectUrl,
+  productIdForPlan,
+  type PaidPlan,
+} from "@/lib/billing/config";
+import { createCheckoutSession, dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
 import { appBaseUrl } from "@/lib/app-url";
 import { logger } from "@/lib/logger";
@@ -51,11 +57,34 @@ export async function GET(request: Request) {
     kind: plan,
   });
 
+  // Preferred: a checkout session, which lowers the autopay limit Indian
+  // cards show (Rs 15,000 by default - see DODO_MANDATE_FLOOR_INR). Any
+  // failure falls back to the static link, so checkout never breaks over it.
+  const productId = productIdForPlan(plan)!;
+  if (dodoApiConfigured()) {
+    try {
+      const sessionUrl = await createCheckoutSession({
+        productId,
+        email: session.user.email,
+        metadata: { checkoutToken: token, kind: plan },
+        returnUrl: checkoutRedirectUrl(),
+      });
+      logger.info("checkout started", { workspaceId: workspace.id, plan, via: "session" });
+      return NextResponse.redirect(sessionUrl);
+    } catch (err) {
+      logger.warn("checkout session failed, using static link", {
+        workspaceId: workspace.id,
+        plan,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   const url = buildCheckoutUrl({ checkoutToken: token, email: session.user.email, plan });
   if (!url) {
     return NextResponse.json({ error: "Billing is not configured." }, { status: 503 });
   }
 
-  logger.info("checkout started", { workspaceId: workspace.id, plan });
+  logger.info("checkout started", { workspaceId: workspace.id, plan, via: "static-link" });
   return NextResponse.redirect(url);
 }

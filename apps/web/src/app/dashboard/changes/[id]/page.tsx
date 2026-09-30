@@ -112,7 +112,7 @@ export default async function ChangeDetailPage({
     <div className="space-y-6">
       <div>
         <Link
-          href="/dashboard/changes"
+          href={`/dashboard/changes?website=${change.websiteId}`}
           className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-secondary hover:text-ink"
         >
           <ArrowLeft className="size-3.5" aria-hidden /> Changes

@@ -46,6 +46,7 @@ export {
   type Day10OfferData,
   performanceDropEmail,
   renewalReminderEmail,
+  paymentProblemEmail,
   type RenewalReminderData,
   type Severity,
   type ChangeLine,
