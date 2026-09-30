@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -177,6 +177,11 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Changelog ==
 
+= 1.2.0 =
+* Redesigned MyKavo screen: a new header with your site and its status, tabs with icons, and one status panel that brings together the verdict, open changes by severity and your site's uptime, response time, SSL and pages.
+* Click a severity in the status panel to jump straight to those changes.
+* Cleaner change lists that line up on phones, clearer before-and-after values, and a Pages list that shows each address once.
+
 = 1.1.0 =
 * New: AI crawlers screen - which AI systems (ChatGPT, Claude, Perplexity and more) read your site, which pages they read most, visits per day, and errors served to them. Also shown in your MyKavo dashboard.
 * Crawler names only: no IP addresses, cookies or visitor data. Can be switched off.
@@ -195,6 +200,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * Suggested privacy policy text.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+A redesigned, easier-to-read MyKavo screen.
 
 = 1.1.0 =
 See which AI systems read your site: the new AI crawlers screen.
