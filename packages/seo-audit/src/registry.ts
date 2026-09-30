@@ -34,6 +34,7 @@ export type AuditCategory =
   | "International"
   | "Accessibility"
   | "Trust signals"
+  | "AI search"
   | "HTML hygiene";
 
 export interface AuditCheckDef {
@@ -503,6 +504,53 @@ export const AUDIT_CHECKS: Record<string, AuditCheckDef> = {
     category: "Accessibility", severity: "WARNING", title: "Form input without label",
     explain: "Inputs without an associated label are hard to use with assistive tech and hurt conversions.",
     fix: "Add a <label for> (or aria-label) to every input, select, and textarea.",
+  },
+
+  // ---------- AI search (AEO / GEO) ----------
+  "ai-crawlers-blocked": {
+    category: "AI search", severity: "ERROR", title: "robots.txt blocks AI search crawlers",
+    explain: "ChatGPT, Claude or Perplexity cannot read the site, so it is left out of their answers and never cited.",
+    fix: "Remove the Disallow: / rules for OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User and PerplexityBot (check security plugins and CDN \"block AI bots\" settings too).",
+  },
+  "ai-training-crawlers-blocked": {
+    category: "AI search", severity: "NOTICE", title: "robots.txt blocks AI training crawlers",
+    explain: "GPTBot, ClaudeBot or similar are kept out. Often deliberate, but it also stops the models from learning about your brand.",
+    fix: "If you did not choose this, remove the Disallow: / rules for these crawlers from robots.txt.",
+  },
+  "ai-llms-txt-missing": {
+    category: "AI search", severity: "NOTICE", title: "No llms.txt",
+    explain: "/llms.txt is a short, curated summary of the site written for AI assistants - what you do, and your key pages.",
+    fix: "Publish /llms.txt: a # Title, a one-paragraph summary, then Markdown lists linking your most important pages.",
+  },
+  "ai-llms-txt-invalid": {
+    category: "AI search", severity: "WARNING", title: "llms.txt returns a web page",
+    explain: "/llms.txt answers with HTML (usually the site's 404 page), so assistants find no summary there.",
+    fix: "Serve a plain-text Markdown file at /llms.txt, or remove the route so it returns a real 404.",
+  },
+  "ai-no-entity-schema": {
+    category: "AI search", severity: "WARNING", title: "Home page does not say who you are",
+    explain: "No Organization, LocalBusiness or WebSite structured data on the home page, so AI systems have to guess the brand, logo and profiles.",
+    fix: "Add Organization (or LocalBusiness) JSON-LD with name, url, logo and sameAs links to your social profiles.",
+  },
+  "ai-questions-no-faq-schema": {
+    category: "AI search", severity: "NOTICE", title: "Questions without FAQ markup",
+    explain: "The page answers several questions in its headings but does not mark them up, so answer engines have to work harder to lift them.",
+    fix: "Add FAQPage JSON-LD mirroring the questions and answers visible on the page.",
+  },
+  "ai-article-no-author": {
+    category: "AI search", severity: "NOTICE", title: "Article has no named author",
+    explain: "AI answers and Google prefer content they can attribute to a real, credible person.",
+    fix: "Show a byline and add author to the Article JSON-LD (a Person with name and url).",
+  },
+  "ai-article-no-date": {
+    category: "AI search", severity: "NOTICE", title: "Article has no machine-readable date",
+    explain: "Without a published or updated date, AI systems cannot tell whether the answer is current.",
+    fix: "Add datePublished and dateModified to the Article JSON-LD, or article:published_time meta tags.",
+  },
+  "ai-no-lead-answer": {
+    category: "AI search", severity: "NOTICE", title: "No short answer near the top",
+    explain: "AI answers quote a clear 40-60 word answer right under the heading. This page opens without one, or with a long paragraph.",
+    fix: "Start the page with a 1-2 sentence answer to its main question, then go into detail.",
   },
 
   // ---------- Trust signals ----------

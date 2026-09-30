@@ -146,3 +146,79 @@ describe("compareSiteMeta", () => {
     expect(small[0].severity).toBe("INFO");
   });
 });
+
+describe("compareSiteMeta - AI crawlers", () => {
+  const blockAi = "User-agent: GPTBot\nUser-agent: ClaudeBot\nDisallow: /\n\nUser-agent: *\nDisallow: /admin/";
+
+  it("raises HIGH when robots.txt starts blocking ChatGPT and Claude crawlers", () => {
+    const changes = compareSiteMeta(meta({}), meta({ robotsTxtContent: blockAi, robotsTxtHash: "hash-b" }));
+    const ai = changes.find((c) => c.changeType === "ai_crawlers_blocked");
+    expect(ai?.severity).toBe("HIGH");
+    expect(ai?.title).toContain("GPTBot (OpenAI)");
+    expect(ai?.title).toContain("ClaudeBot (Anthropic)");
+    expect(ai?.notify).toBe(true);
+  });
+
+  it("is only MEDIUM when just training crawlers are blocked", () => {
+    const changes = compareSiteMeta(
+      meta({}),
+      meta({ robotsTxtContent: "User-agent: CCBot\nDisallow: /", robotsTxtHash: "hash-b" }),
+    );
+    expect(changes.find((c) => c.changeType === "ai_crawlers_blocked")?.severity).toBe("MEDIUM");
+  });
+
+  it("reports crawlers being let back in, quietly", () => {
+    const changes = compareSiteMeta(meta({ robotsTxtContent: blockAi }), meta({ robotsTxtHash: "hash-b" }));
+    expect(changes.find((c) => c.changeType === "ai_crawlers_unblocked")?.severity).toBe("LOW");
+  });
+
+  it("leaves a full block to the existing CRITICAL alert, without doubling it", () => {
+    const changes = compareSiteMeta(
+      meta({}),
+      meta({ robotsTxtContent: "User-agent: *\nDisallow: /", robotsTxtHash: "hash-b" }),
+    );
+    expect(changes.some((c) => c.changeType === "robots_txt_blocks_all")).toBe(true);
+    expect(changes.some((c) => c.changeType === "ai_crawlers_blocked")).toBe(false);
+  });
+
+  it("counts a robots.txt that disappeared as allowing everyone", () => {
+    const changes = compareSiteMeta(
+      meta({ robotsTxtContent: blockAi }),
+      meta({ robotsTxtStatus: 404, robotsTxtContent: null, robotsTxtHash: null }),
+    );
+    expect(changes.some((c) => c.changeType === "ai_crawlers_unblocked")).toBe(true);
+  });
+});
+
+describe("compareSiteMeta - llms.txt", () => {
+  it("raises HIGH when llms.txt disappears", () => {
+    const changes = compareSiteMeta(
+      meta({ llmsTxtStatus: 200, llmsTxtHash: "l1" }),
+      meta({ llmsTxtStatus: 404, llmsTxtHash: null }),
+    );
+    expect(changes.find((c) => c.changeType === "llms_txt_removed")?.severity).toBe("HIGH");
+  });
+
+  it("treats an HTML page served at /llms.txt as missing", () => {
+    const changes = compareSiteMeta(
+      meta({ llmsTxtStatus: 200, llmsTxtHash: "l1" }),
+      meta({ llmsTxtStatus: 200, llmsTxtHash: null }),
+    );
+    expect(changes.find((c) => c.changeType === "llms_txt_removed")?.description).toContain("web page");
+  });
+
+  it("notes a new or edited llms.txt as INFO", () => {
+    expect(
+      compareSiteMeta(meta({ llmsTxtStatus: 404, llmsTxtHash: null }), meta({ llmsTxtStatus: 200, llmsTxtHash: "l1" }))[0]
+        ?.changeType,
+    ).toBe("llms_txt_appeared");
+    expect(
+      compareSiteMeta(meta({ llmsTxtStatus: 200, llmsTxtHash: "l1" }), meta({ llmsTxtStatus: 200, llmsTxtHash: "l2" }))[0]
+        ?.severity,
+    ).toBe("INFO");
+  });
+
+  it("compares nothing when the earlier capture predates llms.txt monitoring", () => {
+    expect(compareSiteMeta(meta({}), meta({ llmsTxtStatus: 404, llmsTxtHash: null }))).toEqual([]);
+  });
+});

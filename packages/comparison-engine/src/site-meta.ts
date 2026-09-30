@@ -5,6 +5,7 @@
  */
 
 import { scoreChange, type ChangeSignal, type ScoredChange } from "@mykavo/severity-engine";
+import { HIGH_IMPACT_AI_AGENTS, blockedAiCrawlers } from "@mykavo/shared";
 
 /** One scan's captured robots.txt + sitemap state (SiteMetaSnapshot row). */
 export interface SiteMetaComparable {
@@ -15,6 +16,13 @@ export interface SiteMetaComparable {
   sitemapStatus: number | null;
   sitemapUrlCount: number | null;
   sitemapHash: string | null;
+  /**
+   * /llms.txt: its status and a hash of the file, set only when it answered
+   * with a real text file (not an HTML error page). Undefined when this
+   * capture predates llms.txt monitoring - then it is not compared at all.
+   */
+  llmsTxtStatus?: number | null;
+  llmsTxtHash?: string | null;
 }
 
 /**
@@ -117,6 +125,43 @@ export function compareSiteMeta(
       previous: previous.robotsTxtContent,
       current: current.robotsTxtContent,
     });
+  }
+
+  // AI crawlers: which ones robots.txt keeps out of the whole site. A
+  // missing robots.txt allows everyone. Skipped when the whole site was just
+  // blocked for every crawler - that CRITICAL already says it.
+  const robotsReadable = (m: SiteMetaComparable) =>
+    OK(m.robotsTxtStatus) ? m.robotsTxtContent : m.robotsTxtStatus !== null && m.robotsTxtStatus >= 400 && m.robotsTxtStatus < 500 ? "" : null;
+  const prevRobots = robotsReadable(previous);
+  const currRobots = robotsReadable(current);
+  const blockedEveryone = signals.some((sig) => sig.kind === "robots_txt_changed" && sig.newlyBlocksAll);
+  if (prevRobots !== null && currRobots !== null && !blockedEveryone) {
+    const before = new Set(blockedAiCrawlers(prevRobots).map((c) => c.agent));
+    const after = blockedAiCrawlers(currRobots);
+    const newly = after.filter((c) => !before.has(c.agent));
+    if (newly.length > 0) {
+      signals.push({
+        kind: "ai_crawlers_blocked",
+        crawlers: newly.map((c) => `${c.agent} (${c.owner})`),
+        highImpact: newly.some((c) => HIGH_IMPACT_AI_AGENTS.has(c.agent)),
+      });
+    }
+    const afterSet = new Set(after.map((c) => c.agent));
+    const unblocked = [...before].filter((a) => !afterSet.has(a));
+    if (unblocked.length > 0) signals.push({ kind: "ai_crawlers_unblocked", crawlers: unblocked });
+  }
+
+  // llms.txt - only when both captures looked for it.
+  if (previous.llmsTxtStatus !== undefined && current.llmsTxtStatus !== undefined) {
+    const hadLlms = OK(previous.llmsTxtStatus ?? null) && Boolean(previous.llmsTxtHash);
+    const hasLlms = OK(current.llmsTxtStatus ?? null) && Boolean(current.llmsTxtHash);
+    if (hadLlms && !hasLlms) {
+      signals.push({ kind: "llms_txt_removed", currentStatus: current.llmsTxtStatus ?? null });
+    } else if (!hadLlms && hasLlms) {
+      signals.push({ kind: "llms_txt_appeared" });
+    } else if (hadLlms && hasLlms && previous.llmsTxtHash !== current.llmsTxtHash) {
+      signals.push({ kind: "llms_txt_changed" });
+    }
   }
 
   // sitemap

@@ -107,7 +107,7 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
           "Free plan: 1 website, 5 monitored pages, weekly scans, 30-day history, no card",
           "Pro at $20/month: 8 websites, 15 pages each, daily scans, 1-year history, 3 seats",
           "Agency at $49/month: 30 websites, 25 pages each, white-label client reports, 15 seats",
-          "Site audit on every plan: 89 checks across 22 categories",
+          "Site audit on every plan: 98 checks across 23 categories",
           "Every alert carries the previous and current value, and a screenshot diff for visual change",
         ].map((point) => (
           <li key={point} className="flex items-start gap-3 text-[15px] text-[#151515]/90">

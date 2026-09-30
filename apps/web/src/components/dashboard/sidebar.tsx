@@ -21,6 +21,7 @@ import {
   MailQuestion,
   Workflow,
   Megaphone,
+  Sparkles,
 } from "lucide-react";
 import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
@@ -49,6 +50,7 @@ const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   analyser: ShieldCheck,
   wordpress: WordPressGlyph,
   shopify: ShopifyGlyph,
+  "ai-assistants": Sparkles,
   notifications: Bell,
   billing: CreditCard,
   settings: Settings,

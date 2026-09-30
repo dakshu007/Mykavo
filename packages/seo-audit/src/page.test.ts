@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { extractFacts, pageIssues } from "./page";
 import { AUDIT_CHECKS } from "./registry";
-import { aggregateIssues } from "./crawl";
+import { aggregateIssues, aiSiteIssues } from "./crawl";
 
 function facts(html: string, overrides: Partial<Parameters<typeof extractFacts>[0]> = {}) {
   return extractFacts({
@@ -183,5 +183,103 @@ describe("aggregateIssues foundOn", () => {
       ctx,
     );
     expect(groups[0].urls[0].foundOn).toBeUndefined();
+  });
+});
+
+
+const long = (n: number) => "useful words ".repeat(Math.ceil(n / 2)).trim();
+const aiIds = (html: string) =>
+  pageIssues(facts(html))
+    .map((i) => i.checkId)
+    .filter((id) => id.startsWith("ai-"));
+
+describe("AI search page checks", () => {
+  it("flags FAQ-shaped content without FAQPage markup", () => {
+    const html = `<html><body><h1>Guide</h1><p>${long(40)}</p>
+      <h2>What is it?</h2><p>${long(100)}</p><h2>How much does it cost?</h2><p>${long(100)}</p>
+      <h3>Can I cancel?</h3><p>${long(100)}</p></body></html>`;
+    expect(aiIds(html)).toContain("ai-questions-no-faq-schema");
+  });
+
+  it("is satisfied by FAQPage markup, even nested in a @graph", () => {
+    const html = `<html><head><script type="application/ld+json">{"@graph":[{"@type":"FAQPage"}]}</script></head>
+      <body><h1>Guide</h1><p>${long(40)}</p><h2>What?</h2><h2>Why?</h2><h2>How?</h2><p>${long(300)}</p></body></html>`;
+    expect(aiIds(html)).not.toContain("ai-questions-no-faq-schema");
+  });
+
+  it("asks articles for an author and a date", () => {
+    const html = `<html><head><meta property="og:type" content="article"></head>
+      <body><h1>Post</h1><p>${long(40)}</p><p>${long(400)}</p></body></html>`;
+    expect(aiIds(html)).toEqual(expect.arrayContaining(["ai-article-no-author", "ai-article-no-date"]));
+  });
+
+  it("accepts a JSON-LD author and date", () => {
+    const html = `<html><head><script type="application/ld+json">{"@type":"BlogPosting","author":{"@type":"Person","name":"A"},"datePublished":"2026-09-01"}</script></head>
+      <body><h1>Post</h1><p>${long(40)}</p><p>${long(400)}</p></body></html>`;
+    const ids = aiIds(html);
+    expect(ids).not.toContain("ai-article-no-author");
+    expect(ids).not.toContain("ai-article-no-date");
+  });
+
+  it("wants a short answer right under the heading", () => {
+    expect(aiIds(`<html><body><h1>Q</h1><p>${long(200)}</p><p>${long(300)}</p></body></html>`)).toContain(
+      "ai-no-lead-answer",
+    );
+    expect(aiIds(`<html><body><h1>Q</h1><p>${long(45)}</p><p>${long(400)}</p></body></html>`)).not.toContain(
+      "ai-no-lead-answer",
+    );
+  });
+
+  it("leaves short and noindex pages alone", () => {
+    expect(aiIds(`<html><body><h1>Q</h1><p>${long(200)}</p></body></html>`)).toEqual([]);
+    expect(
+      aiIds(`<html><head><meta name="robots" content="noindex"></head><body><h1>Q</h1><p>${long(600)}</p></body></html>`),
+    ).toEqual([]);
+  });
+});
+
+describe("AI search site checks", () => {
+  const origin = "https://example.com";
+  const home = (types: string[]) => [{ url: `${origin}/`, jsonLdTypes: types }];
+
+  it("reports blocked answer-engine crawlers as an error and training crawlers as a notice", () => {
+    const robots = "User-agent: OAI-SearchBot\nUser-agent: PerplexityBot\nUser-agent: GPTBot\nDisallow: /";
+    const out = aiSiteIssues(origin, { present: true, text: robots }, "ok", home(["Organization"]));
+    expect(out.find((i) => i.checkId === "ai-crawlers-blocked")?.detail).toBe("OAI-SearchBot, PerplexityBot");
+    expect(out.find((i) => i.checkId === "ai-training-crawlers-blocked")?.detail).toBe("GPTBot");
+  });
+
+  it("flags a missing llms.txt and one that is really an HTML page", () => {
+    expect(aiSiteIssues(origin, { present: false, text: "" }, "missing", []).map((i) => i.checkId)).toEqual([
+      "ai-llms-txt-missing",
+    ]);
+    expect(aiSiteIssues(origin, { present: false, text: "" }, "html", []).map((i) => i.checkId)).toEqual([
+      "ai-llms-txt-invalid",
+    ]);
+  });
+
+  it("wants the home page to say who is behind the site", () => {
+    const ids = (types: string[]) =>
+      aiSiteIssues(origin, { present: false, text: "" }, "ok", home(types)).map((i) => i.checkId);
+    expect(ids([])).toEqual(["ai-no-entity-schema"]);
+    expect(ids(["WebPage"])).toEqual(["ai-no-entity-schema"]);
+    expect(ids(["Organization"])).toEqual([]);
+    expect(ids(["AutoRepairBusiness"])).toEqual([]);
+  });
+
+  it("registers every AI check it can raise", () => {
+    for (const id of [
+      "ai-crawlers-blocked",
+      "ai-training-crawlers-blocked",
+      "ai-llms-txt-missing",
+      "ai-llms-txt-invalid",
+      "ai-no-entity-schema",
+      "ai-questions-no-faq-schema",
+      "ai-article-no-author",
+      "ai-article-no-date",
+      "ai-no-lead-answer",
+    ]) {
+      expect(AUDIT_CHECKS[id]?.category).toBe("AI search");
+    }
   });
 });

@@ -11,7 +11,8 @@
     "./channels": "./src/channels.ts",
     "./stabilization": "./src/stabilization.ts",
     "./script-services": "./src/script-services.ts",
-    "./flows": "./src/flows.ts"
+    "./flows": "./src/flows.ts",
+    "./ai-crawlers": "./src/ai-crawlers.ts"
   },
   "scripts": {
     "test": "vitest run"

@@ -210,7 +210,11 @@ describe("isNavItemActive", () => {
 describe("dashboardNav - integrations", () => {
   it("gives WordPress and Shopify their own entries, before monitoring is live too", () => {
     const group = dashboardNav(fresh).find((g) => g.id === "integrations");
-    expect(group?.items.map((i) => i.href)).toEqual(["/dashboard/wordpress", "/dashboard/shopify"]);
+    expect(group?.items.map((i) => i.href)).toEqual([
+      "/dashboard/wordpress",
+      "/dashboard/shopify",
+      "/dashboard/ai-assistants",
+    ]);
   });
 
   it("marks Shopify as coming soon and WordPress as live", () => {

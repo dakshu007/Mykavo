@@ -133,6 +133,7 @@ model Workspace {
   invites              WorkspaceInvite[]
   websites             Website[]
   siteConnections      SiteConnection[]
+  apiKeys              ApiKey[]
   notificationChannels NotificationChannel[]
   notifications        Notification[]
   subscription         Subscription?
@@ -395,6 +396,11 @@ model SiteMetaSnapshot {
   sitemapStatus   Int?
   sitemapUrlCount Int?
   sitemapHash     String?
+
+  // /llms.txt observation. Hash set only when it answered with a real text
+  // file (an HTML error page served at that path does not count).
+  llmsTxtStatus Int?
+  llmsTxtHash   String?
 
   createdAt DateTime @default(now())
 
@@ -1421,3 +1427,23 @@ model BrevoSyncRun {
   @@map("brevo_sync_run")
 }
 
+
+/// Workspace API keys for the MCP server (/api/mcp). Only a SHA-256 hash of
+/// the key is kept; the key is shown once when created. Read-only access to
+/// the workspace's monitoring data.
+model ApiKey {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name            String
+  keyHash         String    @unique
+  /// First characters of the key, to tell keys apart in the list.
+  keyPrefix       String
+  createdByUserId String?
+  createdAt       DateTime  @default(now())
+  lastUsedAt      DateTime?
+  revokedAt       DateTime?
+
+  @@index([workspaceId])
+  @@map("api_key")
+}

@@ -9,6 +9,7 @@
  */
 
 import { assertSafeUrl } from "@mykavo/shared/ssrf";
+import { blockedAiCrawlers } from "@mykavo/shared/ai-crawlers";
 import { extractFacts, pageIssues, type PageFacts, type PageIssue } from "./page";
 import { AUDIT_CHECKS, SEVERITY_ORDER, type AuditSeverity } from "./registry";
 
@@ -215,6 +216,8 @@ function normalizeForQueue(raw: string): string | null {
 
 interface RobotsInfo {
   present: boolean;
+  /** The robots.txt body (capped), for the AI crawler checks. */
+  text: string;
   disallows: string[];
   sitemaps: string[];
   blocksAssets: boolean;
@@ -226,7 +229,7 @@ async function fetchRobots(origin: string): Promise<RobotsInfo> {
       headers: { "user-agent": USER_AGENT },
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return { present: false, disallows: [], sitemaps: [], blocksAssets: false };
+    if (!res.ok) return { present: false, text: "", disallows: [], sitemaps: [], blocksAssets: false };
     const text = (await res.text()).slice(0, 100_000);
     const sitemaps = [...text.matchAll(/^sitemap:\s*(\S+)/gim)].map((m) => m[1]);
     // Only honor the generic (*) group - we crawl as a generic bot.
@@ -243,10 +246,72 @@ async function fetchRobots(origin: string): Promise<RobotsInfo> {
       }
     }
     const blocksAssets = disallows.some((d) => /\.(css|js)|\/(css|js|assets|static|wp-includes)\b/i.test(d));
-    return { present: true, disallows, sitemaps, blocksAssets };
+    return { present: true, text, disallows, sitemaps, blocksAssets };
   } catch {
-    return { present: false, disallows: [], sitemaps: [], blocksAssets: false };
+    return { present: false, text: "", disallows: [], sitemaps: [], blocksAssets: false };
   }
+}
+
+type LlmsTxtState = "ok" | "missing" | "html";
+
+async function fetchLlmsTxt(origin: string): Promise<LlmsTxtState> {
+  try {
+    const res = await fetch(`${origin}/llms.txt`, {
+      headers: { "user-agent": USER_AGENT },
+      signal: AbortSignal.timeout(10_000),
+      redirect: "follow",
+    });
+    if (!res.ok) {
+      await res.body?.cancel().catch(() => undefined);
+      return "missing";
+    }
+    const text = (await res.text()).slice(0, 5_000).trim();
+    if (!text) return "missing";
+    return /^<(!doctype|html|head|body)\b/i.test(text) ? "html" : "ok";
+  } catch {
+    return "missing";
+  }
+}
+
+/** Types that tell an answer engine who is behind the site. */
+const ENTITY_TYPES = /^(Organization|Corporation|LocalBusiness|OnlineStore|Store|WebSite|Person|NGO|EducationalOrganization|ProfessionalService|.+Business)$/;
+
+/**
+ * Site-level AI search checks. Pure over what the crawl already gathered,
+ * plus the llms.txt probe - exported for tests.
+ */
+export function aiSiteIssues(
+  origin: string,
+  robots: { present: boolean; text: string },
+  llms: LlmsTxtState,
+  pages: Pick<PageFacts, "url" | "jsonLdTypes">[],
+): PageIssue[] {
+  const out: PageIssue[] = [];
+  const robotsUrl = `${origin}/robots.txt`;
+  if (robots.present) {
+    const blocked = blockedAiCrawlers(robots.text);
+    const answering = blocked.filter((c) => c.purpose !== "training");
+    const training = blocked.filter((c) => c.purpose === "training");
+    if (answering.length > 0)
+      out.push({ checkId: "ai-crawlers-blocked", url: robotsUrl, detail: answering.map((c) => c.agent).join(", ") });
+    if (training.length > 0)
+      out.push({ checkId: "ai-training-crawlers-blocked", url: robotsUrl, detail: training.map((c) => c.agent).join(", ") });
+  }
+  if (llms === "missing") out.push({ checkId: "ai-llms-txt-missing", url: `${origin}/llms.txt` });
+  if (llms === "html") out.push({ checkId: "ai-llms-txt-invalid", url: `${origin}/llms.txt` });
+
+  const home = pages.find((p) => {
+    try {
+      const u = new URL(p.url);
+      return u.origin === origin && (u.pathname === "/" || u.pathname === "");
+    } catch {
+      return false;
+    }
+  });
+  if (home && !home.jsonLdTypes.some((t) => ENTITY_TYPES.test(t))) {
+    out.push({ checkId: "ai-no-entity-schema", url: home.url });
+  }
+  return out;
 }
 
 function robotsAllows(path: string, disallows: string[]): boolean {
@@ -425,6 +490,9 @@ export async function runSiteAudit(
     if (robots.blocksAssets) issues.push({ checkId: "robots-blocks-assets", url: `${origin}/robots.txt` });
   }
   if (sitemapUrls.length === 0) issues.push({ checkId: "sitemap-missing", url: `${origin}/sitemap.xml` });
+
+  // AI search: can answer engines read the site, and does it introduce itself?
+  issues.push(...aiSiteIssues(origin, robots, await fetchLlmsTxt(origin), pages));
 
   // Duplicates across pages
   const byTitle = new Map<string, string[]>();

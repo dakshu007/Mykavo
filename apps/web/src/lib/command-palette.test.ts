@@ -31,6 +31,7 @@ describe("staticEntries", () => {
       "Scan History",
       "WordPress",
       "Shopify",
+      "AI assistants",
       "Notifications",
       "Billing",
       "Settings",

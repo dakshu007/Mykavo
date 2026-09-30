@@ -1,5 +1,5 @@
 /**
- * Per-scan robots.txt + sitemap capture. One plain fetch each (no Playwright),
+ * Per-scan robots.txt + sitemap + llms.txt capture. One plain fetch each (no Playwright),
  * persisted as a SiteMetaSnapshot for the comparison step. Every failure is
  * recorded as a status/null - capture must never fail the scan.
  */
@@ -45,6 +45,18 @@ async function fetchText(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Hash of a real llms.txt, or null. Sites with a catch-all route answer
+ * /llms.txt with their HTML 404 page and status 200; that is not an
+ * llms.txt, and counting it as one would hide the file disappearing.
+ */
+export function llmsHash(body: string | null): string | null {
+  if (!body) return null;
+  const text = body.trim();
+  if (text.length === 0 || /^<(!doctype|html|head|body)\b/i.test(text)) return null;
+  return sha256(text);
 }
 
 /** Sitemap URLs declared in robots.txt (`Sitemap:` lines). */
@@ -128,6 +140,21 @@ export async function captureSiteMeta(params: {
       create: { scanId: params.scanId, ...data },
       update: data,
     });
+
+    // llms.txt - written separately so a database that has not had the
+    // llms.txt columns added yet only loses this, never robots/sitemap.
+    const llms = await fetchText(`${origin}/llms.txt`);
+    try {
+      await prisma.siteMetaSnapshot.update({
+        where: { scanId: params.scanId },
+        data: { llmsTxtStatus: llms.status, llmsTxtHash: llmsHash(llms.body) },
+      });
+    } catch (err) {
+      logger.warn("llms.txt not recorded (migration 20260930160000 not applied?)", {
+        scanId: params.scanId,
+        error: err instanceof Error ? err.message.slice(0, 200) : String(err),
+      });
+    }
   } catch (err) {
     logger.warn("site meta capture failed", {
       scanId: params.scanId,

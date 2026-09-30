@@ -456,7 +456,20 @@ export async function runComparisonForScan(
   // Compared against the most recent previous capture: site meta has no
   // user-approved baseline concept. First capture produces no events.
   try {
-    const currentMeta = await prisma.siteMetaSnapshot.findUnique({ where: { scanId } });
+    // Explicit columns: the llms.txt ones are read separately below, so a
+    // database without them still compares robots.txt and sitemaps.
+    const metaSelect = {
+      id: true,
+      createdAt: true,
+      robotsTxtStatus: true,
+      robotsTxtContent: true,
+      robotsTxtHash: true,
+      sitemapUrl: true,
+      sitemapStatus: true,
+      sitemapUrlCount: true,
+      sitemapHash: true,
+    } as const;
+    const currentMeta = await prisma.siteMetaSnapshot.findUnique({ where: { scanId }, select: metaSelect });
     if (currentMeta) {
       const previousMeta = await prisma.siteMetaSnapshot.findFirst({
         where: {
@@ -465,8 +478,22 @@ export async function runComparisonForScan(
           createdAt: { lt: currentMeta.createdAt },
         },
         orderBy: { createdAt: "desc" },
+        select: metaSelect,
       });
-      for (const change of compareSiteMeta(previousMeta, currentMeta)) {
+      const llms = await prisma.siteMetaSnapshot
+        .findMany({
+          where: { id: { in: [currentMeta.id, previousMeta?.id].filter((x): x is string => Boolean(x)) } },
+          select: { id: true, llmsTxtStatus: true, llmsTxtHash: true },
+        })
+        .catch(() => []);
+      // A capture that never looked for llms.txt has no row values at all
+      // (status AND hash null) - leave it undefined so it is not compared.
+      const withLlms = <T extends { id: string }>(m: T) => {
+        const row = llms.find((l) => l.id === m.id);
+        const looked = row && (row.llmsTxtStatus !== null || row.llmsTxtHash !== null);
+        return looked ? { ...m, llmsTxtStatus: row.llmsTxtStatus, llmsTxtHash: row.llmsTxtHash } : m;
+      };
+      for (const change of compareSiteMeta(previousMeta ? withLlms(previousMeta) : null, withLlms(currentMeta))) {
         await prisma.changeEvent.create({
           data: {
             websiteId: scan.websiteId,

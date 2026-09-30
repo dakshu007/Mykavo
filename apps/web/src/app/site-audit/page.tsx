@@ -27,7 +27,7 @@ const PATH = "/site-audit";
 
 export const metadata: Metadata = {
   title: "Site Audit - Technical SEO Crawl With 89 Checks",
-  description: `MyKavo Site Audit crawls your whole site and checks every page against ${AUDIT_CHECK_COUNT} technical SEO checks in ${AUDIT_CATEGORY_COUNT} categories - broken pages and links, redirect chains, noindex mistakes, duplicate titles, schema, security and speed - sorted by severity, with fix guidance and CSV export.`,
+  description: `MyKavo Site Audit crawls your whole site and checks every page against ${AUDIT_CHECK_COUNT} technical SEO checks in ${AUDIT_CATEGORY_COUNT} categories - broken pages and links, redirect chains, noindex mistakes, duplicate titles, schema, AI search readiness (AEO/GEO), security and speed - sorted by severity, with fix guidance and CSV export.`,
   keywords: [
     "site audit tool",
     "technical SEO audit",
@@ -116,7 +116,7 @@ const features = [
 const faqs = [
   {
     q: "What does a site audit check?",
-    a: `MyKavo runs ${AUDIT_CHECK_COUNT} checks across ${AUDIT_CATEGORY_COUNT} categories: HTTP status codes, crawlability and redirects, indexability, titles, meta descriptions, headings, content, images, internal and external links, URLs, sitemaps, robots.txt, structured data, social tags, security, performance, mobile, international (hreflang and lang), accessibility basics, trust signals and HTML hygiene. The full list is on this page.`,
+    a: `MyKavo runs ${AUDIT_CHECK_COUNT} checks across ${AUDIT_CATEGORY_COUNT} categories: HTTP status codes, crawlability and redirects, indexability, titles, meta descriptions, headings, content, images, internal and external links, URLs, sitemaps, robots.txt, structured data, social tags, security, performance, mobile, international (hreflang and lang), accessibility basics, trust signals, AI search readiness (AI crawlers allowed in robots.txt, llms.txt, FAQ and author markup, a short answer at the top of each page) and HTML hygiene. The full list is on this page.`,
   },
   {
     q: "Is the site audit free?",

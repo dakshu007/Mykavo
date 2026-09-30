@@ -74,6 +74,7 @@ export function staticEntries(
     { id: "nav-scans", section: "Navigation", label: "Scan History", href: "/dashboard/scans" },
     { id: "nav-wordpress", section: "Navigation", label: "WordPress", href: "/dashboard/wordpress" },
     { id: "nav-shopify", section: "Navigation", label: "Shopify", href: "/dashboard/shopify" },
+    { id: "nav-ai-assistants", section: "Navigation", label: "AI assistants", href: "/dashboard/ai-assistants" },
     {
       id: "nav-notifications",
       section: "Navigation",

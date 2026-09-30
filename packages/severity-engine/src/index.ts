@@ -95,6 +95,17 @@ export type ChangeSignal =
       previous: string | null;
       current: string | null;
     }
+  | {
+      kind: "ai_crawlers_blocked";
+      /** Newly blocked crawlers, e.g. "GPTBot (OpenAI)". */
+      crawlers: string[];
+      /** True when a crawler that feeds AI answers people see is among them. */
+      highImpact: boolean;
+    }
+  | { kind: "ai_crawlers_unblocked"; crawlers: string[] }
+  | { kind: "llms_txt_removed"; currentStatus: number | null }
+  | { kind: "llms_txt_appeared" }
+  | { kind: "llms_txt_changed" }
   | { kind: "sitemap_removed"; sitemapUrl: string; currentStatus: number | null }
   | { kind: "sitemap_url_count"; previous: number; current: number; sitemapUrl: string }
   | { kind: "sitemap_content_changed"; sitemapUrl: string }
@@ -488,6 +499,76 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         }. Crawlers fall back to crawling everything, and declared sitemaps are no longer advertised.`,
         previousValue: `HTTP ${signal.previousStatus}`,
         currentValue: signal.currentStatus === null ? "Unreachable" : `HTTP ${signal.currentStatus}`,
+      });
+
+    case "ai_crawlers_blocked": {
+      const list = signal.crawlers.join(", ");
+      const many = signal.crawlers.length > 1;
+      return finalize({
+        category: "SEO",
+        changeType: "ai_crawlers_blocked",
+        severity: signal.highImpact ? "HIGH" : "MEDIUM",
+        title: `robots.txt now blocks AI crawler${many ? "s" : ""}: ${list}`,
+        description: `robots.txt changed and now keeps ${list} out of the whole site. ${
+          signal.highImpact
+            ? "These are the crawlers ChatGPT, Claude and Perplexity use to read pages for their answers, so the site will stop being found and cited there."
+            : "These collect data for AI models; blocking them is sometimes deliberate, so check it was intended."
+        } This often happens by accident - a security plugin, a CDN "block AI bots" setting or a theme update rewriting robots.txt.`,
+        previousValue: "Allowed",
+        currentValue: `Blocked: ${list}`,
+      });
+    }
+
+    case "ai_crawlers_unblocked": {
+      const list = signal.crawlers.join(", ");
+      return finalize({
+        category: "SEO",
+        changeType: "ai_crawlers_unblocked",
+        severity: "LOW",
+        title: `robots.txt now allows AI crawler${signal.crawlers.length > 1 ? "s" : ""}: ${list}`,
+        description: `${list} can read the site again, so it can appear in AI answers once they revisit.`,
+        previousValue: `Blocked: ${list}`,
+        currentValue: "Allowed",
+      });
+    }
+
+    case "llms_txt_removed":
+      return finalize({
+        category: "SEO",
+        changeType: "llms_txt_removed",
+        severity: "HIGH",
+        title: "llms.txt is no longer reachable",
+        description: `/llms.txt used to answer, but now ${
+          signal.currentStatus === null
+            ? "does not respond"
+            : signal.currentStatus >= 200 && signal.currentStatus < 300
+              ? "returns a web page instead of the file"
+              : `returns HTTP ${signal.currentStatus}`
+        }. AI assistants lose the curated summary of the site they were reading.`,
+        previousValue: "Available",
+        currentValue: signal.currentStatus === null ? "No response" : `HTTP ${signal.currentStatus}`,
+      });
+
+    case "llms_txt_appeared":
+      return finalize({
+        category: "SEO",
+        changeType: "llms_txt_appeared",
+        severity: "INFO",
+        title: "llms.txt added",
+        description: "The site now publishes /llms.txt, a summary written for AI assistants.",
+        previousValue: "Missing",
+        currentValue: "Available",
+      });
+
+    case "llms_txt_changed":
+      return finalize({
+        category: "SEO",
+        changeType: "llms_txt_changed",
+        severity: "INFO",
+        title: "llms.txt changed",
+        description: "The content of /llms.txt changed - worth a look if nobody meant to edit what AI assistants read about the site.",
+        previousValue: null,
+        currentValue: null,
       });
 
     case "robots_txt_changed": {

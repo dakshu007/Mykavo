@@ -65,6 +65,20 @@ export interface PageFacts {
   hreflangs: { lang: string; href: string }[];
   a11yEmptyControls: number;
   inputsWithoutLabel: number;
+
+  // AI search (AEO/GEO) signals
+  /** Every schema.org @type found in the JSON-LD, including inside @graph. */
+  jsonLdTypes: string[];
+  /** H2/H3 headings phrased as questions - FAQ-shaped content. */
+  questionHeadings: number;
+  /** A blog post or article: og:type=article or Article-family JSON-LD. */
+  articleLike: boolean;
+  /** An author is named: meta author, rel=author, JSON-LD author or a byline. */
+  hasAuthor: boolean;
+  /** A published or updated date is machine-readable. */
+  hasDate: boolean;
+  /** Words in the first real paragraph after the H1; null when there is none. */
+  leadParagraphWords: number | null;
 }
 
 const GENERIC_ANCHORS = new Set([
@@ -190,11 +204,64 @@ export function extractFacts(input: {
   // Structured data
   const ldBlocks = root.querySelectorAll('script[type="application/ld+json" i]');
   let jsonLdInvalid = 0;
+  const jsonLdTypes = new Set<string>();
+  let jsonLdAuthor = false;
+  let jsonLdDate = false;
+  const walkLd = (node: unknown, depth: number): void => {
+    if (depth > 6 || node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const item of node) walkLd(item, depth + 1);
+      return;
+    }
+    const obj = node as Record<string, unknown>;
+    const type = obj["@type"];
+    for (const t of Array.isArray(type) ? type : [type]) if (typeof t === "string") jsonLdTypes.add(t);
+    if (obj.author) jsonLdAuthor = true;
+    if (obj.datePublished || obj.dateModified) jsonLdDate = true;
+    for (const value of Object.values(obj)) if (value && typeof value === "object") walkLd(value, depth + 1);
+  };
   for (const block of ldBlocks) {
     try {
-      JSON.parse(block.text);
+      walkLd(JSON.parse(block.text), 0);
     } catch {
       jsonLdInvalid++;
+    }
+  }
+
+  // AI search signals
+  const ogType = (root.querySelector('meta[property="og:type" i]')?.getAttribute("content") ?? "").toLowerCase();
+  const articleLike =
+    ogType === "article" || ["Article", "BlogPosting", "NewsArticle", "TechArticle"].some((t) => jsonLdTypes.has(t));
+  const hasAuthor =
+    jsonLdAuthor ||
+    Boolean(root.querySelector('meta[name="author" i]')?.getAttribute("content")?.trim()) ||
+    Boolean(root.querySelector('a[rel~="author" i], link[rel~="author" i], [itemprop="author"]')) ||
+    root
+      .querySelectorAll('[class*="author" i], [class*="byline" i]')
+      .some((el) => el.text.trim().length > 1 && el.text.trim().length < 120);
+  const hasDate =
+    jsonLdDate ||
+    Boolean(
+      root.querySelector(
+        'meta[property="article:published_time" i], meta[property="article:modified_time" i], time[datetime], [itemprop="datePublished"], [itemprop="dateModified"]',
+      ),
+    );
+  const questionHeadings = root.querySelectorAll("h2, h3").filter((h) => /\?\s*$/.test(h.text.trim())).length;
+  // The first substantial paragraph after the H1 (or in the page when there
+  // is no H1): the spot AI answers quote from.
+  let leadParagraphWords: number | null = null;
+  let seenH1 = !root.querySelector("h1");
+  const walk = root.querySelector("body") ?? root;
+  for (const el of walk.querySelectorAll("*")) {
+    if (el.tagName === "H1") {
+      seenH1 = true;
+      continue;
+    }
+    if (!seenH1 || el.tagName !== "P") continue;
+    const words = el.text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean).length;
+    if (words >= 8) {
+      leadParagraphWords = words;
+      break;
     }
   }
 
@@ -297,6 +364,12 @@ export function extractFacts(input: {
     hreflangs,
     a11yEmptyControls,
     inputsWithoutLabel,
+    jsonLdTypes: [...jsonLdTypes],
+    questionHeadings,
+    articleLike,
+    hasAuthor,
+    hasDate,
+    leadParagraphWords,
   };
 }
 
@@ -404,6 +477,17 @@ export function pageIssues(f: PageFacts): PageIssue[] {
   // Structured data
   if (f.jsonLdInvalid > 0) add("schema-invalid-json", `${f.jsonLdInvalid} blocks`);
   else if (f.jsonLdBlocks === 0) add("schema-missing");
+
+  // AI search (AEO/GEO): what makes a page easy for an AI answer to quote
+  // and credit. Only on indexable pages with real content.
+  if (!f.noindex && f.wordCount >= 300) {
+    if (f.questionHeadings >= 3 && !f.jsonLdTypes.includes("FAQPage"))
+      add("ai-questions-no-faq-schema", `${f.questionHeadings} question headings`);
+    if (f.articleLike && !f.hasAuthor) add("ai-article-no-author");
+    if (f.articleLike && !f.hasDate) add("ai-article-no-date");
+    if (f.leadParagraphWords === null) add("ai-no-lead-answer", "no opening paragraph");
+    else if (f.leadParagraphWords > 90) add("ai-no-lead-answer", `opening paragraph is ${f.leadParagraphWords} words`);
+  }
 
   // Security
   if (!isHttps) add("sec-http-page");

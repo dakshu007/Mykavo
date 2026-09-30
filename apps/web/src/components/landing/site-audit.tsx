@@ -11,12 +11,12 @@ import { eyebrow, fontDisplay } from "./style";
  */
 
 /**
- * Counts come from the check registry in @mykavo/seo-audit (89 checks across
- * 22 categories). If checks are added there, update these - an understated
+ * Counts come from the check registry in @mykavo/seo-audit (98 checks across
+ * 23 categories). If checks are added there, update these - an understated
  * number is still a wrong number, and this section previously said "75+".
  */
 const AUDIT_BULLETS = [
-  "89 checks across 22 categories - crawlability, indexability, titles, headings, links, images, schema, security, performance",
+  "98 checks across 23 categories - crawlability, indexability, titles, headings, links, images, schema, security, performance",
   "Sorted for you: errors first, then warnings, then notices - so you always know what to fix next",
   "Every issue says what it means, why it matters, and exactly how to fix it",
   "See the exact URLs each issue was found on, and export the whole list as CSV",
