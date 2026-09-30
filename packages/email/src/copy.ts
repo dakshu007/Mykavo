@@ -24,6 +24,8 @@ export const AUTOMATION_KEYS = [
   "day3_setup",
   "day6_android",
   "day10_offer",
+  "plugin_update",
+  "app_update",
 ] as const;
 export type AutomationKey = (typeof AUTOMATION_KEYS)[number];
 
@@ -80,6 +82,20 @@ export const DEFAULT_COPY: Record<AutomationKey, { subject: string; heading: str
       "Hi {firstName}, you have been on MyKavo for {days} days. If one website checked once a week is not enough, Pro watches up to 8 websites every day - and for you it is {percent}% off: ${price} a month instead of ${regularPrice}.",
     buttonLabel: "Upgrade to Pro for ${price}",
   },
+  plugin_update: {
+    subject: "MyKavo for WordPress {version} is out",
+    heading: "MyKavo for WordPress {version} is ready",
+    intro:
+      "Hi {firstName}, a new version of the MyKavo plugin is out. Updating takes a few seconds: open Plugins in WordPress and click \"Update now\" next to MyKavo. Your connection, settings and history stay as they are.",
+    buttonLabel: "Update in WordPress",
+  },
+  app_update: {
+    subject: "MyKavo for Android {version} is ready",
+    heading: "A new MyKavo app is ready",
+    intro:
+      "Hi {firstName}, version {version} of the MyKavo Android app is ready. Download it and install it over the one you have - you stay signed in, and your alerts keep coming.",
+    buttonLabel: "Download version {version}",
+  },
 };
 
 /** The placeholders each email understands, for the editor. */
@@ -105,6 +121,14 @@ export const PLACEHOLDERS: Record<AutomationKey, { token: string; meaning: strin
     { token: "{regularPrice}", meaning: "normal Pro price, e.g. 20" },
     { token: "{code}", meaning: "the discount code" },
     { token: "{days}", meaning: "days since signup when it is sent" },
+  ],
+  plugin_update: [
+    { token: "{firstName}", meaning: "first name (dropped when unknown)" },
+    { token: "{version}", meaning: "the new version, e.g. 1.2.0" },
+  ],
+  app_update: [
+    { token: "{firstName}", meaning: "first name (dropped when unknown)" },
+    { token: "{version}", meaning: "the new version, e.g. 1.0.2" },
   ],
 };
 

@@ -1,5 +1,5 @@
 import { isMissingTableError, prisma } from "@mykavo/database";
-import { LIFECYCLE_KEYS, brevoBlocklist, brevoConfigured, isLifecycleSubject } from "@mykavo/email";
+import { AUTOMATIONS, brevoBlocklist, brevoConfigured, isAutomationKey, isLifecycleSubject } from "@mykavo/email";
 import { logger } from "@/lib/logger";
 
 /**
@@ -36,9 +36,12 @@ async function findLifecycleNotification(id: string): Promise<Row> {
   }
   if (!n) return null;
   const key = n.automationSend?.automationKey;
-  // Lifecycle emails, and custom emails from Automation Tool flows.
+  // Optional automated emails (lifecycle series, product updates) and custom
+  // emails from Automation Tool flows.
   const lifecycle = key
-    ? (LIFECYCLE_KEYS as string[]).includes(key) || key.startsWith("flow:")
+    ? isAutomationKey(key)
+      ? AUTOMATIONS[key].unsubscribable
+      : key.startsWith("flow:")
     : isLifecycleSubject(n.subject);
   return lifecycle ? { recipient: n.recipient, subject: n.subject } : null;
 }

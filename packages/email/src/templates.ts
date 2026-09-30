@@ -1373,6 +1373,103 @@ export function day10OfferEmail(d: Day10OfferData, copy: EmailCopy = {}): { subj
 
 // ---------- Custom emails from the Automation Tool ----------
 
+export interface PluginUpdateData {
+  name: string;
+  version: string;
+  /** What changed, one line each (from the WordPress.org changelog). */
+  notes: string[];
+  /** The person's connected sites still on an older version. */
+  sites: { label: string; currentVersion: string | null; pluginsUrl: string }[];
+  unsubscribeUrl: string;
+}
+
+function whatsNew(notes: string[]): { html: string; text: string } {
+  if (!notes.length) return { html: "", text: "" };
+  return {
+    html:
+      `<p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#16181d">What's new</p>` +
+      `<ul style="margin:0 0 22px;padding-left:18px;font-size:14px;color:#16181d">${notes
+        .slice(0, 8)
+        .map((n) => `<li style="margin:0 0 6px">${esc(n)}</li>`)
+        .join("")}</ul>`,
+    text: `What's new:\n${notes
+      .slice(0, 8)
+      .map((n) => `- ${n}`)
+      .join("\n")}\n\n`,
+  };
+}
+
+/** A new plugin version is on WordPress.org and these sites run an older one. */
+export function pluginUpdateEmail(d: PluginUpdateData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const def = DEFAULT_COPY.plugin_update;
+  const vars = { firstName: firstNameOf(d.name), version: d.version };
+  const subject = fillPlaceholders(pick(copy.subject, def.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, def.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, def.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, def.buttonLabel ?? ""), vars);
+  const notes = whatsNew(d.notes);
+  const first = d.sites[0];
+  const sitesHtml = d.sites.length
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 22px;border:1px solid #e4e7ee;border-radius:12px;border-collapse:separate">${d.sites
+        .map(
+          (s, i) =>
+            `<tr><td style="padding:12px 14px;${i ? "border-top:1px solid #e4e7ee;" : ""}font-size:14px;color:#16181d"><strong>${esc(s.label)}</strong><br/><span style="font-size:12px;color:#5c6270">${esc(
+              s.currentVersion ? `Running ${s.currentVersion}` : "Running an older version",
+            )} &rarr; ${esc(d.version)}</span></td><td style="padding:12px 14px;${i ? "border-top:1px solid #e4e7ee;" : ""}text-align:right;white-space:nowrap"><a href="${esc(s.pluginsUrl)}" style="font-size:13px;color:#3556f4;text-decoration:none">Update</a></td></tr>`,
+        )
+        .join("")}</table>`
+    : "";
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Plugin update</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 18px;font-size:14px;color:#5c6270")}
+    ${sitesHtml}
+    ${notes.html}
+    ${first ? button(first.pluginsUrl, cta) : ""}
+  `;
+  const text =
+    `${intro}\n\n` +
+    d.sites.map((s) => `- ${s.label}: ${s.currentVersion ?? "older version"} -> ${d.version} (${s.pluginsUrl})`).join("\n") +
+    (d.sites.length ? "\n\n" : "") +
+    notes.text +
+    (first ? `${cta}: ${first.pluginsUrl}` : "") +
+    lifecycleTextFooter(d.unsubscribeUrl);
+  return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+}
+
+export interface AppUpdateData {
+  name: string;
+  version: string;
+  /** The version the person was last seen on, when the app said. */
+  currentVersion: string | null;
+  notes: string[];
+  downloadUrl: string;
+  unsubscribeUrl: string;
+}
+
+/** A new Android app build is out and this person runs an older one. */
+export function appUpdateEmail(d: AppUpdateData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const def = DEFAULT_COPY.app_update;
+  const vars = { firstName: firstNameOf(d.name), version: d.version };
+  const subject = fillPlaceholders(pick(copy.subject, def.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, def.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, def.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, def.buttonLabel ?? ""), vars);
+  const notes = whatsNew(d.notes);
+  const current = d.currentVersion ? `You have version ${d.currentVersion}.` : "";
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">MyKavo for Android</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
+    ${current ? `<p style="margin:0 0 18px;font-size:13px;color:#5c6270">${esc(current)}</p>` : ""}
+    ${notes.html}
+    ${button(d.downloadUrl, cta)}
+  `;
+  const text =
+    `${intro}\n\n` + (current ? `${current}\n\n` : "") + notes.text + `${cta}: ${d.downloadUrl}` + lifecycleTextFooter(d.unsubscribeUrl);
+  return { subject, html: lifecycleShell(inner, d.unsubscribeUrl), text };
+}
+
 export interface FlowCustomEmailData {
   name: string;
   subject: string;

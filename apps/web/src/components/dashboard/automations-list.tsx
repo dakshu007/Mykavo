@@ -164,7 +164,14 @@ export function AutomationsList({ overview }: { overview: AutomationsOverview })
     }
   }
 
-  const groups = ["Onboarding", "Lifecycle series"] as const;
+  const groups = ["Onboarding", "Lifecycle series", "Product updates"] as const;
+  const blurb: Record<(typeof groups)[number], string> = {
+    Onboarding: "Transactional: sent once each, no unsubscribe link, and only to workspaces with email switched on.",
+    "Lifecycle series":
+      "Optional: each carries an unsubscribe link, stops for paying and unsubscribed accounts, and never sends two within a day.",
+    "Product updates":
+      "Optional: once per person per version, never two within 72 hours, with an unsubscribe link. Send them from Update emails below.",
+  };
   return (
     <div className="space-y-6">
       {error && (
@@ -176,9 +183,7 @@ export function AutomationsList({ overview }: { overview: AutomationsOverview })
         <Card key={g}>
           <CardHeader title={g} />
           <p className="-mt-2 mb-4 text-[13px] text-ink-secondary">
-            {g === "Onboarding"
-              ? "Transactional: sent once each, no unsubscribe link, and only to workspaces with email switched on."
-              : "Optional: each carries an unsubscribe link, stops for paying and unsubscribed accounts, and never sends two within a day."}
+            {blurb[g]}
           </p>
           <ul className="divide-y divide-line">
             {overview.automations

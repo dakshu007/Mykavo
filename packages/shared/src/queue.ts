@@ -15,6 +15,8 @@ export const HEALTH_SWEEP_QUEUE = "health-sweep";
  * page-fingerprint.ts and apps/worker/src/change-watch.ts).
  */
 export const CHANGE_WATCH_QUEUE = "change-watch";
+/** "Update available" emails: WordPress.org check and sends (product-updates.ts). */
+export const PRODUCT_UPDATES_QUEUE = "product-updates";
 export const REPORT_SWEEP_QUEUE = "report-sweep";
 export const AUDIT_SWEEP_QUEUE = "audit-sweep";
 export const BILLING_SWEEP_QUEUE = "billing-sweep";

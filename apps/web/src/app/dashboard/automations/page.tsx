@@ -8,6 +8,8 @@ import { getAutomationsOverview } from "@/lib/automations-admin";
 import { Card, CardHeader } from "@/components/ui/card";
 import { AutomationsList } from "@/components/dashboard/automations-list";
 import { AutomationPeopleSection } from "@/components/dashboard/engagement-sections";
+import { UpdateEmailsPanel } from "@/components/dashboard/update-emails-panel";
+import { loadUpdateEmailsPanel } from "@/lib/admin/product-updates";
 
 export const metadata: Metadata = {
   title: "Automations",
@@ -25,7 +27,7 @@ export default async function AutomationsPage() {
   const session = await requireSession();
   if (!isPlatformAdmin(session.user.email)) notFound();
 
-  const overview = await getAutomationsOverview();
+  const [overview, updates] = await Promise.all([getAutomationsOverview(), loadUpdateEmailsPanel()]);
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -72,6 +74,8 @@ export default async function AutomationsPage() {
       </Card>
 
       <AutomationsList overview={overview} />
+
+      <UpdateEmailsPanel panel={updates} />
 
       <AutomationPeopleSection />
     </div>

@@ -20,7 +20,9 @@ import {
   DAY3_STATS_SUBJECT_PREFIX,
   DAY6_ANDROID_SUBJECT,
   FIRST_WEBSITE_NUDGE_SUBJECT,
+  appUpdateEmail,
   baselineReadyEmail,
+  pluginUpdateEmail,
   day10OfferEmail,
   day3SetupEmail,
   day3StatsEmail,
@@ -33,6 +35,8 @@ import {
   type Day3StatsData,
   type Day6AndroidData,
   type FirstWebsiteNudgeData,
+  type AppUpdateData,
+  type PluginUpdateData,
   type WelcomeEmailData,
 } from "./templates";
 
@@ -41,7 +45,7 @@ export { AUTOMATION_KEYS, DEFAULT_COPY, PLACEHOLDERS, isAutomationKey, type Auto
 export interface AutomationMeta {
   key: AutomationKey;
   name: string;
-  group: "Onboarding" | "Lifecycle series";
+  group: "Onboarding" | "Lifecycle series" | "Product updates";
   /** When it goes out, in words. Lifecycle steps leave out the day: it is editable. */
   trigger: string;
   /** Carries an unsubscribe link (optional mail) or not (transactional). */
@@ -55,7 +59,7 @@ export interface AutomationMeta {
    * default subject. Keeps a customised subject from re-sending to people
    * who already got the original.
    */
-  legacySubject: { exact: string } | { prefix: string };
+  legacySubject: { exact: string } | { prefix: string } | null;
 }
 
 export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
@@ -129,7 +133,35 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
     offer: true,
     legacySubject: { exact: DAY10_OFFER_SUBJECT },
   },
+  plugin_update: {
+    key: "plugin_update",
+    name: "WordPress plugin update",
+    group: "Product updates",
+    trigger:
+      "When a new version of the plugin appears on WordPress.org (checked hourly), once per version, to each person whose connected site runs an older one.",
+    unsubscribable: true,
+    timing: null,
+    offer: false,
+    legacySubject: null,
+  },
+  app_update: {
+    key: "app_update",
+    name: "Android app update",
+    group: "Product updates",
+    trigger: "When you press Send in Update emails, once per version, to people on an older version of the app.",
+    unsubscribable: true,
+    timing: null,
+    offer: false,
+    legacySubject: null,
+  },
 };
+
+/**
+ * Built-in emails a flow may send. Product update emails are not among them:
+ * they need a release and the person's outdated installs, which only the
+ * update sender has.
+ */
+export const FLOW_EMAIL_KEYS: AutomationKey[] = AUTOMATION_KEYS.filter((k) => AUTOMATIONS[k].group !== "Product updates");
 
 /** Keys whose emails count against the REMINDER budget and carry unsubscribe. */
 export const LIFECYCLE_KEYS: AutomationKey[] = ["day3_stats", "day3_setup", "day6_android", "day10_offer"];
@@ -252,7 +284,9 @@ export type AutomationData =
   | { key: "day3_stats"; data: Day3StatsData }
   | { key: "day3_setup"; data: Day3SetupData }
   | { key: "day6_android"; data: Day6AndroidData }
-  | { key: "day10_offer"; data: Omit<Day10OfferData, "code" | "percent" | "price" | "days"> };
+  | { key: "day10_offer"; data: Omit<Day10OfferData, "code" | "percent" | "price" | "days"> }
+  | { key: "plugin_update"; data: PluginUpdateData }
+  | { key: "app_update"; data: AppUpdateData };
 
 /**
  * Render an automation with its saved settings. The offer's code, percent,
@@ -277,6 +311,10 @@ export function renderAutomation(
       return day3SetupEmail(input.data, copy);
     case "day6_android":
       return day6AndroidEmail(input.data, copy);
+    case "plugin_update":
+      return pluginUpdateEmail(input.data, copy);
+    case "app_update":
+      return appUpdateEmail(input.data, copy);
     case "day10_offer": {
       const s = settings.day10_offer;
       const percent = s?.offerPercent ?? DEFAULT_OFFER.percent;
@@ -327,12 +365,39 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
       return { key, data: { name, androidUrl: `${appBase}/android-app`, alertEmail: "you@example.com", notificationsUrl: `${appBase}/dashboard/notifications`, unsubscribeUrl } };
     case "day10_offer":
       return { key, data: { name, regularPrice: 20, upgradeUrl: `${appBase}/dashboard/billing`, unsubscribeUrl } };
+    case "plugin_update":
+      return {
+        key,
+        data: {
+          name,
+          version: "1.2.0",
+          notes: [
+            "Redesigned MyKavo screen with one clear status panel.",
+            "See which AI crawlers (ChatGPT, Claude, Perplexity) read your site.",
+          ],
+          sites: [{ label: "northstar.example", currentVersion: "1.0.0", pluginsUrl: "https://northstar.example/wp-admin/plugins.php" }],
+          unsubscribeUrl,
+        },
+      };
+    case "app_update":
+      return {
+        key,
+        data: {
+          name,
+          version: "1.0.2",
+          currentVersion: "1.0.1",
+          notes: ["Faster start-up and smoother tabs."],
+          downloadUrl: `${appBase}/dashboard/app`,
+          unsubscribeUrl,
+        },
+      };
   }
 }
 
 /** Whether a stored subject is a pre-send-log email of this automation. */
 export function matchesLegacySubject(key: AutomationKey, subject: string): boolean {
   const l = AUTOMATIONS[key].legacySubject;
+  if (!l) return false;
   return "exact" in l ? subject === l.exact : subject.startsWith(l.prefix);
 }
 

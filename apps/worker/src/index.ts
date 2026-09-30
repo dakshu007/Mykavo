@@ -15,6 +15,7 @@ import {
   LIGHTHOUSE_AUDIT_QUEUE,
   HEALTH_SWEEP_QUEUE,
   CHANGE_WATCH_QUEUE,
+  PRODUCT_UPDATES_QUEUE,
   REPORT_SWEEP_QUEUE,
   AUDIT_SWEEP_QUEUE,
   BILLING_SWEEP_QUEUE,
@@ -47,6 +48,7 @@ import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
 import { runHealthSweep } from "./health";
 import { runChangeWatchSweep } from "./change-watch";
+import { runProductUpdates } from "./product-updates";
 import { runReportSweep } from "./report";
 import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
@@ -64,6 +66,8 @@ const HEALTH_CRON = process.env.HEALTH_CRON ?? "*/5 * * * *"; // every 5 minutes
 // Quick change checks; each website is still checked at most hourly (paid)
 // or every 6 hours (free) - see change-watch.ts.
 const CHANGE_WATCH_CRON = process.env.CHANGE_WATCH_CRON ?? "*/10 * * * *";
+// Update emails: WordPress.org is asked hourly; admin "Send" is picked up here.
+const PRODUCT_UPDATES_CRON = process.env.PRODUCT_UPDATES_CRON ?? "*/10 * * * *";
 const REPORT_CRON = process.env.REPORT_CRON ?? "0 8 * * 1"; // Mondays 08:00 UTC
 const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 const BILLING_CRON = process.env.BILLING_CRON ?? "0 9 * * *"; // daily 09:00 UTC
@@ -158,6 +162,13 @@ async function main() {
     await runChangeWatchSweep(boss);
   });
   await boss.schedule(CHANGE_WATCH_QUEUE, CHANGE_WATCH_CRON);
+
+  // "Update available" emails for the WordPress plugin and the Android app.
+  await boss.createQueue(PRODUCT_UPDATES_QUEUE, { retryLimit: 0, expireInSeconds: 15 * 60 }).catch(() => {});
+  await boss.work(PRODUCT_UPDATES_QUEUE, { batchSize: 1 }, async () => {
+    await runProductUpdates();
+  });
+  await boss.schedule(PRODUCT_UPDATES_QUEUE, PRODUCT_UPDATES_CRON);
 
   // Weekly client-ready reports (spec §37): one summary email per ACTIVE
   // website every Monday morning - the agency forward-to-client selling point.

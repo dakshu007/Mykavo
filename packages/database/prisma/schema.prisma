@@ -40,6 +40,7 @@ model User {
   automationRuns    AutomationFlowRun[]
   activityDays      UserActivityDay[]
   activityEvents    ActivityEvent[]
+  productUpdateNotices ProductUpdateNotice[]
 
   @@map("user")
 }
@@ -1531,4 +1532,41 @@ model ScanQuotaUse {
 
   @@index([workspaceId, kind, createdAt])
   @@map("scan_quota_use")
+}
+
+/// A released version of something users install: the WordPress plugin
+/// (seen on WordPress.org by the worker, or entered by an admin) or the
+/// Android app (entered by an admin). Drives the "update available" emails.
+model ProductRelease {
+  id               String    @id @default(cuid())
+  /// "wordpress-plugin" | "android-app"
+  product          String
+  version          String
+  /// What changed, one line each (WordPress.org changelog, or typed by an admin).
+  notes            Json      @default("[]")
+  /// "wordpress.org" | "admin"
+  source           String
+  detectedAt       DateTime  @default(now())
+  /// Set when an admin presses Send; the worker then emails everyone outdated.
+  sendRequestedAt  DateTime?
+  requestedByEmail String?
+
+  @@unique([product, version])
+  @@map("product_release")
+}
+
+/// One person told about one release, so nobody gets the same update email
+/// twice - and nobody gets more than one update email every few days.
+model ProductUpdateNotice {
+  id             String   @id @default(cuid())
+  product        String
+  version        String
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notificationId String?
+  createdAt      DateTime @default(now())
+
+  @@unique([product, version, userId])
+  @@index([userId, createdAt])
+  @@map("product_update_notice")
 }

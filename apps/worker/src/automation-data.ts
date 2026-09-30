@@ -168,6 +168,10 @@ export async function buildAutomationData(
     case "day10_offer":
       // Code, percent, price and day come from the saved settings.
       return { key, data: { name, regularPrice: PLAN_PRICES_USD.pro, upgradeUrl: `${appBase}/dashboard/billing`, unsubscribeUrl } };
+    case "plugin_update":
+    case "app_update":
+      // Sent by product-updates.ts, which knows the release and the installs.
+      return null;
   }
 }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@mykavo/database";
-import { AUTOMATION_KEYS } from "@mykavo/email";
+import { FLOW_EMAIL_KEYS } from "@mykavo/email";
 import { FLOW_LIMITS, flowIssues, isFlowTrigger, parseFlowDefinition } from "@mykavo/shared";
 import { adminRequest, readJson } from "@/lib/automations-api";
 import { logger } from "@/lib/logger";
@@ -39,7 +39,7 @@ export async function PUT(request: Request, { params }: Params) {
 
   // An active flow must stay runnable: saving a broken one would stall
   // every account in it.
-  const issues = flowIssues(parsed.flow, AUTOMATION_KEYS);
+  const issues = flowIssues(parsed.flow, FLOW_EMAIL_KEYS);
   if (flow.status === "ACTIVE" && issues.length > 0) {
     return NextResponse.json({ error: "This flow is on - fix the problems before saving, or pause it first.", issues }, { status: 400 });
   }
@@ -65,7 +65,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   if (status === "ACTIVE") {
     const parsed = parseFlowDefinition(flow.definition);
-    const issues = parsed.ok ? flowIssues(parsed.flow, AUTOMATION_KEYS) : [{ stepId: null, message: parsed.error }];
+    const issues = parsed.ok ? flowIssues(parsed.flow, FLOW_EMAIL_KEYS) : [{ stepId: null, message: parsed.error }];
     if (issues.length > 0) return NextResponse.json({ error: "Fix the problems first.", issues }, { status: 400 });
   }
   await prisma.automationFlow.update({

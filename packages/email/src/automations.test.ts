@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTOMATION_KEYS,
   AUTOMATIONS,
+  LIFECYCLE_KEYS,
   defaultSettings,
   lifecycleSendDays,
   matchesLegacySubject,
@@ -21,10 +22,11 @@ describe("automation registry", () => {
       const mail = renderAutomation(sampleAutomationData(key, APP, "Ana Lopez"), s);
       expect(mail.subject.length).toBeGreaterThan(5);
       expect(mail.html).not.toMatch(/\{[a-zA-Z]+\}/);
-      expect(matchesLegacySubject(key, mail.subject)).toBe(true);
+      // Only emails that went out before the send log have legacy subjects.
+      expect(matchesLegacySubject(key, mail.subject)).toBe(AUTOMATIONS[key].legacySubject !== null);
       // Optional mail and only optional mail carries an unsubscribe.
       expect(mail.html.includes("Unsubscribe from these emails")).toBe(AUTOMATIONS[key].unsubscribable);
-      expect(isLifecycleSubject(mail.subject)).toBe(AUTOMATIONS[key].unsubscribable);
+      expect(isLifecycleSubject(mail.subject)).toBe((LIFECYCLE_KEYS as string[]).includes(key));
     }
   });
 
@@ -93,5 +95,23 @@ describe("settingsFromRows", () => {
     expect(s.day6_android).toMatchObject({ enabled: false, sendOnDay: 7, offerCode: null, offerPercent: null });
     expect(s.welcome.enabled).toBe(true);
     expect(lifecycleSendDays(s)).toEqual({ day3: 3, day6: 7, day10: 10 });
+  });
+});
+
+describe("product update emails", () => {
+  it("lists every outdated site with its own update link, and the changelog", () => {
+    const mail = renderAutomation(sampleAutomationData("plugin_update", APP, "Ana Lopez"), defaultSettings());
+    expect(mail.subject).toBe("MyKavo for WordPress 1.2.0 is out");
+    expect(mail.html).toContain("northstar.example");
+    expect(mail.html).toContain("https://northstar.example/wp-admin/plugins.php");
+    expect(mail.html).toContain("Running 1.0.0");
+    expect(mail.text).toContain("What's new:");
+  });
+
+  it("app update names the version in subject and button", () => {
+    const mail = renderAutomation(sampleAutomationData("app_update", APP, "Ana Lopez"), defaultSettings());
+    expect(mail.subject).toBe("MyKavo for Android 1.0.2 is ready");
+    expect(mail.html).toContain("Download version 1.0.2");
+    expect(mail.html).toContain("You have version 1.0.1.");
   });
 });

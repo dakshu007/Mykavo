@@ -95,7 +95,7 @@ export async function sendAutomatedEmail(input: {
   // Optional mail goes out on the promotional stream (Brevo when set up);
   // anything an account needs stays on Resend.
   const result = input.unsubscribable
-    ? await sendMarketingEmail(message, [input.key.startsWith("flow:") ? "flow" : "lifecycle"])
+    ? await sendMarketingEmail(message, [input.key.startsWith("flow:") ? "flow" : input.key.endsWith("_update") ? "product-update" : "lifecycle"])
     : await sendEmail(message);
   await prisma.notification.update({
     where: { id: row.id },

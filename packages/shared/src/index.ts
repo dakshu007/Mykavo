@@ -30,3 +30,4 @@ export * from "./ad-selectors";
 export * from "./flows";
 export * from "./page-fingerprint";
 export * from "./ai-crawlers";
+export * from "./product-updates";

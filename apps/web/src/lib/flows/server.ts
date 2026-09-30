@@ -1,5 +1,5 @@
 import { isMissingTableError, prisma } from "@mykavo/database";
-import { AUTOMATIONS, AUTOMATION_KEYS } from "@mykavo/email";
+import { AUTOMATIONS, FLOW_EMAIL_KEYS } from "@mykavo/email";
 import { allSteps, parseFlowDefinition, type FlowDefinition, type FlowStatus, type FlowTrigger } from "@mykavo/shared";
 import { getAutomationsOverview } from "@/lib/automations-admin";
 import { countSteps } from "./edit";
@@ -20,7 +20,7 @@ export interface BuiltinEmailOption {
 }
 
 export function builtinEmailOptions(): BuiltinEmailOption[] {
-  return AUTOMATION_KEYS.map((k) => ({
+  return FLOW_EMAIL_KEYS.map((k) => ({
     key: k,
     name: AUTOMATIONS[k].name,
     group: AUTOMATIONS[k].group,

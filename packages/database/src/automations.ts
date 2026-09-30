@@ -42,11 +42,14 @@ export type LegacySubject = { exact: string } | { prefix: string };
  * the send log, or - for emails sent before the log existed - carrying the
  * automation's original subject. Test sends never count.
  */
-export function automationSentWhere(key: string, legacy: LegacySubject, ready: boolean): Prisma.NotificationWhereInput {
+export function automationSentWhere(key: string, legacy: LegacySubject | null, ready: boolean): Prisma.NotificationWhereInput {
+  const byLog: Prisma.NotificationWhereInput = { automationSend: { is: { automationKey: key, isTest: false } } };
+  // Emails that only ever went out with the send log have no subject to match.
+  if (!legacy) return ready ? byLog : { id: "" };
   const bySubject: Prisma.NotificationWhereInput =
     "exact" in legacy ? { subject: legacy.exact } : { subject: { startsWith: legacy.prefix } };
   if (!ready) return bySubject;
-  return { OR: [bySubject, { automationSend: { is: { automationKey: key, isTest: false } } }] };
+  return { OR: [bySubject, byLog] };
 }
 
 /** Log that a Notification was sent by an automation. No-op before the migration. */
