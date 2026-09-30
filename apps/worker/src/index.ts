@@ -14,6 +14,7 @@ import {
   ARTIFACT_PURGE_QUEUE,
   LIGHTHOUSE_AUDIT_QUEUE,
   HEALTH_SWEEP_QUEUE,
+  CHANGE_WATCH_QUEUE,
   REPORT_SWEEP_QUEUE,
   AUDIT_SWEEP_QUEUE,
   BILLING_SWEEP_QUEUE,
@@ -45,6 +46,7 @@ import { runRetentionSweep } from "./retention";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
 import { runHealthSweep } from "./health";
+import { runChangeWatchSweep } from "./change-watch";
 import { runReportSweep } from "./report";
 import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
@@ -54,10 +56,14 @@ import { runSiteAuditJob } from "./site-audit";
 import { runGscSync, runGscSweep } from "./gsc-sync";
 import { runDomainSweep } from "./domain-check";
 import { startWatchdog } from "./watchdog";
+import { startKeepWarm } from "./keep-warm";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
 const HEALTH_CRON = process.env.HEALTH_CRON ?? "*/5 * * * *"; // every 5 minutes
+// Quick change checks; each website is still checked at most hourly (paid)
+// or every 6 hours (free) - see change-watch.ts.
+const CHANGE_WATCH_CRON = process.env.CHANGE_WATCH_CRON ?? "*/10 * * * *";
 const REPORT_CRON = process.env.REPORT_CRON ?? "0 8 * * 1"; // Mondays 08:00 UTC
 const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 const BILLING_CRON = process.env.BILLING_CRON ?? "0 9 * * *"; // daily 09:00 UTC
@@ -144,6 +150,14 @@ async function main() {
     await runHealthSweep();
   });
   await boss.schedule(HEALTH_SWEEP_QUEUE, HEALTH_CRON);
+
+  // Quick change checks between full scans: a redesign or a broken deploy
+  // triggers a full scan within the hour instead of waiting for the schedule.
+  await boss.createQueue(CHANGE_WATCH_QUEUE, { retryLimit: 0, expireInSeconds: 15 * 60 }).catch(() => {});
+  await boss.work(CHANGE_WATCH_QUEUE, { batchSize: 1 }, async () => {
+    await runChangeWatchSweep(boss);
+  });
+  await boss.schedule(CHANGE_WATCH_QUEUE, CHANGE_WATCH_CRON);
 
   // Weekly client-ready reports (spec §37): one summary email per ACTIVE
   // website every Monday morning - the agency forward-to-client selling point.
@@ -284,10 +298,15 @@ async function main() {
   // exists to report. A plain interval keeps ticking either way.
   const stopDatabaseWatch = startDatabaseWatch();
 
+  // Keep the web app's serverless function warm so dashboard clicks do not
+  // wait on a cold start (see keep-warm.ts).
+  const stopKeepWarm = startKeepWarm();
+
   async function shutdown(signal: string) {
     logger.info("shutting down", { signal });
     try {
       stopDatabaseWatch();
+      stopKeepWarm();
       await boss.stop({ graceful: true, timeout: 30_000 });
       await pool.close();
     } finally {

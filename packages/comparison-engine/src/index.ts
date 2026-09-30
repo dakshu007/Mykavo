@@ -7,6 +7,7 @@ export {
 } from "./compare";
 export { compareScreenshots, type VisualDiffResult } from "./visual";
 export { comparePlatform } from "./platform";
+export { isPageRedesign, siteRedesignSignal, type RedesignEvidence } from "./redesign";
 export {
   compareBrokenLinks,
   isBrokenLinkStatus,

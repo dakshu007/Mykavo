@@ -254,3 +254,63 @@ describe("the diff image", () => {
     expect(png.height).toBe(90);
   });
 });
+
+/* ------------------ white space must not vouch for a redesign ------------- */
+
+/**
+ * A realistic page: mostly white, with "lines of text" - rows holding dark
+ * glyph-like blocks at positions set by `seed` - separated by blank gaps.
+ * Two different seeds are two different designs on the same white page.
+ */
+function textPage(seed: number, lines: number, width = 320): Buffer {
+  const lineHeight = 6;
+  const gap = 14; // blank rows between lines, like real line spacing + padding
+  const height = lines * (lineHeight + gap);
+  const data = new Uint8Array(width * height * 4).fill(255);
+  for (let line = 0; line < lines; line++) {
+    const top = line * (lineHeight + gap);
+    for (let y = top; y < top + lineHeight; y++) {
+      for (let x = 0; x < width; x++) {
+        // Deterministic "glyphs": dark where a hash of (line, x-block, seed) is odd.
+        const block = Math.floor(x / 16);
+        let h = Math.imul(line + 1, 0x9e3779b1) ^ Math.imul(block + 1, 0x85ebca6b) ^ Math.imul(seed + 1, 0xc2b2ae35) ^ (y - top);
+        h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
+        const ink = ((h ^ (h >>> 12)) & 7) < 3;
+        const i = (y * width + x) * 4;
+        const v = ink ? 30 : 255;
+        data[i] = data[i + 1] = data[i + 2] = v;
+      }
+    }
+  }
+  return jpeg.encode({ data: Buffer.from(data), width, height }, 90).data;
+}
+
+describe("redesigns on a white page", () => {
+  it("scores a full redesign as a critical-size change even though both designs are mostly white", () => {
+    // Every line of content differs; only the white background is shared.
+    const result = compareScreenshots(textPage(1, 40), textPage(2, 40))!;
+    // Unweighted, the shared white rows (70% of the page) matched each other
+    // and this read as ~30% - the redesign that did not alert.
+    expect(result.contentDifferencePercentage).toBeGreaterThan(60);
+  });
+
+  it("still scores an identical white page as unchanged", () => {
+    const page = textPage(3, 40);
+    expect(compareScreenshots(page, page)!.contentDifferencePercentage).toBe(0);
+  });
+
+  it("keeps a small edit small", () => {
+    // Same design, a few lines of the page rewritten at the end.
+    const before = textPage(4, 40);
+    const data = jpeg.decode(textPage(4, 40), { useTArray: true });
+    const alt = jpeg.decode(textPage(5, 40), { useTArray: true });
+    // Swap in the last two lines (2 x 20 rows) from a different design.
+    const rowBytes = data.width * 4;
+    const from = (40 - 2) * 20 * rowBytes;
+    data.data.set(alt.data.subarray(from), from);
+    const after = jpeg.encode({ data: Buffer.from(data.data), width: data.width, height: data.height }, 90).data;
+    const result = compareScreenshots(before, after)!;
+    expect(result.contentDifferencePercentage).toBeGreaterThan(0);
+    expect(result.contentDifferencePercentage).toBeLessThan(15);
+  });
+});

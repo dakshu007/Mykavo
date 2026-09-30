@@ -18,7 +18,9 @@ import {
   compareScreenshots,
   compareSiteMeta,
   highestSeverity,
+  isPageRedesign,
   scoreChange,
+  siteRedesignSignal,
   type ComparableSnapshot,
   type LinkObservation,
   type PageLinkObservations,
@@ -214,6 +216,7 @@ export async function runComparisonForScan(
   let totalChanges = 0;
   let pagesCompared = 0;
   let pagesFailed = 0;
+  let pagesRedesigned = 0;
 
   // Per-page link observations feed one grouped site-wide broken-links
   // comparison after the loop (spec §20). Monitored pages' own URLs are
@@ -300,9 +303,25 @@ export async function runComparisonForScan(
               // count: inserting one paragraph shifts every row below it, which
               // a positional pixel diff reports as most of the page changing.
               // The raw number is still stored and shown next to the diff image.
+              // Look, words and structure all changed together: a redesign or
+              // a replaced page, never scored below HIGH.
+              const redesign = isPageRedesign({
+                contentPercentage: visual.contentDifferencePercentage,
+                pixelPercentage: visual.differencePercentage,
+                textChanged:
+                  baselineSnap.textHash !== null &&
+                  snapshot.textHash !== null &&
+                  baselineSnap.textHash !== snapshot.textHash,
+                domChanged:
+                  baselineSnap.domHash !== null &&
+                  snapshot.domHash !== null &&
+                  baselineSnap.domHash !== snapshot.domHash,
+              });
+              if (redesign) pagesRedesigned++;
               const scored = scoreChange({
                 kind: "visual_diff",
                 percentage: visual.contentDifferencePercentage,
+                redesign,
               });
               if (scored) {
                 // Derived from ids, NOT by rewriting the screenshot key: that
@@ -366,6 +385,36 @@ export async function runComparisonForScan(
         err,
       );
     }
+  }
+
+  // Site-wide redesign headline: when most pages were rebuilt in the same
+  // scan, lead with one CRITICAL event that says so, rather than leaving the
+  // owner to piece it together from a page-by-page list.
+  try {
+    const signal = siteRedesignSignal(pagesRedesigned, pagesCompared);
+    const scored = signal ? scoreChange(signal) : null;
+    if (scored) {
+      await prisma.changeEvent.create({
+        data: {
+          websiteId: scan.websiteId,
+          monitoredPageId: null,
+          scanId,
+          category: CATEGORY_TO_ENUM[scored.category],
+          changeType: scored.changeType,
+          severity: scored.severity as ChangeSeverity,
+          title: scored.title,
+          description: scored.description,
+          previousValue: scored.previousValue,
+          currentValue: scored.currentValue,
+          metadata: { pagesRedesigned, pagesCompared } as never,
+          status: "NEW",
+        },
+      });
+      severities.push(scored.severity);
+      totalChanges++;
+    }
+  } catch (err) {
+    logger.error("site redesign event failed", { scanId }, err);
   }
 
   // Broken internal links (spec §20): one grouped site-wide event per scan -
@@ -453,6 +502,7 @@ export async function runComparisonForScan(
     highest,
     pagesCompared,
     pagesFailed,
+    pagesRedesigned,
   });
   return { changes: totalChanges, highest, pagesCompared, pagesFailed };
 }

@@ -20,6 +20,7 @@ import {
 } from "@mykavo/scanner";
 import {
   computeNextScanAt,
+  computeRetryAfterFailure,
   includesConversionMonitoring,
   parseSelectorList,
   resolveScanOutcome,
@@ -341,11 +342,13 @@ export async function runScanWebsiteJob(
     data: {
       lastScanAt: finishedAt,
       // A finished scan (even partial) puts the website into ACTIVE monitoring
-      // and re-arms recurring scans (spec §40). Failures pause scheduling.
+      // and re-arms recurring scans (spec §40). A failed one marks the site
+      // ERROR but keeps trying at least daily: monitoring must never stop
+      // silently because a site was down, or blocking, for one night.
       status: nowActive ? "ACTIVE" : "ERROR",
       nextScanAt: nowActive
         ? computeNextScanAt(website.scanFrequency, finishedAt)
-        : null,
+        : computeRetryAfterFailure(website.scanFrequency, finishedAt),
     },
   });
 

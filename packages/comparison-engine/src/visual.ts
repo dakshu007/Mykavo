@@ -121,6 +121,45 @@ function rowSignature(data: Uint8Array, width: number, y: number, offset: number
 interface RowSignaturePair {
   a: number;
   b: number;
+  /** A flat row of one colour: page background, padding, the gap between lines. */
+  blank: boolean;
+}
+
+/** Largest per-channel spread between block averages that still reads as one flat colour. */
+const BLANK_SPREAD = 12;
+
+/**
+ * True when every block in the row averages to (nearly) the same colour.
+ * Such rows carry no content of their own - they are the background a page
+ * sits on - so they must not be allowed to vouch for "nothing changed".
+ */
+function isBlankRow(data: Uint8Array, width: number, y: number): boolean {
+  const rowStart = y * width * 4;
+  let minR = 255, minG = 255, minB = 255;
+  let maxR = 0, maxG = 0, maxB = 0;
+  for (let blockStart = 0; blockStart < width; blockStart += BLOCK_WIDTH) {
+    const blockEnd = Math.min(blockStart + BLOCK_WIDTH, width);
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    for (let x = blockStart; x < blockEnd; x++) {
+      const i = rowStart + x * 4;
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+    }
+    const count = blockEnd - blockStart;
+    r /= count;
+    g /= count;
+    b /= count;
+    if (r < minR) minR = r;
+    if (g < minG) minG = g;
+    if (b < minB) minB = b;
+    if (r > maxR) maxR = r;
+    if (g > maxG) maxG = g;
+    if (b > maxB) maxB = b;
+  }
+  return maxR - minR <= BLANK_SPREAD && maxG - minG <= BLANK_SPREAD && maxB - minB <= BLANK_SPREAD;
 }
 
 function rowSignatures(img: RGBAImage): RowSignaturePair[] {
@@ -129,9 +168,23 @@ function rowSignatures(img: RGBAImage): RowSignaturePair[] {
     out[y] = {
       a: rowSignature(img.data, img.width, y, 0),
       b: rowSignature(img.data, img.width, y, QUANTIZE_STEP / 2),
+      blank: isBlankRow(img.data, img.width, y),
     };
   }
   return out;
+}
+
+/**
+ * How much a row counts toward the content score. Blank rows still count a
+ * little - a hero band switching from white to black is a change - but a
+ * page is mostly background, and at full weight that background matched
+ * itself across two completely different designs: a full redesign on a white
+ * site scored as a small change and never alerted.
+ */
+const BLANK_ROW_WEIGHT = 0.15;
+
+function rowWeight(row: RowSignaturePair): number {
+  return row.blank ? BLANK_ROW_WEIGHT : 1;
 }
 
 /**
@@ -149,6 +202,11 @@ function rowSignatures(img: RGBAImage): RowSignaturePair[] {
  * rows genuinely added or removed - is the real difference. Ordering is
  * deliberately not considered; a reordered page reading as unchanged is a far
  * cheaper mistake than a shifted page screaming that everything broke.
+ *
+ * Rows are WEIGHTED: flat background rows count far less than rows with
+ * content in them (see BLANK_ROW_WEIGHT). Otherwise the white space shared by
+ * any two designs - margins, section padding, the gaps between lines of text -
+ * matches itself and drowns out a page whose every word and image changed.
  */
 function contentDifferencePercentage(baseline: RGBAImage, current: RGBAImage): number {
   const baseRows = rowSignatures(baseline);
@@ -179,15 +237,22 @@ function contentDifferencePercentage(baseline: RGBAImage, current: RGBAImage): n
     return -1;
   }
 
-  let matched = 0;
+  let changed = 0;
+  let total = 0;
   for (const sig of currRows) {
-    if (claim(byA.get(sig.a)) !== -1 || claim(byB.get(sig.b)) !== -1) matched++;
+    const weight = rowWeight(sig);
+    total += weight;
+    let index = claim(byA.get(sig.a));
+    if (index === -1) index = claim(byB.get(sig.b));
+    if (index === -1) changed += weight; // appeared
   }
-
-  const added = currRows.length - matched;
-  const removed = baseRows.length - matched;
-  const total = baseRows.length + currRows.length;
-  return ((added + removed) / total) * 100;
+  baseRows.forEach((sig, index) => {
+    const weight = rowWeight(sig);
+    total += weight;
+    if (!claimed[index]) changed += weight; // removed
+  });
+  if (total === 0) return 0;
+  return (changed / total) * 100;
 }
 
 /* --------------------------- diff image rendering ------------------------- */

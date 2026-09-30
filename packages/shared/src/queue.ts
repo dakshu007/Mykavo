@@ -9,6 +9,12 @@ export const SCHEDULER_SWEEP_QUEUE = "scheduler-sweep";
 export const RETENTION_SWEEP_QUEUE = "retention-sweep";
 export const LIGHTHOUSE_AUDIT_QUEUE = "lighthouse-audit";
 export const HEALTH_SWEEP_QUEUE = "health-sweep";
+/**
+ * Quick change checks between full scans: a plain GET per monitored page,
+ * fingerprinted, and a full scan the moment a page moves (see
+ * page-fingerprint.ts and apps/worker/src/change-watch.ts).
+ */
+export const CHANGE_WATCH_QUEUE = "change-watch";
 export const REPORT_SWEEP_QUEUE = "report-sweep";
 export const AUDIT_SWEEP_QUEUE = "audit-sweep";
 export const BILLING_SWEEP_QUEUE = "billing-sweep";

@@ -96,6 +96,24 @@ function pagePath(url: string): string {
 
 const dashboardBase = process.env.APP_URL ?? "http://localhost:3000";
 
+/** Whether the website's scan before this one also ended FAILED. */
+async function previousScanFailed(
+  websiteId: string,
+  scan: { id: string; createdAt: Date },
+): Promise<boolean> {
+  const previous = await prisma.scan.findFirst({
+    where: {
+      websiteId,
+      id: { not: scan.id },
+      createdAt: { lt: scan.createdAt },
+      status: { in: ["COMPLETED", "PARTIAL", "FAILED"] },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { status: true },
+  });
+  return previous?.status === "FAILED";
+}
+
 async function record(
   workspaceId: string,
   websiteId: string,
@@ -228,6 +246,15 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
     const title = verdictMissing
       ? `Scan incomplete on ${host} - changes were not checked`
       : `Scan failed on ${host}`;
+
+    // A site that stays down is retried at least daily. The first failure
+    // alerts; the retries that fail the same way stay quiet until a scan
+    // succeeds again (the site-health sweep keeps reporting downtime).
+    const repeatFailure = scan.status === "FAILED" && (await previousScanFailed(website.id, scan));
+    if (repeatFailure) {
+      logger.info("repeat failure, alert skipped", { scanId, websiteId: website.id });
+      return false;
+    }
 
     let ok = false;
     if (config?.failureAlerts) {

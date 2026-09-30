@@ -71,7 +71,18 @@ export type ChangeSignal =
   | { kind: "page_weight"; previousBytes: number; currentBytes: number }
   | { kind: "request_count"; previous: number; current: number }
   | { kind: "response_time"; previousMs: number; currentMs: number }
-  | { kind: "visual_diff"; percentage: number }
+  | {
+      kind: "visual_diff";
+      percentage: number;
+      /**
+       * The page was redesigned, not edited: the screenshot, the visible text
+       * and the markup all changed at once (see isPageRedesign in
+       * @mykavo/comparison-engine). Never scored below HIGH.
+       */
+      redesign?: boolean;
+    }
+  /** Most of the compared pages were redesigned in one go - one headline event. */
+  | { kind: "site_redesign"; pages: number; total: number }
   // Site-level robots.txt / sitemap regressions (spec §19 family). These are
   // website-wide signals - the resulting change events carry no monitored page.
   | { kind: "robots_txt_removed"; previousStatus: number; currentStatus: number | null }
@@ -425,6 +436,20 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
 
     case "visual_diff": {
       const p = signal.percentage;
+      if (signal.redesign) {
+        return finalize({
+          category: "VISUAL",
+          changeType: "page_redesigned",
+          // A redesign always reaches the inbox. Deliberate or not, the page a
+          // client approved is gone, and that is exactly what MyKavo is for.
+          severity: p >= 30 ? "CRITICAL" : "HIGH",
+          title: `Page redesigned - ${p.toFixed(0)}% of the page changed`,
+          description:
+            "The layout, the visible text and the page structure all changed at once. This page no longer looks like its approved baseline. If the redesign was intended, approve it as the new baseline; if not, something replaced the page.",
+          previousValue: "Baseline design",
+          currentValue: `${p.toFixed(1)}% changed`,
+        });
+      }
       if (p < 1) return null; // 0-1% ignored (spec §18)
       // Spec §18 bands. 30%+ is the CRITICAL candidate tier - it previously
       // returned HIGH from both arms of the ternary, so it could never fire.
@@ -440,6 +465,17 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         currentValue: `${p.toFixed(1)}% changed`,
       });
     }
+
+    case "site_redesign":
+      return finalize({
+        category: "VISUAL",
+        changeType: "site_redesigned",
+        severity: "CRITICAL",
+        title: `Website redesigned - ${signal.pages} of ${signal.total} pages look completely different`,
+        description: `${signal.pages} of the ${signal.total} monitored pages changed layout, text and structure in the same scan. This looks like a new theme, a rebuild or a replaced site. Review the pages below, then approve the new design as the baseline or roll back.`,
+        previousValue: "Approved design",
+        currentValue: `${signal.pages} of ${signal.total} pages redesigned`,
+      });
 
     case "robots_txt_removed":
       return finalize({

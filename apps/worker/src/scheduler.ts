@@ -48,9 +48,11 @@ export async function runSchedulerSweep(boss: PgBoss): Promise<number> {
     logger.error("stuck-audit recovery failed", {}, err);
   }
 
+  // ERROR websites are retried too (see computeRetryAfterFailure): a site
+  // whose last scan failed stays on the schedule, at most a day apart.
   const due = await prisma.website.findMany({
     where: {
-      status: "ACTIVE",
+      status: { in: ["ACTIVE", "ERROR"] },
       nextScanAt: { lte: now },
       monitoredPages: { some: { enabled: true } },
     },
@@ -67,7 +69,7 @@ export async function runSchedulerSweep(boss: PgBoss): Promise<number> {
     // COMMITTED a concurrent sweep re-reads the row post-commit and its guard
     // (nextScanAt <= now) no longer matches, so exactly one sweep claims it.
     const claim = await prisma.website.updateMany({
-      where: { id: website.id, status: "ACTIVE", nextScanAt: { lte: now } },
+      where: { id: website.id, status: { in: ["ACTIVE", "ERROR"] }, nextScanAt: { lte: now } },
       data: { nextScanAt: next },
     });
     if (claim.count !== 1) continue;

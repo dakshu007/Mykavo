@@ -28,3 +28,4 @@ export * from "./person-name";
 export * from "./app-access";
 export * from "./ad-selectors";
 export * from "./flows";
+export * from "./page-fingerprint";

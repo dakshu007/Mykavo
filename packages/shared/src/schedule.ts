@@ -16,6 +16,16 @@ export function computeNextScanAt(frequency: ScanFrequency, from: Date): Date {
   return new Date(from.getTime() + frequencyIntervalMs(frequency));
 }
 
+/**
+ * When to try again after a scan FAILED outright: the normal schedule, but
+ * never more than a day away. A failed scan used to clear nextScanAt, which
+ * stopped monitoring for good after one bad night - a site that came back
+ * (or was relaunched on a new host) was never looked at again.
+ */
+export function computeRetryAfterFailure(frequency: ScanFrequency, from: Date): Date {
+  return new Date(from.getTime() + Math.min(frequencyIntervalMs(frequency), DAY_MS));
+}
+
 /** A website is due when it is ACTIVE and its nextScanAt has passed. */
 export function isScanDue(
   website: { status: string; nextScanAt: Date | null },
