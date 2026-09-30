@@ -12,6 +12,8 @@
  * something that is no longer Slack's logo.
  */
 
+import { BRAND_MARKS } from "./brand-marks";
+
 export function SlackIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 122.8 122.8" className={className} aria-hidden focusable="false">
@@ -95,6 +97,28 @@ export function GoogleIcon({ className = "" }: { className?: string }) {
         fill="#34A853"
         d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
+    </svg>
+  );
+}
+
+/**
+ * WordPress and Shopify as single-colour glyphs (Simple Icons paths, see
+ * brand-marks.ts) that take the surrounding text colour - for navigation,
+ * where every other entry is a monochrome line icon and a full-colour logo
+ * would shout.
+ */
+export function WordPressGlyph({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable="false">
+      <path fill="currentColor" d={BRAND_MARKS.wordpress.path} />
+    </svg>
+  );
+}
+
+export function ShopifyGlyph({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable="false">
+      <path fill="currentColor" d={BRAND_MARKS.shopify.path} />
     </svg>
   );
 }

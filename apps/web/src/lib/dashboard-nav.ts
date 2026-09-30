@@ -23,7 +23,7 @@
  * components cannot drift apart again.
  */
 
-export type NavGroupId = "monitoring" | "analysis" | "account" | "admin";
+export type NavGroupId = "monitoring" | "analysis" | "integrations" | "account" | "admin";
 
 /** Stable ids, so the sidebar's icon map is checked at compile time. */
 export type NavItemId =
@@ -34,6 +34,8 @@ export type NavItemId =
   | "site-audit"
   | "search-console"
   | "analyser"
+  | "wordpress"
+  | "shopify"
   | "notifications"
   | "billing"
   | "settings"
@@ -53,6 +55,8 @@ export interface NavItem {
   short?: string;
   /** Match the pathname exactly - only /dashboard needs this. */
   exact?: boolean;
+  /** A small tag after the label, e.g. "Soon" for a page that is not live yet. */
+  badge?: string;
 }
 
 export interface NavGroup {
@@ -101,6 +105,17 @@ const ANALYSIS: NavItem[] = [
   { id: "analyser", href: "/dashboard/analyser", label: "MyKavo Analyser", short: "Analyser" },
 ];
 
+/**
+ * One entry per platform, rather than one "WordPress and Shopify" card
+ * buried in Settings: each has its own setup story and its own page.
+ * Always shown - connecting the plugin is a way INTO monitoring, so it must
+ * not wait for monitoring to be live.
+ */
+const INTEGRATIONS: NavItem[] = [
+  { id: "wordpress", href: "/dashboard/wordpress", label: "WordPress" },
+  { id: "shopify", href: "/dashboard/shopify", label: "Shopify", badge: "Soon" },
+];
+
 const ACCOUNT: NavItem[] = [
   { id: "notifications", href: "/dashboard/notifications", label: "Notifications" },
   { id: "billing", href: "/dashboard/billing", label: "Billing" },
@@ -125,6 +140,8 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
   if (access.monitoringLive) {
     groups.push({ id: "analysis", label: "Deeper analysis", items: ANALYSIS });
   }
+
+  groups.push({ id: "integrations", label: "Integrations", items: INTEGRATIONS });
 
   groups.push({
     id: "account",

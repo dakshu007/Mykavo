@@ -72,6 +72,8 @@ export function staticEntries(
     { id: "nav-websites", section: "Navigation", label: "Websites", href: "/dashboard/websites" },
     { id: "nav-changes", section: "Navigation", label: "Changes", href: "/dashboard/changes" },
     { id: "nav-scans", section: "Navigation", label: "Scan History", href: "/dashboard/scans" },
+    { id: "nav-wordpress", section: "Navigation", label: "WordPress", href: "/dashboard/wordpress" },
+    { id: "nav-shopify", section: "Navigation", label: "Shopify", href: "/dashboard/shopify" },
     {
       id: "nav-notifications",
       section: "Navigation",

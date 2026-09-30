@@ -21,8 +21,8 @@ import {
   MailQuestion,
   Workflow,
   Megaphone,
-  type LucideIcon,
 } from "lucide-react";
+import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPaletteTrigger } from "@/components/dashboard/command-palette";
@@ -39,7 +39,7 @@ import { dashboardNav, isNavItemActive, type NavItemId } from "@/lib/dashboard-n
  * adding an item to lib/dashboard-nav without an icon is a compile error
  * rather than a blank space in the sidebar.
  */
-const ICONS: Record<NavItemId, LucideIcon> = {
+const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   overview: LayoutDashboard,
   websites: Globe,
   changes: GitCompareArrows,
@@ -47,6 +47,8 @@ const ICONS: Record<NavItemId, LucideIcon> = {
   "site-audit": SearchCheck,
   "search-console": BarChart3,
   analyser: ShieldCheck,
+  wordpress: WordPressGlyph,
+  shopify: ShopifyGlyph,
   notifications: Bell,
   billing: CreditCard,
   settings: Settings,
@@ -142,6 +144,16 @@ export function DashboardSidebar({
                   >
                     <Icon className="size-4.5 shrink-0" aria-hidden />
                     {item.label}
+                    {item.badge && (
+                      <span
+                        className={cn(
+                          "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          active ? "bg-ink-inverse/15 text-ink-inverse" : "bg-primary-soft text-accent",
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

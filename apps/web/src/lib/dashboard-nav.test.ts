@@ -20,7 +20,7 @@ describe("dashboardNav - the first run", () => {
    * products competing for the same first impression.
    */
   it("shows only the loop and account before monitoring is live", () => {
-    expect(dashboardNav(fresh).map((g) => g.id)).toEqual(["monitoring", "account"]);
+    expect(dashboardNav(fresh).map((g) => g.id)).toEqual(["monitoring", "integrations", "account"]);
   });
 
   it("hides the analysis tools until the loop has run once", () => {
@@ -204,5 +204,18 @@ describe("isNavItemActive", () => {
    */
   it("keeps prefix-adjacent sections apart", () => {
     expect(isNavItemActive(byId("scans"), "/dashboard/search-console")).toBe(false);
+  });
+});
+
+describe("dashboardNav - integrations", () => {
+  it("gives WordPress and Shopify their own entries, before monitoring is live too", () => {
+    const group = dashboardNav(fresh).find((g) => g.id === "integrations");
+    expect(group?.items.map((i) => i.href)).toEqual(["/dashboard/wordpress", "/dashboard/shopify"]);
+  });
+
+  it("marks Shopify as coming soon and WordPress as live", () => {
+    const items = flattenNav(dashboardNav(fresh));
+    expect(items.find((i) => i.id === "shopify")?.badge).toBe("Soon");
+    expect(items.find((i) => i.id === "wordpress")?.badge).toBeUndefined();
   });
 });
