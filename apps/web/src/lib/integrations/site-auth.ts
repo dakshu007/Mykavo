@@ -15,6 +15,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@mykavo/database";
 import { TOKEN_PREFIX, pluginVersionFromUserAgent, sha256Hex } from "@/lib/integrations/site-connection";
 import { looksLikeJwt, verifySessionToken } from "@/lib/integrations/shopify";
+import { touchActivity } from "@/lib/activity/record";
 
 export interface SiteContext {
   platform: "wordpress" | "shopify";
@@ -32,7 +33,21 @@ export interface SiteContext {
 /** lastUsedAt is informational - write it at most this often. */
 const LAST_USED_WRITE_INTERVAL_MS = 5 * 60 * 1000;
 
-export async function authenticateSiteRequest(request: Request): Promise<SiteContext | null> {
+/**
+ * Authenticate a site API request. Unless `automated` (a cron or update hook,
+ * not a person), the request also marks the connecting user active on the
+ * plugin's channel for admin tracking.
+ */
+export async function authenticateSiteRequest(
+  request: Request,
+  options: { automated?: boolean } = {},
+): Promise<SiteContext | null> {
+  const ctx = await authenticate(request);
+  if (ctx && !options.automated) touchActivity(ctx.actingUserId ?? ctx.workspaceOwnerId, ctx.platform);
+  return ctx;
+}
+
+async function authenticate(request: Request): Promise<SiteContext | null> {
   const header = request.headers.get("authorization") ?? "";
   const match = /^Bearer\s+(\S+)$/i.exec(header);
   const token = match?.[1];

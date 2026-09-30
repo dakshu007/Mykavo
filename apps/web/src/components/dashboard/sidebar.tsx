@@ -22,6 +22,7 @@ import {
   Workflow,
   Megaphone,
   Sparkles,
+  Activity,
 } from "lucide-react";
 import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
@@ -56,6 +57,7 @@ const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   settings: Settings,
   blog: PenLine,
   users: UserPlus,
+  tracking: Activity,
   usage: Gauge,
   "app-requests": MailQuestion,
   automations: Workflow,

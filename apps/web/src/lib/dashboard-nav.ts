@@ -42,6 +42,7 @@ export type NavItemId =
   | "settings"
   | "blog"
   | "users"
+  | "tracking"
   | "usage"
   | "app-requests"
   | "automations"
@@ -164,6 +165,7 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
   if (access.isPlatformAdmin) {
     admin.push(
       { id: "users", href: "/dashboard/users", label: "Users" },
+      { id: "tracking", href: "/dashboard/tracking", label: "Tracking" },
       {
         id: "app-requests",
         href: "/dashboard/app-requests",

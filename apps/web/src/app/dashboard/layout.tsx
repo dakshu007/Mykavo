@@ -8,6 +8,7 @@ import { greetingForHour, hourInTimeZone, timezoneFromNetlifyGeo } from "@/lib/g
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
 import { CommandPalette } from "@/components/dashboard/command-palette";
+import { ActivityBeacon } from "@/components/dashboard/activity-beacon";
 import { Greeting } from "@/components/dashboard/greeting";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
@@ -59,6 +60,7 @@ export default async function DashboardLayout({
     // data-clarity-mask: if Clarity is already running (a visitor came in from a
     // public page without a reload), it masks everything in the signed-in app.
     <div data-clarity-mask="True" className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
+      <ActivityBeacon />
       <CommandPalette
         isBlogAdmin={isBlogAdmin(session.user.email)}
         isPlatformAdmin={isPlatformAdmin(session.user.email)}

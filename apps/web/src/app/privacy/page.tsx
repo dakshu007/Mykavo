@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
       eyebrowText="legal"
       title="Privacy Policy"
       intro="This policy explains, in plain English, what data MyKavo collects, why we collect it, where it lives, and the choices you have. MyKavo is operated by Dakshesh Babu, an independent developer. If anything here is unclear, email support@mykavo.app and you will get a straight answer."
-      updated="September 25, 2026"
+      updated="September 30, 2026"
     >
       <h2>1. What data we collect</h2>
       <h3>Account data</h3>
@@ -46,7 +46,9 @@ export default function PrivacyPolicyPage() {
       <p>
         If you connect a WordPress site with the MyKavo plugin, we receive the site&apos;s address
         and name, the names and version numbers of plugins, themes and WordPress itself when they
-        are updated, switched on or off, and the addresses of pages you choose to monitor. If you
+        are updated, switched on or off, and the addresses of pages you choose to monitor. From version 1.1.0 the plugin also sends
+        daily counts of visits from AI crawlers such as GPTBot or ClaudeBot - by crawler name,
+        with the paths they visited, never IP addresses or anything about people. If you
         install the MyKavo Shopify app, we receive the store&apos;s myshopify.com domain, its name
         and primary domain, an access token that lets us read the store&apos;s themes (stored
         encrypted), and the names of themes when they are published or edited. Neither the plugin
@@ -61,6 +63,16 @@ export default function PrivacyPolicyPage() {
         directly to Dodo Payments and never touches MyKavo servers - we never see or store card
         details. We keep only the subscription records we need to know which plan your account is
         on.
+      </p>
+      <h3>How you use MyKavo</h3>
+      <p>
+        To understand how MyKavo is used and to help people who get stuck, we keep a record in our
+        own database of how you use the product: which dashboard pages and app screens you open
+        and when, the days you use the web dashboard, the Android app, the WordPress plugin, the
+        Shopify app or an AI assistant connection, your app version, and the type of browser or
+        device you sign in from. It records page and screen names only - never what you type or
+        what is on the page. Only the MyKavo team can see it, it is not shared with anyone, and it
+        is deleted with your account.
       </p>
       <h3>Analytics and product emails</h3>
       <p>
@@ -87,8 +99,9 @@ export default function PrivacyPolicyPage() {
           your Pro features active.
         </li>
         <li>
-          <strong>To improve the product</strong> - aggregate analytics on marketing pages and
-          occasional product-update emails help us build the right features.
+          <strong>To improve the product</strong> - aggregate analytics on marketing pages, the
+          usage records described above, and occasional product-update emails help us build the
+          right features.
         </li>
       </ul>
       <p>

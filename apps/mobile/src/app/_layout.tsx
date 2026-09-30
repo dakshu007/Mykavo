@@ -8,7 +8,7 @@ import { GeistMono_400Regular, GeistMono_500Medium } from "@expo-google-fonts/ge
 import { Poppins_500Medium, Poppins_600SemiBold } from "@expo-google-fonts/poppins";
 import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
-import { Stack, useRouter } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +29,8 @@ import {
   configureNotificationHandler,
   routeForNotification,
 } from "@/lib/push";
+import { reportScreen } from "@/lib/api";
+import { screenName } from "@/lib/screen-name";
 import { wipeSecureStorage } from "@/lib/secure-storage";
 import { fonts, gold } from "@/lib/theme";
 import { ThemeProvider, useTheme } from "@/lib/theme-context";
@@ -209,12 +211,23 @@ function PushBridge() {
   return null;
 }
 
+/** Reports each screen the user opens, by name, for MyKavo's usage tracking. */
+function ScreenReporter() {
+  const pathname = usePathname();
+  useEffect(() => {
+    const name = screenName(pathname);
+    if (name) reportScreen(name);
+  }, [pathname]);
+  return null;
+}
+
 function Root() {
   const { palette, theme } = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: palette.canvas }}>
       <StatusBar style={theme === "dark" ? "light" : "dark"} />
       <PushBridge />
+      <ScreenReporter />
       <Stack
         screenOptions={{
           headerShown: false,

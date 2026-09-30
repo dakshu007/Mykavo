@@ -9,6 +9,7 @@ import {
 } from "@mykavo/database";
 import { auth } from "@/lib/auth";
 import { resolveCurrentMembership } from "@/lib/session";
+import { noteAppRequest } from "@/lib/activity/record";
 
 /**
  * Authorization helpers for API route handlers. Workspace scope AND role are
@@ -26,11 +27,15 @@ export interface ApiContext {
 
 /** Returns null when unauthenticated or without a workspace membership. */
 export async function getApiContext(): Promise<ApiContext | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const hdrs = await headers();
+  const session = await auth.api.getSession({ headers: hdrs });
   if (!session) return null;
 
   const membership = await resolveCurrentMembership(session.user.id);
   if (!membership) return null;
+
+  // Admin tracking: requests from the Android app mark the user active there.
+  noteAppRequest(session.user.id, membership.workspace.id, hdrs.get("user-agent"), hdrs.get("x-mykavo-client"));
 
   return {
     userId: session.user.id,

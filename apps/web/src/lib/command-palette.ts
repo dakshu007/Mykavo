@@ -94,6 +94,13 @@ export function staticEntries(
   }
   if (isPlatformAdmin) {
     navigation.push({
+      id: "nav-tracking",
+      section: "Navigation",
+      label: "Tracking",
+      href: "/dashboard/tracking",
+      hint: "users activity android wordpress plugin app",
+    });
+    navigation.push({
       id: "nav-usage",
       section: "Navigation",
       label: "All Usage",

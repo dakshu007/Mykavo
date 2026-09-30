@@ -12,6 +12,7 @@
  * login screen) instead of leaving the user stranded on error states.
  */
 
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 import { API_BASE, authClient } from "./auth";
@@ -90,6 +91,29 @@ function authHeaders(): Record<string, string> {
   return parts.length > 0 ? { Cookie: parts.join("; ") } : {};
 }
 
+/**
+ * Tells MyKavo which app build is calling ("android/1.0.2"), so the team can
+ * see who uses the app and on which version. Native only: the web preview
+ * is a browser.
+ */
+function clientHeaders(): Record<string, string> {
+  if (Platform.OS === "web") return {};
+  return { "X-MyKavo-Client": `${Platform.OS}/${Constants.expoConfig?.version ?? "0"}` };
+}
+
+/**
+ * Report which screen is open, for MyKavo's own usage tracking. The screen's
+ * name only - nothing on it. Fire-and-forget: never delays or breaks the UI.
+ */
+export function reportScreen(name: string): void {
+  if (Platform.OS === "web") return;
+  void fetch(`${API_BASE}/api/activity`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...clientHeaders(), ...authHeaders() },
+    body: JSON.stringify({ screen: name }),
+  }).catch(() => undefined);
+}
+
 async function request<T>(
   path: string,
   init?: { method?: string; body?: unknown },
@@ -99,6 +123,7 @@ async function request<T>(
     headers: {
       Accept: "application/json",
       ...(init?.body !== undefined ? { "Content-Type": "application/json" } : {}),
+      ...clientHeaders(),
       ...authHeaders(),
     },
     ...(init?.body !== undefined ? { body: JSON.stringify(init.body) } : {}),

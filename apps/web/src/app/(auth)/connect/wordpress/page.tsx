@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Check, Globe, Lock, Plus } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { getSession, getCurrentMembership } from "@/lib/session";
+import { logActivityEvent } from "@/lib/activity/record";
 import { bareHost, parseConnectRequest } from "@/lib/integrations/site-connection";
 
 export const metadata: Metadata = {
@@ -74,6 +75,16 @@ export default async function ConnectWordPressPage({
   }
 
   const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
+  // Admin tracking: pressing Connect in the plugin lands here, so this is
+  // "started installing the plugin" even if the approval is never finished.
+  void logActivityEvent({
+    userId: session.user.id,
+    workspaceId: workspace.id,
+    channel: "wordpress",
+    type: "wordpress_connect_started",
+    label: req.siteHost,
+    meta: { site: req.siteUrl, pluginVersion: params.pv ?? null, wpVersion: params.wpv ?? null },
+  });
   if (role === "VIEWER") {
     return (
       <Problem message="Viewers can't connect sites. Ask an owner or admin of this workspace to connect it." />

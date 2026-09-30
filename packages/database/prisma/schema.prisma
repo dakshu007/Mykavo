@@ -38,6 +38,8 @@ model User {
   decidedAppAccess  AppAccessRequest[] @relation("AppAccessDecider")
   siteConnections   SiteConnection[]   @relation("SiteConnectionCreator")
   automationRuns    AutomationFlowRun[]
+  activityDays      UserActivityDay[]
+  activityEvents    ActivityEvent[]
 
   @@map("user")
 }
@@ -1469,4 +1471,44 @@ model AiCrawlerVisit {
   @@unique([websiteId, day, agent])
   @@index([websiteId, day])
   @@map("ai_crawler_visit")
+}
+
+/// Admin tracking: whether each user was active on each channel on a UTC day
+/// ("web", "android", "wordpress", "shopify", "mcp"). Upserted by the request
+/// paths each channel uses, throttled, so `pings` is a rough intensity - the
+/// row's existence and first/last times are what matter.
+model UserActivityDay {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day     DateTime @db.Date
+  channel String
+  pings   Int      @default(1)
+  firstAt DateTime @default(now())
+  lastAt  DateTime @default(now())
+
+  @@unique([userId, day, channel])
+  @@index([day])
+  @@map("user_activity_day")
+}
+
+/// Admin tracking: things a user did that no other table records - dashboard
+/// page views, Android app opens and screens, WordPress connect attempts.
+model ActivityEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  /// "web" | "android" | "wordpress" | "shopify" | "mcp"
+  channel     String
+  /// "page_view" | "app_open" | "screen_view" | "wordpress_connect_started"
+  type        String
+  path        String?
+  label       String?
+  meta        Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([type, createdAt(sort: Desc)])
+  @@map("activity_event")
 }

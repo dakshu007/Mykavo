@@ -1,4 +1,5 @@
 import { isMissingTableError, prisma } from "@mykavo/database";
+import { touchActivity } from "@/lib/activity/record";
 import { bearerKey, hashApiKey } from "./api-key-format";
 
 export interface ApiKeyContext {
@@ -21,7 +22,13 @@ export async function authenticateApiKey(request: Request): Promise<ApiKeyContex
   const row = await prisma.apiKey
     .findUnique({
       where: { keyHash: hashApiKey(key) },
-      select: { id: true, revokedAt: true, lastUsedAt: true, workspace: { select: { id: true, name: true } } },
+      select: {
+        id: true,
+        revokedAt: true,
+        lastUsedAt: true,
+        createdByUserId: true,
+        workspace: { select: { id: true, name: true, ownerId: true } },
+      },
     })
     .catch((err: unknown) => {
       if (isMissingTableError(err)) return null;
@@ -33,5 +40,7 @@ export async function authenticateApiKey(request: Request): Promise<ApiKeyContex
   if (!row.lastUsedAt || now - row.lastUsedAt.getTime() > LAST_USED_WRITE_INTERVAL_MS) {
     void prisma.apiKey.update({ where: { id: row.id }, data: { lastUsedAt: new Date(now) } }).catch(() => undefined);
   }
+  // Admin tracking: the person who created the key is the one asking.
+  touchActivity(row.createdByUserId ?? row.workspace.ownerId, "mcp");
   return { keyId: row.id, workspaceId: row.workspace.id, workspaceName: row.workspace.name };
 }

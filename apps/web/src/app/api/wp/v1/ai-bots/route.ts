@@ -14,7 +14,7 @@ import { logger } from "@/lib/logger";
  * never double-counts.
  */
 export async function POST(request: Request) {
-  const ctx = await authenticateSiteRequest(request);
+  const ctx = await authenticateSiteRequest(request, { automated: true });
   if (!ctx) return unauthorizedSite();
   if (ctx.platform !== "wordpress") {
     return NextResponse.json({ error: "Not available for this connection." }, { status: 404 });

@@ -14,7 +14,7 @@ import { logger } from "@/lib/logger";
  * not an error: the update happened either way and the plugin records it.
  */
 export async function POST(request: Request) {
-  const ctx = await authenticateSiteRequest(request);
+  const ctx = await authenticateSiteRequest(request, { automated: true });
   if (!ctx) return unauthorizedSite();
   // WordPress reports its own updates; Shopify theme changes arrive as webhooks.
   if (ctx.platform !== "wordpress") {
