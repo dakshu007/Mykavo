@@ -27,8 +27,20 @@ export async function GET(_request: Request, { params }: Params) {
       where: { id, website: { workspaceId: ctx.workspace.id } },
       include: {
         website: { select: { name: true, url: true } },
+        // Polled every 3 s by the app while a scan runs: select only the
+        // columns the response uses, never the large JSON ones.
         snapshots: {
-          include: {
+          select: {
+            id: true,
+            url: true,
+            title: true,
+            httpStatus: true,
+            responseTimeMs: true,
+            pageWeightBytes: true,
+            requestCount: true,
+            errorCode: true,
+            errorMessage: true,
+            screenshotStorageKey: true,
             monitoredPage: {
               select: {
                 baselines: {
@@ -44,7 +56,14 @@ export async function GET(_request: Request, { params }: Params) {
     }),
     prisma.changeEvent.findMany({
       where: { scanId: id, website: { workspaceId: ctx.workspace.id } },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        severity: true,
+        category: true,
+        status: true,
+        detectedAt: true,
+        websiteId: true,
         website: { select: { name: true } },
         monitoredPage: { select: { url: true } },
       },

@@ -37,6 +37,7 @@ import {
   type GscSyncJob,
 } from "@mykavo/shared";
 import { logger } from "./logger";
+import { BOSS_TUNING, ON_DEMAND_POLL, SWEEP_POLL, ensureQueue } from "./queue-tuning";
 import { sendTestPush } from "./push";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
@@ -99,25 +100,23 @@ async function main() {
     // second worker from starting at all during the move to a real server.
     // Four is ample: the queue does short polls, not sustained parallel work.
     max: Number(process.env.PGBOSS_POOL_MAX ?? 4),
+    // Idle egress: NOTIFY delivery + relaxed housekeeping (see queue-tuning.ts).
+    ...BOSS_TUNING,
   });
   boss.on("error", (err) => logger.error("pg-boss error", {}, err));
 
   await boss.start();
-  await boss
-    .createQueue(SCAN_WEBSITE_QUEUE, {
-      retryLimit: 2,
-      retryDelay: 30,
-      expireInSeconds: 15 * 60,
-    })
-    .catch(() => {
-      // Queue already created by the web app - fine.
-    });
+  await ensureQueue(boss, SCAN_WEBSITE_QUEUE, {
+    retryLimit: 2,
+    retryDelay: 30,
+    expireInSeconds: 15 * 60,
+  });
 
   const pool = new BrowserPool({ maxConcurrentPages: 3, restartAfterPages: 50 });
 
   await boss.work<ScanWebsiteJob>(
     SCAN_WEBSITE_QUEUE,
-    { batchSize: 1, pollingIntervalSeconds: 2 },
+    { batchSize: 1, ...ON_DEMAND_POLL },
     async ([job]) => {
       logger.info("job received", { jobId: job.id, scanId: job.data.scanId });
       await runScanWebsiteJob(job.data.scanId, pool);
@@ -125,16 +124,16 @@ async function main() {
   );
 
   // Central scheduler (spec §40): a single cron sweep, not one job per website.
-  await boss.createQueue(SCHEDULER_SWEEP_QUEUE).catch(() => {});
-  await boss.work(SCHEDULER_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, SCHEDULER_SWEEP_QUEUE);
+  await boss.work(SCHEDULER_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runSchedulerSweep(boss);
   });
   await boss.schedule(SCHEDULER_SWEEP_QUEUE, SWEEP_CRON);
 
   // Retention cleanup (spec §60/§91): a daily sweep deletes expired snapshots,
   // their artifacts, and old change events per each workspace's plan window.
-  await boss.createQueue(RETENTION_SWEEP_QUEUE).catch(() => {});
-  await boss.work(RETENTION_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, RETENTION_SWEEP_QUEUE);
+  await boss.work(RETENTION_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runRetentionSweep();
   });
   await boss.schedule(RETENTION_SWEEP_QUEUE, RETENTION_CRON);
@@ -143,37 +142,37 @@ async function main() {
   // Enqueued by the web app the moment a website is deleted, so the bucket
   // shrinks immediately rather than at 03:00; the retention sweep drains the
   // same table, so a missed job costs hours, not the saving itself.
-  await boss.createQueue(ARTIFACT_PURGE_QUEUE, { retryLimit: 2 }).catch(() => {});
-  await boss.work(ARTIFACT_PURGE_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, ARTIFACT_PURGE_QUEUE, { retryLimit: 2 });
+  await boss.work(ARTIFACT_PURGE_QUEUE, { batchSize: 1, ...ON_DEMAND_POLL }, async () => {
     await drainArtifactPurge();
   });
 
   // Site-health sweep: uptime probe + SSL expiry for every ACTIVE website.
-  await boss.createQueue(HEALTH_SWEEP_QUEUE).catch(() => {});
-  await boss.work(HEALTH_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, HEALTH_SWEEP_QUEUE);
+  await boss.work(HEALTH_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runHealthSweep();
   });
   await boss.schedule(HEALTH_SWEEP_QUEUE, HEALTH_CRON);
 
   // Quick change checks between full scans: a redesign or a broken deploy
   // triggers a full scan within the hour instead of waiting for the schedule.
-  await boss.createQueue(CHANGE_WATCH_QUEUE, { retryLimit: 0, expireInSeconds: 15 * 60 }).catch(() => {});
-  await boss.work(CHANGE_WATCH_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, CHANGE_WATCH_QUEUE, { retryLimit: 0, expireInSeconds: 15 * 60 });
+  await boss.work(CHANGE_WATCH_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runChangeWatchSweep(boss);
   });
   await boss.schedule(CHANGE_WATCH_QUEUE, CHANGE_WATCH_CRON);
 
   // "Update available" emails for the WordPress plugin and the Android app.
-  await boss.createQueue(PRODUCT_UPDATES_QUEUE, { retryLimit: 0, expireInSeconds: 15 * 60 }).catch(() => {});
-  await boss.work(PRODUCT_UPDATES_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, PRODUCT_UPDATES_QUEUE, { retryLimit: 0, expireInSeconds: 15 * 60 });
+  await boss.work(PRODUCT_UPDATES_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runProductUpdates();
   });
   await boss.schedule(PRODUCT_UPDATES_QUEUE, PRODUCT_UPDATES_CRON);
 
   // Weekly client-ready reports (spec §37): one summary email per ACTIVE
   // website every Monday morning - the agency forward-to-client selling point.
-  await boss.createQueue(REPORT_SWEEP_QUEUE).catch(() => {});
-  await boss.work(REPORT_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, REPORT_SWEEP_QUEUE);
+  await boss.work(REPORT_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runReportSweep();
   });
   await boss.schedule(REPORT_SWEEP_QUEUE, REPORT_CRON);
@@ -181,50 +180,50 @@ async function main() {
   // Weekly Lighthouse audit sweep: enqueues one homepage audit per ACTIVE
   // website (Tuesdays by default - offset from the Monday report sweep) so
   // scores stay fresh and performance-drop alerts fire without user action.
-  await boss.createQueue(AUDIT_SWEEP_QUEUE).catch(() => {});
-  await boss.work(AUDIT_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, AUDIT_SWEEP_QUEUE);
+  await boss.work(AUDIT_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runAuditSweep(boss);
   });
   await boss.schedule(AUDIT_SWEEP_QUEUE, AUDIT_CRON);
 
   // Daily client-report delivery sweep (Pro): emails each website's branded
   // report to configured client recipients on its weekly/monthly cadence.
-  await boss.createQueue(CLIENT_REPORT_SWEEP_QUEUE).catch(() => {});
-  await boss.work(CLIENT_REPORT_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, CLIENT_REPORT_SWEEP_QUEUE);
+  await boss.work(CLIENT_REPORT_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runClientReportSweep();
   });
   await boss.schedule(CLIENT_REPORT_SWEEP_QUEUE, CLIENT_REPORT_CRON);
 
   // Daily billing sweep: "Pro renews soon / about to expire" reminder emails,
   // one per billing period (dedupe via Subscription.renewalReminderSentAt).
-  await boss.createQueue(BILLING_SWEEP_QUEUE).catch(() => {});
-  await boss.work(BILLING_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, BILLING_SWEEP_QUEUE);
+  await boss.work(BILLING_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runBillingSweep();
   });
   await boss.schedule(BILLING_SWEEP_QUEUE, BILLING_CRON);
 
   // Activation: "baseline ready" + the one-time "add your first website"
   // reminder, spending only the email budget alerts leave over.
-  await boss.createQueue(ACTIVATION_SWEEP_QUEUE, { expireInSeconds: 20 * 60 }).catch(() => {});
-  await boss.work(ACTIVATION_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, ACTIVATION_SWEEP_QUEUE, { expireInSeconds: 20 * 60 });
+  await boss.work(ACTIVATION_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runActivationSweep();
   });
   await boss.schedule(ACTIVATION_SWEEP_QUEUE, ACTIVATION_CRON);
 
   // Google Search Console: on-demand syncs + a daily sweep.
-  await boss.createQueue(GSC_SYNC_QUEUE, { retryLimit: 1, expireInSeconds: 10 * 60 }).catch(() => {});
-  await boss.work<GscSyncJob>(GSC_SYNC_QUEUE, { batchSize: 1 }, async ([job]) => {
+  await ensureQueue(boss, GSC_SYNC_QUEUE, { retryLimit: 1, expireInSeconds: 10 * 60 });
+  await boss.work<GscSyncJob>(GSC_SYNC_QUEUE, { batchSize: 1, ...ON_DEMAND_POLL }, async ([job]) => {
     await runGscSync(job.data);
   });
-  await boss.createQueue(GSC_SYNC_SWEEP_QUEUE).catch(() => {});
-  await boss.work(GSC_SYNC_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, GSC_SYNC_SWEEP_QUEUE);
+  await boss.work(GSC_SYNC_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runGscSweep();
   });
   await boss.schedule(GSC_SYNC_SWEEP_QUEUE, GSC_CRON);
 
   // Domain expiry (RDAP). One request per registrable domain, a second apart.
-  await boss.createQueue(DOMAIN_SWEEP_QUEUE, { expireInSeconds: 20 * 60 }).catch(() => {});
-  await boss.work(DOMAIN_SWEEP_QUEUE, { batchSize: 1 }, async () => {
+  await ensureQueue(boss, DOMAIN_SWEEP_QUEUE, { expireInSeconds: 20 * 60 });
+  await boss.work(DOMAIN_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runDomainSweep();
   });
   await boss.schedule(DOMAIN_SWEEP_QUEUE, DOMAIN_CRON);
@@ -232,12 +231,10 @@ async function main() {
   // "Send me a test alert" from the app. Short expiry: a test nobody receives
   // within a minute has failed its purpose, and a stale one arriving later
   // would be more confusing than none.
-  await boss
-    .createQueue(PUSH_TEST_QUEUE, { retryLimit: 0, expireInSeconds: 60 })
-    .catch(() => {});
+  await ensureQueue(boss, PUSH_TEST_QUEUE, { retryLimit: 0, expireInSeconds: 60 });
   await boss.work<PushTestJob>(
     PUSH_TEST_QUEUE,
-    { batchSize: 1, pollingIntervalSeconds: 2 },
+    { batchSize: 1, ...ON_DEMAND_POLL },
     async ([job]) => {
       logger.info("push test job received", { jobId: job.id, userId: job.data.userId });
       await sendTestPush(job.data.userId);
@@ -246,12 +243,10 @@ async function main() {
 
   // Site audits (technical SEO crawl): up to ~10 min of polite fetching per
   // run, so strictly one at a time with a single retry on expiry.
-  await boss
-    .createQueue(SITE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 15 * 60 })
-    .catch(() => {});
+  await ensureQueue(boss, SITE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 15 * 60 });
   await boss.work<SiteAuditJob>(
     SITE_AUDIT_QUEUE,
-    { batchSize: 1, pollingIntervalSeconds: 2 },
+    { batchSize: 1, ...ON_DEMAND_POLL },
     async ([job]) => {
       logger.info("site audit job received", { jobId: job.id, siteAuditId: job.data.siteAuditId });
       await runSiteAuditJob(job.data);
@@ -260,12 +255,10 @@ async function main() {
 
   // Lighthouse audits (on-demand + weekly sweep). Heavyweight (~10-40s,
   // CPU-bound), so one at a time (batchSize 1) with a single retry.
-  await boss
-    .createQueue(LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60 })
-    .catch(() => {});
+  await ensureQueue(boss, LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60 });
   await boss.work<LighthouseAuditJob>(
     LIGHTHOUSE_AUDIT_QUEUE,
-    { batchSize: 1, pollingIntervalSeconds: 2 },
+    { batchSize: 1, ...ON_DEMAND_POLL },
     async ([job]) => {
       logger.info("lighthouse job received", { jobId: job.id, auditId: job.data.auditId });
       await runLighthouseAuditJob(job.data.auditId);
@@ -290,8 +283,8 @@ async function main() {
   // "Somebody signed up" - to the operator, not to a customer. Enqueued by the
   // web app's signup hook; delivered here so a push round trip can never slow
   // down or fail the request that creates an account.
-  await boss.createQueue(ADMIN_SIGNUP_QUEUE, { retryLimit: 2 }).catch(() => {});
-  await boss.work<AdminSignupJob>(ADMIN_SIGNUP_QUEUE, { batchSize: 1 }, async ([job]) => {
+  await ensureQueue(boss, ADMIN_SIGNUP_QUEUE, { retryLimit: 2 });
+  await boss.work<AdminSignupJob>(ADMIN_SIGNUP_QUEUE, { batchSize: 1, ...ON_DEMAND_POLL }, async ([job]) => {
     await runAdminSignupJob(job.data.userId);
   });
 
@@ -299,8 +292,8 @@ async function main() {
   // the operator alert above: the two have independent failure modes, and the
   // admin job's early returns (no ADMIN_EMAILS, admin's own signup) must
   // never be able to swallow a customer's welcome.
-  await boss.createQueue(WELCOME_EMAIL_QUEUE, { retryLimit: 3 }).catch(() => {});
-  await boss.work<WelcomeEmailJob>(WELCOME_EMAIL_QUEUE, { batchSize: 1 }, async ([job]) => {
+  await ensureQueue(boss, WELCOME_EMAIL_QUEUE, { retryLimit: 3 });
+  await boss.work<WelcomeEmailJob>(WELCOME_EMAIL_QUEUE, { batchSize: 1, ...ON_DEMAND_POLL }, async ([job]) => {
     await runWelcomeEmailJob(job.data.userId);
   });
 

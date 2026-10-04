@@ -27,7 +27,22 @@ import { env } from "@/lib/env";
 const globalForBoss = globalThis as unknown as { boss?: Promise<PgBoss> };
 
 async function createBoss(): Promise<PgBoss> {
-  const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: "pgboss" });
+  // Producer only. The web app just sends jobs; the worker owns maintenance,
+  // cron and schema migrations. With pg-boss defaults, start() also launched
+  // those background loops here (flow + cron checks every 5 s, supervision,
+  // monitoring) - and keep-warm keeps this function alive around the clock,
+  // so they ran 24/7 against the database: ~108 MB/day of Supabase egress
+  // measured at idle, against 0 for this configuration. The queue cache is
+  // still refreshed (rarely) because send() reads each queue's `notify` flag
+  // from it to fire the NOTIFY that wakes the worker instantly.
+  const boss = new PgBoss({
+    connectionString: env.DATABASE_URL,
+    schema: "pgboss",
+    supervise: false,
+    schedule: false,
+    migrate: false,
+    queueCacheIntervalSeconds: 300,
+  });
   await boss.start();
   // Retry/expiry policy lives on the queue in pg-boss v12. createQueue is
   // idempotent (the worker also ensures these) - ignore "already exists".
@@ -36,10 +51,11 @@ async function createBoss(): Promise<PgBoss> {
       retryLimit: 2,
       retryDelay: 30,
       expireInSeconds: 15 * 60,
+      notify: true,
     })
     .catch(() => {});
   await boss
-    .createQueue(LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60 })
+    .createQueue(LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60, notify: true })
     .catch(() => {});
   return boss;
 }

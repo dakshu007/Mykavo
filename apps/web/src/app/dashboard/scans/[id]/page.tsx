@@ -25,8 +25,21 @@ export default async function ScanDetailPage({
       where: { id, website: { workspaceId: workspace.id } },
       include: {
         website: { select: { id: true, name: true, url: true } },
+        // Only the columns this page renders: it re-runs every 3 s while a
+        // scan is in flight, and a full snapshot row carries large JSON
+        // (platformFingerprint, technologies, h1Values) that is never shown.
         snapshots: {
-          include: {
+          select: {
+            id: true,
+            url: true,
+            title: true,
+            httpStatus: true,
+            responseTimeMs: true,
+            pageWeightBytes: true,
+            requestCount: true,
+            screenshotStorageKey: true,
+            errorCode: true,
+            errorMessage: true,
             monitoredPage: {
               select: {
                 id: true,
@@ -45,7 +58,16 @@ export default async function ScanDetailPage({
     }),
     prisma.changeEvent.findMany({
       where: { scanId: id, website: { workspaceId: workspace.id } },
-      include: { monitoredPage: { select: { url: true } } },
+      // previousValue / currentValue / metadata can be large and are only
+      // shown on the change detail page.
+      select: {
+        id: true,
+        title: true,
+        severity: true,
+        category: true,
+        status: true,
+        monitoredPage: { select: { url: true } },
+      },
       orderBy: [{ detectedAt: "desc" }],
     }),
   ]);
