@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Code2,
   Eye,
@@ -12,7 +12,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { CategoryScene, type SceneKey } from "./category-scenes";
+import { CategoryScene, SCENE_CYCLE, type SceneKey } from "./category-scenes";
 import { fontDisplay } from "./style";
 
 /**
@@ -150,26 +150,40 @@ const SEVERITY_CHIP: Record<Category["severity"], string> = {
   MEDIUM: "bg-white text-[#151515] border border-black/15",
 };
 
-const ROTATE_MS = 8500;
-
 export function CategoryTabs() {
   const [activeKey, setActiveKey] = useState<SceneKey>("availability");
   const [paused, setPaused] = useState(false);
   const active = CATEGORIES.find((c) => c.key === activeKey) ?? CATEGORIES[2];
+  const pausedRef = useRef(false);
+  const barRef = useRef<HTMLSpanElement>(null);
+  const reducedMotion = useRef(false);
 
-  // Auto-advance to the next category every 7s. Hovering (or keyboard focus
-  // inside) pauses the tour; any switch - manual or automatic - restarts the
-  // full interval because activeKey is a dependency. Users who prefer
-  // reduced motion get a static panel.
   useEffect(() => {
-    if (paused) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = setTimeout(() => {
-      const index = CATEGORIES.findIndex((c) => c.key === activeKey);
-      setActiveKey(CATEGORIES[(index + 1) % CATEGORIES.length].key);
-    }, ROTATE_MS);
-    return () => clearTimeout(timer);
-  }, [activeKey, paused]);
+    pausedRef.current = paused;
+  }, [paused]);
+  useEffect(() => {
+    reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  // The tour runs on the SCENE's clock, not a wall-clock timer: the scene
+  // only plays once the page has settled and while it is on screen, so a
+  // separate timer drifted and cut scenes short or left them sitting
+  // finished. Each tab now gets exactly SCENE_CYCLE seconds of animation -
+  // the scene, then at least a second on its verdict - and the pill's bar
+  // fills on the same clock. Hovering or focusing inside holds the current
+  // tab; reduced motion shows a static panel and never auto-advances.
+  const onTick = useCallback(
+    (t: number) => {
+      if (barRef.current) barRef.current.style.width = `${Math.min(1, t / SCENE_CYCLE) * 100}%`;
+      if (t < SCENE_CYCLE || pausedRef.current || reducedMotion.current) return;
+      setActiveKey((current) => {
+        if (current !== activeKey) return current;
+        const index = CATEGORIES.findIndex((c) => c.key === current);
+        return CATEGORIES[(index + 1) % CATEGORIES.length].key;
+      });
+    },
+    [activeKey],
+  );
 
   return (
     <div
@@ -202,9 +216,9 @@ export function CategoryTabs() {
               {selected && (
                 <span
                   key={c.key}
+                  ref={barRef}
                   aria-hidden
-                  className="cat-timer absolute bottom-0 left-0 h-[3px] bg-[#151515]"
-                  style={{ animationPlayState: paused ? "paused" : "running" }}
+                  className="cat-timer absolute bottom-0 left-0 h-[3px] w-0 bg-[#151515]"
                 />
               )}
               <c.icon className="size-4" aria-hidden />
@@ -254,14 +268,13 @@ export function CategoryTabs() {
               before={active.before}
               after={active.after}
               severity={active.severity}
+              onTick={onTick}
               label={`${active.name} example: ${active.headline}. Baseline ${active.before}, current scan ${active.after}, severity ${active.severity}.`}
             />
           </div>
         </div>
       </div>
       <style>{`
-        @keyframes cat-timer { from { width: 0%; } to { width: 100%; } }
-        .cat-timer { animation: cat-timer ${ROTATE_MS}ms linear forwards; }
         @keyframes cat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         .cat-story > * { animation: cat-in 450ms ease-out both; }
         .cat-story > *:nth-child(2) { animation-delay: 60ms; }

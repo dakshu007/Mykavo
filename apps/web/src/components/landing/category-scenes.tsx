@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { ArrowRight, Check, Globe, X } from "lucide-react";
 import { stageClip, useStageClock } from "./use-stage-clock";
 
@@ -26,6 +26,14 @@ export const SCENE_W = 480;
 export const SCENE_H = 400;
 /** When the verdict strip lands; scenes hold after this. */
 export const VERDICT_AT = 3.1;
+/** When the last bit of motion (the severity stamp) settles. */
+export const SCENE_DONE_AT = VERDICT_AT + 0.75;
+/**
+ * One full turn of a tab, in scene time: the animation plus a hold of at
+ * least a second on the verdict. The tour advances on this, so it can never
+ * cut a scene short or leave it sitting finished for long.
+ */
+export const SCENE_CYCLE = 5;
 
 const cl = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const r = (x: number, a: number, b: number) => cl((x - a) / (b - a));
@@ -576,14 +584,24 @@ export function CategoryScene({
   after,
   severity,
   label,
+  onTick,
 }: {
   scene: SceneKey;
   before: string;
   after: string;
   severity: string;
   label: string;
+  /** Called with the scene's clock on every frame it draws. */
+  onTick?: (t: number) => void;
 }) {
   const { wrapRef, t, k, fitted } = useStageClock(SCENE_W, 12);
+  const tick = useRef(onTick);
+  useEffect(() => {
+    tick.current = onTick;
+  }, [onTick]);
+  useEffect(() => {
+    tick.current?.(t);
+  }, [t]);
   const Scene = SCENES[scene];
   return (
     <div ref={wrapRef} role="img" aria-label={label} style={{ position: "relative", width: "100%", aspectRatio: `${SCENE_W} / ${SCENE_H}`, overflow: stageClip(fitted) }}>

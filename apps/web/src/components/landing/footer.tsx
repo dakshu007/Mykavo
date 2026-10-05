@@ -46,6 +46,7 @@ const columns = [
       { href: "/site-audit", label: "Site Audit" },
       { href: "/#client-reports", label: "Client reports" },
       { href: "/wordpress-plugin", label: "WordPress plugin" },
+      { href: "/chrome-extension", label: "Chrome extension", tag: "new" },
       { href: "/shopify-app", label: "Shopify app", tag: "soon" },
       { href: "/android-app", label: "Android app" },
       { href: "/pricing", label: "Pricing" },

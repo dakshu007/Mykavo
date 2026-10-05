@@ -35,3 +35,11 @@ describe("category scenes", () => {
     }
   });
 });
+
+describe("category tour timing", () => {
+  it("holds every finished scene at least a second, and turns within five", async () => {
+    const { SCENE_CYCLE, SCENE_DONE_AT } = await import("./category-scenes");
+    expect(SCENE_CYCLE - SCENE_DONE_AT).toBeGreaterThanOrEqual(1);
+    expect(SCENE_CYCLE).toBeLessThanOrEqual(5);
+  });
+});

@@ -18,6 +18,7 @@ type MenuItem = { href: string; label: string; badge?: string };
 
 const integrations: MenuItem[] = [
   { href: "/wordpress-plugin", label: "WordPress plugin" },
+  { href: "/chrome-extension", label: "Chrome extension", badge: "New" },
   { href: "/shopify-app", label: "Shopify app", badge: "Coming soon" },
 ];
 

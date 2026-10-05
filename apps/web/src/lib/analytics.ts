@@ -40,6 +40,9 @@ export type AnalyticsEvent =
   | "blog_ai_summary"
   // Shopify app page
   | "shopify_app_viewed"
+  // Chrome extension page
+  | "chrome_extension_viewed"
+  | "chrome_store_clicked"
   // Android app page
   | "android_app_viewed"
   // Video tutorials page
