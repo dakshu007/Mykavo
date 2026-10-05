@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
       eyebrowText="legal"
       title="Privacy Policy"
       intro="This policy explains, in plain English, what data MyKavo collects, why we collect it, where it lives, and the choices you have. MyKavo is operated by Dakshesh Babu, an independent developer. If anything here is unclear, email support@mykavo.app and you will get a straight answer."
-      updated="September 30, 2026"
+      updated="October 5, 2026"
     >
       <h2>1. What data we collect</h2>
       <h3>Account data</h3>
@@ -57,6 +57,23 @@ export default function PrivacyPolicyPage() {
         delete its access token immediately and the store&apos;s data within 48 hours, as Shopify
         requires; your monitoring history stays in your MyKavo account until you delete it.
       </p>
+      <h3 id="chrome-extension">MyKavo Chrome extension</h3>
+      <p>
+        The extension&apos;s SEO check runs entirely in your browser: it reads the page you open it
+        on only when you click the extension, and the page&apos;s content, address and title never
+        leave your browser for that check. MyKavo is contacted only when you ask it to be: when
+        you press Protect (the website&apos;s address and the page you were on are sent so MyKavo
+        can add it to your account), and when you open the extension on a website you connected
+        (to show its monitoring status) or press Scan now. Connecting stores a token in the
+        extension that can see and scan that one website only - never your password - and you can
+        disconnect it from the extension menu at any time. Unless you switch off &quot;Share
+        anonymous usage counts&quot; in the extension menu, it also sends anonymous counts - that it
+        was installed, opened, checked a page, or that Protect, Scan now or Open MyKavo was pressed
+        - with a random install number and the extension version. These counts never include a
+        web address, a website name or anything from the page, and are not linked to you unless
+        you connect a website, when they help us see whether the extension helped you get set up.
+        The extension does not collect your browsing history.
+      </p>
       <h3>Billing data</h3>
       <p>
         Payments are processed by Dodo Payments, our merchant of record. Your card number goes
@@ -69,7 +86,7 @@ export default function PrivacyPolicyPage() {
         To understand how MyKavo is used and to help people who get stuck, we keep a record in our
         own database of how you use the product: which dashboard pages and app screens you open
         and when, the days you use the web dashboard, the Android app, the WordPress plugin, the
-        Shopify app or an AI assistant connection, your app version, and the type of browser or
+        Shopify app, the Chrome extension or an AI assistant connection, your app version, and the type of browser or
         device you sign in from. It records page and screen names only - never what you type or
         what is on the page. Only the MyKavo team can see it, it is not shared with anyone, and it
         is deleted with your account.

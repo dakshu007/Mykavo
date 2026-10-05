@@ -4,7 +4,7 @@
  * all of it is unit-tested.
  */
 
-export const CHANNELS = ["web", "android", "wordpress", "shopify", "mcp"] as const;
+export const CHANNELS = ["web", "android", "wordpress", "shopify", "chrome", "mcp"] as const;
 export type Channel = (typeof CHANNELS)[number];
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
@@ -12,6 +12,7 @@ export const CHANNEL_LABEL: Record<Channel, string> = {
   android: "Android app",
   wordpress: "WordPress plugin",
   shopify: "Shopify app",
+  chrome: "Chrome extension",
   mcp: "AI assistant (MCP)",
 };
 

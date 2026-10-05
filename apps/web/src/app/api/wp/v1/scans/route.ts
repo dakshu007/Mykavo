@@ -4,6 +4,7 @@ import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/si
 import { mapScanListItem } from "@/lib/mobile/mapping";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { triggerWebsiteScan } from "@/lib/scans/trigger";
+import { logActivityEvent } from "@/lib/activity/record";
 
 /** The connected website's recent scans, newest first. */
 export async function GET(request: Request) {
@@ -40,6 +41,16 @@ export async function POST(request: Request) {
       { error: result.error, ...(result.scanId ? { scanId: result.scanId } : {}) },
       { status: result.status },
     );
+  }
+  if (ctx.platform === "chrome") {
+    void logActivityEvent({
+      userId: ctx.actingUserId ?? ctx.workspaceOwnerId,
+      workspaceId: ctx.workspaceId,
+      channel: "chrome",
+      type: "extension_scan_triggered",
+      label: ctx.website.name,
+      meta: { websiteId: ctx.website.id, scanId: result.scan.id },
+    });
   }
   return NextResponse.json({ scan: { id: result.scan.id, status: result.scan.status } }, { status: 201 });
 }

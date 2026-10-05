@@ -39,7 +39,8 @@ function refused() {
 }
 
 /**
- * Called by the WordPress SERVER (not the browser) to finish connecting:
+ * Called by the WordPress SERVER (not the browser), or by the Chrome
+ * extension's background worker, to finish connecting:
  * one-time code + PKCE verifier in, site-scoped access token out. The code
  * is consumed atomically, so it can be exchanged exactly once.
  */
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
     select: {
       id: true,
       websiteId: true,
+      platform: true,
       siteUrl: true,
       codeChallenge: true,
       codeExpiresAt: true,
@@ -102,7 +104,11 @@ export async function POST(request: Request) {
     });
     if (updated.count !== 1) return false;
     // Reconnecting the same site replaces its old token rather than
-    // leaving a second live credential behind.
+    // leaving a second live credential behind. Not for the Chrome
+    // extension: each browser holds its own token for a site (the
+    // extension retires its previous one itself when it reconnects), and
+    // connecting a second laptop must not sign the first one out.
+    if (pending.platform !== "wordpress") return true;
     await tx.siteConnection.updateMany({
       where: {
         websiteId: pending.websiteId,
@@ -117,7 +123,11 @@ export async function POST(request: Request) {
   });
   if (!issued) return refused();
 
-  logger.info("wordpress connection completed", { websiteId: pending.websiteId, connectionId: pending.id });
+  logger.info("site connection completed", {
+    platform: pending.platform,
+    websiteId: pending.websiteId,
+    connectionId: pending.id,
+  });
   return NextResponse.json({
     token,
     website: pending.website,

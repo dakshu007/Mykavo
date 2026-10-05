@@ -1,8 +1,8 @@
 /**
  * Authenticates requests to the site API (/api/wp/v1) from:
  *
- *   - the WordPress plugin: Authorization: Bearer mkv_wp_... (a token scoped
- *     to one website, stored as a hash), and
+ *   - the WordPress plugin and the Chrome extension: Authorization: Bearer
+ *     mkv_wp_... (a token scoped to one website, stored as a hash), and
  *   - the Shopify app: Authorization: Bearer <App Bridge session token>, a
  *     JWT Shopify signs with our client secret, which names the store; the
  *     store's approved link says which website it may see.
@@ -18,7 +18,7 @@ import { looksLikeJwt, verifySessionToken } from "@/lib/integrations/shopify";
 import { touchActivity } from "@/lib/activity/record";
 
 export interface SiteContext {
-  platform: "wordpress" | "shopify";
+  platform: "wordpress" | "shopify" | "chrome";
   /** The Shopify store's row, for Shopify requests. */
   shopifyShopId: string | null;
   connectionId: string;
@@ -58,6 +58,7 @@ async function authenticate(request: Request): Promise<SiteContext | null> {
     where: { tokenHash: sha256Hex(token) },
     select: {
       id: true,
+      platform: true,
       revokedAt: true,
       lastUsedAt: true,
       pluginVersion: true,
@@ -83,7 +84,7 @@ async function authenticate(request: Request): Promise<SiteContext | null> {
   }
 
   return {
-    platform: "wordpress",
+    platform: connection.platform === "chrome" ? "chrome" : "wordpress",
     shopifyShopId: null,
     connectionId: connection.id,
     workspaceId: connection.workspace.id,

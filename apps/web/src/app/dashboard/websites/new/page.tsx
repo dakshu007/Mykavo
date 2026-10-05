@@ -9,9 +9,9 @@ import { AddWebsiteWizard } from "./add-website-wizard";
 export default async function NewWebsitePage({
   searchParams,
 }: {
-  searchParams: Promise<{ url?: string }>;
+  searchParams: Promise<{ url?: string; website?: string; page?: string }>;
 }) {
-  const { url: prefill } = await searchParams;
+  const { url: prefill, website: resumeId, page } = await searchParams;
   // Only a plain http(s) address is prefilled; the wizard still validates it
   // (and the API runs the full SSRF check) before anything is fetched.
   const initialUrl =
@@ -24,7 +24,20 @@ export default async function NewWebsitePage({
     prisma.website.count({ where: { workspaceId: workspace.id } }),
   ]);
 
-  if (websiteCount >= websiteLimit) redirect("/dashboard/websites");
+  // Resume: a website added elsewhere (the Chrome extension) that has no
+  // monitored pages yet picks up at page discovery. It already counts
+  // toward the limit, so the limit check below doesn't apply to it.
+  const resume =
+    typeof resumeId === "string" && /^[a-z0-9]{10,40}$/i.test(resumeId)
+      ? await prisma.website.findFirst({
+          where: { id: resumeId, workspaceId: workspace.id },
+          select: { id: true, url: true, _count: { select: { monitoredPages: true } } },
+        })
+      : null;
+  if (resume && resume._count.monitoredPages > 0) redirect(`/dashboard/websites/${resume.id}`);
+  const preferredPage = typeof page === "string" && /^https?:\/\/[^\s]{1,2000}$/i.test(page) ? page : null;
+
+  if (!resume && websiteCount >= websiteLimit) redirect("/dashboard/websites");
 
   // Page limits are per website, so a new website starts with the full budget.
   const pageBudget = plan.limits.pagesPerWebsite;
@@ -38,14 +51,20 @@ export default async function NewWebsitePage({
         >
           <ArrowLeft className="size-3.5" aria-hidden /> Websites
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">Add a website</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+          {resume ? "Choose pages to monitor" : "Add a website"}
+        </h1>
         <p className="mt-1 text-sm text-ink-secondary">
           {pageBudget === Infinity
             ? `Your ${plan.name} plan monitors unlimited pages per website.`
             : `Your ${plan.name} plan monitors up to ${pageBudget} pages per website.`}
         </p>
       </div>
-      <AddWebsiteWizard pageBudget={pageBudget} initialUrl={initialUrl} />
+      <AddWebsiteWizard
+        pageBudget={pageBudget}
+        initialUrl={resume ? resume.url : initialUrl}
+        resume={resume ? { websiteId: resume.id, preferredPage } : undefined}
+      />
     </div>
   );
 }

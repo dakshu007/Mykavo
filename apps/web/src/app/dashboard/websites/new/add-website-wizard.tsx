@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Globe, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -43,10 +43,17 @@ async function startBaseline(websiteId: string): Promise<string | null> {
 export function AddWebsiteWizard({
   pageBudget,
   initialUrl = "",
+  resume,
 }: {
   pageBudget: number;
   /** Prefill, e.g. from the WordPress plugin's "add this site" link. */
   initialUrl?: string;
+  /**
+   * A website that already exists without pages (added from the Chrome
+   * extension): skip creation and go straight to discovery, putting the
+   * page the user was on first.
+   */
+  resume?: { websiteId: string; preferredPage: string | null };
 }) {
   const router = useRouter();
 
@@ -62,6 +69,33 @@ export function AddWebsiteWizard({
   const [phase, setPhase] = useState("");
   const [error, setError] = useState("");
 
+  async function discover(id: string, preferredPage: string | null) {
+    setPhase("Discovering pages - checking sitemaps and homepage links…");
+    const discovery = await requestJson<{
+      pages: SelectablePage[];
+      warnings: string[];
+      truncated: boolean;
+    }>(`/api/websites/${id}/discover`);
+    track("discovery_completed", { pages: discovery.pages.length });
+
+    let found = discovery.pages;
+    if (preferredPage) {
+      // The page the user was on goes first (after the homepage), added if
+      // discovery didn't reach it.
+      const same = (u: string) => u.replace(/\/$/, "") === preferredPage.replace(/\/$/, "");
+      const hit = found.find((p) => same(p.url));
+      const rest = found.filter((p) => !same(p.url));
+      const home = rest.filter((p) => p.source === "homepage");
+      found = [...home, hit ?? { url: preferredPage, source: "link" }, ...rest.filter((p) => p.source !== "homepage")];
+    }
+    setPages(found);
+    setWarnings(discovery.warnings);
+    setTruncated(discovery.truncated);
+    // Pre-select from the top (homepage first) within the plan budget.
+    setSelected(new Set(found.slice(0, pageBudget).map((p) => p.url)));
+    setStep("select");
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -75,21 +109,40 @@ export function AddWebsiteWizard({
       });
       setWebsiteId(created.website.id);
       track("website_added");
+      await discover(created.website.id, null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+      setPhase("");
+    }
+  }
 
-      setPhase("Discovering pages - checking sitemaps and homepage links…");
-      const discovery = await requestJson<{
-        pages: SelectablePage[];
-        warnings: string[];
-        truncated: boolean;
-      }>(`/api/websites/${created.website.id}/discover`);
-      track("discovery_completed", { pages: discovery.pages.length });
+  // Resume runs discovery once, on arrival. A failure falls back to the
+  // URL step, whose submit reports "already in your workspace" - so it
+  // retries discovery directly instead.
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (!resume || resumed.current) return;
+    resumed.current = true;
+    setWebsiteId(resume.websiteId);
+    setLoading(true);
+    discover(resume.websiteId, resume.preferredPage)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Something went wrong."))
+      .finally(() => {
+        setLoading(false);
+        setPhase("");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  }, []);
 
-      setPages(discovery.pages);
-      setWarnings(discovery.warnings);
-      setTruncated(discovery.truncated);
-      // Pre-select from the top (homepage first) within the plan budget.
-      setSelected(new Set(discovery.pages.slice(0, pageBudget).map((p) => p.url)));
-      setStep("select");
+  async function retryResume(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resume || loading) return;
+    setLoading(true);
+    setError("");
+    try {
+      await discover(resume.websiteId, resume.preferredPage);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -146,7 +199,7 @@ export function AddWebsiteWizard({
   if (step === "url") {
     return (
       <Card className="max-w-xl">
-        <form onSubmit={handleCreate} className="space-y-4">
+        <form onSubmit={resume ? retryResume : handleCreate} className="space-y-4">
           <div>
             <label htmlFor="website-url" className="mb-1.5 block text-[13px] font-medium text-ink">
               Website URL
@@ -156,13 +209,14 @@ export function AddWebsiteWizard({
               type="text"
               inputMode="url"
               required
+              readOnly={Boolean(resume)}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="example.com"
               className="h-12 w-full rounded-field border border-line bg-card px-4 font-mono text-[14px] text-ink placeholder:font-sans placeholder:text-ink-faint focus:border-accent focus:outline-none"
             />
           </div>
-          <div>
+          <div hidden={Boolean(resume)}>
             <label htmlFor="website-name" className="mb-1.5 block text-[13px] font-medium text-ink">
               Name <span className="font-normal text-ink-faint">(optional)</span>
             </label>
@@ -190,7 +244,7 @@ export function AddWebsiteWizard({
             ) : (
               <Globe className="size-4" aria-hidden />
             )}
-            {loading ? phase || "Working…" : "Add & discover pages"}
+            {loading ? phase || "Working…" : resume ? "Discover pages" : "Add & discover pages"}
           </button>
           <p className="text-[13px] leading-5 text-ink-faint">
             MyKavo fetches the homepage, robots.txt, and sitemaps to find your pages. Only

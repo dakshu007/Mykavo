@@ -225,20 +225,20 @@ function androidState(
 }
 
 function pluginState(
-  platform: "wordpress" | "shopify",
+  platform: "wordpress" | "shopify" | "chrome",
   conns: RawConnection[],
   lastActive: Date | null,
   connectStarts: RawEvent[],
   now: Date,
 ): ChannelState {
   const live = conns.filter((c) => c.connectedAt && !c.revokedAt);
-  const noun = platform === "wordpress" ? "site" : "store";
+  const noun = platform === "shopify" ? "store" : "site";
   if (live.length) {
     const lastAt = maxDate(lastActive, ...live.map((c) => c.lastUsedAt));
     const versions = [...new Set(live.map((c) => c.pluginVersion).filter(Boolean))];
     const detail = [
       live.map((c) => c.siteName || hostOf(c.siteUrl)).slice(0, 2).join(", ") + (live.length > 2 ? ` +${live.length - 2}` : ""),
-      versions.length && platform === "wordpress" ? `plugin ${versions.join("/")}` : null,
+      versions.length && platform !== "shopify" ? `${platform === "chrome" ? "extension" : "plugin"} ${versions.join("/")}` : null,
       lastAt ? `used ${ago(lastAt, now)}` : null,
     ]
       .filter(Boolean)
@@ -261,7 +261,7 @@ function pluginState(
     const last = maxDate(...conns.map((c) => c.revokedAt));
     return { status: "stopped", label: "Disconnected", detail: `${plural(conns.length, noun)} · ${ago(last, now)}`, lastAt: iso(last) };
   }
-  if (platform === "wordpress" && connectStarts.length) {
+  if (platform !== "shopify" && connectStarts.length) {
     const e = connectStarts[0];
     return {
       status: "started",
@@ -336,6 +336,13 @@ export function buildTrackingRows(input: TrackingInput): TrackingRow[] {
         now,
       ),
       shopify: pluginState("shopify", conns.filter((c) => c.platform === "shopify"), lastBy("shopify"), [], now),
+      chrome: pluginState(
+        "chrome",
+        conns.filter((c) => c.platform === "chrome"),
+        lastBy("chrome"),
+        myEvents.filter((e) => e.type === "extension_connect_started"),
+        now,
+      ),
       mcp: mcpState(input.apiKeys.filter((k) => belongsTo(u.id, k, ws)), lastBy("mcp"), now),
     };
 
@@ -409,6 +416,7 @@ export function summarizeRows(rows: TrackingRow[], now: Date = new Date()): Trac
       { label: "Active in last 7 days", count: rows.filter((r) => within(r.lastActiveAt, 7)).length },
       { label: "Uses Android app", count: rows.filter((r) => adopted(r, "android")).length },
       { label: "WordPress plugin connected", count: rows.filter((r) => adopted(r, "wordpress")).length },
+      { label: "Chrome extension connected", count: rows.filter((r) => adopted(r, "chrome")).length },
       { label: "Paid", count: rows.filter((r) => r.paid).length },
     ],
   };
@@ -484,4 +492,52 @@ export function topPages(events: RawEvent[]): Array<{ label: string; route: stri
     });
   }
   return [...m.values()].sort((a, b) => b.views - a.views);
+}
+
+/* ------------------------------------------------- extension funnel -- */
+
+export interface RawExtensionInstall {
+  opens: number;
+  pageChecks: number;
+  monitorClicks: number;
+  dashboardOpens: number;
+  connectStartedAt: Date | null;
+  signedUpAt: Date | null;
+  connectedAt: Date | null;
+  userId: string | null;
+}
+
+export interface ExtensionFunnel {
+  installs: number;
+  steps: Array<{ label: string; count: number }>;
+}
+
+/**
+ * The Chrome extension's acquisition funnel, install by install: from
+ * installing to a connected website, a return visit and a paid plan.
+ * "Came back" is a connected user whose extension talked to MyKavo again
+ * a day or more after connecting.
+ */
+export function buildExtensionFunnel(
+  installs: RawExtensionInstall[],
+  returnedUserIds: Set<string>,
+  paidUserIds: Set<string>,
+): ExtensionFunnel {
+  const n = (pred: (i: RawExtensionInstall) => boolean) => installs.filter(pred).length;
+  const connected = (i: RawExtensionInstall) => !!i.connectedAt;
+  return {
+    installs: installs.length,
+    steps: [
+      { label: "Installed", count: installs.length },
+      { label: "Opened the popup", count: n((i) => i.opens > 0) },
+      { label: "Checked a page", count: n((i) => i.pageChecks > 0) },
+      { label: "Clicked Protect", count: n((i) => i.monitorClicks > 0 || !!i.connectStartedAt) },
+      { label: "Reached MyKavo", count: n((i) => !!i.connectStartedAt) },
+      { label: "Created an account", count: n((i) => !!i.signedUpAt) },
+      { label: "Connected a website", count: n(connected) },
+      { label: "Opened the dashboard", count: n((i) => connected(i) && i.dashboardOpens > 0) },
+      { label: "Came back", count: n((i) => connected(i) && !!i.userId && returnedUserIds.has(i.userId)) },
+      { label: "Paid", count: n((i) => connected(i) && !!i.userId && paidUserIds.has(i.userId)) },
+    ],
+  };
 }

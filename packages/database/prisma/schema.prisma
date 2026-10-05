@@ -40,6 +40,7 @@ model User {
   automationRuns    AutomationFlowRun[]
   activityDays      UserActivityDay[]
   activityEvents    ActivityEvent[]
+  extensionInstalls ExtensionInstall[]
   productUpdateNotices ProductUpdateNotice[]
 
   @@map("user")
@@ -1514,6 +1515,37 @@ model ActivityEvent {
   @@index([userId, createdAt(sort: Desc)])
   @@index([type, createdAt(sort: Desc)])
   @@map("activity_event")
+}
+
+/// One Chrome extension install, for the acquisition funnel (installs ->
+/// opens -> checks -> Protect clicks -> connected sites). Keyed by a random
+/// id the extension generates on install. Holds counters and milestones
+/// only: never a URL, a hostname or page content.
+model ExtensionInstall {
+  id               String    @id
+  version          String?
+  installedAt      DateTime  @default(now())
+  lastSeenAt       DateTime  @default(now())
+  opens            Int       @default(0)
+  pageChecks       Int       @default(0)
+  monitorClicks    Int       @default(0)
+  dashboardOpens   Int       @default(0)
+  scansTriggered   Int       @default(0)
+  /// Reached /connect/chrome (signed in or not).
+  connectStartedAt DateTime?
+  /// Saw the sign-in / sign-up step because they had no session.
+  authStartedAt    DateTime?
+  /// Created their MyKavo account during the extension flow.
+  signedUpAt       DateTime?
+  /// First website connected through this install.
+  connectedAt      DateTime?
+  existingUser     Boolean?
+  userId           String?
+  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([installedAt])
+  @@index([userId])
+  @@map("extension_install")
 }
 
 /// Scans counted against a plan quota, kept per workspace so the count

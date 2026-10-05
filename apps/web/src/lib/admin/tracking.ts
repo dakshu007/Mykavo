@@ -2,13 +2,16 @@ import { isInternalEmail, isMissingTableError, prisma } from "@mykavo/database";
 import { describeUserAgent, lastDays, utcDay, CHANNELS, type Channel } from "@/lib/activity/core";
 import { logger } from "@/lib/logger";
 import {
+  buildExtensionFunnel,
   buildTrackingRows,
   groupVisits,
   hostOf,
   summarizeRows,
   topPages,
+  type ExtensionFunnel,
   type RawActivityDay,
   type RawEvent,
+  type RawExtensionInstall,
   type TimelineItem,
   type TrackingInput,
   type TrackingKpis,
@@ -105,7 +108,7 @@ async function loadInput(scope: Scope = {}): Promise<TrackingInput> {
       .findMany({
         where: {
           userId: { in: ids },
-          type: { in: ["wordpress_connect_started", "app_open", "screen_view"] },
+          type: { in: ["wordpress_connect_started", "extension_connect_started", "app_open", "screen_view"] },
           createdAt: { gte: new Date(Date.now() - 180 * DAY_MS) },
         },
         select: { userId: true, channel: true, type: true, path: true, label: true, meta: true, createdAt: true },
@@ -144,6 +147,8 @@ export interface TrackingOverview {
   daily: Array<{ day: string } & Record<Channel, number>>;
   /** Whether the user_activity tables exist yet. */
   recording: boolean;
+  /** Chrome extension installs through to paid; null before its migration. */
+  extension: ExtensionFunnel | null;
 }
 
 export async function loadTrackingOverview(includeInternal: boolean): Promise<TrackingOverview> {
@@ -161,11 +166,47 @@ export async function loadTrackingOverview(includeInternal: boolean): Promise<Tr
     }
     return entry;
   });
-  const recording = await prisma.userActivityDay
-    .count({ take: 1 })
-    .then(() => true)
-    .catch(() => false);
-  return { rows, kpis: summarizeRows(rows), daily, recording };
+  const [recording, installs] = await Promise.all([
+    prisma.userActivityDay
+      .count({ take: 1 })
+      .then(() => true)
+      .catch(() => false),
+    prisma.extensionInstall
+      .findMany({
+        select: {
+          opens: true,
+          pageChecks: true,
+          monitorClicks: true,
+          dashboardOpens: true,
+          connectStartedAt: true,
+          signedUpAt: true,
+          connectedAt: true,
+          userId: true,
+        },
+      })
+      .catch(tolerant<RawExtensionInstall[] | null>("extension installs", null)),
+  ]);
+  const internalIds = new Set(all.filter((r) => r.internal).map((r) => r.id));
+  const returned = new Set(
+    input.connections
+      .filter(
+        (c) =>
+          c.platform === "chrome" &&
+          c.createdByUserId &&
+          c.connectedAt &&
+          c.lastUsedAt &&
+          +c.lastUsedAt - +c.connectedAt >= DAY_MS,
+      )
+      .map((c) => c.createdByUserId as string),
+  );
+  const extension = installs
+    ? buildExtensionFunnel(
+        includeInternal ? installs : installs.filter((i) => !i.userId || !internalIds.has(i.userId)),
+        returned,
+        new Set(all.filter((r) => r.paid).map((r) => r.id)),
+      )
+    : null;
+  return { rows, kpis: summarizeRows(rows), daily, recording, extension };
 }
 
 export interface UserTracking {
@@ -249,9 +290,15 @@ export async function loadUserTracking(userId: string): Promise<UserTracking | n
   for (const e of events.filter((x) => x.type === "wordpress_connect_started")) {
     add(e.createdAt, "wordpress", "Pressed Connect in the WordPress plugin", e.label);
   }
+  for (const e of events.filter((x) => x.type === "extension_connect_started")) {
+    add(e.createdAt, "chrome", "Pressed Protect in the Chrome extension", e.label);
+  }
+  for (const e of events.filter((x) => x.type === "extension_scan_triggered")) {
+    add(e.createdAt, "chrome", "Ran a scan from the Chrome extension", e.label);
+  }
   for (const c of myConnections) {
-    const ch: Channel = c.platform === "shopify" ? "shopify" : "wordpress";
-    const noun = ch === "shopify" ? "Shopify app" : "WordPress plugin";
+    const ch: Channel = c.platform === "shopify" ? "shopify" : c.platform === "chrome" ? "chrome" : "wordpress";
+    const noun = ch === "shopify" ? "Shopify app" : ch === "chrome" ? "Chrome extension" : "WordPress plugin";
     add(c.createdAt, ch, `Approved the ${noun} connection`, hostOf(c.siteUrl));
     add(c.connectedAt, ch, `${noun} connected`, [hostOf(c.siteUrl), c.pluginVersion ? `plugin ${c.pluginVersion}` : null].filter(Boolean).join(" · "));
     add(c.revokedAt, ch, `${noun} disconnected`, hostOf(c.siteUrl));

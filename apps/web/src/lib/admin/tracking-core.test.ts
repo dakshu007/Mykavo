@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildTrackingRows, groupVisits, summarizeRows, topPages, type TrackingInput } from "./tracking-core";
+import {
+  buildExtensionFunnel,
+  buildTrackingRows,
+  groupVisits,
+  summarizeRows,
+  topPages,
+  type RawExtensionInstall,
+  type TrackingInput,
+} from "./tracking-core";
 
 const now = new Date("2026-10-01T12:00:00Z");
 const h = (hours: number) => new Date(now.getTime() - hours * 3_600_000);
@@ -127,5 +135,87 @@ describe("visits", () => {
   it("ranks pages by views", () => {
     const pages = topPages([ev(3, "/dashboard/changes"), ev(2, "/dashboard/changes"), ev(1, "/dashboard")]);
     expect(pages.map((p) => [p.label, p.views])).toEqual([["Changes", 2], ["Overview", 1]]);
+  });
+});
+
+describe("Chrome extension channel", () => {
+  it("shows a connected extension with its version, and a Protect click that went nowhere", () => {
+    const rows = buildTrackingRows(
+      input({
+        connections: [
+          {
+            workspaceId: "w1",
+            createdByUserId: "u1",
+            platform: "chrome",
+            siteUrl: "https://shop.example",
+            siteName: null,
+            createdAt: h(24 * 2),
+            connectedAt: h(24 * 2),
+            lastUsedAt: h(4),
+            pluginVersion: "2.0.0",
+            revokedAt: null,
+          },
+        ],
+        events: [
+          { userId: "u2", channel: "chrome", type: "extension_connect_started", path: null, label: "ben.blog", meta: null, createdAt: h(6) },
+        ],
+      }),
+    );
+    const asha = rows.find((r) => r.id === "u1")!;
+    expect(asha.channels.chrome).toMatchObject({ status: "active", label: "Connected, in use" });
+    expect(asha.channels.chrome.detail).toContain("extension 2.0.0");
+    expect(rows.find((r) => r.id === "u2")!.channels.chrome).toMatchObject({ status: "started" });
+  });
+});
+
+describe("buildExtensionFunnel", () => {
+  const base: RawExtensionInstall = {
+    opens: 0,
+    pageChecks: 0,
+    monitorClicks: 0,
+    dashboardOpens: 0,
+    connectStartedAt: null,
+    signedUpAt: null,
+    connectedAt: null,
+    userId: null,
+  };
+  const installs: RawExtensionInstall[] = [
+    base,
+    { ...base, opens: 3, pageChecks: 3 },
+    { ...base, opens: 1, pageChecks: 1, monitorClicks: 1, connectStartedAt: h(5) },
+    {
+      ...base,
+      opens: 9,
+      pageChecks: 8,
+      monitorClicks: 1,
+      dashboardOpens: 2,
+      connectStartedAt: h(50),
+      signedUpAt: h(49),
+      connectedAt: h(48),
+      userId: "u1",
+    },
+  ];
+
+  it("counts each install once per step, from install to paid", () => {
+    const f = buildExtensionFunnel(installs, new Set(["u1"]), new Set(["u1"]));
+    expect(f.installs).toBe(4);
+    expect(Object.fromEntries(f.steps.map((s) => [s.label, s.count]))).toEqual({
+      Installed: 4,
+      "Opened the popup": 3,
+      "Checked a page": 3,
+      "Clicked Protect": 2,
+      "Reached MyKavo": 2,
+      "Created an account": 1,
+      "Connected a website": 1,
+      "Opened the dashboard": 1,
+      "Came back": 1,
+      Paid: 1,
+    });
+  });
+
+  it("doesn't credit return visits or payment without a connection", () => {
+    const f = buildExtensionFunnel(installs.slice(0, 3), new Set(["u1"]), new Set(["u1"]));
+    expect(f.steps.find((s) => s.label === "Paid")!.count).toBe(0);
+    expect(f.steps.find((s) => s.label === "Came back")!.count).toBe(0);
   });
 });

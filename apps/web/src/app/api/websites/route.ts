@@ -2,11 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@mykavo/database";
 import { getApiContext, requireRole } from "@/lib/api-auth";
-import { assertCanAddWebsite, LimitError } from "@/lib/limits";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { assertSafeUrl, UnsafeUrlError } from "@/lib/security/ssrf";
-import { normalizeUrl, parseUrlInput } from "@/lib/url";
-import { logger } from "@/lib/logger";
+import { createWebsite } from "@/lib/website-create";
 
 export async function GET() {
   const ctx = await getApiContext();
@@ -47,62 +44,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please enter a valid URL." }, { status: 400 });
   }
 
-  const parsed = parseUrlInput(input.url);
-  if (!parsed) {
+  const result = await createWebsite(ctx.workspace.id, { url: input.url, name: input.name });
+  if (!result.ok) {
+    const status = result.reason === "LIMIT" ? 403 : result.reason === "EXISTS" ? 409 : 400;
     return NextResponse.json(
-      { error: "That doesn't look like a valid URL." },
-      { status: 400 },
+      { error: result.error, ...(result.reason === "LIMIT" && result.code ? { code: result.code } : {}) },
+      { status },
     );
   }
+  const website = result.website;
 
-  try {
-    await assertSafeUrl(parsed.href);
-  } catch (err) {
-    const message =
-      err instanceof UnsafeUrlError && err.code === "DNS_FAILURE"
-        ? "We couldn't resolve that hostname. Check the spelling and try again."
-        : "This URL can't be monitored.";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-
-  try {
-    await assertCanAddWebsite(ctx.workspace.id);
-  } catch (err) {
-    if (err instanceof LimitError) {
-      return NextResponse.json({ error: err.message, code: err.code }, { status: 403 });
-    }
-    throw err;
-  }
-
-  const normalized = normalizeUrl(parsed, { stripAllParams: true });
-  const existing = await prisma.website.findUnique({
-    where: {
-      workspaceId_normalizedUrl: {
-        workspaceId: ctx.workspace.id,
-        normalizedUrl: normalized,
-      },
-    },
-  });
-  if (existing) {
-    return NextResponse.json(
-      { error: "This website is already in your workspace." },
-      { status: 409 },
-    );
-  }
-
-  const website = await prisma.website.create({
-    data: {
-      workspaceId: ctx.workspace.id,
-      name: input.name || parsed.hostname.replace(/^www\./, ""),
-      url: parsed.href,
-      normalizedUrl: normalized,
-      status: "PENDING",
-    },
-  });
-
-  logger.info("website added", {
-    workspaceId: ctx.workspace.id,
-    websiteId: website.id,
-  });
   return NextResponse.json({ website }, { status: 201 });
 }

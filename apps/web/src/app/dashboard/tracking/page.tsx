@@ -31,6 +31,7 @@ const SHOWS: Array<{ id: Show; label: string }> = [
   { id: "android", label: "Android app" },
   { id: "wordpress", label: "WordPress" },
   { id: "shopify", label: "Shopify" },
+  { id: "chrome", label: "Chrome" },
   { id: "mcp", label: "AI assistant" },
 ];
 
@@ -92,7 +93,7 @@ export default async function TrackingPage({
   const show: Show = (SHOWS.find((s) => s.id === sp.show)?.id ?? "all") as Show;
   const includeInternal = sp.internal === "1";
 
-  const { rows, kpis, daily, recording } = await loadTrackingOverview(includeInternal);
+  const { rows, kpis, daily, recording, extension } = await loadTrackingOverview(includeInternal);
   const visible = visibleRows(rows, show);
   const maxDaily = Math.max(1, ...daily.map((d) => CHANNELS.reduce((n, ch) => n + d[ch], 0)));
   const pct = (n: number) => (kpis.users ? Math.round((n / kpis.users) * 100) : 0);
@@ -184,6 +185,41 @@ export default async function TrackingPage({
           </ul>
         </Card>
       </div>
+
+      {extension && (
+        <Card>
+          <CardHeader
+            icon={CHANNEL_ICON.chrome}
+            title="Chrome extension funnel"
+            action={<span className="text-[12px] text-ink-faint">Anonymous counts · all time</span>}
+          />
+          {extension.installs === 0 ? (
+            <p className="text-[13px] text-ink-secondary">No installs recorded yet.</p>
+          ) : (
+            <ol className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+              {extension.steps.map((f, i) => {
+                const share = Math.round((f.count / extension.installs) * 100);
+                return (
+                  <li key={f.label}>
+                    <div className="flex items-baseline justify-between text-[13px]">
+                      <span className="text-ink">
+                        <span className="mr-1.5 font-mono text-[11px] text-ink-faint">{i + 1}</span>
+                        {f.label}
+                      </span>
+                      <span className="tabular-nums text-ink-secondary">
+                        <b className="font-semibold text-ink">{f.count}</b> · {share}%
+                      </span>
+                    </div>
+                    <div className="mt-1 h-2 rounded-full bg-surface">
+                      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.max(share, f.count ? 2 : 0)}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </Card>
+      )}
 
       <Card>
         <CardHeader

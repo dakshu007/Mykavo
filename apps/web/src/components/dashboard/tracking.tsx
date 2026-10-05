@@ -1,5 +1,5 @@
 import { Bot, Globe, Smartphone, UserRound } from "lucide-react";
-import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
+import { ChromeGlyph, ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
 import { CHANNEL_LABEL, type Channel } from "@/lib/activity/core";
 import type { ChannelState, ChannelStatus } from "@/lib/admin/tracking-core";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ export const CHANNEL_ICON: Record<Channel | "account", React.ComponentType<{ cla
   android: Smartphone,
   wordpress: WordPressGlyph,
   shopify: ShopifyGlyph,
+  chrome: ChromeGlyph,
   mcp: Bot,
   account: UserRound,
 };
@@ -22,6 +23,7 @@ export const CHANNEL_DOT: Record<Channel, string> = {
   // WordPress blue: the only channel colour without a theme token of its own.
   wordpress: "bg-[#2f7fc1]",
   shopify: "bg-warning",
+  chrome: "bg-primary",
   mcp: "bg-accent",
 };
 

@@ -115,6 +115,17 @@ export function WordPressGlyph({ className = "" }: { className?: string }) {
   );
 }
 
+/** Chrome extension: a plain three-segment ring, not Google's logo. */
+export function ChromeGlyph({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable="false" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9.5" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 8.5h9M8.97 13.75 4.47 5.95M15.03 13.75l-4.5 7.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ShopifyGlyph({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden focusable="false">
