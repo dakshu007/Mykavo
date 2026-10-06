@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChromeExtensionLaunch } from "@/components/landing/chrome-extension-launch";
 import {
   ArrowRight,
   Braces,
@@ -455,6 +456,9 @@ export default function HomePage() {
 
         {/* Alert channels - hub-and-spoke: the spark delivering everywhere */}
         <AlertChannelsSection />
+
+        {/* Chrome extension launch - the instant check and one-click Protect */}
+        <ChromeExtensionLaunch />
 
         {/* WordPress plugin - Safe Updates, with its own page for the detail */}
         <WordPressPluginSection />

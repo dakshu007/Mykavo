@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { CHROME_EXTENSION_PAGE_PATH } from "@/config/chrome-extension";
 import { GoogleCta } from "./google-cta";
 import { LandingUrlInput } from "./url-input";
 import { HeroStoryAnimation } from "./hero-story-animation";
@@ -21,11 +22,31 @@ export function LandingHero() {
       />
 
       <div className="relative mx-auto max-w-6xl">
+        {/* Launch pill: the Chrome extension is live. A link, not a badge -
+            the one place on the page that says what's new, and where to try it. */}
         <div className="flex justify-center">
-          <p className="flex items-center gap-2 rounded-full border border-[#151515]/15 bg-white px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#151515]/70 shadow-[2px_2px_0_#151515]">
-            <Sparkles className="size-3.5 text-[#151515]" aria-hidden />
-            Website change detection
-          </p>
+          <Link
+            href={CHROME_EXTENSION_PAGE_PATH}
+            className="hero-launch group relative flex items-center gap-2.5 overflow-hidden rounded-full border border-[#151515] bg-white py-1 pl-1 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
+          >
+            <span className="flex items-center gap-1.5 rounded-full bg-[#151515] px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFD400]">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#FFD400] opacity-70 motion-reduce:animate-none" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-[#FFD400]" />
+              </span>
+              Just launched
+            </span>
+            <span>MyKavo for Chrome is live</span>
+            <span className="hidden items-center gap-1 text-[#151515]/60 transition-colors group-hover:text-[#151515] sm:inline-flex">
+              Try it now <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </span>
+            <span aria-hidden className="hero-launch-shine pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-[#FFD400]/40 to-transparent" />
+          </Link>
+          <style>{`
+            @keyframes hero-launch-shine { 0%, 70% { transform: translateX(0); } 100% { transform: translateX(480%); } }
+            .hero-launch-shine { animation: hero-launch-shine 4.5s ease-in-out 1.5s infinite; }
+            @media (prefers-reduced-motion: reduce) { .hero-launch-shine { display: none; } }
+          `}</style>
         </div>
 
         {/*

@@ -38,6 +38,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 - MCP server (${site.url}/api/mcp): connect Claude, Cursor or any MCP client with a workspace API key and ask about your websites in plain language - what changed, which site needs attention, what the latest audit says. Read-only
 - Client reports: white-label PDF-style reports with your own branding, on a schedule, ready to forward to a client
 - WordPress plugin (free, ${site.url}/wordpress-plugin): brings a site's monitoring into wp-admin. Safe Updates checks the site after every plugin, theme, WordPress and translation update (automatic ones included) and after plugins are activated or deactivated or the theme is switched, then names the update on every change it found. Also: WooCommerce store-page guard, "Monitor with MyKavo" on pages and posts, Plugins-screen warnings, Site Health, and WP-CLI commands (wp mykavo scan --wait). Adds nothing to public pages: no scripts, queries, autoloaded options or cron
+- Chrome extension (free, ${site.url}/chrome-extension, on the Chrome Web Store as "MyKavo - SEO & Website Monitor"): an instant on-page SEO check of any page, run locally in the browser (title, meta description, canonical, indexability, HTTPS, headings, structured data, social tags, alt text and more, scored out of 100), plus one-click "Protect" that adds the website to MyKavo monitoring. Once connected it shows the site's status, critical changes and uptime, and can start a scan. Monitoring runs in the cloud, so Chrome does not need to stay open
 - Shopify app (free to install, ${site.url}/shopify-app): brings a store's monitoring into the Shopify admin. Theme checks scan the store every time the live theme is published or edited (edits at most once every 15 minutes) and label every change found with the theme change it appeared after. Also: store-page guard for the home, all products, cart and search pages, and one-click approve, fixed or ignore. Asks only for read_themes and adds nothing to the storefront
 
 ## How it works
@@ -88,6 +89,7 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, from the outside - works with or without the plugin
 - [Site Audit](${site.url}/site-audit): the technical SEO crawl - every check listed, plan limits, how it works
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin - a check after every update, with the update named if something broke
+- [MyKavo for Chrome](${site.url}/chrome-extension): the free extension - an instant SEO check of any page, and one-click website monitoring
 - [MyKavo for Android](${site.url}/android-app): the Android app - push alerts for critical and high changes, triage and approve changes, run scans and add websites, live-synced with the web dashboard. Free on every plan, early access by request
 - [MyKavo for Shopify](${site.url}/shopify-app): the Shopify app, coming soon to the Shopify App Store - a check after every theme publish and edit, with before-and-after evidence in the Shopify admin
 - [Website Monitoring for Shopify](${site.url}/website-monitoring-for-shopify): protect product pages, pixels, and add-to-cart CTAs
@@ -112,6 +114,7 @@ Each comparison page states plainly where the other category of tool is the bett
 ## Integrations
 
 - WordPress plugin (${site.url}/wordpress-plugin): free, listed in the WordPress.org plugin directory at https://wordpress.org/plugins/mykavo/ (search "MyKavo" under Plugins > Add New)
+- Chrome extension (${site.url}/chrome-extension): free, on the Chrome Web Store at https://chromewebstore.google.com/detail/mykavo-seo-website-monito/mejgmahebmmcbhmjknnbnfkepopbglpg
 - Android app (${site.url}/android-app): free on every plan; early access by request (same email as the MyKavo account), then downloaded from the dashboard. Android 7.0+. iOS coming soon
 - Shopify app (${site.url}/shopify-app): built, coming soon to the Shopify App Store. Until then any Shopify store can be monitored from mykavo.app with nothing installed
 - Supabase (${site.url}/docs/platform/supabase): a Database Webhook or a pg_net trigger calls the website's deploy hook, so publishing content starts a check. MyKavo never connects to the database
@@ -136,6 +139,7 @@ ${CHANGELOG.slice(0, 3)
 - [What's new](${site.url}${CHANGELOG_PATH}): release notes, newest first
 - [Brand assets](${site.url}/brand): logo, logomark, app icon and colors
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin, also at https://wordpress.org/plugins/mykavo/
+- [MyKavo for Chrome](${site.url}/chrome-extension): the free extension, also on the Chrome Web Store
 - [MyKavo for Android](${site.url}/android-app): the Android app
 - [Site Audit](${site.url}/site-audit): the technical SEO crawl
 - [Deploy checks](${site.url}/docs/platform/deploy-checks): check the site after every deploy from GitHub Actions, Netlify or Vercel

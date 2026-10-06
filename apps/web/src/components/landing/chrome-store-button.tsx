@@ -8,11 +8,20 @@ import { CHROME_EXTENSION_VERSION, CHROME_STORE_URL } from "@/config/chrome-exte
  * The main install action: the Chrome Web Store listing, counted per
  * placement. Until the listing is live it says so instead of linking.
  */
-export function ChromeStoreButton({ placement, variant = "gold" }: { placement: string; variant?: "gold" | "ink" }) {
+export function ChromeStoreButton({
+  placement,
+  variant = "gold",
+}: {
+  placement: string;
+  /** gold on light pages, ink on a gold panel, dark on an ink band. */
+  variant?: "gold" | "ink" | "dark";
+}) {
   const styles =
     variant === "gold"
       ? "border-[#151515] bg-[#FFD400] text-[#151515] shadow-[4px_4px_0_#151515] hover:bg-[#ffe14d]"
-      : "border-[#151515] bg-white text-[#151515] hover:bg-[#F3F1E6]";
+      : variant === "dark"
+        ? "border-[#FFD400] bg-[#FFD400] text-[#151515] shadow-[4px_4px_0_#F5F5F0] hover:bg-[#ffe14d]"
+        : "border-[#151515] bg-white text-[#151515] hover:bg-[#F3F1E6]";
   if (!CHROME_STORE_URL) {
     return (
       <span

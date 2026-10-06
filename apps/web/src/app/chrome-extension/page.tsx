@@ -226,8 +226,12 @@ export default function ChromeExtensionPage() {
                 <ChromeMark className="size-4.5" />
               </span>
               <span className="text-[13px] font-semibold">MyKavo for Chrome</span>
-              <span className="rounded-full bg-[#FFD400] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em]">
-                New
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E5F6EC] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[#147A3A]">
+                <span className="relative flex size-1.5">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#16A34A] opacity-60 motion-reduce:animate-none" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-[#16A34A]" />
+                </span>
+                Live on the Chrome Web Store
               </span>
             </div>
             <p className={`${eyebrow} mb-4`}>{"// seo & website monitor //"}</p>

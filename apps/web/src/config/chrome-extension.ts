@@ -9,11 +9,11 @@ export const CHROME_EXTENSION_VERSION = "2.0.0";
 export const CHROME_EXTENSION_PAGE_PATH = "/chrome-extension";
 
 /**
- * The Chrome Web Store listing. Null until the extension is published - the
- * page then says "Coming soon to the Chrome Web Store" instead of linking.
- * Paste the listing URL here after the store approves it.
+ * The Chrome Web Store listing (live since October 2026). Set to null to
+ * show "Coming soon to the Chrome Web Store" instead of linking.
  */
-export const CHROME_STORE_URL: string | null = null;
+export const CHROME_STORE_URL: string | null =
+  "https://chromewebstore.google.com/detail/mykavo-seo-website-monito/mejgmahebmmcbhmjknnbnfkepopbglpg";
 
 /** Lowest Chrome version the extension supports (manifest minimum_chrome_version). */
 export const CHROME_MIN_VERSION = "116";
