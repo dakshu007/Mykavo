@@ -45,6 +45,8 @@ export type AnalyticsEvent =
   | "chrome_store_clicked"
   // Android app page
   | "android_app_viewed"
+  // Platforms page
+  | "platforms_viewed"
   // Video tutorials page
   | "tutorial_played";
 

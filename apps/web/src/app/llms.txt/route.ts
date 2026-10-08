@@ -88,6 +88,7 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - [Website Content Monitoring](${site.url}/website-content-monitoring): normalized text and DOM change tracking with an evidence trail
 - [Website Monitoring for WordPress](${site.url}/website-monitoring-for-wordpress): catch what plugin and theme updates break, from the outside - works with or without the plugin
 - [Site Audit](${site.url}/site-audit): the technical SEO crawl - every check listed, plan limits, how it works
+- [MyKavo platforms](${site.url}/platforms): everywhere MyKavo works - web app, WordPress plugin, Chrome extension, MCP server for AI assistants and deploy hooks live today; Android app by request; Shopify app coming soon
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin - a check after every update, with the update named if something broke
 - [MyKavo for Chrome](${site.url}/chrome-extension): the free extension - an instant SEO check of any page, and one-click website monitoring
 - [MyKavo for Android](${site.url}/android-app): the Android app - push alerts for critical and high changes, triage and approve changes, run scans and add websites, live-synced with the web dashboard. Free on every plan, early access by request
