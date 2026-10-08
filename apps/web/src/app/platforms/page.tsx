@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight, ArrowUpRight, BellRing, CheckCircle2, Globe, KeyRound, Rocket, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BellRing, CheckCircle2, Globe, KeyRound, Rocket, ShieldCheck } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
-import { ChromeMark } from "@/components/landing/chrome-store-button";
-import { BRANDED_PLATFORM_MARK, BrandGlyph, isBrandedPlatform } from "@/components/landing/platform-marks";
+import { PlatformLogo, WORKS_WITH_LOGO, isBrandedPlatform } from "@/components/landing/platform-marks";
 import { PlatformsOrbitAnimation } from "@/components/landing/platforms-orbit-animation";
 import { PlatformsRelayAnimation } from "@/components/landing/platforms-relay-animation";
 import { TrackOnView } from "@/components/track-on-view";
@@ -171,19 +170,8 @@ const pageJsonLd = {
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFD400]";
 
 function PlatformIcon({ id, className = "size-5" }: { id: Platform["id"]; className?: string }) {
-  if (isBrandedPlatform(id)) return <BrandGlyph slug={BRANDED_PLATFORM_MARK[id]} className={className} />;
-  switch (id) {
-    case "web":
-      return <Globe className={className} aria-hidden />;
-    case "chrome":
-      return <ChromeMark className={className} />;
-    case "ai":
-      return <Sparkles className={className} aria-hidden />;
-    case "deploy":
-      return <Rocket className={className} aria-hidden />;
-    default:
-      return null;
-  }
+  if (isBrandedPlatform(id)) return <PlatformLogo id={id} className={className} />;
+  return id === "deploy" ? <Rocket className={className} aria-hidden /> : <Globe className={className} aria-hidden />;
 }
 
 /** Real marks sit on a white tile in their own colours; MyKavo's own icons stay on gold. */
@@ -230,7 +218,7 @@ function PlatformCard({ p, index, wide = false }: { p: Platform; index: number; 
     >
       <div className="flex items-start justify-between gap-3">
         <span className={`inline-flex size-12 items-center justify-center rounded-2xl border border-[#FFD400]/70 ${tileClass(p.id)}`}>
-          <PlatformIcon id={p.id} className="size-6" />
+          <PlatformIcon id={p.id} className={p.id === "chrome" ? "size-8" : "size-6"} />
         </span>
         <div className="flex flex-col items-end gap-2">
           <StatusChip status={p.status} />
@@ -248,6 +236,20 @@ function PlatformCard({ p, index, wide = false }: { p: Platform; index: number; 
           </li>
         ))}
       </ul>
+      {p.worksWith && (
+        <div className="mt-5 flex flex-wrap items-center gap-2" aria-label={`${p.name} works with`}>
+          {p.worksWith.items.map((w) => (
+            <span
+              key={w.name}
+              className="inline-flex items-center gap-2 rounded-full bg-white py-1 pl-1.5 pr-3 text-[13px] font-semibold text-[#151515]"
+            >
+              {WORKS_WITH_LOGO[w.logo]("size-5")}
+              {w.name}
+            </span>
+          ))}
+          <span className="text-[13px] text-[#9C9E93]">{p.worksWith.note}</span>
+        </div>
+      )}
       <Link
         href={p.href}
         className={`mt-7 inline-flex w-fit items-center gap-2 border-b-2 border-[#FFD400] pb-0.5 text-[14px] font-semibold text-[#FFD400] transition-colors hover:text-[#fff3b0] ${FOCUS}`}
@@ -437,7 +439,7 @@ export default function PlatformsPage() {
             .
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-center text-xs leading-5 text-[#9C9E93]">
-            WordPress, Shopify, Android, Slack, Discord and other names and logos are trademarks of their owners. They
+            WordPress, Chrome, Android, Shopify, Slack, Discord, Claude, Cursor, GitHub Actions, Vercel, Netlify and other names and logos are trademarks of their owners. They
             are shown only to say what MyKavo works with, not as endorsements.
           </p>
         </section>

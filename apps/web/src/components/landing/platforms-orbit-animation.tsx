@@ -1,10 +1,9 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { Globe, Rocket, Sparkles } from "lucide-react";
+import { Globe, Rocket } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
-import { ChromeMark } from "./chrome-store-button";
-import { BrandGlyph, isBrandedPlatform } from "./platform-marks";
+import { PlatformLogo, isBrandedPlatform } from "./platform-marks";
 import { stageClip, useStageClock } from "./use-stage-clock";
 import { ALERT_CHANNELS } from "@/config/platforms";
 
@@ -145,13 +144,13 @@ export function orbitFrameAt(t: number) {
   };
 }
 
-/** Real marks (WordPress, Android, Shopify) keep their own colours; the rest use MyKavo's gold. */
+/** Real logos (WordPress, Chrome, Android, Claude, Shopify) keep their own colours; Deploys uses MyKavo's gold. */
 const NODE_ICON: Record<OrbitNode["id"], (c: string) => ReactNode> = {
-  wordpress: () => <BrandGlyph slug="wordpress" className="size-[24px]" />,
-  chrome: () => <ChromeMark className="size-[22px]" />,
-  android: () => <BrandGlyph slug="android" className="size-[24px]" />,
-  shopify: () => <BrandGlyph slug="shopify" className="size-[22px]" />,
-  ai: (c) => <Sparkles size={22} color={c} strokeWidth={2.2} />,
+  wordpress: () => <PlatformLogo id="wordpress" className="size-[24px]" />,
+  chrome: () => <PlatformLogo id="chrome" className="size-[28px]" />,
+  android: () => <PlatformLogo id="android" className="size-[24px]" />,
+  shopify: () => <PlatformLogo id="shopify" className="size-[22px]" />,
+  ai: () => <PlatformLogo id="ai" className="size-[24px]" />,
   deploy: (c) => <Rocket size={22} color={c} strokeWidth={2.2} />,
 };
 

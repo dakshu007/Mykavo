@@ -12,6 +12,12 @@ export const PLATFORMS_PAGE_PATH = "/platforms";
 
 export type PlatformStatus = "live" | "request" | "soon";
 
+/** A third-party tool a platform is used with. The page draws its real logo. */
+export interface WorksWith {
+  name: string;
+  logo: "claude" | "cursor" | "githubactions" | "vercel" | "netlify";
+}
+
 export interface Platform {
   id: "web" | "wordpress" | "chrome" | "android" | "ai" | "deploy" | "shopify";
   name: string;
@@ -21,6 +27,8 @@ export interface Platform {
   /** One line under the name. */
   tagline: string;
   points: string[];
+  /** Real tools it is used with, shown as logo chips under the points. */
+  worksWith?: { items: WorksWith[]; note: string };
   href: string;
   cta: string;
 }
@@ -104,6 +112,13 @@ export const PLATFORMS: Platform[] = [
       "Ask which site needs attention, what changed, what the latest audit says",
       "Read-only, with a per-workspace API key you can revoke",
     ],
+    worksWith: {
+      items: [
+        { name: "Claude", logo: "claude" },
+        { name: "Cursor", logo: "cursor" },
+      ],
+      note: "and any MCP client",
+    },
     href: "/signup",
     cta: "Create a free account",
   },
@@ -118,8 +133,16 @@ export const PLATFORMS: Platform[] = [
       "A scan runs straight away and always sends a verdict, clean or not",
       "An optional version note, such as v1.2.3, travels with the scan",
     ],
-    href: "/pricing",
-    cta: "See plans",
+    worksWith: {
+      items: [
+        { name: "GitHub Actions", logo: "githubactions" },
+        { name: "Vercel", logo: "vercel" },
+        { name: "Netlify", logo: "netlify" },
+      ],
+      note: "or any CI that can call a URL",
+    },
+    href: "/docs/platform/deploy-checks",
+    cta: "How deploy checks work",
   },
   {
     id: "shopify",

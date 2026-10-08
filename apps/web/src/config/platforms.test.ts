@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { WORKS_WITH_LOGO, isBrandedPlatform } from "@/components/landing/platform-marks";
 import { ALERT_CHANNELS, PLATFORMS, PLATFORMS_PAGE_PATH, STATUS_LABEL, platformsByStatus } from "./platforms";
 
 describe("platforms config", () => {
@@ -40,5 +41,23 @@ describe("platforms config", () => {
       expect(p.cta.length).toBeGreaterThan(3);
       expect(p.points.length).toBeGreaterThanOrEqual(3);
     }
+  });
+
+  it("only names tools it has a real logo for", () => {
+    const withLogos = PLATFORMS.filter((p) => p.worksWith);
+    expect(withLogos.map((p) => p.id)).toEqual(["ai", "deploy"]);
+    for (const p of withLogos) {
+      expect(p.worksWith!.items.length).toBeGreaterThan(0);
+      for (const w of p.worksWith!.items) {
+        expect(Object.keys(WORKS_WITH_LOGO), `${p.id}: ${w.name}`).toContain(w.logo);
+      }
+    }
+  });
+
+  it("gives the platforms that have an official logo a white tile, and MyKavo's own icons the rest", () => {
+    const branded = PLATFORMS.filter((p) => isBrandedPlatform(p.id)).map((p) => p.id);
+    expect(branded).toEqual(["wordpress", "chrome", "android", "ai", "shopify"]);
+    expect(isBrandedPlatform("web")).toBe(false);
+    expect(isBrandedPlatform("deploy")).toBe(false);
   });
 });
