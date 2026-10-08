@@ -1,8 +1,10 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { Bell, Check, Mail, MessageSquare, Smartphone, Sparkles, Webhook } from "lucide-react";
+import { Bell, Check, Mail, Sparkles } from "lucide-react";
+import { DiscordIcon, SlackIcon, WebhookIcon } from "@/components/brand/integration-icons";
 import { ChromeMark } from "./chrome-store-button";
+import { BrandGlyph } from "./platform-marks";
 import { stageClip, useStageClock } from "./use-stage-clock";
 
 /**
@@ -86,12 +88,15 @@ export function relayFrameAt(t: number) {
   };
 }
 
+/** Slack, Discord, the webhook mark and Android keep their official colours, on white tiles. */
+const BRANDED: ReadonlySet<(typeof RELAY_ROWS)[number]["key"]> = new Set(["slack", "discord", "webhook", "push"]);
+
 const ICON: Record<(typeof RELAY_ROWS)[number]["key"], (c: string) => ReactNode> = {
   email: (c) => <Mail size={22} color={c} strokeWidth={2.2} />,
-  slack: (c) => <MessageSquare size={22} color={c} strokeWidth={2.2} />,
-  discord: (c) => <MessageSquare size={22} color={c} strokeWidth={2.2} />,
-  webhook: (c) => <Webhook size={22} color={c} strokeWidth={2.2} />,
-  push: (c) => <Smartphone size={22} color={c} strokeWidth={2.2} />,
+  slack: () => <SlackIcon className="size-[22px]" />,
+  discord: () => <DiscordIcon className="size-[22px]" />,
+  webhook: () => <WebhookIcon className="size-[22px]" />,
+  push: () => <BrandGlyph slug="android" className="size-[24px]" />,
   chrome: () => <ChromeMark className="size-[22px]" />,
   ai: (c) => <Sparkles size={22} color={c} strokeWidth={2.2} />,
 };
@@ -232,7 +237,7 @@ export function PlatformsRelayAnimation() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: lit ? GOLD : "#2b2a22",
+                  background: BRANDED.has(row.key) ? "#FFFFFF" : lit ? GOLD : "#2b2a22",
                 }}
               >
                 {ICON[row.key](lit ? "#151515" : GOLD)}

@@ -1,24 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  BellRing,
-  CheckCircle2,
-  Globe,
-  KeyRound,
-  Puzzle,
-  Rocket,
-  ShieldCheck,
-  ShoppingBag,
-  Smartphone,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, BellRing, CheckCircle2, Globe, KeyRound, Rocket, ShieldCheck, Sparkles } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { ChromeMark } from "@/components/landing/chrome-store-button";
+import { BRANDED_PLATFORM_MARK, BrandGlyph, isBrandedPlatform } from "@/components/landing/platform-marks";
 import { PlatformsOrbitAnimation } from "@/components/landing/platforms-orbit-animation";
 import { PlatformsRelayAnimation } from "@/components/landing/platforms-relay-animation";
 import { TrackOnView } from "@/components/track-on-view";
@@ -62,13 +50,13 @@ const stats = [
 
 const marquee = PLATFORMS.map((p) => `${p.name} · ${STATUS_LABEL[p.status]}`);
 
-const picks: Array<{ who: string; use: string; why: string; href: string; icon: typeof Puzzle | "chrome" }> = [
+const picks: Array<{ who: string; use: string; why: string; href: string; icon: Platform["id"] }> = [
   {
     who: "I look after client WordPress sites",
     use: "WordPress plugin",
     why: "A check after every plugin, theme and core update, naming the one that broke something.",
     href: "/wordpress-plugin",
-    icon: Puzzle,
+    icon: "wordpress",
   },
   {
     who: "I am auditing a page right now",
@@ -82,28 +70,28 @@ const picks: Array<{ who: string; use: string; why: string; href: string; icon: 
     use: "Android app",
     why: "Push notifications and your changes in your pocket. Access is by request.",
     href: "/android-app",
-    icon: Smartphone,
+    icon: "android",
   },
   {
     who: "I ship through CI or a host",
     use: "Deploy pipelines",
     why: "Call a deploy hook after a release and get a verdict from a fresh scan.",
     href: "/pricing",
-    icon: Rocket,
+    icon: "deploy",
   },
   {
     who: "I live in an AI assistant",
     use: "AI assistants",
     why: "Ask Claude, Cursor or any MCP client which site needs attention. Read-only.",
     href: "/signup",
-    icon: Sparkles,
+    icon: "ai",
   },
   {
     who: "I run a Shopify store",
     use: "The web app, today",
     why: "Monitor any Shopify store from mykavo.app now. The Shopify app is coming soon.",
     href: "/website-monitoring-for-shopify",
-    icon: ShoppingBag,
+    icon: "shopify",
   },
 ];
 
@@ -183,22 +171,24 @@ const pageJsonLd = {
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFD400]";
 
 function PlatformIcon({ id, className = "size-5" }: { id: Platform["id"]; className?: string }) {
+  if (isBrandedPlatform(id)) return <BrandGlyph slug={BRANDED_PLATFORM_MARK[id]} className={className} />;
   switch (id) {
     case "web":
       return <Globe className={className} aria-hidden />;
-    case "wordpress":
-      return <Puzzle className={className} aria-hidden />;
     case "chrome":
       return <ChromeMark className={className} />;
-    case "android":
-      return <Smartphone className={className} aria-hidden />;
     case "ai":
       return <Sparkles className={className} aria-hidden />;
     case "deploy":
       return <Rocket className={className} aria-hidden />;
-    case "shopify":
-      return <ShoppingBag className={className} aria-hidden />;
+    default:
+      return null;
   }
+}
+
+/** Real marks sit on a white tile in their own colours; MyKavo's own icons stay on gold. */
+function tileClass(id: Platform["id"]) {
+  return isBrandedPlatform(id) ? "bg-white" : "bg-[#FFD400] text-[#151515]";
 }
 
 function StatusChip({ status }: { status: Platform["status"] }) {
@@ -239,7 +229,7 @@ function PlatformCard({ p, index, wide = false }: { p: Platform; index: number; 
       } ${wide ? "lg:col-span-2" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex size-12 items-center justify-center rounded-2xl border border-[#FFD400]/70 bg-[#FFD400] text-[#151515]">
+        <span className={`inline-flex size-12 items-center justify-center rounded-2xl border border-[#FFD400]/70 ${tileClass(p.id)}`}>
           <PlatformIcon id={p.id} className="size-6" />
         </span>
         <div className="flex flex-col items-end gap-2">
@@ -446,6 +436,10 @@ export default function PlatformsPage() {
             </a>
             .
           </p>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-xs leading-5 text-[#9C9E93]">
+            WordPress, Shopify, Android, Slack, Discord and other names and logos are trademarks of their owners. They
+            are shown only to say what MyKavo works with, not as endorsements.
+          </p>
         </section>
 
         {/* Relay */}
@@ -482,8 +476,8 @@ export default function PlatformsPage() {
                 href={p.href}
                 className={`group flex flex-col rounded-2xl border border-white/14 bg-[#161614] p-6 transition-all hover:-translate-y-0.5 hover:border-[#FFD400] hover:shadow-[5px_5px_0_#FFD400] ${FOCUS}`}
               >
-                <span className="inline-flex size-10 items-center justify-center rounded-xl bg-[#FFD400] text-[#151515]">
-                  {p.icon === "chrome" ? <ChromeMark className="size-5" /> : <p.icon className="size-5" aria-hidden />}
+                <span className={`inline-flex size-10 items-center justify-center rounded-xl ${tileClass(p.icon)}`}>
+                  <PlatformIcon id={p.icon} className="size-5" />
                 </span>
                 <p className="mt-5 text-[13px] font-medium italic leading-5 text-[#A3A397]">&ldquo;{p.who}&rdquo;</p>
                 <h3 className={`${fontDisplay} mt-2 text-[22px] leading-snug text-[#F2F2EA]`}>{p.use}</h3>

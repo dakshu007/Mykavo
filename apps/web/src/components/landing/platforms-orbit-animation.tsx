@@ -1,9 +1,10 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { Globe, Puzzle, Rocket, ShoppingBag, Smartphone, Sparkles } from "lucide-react";
+import { Globe, Rocket, Sparkles } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { ChromeMark } from "./chrome-store-button";
+import { BrandGlyph, isBrandedPlatform } from "./platform-marks";
 import { stageClip, useStageClock } from "./use-stage-clock";
 import { ALERT_CHANNELS } from "@/config/platforms";
 
@@ -144,11 +145,12 @@ export function orbitFrameAt(t: number) {
   };
 }
 
+/** Real marks (WordPress, Android, Shopify) keep their own colours; the rest use MyKavo's gold. */
 const NODE_ICON: Record<OrbitNode["id"], (c: string) => ReactNode> = {
-  wordpress: (c) => <Puzzle size={22} color={c} strokeWidth={2.2} />,
+  wordpress: () => <BrandGlyph slug="wordpress" className="size-[24px]" />,
   chrome: () => <ChromeMark className="size-[22px]" />,
-  android: (c) => <Smartphone size={22} color={c} strokeWidth={2.2} />,
-  shopify: (c) => <ShoppingBag size={22} color={c} strokeWidth={2.2} />,
+  android: () => <BrandGlyph slug="android" className="size-[24px]" />,
+  shopify: () => <BrandGlyph slug="shopify" className="size-[22px]" />,
   ai: (c) => <Sparkles size={22} color={c} strokeWidth={2.2} />,
   deploy: (c) => <Rocket size={22} color={c} strokeWidth={2.2} />,
 };
@@ -291,7 +293,7 @@ export function PlatformsOrbitAnimation() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: on ? GOLD : "#2b2a22",
+                    background: isBrandedPlatform(meta.id) ? "#FFFFFF" : on ? GOLD : "#2b2a22",
                   }}
                 >
                   {NODE_ICON[meta.id](on ? "#151515" : GOLD)}
