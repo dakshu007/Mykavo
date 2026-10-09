@@ -166,3 +166,9 @@ export const ALERT_CHANNELS = ["Email", "Slack", "Discord", "Webhook", "Push"] a
 export function platformsByStatus(status: PlatformStatus): Platform[] {
   return PLATFORMS.filter((p) => p.status === status);
 }
+
+/**
+ * The platforms the homepage band shows, in order. Five is enough to say
+ * "it works where you work"; the band links on to /platforms for the rest.
+ */
+export const HOMEPAGE_BAND_IDS: Platform["id"][] = ["wordpress", "chrome", "android", "ai", "shopify"];

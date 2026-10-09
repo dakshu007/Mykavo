@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { WORKS_WITH_LOGO, isBrandedPlatform } from "@/components/landing/platform-marks";
-import { ALERT_CHANNELS, PLATFORMS, PLATFORMS_PAGE_PATH, STATUS_LABEL, platformsByStatus } from "./platforms";
+import { ALERT_CHANNELS, HOMEPAGE_BAND_IDS, PLATFORMS, PLATFORMS_PAGE_PATH, STATUS_LABEL, platformsByStatus } from "./platforms";
 
 describe("platforms config", () => {
   it("lists each platform once, with unique ids", () => {
@@ -59,5 +59,13 @@ describe("platforms config", () => {
     expect(branded).toEqual(["wordpress", "chrome", "android", "ai", "shopify"]);
     expect(isBrandedPlatform("web")).toBe(false);
     expect(isBrandedPlatform("deploy")).toBe(false);
+  });
+
+  it("keeps the homepage band to real, distinct platforms that have a logo", () => {
+    expect(new Set(HOMEPAGE_BAND_IDS).size).toBe(HOMEPAGE_BAND_IDS.length);
+    for (const id of HOMEPAGE_BAND_IDS) {
+      expect(PLATFORMS.some((p) => p.id === id), id).toBe(true);
+      expect(isBrandedPlatform(id), `${id} needs an official logo for the band`).toBe(true);
+    }
   });
 });

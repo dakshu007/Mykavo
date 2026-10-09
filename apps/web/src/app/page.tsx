@@ -28,6 +28,7 @@ import { CategoryTabs } from "@/components/landing/categories";
 import { WhatItIsSection } from "@/components/landing/what-it-is";
 import { AlertChannelsSection } from "@/components/landing/alert-channels";
 import { AppDownloadSection } from "@/components/landing/app-download";
+import { PlatformsBand } from "@/components/landing/platforms-band";
 import { WordPressPluginSection } from "@/components/landing/wordpress-plugin";
 import { SiteAuditSection } from "@/components/landing/site-audit";
 import { ClientReportsSection } from "@/components/landing/client-reports";
@@ -465,6 +466,9 @@ export default function HomePage() {
 
         {/* Android app - web + mobile sync story (download paused: coming soon) */}
         <AppDownloadSection />
+
+        {/* Where MyKavo works - the real logos, linking on to /platforms */}
+        <PlatformsBand />
 
         {/* Before / after MyKavo - v7-style stat pairs. Sits with the
             agency argument rather than up top: it is an ROI case, and four

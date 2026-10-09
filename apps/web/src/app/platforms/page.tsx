@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, ArrowUpRight, BellRing, CheckCircle2, Globe, KeyRound, Rocket, ShieldCheck } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
+import { TrackedLink } from "@/components/landing/tracked-link";
 import { eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { PlatformLogo, WORKS_WITH_LOGO, isBrandedPlatform } from "@/components/landing/platform-marks";
 import { PlatformsOrbitAnimation } from "@/components/landing/platforms-orbit-animation";
@@ -250,13 +250,15 @@ function PlatformCard({ p, index, wide = false }: { p: Platform; index: number; 
           <span className="text-[13px] text-[#9C9E93]">{p.worksWith.note}</span>
         </div>
       )}
-      <Link
+      <TrackedLink
         href={p.href}
+        event="platform_clicked"
+        eventProps={{ platform: p.id, placement: "lineup", status: p.status }}
         className={`mt-7 inline-flex w-fit items-center gap-2 border-b-2 border-[#FFD400] pb-0.5 text-[14px] font-semibold text-[#FFD400] transition-colors hover:text-[#fff3b0] ${FOCUS}`}
       >
         {p.cta}
         <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden />
-      </Link>
+      </TrackedLink>
     </article>
   );
 }
@@ -332,19 +334,23 @@ export default function PlatformsPage() {
                 quiet alerts.
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
+                <TrackedLink
                   href="/signup"
+                  event="platforms_cta_clicked"
+                  eventProps={{ placement: "hero", target: "signup" }}
                   className={`inline-flex items-center gap-2 rounded-full border border-[#FFD400] bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] shadow-[4px_4px_0_#F2F2EA] transition-colors hover:bg-[#ffe14d] ${FOCUS}`}
                 >
                   Start monitoring free
                   <ArrowRight className="size-4" aria-hidden />
-                </Link>
-                <a
+                </TrackedLink>
+                <TrackedLink
                   href="#lineup"
+                  event="platforms_cta_clicked"
+                  eventProps={{ placement: "hero", target: "lineup" }}
                   className={`inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3.5 text-sm font-semibold text-[#F2F2EA] transition-colors hover:border-[#FFD400] hover:text-[#FFD400] ${FOCUS}`}
                 >
                   See every platform
-                </a>
+                </TrackedLink>
               </div>
               <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-[#9C9E93]">
                 Free plan · 1 website · no card required
@@ -473,9 +479,11 @@ export default function PlatformsPage() {
           </SectionHead>
           <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {picks.map((p) => (
-              <Link
+              <TrackedLink
                 key={p.who}
                 href={p.href}
+                event="platform_clicked"
+                eventProps={{ platform: p.icon, placement: "picker", status: PLATFORMS.find((x) => x.id === p.icon)?.status ?? "live" }}
                 className={`group flex flex-col rounded-2xl border border-white/14 bg-[#161614] p-6 transition-all hover:-translate-y-0.5 hover:border-[#FFD400] hover:shadow-[5px_5px_0_#FFD400] ${FOCUS}`}
               >
                 <span className={`inline-flex size-10 items-center justify-center rounded-xl ${tileClass(p.icon)}`}>
@@ -488,7 +496,7 @@ export default function PlatformsPage() {
                   Take me there
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden />
                 </span>
-              </Link>
+              </TrackedLink>
             ))}
           </div>
         </section>
@@ -551,19 +559,23 @@ export default function PlatformsPage() {
               Start on the web in a minute, then add the platforms you work in. The free plan covers one website.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
+              <TrackedLink
                 href="/signup"
+                event="platforms_cta_clicked"
+                eventProps={{ placement: "final", target: "signup" }}
                 className="inline-flex items-center gap-2 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#151515]"
               >
                 Start monitoring free
                 <ArrowRight className="size-4" aria-hidden />
-              </Link>
-              <Link
+              </TrackedLink>
+              <TrackedLink
                 href="/pricing"
+                event="platforms_cta_clicked"
+                eventProps={{ placement: "final", target: "pricing" }}
                 className="inline-flex items-center gap-2 rounded-full border border-[#151515] px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#151515]/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#151515]"
               >
                 Compare plans
-              </Link>
+              </TrackedLink>
             </div>
           </div>
         </section>

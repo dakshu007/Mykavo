@@ -47,10 +47,16 @@ export type AnalyticsEvent =
   | "android_app_viewed"
   // Platforms page
   | "platforms_viewed"
+  // A platform card, picker entry or homepage chip was clicked.
+  // props: platform (id), placement, status (live | request | soon)
+  | "platform_clicked"
+  // A call to action around the platforms page was clicked.
+  // props: placement, target (signup | pricing | all_platforms | lineup)
+  | "platforms_cta_clicked"
   // Video tutorials page
   | "tutorial_played";
 
-type EventProps = Record<string, string | number | boolean>;
+export type EventProps = Record<string, string | number | boolean>;
 
 interface AnalyticsWindow extends Window {
   plausible?: (event: string, options?: { props?: EventProps }) => void;
