@@ -31,6 +31,10 @@ const tools: MenuItem[] = [
   { href: "/tools/redirect-chain-checker", label: "Redirect Chain Checker" },
   { href: "/tools/bulk-url-status-checker", label: "Bulk URL Status Checker" },
   { href: "/tools/script-detector", label: "Script Detector" },
+  { href: "/tools/noindex-checker", label: "Noindex Checker", badge: "New" },
+  { href: "/tools/wordpress-theme-detector", label: "WordPress Theme Detector", badge: "New" },
+  { href: "/tools/robots-txt-tester", label: "Robots.txt Tester", badge: "New" },
+  { href: "/tools/ssl-certificate-checker", label: "SSL Certificate Checker", badge: "New" },
 ];
 
 function SoonBadge({ children }: { children: React.ReactNode }) {

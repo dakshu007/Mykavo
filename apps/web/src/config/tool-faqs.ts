@@ -1,7 +1,7 @@
 import type { ToolFaq } from "@/components/landing/tool-faq";
 
 /**
- * FAQ copy for the six free tools, kept together so the answers stay
+ * FAQ copy for the free tools, kept together so the answers stay
  * consistent about shared behaviour (SSRF-guarded fetching, no signup, public
  * pages only) instead of drifting apart across six files.
  *
@@ -134,5 +134,81 @@ export const EEAT_FAQS: readonly ToolFaq[] = [
   {
     q: "Is this E-E-A-T score an official Google score?",
     a: "No, and treat any tool claiming otherwise with suspicion. Google publishes no E-E-A-T score and no API for one. This analyser inspects the observable signals on a page that map to the published rater guidelines, and reports them so you can act on the specific gaps.",
+  },
+];
+
+export const NOINDEX_FAQS: readonly ToolFaq[] = [
+  {
+    q: "How do I check if a page has a noindex tag?",
+    a: "Enter the URL and the checker reads the page the way a crawler does: every robots and googlebot meta tag in the HTML, the X-Robots-Tag HTTP header, the final status code after redirects, and whether robots.txt lets Googlebot crawl the page at all. It then says in one line whether the page can be indexed and, if not, exactly which signal is stopping it.",
+  },
+  {
+    q: "Why can't I find a noindex tag in my page source?",
+    a: "Because it can arrive in the HTTP response instead of the HTML. An X-Robots-Tag: noindex header, often added by a server rule, CDN or SEO plugin, does the same job as the meta tag but never appears in View Source. This checker reads both, which is why it can find a noindex your browser doesn't show.",
+  },
+  {
+    q: "Is a page blocked by robots.txt the same as noindex?",
+    a: "No. robots.txt stops Google from crawling the page, while noindex stops it from being indexed. A page blocked in robots.txt can still appear in results from links, and Google can never see a noindex on a page it isn't allowed to crawl. To remove a page from Google, allow crawling and use noindex.",
+  },
+  {
+    q: "How do I get alerted if a page becomes noindex?",
+    a: "By checking it on a schedule rather than once. A noindex usually arrives by accident, from a staging setting carried to production, a plugin update or a theme change, and nothing on the page looks different. MyKavo checks the robots meta on every monitored page each scan and treats index to noindex as a critical change.",
+  },
+];
+
+export const WORDPRESS_DETECTOR_FAQS: readonly ToolFaq[] = [
+  {
+    q: "How do I find out what WordPress theme a site is using?",
+    a: "Enter the site's URL. The detector finds the theme folders the page loads files from and reads the theme's style.css header, which names the theme, its version, its author and, for a child theme, the parent theme it's built on.",
+  },
+  {
+    q: "Can it see every plugin a WordPress site uses?",
+    a: "No tool working from outside the site can. It finds plugins that load files on the page you checked, plus well-known plugins that identify themselves in the page, such as Yoast SEO, Rank Math, WooCommerce and Elementor. Plugins that only work in the admin area, like most security, backup and admin tools, leave nothing on the public page to detect.",
+  },
+  {
+    q: "Why does the detector say a site isn't WordPress when it is?",
+    a: "Some sites hide or rename the wp-content folder, serve assets from a CDN with rewritten paths, or remove the generator tag. When none of the usual WordPress signals are present in the delivered HTML, the detector says so rather than guessing.",
+  },
+  {
+    q: "What happens when a WordPress plugin update breaks a page?",
+    a: "Usually nothing visible to uptime monitors: the page still returns 200 OK while a button, form or layout is broken. MyKavo's WordPress plugin checks your important pages after every plugin, theme and core update and names the update that changed them.",
+  },
+];
+
+export const ROBOTS_TXT_FAQS: readonly ToolFaq[] = [
+  {
+    q: "How do I test if a URL is blocked by robots.txt?",
+    a: "Enter the full URL of the page. The tester fetches the site's robots.txt, finds the group each crawler obeys and applies Google's matching rules: the longest matching rule wins, allow wins a tie, and * and $ work as wildcards. It shows the result for Googlebot, Bingbot and the main AI crawlers, with the exact line that decided it.",
+  },
+  {
+    q: "Which rule wins when Allow and Disallow both match?",
+    a: "The rule with the longest matching path wins. If an Allow and a Disallow match with paths of the same length, Allow wins. A crawler also only obeys one group: the one naming its own user agent, or the * group if no group names it.",
+  },
+  {
+    q: "What happens if robots.txt is missing or returns an error?",
+    a: "A missing robots.txt (404) means nothing is blocked. A server error (5xx) is different: Google treats the whole site as blocked until the file can be fetched again, which is why an outage that only hits robots.txt can still hurt crawling.",
+  },
+  {
+    q: "Can I block AI crawlers like GPTBot and ClaudeBot with robots.txt?",
+    a: "Yes, the major AI companies publish crawler names that respect robots.txt, such as GPTBot for OpenAI and ClaudeBot for Anthropic. This tester shows whether each is currently allowed on the URL you check, so you can confirm a block is written correctly.",
+  },
+];
+
+export const SSL_CHECKER_FAQS: readonly ToolFaq[] = [
+  {
+    q: "How do I check when an SSL certificate expires?",
+    a: "Enter the domain. The checker connects to the site over HTTPS on port 443, reads the certificate it presents and shows the expiry date, the number of days left, who issued it and every hostname it covers.",
+  },
+  {
+    q: "Why does the checker say the chain is incomplete when my browser shows a padlock?",
+    a: "Browsers often recover a missing intermediate certificate from their cache or by downloading it, so the site looks fine to you. Apps, payment and webhook services, bots and older devices usually don't, and fail the connection. The fix is to install the full chain (the certificate plus its intermediate) on the server.",
+  },
+  {
+    q: "How many days before expiry should I renew?",
+    a: "Most certificates now come from automated issuers like Let's Encrypt, which are valid for 90 days and renew at around 30 days left. If a certificate is under 21 days and still hasn't renewed, check the automation now; under 7 days is an emergency.",
+  },
+  {
+    q: "Can I get an alert before my SSL certificate expires?",
+    a: "Yes. Renewal automation fails quietly, and the first sign is often a browser security warning in front of your customers. MyKavo checks the certificate of every website you monitor, on every plan including Free, and alerts you by email and your chat channels when it is within 14 days of expiring.",
   },
 ];

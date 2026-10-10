@@ -3,14 +3,18 @@ import Link from "next/link";
 import { ChromeExtensionLaunch } from "@/components/landing/chrome-extension-launch";
 import {
   ArrowRight,
+  Bot,
   Braces,
   CheckCircle2,
   Code2,
   GitCompareArrows,
   Globe,
   ListChecks,
+  Lock,
+  Palette,
   Route,
   Search,
+  SearchX,
   ShieldCheck,
   Store,
   Tags,
@@ -220,6 +224,38 @@ const freeTools = [
     title: "Script Detector",
     word: "Reveal",
     desc: "List every external script on a page and identify the services behind them.",
+    featured: false,
+  },
+  {
+    icon: SearchX,
+    href: "/tools/noindex-checker",
+    title: "Noindex Checker",
+    word: "Index",
+    desc: "See if Google can index a page: robots meta, X-Robots-Tag, status code and robots.txt in one check.",
+    featured: false,
+  },
+  {
+    icon: Palette,
+    href: "/tools/wordpress-theme-detector",
+    title: "WordPress Theme Detector",
+    word: "Detect",
+    desc: "Find the theme, its version and parent, and the plugins any WordPress page loads.",
+    featured: false,
+  },
+  {
+    icon: Bot,
+    href: "/tools/robots-txt-tester",
+    title: "Robots.txt Tester",
+    word: "Allow?",
+    desc: "Test a URL against robots.txt for Googlebot, Bingbot and AI crawlers, with the deciding rule.",
+    featured: false,
+  },
+  {
+    icon: Lock,
+    href: "/tools/ssl-certificate-checker",
+    title: "SSL Certificate Checker",
+    word: "Expiry",
+    desc: "When the certificate expires, who issued it, what it covers and whether the chain is trusted.",
     featured: false,
   },
 ];
@@ -569,7 +605,7 @@ export default function HomePage() {
             Try the detection engine <span className="text-[#6B6B60]">free.</span>
           </DisplayHeading>
           <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#6B6B60]">
-            Five free tools, no account needed. Every one is powered by the same engine that runs
+            Ten free tools, no account needed. Every one is powered by the same engine that runs
             MyKavo&apos;s monitoring.
           </p>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

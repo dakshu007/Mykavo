@@ -21,6 +21,10 @@ const columns = [
       { href: "/tools/redirect-chain-checker", label: "Redirect Chain Checker" },
       { href: "/tools/bulk-url-status-checker", label: "Bulk URL Status Checker" },
       { href: "/tools/script-detector", label: "Script Detector" },
+      { href: "/tools/noindex-checker", label: "Noindex Checker" },
+      { href: "/tools/wordpress-theme-detector", label: "WordPress Theme Detector" },
+      { href: "/tools/robots-txt-tester", label: "Robots.txt Tester" },
+      { href: "/tools/ssl-certificate-checker", label: "SSL Certificate Checker" },
     ],
   },
   {
