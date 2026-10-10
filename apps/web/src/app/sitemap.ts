@@ -2,6 +2,7 @@ import { livePostWhere } from "@/lib/blog-schedule";
 import type { MetadataRoute } from "next";
 import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
+import { TOOLS, TOOLS_HUB_PATH, toolHref } from "@/config/tools";
 import { ALTERNATIVES } from "@/config/alternatives";
 import { DOC_SECTIONS, allDocArticles } from "@/config/docs";
 import { getChannelVideos } from "@/lib/youtube";
@@ -13,23 +14,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes = [
     "",
     "/pricing",
+    TOOLS_HUB_PATH,
+    ...TOOLS.map((t) => toolHref(t.slug)),
     "/preview",
     "/about",
     "/support",
     "/privacy",
     "/terms",
     "/cookies",
-    "/tools/website-change-detector",
-    "/tools/meta-tag-checker",
-    "/tools/redirect-chain-checker",
-    "/tools/bulk-url-status-checker",
-    "/tools/script-detector",
-    "/tools/noindex-checker",
-    "/tools/wordpress-theme-detector",
-    "/tools/robots-txt-tester",
-    "/tools/ssl-certificate-checker",
-    "/tools/eeat-analyzer",
-    "/tools/competitor-analysis-tool",
     "/visual-regression-testing",
     "/seo-monitoring",
     "/best-website-monitoring-tools",

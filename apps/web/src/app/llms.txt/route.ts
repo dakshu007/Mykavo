@@ -3,6 +3,7 @@ import { prisma } from "@mykavo/database";
 import { site, socials } from "@/config/site";
 import { CHANGELOG, CHANGELOG_PATH } from "@/config/changelog";
 import { allDocArticles } from "@/config/docs";
+import { TOOLS } from "@/config/tools";
 
 /**
  * /llms.txt - the emerging convention that gives LLMs and AI search engines
@@ -70,16 +71,9 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 
 ## Free tools (no signup)
 
-- Website Change Detector: ${site.url}/tools/website-change-detector
-- Meta Tag Checker: ${site.url}/tools/meta-tag-checker
-- Redirect Chain Checker: ${site.url}/tools/redirect-chain-checker
-- Bulk URL Status Checker: ${site.url}/tools/bulk-url-status-checker
-- Script Detector: ${site.url}/tools/script-detector
-- Noindex Checker: ${site.url}/tools/noindex-checker (robots meta, X-Robots-Tag header, status code and robots.txt in one check)
-- WordPress Theme & Plugin Detector: ${site.url}/tools/wordpress-theme-detector
-- Robots.txt Tester: ${site.url}/tools/robots-txt-tester (Google's matching rules, for Googlebot, Bingbot and AI crawlers)
-- SSL Certificate Checker: ${site.url}/tools/ssl-certificate-checker (expiry, issuer, hostnames covered, chain trust)
-- E-E-A-T Analyzer: ${site.url}/tools/eeat-analyzer
+All tools: ${site.url}/tools
+
+${TOOLS.map((t) => `- ${t.name}: ${site.url}/tools/${t.slug} - ${t.blurb}`).join("\n")}
 
 ## Competitor monitoring
 

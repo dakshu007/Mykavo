@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { AppAnnouncement } from "./app-announcement";
 import { GoogleIcon } from "@/components/brand/integration-icons";
+import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
 
 const links = [
   { href: "/pricing", label: "Pricing" },
@@ -23,20 +24,6 @@ const integrations: MenuItem[] = [
   { href: "/shopify-app", label: "Shopify app", badge: "Coming soon" },
 ];
 
-const tools: MenuItem[] = [
-  { href: "/tools/competitor-analysis-tool", label: "Competitor Analysis" },
-  { href: "/tools/website-change-detector", label: "Website Change Detector" },
-  { href: "/tools/meta-tag-checker", label: "Meta Tag Checker" },
-  { href: "/tools/eeat-analyzer", label: "E-E-A-T Analyzer" },
-  { href: "/tools/redirect-chain-checker", label: "Redirect Chain Checker" },
-  { href: "/tools/bulk-url-status-checker", label: "Bulk URL Status Checker" },
-  { href: "/tools/script-detector", label: "Script Detector" },
-  { href: "/tools/noindex-checker", label: "Noindex Checker", badge: "New" },
-  { href: "/tools/wordpress-theme-detector", label: "WordPress Theme Detector", badge: "New" },
-  { href: "/tools/robots-txt-tester", label: "Robots.txt Tester", badge: "New" },
-  { href: "/tools/ssl-certificate-checker", label: "SSL Certificate Checker", badge: "New" },
-];
-
 function SoonBadge({ children }: { children: React.ReactNode }) {
   return (
     <span className="rounded-full bg-[#FFD400] px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-[#151515]">
@@ -49,7 +36,21 @@ function SoonBadge({ children }: { children: React.ReactNode }) {
  * A header dropdown (Integrations, Tools): opens on hover or click, closes
  * on outside click, Escape or mouse-leave.
  */
-function NavMenu({ label, heading, items }: { label: string; heading: string; items: MenuItem[] }) {
+function NavMenu({
+  label,
+  heading,
+  items = [],
+  panelClassName = "left-1/2 w-64 -translate-x-1/2",
+  children,
+}: {
+  label: string;
+  heading: string;
+  items?: MenuItem[];
+  /** Position and width of the panel; defaults to a narrow list centred on the button. */
+  panelClassName?: string;
+  /** Custom panel content (the Tools grid); receives a close callback. */
+  children?: (close: () => void) => React.ReactNode;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   // A short grace period before a hover-close, so crossing the gap between
@@ -110,30 +111,81 @@ function NavMenu({ label, heading, items }: { label: string; heading: string; it
       <div
         role="menu"
         aria-label={heading}
-        className={`absolute left-1/2 top-full w-64 origin-top -translate-x-1/2 pt-[22px] transition-[opacity,translate,scale,visibility] duration-200 ease-out motion-reduce:transition-none ${
+        className={`absolute top-full origin-top pt-[22px] transition-[opacity,translate,scale,visibility] duration-200 ease-out motion-reduce:transition-none ${panelClassName} ${
           menuOpen
             ? "visible translate-y-0 scale-100 opacity-100"
             : "pointer-events-none invisible -translate-y-1.5 scale-[0.97] opacity-0"
         }`}
       >
-          <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white p-1.5 shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
-            <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
-              {heading}
+          {children ? (
+            children(() => setMenuOpen(false))
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white p-1.5 shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
+              <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
+                {heading}
+              </p>
+              {items.map((t) => (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  role="menuitem"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
+                >
+                  {t.label}
+                  {t.badge && <SoonBadge>{t.badge}</SoonBadge>}
+                </Link>
+              ))}
+            </div>
+          )}
+      </div>
+    </div>
+  );
+}
+
+const TOOL_COLUMNS: ToolCategory[] = ["seo", "health", "detect"];
+
+/**
+ * The Tools menu: three short columns instead of one long list, so nineteen
+ * tools fit on one screen without scrolling. Names only (the hub page has the
+ * descriptions); a small gold dot marks new tools.
+ */
+function ToolsPanel({ close }: { close: () => void }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
+      <div className="grid grid-cols-3 gap-1 p-2">
+        {TOOL_COLUMNS.map((cat) => (
+          <div key={cat} className="min-w-0">
+            <p className="px-2.5 pb-1.5 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]">
+              {TOOL_CATEGORIES[cat].title}
             </p>
-            {items.map((t) => (
+            {toolsByCategory(cat).map((t) => (
               <Link
-                key={t.href}
-                href={t.href}
+                key={t.slug}
+                href={toolHref(t.slug)}
                 role="menuitem"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
+                onClick={close}
+                className="group flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
               >
-                {t.label}
-                {t.badge && <SoonBadge>{t.badge}</SoonBadge>}
+                <t.icon className="size-3.5 shrink-0 text-[#151515]/45 transition-colors group-hover:text-[#151515]" aria-hidden />
+                <span className="truncate">{t.menuLabel}</span>
+                {t.isNew && <span className="size-1.5 shrink-0 rounded-full bg-[#FFD400] ring-1 ring-[#151515]/30" aria-label="New" />}
               </Link>
             ))}
           </div>
+        ))}
       </div>
+      <Link
+        href={TOOLS_HUB_PATH}
+        role="menuitem"
+        onClick={close}
+        className="group flex items-center justify-between border-t border-[#151515]/10 bg-[#FBFAF3] px-5 py-3 text-[13px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
+      >
+        <span>
+          All {TOOLS.length} free tools <span className="font-normal text-[#6B6B60]">- no signup needed</span>
+        </span>
+        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+      </Link>
     </div>
   );
 }
@@ -177,7 +229,13 @@ export function LandingNav() {
             </Link>
           ))}
 
-          <NavMenu label="Tools" heading="Free tools" items={tools} />
+          <NavMenu
+            label="Tools"
+            heading="Free tools"
+            panelClassName="-right-28 w-[640px] xl:left-1/2 xl:right-auto xl:-translate-x-1/2"
+          >
+            {(close) => <ToolsPanel close={close} />}
+          </NavMenu>
         </nav>
 
         <div className="hidden items-center gap-1.5 lg:flex">
@@ -242,19 +300,22 @@ export function LandingNav() {
                 {t.badge && <SoonBadge>{t.badge}</SoonBadge>}
               </Link>
             ))}
-            <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
-              Free tools
-            </p>
-            {tools.map((t) => (
-              <Link
-                key={t.href}
-                href={t.href}
-                onClick={() => setOpen(false)}
-                className="rounded-xl px-3 py-2.5 text-[14px] font-medium text-[#151515]/75 transition-colors hover:bg-[#151515]/[0.04]"
-              >
-                {t.label}
-              </Link>
-            ))}
+            {/* One link, not the full list: nineteen tools would turn the
+                phone menu into a scroll. The hub groups them properly. */}
+            <Link
+              href={TOOLS_HUB_PATH}
+              onClick={() => setOpen(false)}
+              className="mt-3 flex items-center justify-between rounded-xl border border-[#151515]/10 bg-[#FBFAF3] px-3 py-3 text-[15px] font-medium text-[#151515]/85 transition-colors hover:bg-[#FFD400]/25"
+            >
+              <span className="flex items-center gap-2.5">
+                <Wrench className="size-4 text-[#151515]/60" aria-hidden />
+                Free tools
+              </span>
+              <span className="flex items-center gap-1.5 font-mono text-[11px] text-[#6B6B60]">
+                {TOOLS.length}
+                <ArrowRight className="size-4 text-[#151515]" aria-hidden />
+              </span>
+            </Link>
           </nav>
           <div className="mt-2 grid grid-cols-2 gap-2 border-t border-black/10 pt-4">
             <Link

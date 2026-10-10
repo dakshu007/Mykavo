@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChromeExtensionLaunch } from "@/components/landing/chrome-extension-launch";
+import { TOOLS, TOOLS_HUB_PATH } from "@/config/tools";
 import {
   ArrowRight,
   Bot,
@@ -9,13 +10,12 @@ import {
   Code2,
   GitCompareArrows,
   Globe,
-  ListChecks,
+  Link2Off,
   Lock,
   Palette,
   Route,
   Search,
   SearchX,
-  ShieldCheck,
   Store,
   Tags,
   Users,
@@ -188,13 +188,6 @@ const freeTools = [
     featured: true,
   },
   {
-    icon: ShieldCheck,
-    href: "/tools/eeat-analyzer",
-    title: "E-E-A-T Analyzer",
-    word: "Score",
-    desc: "Score any page against Google's Experience, Expertise, Authoritativeness, and Trust framework - with fixes.",
-  },
-  {
     icon: Tags,
     href: "/tools/meta-tag-checker",
     title: "Meta Tag Checker",
@@ -211,14 +204,6 @@ const freeTools = [
     featured: false,
   },
   {
-    icon: ListChecks,
-    href: "/tools/bulk-url-status-checker",
-    title: "Bulk URL Status Checker",
-    word: "Sweep",
-    desc: "Check status codes and response times of up to 20 URLs in one go.",
-    featured: false,
-  },
-  {
     icon: Braces,
     href: "/tools/script-detector",
     title: "Script Detector",
@@ -232,6 +217,14 @@ const freeTools = [
     title: "Noindex Checker",
     word: "Index",
     desc: "See if Google can index a page: robots meta, X-Robots-Tag, status code and robots.txt in one check.",
+    featured: false,
+  },
+  {
+    icon: Link2Off,
+    href: "/tools/broken-link-checker",
+    title: "Broken Link Checker",
+    word: "Find",
+    desc: "Find every broken link on a page, with its status code and anchor text.",
     featured: false,
   },
   {
@@ -605,8 +598,8 @@ export default function HomePage() {
             Try the detection engine <span className="text-[#6B6B60]">free.</span>
           </DisplayHeading>
           <p className="mx-auto mt-5 max-w-2xl text-center text-[15px] leading-7 text-[#6B6B60]">
-            Ten free tools, no account needed. Every one is powered by the same engine that runs
-            MyKavo&apos;s monitoring.
+            {TOOLS.length} free tools, no account needed. Every one is powered by the same engine that runs
+            MyKavo&apos;s monitoring. Here are the most used.
           </p>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {freeTools.map((tool) => (
@@ -637,6 +630,15 @@ export default function HomePage() {
                 </div>
               </Link>
             ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link
+              href={TOOLS_HUB_PATH}
+              className="inline-flex items-center gap-2 rounded-full border border-[#151515] bg-white px-5 py-2.5 text-[14px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0_#151515]"
+            >
+              See all {TOOLS.length} free tools
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
           </div>
         </Section>
 
