@@ -49,7 +49,9 @@ export function AppAnnouncement() {
   const [state, setState] = useState<"hidden" | "shown">("hidden");
 
   useEffect(() => {
-    if (dismissedRecently()) return;
+    // Phones and tablets (Android included) never see it: a Chrome extension
+    // can't be installed there, and a card over the article is just in the way.
+    if (dismissedRecently() || !window.matchMedia("(min-width: 768px) and (pointer: fine)").matches) return;
     // A short delay so it arrives after the page has settled rather than
     // competing with first paint - and so it reads as a notification rather
     // than part of the layout.

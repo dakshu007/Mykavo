@@ -36,6 +36,16 @@ export function BlogMarkdown({
         </a>
       );
     },
+    // Wide tables scroll sideways in their own box instead of stretching the
+    // page past the phone's screen (a 5-column comparison is ~600px wide).
+    table: ({ node, ...rest }) => {
+      void node;
+      return (
+        <div className="blog-table-scroll">
+          <table {...rest} />
+        </div>
+      );
+    },
     ...(headingIds
       ? {
           h2: ({ node, children }) => {
