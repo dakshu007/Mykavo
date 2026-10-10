@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -55,11 +56,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   // Client reports must never surface in search results.
   const robots = { index: false, follow: false } as const;
   if (!website) return { robots };
-  return {
+  return withSocial({
     title: { absolute: `${website.name} - website monitoring report` },
     description: `Monitoring report for ${website.name}: uptime, changes caught, and performance for the last ${REPORT_WINDOW_DAYS} days.`,
     robots,
-  };
+  });
 }
 
 const SEVERITY_BAR_CLASS: Record<string, string> = {

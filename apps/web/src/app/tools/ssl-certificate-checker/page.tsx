@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -8,12 +9,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { SslChecker } from "./ssl-checker";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free SSL Certificate Checker - Expiry Date & Chain",
   description:
     "Free SSL certificate checker: see when a site's certificate expires, days left, the issuer, every hostname it covers, and whether the chain is trusted and complete.",
   alternates: { canonical: "/tools/ssl-certificate-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

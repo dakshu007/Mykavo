@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Website Monitoring Checklist - What to Watch & Best Practices",
   description:
     "A practical website monitoring checklist: the signals to watch (uptime, visual, SEO, links, scripts, performance), how often to check each, and the best practices that keep alerts trustworthy.",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
     "site monitoring checklist",
   ],
   alternates: { canonical: "/guides/website-monitoring-checklist" },
-};
+});
 
 const faqs = [
   {

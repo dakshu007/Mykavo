@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -8,12 +9,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { BulkStatusChecker } from "./bulk-status-checker";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Bulk URL Status Checker",
   description:
     "Free bulk URL status checker: paste up to 20 URLs and check their HTTP status codes and response times in one go - spot 404s, 500s, and slow pages instantly.",
   alternates: { canonical: "/tools/bulk-url-status-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

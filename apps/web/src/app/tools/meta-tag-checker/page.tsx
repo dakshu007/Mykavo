@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -8,12 +9,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { MetaTagChecker } from "./meta-tag-checker";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Meta Tag Checker",
   description:
     "Free meta tag checker: analyze any page's title tag, meta description, canonical URL, robots meta, Open Graph tags, and H1 headings - with clear pass/warn guidance.",
   alternates: { canonical: "/tools/meta-tag-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

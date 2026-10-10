@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
@@ -6,7 +7,7 @@ import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 import { ALTERNATIVES, VERIFIED_ON } from "@/config/alternatives";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "MyKavo Alternatives - Compared With Visualping, Hexometer and Distill",
   description:
     "Honest, dated comparisons of MyKavo against named website monitoring tools - including where each of them is the better choice.",
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
     "website monitoring alternatives",
   ],
   alternates: { canonical: "/alternatives" },
-};
+});
 
 export default function AlternativesPage() {
   return (

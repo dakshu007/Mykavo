@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
@@ -6,7 +7,7 @@ import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 import { DOCS_UPDATED, DOC_SECTIONS } from "@/config/docs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "MyKavo Documentation - How Website Change Monitoring Works",
   description:
     "Public documentation for MyKavo: how to set up monitoring, what every check does, how severity is decided, how to cut false positives, plan limits, crawling behaviour and data retention.",
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
     "website change monitoring documentation",
   ],
   alternates: { canonical: "/docs" },
-};
+});
 
 export default function DocsIndexPage() {
   return (

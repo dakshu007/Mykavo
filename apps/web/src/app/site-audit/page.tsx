@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Download, Gauge, ListOrdered, MapPin, Radar, SearchCheck } from "lucide-react";
 import {
@@ -25,7 +26,7 @@ import {
 
 const PATH = "/site-audit";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Site Audit - Technical SEO Crawl With 89 Checks",
   description: `MyKavo Site Audit crawls your whole site and checks every page against ${AUDIT_CHECK_COUNT} technical SEO checks in ${AUDIT_CATEGORY_COUNT} categories - broken pages and links, redirect chains, noindex mistakes, duplicate titles, schema, AI search readiness (AEO/GEO), security and speed - sorted by severity, with fix guidance and CSV export.`,
   keywords: [
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     description: `${AUDIT_CHECK_COUNT} checks across ${AUDIT_CATEGORY_COUNT} categories, sorted by severity, with fix guidance for every issue.`,
     url: PATH,
   },
-};
+});
 
 const SEVERITY_STYLE: Record<AuditSeverity, { label: string; dot: string }> = {
   ERROR: { label: "Error", dot: "#e5484d" },

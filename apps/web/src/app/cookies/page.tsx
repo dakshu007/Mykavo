@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Cookie Policy - How MyKavo Uses Cookies",
   description:
     "Plain-English explanation of the cookies MyKavo uses: essential session cookies for signing in, a theme preference, and Google Analytics and Microsoft Clarity on marketing pages only. No advertising cookies, no data selling.",
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     "cookie preferences",
   ],
   alternates: { canonical: "/cookies" },
-};
+});
 
 export default function CookiePolicyPage() {
   return (

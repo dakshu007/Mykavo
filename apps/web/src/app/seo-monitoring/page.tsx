@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "SEO Monitoring Tool - Get Alerted When Rankings-Critical Tags Change",
   description:
     "SEO monitoring tools watch the on-page elements rankings depend on: titles, canonicals, robots meta, noindex flips, redirects, structured data. MyKavo alerts you the day they change, with before-and-after values.",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     "meta tag monitoring",
   ],
   alternates: { canonical: "/seo-monitoring" },
-};
+});
 
 const faqs = [
   {

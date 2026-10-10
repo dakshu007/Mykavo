@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { Check, CheckCircle2, Minus } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
@@ -16,7 +17,7 @@ import {
   softwareApplicationNode,
 } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Pricing - Website Monitoring Plans from $0",
   description:
     "Simple, transparent pricing for website change monitoring. Start free with one website. Pro is $20/month for 8 websites, Agency is $49/month for 30 websites with white-label client reports.",
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     url: "/pricing",
     type: "website",
   },
-};
+});
 
 const comparisonRows: Array<{
   label: string;

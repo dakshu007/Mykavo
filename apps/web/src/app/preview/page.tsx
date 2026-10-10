@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { DashboardPreview } from "@/components/preview/dashboard-preview";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Dashboard Preview",
   description:
     "Explore the MyKavo dashboard: multi-website monitoring overview, change feed, and before-and-after change details. Sample data preview.",
   alternates: { canonical: "/preview" },
-};
+});
 
 export default function PreviewPage() {
   return (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Visual Regression Testing - Automated Screenshot Comparison",
   description:
     "Visual regression testing catches unintended layout and design changes by comparing screenshots against an approved baseline. Learn how it works and how to run it on any live website without writing test code.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     "UI regression testing",
   ],
   alternates: { canonical: "/visual-regression-testing" },
-};
+});
 
 const faqs = [
   {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -11,11 +12,11 @@ import { STRUCTURED_DATA_FAQS } from "./faqs";
 const description =
   "Free structured data checker: view every JSON-LD block on a page, find invalid JSON, and check common required properties. Also detects microdata and RDFa.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Structured Data Checker - View & Validate Schema Markup",
   description,
   alternates: { canonical: "/tools/structured-data-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

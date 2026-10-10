@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -31,7 +32,7 @@ import {
  * FAQPage JSON-LD describe both for machines that prefer markup to prose.
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Best Website Monitoring Tools in 2026 - An Honest Comparison",
   description:
     "There is no single best website monitoring tool - there are four different jobs and a different right answer for each. An honest comparison of change detection, uptime, technical SEO crawling and visual regression testing, including where each one stops.",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     "site monitoring tools",
   ],
   alternates: { canonical: "/best-website-monitoring-tools" },
-};
+});
 
 const faqs = [
   {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { notFound } from "next/navigation";
 import { AlternativePage } from "@/components/landing/alternative-page";
 import { ALTERNATIVES, findAlternative } from "@/config/alternatives";
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const alternative = findAlternative(slug);
   if (!alternative) return {};
-  return {
+  return withSocial({
     title: alternative.title,
     description: alternative.description,
     keywords: alternative.keywords,
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       url: `/alternatives/${alternative.slug}`,
       type: "article",
     },
-  };
+  });
 }
 
 export default async function Page({ params }: Params) {

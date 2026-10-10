@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { prisma } from "@mykavo/database";
 import { Logo } from "@/components/brand/logo";
@@ -7,11 +8,11 @@ import { InviteAcceptButton } from "@/components/invite-accept-button";
 import { getSession } from "@/lib/session";
 import { emailsMatch, isInviteUsable } from "@/lib/team";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Workspace invitation",
   description: "Join a MyKavo workspace.",
   robots: { index: false },
-};
+});
 
 function roleLabel(role: string): string {
   return role.charAt(0) + role.slice(1).toLowerCase();

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Terms of Service - MyKavo Website Monitoring",
   description:
     "The terms that govern your use of MyKavo website change detection and monitoring. Plain-English rules on accounts, acceptable use, billing, refunds and liability.",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     "MyKavo legal",
   ],
   alternates: { canonical: "/terms" },
-};
+});
 
 export default function TermsPage() {
   return (

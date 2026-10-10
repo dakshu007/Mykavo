@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Webflow Website Monitoring - Know What Every Publish Changed",
   description:
     "Webflow website monitoring for designers and agencies: see exactly what each publish changed across pages - layout, SEO settings, interactions, embeds - and catch client-editor mistakes before visitors do.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     "Webflow client editor changes",
   ],
   alternates: { canonical: "/website-monitoring-for-webflow" },
-};
+});
 
 const faqs = [
   {

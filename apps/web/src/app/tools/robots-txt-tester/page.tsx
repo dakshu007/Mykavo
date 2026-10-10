@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -9,12 +10,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { RobotsTxtTester } from "./robots-txt-tester";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Robots.txt Tester - Is This URL Blocked?",
   description:
     "Free robots.txt tester: check if a URL is blocked for Googlebot, Bingbot, GPTBot, ClaudeBot and other crawlers, see the exact rule that decides it, and spot common mistakes.",
   alternates: { canonical: "/tools/robots-txt-tester" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

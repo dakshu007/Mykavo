@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { notFound } from "next/navigation";
 import { DocArticlePage } from "@/components/landing/doc-article";
 import { DOC_SECTIONS, findDocArticle } from "@/config/docs";
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { section, article } = await params;
   const found = findDocArticle(section, article);
   if (!found) return {};
-  return {
+  return withSocial({
     title: `${found.article.title} - MyKavo Docs`,
     description: found.article.description,
     keywords: found.article.keywords,
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       url: `/docs/${section}/${article}`,
       type: "article",
     },
-  };
+  });
 }
 
 export default async function Page({ params }: Params) {

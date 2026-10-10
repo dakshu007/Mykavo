@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Website Maintenance Checklist - Weekly, Monthly & Quarterly Tasks",
   description:
     "A no-fluff website maintenance checklist: weekly, monthly, and quarterly tasks covering updates, backups, security, SEO health, performance, and content - plus which parts you should automate.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     "agency website maintenance",
   ],
   alternates: { canonical: "/guides/website-maintenance-checklist" },
-};
+});
 
 const faqs = [
   {

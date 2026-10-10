@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { LeadForm } from "@/components/marketing/lead-form";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Write for Us - Guest Posts on Website Monitoring and Technical SEO",
   description:
     "Pitch a guest post to the MyKavo blog. We publish practical writing on website change monitoring, regression prevention, technical SEO and running client sites - from people who have actually done the work.",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     "submit a guest post seo",
   ],
   alternates: { canonical: "/write-for-us" },
-};
+});
 
 const faqs = [
   {

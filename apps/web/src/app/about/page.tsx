@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { Eye, Radar, ShieldCheck, Zap } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
@@ -12,7 +13,7 @@ import {
   organizationNode,
 } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "About - The Story Behind MyKavo",
   description:
     "MyKavo comes from the Tamil word Kaval - protection, vigilance, standing guard. The story behind the name, the reason the product exists, and the developer building it.",
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
     "website change detection tool",
   ],
   alternates: { canonical: "/about" },
-};
+});
 
 const principles = [
   {

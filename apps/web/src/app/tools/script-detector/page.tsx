@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -8,12 +9,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { ScriptDetector } from "./script-detector";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Third-Party Script Detector",
   description:
     "Free script detector: list every external script on a page and identify common services like Google Analytics, Tag Manager, Meta Pixel, Stripe, Hotjar, Intercom, and HubSpot.",
   alternates: { canonical: "/tools/script-detector" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

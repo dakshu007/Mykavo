@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { LeadForm } from "@/components/marketing/lead-form";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Technology Partner Program - Build with MyKavo",
   description:
     "For hosts, CMS platforms, deployment tools and reporting suites that want website change monitoring inside their own product. Apply to the MyKavo Technology Partner track.",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     "mykavo integration",
   ],
   alternates: { canonical: "/partners/tech" },
-};
+});
 
 const faqs = [
   {

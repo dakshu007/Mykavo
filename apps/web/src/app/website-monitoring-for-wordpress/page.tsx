@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "WordPress Website Monitoring - Catch Plugin & Theme Breakage",
   description:
     "WordPress website monitoring for agencies and site owners: detect what plugin updates, theme changes, and client edits actually changed on your pages - visual, SEO, links, scripts - with before-and-after proof.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     "WordPress uptime monitoring",
   ],
   alternates: { canonical: "/website-monitoring-for-wordpress" },
-};
+});
 
 const faqs = [
   {

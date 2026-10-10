@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
@@ -31,12 +32,12 @@ const DESCRIPTION =
  */
 export async function generateMetadata(): Promise<Metadata> {
   const videos = await getChannelVideos();
-  return {
+  return withSocial({
     title: "MyKavo Video Tutorials - Website Monitoring Walkthroughs",
     description: DESCRIPTION,
     alternates: { canonical: PATH },
     ...(videos.length === 0 ? { robots: { index: false, follow: true } } : {}),
-  };
+  });
 }
 
 function formatDate(iso: string): string {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -12,11 +13,11 @@ import { SHOPIFY_DETECTOR_FAQS } from "./faqs";
 const DESCRIPTION =
   "Free Shopify theme detector: enter a store URL to see its theme, the original theme it was built from, its version, and the apps the page loads.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Shopify Theme Detector - What Theme & Apps Is That Store Using?",
   description: DESCRIPTION,
   alternates: { canonical: "/tools/shopify-theme-detector" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

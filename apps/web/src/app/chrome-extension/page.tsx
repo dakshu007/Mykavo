@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -34,7 +35,7 @@ import {
 } from "@/config/chrome-extension";
 import { ORGANIZATION_ID, breadcrumbList, faqPage, jsonLdScript, organizationNode } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Chrome Extension - Instant SEO Check + One-Click Website Monitoring",
   description:
     "The free MyKavo Chrome extension checks any page's SEO in one click, right in your browser, and connects the website to MyKavo monitoring with one more. Status, critical changes and scans, wherever you browse.",
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
     url: CHROME_EXTENSION_PAGE_PATH,
     images: [{ url: "/chrome/connect.webp", width: 2000, height: 1520 }],
   },
-};
+});
 
 const stats = [
   { value: "1", label: "click for a full on-page SEO check" },

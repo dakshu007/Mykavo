@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth, googleEnabled } from "@/lib/auth";
 import { AuthForm } from "@/components/auth-form";
 import { safeNextPath } from "@/lib/team";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Sign in",
   description: "Sign in to your MyKavo dashboard.",
   robots: { index: false },
-};
+});
 
 export default async function LoginPage({
   searchParams,

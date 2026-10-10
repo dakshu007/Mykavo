@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Image from "next/image";
 import { Download } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
@@ -11,12 +12,12 @@ import {
   organizationNode,
 } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Brand Assets - MyKavo Logo and Colors",
   description:
     "Download the MyKavo logo, logomark and app icon in SVG and PNG, with the brand colors and simple usage guidelines for partners and press.",
   alternates: { canonical: "/brand" },
-};
+});
 
 const assets: Array<{ file: string; label: string; format: string; preview: string; dark?: boolean }> = [
   { file: "mykavo-logo-light.png", label: "Logo on white", format: "PNG", preview: "mykavo-logo-light.png" },

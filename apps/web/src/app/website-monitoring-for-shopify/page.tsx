@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Shopify Website Monitoring - Protect Your Storefront & Checkout",
   description:
     "Shopify website monitoring for stores and agencies: catch theme updates, app script changes, broken add-to-cart buttons, and SEO regressions on product pages before they cost you sales.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     "Shopify uptime monitoring",
   ],
   alternates: { canonical: "/website-monitoring-for-shopify" },
-};
+});
 
 const faqs = [
   {

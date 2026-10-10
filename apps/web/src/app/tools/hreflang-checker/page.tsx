@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -9,12 +10,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { HreflangChecker } from "./hreflang-checker";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Hreflang Checker - Validate Hreflang Tags & Return Links",
   description:
     "Free hreflang checker: validate every hreflang code on a page, then confirm each alternate loads, is indexable and links back. Catches en-UK, missing self-references and more.",
   alternates: { canonical: "/tools/hreflang-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

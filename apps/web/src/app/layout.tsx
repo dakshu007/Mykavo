@@ -68,12 +68,14 @@ export const metadata: Metadata = {
     "website monitoring for agencies",
     "website monitoring software",
   ],
+  // Site-wide social defaults. No url here: an inherited og:url made every
+  // page share as the homepage. Pages fill title/description/url from their
+  // own metadata via withSocial() (lib/social-metadata.ts).
   openGraph: {
     type: "website",
     siteName: site.name,
     title: `${site.name} - ${site.tagline}`,
     description: site.description,
-    url: site.url,
     locale: "en_US",
   },
   twitter: {

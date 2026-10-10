@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import type { ReactNode } from "react";
 import { ArrowRight, ArrowUpRight, BellRing, CheckCircle2, Globe, KeyRound, Rocket, ShieldCheck } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
@@ -14,7 +15,7 @@ import { PLATFORMS, PLATFORMS_PAGE_PATH, STATUS_LABEL, platformsByStatus, type P
 import { WP_PLUGIN_DIRECTORY_URL } from "@/config/wordpress-plugin";
 import { WEBSITE_ID, breadcrumbList, faqPage, jsonLdScript, organizationNode } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Platforms - Where MyKavo Works: Web, WordPress, Chrome, Android, AI Assistants",
   description:
     "MyKavo website monitoring works where you do: the web app, a WordPress plugin, a Chrome extension, an MCP server for AI assistants, deploy hooks for CI, an Android app by request, and a Shopify app coming soon.",
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
       "Web, WordPress, Chrome, AI assistants and deploy pipelines today. Android by request. Shopify coming soon. One MyKavo account behind all of them.",
     url: PLATFORMS_PAGE_PATH,
   },
-};
+});
 
 const liveCount = platformsByStatus("live").length;
 const requestCount = platformsByStatus("request").length;

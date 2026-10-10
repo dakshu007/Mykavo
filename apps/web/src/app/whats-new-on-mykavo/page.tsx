@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
@@ -15,12 +16,12 @@ import {
   organizationNode,
 } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "What's New on MyKavo - Release Notes and Updates",
   description:
     "Every new feature, improvement and fix in MyKavo, newest first: the WordPress plugin, Supabase integration, Agency plan, Add to Slack, Android app and more.",
   alternates: { canonical: CHANGELOG_PATH },
-};
+});
 
 const KIND_STYLE: Record<ChangeKind, { label: string; className: string }> = {
   new: { label: "New", className: "bg-[#FFD400] text-[#151515]" },

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Image from "next/image";
 import Link from "next/link";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
@@ -40,7 +41,7 @@ import {
   organizationNode,
 } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "WordPress Plugin - Check Your Site After Every Update",
   description:
     "The free MyKavo WordPress plugin checks your pages after every plugin, theme and WordPress update, names the update that broke something, and shows before-and-after screenshots in wp-admin. Nothing added to your public pages.",
@@ -61,7 +62,7 @@ export const metadata: Metadata = {
     url: WP_PLUGIN_PAGE_PATH,
     images: [{ url: "/wordpress/safe-updates.webp", width: 1440, height: 1100 }],
   },
-};
+});
 
 const zeroCost = [
   { value: "0", label: "scripts or styles on your public pages" },

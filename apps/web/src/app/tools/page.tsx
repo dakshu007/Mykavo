@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -7,11 +8,11 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Website & SEO Tools - No Signup",
   description: `${TOOLS.length} free tools to check any page: noindex, canonical, robots.txt, broken links, SSL expiry, page size, schema, analytics tags, and WordPress and Shopify detection. No account needed.`,
   alternates: { canonical: TOOLS_HUB_PATH },
-};
+});
 
 const CATEGORY_ORDER: ToolCategory[] = ["seo", "health", "detect"];
 

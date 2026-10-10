@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -12,11 +13,11 @@ import { PAGE_SIZE_CHECKER_FAQS } from "./faqs";
 const description =
   "Free page size checker: measure a web page's HTML size, total weight and request count. See scripts, stylesheets, images and fonts by size and third-party share.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Page Size Checker - Page Weight & Request Counter",
   description,
   alternates: { canonical: "/tools/page-size-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

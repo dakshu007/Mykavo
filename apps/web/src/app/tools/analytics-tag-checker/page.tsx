@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -12,11 +13,11 @@ import { ANALYTICS_TAG_FAQS } from "./faqs";
 const DESCRIPTION =
   "Free analytics tag checker: enter a URL to see if GA4, Google Tag Manager, Google Ads, Meta Pixel or other analytics tags are installed, with their IDs.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Google Analytics Checker - Is GA4 or GTM Installed?",
   description: DESCRIPTION,
   alternates: { canonical: "/tools/analytics-tag-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

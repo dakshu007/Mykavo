@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/components/landing/seo-page";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "How to Monitor Website Changes (5 Methods, From Free to Automated)",
   description:
     "How to monitor a website for changes: five practical methods from manual checks and diff tools to fully automated baseline monitoring - what each catches, what each misses, and how to set up alerts.",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     "detect changes on a web page",
   ],
   alternates: { canonical: "/guides/how-to-monitor-website-changes" },
-};
+});
 
 const faqs = [
   {

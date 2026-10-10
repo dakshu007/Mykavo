@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Support - Get Help with MyKavo Website Monitoring",
   description:
     "Need help with MyKavo? Email support@mykavo.app and get a reply within one business day. Bug report tips, billing help, self-serve guides, free tools and answers to common monitoring questions.",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     "MyKavo billing help",
   ],
   alternates: { canonical: "/support" },
-};
+});
 
 /**
  * Plain-text mirrors of the five answers rendered below. They must stay in

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { notFound } from "next/navigation";
 import { ComparisonPage } from "@/components/landing/comparison-page";
 import { findComparison } from "@/config/comparisons";
 
 const comparison = findComparison("visual-change-detection");
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: comparison?.title,
   description: comparison?.description,
   keywords: comparison?.keywords,
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     url: "/compare/visual-change-detection",
     type: "article",
   },
-};
+});
 
 export default function Page() {
   if (!comparison) notFound();

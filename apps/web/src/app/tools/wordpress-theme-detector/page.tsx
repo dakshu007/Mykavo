@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -9,12 +10,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { WordPressDetector } from "./wordpress-detector";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "WordPress Theme Detector - What Theme & Plugins Is That Site Using?",
   description:
     "Free WordPress theme and plugin detector: enter any URL to see the theme, its version and author, the parent theme, and the plugins the page loads.",
   alternates: { canonical: "/tools/wordpress-theme-detector" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

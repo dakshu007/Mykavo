@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -44,11 +45,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   // Status pages must never compete with the marketing site in search.
   const robots = { index: false, follow: false } as const;
   if (!website) return { robots };
-  return {
+  return withSocial({
     title: { absolute: `${website.name} status - MyKavo` },
     description: `Live availability and uptime history for ${website.name}.`,
     robots,
-  };
+  });
 }
 
 /** Bar fill per day level - always paired with the text legend below. */

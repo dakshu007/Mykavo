@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -8,12 +9,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { EeatAnalyzer } from "./eeat-analyzer";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free E-E-A-T Analyzer & Checker",
   description:
     "Free E-E-A-T checker: analyze any page against Google's Experience, Expertise, Authoritativeness, and Trust guidelines - 20 on-page signals with a score and concrete fixes.",
   alternates: { canonical: "/tools/eeat-analyzer" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

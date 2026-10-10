@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Privacy Policy - How MyKavo Handles Your Data",
   description:
     "Learn what data MyKavo collects, why we collect it, where it is stored, how long we keep it, and how to access, export, or delete your account data.",
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     "SaaS privacy policy",
   ],
   alternates: { canonical: "/privacy" },
-};
+});
 
 export default function PrivacyPolicyPage() {
   return (

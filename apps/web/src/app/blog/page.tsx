@@ -1,5 +1,6 @@
 import { livePostWhere } from "@/lib/blog-schedule";
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { BlogCta } from "@/components/blog/blog-cta";
 import { PenLine, Rss } from "lucide-react";
@@ -22,7 +23,7 @@ import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structur
 // cold serverless function and the database - several seconds of nothing.
 export const revalidate = 30;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Blog",
   description:
     "Guides and practical notes on website change detection, regression monitoring, SEO health, and keeping client websites working - from the MyKavo team.",
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
     canonical: "/blog",
     types: { "application/rss+xml": "/blog/feed.xml" },
   },
-};
+});
 
 const dateFormat = new Intl.DateTimeFormat("en-US", {
   year: "numeric",

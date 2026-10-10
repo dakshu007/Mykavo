@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -12,11 +13,11 @@ import { site } from "@/config/site";
 const description =
   "Free canonical tag checker: find every canonical a page declares in its HTML and HTTP headers, spot conflicts, and check the canonical URL returns 200, does not redirect and is not noindex.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Canonical Tag Checker - Is Your Canonical URL Correct?",
   description,
   alternates: { canonical: "/tools/canonical-tag-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

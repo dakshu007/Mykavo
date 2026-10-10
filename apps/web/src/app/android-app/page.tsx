@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
 import {
@@ -42,7 +43,7 @@ import {
   organizationNode,
 } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Android App - Website Monitoring in Your Pocket",
   description:
     "The MyKavo Android app mirrors your dashboard live: push alerts for critical changes, triage and approve changes, run scans and add websites from your phone. Free on every plan.",
@@ -61,7 +62,7 @@ export const metadata: Metadata = {
       "Push alerts, one-tap triage and live sync with the web dashboard. Know what changed and fix what matters, from anywhere.",
     url: ANDROID_APP_PAGE_PATH,
   },
-};
+});
 
 const stats = [
   { value: "5", label: "tabs - the whole dashboard, rebuilt for your thumb" },

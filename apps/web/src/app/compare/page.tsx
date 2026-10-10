@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
@@ -6,7 +7,7 @@ import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 import { COMPARISONS } from "@/config/comparisons";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Compare MyKavo - Website Monitoring Tool Comparisons",
   description:
     "How MyKavo compares with uptime monitors, simple change-detection tools and technical SEO crawlers - capability by capability, including where each of them is the better choice.",
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
     "technical SEO crawler alternative",
   ],
   alternates: { canonical: "/compare" },
-};
+});
 
 export default function ComparePage() {
   return (

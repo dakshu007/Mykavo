@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -25,7 +26,7 @@ import { CompetitorAnalysis } from "./competitor-analysis";
  * signup rather than an input box, which is the honest framing.
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Competitor Analysis Tool - Track Every Change on a Rival's Website",
   description:
     "Monitor competitor websites automatically. MyKavo tracks pricing changes, new pages, copy rewrites, and SEO edits on any public site - and emails you the before-and-after the day it changes.",
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     "website change tracker for competitors",
   ],
   alternates: { canonical: "/tools/competitor-analysis-tool" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

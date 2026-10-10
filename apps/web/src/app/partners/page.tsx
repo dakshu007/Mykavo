@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight, Building2, Plug } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "MyKavo Partner Program - Agency and Technology Partners",
   description:
     "Two ways to partner with MyKavo: Agency Partners who monitor client websites at scale, and Technology Partners building integrations. How each works, what you get, and how to apply.",
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     "white label website monitoring",
   ],
   alternates: { canonical: "/partners" },
-};
+});
 
 const faqs = [
   {

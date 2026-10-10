@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -9,12 +10,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { NoindexChecker } from "./noindex-checker";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Noindex Checker - Is My Page Blocked From Google?",
   description:
     "Free noindex checker: see if a page can be indexed by Google. Checks robots meta tags, the X-Robots-Tag header, the HTTP status and robots.txt in one go.",
   alternates: { canonical: "/tools/noindex-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

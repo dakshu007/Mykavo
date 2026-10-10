@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { LeadForm } from "@/components/marketing/lead-form";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Book a MyKavo Demo - See Change Monitoring on Your Own Site",
   description:
     "A 30-minute walkthrough on one of your own websites: baseline, first scan, a real change with before-and-after evidence, and the alert it would have sent. No slides.",
   keywords: ["mykavo demo", "website monitoring demo", "book a demo website monitoring"],
   alternates: { canonical: "/demo" },
-};
+});
 
 const faqs = [
   {

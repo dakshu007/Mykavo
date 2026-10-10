@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
@@ -17,11 +18,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { section } = await params;
   const found = findDocSection(section);
   if (!found) return {};
-  return {
+  return withSocial({
     title: `${found.title} - MyKavo Docs`,
     description: found.description,
     alternates: { canonical: `/docs/${section}` },
-  };
+  });
 }
 
 export default async function Page({ params }: Params) {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Image from "next/image";
 import Link from "next/link";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
@@ -30,7 +31,7 @@ import {
   organizationNode,
 } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Shopify App - Check Your Store After Every Theme Change",
   description:
     "MyKavo for Shopify checks your storefront every time your live theme is published or edited, and shows what changed with before-and-after screenshots inside your Shopify admin. Nothing added to your storefront.",
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
     url: SHOPIFY_APP_PAGE_PATH,
     images: [{ url: "/shopify/theme-checks.webp", width: 1600, height: 900 }],
   },
-};
+});
 
 const themePoints = [
   "Publishing a theme starts a check of your monitored pages against their approved baseline.",

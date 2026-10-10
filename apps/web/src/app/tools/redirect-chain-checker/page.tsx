@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -8,12 +9,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { RedirectChainChecker } from "./redirect-chain-checker";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Redirect Chain Checker",
   description:
     "Free redirect chain checker: follow every hop a URL takes, see each 301/302/307/308 status, count the hops, and catch redirect loops and overly long chains.",
   alternates: { canonical: "/tools/redirect-chain-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

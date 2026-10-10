@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import {
@@ -9,7 +10,7 @@ import {
   jsonLdScript,
 } from "@/components/landing/seo-page";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Website Content Monitoring - Track Text & Page Changes Automatically",
   description:
     "Website content monitoring tracks the text and structure of your pages and alerts you when they change. Catch unauthorized edits, CMS mistakes, and silent content loss with before-and-after comparison.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     "page change monitoring",
   ],
   alternates: { canonical: "/website-content-monitoring" },
-};
+});
 
 const faqs = [
   {

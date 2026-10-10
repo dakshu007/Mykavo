@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { Suspense } from "react";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -9,12 +10,12 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { ChangeDetector } from "./change-detector";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Website Change Detector",
   description:
     "Free website change detector: snapshot any page's HTTP status, SEO tags, links, and scripts - then compare two URLs or re-check later to see exactly what changed.",
   alternates: { canonical: "/tools/website-change-detector" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

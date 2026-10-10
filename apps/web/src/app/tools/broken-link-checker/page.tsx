@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
@@ -12,11 +13,11 @@ import { BROKEN_LINK_CHECKER_FAQS } from "./faqs";
 const description =
   "Free broken link checker: find 404 and other broken links on any page. Checks up to 100 links at once, internal and external, and shows the status of each.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Broken Link Checker (Single Page) - Find 404 Links",
   description,
   alternates: { canonical: "/tools/broken-link-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ChromeExtensionLaunch } from "@/components/landing/chrome-extension-launch";
 import { TOOLS, TOOLS_HUB_PATH } from "@/config/tools";
@@ -45,7 +46,7 @@ import { getPlan, plans } from "@/config/plans";
 import { site } from "@/config/site";
 import { FEATURE_LIST, organizationNode, websiteNode } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   // Absolute title (not the layout template) so the homepage leads with the
   // primary keywords: website monitoring tool / website change detection.
   title: {
@@ -80,7 +81,7 @@ export const metadata: Metadata = {
     url: "/",
     type: "website",
   },
-};
+});
 
 // Structured data for search engines AND AI answer engines (AI Overviews,
 // ChatGPT, Perplexity): organization, website, the app with real prices, and

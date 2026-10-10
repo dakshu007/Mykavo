@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolFaqSection } from "@/components/landing/tool-faq";
@@ -11,11 +12,11 @@ import { HEADING_STRUCTURE_FAQS } from "./faqs";
 const description =
   "Free heading structure checker: see every H1 to H6 on a page as an outline. Flags a missing H1, multiple H1s, empty headings, skipped levels and long headings.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocial({
   title: "Free Heading Structure Checker - H1 to H6 Outline",
   description,
   alternates: { canonical: "/tools/heading-structure-checker" },
-};
+});
 
 const jsonLd = {
   "@context": "https://schema.org",

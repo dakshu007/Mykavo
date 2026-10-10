@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
@@ -50,12 +51,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const data = await load(slug);
   if (!data) return {};
   const { view } = data;
-  return {
+  return withSocial({
     title: `${view.name}${view.role ? `, ${view.role}` : ""}`,
     description: view.bio ?? `Posts by ${view.name} on the MyKavo blog.`,
     alternates: { canonical: `/blog/author/${slug}` },
     openGraph: { type: "profile", title: view.name, url: view.url, ...(view.image ? { images: [view.image] } : {}) },
-  };
+  });
 }
 
 export default async function BlogAuthorPage({ params }: Params) {
