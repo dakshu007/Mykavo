@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     q: "Can I put my own branding on the reports?",
-    a: "Yes, on the Agency plan ($49/month for 30 websites). Client reports carry your logo and colours, go out on a schedule, and are written to be forwarded to a client without editing.",
+    a: "Yes, on the Agency plan ($79/month for 30 websites). Client reports carry your logo and colours, go out on a schedule, and are written to be forwarded to a client without editing.",
   },
   {
     q: "Do partners get a discount?",

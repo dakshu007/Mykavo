@@ -174,7 +174,7 @@ const faqs = [
   },
   {
     q: "Is the plugin free?",
-    a: "Yes. The plugin is free on every plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. Safe Updates - the automatic check after every update - and on-demand scans are part of the Pro ($20/month) and Agency ($49/month) plans. On Free, every update is still listed so you know what changed and when.",
+    a: "Yes. The plugin is free on every plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. Safe Updates - the automatic check after every update - and on-demand scans are part of the Pro ($20/month) and Agency ($79/month) plans. On Free, every update is still listed so you know what changed and when.",
   },
   {
     q: "How does it know which update broke something?",

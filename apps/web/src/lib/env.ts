@@ -166,7 +166,7 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   QUOTA_NETLIFY_BANDWIDTH_GB: z.string().optional(),
   // Dodo Payments (optional - billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
-  // The $49/mo Agency product. Defaults to the live product in
+  // The $79/mo Agency product. Defaults to the live product in
   // lib/billing/config.ts; set it only to point at a different product.
   DODO_AGENCY_PRODUCT_ID: z.string().optional(),
   // Retired website add-on product - nothing reads it any more.

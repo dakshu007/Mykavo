@@ -99,7 +99,7 @@ export default function TermsPage() {
           </tr>
           <tr>
             <td>Agency</td>
-            <td>$49 / month</td>
+            <td>$79 / month</td>
             <td>
               30 websites, 25 monitored pages each, daily scans, 1-year history, white-label client
               reports

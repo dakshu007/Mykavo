@@ -273,7 +273,7 @@ const faqs = [
   },
   {
     q: "How many websites can I monitor?",
-    a: "The free plan monitors 1 website with 5 pages. Pro is $20/month for 8 websites with 15 monitored pages each - ideal for freelancers and small teams. Agency is $49/month for 30 websites with 25 pages each, plus white-label client reports and up to 15 team members.",
+    a: "The free plan monitors 1 website with 5 pages. Pro is $20/month for 8 websites with 15 monitored pages each - ideal for freelancers and small teams. Agency is $79/month for 30 websites with 25 pages each, plus white-label client reports and up to 15 team members.",
   },
   {
     q: "Is it safe to point MyKavo at my site?",

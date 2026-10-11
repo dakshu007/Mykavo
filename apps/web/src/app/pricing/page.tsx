@@ -20,7 +20,7 @@ import {
 export const metadata: Metadata = withSocial({
   title: "Pricing - Website Monitoring Plans from $0",
   description:
-    "Simple, transparent pricing for website change monitoring. Start free with one website. Pro is $20/month for 8 websites, Agency is $49/month for 30 websites with white-label client reports.",
+    "Simple, transparent pricing for website change monitoring. Start free with one website. Pro is $20/month for 8 websites, Agency is $79/month for 30 websites with white-label client reports.",
   keywords: [
     "website monitoring pricing",
     "site monitoring tools pricing",
@@ -31,7 +31,7 @@ export const metadata: Metadata = withSocial({
   openGraph: {
     title: "MyKavo Pricing - Website Monitoring from $0",
     description:
-      "Free plan for one website. Pro at $20/month for 8 websites. Agency at $49/month for 30 websites, white-label client reports and 15 team members.",
+      "Free plan for one website. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.",
     url: "/pricing",
     type: "website",
   },
@@ -156,7 +156,7 @@ export default function PricingPage() {
           </h1>
           <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
             One missed regression costs more than a year of MyKavo. Start free with one website,
-            go Pro for $20/month, or run every client site on Agency for $49/month.
+            go Pro for $20/month, or run every client site on Agency for $79/month.
           </p>
         </div>
 

@@ -10,7 +10,7 @@ import { site } from "@/config/site";
 export const DODO_PRODUCT_ID =
   process.env.DODO_PRODUCT_ID ?? "pdt_0NjKwQ1pTRkSQhk6cmVzo";
 
-/** The $49 Agency product id in Dodo (LIVE-mode product; override via env). */
+/** The $79 Agency product id in Dodo (LIVE-mode product; override via env). */
 export const DODO_AGENCY_PRODUCT_ID =
   process.env.DODO_AGENCY_PRODUCT_ID ?? "pdt_0NoEhSbtZs80pP9y9XT0S";
 
@@ -48,7 +48,7 @@ const CHECKOUT_BASE =
  * Dodo's default is Rs 15,000 - the RBI no-extra-authentication ceiling - and
  * customers read that as "MyKavo may take Rs 15,000 from my account". The
  * bank registers max(this floor, the actual charge), so a lower floor still
- * bills correctly. Rs 6,000 covers Agency ($49 plus GST, with room for the
+ * bills correctly. Rs 10,000 covers Agency ($79 plus GST, with room for the
  * exchange rate), so a Pro customer who upgrades to Agency later is not
  * declined for going over the limit they first approved.
  *
@@ -56,8 +56,8 @@ const CHECKOUT_BASE =
  * NPCI rule no merchant can change.
  */
 export const DODO_MANDATE_FLOOR_INR = (() => {
-  const raw = Number(process.env.DODO_MANDATE_FLOOR_INR ?? 6000);
-  return Number.isFinite(raw) && raw >= 500 && raw <= 15000 ? Math.round(raw) : 6000;
+  const raw = Number(process.env.DODO_MANDATE_FLOOR_INR ?? 10000);
+  return Number.isFinite(raw) && raw >= 500 && raw <= 15000 ? Math.round(raw) : 10000;
 })();
 
 /** Whether the checkout button can be shown (product configured). */

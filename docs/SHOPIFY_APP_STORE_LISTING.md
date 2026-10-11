@@ -83,7 +83,7 @@ and anything else (Free, the private test plan) grants nothing.
 | --- | --- | --- |
 | Free | $0 | 1 website · 5 monitored pages · Weekly scans · Theme changes listed in the app |
 | Pro | $20 / month | 8 websites · 15 monitored pages each · Daily scans · Automatic check after every theme publish and edit · Run scans any time |
-| Agency | $49 / month | 30 websites · 25 monitored pages each · Daily scans · Automatic theme checks · White-label client reports · Up to 15 team members |
+| Agency | $79 / month | 30 websites · 25 monitored pages each · Daily scans · Automatic theme checks · White-label client reports · Up to 15 team members |
 
 These match the mykavo.app plans (`packages/shared/src/plan-tier.ts`,
 `apps/web/src/config/plans.ts`); change both together.

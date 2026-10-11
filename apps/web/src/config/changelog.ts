@@ -110,7 +110,7 @@ export const CHANGELOG: ChangelogRelease[] = [
     items: [
       {
         kind: "new",
-        text: "Agency plan at $49 a month: 30 websites, white-label client reports, post-deploy checks and up to 15 team members.",
+        text: "Agency plan: 30 websites, white-label client reports, post-deploy checks and up to 15 team members.",
         href: "/pricing",
       },
       {

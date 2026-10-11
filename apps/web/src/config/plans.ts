@@ -3,7 +3,7 @@
  * Never hardcode plan limits elsewhere - server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
- * MyKavo ships three plans: Free, Pro at $20/month and Agency at $49/month.
+ * MyKavo ships three plans: Free, Pro at $20/month and Agency at $79/month.
  * Pro is 8 websites with 15 monitored pages each; Agency is 30 with 25 each,
  * plus white-label client reports and a larger team. Prices live in
  * @mykavo/shared (PLAN_PRICES_USD) because the worker quotes them in emails.

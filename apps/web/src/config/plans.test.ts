@@ -3,11 +3,11 @@ import { getPlan, plans, formatLimit, resolvePlan, nextPlanUp } from "./plans";
 import { includesClientReports, PLAN_PRICES_USD } from "@mykavo/shared";
 
 describe("plans config", () => {
-  it("contains exactly three plans: free, pro ($20) and agency ($49)", () => {
+  it("contains exactly three plans: free, pro ($20) and agency ($79)", () => {
     expect(plans.map((p) => [p.id, p.priceMonthlyUsd])).toEqual([
       ["free", 0],
       ["pro", 20],
-      ["agency", 49],
+      ["agency", 79],
     ]);
   });
 

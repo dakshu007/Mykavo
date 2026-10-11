@@ -401,13 +401,13 @@ export const DOC_SECTIONS: DocSection[] = [
           "What the Free, Pro and Agency plans include, what the limits are, and how they are enforced.",
         keywords: ["mykavo pricing", "website monitoring pricing", "free website monitoring"],
         capsule:
-          "MyKavo has three plans. Free covers one website with five monitored pages, weekly scans and 30 days of history, with no card required. Pro is $20 a month for eight websites with fifteen monitored pages each, daily scans, a year of history and three seats. Agency is $49 a month for thirty websites with twenty-five pages each, white-label client reports and fifteen seats. Limits are enforced on the server, not in the interface.",
+          "MyKavo has three plans. Free covers one website with five monitored pages, weekly scans and 30 days of history, with no card required. Pro is $20 a month for eight websites with fifteen monitored pages each, daily scans, a year of history and three seats. Agency is $79 a month for thirty websites with twenty-five pages each, white-label client reports and fifteen seats. Limits are enforced on the server, not in the interface.",
         blocks: [
           {
             type: "table",
             head: ["", "Free", "Pro", "Agency"],
             rows: [
-              ["Price", "$0", "$20 / month", "$49 / month"],
+              ["Price", "$0", "$20 / month", "$79 / month"],
               ["Websites", "1", "8", "30"],
               ["Monitored pages per website", "5", "15", "25"],
               ["Scan frequency", "Weekly", "Daily", "Daily"],

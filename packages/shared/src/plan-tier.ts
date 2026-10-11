@@ -12,7 +12,7 @@ export type PlanTier = "free" | "pro" | "agency";
 export const PLAN_PRICES_USD: Record<PlanTier, number> = {
   free: 0,
   pro: 20,
-  agency: 49,
+  agency: 79,
 };
 
 export const PLAN_NAMES: Record<PlanTier, string> = {
