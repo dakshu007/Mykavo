@@ -27,6 +27,18 @@ export const CHANGELOG_PATH = "/whats-new-on-mykavo";
 
 export const CHANGELOG: ChangelogRelease[] = [
   {
+    date: "2026-10-11",
+    title: "WordPress update history on every plan",
+    summary: "Every plugin, theme and WordPress update on a connected site is now listed on mykavo.app, Free plan included.",
+    items: [
+      {
+        kind: "new",
+        text: "The website page shows WordPress updates as they happen: what was updated, from which version to which, and whether it was automatic. On Pro and Agency each update links to the check that ran right after it.",
+        href: "/wordpress-plugin",
+      },
+    ],
+  },
+  {
     date: "2026-09-25",
     title: "MyKavo on WordPress.org, and a page for the Android app",
     summary: "Install MyKavo for WordPress straight from your dashboard, with updates like any other plugin.",

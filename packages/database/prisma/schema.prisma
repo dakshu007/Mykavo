@@ -287,6 +287,7 @@ model Website {
   gscDimensionRows  GscDimensionRow[]
   siteAudits        SiteAudit[]
   aiCrawlerVisits   AiCrawlerVisit[]
+  updateEvents      SiteUpdateEvent[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -1264,6 +1265,31 @@ model SiteConnection {
   @@index([workspaceId])
   @@index([websiteId])
   @@map("site_connection")
+}
+
+/// A WordPress update the MyKavo plugin reported (Safe Updates): plugins,
+/// themes, core or translations updated, a plugin switched on or off, or
+/// the theme switched. Kept on every plan, so the update history is on
+/// mykavo.app even when the plan does not include the check after it.
+model SiteUpdateEvent {
+  id          String   @id @default(cuid())
+  websiteId   String
+  website     Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  workspaceId String
+  /// "manual" | "auto"
+  trigger     String
+  /// "Updated WooCommerce 8.1.0 → 8.2.0 and 2 more"
+  note        String
+  /// The reported items: [{ type, name, from, to, action }]
+  items       Json
+  /// The check started for it, or the one already running that covers it.
+  scanId      String?
+  /// Why no check ran: PLAN, NO_BASELINE, NO_PAGES, QUOTA, ENQUEUE. Null when checked.
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@index([websiteId, createdAt(sort: Desc)])
+  @@map("site_update_event")
 }
 
 /// A Shopify store that installed the MyKavo Shopify app. Exists from install

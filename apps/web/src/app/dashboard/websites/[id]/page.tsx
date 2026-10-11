@@ -56,6 +56,8 @@ import { DomainExpiryPanel } from "@/components/dashboard/domain-expiry";
 import { DeployHookSettings } from "./deploy-hook-settings";
 import { loadAiCrawlerVisits } from "@/lib/ai-crawler-visits";
 import { AiCrawlerVisitsPanel } from "@/components/dashboard/ai-crawler-visits";
+import { loadUpdateHistory } from "@/lib/wp-update-history";
+import { WordPressUpdatesPanel } from "@/components/dashboard/wordpress-updates";
 
 /** Time windows for the health queries - one clock read per request. */
 function healthWindows(windowDays: number): {
@@ -148,10 +150,14 @@ export default async function WebsiteDetailPage({
   // Loaded after the ownership check rather than in the batch above: it is
   // keyed by websiteId alone, and a workspace boundary is not something to hold
   // open on the assumption that a later notFound() will catch it.
-  const [platformStack, aiVisits] = await Promise.all([
+  const [platformStack, aiVisits, updateHistory] = await Promise.all([
     loadPlatformStack(website.id),
     loadAiCrawlerVisits(website.id),
+    loadUpdateHistory(website.id),
   ]);
+  // WordPress update history: shown once the plugin is connected or has
+  // reported anything, on every plan.
+  const showUpdates = updateHistory.connected || updateHistory.entries.length > 0;
   // Shown when there are counts, a WordPress connection that can send them,
   // or a WordPress site that could (then it invites installing the plugin).
   const showAiVisits =
@@ -472,6 +478,12 @@ export default async function WebsiteDetailPage({
           </ul>
         )}
       </Card>
+
+      {showUpdates && (
+        <Card>
+          <WordPressUpdatesPanel data={updateHistory} checksIncluded={plan.limits.deployChecks} />
+        </Card>
+      )}
 
       {website.scans.length > 0 && (
         <Card>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@mykavo/database";
 import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/site-auth";
 import { buildUpdateNote, updateEventSchema } from "@/lib/integrations/wp-updates";
 import { rateLimit } from "@/lib/security/rate-limit";
@@ -12,6 +13,8 @@ import { logger } from "@/lib/logger";
  *
  * A refusal (Free plan, no baseline yet, daily quota) is a 200 with a reason,
  * not an error: the update happened either way and the plugin records it.
+ * MyKavo records it too, on every plan, so the update history is on
+ * mykavo.app even when the plan does not include the check after it.
  */
 export async function POST(request: Request) {
   const ctx = await authenticateSiteRequest(request, { automated: true });
@@ -38,6 +41,28 @@ export async function POST(request: Request) {
     mode: "deploy",
     note,
   });
+
+  // The history row. Never allowed to fail the report: the check (if any)
+  // is already queued and the plugin has its own copy.
+  const scanId = result.ok ? result.scan.id : result.reason === "BUSY" ? (result.scanId ?? null) : null;
+  await prisma.siteUpdateEvent
+    .create({
+      data: {
+        websiteId: ctx.website.id,
+        workspaceId: ctx.workspaceId,
+        trigger: parsed.data.trigger,
+        note,
+        items: parsed.data.items,
+        scanId,
+        reason: result.ok || scanId ? null : result.reason,
+      },
+    })
+    .catch((err: unknown) => {
+      logger.warn("wordpress update not stored", {
+        websiteId: ctx.website.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
   logger.info("wordpress update reported", {
     workspaceId: ctx.workspaceId,
