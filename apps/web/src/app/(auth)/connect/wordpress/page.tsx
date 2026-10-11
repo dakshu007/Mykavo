@@ -83,7 +83,9 @@ export default async function ConnectWordPressPage({
     channel: "wordpress",
     type: "wordpress_connect_started",
     label: req.siteHost,
-    meta: { site: req.siteUrl, pluginVersion: params.pv ?? null, wpVersion: params.wpv ?? null },
+    // `admin` lets the "finish connecting" email link straight to the
+    // plugin's screen, also for WordPress installed in a subfolder.
+    meta: { site: req.siteUrl, admin: req.returnUrl, pluginVersion: params.pv ?? null, wpVersion: params.wpv ?? null },
   });
   if (role === "VIEWER") {
     return (
@@ -104,7 +106,13 @@ export default async function ConnectWordPressPage({
     url.searchParams.set("mykavo_state", req.state);
     return url.toString();
   })();
-  const addUrl = `/dashboard/websites/new?url=${encodeURIComponent(req.siteUrl)}`;
+  // After adding the site, the wizard brings them back here to approve -
+  // otherwise nothing tells them to press Connect in WordPress again, and
+  // the connection is never made. The plugin's link lasts an hour.
+  const connectPath = `/connect/wordpress?${new URLSearchParams(
+    Object.entries(params).filter((e): e is [string, string] => typeof e[1] === "string"),
+  ).toString()}`;
+  const addUrl = `/dashboard/websites/new?url=${encodeURIComponent(req.siteUrl)}&connect=${encodeURIComponent(connectPath)}`;
 
   const hidden = (
     <>
@@ -139,7 +147,7 @@ export default async function ConnectWordPressPage({
             <span className="font-semibold">{workspace.name}</span> yet.
           </p>
           <p className="mt-1 text-[13px] text-ink-secondary">
-            Add it first - it takes a minute - then press Connect in WordPress again.
+            Add it first. It takes a minute, and you come straight back here to finish connecting.
           </p>
           <Link
             href={addUrl}

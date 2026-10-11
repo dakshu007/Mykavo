@@ -98,6 +98,18 @@ export function bareHost(hostname: string): string {
 }
 
 /**
+ * Where the add-website wizard returns to after adding a site from the
+ * WordPress consent screen: only that screen, on this site, so the param
+ * can't be used to bounce people anywhere else. The consent screen
+ * re-validates its own query when they land.
+ */
+export function connectReturnPath(raw: string | null | undefined): string | null {
+  if (!raw || raw.length > 4000) return null;
+  if (!/^\/connect\/wordpress\?[A-Za-z0-9._~%&=+-]+$/.test(raw)) return null;
+  return raw;
+}
+
+/**
  * Validate the query a plugin sends to /connect/wordpress. The return URL
  * must be the same site's wp-admin: a connect link that bounced the code to
  * any other host would hand it to whoever crafted the link.

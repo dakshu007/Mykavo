@@ -20,6 +20,7 @@ export const AUTOMATION_KEYS = [
   "welcome",
   "first_website",
   "baseline_ready",
+  "wordpress_connect",
   "day3_stats",
   "day3_setup",
   "day6_android",
@@ -55,6 +56,13 @@ export const DEFAULT_COPY: Record<AutomationKey, { subject: string; heading: str
     intro:
       "MyKavo recorded the known-good state of {pages} on {website}. Every scan from now on is compared against it, and you hear from us when something important changes.",
     buttonLabel: "See the baseline",
+  },
+  wordpress_connect: {
+    subject: "Finish connecting {site} to MyKavo",
+    heading: "One click left to connect {site}",
+    intro:
+      "Hi {firstName}, you pressed Connect in the MyKavo WordPress plugin, but the connection was never approved, so the plugin can't show your site's changes yet. Finishing takes about 10 seconds:",
+    buttonLabel: "Open MyKavo in WordPress",
   },
   day3_stats: {
     subject: "Your first days with MyKavo: {scans}, {changes} found",
@@ -106,6 +114,10 @@ export const PLACEHOLDERS: Record<AutomationKey, { token: string; meaning: strin
     { token: "{website}", meaning: "the website's domain" },
     { token: "{websiteName}", meaning: "the website's name" },
     { token: "{pages}", meaning: 'pages captured, e.g. "5 pages"' },
+  ],
+  wordpress_connect: [
+    { token: "{firstName}", meaning: "first name (dropped when unknown)" },
+    { token: "{site}", meaning: "the WordPress site's domain" },
   ],
   day3_stats: [
     { token: "{firstName}", meaning: "first name (dropped when unknown)" },

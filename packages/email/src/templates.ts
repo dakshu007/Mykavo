@@ -1048,6 +1048,71 @@ export function baselineReadyEmail(
   return { subject, html: shell(inner), text };
 }
 
+// ---------- Activation: finish connecting WordPress ----------
+
+export interface WordPressConnectData {
+  name: string;
+  /** The WordPress site's domain, e.g. "example.com". */
+  siteHost: string;
+  /** The MyKavo website it matches, when the site is already monitored. */
+  websiteName: string | null;
+  /** The plugin's screen in that site's wp-admin. */
+  pluginUrl: string;
+}
+
+/**
+ * Sent once to someone who pressed Connect in the WordPress plugin and never
+ * approved it. The usual reason: the site was not in MyKavo yet, so the
+ * consent screen asked them to add it first, and after adding it nothing
+ * told them to go back and press Connect again. The steps are the same
+ * either way, because pressing Connect now walks through adding the site
+ * and comes back to the approval on its own.
+ */
+export function wordpressConnectEmail(
+  data: WordPressConnectData,
+  copy: EmailCopy = {},
+): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const d = DEFAULT_COPY.wordpress_connect;
+  const vars = { firstName: firstNameOf(data.name), site: data.siteHost };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
+
+  const steps = [
+    'In your WordPress admin, open MyKavo in the left menu and click "Connect to MyKavo".',
+    data.websiteName
+      ? `On the MyKavo page that opens, ${data.websiteName} is already selected. Click Connect.`
+      : `MyKavo asks you to add ${data.siteHost} first. It takes about a minute, and you come straight back to approve the connection.`,
+    "You are taken back to WordPress, and the plugin shows your site's status and changes.",
+  ];
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">WordPress plugin</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
+    <ol style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">
+      ${steps.map((t) => `<li style="margin:0 0 8px">${esc(t)}</li>`).join("")}
+    </ol>
+    ${button(data.pluginUrl, cta)}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">If WordPress says the link expired, click Connect to MyKavo once more. It starts a fresh one.</p>
+    <p style="margin:16px 0 0;font-size:12px;color:#9aa1b1">Stuck anywhere? Just reply - a real person reads it.</p>
+  `;
+
+  const text =
+    `${intro}\n\n` +
+    steps.map((t, i) => `${i + 1}. ${t}`).join("\n") +
+    `\n\n${cta}: ${data.pluginUrl}\n\n` +
+    `If WordPress says the link expired, click Connect to MyKavo once more. It starts a fresh one.\n` +
+    `Stuck anywhere? Just reply - a real person reads it.`;
+
+  return { subject, html: shell(inner), text };
+}
+
 // ---------- Android app access approved ----------
 
 export interface AppAccessApprovedData {

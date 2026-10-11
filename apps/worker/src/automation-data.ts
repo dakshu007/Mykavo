@@ -172,6 +172,9 @@ export async function buildAutomationData(
     case "app_update":
       // Sent by product-updates.ts, which knows the release and the installs.
       return null;
+    case "wordpress_connect":
+      // Sent by wordpress-connect-email.ts, which knows the site.
+      return null;
   }
 }
 

@@ -6,6 +6,7 @@ import {
   TOKEN_PREFIX,
   bareHost,
   buildReturnUrl,
+  connectReturnPath,
   newAccessToken,
   newConnectCode,
   parseConnectRequest,
@@ -133,5 +134,20 @@ describe("pluginVersionFromUserAgent", () => {
     expect(pluginVersionFromUserAgent("Mozilla/5.0 MyKavo-WordPress/9.9.9")).toBeNull();
     expect(pluginVersionFromUserAgent("MyKavo-WordPress/<script>")).toBeNull();
     expect(pluginVersionFromUserAgent(null)).toBeNull();
+  });
+});
+
+describe("connectReturnPath", () => {
+  it("accepts only the WordPress consent screen on this site", () => {
+    const ok = "/connect/wordpress?site=https%3A%2F%2Fexample.com&state=abc_DEF-123";
+    expect(connectReturnPath(ok)).toBe(ok);
+    expect(connectReturnPath("https://evil.com/connect/wordpress?x=1")).toBeNull();
+    expect(connectReturnPath("//evil.com/connect/wordpress?x=1")).toBeNull();
+    expect(connectReturnPath("/dashboard")).toBeNull();
+    expect(connectReturnPath("/connect/wordpress")).toBeNull();
+    expect(connectReturnPath("/connect/wordpress?x=1\r\nSet-Cookie: a")).toBeNull();
+    expect(connectReturnPath("/connect/wordpress?x=<script>")).toBeNull();
+    expect(connectReturnPath(`/connect/wordpress?x=${"a".repeat(4000)}`)).toBeNull();
+    expect(connectReturnPath(null)).toBeNull();
   });
 });

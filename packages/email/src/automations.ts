@@ -29,6 +29,7 @@ import {
   day6AndroidEmail,
   firstWebsiteNudgeEmail,
   welcomeEmail,
+  wordpressConnectEmail,
   type BaselineReadyData,
   type Day10OfferData,
   type Day3SetupData,
@@ -38,6 +39,7 @@ import {
   type AppUpdateData,
   type PluginUpdateData,
   type WelcomeEmailData,
+  type WordPressConnectData,
 } from "./templates";
 
 export { AUTOMATION_KEYS, DEFAULT_COPY, PLACEHOLDERS, isAutomationKey, type AutomationKey, type EmailCopy };
@@ -92,6 +94,17 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
     timing: null,
     offer: false,
     legacySubject: { prefix: BASELINE_READY_SUBJECT_PREFIX },
+  },
+  wordpress_connect: {
+    key: "wordpress_connect",
+    name: "Finish connecting WordPress",
+    group: "Onboarding",
+    trigger:
+      "Once per account, an hour after someone pressed Connect in the WordPress plugin, if the site still is not connected.",
+    unsubscribable: false,
+    timing: null,
+    offer: false,
+    legacySubject: null,
   },
   day3_stats: {
     key: "day3_stats",
@@ -159,9 +172,12 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
 /**
  * Built-in emails a flow may send. Product update emails are not among them:
  * they need a release and the person's outdated installs, which only the
- * update sender has.
+ * update sender has. Nor is "finish connecting WordPress", which needs the
+ * site somebody tried to connect.
  */
-export const FLOW_EMAIL_KEYS: AutomationKey[] = AUTOMATION_KEYS.filter((k) => AUTOMATIONS[k].group !== "Product updates");
+export const FLOW_EMAIL_KEYS: AutomationKey[] = AUTOMATION_KEYS.filter(
+  (k) => AUTOMATIONS[k].group !== "Product updates" && k !== "wordpress_connect",
+);
 
 /** Keys whose emails count against the REMINDER budget and carry unsubscribe. */
 export const LIFECYCLE_KEYS: AutomationKey[] = ["day3_stats", "day3_setup", "day6_android", "day10_offer"];
@@ -281,6 +297,7 @@ export type AutomationData =
   | { key: "welcome"; data: WelcomeEmailData }
   | { key: "first_website"; data: FirstWebsiteNudgeData }
   | { key: "baseline_ready"; data: BaselineReadyData }
+  | { key: "wordpress_connect"; data: WordPressConnectData }
   | { key: "day3_stats"; data: Day3StatsData }
   | { key: "day3_setup"; data: Day3SetupData }
   | { key: "day6_android"; data: Day6AndroidData }
@@ -305,6 +322,8 @@ export function renderAutomation(
       return firstWebsiteNudgeEmail(input.data, copy);
     case "baseline_ready":
       return baselineReadyEmail(input.data, copy);
+    case "wordpress_connect":
+      return wordpressConnectEmail(input.data, copy);
     case "day3_stats":
       return day3StatsEmail(input.data, copy);
     case "day3_setup":
@@ -352,6 +371,16 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
           frequency: "Weekly",
           alertRecipients: ["you@example.com"],
           alertsUrl: `${appBase}/dashboard/notifications`,
+        },
+      };
+    case "wordpress_connect":
+      return {
+        key,
+        data: {
+          name,
+          siteHost: "northstar.example",
+          websiteName: "Northstar",
+          pluginUrl: "https://northstar.example/wp-admin/admin.php?page=mykavo",
         },
       };
     case "day3_stats":

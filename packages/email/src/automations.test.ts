@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTOMATION_KEYS,
   AUTOMATIONS,
+  FLOW_EMAIL_KEYS,
   LIFECYCLE_KEYS,
   defaultSettings,
   lifecycleSendDays,
@@ -113,5 +114,31 @@ describe("product update emails", () => {
     expect(mail.subject).toBe("MyKavo for Android 1.0.2 is ready");
     expect(mail.html).toContain("Download version 1.0.2");
     expect(mail.html).toContain("You have version 1.0.1.");
+  });
+});
+
+describe("finish connecting WordPress", () => {
+  const data = {
+    name: "Ana Lopez",
+    siteHost: "example.com",
+    websiteName: null,
+    pluginUrl: "https://example.com/wp-admin/admin.php?page=mykavo",
+  };
+
+  it("links to the plugin screen and explains adding the site when it is not monitored", () => {
+    const mail = renderAutomation({ key: "wordpress_connect", data }, defaultSettings());
+    expect(mail.subject).toBe("Finish connecting example.com to MyKavo");
+    expect(mail.html).toContain(data.pluginUrl);
+    expect(mail.text).toContain("asks you to add example.com first");
+    expect(mail.text.startsWith("Hi Ana,")).toBe(true);
+  });
+
+  it("names the already-monitored website", () => {
+    const mail = renderAutomation({ key: "wordpress_connect", data: { ...data, websiteName: "The Levi Family" } }, defaultSettings());
+    expect(mail.text).toContain("The Levi Family is already selected");
+  });
+
+  it("is not offered to flows, which have no site to name", () => {
+    expect(FLOW_EMAIL_KEYS).not.toContain("wordpress_connect");
   });
 });

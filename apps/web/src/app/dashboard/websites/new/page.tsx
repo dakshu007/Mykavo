@@ -4,14 +4,17 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
+import { connectReturnPath } from "@/lib/integrations/site-connection";
 import { AddWebsiteWizard } from "./add-website-wizard";
 
 export default async function NewWebsitePage({
   searchParams,
 }: {
-  searchParams: Promise<{ url?: string; website?: string; page?: string }>;
+  searchParams: Promise<{ url?: string; website?: string; page?: string; connect?: string }>;
 }) {
-  const { url: prefill, website: resumeId, page } = await searchParams;
+  const { url: prefill, website: resumeId, page, connect } = await searchParams;
+  // Came from the WordPress consent screen: go back there once the site is in.
+  const connectReturn = typeof connect === "string" ? connectReturnPath(connect) : null;
   // Only a plain http(s) address is prefilled; the wizard still validates it
   // (and the API runs the full SSRF check) before anything is fetched.
   const initialUrl =
@@ -64,6 +67,7 @@ export default async function NewWebsitePage({
         pageBudget={pageBudget}
         initialUrl={resume ? resume.url : initialUrl}
         resume={resume ? { websiteId: resume.id, preferredPage } : undefined}
+        connectReturn={connectReturn}
       />
     </div>
   );

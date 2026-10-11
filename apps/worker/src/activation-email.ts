@@ -7,6 +7,10 @@
  *      learns it worked. Only scans finished in the last 3 days qualify, so
  *      this never back-fills old websites.
  *
+ *   1b. "Finish connecting WordPress" - once per account, to someone who
+ *      pressed Connect in the plugin an hour or more ago and never approved
+ *      it (see wordpress-connect-email.ts).
+ *
  *   2. "Add your first website" - ONE reminder, a day or more after signup,
  *      to an owner whose workspaces have no website. This one does reach
  *      existing accounts, newest first, a few a day.
@@ -50,6 +54,7 @@ import { resolveEmailConfig } from "./notify";
 import { fullSyncDue, runBrevoSync } from "./brevo-sync";
 import { runFlows } from "./flow-engine";
 import { sendLifecycleEmails } from "./lifecycle-email";
+import { sendWordPressConnectReminders } from "./wordpress-connect-email";
 import { logger } from "./logger";
 
 const appBase = (process.env.APP_URL ?? "https://mykavo.app").replace(/\/+$/, "");
@@ -326,6 +331,17 @@ export async function runActivationSweep(): Promise<void> {
   const before = await currentUsage(automations);
   const baselineReady = await sendBaselineReady(emailAllowance("ACTIVATION", limits, before), automations);
 
+  // Same share as "Baseline ready": help finishing something they started.
+  let wordpressConnect = 0;
+  try {
+    wordpressConnect = await sendWordPressConnectReminders(
+      emailAllowance("ACTIVATION", limits, await currentUsage(automations)),
+      automations,
+    );
+  } catch (err) {
+    logger.error("wordpress connect reminders skipped this run", { error: err instanceof Error ? err.message : String(err) });
+  }
+
   // Re-read: the baseline emails just spent some of the same budget.
   const after = await currentUsage(automations);
   const reminders = await sendFirstWebsiteNudges(emailAllowance("REMINDER", limits, after), automations);
@@ -350,6 +366,7 @@ export async function runActivationSweep(): Promise<void> {
 
   logger.info("activation sweep finished", {
     baselineReady,
+    wordpressConnect,
     reminders,
     lifecycle,
     flows,

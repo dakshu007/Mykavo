@@ -44,6 +44,7 @@ export function AddWebsiteWizard({
   pageBudget,
   initialUrl = "",
   resume,
+  connectReturn = null,
 }: {
   pageBudget: number;
   /** Prefill, e.g. from the WordPress plugin's "add this site" link. */
@@ -54,6 +55,12 @@ export function AddWebsiteWizard({
    * page the user was on first.
    */
   resume?: { websiteId: string; preferredPage: string | null };
+  /**
+   * The WordPress consent screen this was opened from. Once the baseline is
+   * started, go back there to approve the connection rather than to the
+   * scan: the scan keeps running, and the plugin then shows its progress.
+   */
+  connectReturn?: string | null;
 }) {
   const router = useRouter();
 
@@ -182,8 +189,10 @@ export function AddWebsiteWizard({
       // the fallback is the website page, which offers "Run baseline scan".
       setPhase("Starting your baseline scan…");
       const scanId = await startBaseline(websiteId);
-      if (scanId) {
-        track("baseline_started", { websiteId });
+      if (scanId) track("baseline_started", { websiteId });
+      if (connectReturn) {
+        router.push(connectReturn);
+      } else if (scanId) {
         router.push(`/dashboard/scans/${scanId}`);
       } else {
         router.push(`/dashboard/websites/${websiteId}`);
@@ -277,7 +286,9 @@ export function AddWebsiteWizard({
         <p className="text-[13px] text-ink-faint">
           {loading && phase
             ? phase
-            : "Your baseline scan starts straight away. You can change monitored pages anytime."}
+            : connectReturn
+              ? "Your baseline scan starts straight away, then you go back to finish connecting WordPress."
+              : "Your baseline scan starts straight away. You can change monitored pages anytime."}
         </p>
         <button
           onClick={handleSave}
