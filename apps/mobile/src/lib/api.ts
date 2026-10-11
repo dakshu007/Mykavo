@@ -20,7 +20,12 @@ import { buildQuery } from "./query";
 import { safeSecureStorage, WORKSPACE_KEY } from "./secure-storage";
 import type {
   ApiErrorBody,
+  AutomationsResponse,
   BlogListResponse,
+  MarketingResponse,
+  TrackingResponse,
+  TrackingShow,
+  UserTrackingResponse,
   BlogPostStatus,
   BlogStatusResponse,
   AppAccessStatus,
@@ -283,6 +288,43 @@ export const api = {
 
   blogPosts: () => request<BlogListResponse>("/api/mobile/blog"),
 
+  /** Operator-only. Who uses MyKavo where, filtered like the web Tracking page. */
+  tracking: (filters?: { show?: TrackingShow; internal?: boolean }) =>
+    request<TrackingResponse>(
+      `/api/mobile/tracking${buildQuery({
+        show: filters?.show && filters.show !== "all" ? filters.show : undefined,
+        internal: filters?.internal ? "1" : undefined,
+      })}`,
+    ),
+
+  /** Operator-only. One person's channels, timeline, pages and devices. */
+  trackingUser: (userId: string) =>
+    request<UserTrackingResponse>(`/api/mobile/tracking/${encodeURIComponent(userId)}`),
+
+  /** Operator-only. Automated emails, flows and update emails. */
+  automations: () => request<AutomationsResponse>("/api/mobile/automations"),
+
+  /** Switch one automated email on or off - the web dashboard's own route. */
+  setAutomationEnabled: (key: string, enabled: boolean) =>
+    request<unknown>(`/api/admin/automations/${encodeURIComponent(key)}`, {
+      method: "PATCH",
+      body: { enabled },
+    }),
+
+  /** Turn a custom flow on or pause it - the web dashboard's own route. */
+  setFlowStatus: (id: string, status: "ACTIVE" | "PAUSED") =>
+    request<unknown>(`/api/admin/flows/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: { status },
+    }),
+
+  /** Operator-only. Brevo setup, results, audiences and campaigns. */
+  marketing: () => request<MarketingResponse>("/api/mobile/email-marketing"),
+
+  /** Sync contacts to Brevo now - the web dashboard's own route. */
+  syncMarketing: () =>
+    request<unknown>("/api/admin/email-marketing/sync", { method: "POST", body: {} }),
+
   /** Every GSC-connected website in one call - the picker switches instantly. */
   searchConsole: () => request<SearchConsoleResponse>("/api/mobile/search-console"),
 
@@ -293,7 +335,9 @@ export const api = {
   setBlogPostStatus: (id: string, status: BlogPostStatus) =>
     request<BlogStatusResponse>(`/api/mobile/blog/${encodeURIComponent(id)}`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      // request() encodes the body itself; a pre-stringified one arrived as
+      // a JSON string and the server rejected every publish.
+      body: { status },
     }),
 
   muteWebsite: (id: string, muteHours: 1 | 8 | 24 | null) =>

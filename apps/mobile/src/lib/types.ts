@@ -45,6 +45,9 @@ export interface MeResponse {
     /** Optional on its own: an APK may outlive the server that first sent it. */
     users?: boolean;
     appRequests?: boolean;
+    tracking?: boolean;
+    automations?: boolean;
+    marketing?: boolean;
     blog: boolean;
   };
   workspaces: {
@@ -534,4 +537,196 @@ export interface GscWebsiteReport {
 
 export interface SearchConsoleResponse {
   websites: GscWebsiteReport[];
+}
+
+/* -------------------------------- tracking -------------------------------- */
+
+/** Mirrors CHANNELS in apps/web/src/lib/activity/core.ts. */
+export const TRACKING_CHANNELS = ["web", "android", "wordpress", "shopify", "chrome", "mcp"] as const;
+export type TrackingChannel = (typeof TRACKING_CHANNELS)[number];
+
+export const TRACKING_CHANNEL_LABEL: Record<TrackingChannel, string> = {
+  web: "Web dashboard",
+  android: "Android app",
+  wordpress: "WordPress plugin",
+  shopify: "Shopify app",
+  chrome: "Chrome extension",
+  mcp: "AI assistant (MCP)",
+};
+
+export type TrackingShow = "all" | "active" | "inactive" | "stuck" | TrackingChannel;
+
+export type ChannelStatus = "active" | "installed" | "pending" | "started" | "stopped" | "none";
+
+/** Mirrors ChannelState in apps/web/src/lib/admin/tracking-core.ts. */
+export interface ChannelState {
+  status: ChannelStatus;
+  label: string;
+  detail: string | null;
+  lastAt: string | null;
+}
+
+/** Mirrors TrackingRow in apps/web/src/lib/admin/tracking-core.ts. */
+export interface TrackingRow {
+  id: string;
+  name: string;
+  email: string;
+  internal: boolean;
+  signedUpAt: string;
+  plan: string;
+  paid: boolean;
+  websites: number;
+  monitoring: boolean;
+  lastActiveAt: string | null;
+  lastChannel: TrackingChannel | null;
+  activeDays30: number;
+  /** Last 14 days, oldest first: the channels the user was active on each day. */
+  spark: TrackingChannel[][];
+  channels: Record<TrackingChannel, ChannelState>;
+}
+
+export interface TrackingKpis {
+  users: number;
+  activeToday: number;
+  active7d: number;
+  active30d: number;
+  byChannel: Record<TrackingChannel, { adopted: number; active: number; stuck: number }>;
+  funnel: { label: string; count: number }[];
+}
+
+export interface TrackingResponse {
+  /** False until the activity tables exist on the server. */
+  recording: boolean;
+  kpis: TrackingKpis;
+  daily: ({ day: string } & Record<TrackingChannel, number>)[];
+  extension: { installs: number; steps: { label: string; count: number }[] } | null;
+  show: TrackingShow;
+  includeInternal: boolean;
+  shows: { id: TrackingShow; label: string; count: number }[];
+  /** Rows matching the filter; `rows` holds at most 200 of them. */
+  total: number;
+  rows: TrackingRow[];
+}
+
+export interface UserTrackingResponse {
+  row: TrackingRow;
+  workspaces: { id: string; name: string; role: string; plan: string }[];
+  websites: { id: string; name: string; url: string; createdAt: string; lastScanAt: string | null }[];
+  heat: { channel: TrackingChannel; days: { day: string; pings: number }[] }[];
+  timeline: { at: string; channel: TrackingChannel | "account"; title: string; detail: string | null }[];
+  pages: { label: string; route: string; views: number; lastAt: string }[];
+  devices: { label: string; app: boolean; firstAt: string; lastAt: string; kind: "session" | "push" }[];
+}
+
+/* ------------------------------- automations ------------------------------- */
+
+export interface AutomationItem {
+  key: string;
+  name: string;
+  group: "Onboarding" | "Lifecycle series" | "Product updates";
+  /** When it goes out, in words. */
+  trigger: string;
+  unsubscribable: boolean;
+  enabled: boolean;
+  /** Wording, timing or offer differs from what shipped. */
+  customised: boolean;
+  sendOnDay: number | null;
+  offer: { code: string; percent: number } | null;
+  stats: { sent7d: number; sent30d: number; failed30d: number; lastSentAt: string | null };
+}
+
+export type FlowStatus = "DRAFT" | "ACTIVE" | "PAUSED";
+
+export interface FlowListItem {
+  id: string;
+  name: string;
+  status: FlowStatus;
+  trigger: "signup" | "first_website";
+  steps: number;
+  updatedAt: string;
+  runs: { active: number; completed: number; stopped: number };
+  sent: number;
+}
+
+export interface UpdateEmailPanel {
+  product: string;
+  release: { version: string; detectedAt: string; sendRequestedAt: string | null } | null;
+  suggestedVersion: string;
+  total: number;
+  outdated: number;
+  waiting: number;
+  notified: number;
+}
+
+export interface AutomationsResponse {
+  /** False until the email_automation migration exists on the server. */
+  ready: boolean;
+  unsubscribes: { total: number; last30d: number } | null;
+  automations: AutomationItem[];
+  flowsReady: boolean;
+  flows: FlowListItem[];
+  systemFlows: { id: string; name: string; triggerLabel: string; description: string; sent30d: number }[];
+  updates: { ready: boolean; plugin: UpdateEmailPanel; app: UpdateEmailPanel };
+}
+
+/* ----------------------------- email marketing ----------------------------- */
+
+export interface MarketingCampaign {
+  id: number;
+  name: string;
+  subject?: string;
+  status: string;
+  createdAt: string;
+  scheduledAt?: string;
+  sentDate?: string;
+  stats: {
+    sent: number;
+    delivered: number;
+    uniqueViews: number;
+    uniqueClicks: number;
+    unsubscriptions: number;
+    hardBounces: number;
+    softBounces: number;
+    complaints: number;
+  } | null;
+}
+
+export interface MarketingResponse {
+  configured: boolean;
+  provider: "brevo" | "resend";
+  forcedResend: boolean;
+  sender: { name: string; email: string };
+  checks: {
+    apiKey: boolean;
+    senderEmail: boolean;
+    senderVerified: boolean | null;
+    domainAuthenticated: boolean | null;
+    migration: boolean;
+    synced: boolean;
+  };
+  account: { plan: string; creditsLeft: number | null } | null;
+  report: {
+    requests: number;
+    delivered: number;
+    hardBounces: number;
+    softBounces: number;
+    uniqueOpens: number;
+    uniqueClicks: number;
+    spamReports: number;
+    blocked: number;
+    unsubscribed: number;
+  } | null;
+  audiences: { key: string; id: number; name: string; description: string; subscribers: number }[] | null;
+  mykavo: { accounts: number; optedOut: number };
+  syncs: {
+    id: string;
+    kind: string;
+    status: string;
+    startedAt: string;
+    finishedAt: string | null;
+    contacts: number;
+    error: string | null;
+  }[];
+  campaigns: MarketingCampaign[];
+  errors: Partial<Record<"account" | "report" | "audiences" | "campaigns" | "senders", string>>;
 }

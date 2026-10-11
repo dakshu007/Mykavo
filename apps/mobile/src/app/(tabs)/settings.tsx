@@ -8,14 +8,17 @@ import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
+  Activity,
   BarChart3,
   Bell,
   Check,
   ChevronRight,
   MailQuestion,
+  Megaphone,
   PenLine,
   Scale,
   Users,
+  Workflow,
 } from "lucide-react-native";
 import { useState } from "react";
 import {
@@ -296,6 +299,18 @@ export default function SettingsScreen() {
   }
 
   const { user, workspaces, plan } = data;
+  // Operator-only links. The server re-checks the same allowlist on every
+  // admin endpoint, so these flags are convenience rather than the boundary -
+  // but a row that 404s on tap is its own kind of broken.
+  const admin = data.admin;
+  const adminLinks = [
+    admin?.users && { href: "/users" as const, icon: Users, title: "Users", description: "Who has signed up, and who has activated" },
+    admin?.tracking && { href: "/tracking" as const, icon: Activity, title: "Tracking", description: "Who uses MyKavo where, and who is stuck" },
+    admin?.appRequests && { href: "/app-requests" as const, icon: MailQuestion, title: "App requests", description: "Approve who gets the Android app" },
+    admin?.automations && { href: "/automations" as const, icon: Workflow, title: "Automations", description: "Automated emails and flows, on or off" },
+    admin?.marketing && { href: "/email-marketing" as const, icon: Megaphone, title: "Email marketing", description: "Brevo results, audiences and campaigns" },
+    admin?.blog && { href: "/blog" as const, icon: PenLine, title: "Blog", description: "Publish and unpublish posts" },
+  ].filter((link): link is Exclude<typeof link, false | undefined> => Boolean(link));
   const limitRows = [
     plan.limits.websites === null
       ? "Unlimited websites"
@@ -420,74 +435,34 @@ export default function SettingsScreen() {
       {/* Operator-only. The server re-checks the same allowlist on every
           admin endpoint, so this is convenience rather than the boundary -
           but showing a row that 404s on tap is its own kind of broken. */}
-      {data.admin?.blog || data.admin?.users || data.admin?.appRequests ? (
+      {adminLinks.length > 0 ? (
         <Card style={{ marginBottom: 14 }}>
           <CardTitle style={{ marginBottom: 4 }}>Admin</CardTitle>
-          {data.admin?.users ? (
-            <Pressable
-              onPress={() => router.push("/users")}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                paddingVertical: 12,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Users size={16} color={palette.inkSecondary} />
-              <View style={{ flex: 1 }}>
-                <Small>Users</Small>
-                <Small color={palette.inkSecondary}>
-                  Who has signed up, and who has activated
-                </Small>
+          {adminLinks.map((link, index) => {
+            const Icon = link.icon;
+            return (
+              <View key={link.href}>
+                {index > 0 ? <Divider /> : null}
+                <Pressable
+                  onPress={() => router.push(link.href)}
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    paddingVertical: 12,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <Icon size={16} color={palette.inkSecondary} />
+                  <View style={{ flex: 1 }}>
+                    <Small>{link.title}</Small>
+                    <Small color={palette.inkSecondary}>{link.description}</Small>
+                  </View>
+                  <ChevronRight size={16} color={palette.inkFaint} />
+                </Pressable>
               </View>
-              <ChevronRight size={16} color={palette.inkFaint} />
-            </Pressable>
-          ) : null}
-          {data.admin?.users && (data.admin?.appRequests || data.admin?.blog) ? (
-            <Divider />
-          ) : null}
-          {data.admin?.appRequests ? (
-            <Pressable
-              onPress={() => router.push("/app-requests")}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                paddingVertical: 12,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <MailQuestion size={16} color={palette.inkSecondary} />
-              <View style={{ flex: 1 }}>
-                <Small>App requests</Small>
-                <Small color={palette.inkSecondary}>
-                  Approve who gets the Android app
-                </Small>
-              </View>
-              <ChevronRight size={16} color={palette.inkFaint} />
-            </Pressable>
-          ) : null}
-          {data.admin?.appRequests && data.admin?.blog ? <Divider /> : null}
-          {data.admin?.blog ? (
-            <Pressable
-              onPress={() => router.push("/blog")}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                paddingVertical: 12,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <PenLine size={16} color={palette.inkSecondary} />
-              <View style={{ flex: 1 }}>
-                <Small>Blog</Small>
-                <Small color={palette.inkSecondary}>Publish and unpublish posts</Small>
-              </View>
-              <ChevronRight size={16} color={palette.inkFaint} />
-            </Pressable>
-          ) : null}
+            );
+          })}
         </Card>
       ) : null}
 

@@ -30,13 +30,25 @@ Against a local backend: copy `.env.example` to `.env`, set `EXPO_PUBLIC_API_URL
 
 ## Admin-only areas
 
-Two screens appear only for accounts on an allowlist, set by environment
+These screens appear only for accounts on an allowlist, set by environment
 variables on the WEB app (they gate the API, not the phone):
 
 | Screen | Where | Allowlist |
 | --- | --- | --- |
 | **Usage** | sixth tab in the floating bar | `ADMIN_EMAILS` |
-| **Blog** | Settings → Admin → Blog | `BLOG_ADMIN_EMAILS` |
+| **Users** | Settings → Admin → Users | `ADMIN_EMAILS` |
+| **Tracking** (list and per-person detail) | Settings → Admin → Tracking | `ADMIN_EMAILS` |
+| **App requests** (approve / decline) | Settings → Admin → App requests | `ADMIN_EMAILS` |
+| **Automations** (emails and flows on/off, update emails) | Settings → Admin → Automations | `ADMIN_EMAILS` |
+| **Email marketing** (Brevo results, campaigns, sync now) | Settings → Admin → Email marketing | `ADMIN_EMAILS` |
+| **Blog** (publish / unpublish) | Settings → Admin → Blog | `BLOG_ADMIN_EMAILS` |
+
+Reads come from `/api/mobile/{usage,users,tracking,app-requests,automations,email-marketing,blog}`.
+Changes use the website's own admin routes (`/api/app-access/[id]`,
+`/api/admin/automations/[key]`, `/api/admin/flows/[id]`,
+`/api/admin/email-marketing/sync`), so a change made on the phone is exactly
+the one made at a desk. Editing email wording, flow steps and campaigns stays
+on the website.
 
 `/api/mobile/me` returns an `admin` object saying which to draw. That is a UX
 hint only: `/api/mobile/usage` and `/api/mobile/blog` both re-check the

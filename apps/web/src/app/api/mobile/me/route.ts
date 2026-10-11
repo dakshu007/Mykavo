@@ -55,6 +55,9 @@ export async function GET() {
       // who may see the user list later does not change who sees the meters.
       users: isPlatformAdmin(session.user.email),
       appRequests: isPlatformAdmin(session.user.email),
+      tracking: isPlatformAdmin(session.user.email),
+      automations: isPlatformAdmin(session.user.email),
+      marketing: isPlatformAdmin(session.user.email),
       blog: isBlogAdmin(session.user.email),
     },
     workspaces: memberships.map((m) => ({

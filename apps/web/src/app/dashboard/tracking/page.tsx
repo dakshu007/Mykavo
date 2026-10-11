@@ -5,9 +5,10 @@ import { Activity, AlertTriangle, ChevronRight, Filter, Users } from "lucide-rea
 import { requireSession } from "@/lib/session";
 import { isPlatformAdmin } from "@/lib/platform-admin";
 import { Card, CardHeader } from "@/components/ui/card";
-import { CHANNELS, CHANNEL_LABEL, type Channel } from "@/lib/activity/core";
+import { CHANNELS, CHANNEL_LABEL } from "@/lib/activity/core";
 import { loadTrackingOverview } from "@/lib/admin/tracking";
-import { ago, type TrackingRow } from "@/lib/admin/tracking-core";
+import { ago } from "@/lib/admin/tracking-core";
+import { TRACKING_SHOWS, visibleRows, type TrackingShow } from "@/lib/admin/tracking-filter";
 import {
   ActivitySpark,
   CHANNEL_DOT,
@@ -22,42 +23,8 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-type Show = "all" | "active" | "inactive" | "stuck" | Channel;
-const SHOWS: Array<{ id: Show; label: string }> = [
-  { id: "all", label: "Everyone" },
-  { id: "active", label: "Active 7 days" },
-  { id: "inactive", label: "Gone quiet" },
-  { id: "stuck", label: "Stuck somewhere" },
-  { id: "android", label: "Android app" },
-  { id: "wordpress", label: "WordPress" },
-  { id: "shopify", label: "Shopify" },
-  { id: "chrome", label: "Chrome" },
-  { id: "mcp", label: "AI assistant" },
-];
-
-function matches(row: TrackingRow, show: Show, now: number): boolean {
-  const recent = (at: string | null, days: number) => !!at && now - new Date(at).getTime() <= days * 86_400_000;
-  switch (show) {
-    case "all":
-      return true;
-    case "active":
-      return recent(row.lastActiveAt, 7);
-    case "inactive":
-      return !recent(row.lastActiveAt, 14);
-    case "stuck":
-      return CHANNELS.some((ch) => ["pending", "started"].includes(row.channels[ch].status));
-    default:
-      return row.channels[show].status !== "none";
-  }
-}
-
-/** The filtered rows, most recently active first. */
-function visibleRows(rows: TrackingRow[], show: Show): TrackingRow[] {
-  const now = Date.now();
-  return rows
-    .filter((r) => matches(r, show, now))
-    .sort((a, b) => (b.lastActiveAt ?? b.signedUpAt).localeCompare(a.lastActiveAt ?? a.signedUpAt));
-}
+type Show = TrackingShow;
+const SHOWS = TRACKING_SHOWS;
 
 function href(params: { show?: Show; internal?: boolean }) {
   const q = new URLSearchParams();
