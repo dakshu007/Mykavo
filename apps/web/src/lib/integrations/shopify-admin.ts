@@ -86,11 +86,11 @@ export async function adminGraphql<T>(
 export async function fetchShopInfo(
   shop: string,
   accessToken: string,
-): Promise<{ name: string | null; primaryDomain: string | null }> {
-  const result = await adminGraphql<{ shop: { name: string; primaryDomain: { url: string } | null } }>(
+): Promise<{ id: string | null; name: string | null; primaryDomain: string | null }> {
+  const result = await adminGraphql<{ shop: { id: string; name: string; primaryDomain: { url: string } | null } }>(
     shop,
     accessToken,
-    "{ shop { name primaryDomain { url } } }",
+    "{ shop { id name primaryDomain { url } } }",
   );
   const info = result.data?.shop;
   let primaryDomain: string | null = null;
@@ -102,7 +102,8 @@ export async function fetchShopInfo(
       primaryDomain = null;
     }
   }
-  return { name: info?.name ?? null, primaryDomain: primaryDomain ?? `https://${shop}` };
+  const id = info?.id && /^gid:\/\/shopify\/Shop\/\d{1,20}$/.test(info.id) ? info.id : null;
+  return { id, name: info?.name ?? null, primaryDomain: primaryDomain ?? `https://${shop}` };
 }
 
 export const WEBHOOK_TOPICS = ["THEMES_PUBLISH", "THEMES_UPDATE", "APP_UNINSTALLED"] as const;

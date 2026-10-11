@@ -4,7 +4,7 @@ An embedded Shopify app that shows a store's MyKavo monitoring inside the
 Shopify admin and checks the store whenever its live theme is published or
 edited - the Shopify version of the WordPress plugin's Safe Updates.
 
-Billing stays on mykavo.app (free app that connects to a MyKavo account).
+Merchants pay through Shopify (Shopify App Pricing) - see Billing below.
 
 ## How it fits together
 
@@ -56,6 +56,38 @@ check at most every 15 minutes (the theme editor saves often). Checks are a
 (48 hours later) deletes the store's rows. MyKavo holds no Shopify customer
 data, so the two customer webhooks have nothing to return or erase. The
 store's website in MyKavo belongs to the MyKavo workspace and is kept.
+
+## Billing (Shopify App Pricing)
+
+Merchants who install from the Shopify App Store pay through Shopify, never
+through Dodo (App Store requirement 1.2.1). Plans live in the Partner
+Dashboard (see [SHOPIFY_APP_STORE_LISTING.md](./SHOPIFY_APP_STORE_LISTING.md#2a-pricing---shopify-app-pricing-partner-dashboard)).
+
+- **Where the plan lives**: `shopify_shop.billingPlan` (`pro` | `agency` |
+  null), written only from the Partner API's `activeSubscription`
+  (`packages/shared/src/shopify-billing.ts`). A plan handle counts as paid
+  when it contains the word `pro` or `agency`.
+- **What it unlocks**: `getWorkspaceEntitlement` gives the workspace the
+  higher of its Dodo plan and the best plan paid by a store linked to it
+  (installed, link not revoked). `billedBy` says which.
+- **When it is checked**: each time the app opens (cached 5 minutes), at
+  once when the merchant returns from the plan page (`plan_handle` in the
+  URL -> `/api/shopify/session?refreshPlan=1`), and hourly in the worker
+  for paid stores not checked for 6 hours or past their period end
+  (`shopify-billing-sweep.ts`). Shopify sends no webhook for cancellations
+  or freezes since April 2026. A failed lookup keeps the last confirmed plan.
+- **Losing a plan** (cancel, uninstall, disconnect, relinking the store to
+  another workspace): when the workspace ends up on Free, daily scans go
+  back to weekly, as with Dodo.
+- **In the app**: the site API sends Shopify's plan page as
+  `links.billing` for Shopify requests (null until billing is configured,
+  which hides every plan button). `bootstrap.js` drops any other billing link
+  and opens the plan page in the whole admin window (`_top`).
+- **On mykavo.app**: the billing page shows "paid for through Shopify by
+  <store>" with a link to manage it there, and offers no Dodo checkout for it.
+- **Env** (web and worker): `SHOPIFY_PARTNER_ORG_ID`,
+  `SHOPIFY_PARTNER_API_TOKEN`, `SHOPIFY_APP_ID`, `SHOPIFY_APP_HANDLE`.
+- **Migration**: `20261011120000_shopify_billing` (additive, idempotent).
 
 ## Setup (Shopify Dev Dashboard)
 

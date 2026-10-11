@@ -640,7 +640,7 @@
 			'</ul>' +
 			'<div class="mk-welcome-cta">' +
 			'<a class="mk-btn mk-btn-primary mk-connect" href="' + esc( cfg.connectUrl ) + '" target="_blank" rel="noopener">' + icon( 'link' ) + esc( __( 'Connect to MyKavo', 'mykavo' ) ) + '</a>' +
-			'<span class="mk-fine">' + esc( __( 'Free plan available. No card needed.', 'mykavo' ) ) + '</span>' +
+			'<span class="mk-fine">' + esc( __( 'Setup takes about a minute.', 'mykavo' ) ) + '</span>' +
 			'</div>' +
 			'<p class="mk-speed">' + icon( 'zap' ) + esc( __( 'Adds nothing to your storefront. Zero impact on store speed.', 'mykavo' ) ) + '</p>' +
 			'</div>' +
@@ -942,7 +942,9 @@
 			'<section class="mk-card mk-card-pad"><p class="mk-eyebrow">' + esc( __( 'Workspace', 'mykavo' ) ) + '</p>' +
 			'<p style="font-weight:650;font-size:15px">' + esc( o.workspace.name ) + '</p>' +
 			'<p class="mk-stat-foot">' + esc( sprintf( /* translators: %s: plan name. */ __( '%s plan', 'mykavo' ), o.workspace.plan.name ) ) + '</p>' +
-			'' +
+			( o.workspace.plan.id === 'free' && safeUrl( o.links.billing )
+				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_top">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + '</a></p>'
+				: '' ) +
 			'</section>';
 
 		return (

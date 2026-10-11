@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@mykavo/database";
+import { prisma, resetDailyScansIfFree } from "@mykavo/database";
 import { getApiContext } from "@/lib/api-auth";
 import { appBaseUrl } from "@/lib/app-url";
 import { logger } from "@/lib/logger";
@@ -52,6 +52,15 @@ export async function POST(request: Request) {
   });
   if (!website) return NextResponse.json({ error: "Choose one of your websites." }, { status: 400 });
 
+  // The workspace the store was linked to before, which loses any plan the
+  // store pays for through Shopify once it moves.
+  const previous = store.siteConnectionId
+    ? await prisma.siteConnection.findFirst({
+        where: { id: store.siteConnectionId, revokedAt: null },
+        select: { workspaceId: true },
+      })
+    : null;
+
   const now = new Date();
   await prisma.$transaction(async (tx) => {
     if (store.siteConnectionId) {
@@ -75,6 +84,9 @@ export async function POST(request: Request) {
     await tx.shopifyShop.update({ where: { id: store.id }, data: { siteConnectionId: connection.id } });
   });
 
+  if (previous && previous.workspaceId !== ctx.workspace.id) {
+    await resetDailyScansIfFree(prisma, previous.workspaceId);
+  }
   logger.info("shopify store linked", { shop, workspaceId: ctx.workspace.id, websiteId: website.id });
   return NextResponse.redirect(`${appBaseUrl()}/connect/shopify?done=${encodeURIComponent(shop)}`, 303);
 }

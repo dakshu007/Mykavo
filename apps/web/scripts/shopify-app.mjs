@@ -157,13 +157,23 @@ const JS_REPLACEMENTS = [
   [`return __( 'WordPress update', 'mykavo' );`, `return __( 'Theme change', 'mykavo' );`],
   [`esc( __( 'After an update', 'mykavo' ) ) + '</span>'`, `esc( __( 'After a theme change', 'mykavo' ) ) + '</span>'`],
   [`esc( __( 'Appeared after an update', 'mykavo' ) )`, `esc( __( 'Appeared after a theme change', 'mykavo' ) )`],
-  // No links to pay outside Shopify inside the app (App Store requirement);
-  // bootstrap.js also drops links.billing from the data.
+  // Plans are sold only through Shopify's own plan page inside the admin (App
+  // Store requirement): the button shows only when the site API sent that
+  // page as links.billing - bootstrap.js drops any other billing link - and
+  // it opens in the whole admin window, not a new tab.
   [
     `( o.workspace.plan.id === 'free'
 				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + icon( 'external' ) + '</a></p>'
 				: '' ) +`,
-    `'' +`,
+    `( o.workspace.plan.id === 'free' && safeUrl( o.links.billing )
+				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_top">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + '</a></p>'
+				: '' ) +`,
+  ],
+  // No pricing claims on the connect screen (it is a listing screenshot, and
+  // App Store listing images may not show pricing).
+  [
+    `esc( __( 'Free plan available. No card needed.', 'mykavo' ) )`,
+    `esc( __( 'Setup takes about a minute.', 'mykavo' ) )`,
   ],
   // Store guard.
   [`'<span class="mk-fine">WooCommerce</span></div>'`, `'<span class="mk-fine">Shopify</span></div>'`],

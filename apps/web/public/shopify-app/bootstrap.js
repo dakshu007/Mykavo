@@ -121,6 +121,10 @@
 		return null;
 	}
 
+	function isPlanPage( url ) {
+		return typeof url === 'string' && /^https:\/\/admin\.shopify\.com\/store\/[a-z0-9-]+\/charges\/[a-z0-9-]+\/pricing_plans$/.test( url );
+	}
+
 	window.wp.apiFetch = function ( options ) {
 		var path = String( options.path || '' ).replace( /^\/mykavo\/v1/, '' );
 		var target = route( path, ( options.method || 'GET' ).toUpperCase(), options.data );
@@ -128,9 +132,10 @@
 			return Promise.reject( new Error( 'Unknown request: ' + path ) );
 		}
 		return request( target[ 0 ], target[ 1 ], target[ 2 ] ).then( function ( data ) {
-			// Shopify App Store apps must not send merchants to pay elsewhere
-			// from inside the app, so the screen never gets the billing link.
-			if ( data && data.links ) {
+			// Shopify App Store apps must not send merchants to pay elsewhere:
+			// the only billing link the screen may show is Shopify's own plan
+			// page. Anything else is dropped, which hides every plan button.
+			if ( data && data.links && ! isPlanPage( data.links.billing ) ) {
 				delete data.links.billing;
 			}
 			return data;
@@ -182,12 +187,29 @@
 		window.setTimeout( check, 4000 );
 	}
 	document.addEventListener( 'click', function ( e ) {
-		if ( e.target.closest && e.target.closest( '.mk-connect' ) ) {
+		if ( ! e.target.closest ) {
+			return;
+		}
+		if ( e.target.closest( '.mk-connect' ) ) {
 			watchLink();
+			return;
+		}
+		// Shopify's plan page lives in the admin itself: open it in the whole
+		// window (App Bridge allows _top for admin URLs), not a new tab.
+		var link = e.target.closest( 'a[href]' );
+		if ( link && isPlanPage( link.getAttribute( 'href' ) ) ) {
+			e.preventDefault();
+			window.open( link.getAttribute( 'href' ), '_top' );
 		}
 	} );
 
-	request( '/api/shopify/session', 'POST' ).then( function ( data ) {
+	// Back from Shopify's plan page (its welcome link adds plan_handle): ask
+	// Shopify for the new plan now instead of using the short cache.
+	var sessionPath = /[?&]plan_handle=/.test( window.location.search )
+		? '/api/shopify/session?refreshPlan=1'
+		: '/api/shopify/session';
+
+	request( sessionPath, 'POST' ).then( function ( data ) {
 		window.mykavoConfig = {
 			connected: !! data.linked,
 			connectUrl: data.linkUrl || '#',

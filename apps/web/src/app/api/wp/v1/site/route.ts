@@ -8,6 +8,7 @@ import {
 import { appBaseUrl } from "@/lib/app-url";
 import { getWorkspacePlan } from "@/lib/limits";
 import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/site-auth";
+import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
 import { buildWebsiteHealth, manualScanCapability } from "@/lib/mobile/health";
 import {
   SEVERITY_RANK,
@@ -143,7 +144,13 @@ export async function GET(request: Request) {
         changes: `${base}/dashboard/changes?website=${website.id}`,
         pages: `${base}/dashboard/websites/${website.id}/pages`,
         notifications: `${base}/dashboard/notifications`,
-        billing: `${base}/dashboard/billing`,
+        // In the Shopify app, plans are sold through Shopify's own plan page
+        // (an App Store requirement); null hides every plan link there until
+        // Shopify billing is configured.
+        billing:
+          ctx.platform === "shopify" && ctx.shopifyShop
+            ? shopifyPlanPageUrl(ctx.shopifyShop)
+            : `${base}/dashboard/billing`,
       },
     },
     { headers: { "cache-control": "no-store" } },

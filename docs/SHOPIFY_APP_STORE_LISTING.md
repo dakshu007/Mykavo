@@ -4,11 +4,13 @@ Everything needed to take the app from "installs on the dev store" to "listed
 on the Shopify App Store". Technical details of the app itself live in
 [SHOPIFY_APP.md](./SHOPIFY_APP.md).
 
-Billing model (decided): the app is **free to install**. It links to a
-MyKavo account, and paid plans are billed by MyKavo on mykavo.app, not
-through Shopify. The embedded screen therefore shows no upgrade or billing
-buttons (the generator strips them, and `bootstrap.js` drops
-`links.billing` from API responses).
+Billing model (decided 2026-10-11): **Shopify App Pricing**. The App Store
+does not list apps that bill off-platform (requirement 1.2.1), so merchants
+who install from Shopify pick Free, Pro or Agency on Shopify's own plan page
+and pay on their Shopify bill. MyKavo reads the store's active subscription
+from the Partner API and the plan applies to the MyKavo workspace the store
+is linked to. Everyone who signs up on mykavo.app keeps paying through Dodo.
+How it works in code: [SHOPIFY_APP.md](./SHOPIFY_APP.md#billing-shopify-app-pricing).
 
 ## 1. Before submitting - Dev Dashboard
 
@@ -65,11 +67,47 @@ Theme updates and editor tweaks are the most common way a store quietly breaks: 
 **Category**: Store management > Operations (or Store design > Theme
 management if offered).
 
-**Pricing**: Free to install. In "Additional charges" / pricing details:
+**Pricing**: set up as Shopify App Pricing (section 2a). No pricing text
+anywhere else in the listing or in images (requirements 4.2.2 and 4.2.3).
 
-```
-Free to install. The app connects to a MyKavo account. MyKavo has a free plan (1 website, 5 pages, weekly scans). Automatic theme checks are included in MyKavo Pro and Agency, billed by MyKavo at mykavo.app/pricing.
-```
+## 2a. Pricing - Shopify App Pricing (Partner Dashboard)
+
+Partner Dashboard > App distribution > All apps > MyKavo > Distribution >
+Manage listing > (English) Edit > Pricing content > Manage > Settings:
+**Pricing method: Shopify App Pricing**, default billing frequency
+**Monthly**. Then add three public plans. The plan **names** below matter:
+the app recognises a paid plan by the word "pro" or "agency" in its handle,
+and anything else (Free, the private test plan) grants nothing.
+
+| Plan name | Price | Plan details (one per line in the form) |
+| --- | --- | --- |
+| Free | $0 | 1 website · 5 monitored pages · Weekly scans · Theme changes listed in the app |
+| Pro | $20 / month | 8 websites · 15 monitored pages each · Daily scans · Automatic check after every theme publish and edit · Run scans any time |
+| Agency | $49 / month | 30 websites · 25 monitored pages each · Daily scans · Automatic theme checks · White-label client reports · Up to 15 team members |
+
+These match the mykavo.app plans (`packages/shared/src/plan-tier.ts`,
+`apps/web/src/config/plans.ts`); change both together.
+
+For each paid plan:
+
+- **Welcome link**: `/` (back into the app). Shopify appends `plan_handle`;
+  the app then asks Shopify for the new plan at once.
+- Tick **free for partners and developers**, so reviewers and your own
+  development stores can select Pro and Agency at no charge.
+
+Partner API access (Settings > Partner API clients > Create API client,
+permission **Manage apps**), then set these four in Netlify **and** on the
+worker server:
+
+| Variable | Where to find it |
+| --- | --- |
+| `SHOPIFY_PARTNER_ORG_ID` | The number in your Partner Dashboard URL |
+| `SHOPIFY_PARTNER_API_TOKEN` | The Partner API client's access token |
+| `SHOPIFY_APP_ID` | The number in the app's Partner Dashboard URL |
+| `SHOPIFY_APP_HANDLE` | The app's handle (the last part of its admin URL, `admin.shopify.com/store/<store>/apps/<handle>`) |
+
+Until all four are set the app shows no plan buttons at all, so nothing
+breaks while this is being set up.
 
 **URLs**
 
@@ -99,7 +137,7 @@ Screenshot alt text:
 2. `Theme checks: each theme publish and edit with its verdict`
 3. `A change after a theme publish, with before and after side by side`
 4. `All changes, filtered by severity, labelled with the theme change`
-5. `Connect the store to a free MyKavo account`
+5. `Connect the store to a MyKavo account`
 
 The screenshots use a fictional store ("Northwind Coffee") captured from the
 real app against a local database, so no customer data appears.
@@ -110,17 +148,21 @@ minutes on the dev store, with English narration or captions:
 1. Install from the install link; the app opens in the admin.
 2. Press **Connect to MyKavo**, sign in, choose the website, approve; the app
    now shows the overview.
-3. Online Store > Themes: publish a theme (or edit the live one and save).
-4. Back in the app, **Theme checks** shows the new entry with its verdict.
-5. Open a change: before and after, then **Approve change**.
-6. Settings > Apps: uninstall.
+3. Press **Daily scans with Pro** (or Plan and billing in the menu): Shopify's
+   plan page opens; choose Pro and approve. The app returns showing Pro.
+4. Online Store > Themes: publish a theme (or edit the live one and save).
+5. Back in the app, **Theme checks** shows the new entry with its verdict.
+6. Open a change: before and after, then **Approve change**.
+7. Settings > Apps: uninstall.
 
 ## 4. Reviewer access
 
 Reviewers install the app on their own development store. Two things to know:
 
-- The app needs a MyKavo account, and theme checks need Pro. Give reviewers a
-  ready account rather than making them sign up.
+- The app needs a MyKavo account. Give reviewers a ready account rather than
+  making them sign up. Theme checks need Pro, which reviewers select on
+  Shopify's plan page at no charge (section 2a: "free for partners and
+  developers").
 - Development-store storefronts are password protected, so a brand-new website
   for the reviewer's store would only ever show the password page. The
   reviewer account therefore comes with a public website that already has a
@@ -133,19 +175,8 @@ Set up once, before submitting:
    strong password that exists nowhere else.
 2. Add a public website (for example `https://mykavo.app`), choose three or
    four pages and let the baseline finish.
-3. In the Supabase SQL editor, give that workspace Pro. Replace the email
-   in the last line only:
-
-```sql
-INSERT INTO "subscription" ("id","workspaceId","planId","status","provider","createdAt","updatedAt")
-SELECT 'comp_shopify_review', m."workspaceId", 'pro', 'active', 'manual', now(), now()
-FROM "workspace_member" m JOIN "user" u ON u.id = m."userId"
-WHERE u.email = 'shopify-review@mykavo.app'
-ON CONFLICT ("workspaceId") DO UPDATE SET "planId"='pro', "status"='active';
-```
-
-The billing sweep ignores rows without `currentPeriodEnd`, so this stays Pro
-until deleted.
+3. Leave the workspace on Free: the reviewer's Pro comes from the plan they
+   pick in Shopify, which is what review needs to see working.
 
 **Testing instructions** (paste into the submission form, with the password
 filled in there and nowhere else):
@@ -156,12 +187,13 @@ filled in there and nowhere else):
    Email: shopify-review@mykavo.app
    Password: (see below)
 3. Development stores are password protected, so the test account already monitors a public website with a baseline. Under "Another website" choose it and press Approve. Close the tab; the app refreshes and shows the overview.
-4. In Online Store > Themes, publish any theme, or open the live theme in the editor, change a setting and save.
-5. In the app, open "Theme checks". The change appears within a minute with its scan; when the scan finishes it shows "Verified - nothing changed" or the changes found.
-6. Open "Changes" to review any change, with before and after values and screenshots, and approve, mark fixed or ignore it.
-7. Uninstalling removes the store's access token and link immediately; shop/redact deletes the remaining store record.
+4. Automatic theme checks are part of the Pro plan. Press "Daily scans with Pro" on the overview (or "Plan and billing" in the menu). Shopify's plan page opens; choose Pro (free for development stores) and approve. You return to the app, now on Pro.
+5. In Online Store > Themes, publish any theme, or open the live theme in the editor, change a setting and save.
+6. In the app, open "Theme checks". The change appears within a minute with its scan; when the scan finishes it shows "Verified - nothing changed" or the changes found.
+7. Open "Changes" to review any change, with before and after values and screenshots, and approve, mark fixed or ignore it.
+8. Uninstalling removes the store's access token and link immediately and ends its plan; shop/redact deletes the remaining store record.
 
-The app requests only read_themes and adds nothing to the storefront. Paid MyKavo plans are billed by MyKavo outside Shopify; the test account is already on Pro.
+The app requests only read_themes and adds nothing to the storefront. All charges go through Shopify App Pricing.
 ```
 
 **Emergency developer contact**: the founder's email and phone (asked for in
@@ -181,6 +213,7 @@ the Partner account, not public).
 | Top-level visit | Redirects into the admin instead of rendering outside it |
 | Minimal scopes | `read_themes` only |
 | No storefront impact | No theme app extensions, script tags or pixels |
+| Billing through Shopify | Shopify App Pricing; plan buttons open only Shopify's plan page (`bootstrap.js` drops any other billing link) |
 
 ## 6. After approval
 

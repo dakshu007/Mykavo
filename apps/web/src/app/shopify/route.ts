@@ -12,7 +12,7 @@ import { shopifyConfig } from "@/lib/integrations/shopify-server";
  * leaves /shopify out of the site-wide X-Frame-Options: SAMEORIGIN.
  */
 
-const ASSET_VERSION = "2";
+const ASSET_VERSION = "3";
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);

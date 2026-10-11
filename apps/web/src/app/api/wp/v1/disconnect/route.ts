@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@mykavo/database";
+import { prisma, resetDailyScansIfFree } from "@mykavo/database";
 import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/site-auth";
 import { logger } from "@/lib/logger";
 
@@ -11,6 +11,8 @@ export async function POST(request: Request) {
     where: { id: ctx.connectionId },
     data: { revokedAt: new Date() },
   });
+  // A store paying through Shopify takes its plan with it.
+  if (ctx.platform === "shopify") await resetDailyScansIfFree(prisma, ctx.workspaceId);
   logger.info("site connection disconnected from the site", {
     platform: ctx.platform,
     workspaceId: ctx.workspaceId,

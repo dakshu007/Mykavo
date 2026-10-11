@@ -4,13 +4,21 @@ import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { adminAppUrl, signLinkToken, storePages, verifySessionToken } from "@/lib/integrations/shopify";
 import { ShopifyApiError } from "@/lib/integrations/shopify-admin";
-import { activeLink, ensureInstalled, shopifyConfig } from "@/lib/integrations/shopify-server";
+import {
+  activeLink,
+  ensureInstalled,
+  refreshShopifyBilling,
+  shopifyConfig,
+  shopifyPlanPageUrl,
+} from "@/lib/integrations/shopify-server";
 
 /**
  * The embedded app calls this first, every time it opens. It verifies the
  * App Bridge session token, completes the install when needed (token
  * exchange), and says whether the store is linked to a MyKavo website -
- * with the consent link to use if it is not.
+ * with the consent link to use if it is not. It also refreshes the plan the
+ * store pays for through Shopify; `?refreshPlan=1` (sent when the merchant
+ * returns from Shopify's plan page) skips the short cache.
  */
 export async function POST(request: Request) {
   const config = shopifyConfig();
@@ -39,6 +47,9 @@ export async function POST(request: Request) {
     );
   }
 
+  const forcePlan = new URL(request.url).searchParams.get("refreshPlan") === "1";
+  row = await refreshShopifyBilling(row, { force: forcePlan });
+
   const link = await activeLink(row.id);
   const primaryDomain = row.primaryDomain ?? `https://${row.shop}`;
   return NextResponse.json(
@@ -52,6 +63,10 @@ export async function POST(request: Request) {
       themeChecks: row.themeChecks,
       storePages: storePages(primaryDomain),
       adminUrl: adminAppUrl(row.shop, config.apiKey),
+      // Shopify App Pricing: the plan this store pays for, and Shopify's
+      // plan page (null until billing is set up in the Partner Dashboard).
+      shopifyPlan: row.billingPlan ?? "free",
+      planPageUrl: shopifyPlanPageUrl(row.shop),
     },
     { headers: { "cache-control": "no-store" } },
   );

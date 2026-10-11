@@ -21,6 +21,8 @@ export interface SiteContext {
   platform: "wordpress" | "shopify" | "chrome";
   /** The Shopify store's row, for Shopify requests. */
   shopifyShopId: string | null;
+  /** The store's myshopify.com domain, for Shopify requests. */
+  shopifyShop?: string | null;
   connectionId: string;
   workspaceId: string;
   workspaceName: string;
@@ -124,6 +126,7 @@ async function authenticateShopifyRequest(token: string): Promise<SiteContext | 
   return {
     platform: "shopify",
     shopifyShopId: shop.id,
+    shopifyShop: claims.shop,
     connectionId: link.id,
     workspaceId: link.workspace.id,
     workspaceName: link.workspace.name,

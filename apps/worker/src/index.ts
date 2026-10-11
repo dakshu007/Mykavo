@@ -19,6 +19,7 @@ import {
   REPORT_SWEEP_QUEUE,
   AUDIT_SWEEP_QUEUE,
   BILLING_SWEEP_QUEUE,
+  SHOPIFY_BILLING_SWEEP_QUEUE,
   ACTIVATION_SWEEP_QUEUE,
   CLIENT_REPORT_SWEEP_QUEUE,
   SITE_AUDIT_QUEUE,
@@ -53,6 +54,7 @@ import { runProductUpdates } from "./product-updates";
 import { runReportSweep } from "./report";
 import { runAuditSweep } from "./audit-sweep";
 import { runBillingSweep } from "./billing-sweep";
+import { runShopifyBillingSweep } from "./shopify-billing-sweep";
 import { runActivationSweep } from "./activation-email";
 import { runClientReportSweep } from "./client-report";
 import { runSiteAuditJob } from "./site-audit";
@@ -72,6 +74,7 @@ const PRODUCT_UPDATES_CRON = process.env.PRODUCT_UPDATES_CRON ?? "*/10 * * * *";
 const REPORT_CRON = process.env.REPORT_CRON ?? "0 8 * * 1"; // Mondays 08:00 UTC
 const AUDIT_CRON = process.env.AUDIT_CRON ?? "0 6 * * 2"; // Tuesdays 06:00 UTC
 const BILLING_CRON = process.env.BILLING_CRON ?? "0 9 * * *"; // daily 09:00 UTC
+const SHOPIFY_BILLING_CRON = process.env.SHOPIFY_BILLING_CRON ?? "40 * * * *"; // hourly at :40
 const ACTIVATION_CRON = process.env.ACTIVATION_CRON ?? "20 * * * *"; // hourly at :20
 const CLIENT_REPORT_CRON = process.env.CLIENT_REPORT_CRON ?? "30 8 * * *"; // daily 08:30 UTC
 const GSC_CRON = process.env.GSC_CRON ?? "0 7 * * *"; // daily 07:00 UTC
@@ -201,6 +204,14 @@ async function main() {
     await runBillingSweep();
   });
   await boss.schedule(BILLING_SWEEP_QUEUE, BILLING_CRON);
+
+  // Shopify App Pricing: stores paying through Shopify, re-checked for
+  // cancellations and freezes (Shopify sends no webhook for those).
+  await ensureQueue(boss, SHOPIFY_BILLING_SWEEP_QUEUE, { expireInSeconds: 15 * 60 });
+  await boss.work(SHOPIFY_BILLING_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
+    await runShopifyBillingSweep();
+  });
+  await boss.schedule(SHOPIFY_BILLING_SWEEP_QUEUE, SHOPIFY_BILLING_CRON);
 
   // Activation: "baseline ready" + the one-time "add your first website"
   // reminder, spending only the email budget alerts leave over.

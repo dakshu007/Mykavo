@@ -122,7 +122,7 @@ const faqs = [
   },
   {
     q: "Is the app free?",
-    a: "The app is free to install. It connects to a MyKavo account, which has a free plan: one website, five monitored pages and weekly scans, with no card required. Automatic checks after theme changes are part of the Pro and Agency plans, billed by MyKavo, not through Shopify.",
+    a: "The app is free to install and has a free plan: one website, five monitored pages and weekly scans. Automatic checks after every theme change are part of the Pro and Agency plans, which you choose and pay for inside Shopify, on your regular Shopify bill.",
   },
   {
     q: "What permissions does it need?",

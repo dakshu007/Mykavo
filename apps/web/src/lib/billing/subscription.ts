@@ -16,6 +16,10 @@ export interface WorkspaceSubscription {
   currentPeriodEnd: Date | null;
   dodoCustomerId: string | null;
   dodoSubscriptionId: string | null;
+  /** Who bills the plan in force (null on Free). */
+  billedBy?: "dodo" | "shopify" | null;
+  /** The store paying through Shopify, when billedBy is "shopify". */
+  shopifyShop?: string | null;
 }
 
 /** Resolve a workspace's effective plan (features + limits). */

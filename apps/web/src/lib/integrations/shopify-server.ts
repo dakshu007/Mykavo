@@ -4,8 +4,14 @@
  * call these.
  */
 
-import { prisma, type ShopifyShop } from "@mykavo/database";
-import { encryptToken } from "@mykavo/shared";
+import { applyShopifyBilling, prisma, resetDailyScansIfFree, type ShopifyShop } from "@mykavo/database";
+import {
+  decryptToken,
+  encryptToken,
+  fetchShopifySubscription,
+  planSelectionUrl,
+  shopifyBillingConfig,
+} from "@mykavo/shared";
 import { appBaseUrl } from "@/lib/app-url";
 import { logger } from "@/lib/logger";
 import { triggerWebsiteScan } from "@/lib/scans/trigger";
@@ -14,7 +20,7 @@ import {
   themeNote,
   type ThemeTopic,
 } from "@/lib/integrations/shopify";
-import { exchangeSessionToken, fetchShopInfo, registerWebhooks } from "@/lib/integrations/shopify-admin";
+import { adminGraphql, exchangeSessionToken, fetchShopInfo, registerWebhooks } from "@/lib/integrations/shopify-admin";
 
 export interface ShopifyConfig {
   apiKey: string;
@@ -64,7 +70,7 @@ export async function ensureInstalled(params: {
   });
   const info = await fetchShopInfo(shop, accessToken).catch((err: unknown) => {
     logger.error("shopify shop info failed", { shop }, err);
-    return { name: null, primaryDomain: `https://${shop}` };
+    return { id: null, name: null, primaryDomain: `https://${shop}` };
   });
   const problems = await registerWebhooks(shop, accessToken, webhookUrl()).catch((err: unknown) => {
     logger.error("shopify webhook registration failed", { shop }, err);
@@ -78,6 +84,7 @@ export async function ensureInstalled(params: {
     scope,
     name: info.name,
     primaryDomain: info.primaryDomain,
+    ...(info.id ? { shopGid: info.id } : {}),
     installedAt: now,
     uninstalledAt: null,
   };
@@ -173,26 +180,95 @@ export async function handleThemeWebhook(params: {
   });
 }
 
-/** Revoke the store's link, keeping the site_connection row for audit. */
-async function unlink(row: { id: string; siteConnectionId: string | null }): Promise<void> {
-  if (row.siteConnectionId) {
-    await prisma.siteConnection.updateMany({
-      where: { id: row.siteConnectionId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-  }
+/**
+ * Revoke the store's link, keeping the site_connection row for audit.
+ * Returns the workspace it was linked to, if the link was live.
+ */
+async function unlink(row: { id: string; siteConnectionId: string | null }): Promise<string | null> {
+  if (!row.siteConnectionId) return null;
+  const link = await prisma.siteConnection.findFirst({
+    where: { id: row.siteConnectionId, revokedAt: null },
+    select: { workspaceId: true },
+  });
+  await prisma.siteConnection.updateMany({
+    where: { id: row.siteConnectionId, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+  return link?.workspaceId ?? null;
 }
 
-/** app/uninstalled: the token is dead; forget it and the link. */
+/**
+ * app/uninstalled: the token is dead; forget it and the link. Shopify ends
+ * the app's subscription on uninstall, so the store's plan goes too.
+ */
 export async function handleUninstall(shop: string): Promise<void> {
   const row = await prisma.shopifyShop.findUnique({ where: { shop } });
   if (!row) return;
-  await unlink(row);
+  const workspaceId = await unlink(row);
   await prisma.shopifyShop.update({
     where: { id: row.id },
-    data: { accessTokenEnc: null, uninstalledAt: new Date(), siteConnectionId: null },
+    data: {
+      accessTokenEnc: null,
+      uninstalledAt: new Date(),
+      siteConnectionId: null,
+      billingPlan: null,
+      billingPlanHandle: null,
+      billingPeriodEnd: null,
+      billingCancelAtEnd: false,
+    },
   });
+  if (workspaceId && row.billingPlan) await resetDailyScansIfFree(prisma, workspaceId);
   logger.info("shopify store uninstalled", { shop });
+}
+
+/** How long a confirmed plan is trusted before the app asks Shopify again. */
+const BILLING_FRESH_MS = 5 * 60 * 1000;
+
+/**
+ * Ask Shopify which plan the store pays for and store it (Shopify App
+ * Pricing). Runs when the app opens - forced right after the merchant comes
+ * back from the plan page. A failed lookup keeps the last confirmed plan:
+ * an outage must never take a paying store down to Free.
+ */
+export async function refreshShopifyBilling(row: ShopifyShop, options: { force?: boolean } = {}): Promise<ShopifyShop> {
+  const config = shopifyBillingConfig(process.env);
+  if (!config || row.uninstalledAt) return row;
+  const age = row.billingCheckedAt ? Date.now() - row.billingCheckedAt.getTime() : Infinity;
+  // Even a forced check waits 10 seconds between lookups: reloads must not
+  // run into the Partner API's rate limit (4 requests a second).
+  if (age < (options.force ? 10_000 : BILLING_FRESH_MS)) return row;
+  try {
+    let shopGid = row.shopGid;
+    if (!shopGid && row.accessTokenEnc) {
+      const result = await adminGraphql<{ shop: { id: string } }>(
+        row.shop,
+        decryptToken(row.accessTokenEnc, tokenKey()),
+        "{ shop { id } }",
+      );
+      const id = result.data?.shop?.id;
+      if (id && /^gid:\/\/shopify\/Shop\/\d{1,20}$/.test(id)) {
+        shopGid = id;
+        await prisma.shopifyShop.update({ where: { id: row.id }, data: { shopGid: id } });
+      }
+    }
+    if (!shopGid) return row;
+    const sub = await fetchShopifySubscription(config, shopGid);
+    const { changed } = await applyShopifyBilling(prisma, row.id, sub);
+    if (changed) logger.info("shopify plan changed", { shop: row.shop, plan: sub.plan ?? "free" });
+    return (await prisma.shopifyShop.findUnique({ where: { id: row.id } })) ?? row;
+  } catch (err) {
+    logger.warn("shopify plan check failed; keeping the last confirmed plan", {
+      shop: row.shop,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return row;
+  }
+}
+
+/** Shopify's plan page for the store, or null while Shopify billing is not set up. */
+export function shopifyPlanPageUrl(shop: string): string | null {
+  const config = shopifyBillingConfig(process.env);
+  return config ? planSelectionUrl(shop, config.appHandle) : null;
 }
 
 /**
@@ -203,7 +279,8 @@ export async function handleUninstall(shop: string): Promise<void> {
 export async function handleShopRedact(shop: string): Promise<void> {
   const row = await prisma.shopifyShop.findUnique({ where: { shop } });
   if (!row) return;
-  await unlink(row);
+  const workspaceId = await unlink(row);
   await prisma.shopifyShop.delete({ where: { id: row.id } });
+  if (workspaceId && row.billingPlan) await resetDailyScansIfFree(prisma, workspaceId);
   logger.info("shopify store data redacted", { shop });
 }

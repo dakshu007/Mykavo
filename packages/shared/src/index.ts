@@ -32,3 +32,4 @@ export * from "./page-fingerprint";
 export * from "./ai-crawlers";
 export * from "./product-updates";
 export * from "./wordpress-connect";
+export * from "./shopify-billing";

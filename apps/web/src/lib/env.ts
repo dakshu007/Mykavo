@@ -180,6 +180,14 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   // Dashboard). When either is unset the app's routes answer 503.
   SHOPIFY_API_KEY: z.string().optional(),
   SHOPIFY_API_SECRET: z.string().optional(),
+  // Shopify App Pricing (merchants pay for MyKavo on their Shopify bill).
+  // All four are needed; until then the app shows no plan links. Partner
+  // Dashboard: organization id (in its URL), a Partner API client token with
+  // "Manage apps", the app's numeric id (in its URL) and its handle.
+  SHOPIFY_PARTNER_ORG_ID: z.string().optional(),
+  SHOPIFY_PARTNER_API_TOKEN: z.string().optional(),
+  SHOPIFY_APP_ID: z.string().optional(),
+  SHOPIFY_APP_HANDLE: z.string().optional(),
   DODO_API_KEY: z.string().optional(),
   DODO_MODE: optionalStrictAtRuntime(z.enum(["test", "live"]), "DODO_MODE", ctxRef),
   });

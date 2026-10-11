@@ -1287,9 +1287,21 @@ model ShopifyShop {
   siteConnectionId String?             @unique
   siteConnection   SiteConnection?     @relation(fields: [siteConnectionId], references: [id], onDelete: SetNull)
   themeEvents      ShopifyThemeEvent[]
+  /// gid://shopify/Shop/..., which the Partner API needs to look up billing.
+  shopGid          String?
+  /// Shopify App Pricing: the paid MyKavo plan this store pays for through
+  /// Shopify ("pro" | "agency"), or null for none. Read from the Partner
+  /// API, never from anything the browser sends.
+  billingPlan        String?
+  /// The plan handle as configured in the Partner Dashboard.
+  billingPlanHandle  String?
+  billingPeriodEnd   DateTime?
+  billingCancelAtEnd Boolean   @default(false)
+  billingCheckedAt   DateTime?
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 
+  @@index([billingPlan])
   @@map("shopify_shop")
 }
 

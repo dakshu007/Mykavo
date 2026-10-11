@@ -22,6 +22,7 @@ import { Card, CardHeader, IconChip } from "@/components/ui/card";
 import { ValueQuoteCard } from "@/components/value-quote";
 import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscription-button";
 import { ChangePlanButton } from "@/components/dashboard/change-plan-button";
+import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
 
 function FeatureList({ features, columns = false }: { features: string[]; columns?: boolean }) {
   return (
@@ -96,7 +97,11 @@ export default async function BillingPage({
   const isPaid = plan.id !== "free";
   const pro = getPlan("pro");
   const agency = getPlan("agency");
-  const canChangePlan = dodoApiConfigured() && !subscription?.cancelAtPeriodEnd;
+  // Paid for through Shopify by a linked store (Shopify App Pricing): the
+  // plan is changed or cancelled in the Shopify admin, never here.
+  const shopifyShop = subscription?.billedBy === "shopify" ? (subscription.shopifyShop ?? null) : null;
+  const shopifyPlansUrl = shopifyShop ? shopifyPlanPageUrl(shopifyShop) : null;
+  const canChangePlan = !shopifyShop && dodoApiConfigured() && !subscription?.cancelAtPeriodEnd;
   const justCheckedOut = sp.checkout === "success";
   // Server component: one clock read per request (also keeps the React
   // Compiler purity lint happy - Date.now() inline in render is flagged).
@@ -172,8 +177,14 @@ export default async function BillingPage({
                   {daysToRenewal !== null && (
                     <span className="text-ink-secondary"> (in {daysToRenewal} day{daysToRenewal === 1 ? "" : "s"})</span>
                   )}{" "}
-                  - ${plan.priceMonthlyUsd} billed monthly via Dodo Payments (charged
-                  as ${plan.priceMonthlyUsd} USD).
+                  {shopifyShop ? (
+                    <>- billed through Shopify for {shopifyShop}.</>
+                  ) : (
+                    <>
+                      - ${plan.priceMonthlyUsd} billed monthly via Dodo Payments (charged
+                      as ${plan.priceMonthlyUsd} USD).
+                    </>
+                  )}
                 </>
               )}
             </p>
@@ -182,7 +193,26 @@ export default async function BillingPage({
 
         <FeatureList features={plan.features} />
 
-        {plan.unlimited && !subscription?.dodoSubscriptionId ? (
+        {shopifyShop ? (
+          <div className="mt-6 space-y-3">
+            <p className="text-[13px] text-ink-secondary">
+              {plan.name} is paid for through Shopify by{" "}
+              <span className="font-medium text-ink">{shopifyShop}</span>, which is linked to this
+              workspace. Change or cancel it in that store&apos;s Shopify admin, under Apps &gt;
+              MyKavo.
+            </p>
+            {shopifyPlansUrl && (
+              <a
+                href={shopifyPlansUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-medium text-ink-inverse transition-colors hover:bg-ink-hover"
+              >
+                Manage plan in Shopify
+              </a>
+            )}
+          </div>
+        ) : plan.unlimited && !subscription?.dodoSubscriptionId ? (
           <p className="mt-6 text-[13px] text-ink-secondary">
             This workspace belongs to a MyKavo admin, so it runs on Agency with no limits and
             nothing to pay. Nothing is billed through Dodo Payments.
@@ -262,7 +292,20 @@ export default async function BillingPage({
           </p>
           <FeatureList features={agency.features} columns />
           <div className="mt-6">
-            {agencyBillingEnabled && canChangePlan ? (
+            {shopifyShop ? (
+              shopifyPlansUrl ? (
+                <a
+                  href={shopifyPlansUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
+                >
+                  Upgrade in Shopify <ArrowRight className="size-4" aria-hidden />
+                </a>
+              ) : (
+                <p className="text-sm text-ink-faint">Upgrade from the MyKavo app in your Shopify admin.</p>
+              )
+            ) : agencyBillingEnabled && canChangePlan ? (
               <ChangePlanButton
                 target="agency"
                 label="Upgrade to Agency"

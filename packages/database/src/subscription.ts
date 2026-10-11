@@ -41,8 +41,49 @@ export function planIdFromSubscription(sub: { planId: string; status: string } |
   return toPaidPlanId(sub.planId) ?? "free";
 }
 
+/** Higher of two plans: Agency over Pro over Free. */
+export function higherPlan(a: "free" | PaidPlanId, b: "free" | PaidPlanId): "free" | PaidPlanId {
+  const rank = { free: 0, pro: 1, agency: 2 } as const;
+  return rank[b] > rank[a] ? b : a;
+}
+
+/**
+ * The best plan paid for through Shopify by a store linked to this
+ * workspace (Shopify App Pricing), with that store's domain. A store only
+ * counts while the app is installed and its link to the workspace is live.
+ */
+export async function getShopifyPaidPlan(
+  db: Db,
+  workspaceId: string,
+): Promise<{ planId: PaidPlanId; shop: string; periodEnd: Date | null; cancelAtEnd: boolean } | null> {
+  const shops = await db.shopifyShop.findMany({
+    where: {
+      billingPlan: { in: ["pro", "agency"] },
+      uninstalledAt: null,
+      siteConnection: { is: { workspaceId, revokedAt: null } },
+    },
+    select: { shop: true, billingPlan: true, billingPeriodEnd: true, billingCancelAtEnd: true },
+  });
+  let best: { planId: PaidPlanId; shop: string; periodEnd: Date | null; cancelAtEnd: boolean } | null = null;
+  for (const s of shops) {
+    const planId = toPaidPlanId(s.billingPlan ?? "");
+    if (!planId) continue;
+    if (!best || higherPlan(best.planId, planId) !== best.planId) {
+      best = { planId, shop: s.shop, periodEnd: s.billingPeriodEnd, cancelAtEnd: s.billingCancelAtEnd };
+    }
+  }
+  return best;
+}
+
 export interface Entitlement {
   planId: "free" | PaidPlanId;
+  /**
+   * Who bills the plan in force: MyKavo's own billing (Dodo), or Shopify
+   * for a store linked to the workspace. Null on Free.
+   */
+  billedBy?: "dodo" | "shopify" | null;
+  /** The store paying through Shopify, when billedBy is "shopify". */
+  shopifyShop?: string | null;
   /** Pro bought before Agency existed - keeps the features it included then. */
   grandfathered: boolean;
   /**
@@ -91,11 +132,32 @@ export async function getWorkspaceEntitlement(
       dodoSubscriptionId: sub?.dodoSubscriptionId ?? null,
     };
   }
-  if (!sub) return null;
-  const planId = planIdFromSubscription(sub);
+  const shopify = await getShopifyPaidPlan(db, workspaceId);
+  if (!sub && !shopify) return null;
+  const dodoPlan = planIdFromSubscription(sub);
+  // A store paying through Shopify grants its plan to the workspace it is
+  // linked to; if the workspace also pays MyKavo directly, the higher wins.
+  const fromShopify = shopify !== null && higherPlan(dodoPlan, shopify.planId) !== dodoPlan;
+  if (!sub || fromShopify) {
+    return {
+      planId: shopify!.planId,
+      billedBy: "shopify",
+      shopifyShop: shopify!.shop,
+      grandfathered: false,
+      unlimited: false,
+      status: "active",
+      cancelAtPeriodEnd: shopify!.cancelAtEnd,
+      currentPeriodEnd: shopify!.periodEnd,
+      dodoCustomerId: sub?.dodoCustomerId ?? null,
+      dodoSubscriptionId: sub?.dodoSubscriptionId ?? null,
+    };
+  }
+  const planId = dodoPlan;
   const paid = planId === "free" ? null : planId;
   return {
     planId: paid ?? "free",
+    billedBy: paid ? "dodo" : null,
+    shopifyShop: null,
     grandfathered: paid !== null && isGrandfatheredPro(paid, sub.createdAt),
     unlimited: false,
     status: sub.status,
@@ -206,6 +268,8 @@ export async function downgradeWorkspaceToFree(
       lastEventAt: input.eventAt ?? undefined,
     },
   });
+  // A store paying through Shopify can still keep the workspace on a paid plan.
+  if (await getShopifyPaidPlan(db, input.workspaceId)) return;
   await db.website.updateMany({
     where: { workspaceId: input.workspaceId, scanFrequency: "DAILY" },
     data: { scanFrequency: "WEEKLY" },
@@ -394,4 +458,57 @@ export async function consumeCheckoutIntent(
     data: { consumedAt: now },
   });
   return { workspaceId: intent.workspaceId, kind: intent.kind };
+}
+
+/* ---------- Shopify App Pricing ---------- */
+
+export interface ShopifyBillingSnapshot {
+  plan: PaidPlanId | null;
+  handle: string | null;
+  periodEnd: Date | null;
+  cancelAtEnd: boolean;
+}
+
+/**
+ * Store what the Partner API says a Shopify store pays for. When that takes
+ * the workspace it is linked to down to Free, daily scans go back to weekly,
+ * exactly as when a MyKavo subscription ends.
+ */
+export async function applyShopifyBilling(
+  db: Db,
+  shopifyShopId: string,
+  snapshot: ShopifyBillingSnapshot,
+  checkedAt: Date = new Date(),
+): Promise<{ changed: boolean; workspaceId: string | null }> {
+  const before = await db.shopifyShop.findUnique({
+    where: { id: shopifyShopId },
+    select: { billingPlan: true, siteConnection: { select: { workspaceId: true, revokedAt: true } } },
+  });
+  if (!before) return { changed: false, workspaceId: null };
+  await db.shopifyShop.update({
+    where: { id: shopifyShopId },
+    data: {
+      billingPlan: snapshot.plan,
+      billingPlanHandle: snapshot.handle,
+      billingPeriodEnd: snapshot.periodEnd,
+      billingCancelAtEnd: snapshot.cancelAtEnd,
+      billingCheckedAt: checkedAt,
+    },
+  });
+  const link = before.siteConnection && !before.siteConnection.revokedAt ? before.siteConnection : null;
+  const changed = (before.billingPlan ?? null) !== snapshot.plan;
+  if (changed && link && toPaidPlanId(before.billingPlan ?? "") && !snapshot.plan) {
+    await resetDailyScansIfFree(db, link.workspaceId);
+  }
+  return { changed, workspaceId: link?.workspaceId ?? null };
+}
+
+/** After a store stops paying (or uninstalls): weekly scans again, if nothing else pays. */
+export async function resetDailyScansIfFree(db: Db, workspaceId: string): Promise<void> {
+  const entitlement = await getWorkspaceEntitlement(db, workspaceId);
+  if ((entitlement?.planId ?? "free") !== "free") return;
+  await db.website.updateMany({
+    where: { workspaceId, scanFrequency: "DAILY" },
+    data: { scanFrequency: "WEEKLY" },
+  });
 }
