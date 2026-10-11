@@ -86,9 +86,25 @@ function parseHttpUrl(raw: string | null | undefined): URL | null {
   }
 }
 
+const NAMED_ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+
+/**
+ * WordPress stores the site title HTML-escaped ("Arthur &amp; Gwen"), and
+ * the plugin sends it as stored. Decode it once, in a single pass, so
+ * "&amp;lt;" stays the literal text "&lt;". It is only ever rendered as
+ * text (React and the email templates escape it again), never as HTML.
+ */
+export function decodeHtmlEntities(text: string): string {
+  return text.replace(/&(#\d{1,7}|#x[0-9a-f]{1,6}|[a-z]+);/gi, (m, body: string) => {
+    if (body[0] !== "#") return NAMED_ENTITIES[body.toLowerCase()] ?? m;
+    const code = body[1] === "x" || body[1] === "X" ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+    return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : m;
+  });
+}
+
 function shortText(raw: string | null | undefined, max: number): string | null {
   if (!raw) return null;
-  const trimmed = raw.replace(/\s+/g, " ").trim();
+  const trimmed = decodeHtmlEntities(raw).replace(/\s+/g, " ").trim();
   return trimmed ? trimmed.slice(0, max) : null;
 }
 

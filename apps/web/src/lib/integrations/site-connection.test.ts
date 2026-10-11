@@ -7,6 +7,7 @@ import {
   bareHost,
   buildReturnUrl,
   connectReturnPath,
+  decodeHtmlEntities,
   newAccessToken,
   newConnectCode,
   parseConnectRequest,
@@ -149,5 +150,17 @@ describe("connectReturnPath", () => {
     expect(connectReturnPath("/connect/wordpress?x=<script>")).toBeNull();
     expect(connectReturnPath(`/connect/wordpress?x=${"a".repeat(4000)}`)).toBeNull();
     expect(connectReturnPath(null)).toBeNull();
+  });
+});
+
+describe("decodeHtmlEntities", () => {
+  it("decodes the site title WordPress stores escaped", () => {
+    expect(decodeHtmlEntities("Arthur &amp; Gwen Levi z&quot;l")).toBe('Arthur & Gwen Levi z"l');
+    expect(decodeHtmlEntities("Bob&#039;s &#x2014; Caf&eacute;")).toBe("Bob's \u2014 Caf&eacute;");
+  });
+
+  it("decodes once, and leaves anything it doesn't know as typed", () => {
+    expect(decodeHtmlEntities("&amp;lt;b&amp;gt;")).toBe("&lt;b&gt;");
+    expect(decodeHtmlEntities("Fish & Chips; 100% &#0; &#xD800;")).toBe("Fish & Chips; 100% &#0; &#xD800;");
   });
 });
