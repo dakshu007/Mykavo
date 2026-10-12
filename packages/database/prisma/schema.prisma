@@ -1640,3 +1640,28 @@ model ProductUpdateNotice {
   @@index([userId, createdAt])
   @@map("product_update_notice")
 }
+
+/// A question asked of the support assistant on /support, with what it
+/// answered. Read by the admin Support questions page to see what people ask
+/// and which questions the knowledge base does not cover yet.
+model SupportQuestion {
+  id               String   @id @default(cuid())
+  question         String
+  /// "answer" | "suggest" | "fallback" | "smalltalk" | "pick"
+  kind             String
+  /// The article answered with, or picked from a suggestion.
+  articleId        String?
+  /// Matcher confidence, 0..1.
+  score            Float    @default(0)
+  /// The article being discussed when this was asked.
+  contextArticleId String?
+  /// Set when the person rated the answer.
+  helpful          Boolean?
+  /// The signed-in person who asked, when there is one.
+  userId           String?
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([kind, createdAt(sort: Desc)])
+  @@map("support_question")
+}

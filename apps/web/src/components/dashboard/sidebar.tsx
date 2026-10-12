@@ -23,6 +23,7 @@ import {
   Megaphone,
   Sparkles,
   Activity,
+  LifeBuoy,
 } from "lucide-react";
 import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
@@ -62,6 +63,7 @@ const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   "app-requests": MailQuestion,
   automations: Workflow,
   "email-marketing": Megaphone,
+  "support-questions": LifeBuoy,
   app: Smartphone,
 };
 

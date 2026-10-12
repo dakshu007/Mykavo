@@ -27,6 +27,18 @@ export const CHANGELOG_PATH = "/whats-new-on-mykavo";
 
 export const CHANGELOG: ChangelogRelease[] = [
   {
+    date: "2026-10-12",
+    title: "A new help center with an instant assistant",
+    summary: "Ask the MyKavo Assistant on the support page and get an answer in seconds, any time of day.",
+    items: [
+      {
+        kind: "new",
+        text: "The support page now has the MyKavo Assistant, 175 answers across 12 topics, and a one-tap way to email a real person whenever the assistant can't solve it.",
+        href: "/support",
+      },
+    ],
+  },
+  {
     date: "2026-10-11",
     title: "WordPress update history on every plan",
     summary: "Every plugin, theme and WordPress update on a connected site is now listed on mykavo.app, Free plan included.",
