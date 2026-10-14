@@ -34,7 +34,10 @@ describe("toolForPost", () => {
     expect(toolForPost(post("Accidental noindex: how to detect it"))).toBe("meta-tags");
     expect(toolForPost(post("Redirect chains explained"))).toBe("redirects");
     expect(toolForPost(post("Your analytics script disappeared"))).toBe("scripts");
-    expect(toolForPost(post("Find every broken link and 404"))).toBe("status");
+    expect(toolForPost(post("Find every broken link and 404"))).toBe("broken-links");
+    expect(toolForPost(post("What a 404 status code means"))).toBe("status");
+    expect(toolForPost(post("Best website monitoring tools"))).toBe("meta-tags");
+    expect(toolForPost(post("Website change detection tools compared"))).toBe("meta-tags");
     expect(toolForPost(post("What E-E-A-T means for small sites"))).toBe("eeat");
   });
   it("offers nothing when nothing fits", () => {

@@ -26,7 +26,7 @@ export function StickyCta() {
       }`}
     >
       <div className="flex items-center gap-3">
-        <GoogleButton size="md" />
+        <GoogleButton size="md" from="home:sticky" />
         <Link
           href="/#how-it-works"
           className="hidden h-11 items-center rounded-full border border-[#151515] bg-[#151515] px-6 text-[14px] font-semibold text-[#F5F5F0] shadow-[4px_4px_0_#FFD400] transition-colors hover:bg-[#2a2a2a] sm:inline-flex"

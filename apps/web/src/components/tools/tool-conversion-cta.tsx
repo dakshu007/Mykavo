@@ -51,7 +51,7 @@ export function ToolConversionCta({
         </ul>
 
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <GoogleButton />
+          <GoogleButton from="tool:page" />
           <Link
             href="/signup"
             className="inline-flex h-12 items-center justify-center rounded-full border border-[#151515]/20 bg-white px-6 text-[14px] font-semibold text-[#151515] transition-colors hover:border-[#151515]/45"

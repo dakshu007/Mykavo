@@ -145,6 +145,7 @@ export function WordPressDetector() {
             heading="Know which update broke your WordPress site."
             body="MyKavo's free WordPress plugin checks your key pages after every plugin, theme and core update, and names the update behind any change it finds."
             tool="wordpress-theme-detector"
+            url={report.finalUrl}
           />
         </>
       )}

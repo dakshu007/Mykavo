@@ -170,6 +170,7 @@ export function StructuredDataChecker() {
             heading="Schema breaks quietly. Keep an eye on the pages that matter."
             body="MyKavo scans your important pages on a schedule, records a fingerprint of their structured data with every scan, and alerts you when titles, canonicals, robots tags or H1s change."
             tool="structured-data-checker"
+            url={report.finalUrl}
           />
         </>
       )}

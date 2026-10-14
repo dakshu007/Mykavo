@@ -170,6 +170,7 @@ export function RedirectChainChecker() {
             heading="Get alerted when redirects unexpectedly change."
             body="MyKavo monitors the redirect behavior of every page you care about - new redirects, changed destinations, and broken chains trigger an email before your visitors notice."
             tool="redirect-chain-checker"
+            url={chain.steps[0]?.url}
           />
         </>
       )}

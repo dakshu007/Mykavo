@@ -79,7 +79,7 @@ export function BlogCta({ showMorePosts = true }: { showMorePosts?: boolean }) {
           </ul>
 
           <div className="mt-8 flex flex-col items-center gap-3 lg:items-start">
-            <GoogleButton onDark />
+            <GoogleButton onDark from="blog:end" />
             <Link
               href="/signup"
               className="text-[13px] text-[#9C9E93] underline underline-offset-4 transition-colors hover:text-[#E9EBDF]"

@@ -28,6 +28,7 @@ export function GoogleButton({
   size = "lg",
   onDark = false,
   next,
+  from,
   className = "",
 }: {
   label?: string;
@@ -35,10 +36,13 @@ export function GoogleButton({
   onDark?: boolean;
   /** Same-origin path to land on after auth. */
   next?: string;
+  /** Which CTA this is, recorded with the signup (lib/attribution), e.g. "blog:end". */
+  from?: string;
   className?: string;
 }) {
   const query = new URLSearchParams({ provider: "google" });
   if (next) query.set("next", next);
+  if (from) query.set("from", from);
   const pad = size === "lg" ? "h-13 px-7 text-[15px]" : "h-11 px-6 text-[14px]";
   const shadow = onDark
     ? "shadow-[4px_4px_0_#FFD400] hover:shadow-[5px_6px_0_#FFD400] active:shadow-[2px_2px_0_#FFD400]"

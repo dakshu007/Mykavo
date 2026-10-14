@@ -139,6 +139,7 @@ export function RobotsTxtTester() {
             heading="Get alerted when robots.txt changes."
             body="One wrong line in robots.txt can hide a whole site from Google. MyKavo watches the pages you care about and alerts you, with before-and-after evidence, when indexing signals change."
             tool="robots-txt-tester"
+            url={report.testedUrl}
           />
         </>
       )}

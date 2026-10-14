@@ -3,6 +3,7 @@ import {
   BLOCK_SNIPPETS,
   collectFaqItems,
   createHeadingIdGenerator,
+  withMidpointSlot,
   parseFaqItems,
   parsePost,
   readingTimeMinutes,
@@ -252,5 +253,44 @@ describe("cta-wordpress block", () => {
 
   it("is offered in the editor's / menu as cta-wordpress", () => {
     expect(BLOCK_SNIPPETS.map((o) => o.command)).toContain("cta-wordpress");
+  });
+});
+
+describe("withMidpointSlot", () => {
+  const body = [
+    "Intro paragraph.",
+    "",
+    "## One",
+    "Text one.",
+    "",
+    "```",
+    "## not a heading",
+    "```",
+    "",
+    "## Two",
+    "Text two.",
+    "",
+    "## Three",
+    "Text three.",
+    "",
+    "More.",
+  ].join("\n");
+
+  it("puts the slot before a real H2 past the start, keeping heading ids", () => {
+    const { segments } = parsePost(body);
+    const out = withMidpointSlot(segments);
+    const slot = out.findIndex((s) => s.type === "slot");
+    expect(slot).toBe(1);
+    const after = out[2];
+    expect(after.type === "markdown" && after.content.startsWith("## Two")).toBe(true);
+    expect(after.type === "markdown" && after.headingIds[1]).toBe("two");
+    const before = out[0];
+    expect(before.type === "markdown" && Object.values(before.headingIds)).toEqual(["one"]);
+  });
+
+  it("falls back to the end when there is no heading to split at", () => {
+    const { segments } = parsePost("Just one paragraph.");
+    const out = withMidpointSlot(segments);
+    expect(out[out.length - 1]).toEqual({ type: "slot" });
   });
 });

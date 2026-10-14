@@ -4,6 +4,7 @@ import { MetaTagChecker } from "@/app/tools/meta-tag-checker/meta-tag-checker";
 import { RedirectChainChecker } from "@/app/tools/redirect-chain-checker/redirect-chain-checker";
 import { ScriptDetector } from "@/app/tools/script-detector/script-detector";
 import { BulkStatusChecker } from "@/app/tools/bulk-url-status-checker/bulk-status-checker";
+import { BrokenLinkChecker } from "@/app/tools/broken-link-checker/broken-link-checker";
 import { EeatAnalyzer } from "@/app/tools/eeat-analyzer/eeat-analyzer";
 import type { BlogToolId } from "@/lib/blog-tools";
 
@@ -38,6 +39,12 @@ const TOOLS: Record<BlogToolId, { title: string; lede: string; href: string; Too
     href: "/tools/bulk-url-status-checker",
     Tool: BulkStatusChecker,
   },
+  "broken-links": {
+    title: "Find broken links on your own page",
+    lede: "Every link on the page checked, with the ones that 404, error or go nowhere listed first.",
+    href: "/tools/broken-link-checker",
+    Tool: BrokenLinkChecker,
+  },
   eeat: {
     title: "Score your own page's E-E-A-T signals",
     lede: "Authorship, trust and expertise signals, checked on your page.",
@@ -49,7 +56,7 @@ const TOOLS: Record<BlogToolId, { title: string; lede: string; href: string; Too
 export function PostTool({ tool }: { tool: BlogToolId }) {
   const t = TOOLS[tool];
   return (
-    <section aria-label="Try it on your site" className="mt-8 rounded-[28px] border-2 border-[#151515] bg-[#FBFAF3] p-6 text-[#151515] shadow-[6px_6px_0_#FFD400] sm:p-8">
+    <section aria-label="Try it on your site" className="not-prose my-10 rounded-[28px] border-2 border-[#151515] bg-[#FBFAF3] p-6 text-[#151515] shadow-[6px_6px_0_#FFD400] sm:p-8">
       <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#6B6B60]">Try it on your site · free</p>
       <h2 className="mt-2 text-2xl font-semibold tracking-tight">{t.title}</h2>
       <p className="mt-1.5 text-[15px] leading-7 text-[#6B6B60]">{t.lede}</p>

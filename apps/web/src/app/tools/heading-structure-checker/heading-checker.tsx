@@ -171,6 +171,7 @@ export function HeadingChecker() {
             heading="Find out when an H1 disappears, not weeks later."
             body="MyKavo compares the H1 on every monitored page each scan. A removed H1 is a high-severity alert and a changed one is flagged for review, while edits to other headings show up as text changes."
             tool="heading-structure-checker"
+            url={report.finalUrl}
           />
         </>
       )}

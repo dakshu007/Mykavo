@@ -7,6 +7,7 @@ import { GoogleButton } from "@/components/landing/google-cta";
 import { ShareButtons } from "@/components/blog/share-buttons";
 import { ReadingProgress } from "@/components/blog/reading-progress";
 import { PostTool } from "@/components/blog/post-tool";
+import { BlogStickyCta } from "@/components/blog/blog-sticky-cta";
 import { resolveAuthor } from "@/lib/blog-authors-server";
 import { AuthorBox } from "@/components/blog/author-box";
 import { displayTags, showUpdated } from "@/lib/blog-display";
@@ -302,7 +303,7 @@ export default async function BlogPostPage({ params }: Params) {
               </ul>
             )}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-              <GoogleButton size="md" />
+              <GoogleButton size="md" from="blog:top" />
               <span className="text-[12.5px] text-[#6B6B60]">Free plan · No credit card required</span>
             </div>
           </div>
@@ -323,15 +324,15 @@ export default async function BlogPostPage({ params }: Params) {
                 data-post-body
                 className="rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-10"
               >
-                <PostContent content={post.content} />
+                {/* The matched free tool sits mid-article, between sections:
+                    readers who never reach the end still meet it. */}
+                <PostContent content={post.content} midpoint={tool ? <PostTool tool={tool} /> : undefined} />
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <span className="text-sm font-semibold text-[#151515]">Share this post</span>
                 <ShareButtons url={postUrl} title={post.title} />
               </div>
-
-              {tool && <PostTool tool={tool} />}
 
               {/* Author bio */}
               <aside
@@ -383,6 +384,7 @@ export default async function BlogPostPage({ params }: Params) {
 
               {/* End-of-post product CTA - see components/blog/blog-cta.tsx. */}
               <BlogCta />
+              <BlogStickyCta />
             </article>
 
             <aside className="hidden w-72 shrink-0 lg:block">
@@ -394,7 +396,7 @@ export default async function BlogPostPage({ params }: Params) {
                   <p className="mt-1.5 text-[13px] leading-5 text-[#6B6B60]">
                     MyKavo watches your pages and tells you when something important changes or breaks.
                   </p>
-                  <GoogleButton size="md" className="mt-4 w-full" />
+                  <GoogleButton size="md" className="mt-4 w-full" from="blog:rail" />
                   <Link
                     href="/signup"
                     className="mt-2.5 block text-center text-[12.5px] text-[#6B6B60] underline underline-offset-4 hover:text-[#151515]"

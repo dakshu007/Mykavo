@@ -164,6 +164,7 @@ export function ShopifyDetector() {
             heading="Theme updates and app installs change your store quietly."
             body="MyKavo scans your storefront pages on a schedule and alerts you when an app script vanishes, a page breaks, or a button you told it to watch, like Add to cart, goes missing."
             tool="shopify-theme-detector"
+            url={report.finalUrl}
           />
           <p className="text-center text-[13px] text-[#6B6B60]">
             Run a Shopify store?{" "}

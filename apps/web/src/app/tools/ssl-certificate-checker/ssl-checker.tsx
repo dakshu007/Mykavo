@@ -119,6 +119,7 @@ export function SslChecker() {
             heading="Never find out from a browser warning."
             body="MyKavo checks the certificate of every website you monitor, on every plan including Free, and alerts you by email or Slack when it's within 14 days of expiring."
             tool="ssl-certificate-checker"
+            url={`https://${report.hostname}`}
           />
         </>
       )}

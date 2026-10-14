@@ -4,7 +4,7 @@ import { GoogleButton } from "@/components/landing/google-cta";
 import { WpPluginInstall } from "@/components/landing/wp-plugin-download";
 import { WP_PLUGIN_PAGE_PATH, WP_PLUGIN_REQUIRES } from "@/config/wordpress-plugin";
 import { cn } from "@/lib/utils";
-import { parsePost, type FaqItem, type PostHeading } from "./blocks";
+import { parsePost, withMidpointSlot, type FaqItem, type PostHeading, type SegmentOrSlot } from "./blocks";
 import { BlogMarkdown } from "./markdown";
 
 /**
@@ -12,12 +12,16 @@ import { BlogMarkdown } from "./markdown";
  * {{faq}}…{{/faq}}) in author order. Used by both the public post page and
  * the editor live preview, so the preview shows exactly what readers see.
  */
-export function PostContent({ content }: { content: string }) {
-  const { segments, headings } = parsePost(content);
+export function PostContent({ content, midpoint }: { content: string; midpoint?: React.ReactNode }) {
+  const { segments: parsed, headings } = parsePost(content);
+  // An in-article block (the post's free tool) goes between sections, mid-read.
+  const segments: SegmentOrSlot[] = midpoint ? withMidpointSlot(parsed) : parsed;
   return (
     <>
       {segments.map((segment, index) => {
         switch (segment.type) {
+          case "slot":
+            return <div key={index}>{midpoint}</div>;
           case "markdown":
             return (
               <BlogMarkdown

@@ -10,9 +10,9 @@ import { ScriptDetector } from "./script-detector";
 import { site } from "@/config/site";
 
 export const metadata: Metadata = withSocial({
-  title: "Free Third-Party Script Detector",
+  title: "What Script Is This? Free Script Checker for Any Page",
   description:
-    "Free script detector: list every external script on a page and identify common services like Google Analytics, Tag Manager, Meta Pixel, Stripe, Hotjar, Intercom, and HubSpot.",
+    "Paste a URL and see every script the page loads: Google Analytics, Tag Manager, Meta Pixel, Stripe, Hotjar, Intercom, HubSpot and any unknown third party. Free, no signup.",
   alternates: { canonical: "/tools/script-detector" },
 });
 

@@ -11,9 +11,9 @@ import {
 } from "@/components/landing/seo-page";
 
 export const metadata: Metadata = withSocial({
-  title: "Visual Regression Testing - Automated Screenshot Comparison",
+  title: "Visual Regression Testing for Live Websites (No Code, Free)",
   description:
-    "Visual regression testing catches unintended layout and design changes by comparing screenshots against an approved baseline. Learn how it works and how to run it on any live website without writing test code.",
+    "Visual regression testing without writing tests: MyKavo screenshots your live pages, compares them with an approved baseline and highlights what moved, broke or disappeared. Free plan, no card.",
   keywords: [
     "visual regression testing",
     "visual regression testing tools",

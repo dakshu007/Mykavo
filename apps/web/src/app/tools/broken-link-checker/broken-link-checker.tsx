@@ -120,6 +120,7 @@ export function BrokenLinkChecker() {
             heading="Find out when an internal link breaks, not months later."
             body="MyKavo checks the internal links on every page you monitor after each scan and raises one grouped change when links start returning 404, 410, a server error or stop resolving. Five or more at once is high severity and emailed by default."
             tool="broken-link-checker"
+            url={report.finalUrl}
           />
         </>
       )}

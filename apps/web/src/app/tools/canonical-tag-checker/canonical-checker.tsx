@@ -181,6 +181,7 @@ export function CanonicalChecker() {
             heading="Get alerted when a canonical changes or disappears."
             body="A theme update or SEO plugin setting can rewrite canonicals across a whole site without anything looking different. MyKavo records the canonical on every monitored page each scan and raises a high-severity alert when it changes or is removed."
             tool="canonical-tag-checker"
+            url={report.finalUrl}
           />
         </>
       )}

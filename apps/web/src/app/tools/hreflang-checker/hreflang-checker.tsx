@@ -174,6 +174,7 @@ export function HreflangChecker() {
             heading="Catch hreflang and SEO tag mistakes across the whole site."
             body="MyKavo's Site Audit, included on the free plan for up to 150 pages per crawl, flags invalid hreflang codes and missing self-references, and monitoring alerts you when key SEO tags change."
             tool="hreflang-checker"
+            url={report.finalUrl}
           />
         </>
       )}

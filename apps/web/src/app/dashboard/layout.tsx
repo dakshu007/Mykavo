@@ -9,6 +9,8 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { ActivityBeacon } from "@/components/dashboard/activity-beacon";
+import { SignupTracker } from "@/components/analytics/signup-tracker";
+import { recordSignupAttribution } from "@/lib/attribution/record";
 import { Greeting } from "@/components/dashboard/greeting";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
@@ -39,7 +41,7 @@ export default async function DashboardLayout({
   // monitoringLive gates the sidebar's "Deeper analysis" group: the audit,
   // Search Console and analyser pages have nothing to show before a baseline
   // exists, so on day one they would be dead ends in the navigation.
-  const [memberships, plan, websiteLimit, websitesUsed, monitoringLive, appStatus] =
+  const [memberships, plan, websiteLimit, websitesUsed, monitoringLive, appStatus, newSignup] =
     await Promise.all([
     prisma.workspaceMember.findMany({
       where: { userId: session.user.id },
@@ -53,6 +55,8 @@ export default async function DashboardLayout({
       // Approved for the Android app? Adds the download entry to the nav. By
       // address, which is why the request form insists on the same one.
       getAppAccessStatus(session.user.email),
+      // A brand-new account: remember where it came from, once.
+      recordSignupAttribution(session.user),
     ]);
   const appApproved = canDownloadApp(appStatus);
 
@@ -61,6 +65,7 @@ export default async function DashboardLayout({
     // public page without a reload), it masks everything in the signed-in app.
     <div data-clarity-mask="True" className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
       <ActivityBeacon />
+      {newSignup ? <SignupTracker userId={session.user.id} {...newSignup} /> : null}
       <CommandPalette
         isBlogAdmin={isBlogAdmin(session.user.email)}
         isPlatformAdmin={isPlatformAdmin(session.user.email)}

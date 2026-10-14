@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Clarity } from "@/components/analytics/clarity";
+import { AttributionCapture } from "@/components/analytics/attribution-capture";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
@@ -115,6 +116,8 @@ export default function RootLayout({
         <SmoothScroll />
         {/* Instant feedback on every internal link click, site-wide. */}
         <NavigationProgress />
+        {/* Where a visitor first landed, for signup attribution (lib/attribution). */}
+        <AttributionCapture />
         {children}
         {/* Google tag (gtag.js) - production only.
             lazyOnload: analytics waits until the page has loaded and the

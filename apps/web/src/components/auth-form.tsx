@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { track } from "@/lib/analytics";
 import { BackupCodesPanel, TotpQr, totpSecretFromUri } from "@/components/two-factor";
 
 function Field({
@@ -138,7 +137,6 @@ export function AuthForm({
     if (googleLoading) return;
     setGoogleLoading(true);
     setError("");
-    if (mode === "signup") track("account_created", { provider: "google" });
     const result = await authClient.signIn.social({
       provider: "google",
       callbackURL: target,
@@ -192,7 +190,6 @@ export function AuthForm({
       setLoading(false);
       return;
     }
-    track("account_created");
     const enable = await authClient.twoFactor.enable({ password });
     if (enable.error || !enable.data) {
       // Account exists and is signed in - don't strand the user on an

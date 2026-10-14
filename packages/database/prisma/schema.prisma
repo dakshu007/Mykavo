@@ -1665,3 +1665,22 @@ model SupportQuestion {
   @@index([kind, createdAt(sort: Desc)])
   @@map("support_question")
 }
+
+/// Where a new account came from, recorded once when it first reaches the
+/// dashboard (apps/web/src/lib/attribution): the first page the visitor
+/// landed on, the referring site and the last call to action clicked.
+model SignupAttribution {
+  userId    String   @id
+  /// First landing path on mykavo.app, e.g. "/blog/seo-monitoring-tools".
+  landing   String
+  /// Referring host, "" for direct.
+  referrer  String   @default("")
+  /// Last CTA placement clicked before signing up, e.g. "tool:script-detector".
+  cta       String?
+  /// "google" | "email"
+  method    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@map("signup_attribution")
+}

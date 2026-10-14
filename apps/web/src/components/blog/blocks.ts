@@ -320,3 +320,55 @@ export function readingTimeMinutes(markdown: string): number {
   const words = markdown.split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
 }
+
+/** Where an in-article block (the free tool) goes; see `withMidpointSlot`. */
+export type SegmentOrSlot = BlockSegment | { type: "slot" };
+
+/**
+ * Inserts a slot just before the first H2 that starts at or after `ratio` of
+ * the post (by markdown lines), so an in-article block lands mid-read,
+ * between sections, instead of after the end that most readers never reach.
+ * Never inside a code fence (only real headings have ids) and never in the
+ * last fifth of the post. Returns the segments unchanged with the slot
+ * appended when the post has no suitable heading.
+ */
+export function withMidpointSlot(segments: BlockSegment[], ratio = 0.35): SegmentOrSlot[] {
+  const lineCounts = segments.map((s) => (s.type === "markdown" ? s.content.split("\n").length : 0));
+  const total = lineCounts.reduce((a, b) => a + b, 0);
+  if (total === 0) return [...segments, { type: "slot" }];
+  const from = Math.floor(total * ratio);
+  const until = Math.floor(total * 0.8);
+
+  let seen = 0;
+  for (let si = 0; si < segments.length; si++) {
+    const segment = segments[si];
+    if (segment.type !== "markdown") continue;
+    const lines = segment.content.split("\n");
+    const headingLines = Object.keys(segment.headingIds)
+      .map(Number)
+      .sort((a, b) => a - b);
+    for (const line of headingLines) {
+      const absolute = seen + line - 1;
+      if (absolute < from || absolute > until) continue;
+      if (!/^##\s/.test(lines[line - 1] ?? "")) continue;
+      if (line === 1) return [...segments.slice(0, si), { type: "slot" }, ...segments.slice(si)];
+      const before: MarkdownSegment = {
+        type: "markdown",
+        content: lines.slice(0, line - 1).join("\n"),
+        headingIds: Object.fromEntries(Object.entries(segment.headingIds).filter(([k]) => Number(k) < line)),
+      };
+      const after: MarkdownSegment = {
+        type: "markdown",
+        content: lines.slice(line - 1).join("\n"),
+        headingIds: Object.fromEntries(
+          Object.entries(segment.headingIds)
+            .filter(([k]) => Number(k) >= line)
+            .map(([k, id]) => [String(Number(k) - line + 1), id]),
+        ),
+      };
+      return [...segments.slice(0, si), before, { type: "slot" }, after, ...segments.slice(si + 1)];
+    }
+    seen += lineCounts[si];
+  }
+  return [...segments, { type: "slot" }];
+}

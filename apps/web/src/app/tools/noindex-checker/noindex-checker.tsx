@@ -160,6 +160,7 @@ export function NoindexChecker() {
             heading="Get alerted the moment a page turns noindex."
             body="A stray noindex looks like nothing on the page and costs you all its search traffic. MyKavo checks robots meta on every monitored page each scan and treats index to noindex as a critical alert."
             tool="noindex-checker"
+            url={report.finalUrl}
           />
         </>
       )}

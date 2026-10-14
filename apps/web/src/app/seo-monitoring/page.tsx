@@ -11,9 +11,9 @@ import {
 } from "@/components/landing/seo-page";
 
 export const metadata: Metadata = withSocial({
-  title: "SEO Monitoring Tool - Get Alerted When Rankings-Critical Tags Change",
+  title: "Free SEO Monitoring Software - Alerts When SEO Tags Change",
   description:
-    "SEO monitoring tools watch the on-page elements rankings depend on: titles, canonicals, robots meta, noindex flips, redirects, structured data. MyKavo alerts you the day they change, with before-and-after values.",
+    "SEO monitoring software that watches titles, meta descriptions, canonicals, noindex, redirects and structured data on your key pages, and emails you the day one changes, with before and after. Free plan, no card.",
   keywords: [
     "SEO monitoring tools",
     "SEO monitoring",

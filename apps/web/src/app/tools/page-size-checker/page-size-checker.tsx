@@ -175,6 +175,7 @@ export function PageSizeChecker() {
             heading="Catch the release that makes a page heavier."
             body="MyKavo loads each monitored page in a real browser every scan, records its page weight and request count, and flags a weight increase over 20% (high severity over 50%) or a request count increase over 25% against your approved baseline."
             tool="page-size-checker"
+            url={report.finalUrl}
           />
         </>
       )}

@@ -142,6 +142,7 @@ export function AnalyticsChecker() {
             heading="Know the day your analytics tag disappears."
             body="MyKavo re-scans your key pages on a schedule and sends a high-severity alert when a known analytics or tag manager script stops loading."
             tool="analytics-tag-checker"
+            url={report.finalUrl}
           />
         </>
       )}
