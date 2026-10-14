@@ -16,7 +16,7 @@
  * included when they bought it.
  */
 
-import { PLAN_HISTORY_DAYS, PLAN_PRICES_USD, TRIAL_MAX_WEBSITES, type PlanTier } from "@mykavo/shared";
+import { PLAN_HISTORY_DAYS, PLAN_PRICES_USD, TRIAL_DAYS, TRIAL_MAX_WEBSITES, type PlanTier } from "@mykavo/shared";
 
 export type PlanId = PlanTier;
 
@@ -225,14 +225,25 @@ export function resolvePlan(
 /**
  * A free trial: the plan's features with a smaller website cap, so a trial
  * shows what paying gets without the footprint of a full paid account.
+ *
+ * The cap is the ONE difference from the paid plan, so everything that
+ * describes the plan must say it: the feature list swaps "8 websites" for
+ * the trial's own number, and the headline names it. Copying the paid
+ * plan's list unchanged told trial users they had 8 websites when they
+ * could add 3.
  */
 export function trialPlan(id: PlanId, endsAt: Date): Plan {
   const plan = getPlan(id);
+  const websites = Math.min(plan.limits.websites, TRIAL_MAX_WEBSITES);
+  const paidLine = `${formatLimit(plan.limits.websites)} websites`;
+  const trialLine = `${websites} website${websites === 1 ? "" : "s"} during the trial (${plan.name} has ${formatLimit(plan.limits.websites)})`;
   return {
     ...plan,
     name: `${plan.name} trial`,
+    headline: `Free for ${TRIAL_DAYS} days: every ${plan.name} feature on up to ${websites} website${websites === 1 ? "" : "s"}.`,
     trial: { endsAt },
-    limits: { ...plan.limits, websites: Math.min(plan.limits.websites, TRIAL_MAX_WEBSITES) },
+    limits: { ...plan.limits, websites },
+    features: plan.features.map((f) => (f === paidLine ? trialLine : f)),
   };
 }
 

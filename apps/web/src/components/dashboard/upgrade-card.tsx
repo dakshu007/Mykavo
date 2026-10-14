@@ -4,9 +4,6 @@ import { getPlan, PAID_PLAN_ID, formatLimit } from "@/config/plans";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 
-const BUTTON =
-  "mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100";
-
 /**
  * Sidebar upsell, shown only on the free plan.
  *
@@ -40,7 +37,7 @@ export function UpgradeCard({
         <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
           Daily scans, up to {TRIAL_MAX_WEBSITES} websites. No card needed.
         </p>
-        <StartTrialButton label="Start free trial" className={BUTTON} />
+        <StartTrialButton label="Start free trial" className="mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100" />
       </div>
     );
   }
@@ -56,7 +53,7 @@ export function UpgradeCard({
         </p>
         <Link
           href="/dashboard/billing?from=sidebar:trial"
-          className={BUTTON}
+          className="mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           Keep {pro.name}
         </Link>
@@ -90,7 +87,7 @@ export function UpgradeCard({
       </p>
       <Link
         href="/dashboard/billing"
-        className={BUTTON}
+        className="mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100"
       >
         See plans
       </Link>

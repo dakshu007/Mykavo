@@ -6,7 +6,7 @@
 
 import { isMissingTableError, prisma } from "@mykavo/database";
 import { logger } from "@/lib/logger";
-import { formatLimit, nextPlanUp, type Plan } from "@/config/plans";
+import { formatLimit, getPlan, nextPlanUp, type Plan } from "@/config/plans";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
 import { hasSeatAvailable } from "@/lib/team";
 
@@ -139,6 +139,15 @@ export async function assertCanAddWebsite(workspaceId: string): Promise<void> {
   if (limit === Infinity) return;
   const count = await prisma.website.count({ where: { workspaceId } });
   if (count >= limit) {
+    // A trial is capped below the plan it trials, so the way up is that
+    // plan itself (Pro trial -> Pro), not the plan above it.
+    const paid = plan.trial ? getPlan(plan.id) : null;
+    if (paid) {
+      throw new LimitError(
+        "WEBSITE_LIMIT",
+        `Your ${plan.name} covers up to ${formatLimit(limit)} website${limit === 1 ? "" : "s"}. Upgrade to ${paid.name} to monitor up to ${formatLimit(paid.limits.websites)}.`,
+      );
+    }
     const next = nextPlanUp(plan.id);
     const hint = next
       ? `Upgrade to ${next.name} to monitor up to ${formatLimit(next.limits.websites)}.`
