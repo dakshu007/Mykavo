@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Radar } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { LimitAwareError } from "@/components/dashboard/limit-aware-error";
 
 export function RunScanButton({
   websiteId,
@@ -51,11 +52,7 @@ export function RunScanButton({
         )}
         {isFirstScan ? "Run baseline scan" : "Run scan"}
       </button>
-      {error && (
-        <p className="text-[13px] text-critical-strong" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <LimitAwareError message={error} placement="limit:run-scan" className="text-[13px]" />}
     </div>
   );
 }

@@ -27,6 +27,9 @@ export const AUTOMATION_KEYS = [
   "day10_offer",
   "plugin_update",
   "app_update",
+  "trial_ending",
+  "trial_ended",
+  "monitoring_paused",
 ] as const;
 export type AutomationKey = (typeof AUTOMATION_KEYS)[number];
 
@@ -97,6 +100,27 @@ export const DEFAULT_COPY: Record<AutomationKey, { subject: string; heading: str
       "Hi {firstName}, a new version of the MyKavo plugin is out. Updating takes a few seconds: open Plugins in WordPress and click \"Update now\" next to MyKavo. Your connection, settings and history stay as they are.",
     buttonLabel: "Update in WordPress",
   },
+  trial_ending: {
+    subject: "{days} left of MyKavo Pro",
+    heading: "Your Pro trial ends {date}",
+    intro:
+      "Hi {firstName}, your free Pro trial ends on {date}. After that your websites go back to the Free plan: one website, checked once a week. Pro keeps daily checks, a check after every WordPress or Shopify update and up to 8 websites, for ${price} a month.",
+    buttonLabel: "Keep Pro for ${price} a month",
+  },
+  trial_ended: {
+    subject: "Your MyKavo Pro trial has ended",
+    heading: "You're back on the Free plan",
+    intro:
+      "Hi {firstName}, your 14-day Pro trial has ended. Your websites, baselines and history are all still here. From now on MyKavo checks your website once a week instead of every day.",
+    buttonLabel: "Upgrade to Pro",
+  },
+  monitoring_paused: {
+    subject: "We paused monitoring for {website}",
+    heading: "Monitoring is paused for {website}",
+    intro:
+      "Hi {firstName}, nobody has opened MyKavo for a month, so we paused the checks on {website}. Nothing is deleted: your baseline and history are kept. Open MyKavo and monitoring starts again right away.",
+    buttonLabel: "Resume monitoring",
+  },
   app_update: {
     subject: "MyKavo for Android {version} is ready",
     heading: "A new MyKavo app is ready",
@@ -137,6 +161,17 @@ export const PLACEHOLDERS: Record<AutomationKey, { token: string; meaning: strin
   plugin_update: [
     { token: "{firstName}", meaning: "first name (dropped when unknown)" },
     { token: "{version}", meaning: "the new version, e.g. 1.2.0" },
+  ],
+  trial_ending: [
+    { token: "{firstName}", meaning: "first name (dropped when unknown)" },
+    { token: "{days}", meaning: 'time left, e.g. "3 days"' },
+    { token: "{date}", meaning: 'the day the trial ends, e.g. "Friday, October 24"' },
+    { token: "{price}", meaning: "Pro's monthly price, e.g. 20" },
+  ],
+  trial_ended: [{ token: "{firstName}", meaning: "first name (dropped when unknown)" }],
+  monitoring_paused: [
+    { token: "{firstName}", meaning: "first name (dropped when unknown)" },
+    { token: "{website}", meaning: 'the paused website, or e.g. "2 websites"' },
   ],
   app_update: [
     { token: "{firstName}", meaning: "first name (dropped when unknown)" },

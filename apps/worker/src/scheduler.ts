@@ -9,6 +9,7 @@ import type { PgBoss } from "pg-boss";
 import { prisma, failStuckScans } from "@mykavo/database";
 import { SCAN_WEBSITE_QUEUE, computeNextScanAt, type ScanFrequency } from "@mykavo/shared";
 import { logger } from "./logger";
+import { planScanFrequency } from "./plan-sweep";
 
 const MAX_PER_SWEEP = 50;
 
@@ -62,8 +63,15 @@ export async function runSchedulerSweep(boss: PgBoss): Promise<number> {
   });
 
   let enqueued = 0;
+  // The plan decides the frequency (Free weekly, paid and trials daily).
+  const frequencies = new Map<string, ScanFrequency>();
   for (const website of due) {
-    const next = computeNextScanAt(website.scanFrequency as ScanFrequency, now);
+    let frequency = frequencies.get(website.workspaceId);
+    if (!frequency) {
+      frequency = await planScanFrequency(website.workspaceId).catch(() => website.scanFrequency as ScanFrequency);
+      frequencies.set(website.workspaceId, frequency);
+    }
+    const next = computeNextScanAt(frequency, now);
 
     // Claim: only proceed if THIS update advances nextScanAt. Under READ
     // COMMITTED a concurrent sweep re-reads the row post-commit and its guard

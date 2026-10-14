@@ -29,6 +29,7 @@ import {
   withDefaultAdMasks,
 } from "@mykavo/shared";
 import { logger } from "./logger";
+import { planScanFrequency } from "./plan-sweep";
 import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";
 import { checkLinksForScan } from "./check-links";
@@ -337,18 +338,26 @@ export async function runScanWebsiteJob(
   });
 
   const nowActive = outcome.status !== "FAILED";
+  // The plan decides how often (Free weekly, paid and trials daily), not the
+  // stored column, which only mirrors it for display (plan-sweep.ts).
+  const frequency = await planScanFrequency(website.workspaceId);
+  // A website paused while this scan ran (or scanned by hand while paused)
+  // stays paused: a finished scan must not quietly restart monitoring.
+  const current = await prisma.website.findUnique({ where: { id: website.id }, select: { status: true } });
+  const stillPaused = current?.status === "PAUSED";
   await prisma.website.update({
     where: { id: website.id },
     data: {
       lastScanAt: finishedAt,
+      scanFrequency: frequency,
       // A finished scan (even partial) puts the website into ACTIVE monitoring
       // and re-arms recurring scans (spec §40). A failed one marks the site
       // ERROR but keeps trying at least daily: monitoring must never stop
       // silently because a site was down, or blocking, for one night.
-      status: nowActive ? "ACTIVE" : "ERROR",
+      status: stillPaused ? "PAUSED" : nowActive ? "ACTIVE" : "ERROR",
       nextScanAt: nowActive
-        ? computeNextScanAt(website.scanFrequency, finishedAt)
-        : computeRetryAfterFailure(website.scanFrequency, finishedAt),
+        ? computeNextScanAt(frequency, finishedAt)
+        : computeRetryAfterFailure(frequency, finishedAt),
     },
   });
 

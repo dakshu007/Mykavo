@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
+import { freePlanGapNote } from "@mykavo/email";
+import { getWorkspacePlan } from "@/lib/limits";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import {
@@ -87,6 +89,31 @@ export default async function ChangeDetailPage({
   });
   if (!change) notFound();
 
+  // Free plan: how long before this scan MyKavo last checked the site. The
+  // change happened somewhere in that gap - the honest case for daily checks.
+  const plan = await getWorkspacePlan(workspace.id);
+  let gapNote: string | null = null;
+  if (plan.id === "free" && change.scanId) {
+    const scan = await prisma.scan.findUnique({ where: { id: change.scanId }, select: { createdAt: true } });
+    const previous = scan
+      ? await prisma.scan.findFirst({
+          where: {
+            websiteId: change.websiteId,
+            id: { not: change.scanId },
+            status: { in: ["COMPLETED", "PARTIAL"] },
+            completedAt: { lt: scan.createdAt },
+          },
+          orderBy: { completedAt: "desc" },
+          select: { completedAt: true },
+        })
+      : null;
+    if (scan && previous?.completedAt) {
+      gapNote = freePlanGapNote({
+        days: Math.round((scan.createdAt.getTime() - previous.completedAt.getTime()) / 86_400_000),
+      });
+    }
+  }
+
   // Notes are mutations - viewers read the thread but cannot write to it.
   const canWriteNotes = role === "OWNER" || role === "ADMIN" || role === "MEMBER";
   const canModerateNotes = role === "OWNER" || role === "ADMIN";
@@ -129,6 +156,18 @@ export default async function ChangeDetailPage({
           {change.detectedAt.toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })}
         </p>
       </div>
+
+      {gapNote && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-primary-soft px-5 py-4">
+          <p className="max-w-2xl text-[13.5px] leading-6 text-ink">{gapNote}</p>
+          <Link
+            href="/dashboard/billing?from=change:gap"
+            className="inline-flex h-9 shrink-0 items-center rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-contrast hover:bg-primary-hover"
+          >
+            Get daily checks
+          </Link>
+        </div>
+      )}
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-4">

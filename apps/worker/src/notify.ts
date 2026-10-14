@@ -5,7 +5,7 @@
  * Notification row. Never one email per change.
  */
 
-import { prisma, type ChangeSeverity } from "@mykavo/database";
+import { prisma, getWorkspaceEntitlement, type ChangeSeverity } from "@mykavo/database";
 import {
   sendEmail,
   scanSummaryEmail,
@@ -27,6 +27,35 @@ import {
 } from "@mykavo/shared";
 import { logger } from "./logger";
 import { fanOutToPush } from "./push";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Free plan only: how long before this scan MyKavo last checked the website,
+ * for the "may have been live for up to N days" line. Null on paid plans,
+ * for a first comparison, or on any lookup failure (the alert matters more).
+ */
+async function freePlanGap(
+  workspaceId: string,
+  websiteId: string,
+  scanId: string,
+  scanStartedAt: Date,
+): Promise<{ days: number; upgradeUrl: string } | null> {
+  try {
+    const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+    if (ent && ent.planId !== "free") return null;
+    const previous = await prisma.scan.findFirst({
+      where: { websiteId, id: { not: scanId }, status: { in: ["COMPLETED", "PARTIAL"] }, completedAt: { lt: scanStartedAt } },
+      orderBy: { completedAt: "desc" },
+      select: { completedAt: true },
+    });
+    if (!previous?.completedAt) return null;
+    const days = Math.round((scanStartedAt.getTime() - previous.completedAt.getTime()) / DAY_MS);
+    return { days, upgradeUrl: `${dashboardBase}/dashboard/billing?from=email:alert_gap` };
+  } catch {
+    return null;
+  }
+}
 
 const SEVERITY_RANK: Record<Severity, number> = {
   INFO: 0,
@@ -430,6 +459,7 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
       highestSeverity: highest,
       changes: lines,
       dashboardUrl,
+      freePlanGap: await freePlanGap(website.workspaceId, website.id, scan.id, scan.createdAt),
     });
     const result = await sendEmail({ to: config.recipients, subject: email.subject, html: email.html, text: email.text });
     await record(website.workspaceId, website.id, scan.id, config.recipients, email.subject, result);

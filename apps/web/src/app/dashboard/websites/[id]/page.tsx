@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   prisma,
+  autoPauseReasons,
   getLatestHealthCheck,
   getUptimeStats,
   getDailyHealthRollups,
@@ -246,8 +247,28 @@ export default async function WebsiteDetailPage({
         )
       : null;
 
+  // Paused by MyKavo (not by the owner): say why, and what brings it back.
+  const autoPause = website.status === "PAUSED" ? (await autoPauseReasons(prisma, [website.id])).get(website.id) ?? null : null;
+
   return (
     <div className="space-y-6">
+      {autoPause && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-warning-soft px-5 py-4">
+          <p className="max-w-2xl text-[13.5px] leading-6 text-ink">
+            {autoPause === "OVER_LIMIT"
+              ? "Monitoring is paused: your Pro trial ended and the Free plan covers 1 website. Your baseline and history are kept."
+              : "Monitoring was paused because nobody had opened MyKavo for a month. Your baseline and history are kept. Press Resume monitoring below to start again."}
+          </p>
+          {autoPause === "OVER_LIMIT" && (
+            <Link
+              href="/dashboard/billing?from=paused:over-limit"
+              className="inline-flex h-9 shrink-0 items-center rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-contrast hover:bg-primary-hover"
+            >
+              Resume with Pro
+            </Link>
+          )}
+        </div>
+      )}
       <div>
         <Link
           href="/dashboard/websites"

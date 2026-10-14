@@ -20,6 +20,8 @@ function fakeDb(state: {
 }) {
   const weeklyResets: string[] = [];
   const db = {
+    // No free trials in these scenarios.
+    workspaceTrial: { findUnique: async () => null },
     shopifyShop: {
       findMany: async ({ where }: { where: { siteConnection: { is: { workspaceId: string } } } }) =>
         state.shops

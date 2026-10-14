@@ -16,6 +16,8 @@ import {
   deleteExpiredChangeEvents,
   deleteExpiredHealthChecks,
   findUnreferencedScreenshotKeys,
+  autoPauseReasons,
+  DORMANT_TRIM_AFTER_DAYS,
 } from "@mykavo/database";
 import { diffKey, historyDaysForPlan } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
@@ -42,6 +44,19 @@ export async function runRetentionSweep(
     select: { id: true, workspaceId: true },
   });
 
+  // Websites paused for inactivity for 90+ days keep only their approved
+  // baseline (always protected by findExpiredSnapshots): the cutoff becomes
+  // now. Coming back resumes monitoring against that baseline.
+  const dormantSince = new Map<string, Date>();
+  const reasons = await autoPauseReasons(prisma, websites.map((w) => w.id));
+  if (reasons.size > 0) {
+    const rows = await prisma.websiteAutoPause.findMany({
+      where: { websiteId: { in: [...reasons.keys()] }, reason: "DORMANT" },
+      select: { websiteId: true, pausedAt: true },
+    });
+    for (const r of rows) dormantSince.set(r.websiteId, r.pausedAt);
+  }
+
   // Resolve each workspace's retention window once.
   const windowDaysByWorkspace = new Map<string, number>();
   let snapshotsDeleted = 0;
@@ -56,7 +71,9 @@ export async function runRetentionSweep(
       days = historyDaysForPlan(ent?.planId ?? "free");
       windowDaysByWorkspace.set(website.workspaceId, days);
     }
-    const cutoff = new Date(now - days * DAY_MS);
+    const pausedAt = dormantSince.get(website.id);
+    const trimmed = pausedAt !== undefined && now - pausedAt.getTime() >= DORMANT_TRIM_AFTER_DAYS * DAY_MS;
+    const cutoff = trimmed ? new Date(now) : new Date(now - days * DAY_MS);
 
     changeEventsDeleted += await deleteExpiredChangeEvents(prisma, {
       websiteId: website.id,

@@ -10,6 +10,7 @@
 
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { isPlatformAdminEmail, platformAdminEmails } from "./platform-admin";
+import { getActiveTrial } from "./trial";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -81,9 +82,11 @@ export interface Entitlement {
    * Who bills the plan in force: MyKavo's own billing (Dodo), or Shopify
    * for a store linked to the workspace. Null on Free.
    */
-  billedBy?: "dodo" | "shopify" | null;
+  billedBy?: "dodo" | "shopify" | "trial" | null;
   /** The store paying through Shopify, when billedBy is "shopify". */
   shopifyShop?: string | null;
+  /** When the free trial ends, when billedBy is "trial". */
+  trialEndsAt?: Date | null;
   /** Pro bought before Agency existed - keeps the features it included then. */
   grandfathered: boolean;
   /**
@@ -133,8 +136,27 @@ export async function getWorkspaceEntitlement(
     };
   }
   const shopify = await getShopifyPaidPlan(db, workspaceId);
-  if (!sub && !shopify) return null;
   const dodoPlan = planIdFromSubscription(sub);
+  // Nothing paid: a running free trial grants its plan (see trial.ts).
+  if (dodoPlan === "free" && !shopify) {
+    const trial = await getActiveTrial(db, workspaceId);
+    if (trial) {
+      return {
+        planId: trial.planId,
+        billedBy: "trial",
+        shopifyShop: null,
+        trialEndsAt: trial.endsAt,
+        grandfathered: false,
+        unlimited: false,
+        status: "trialing",
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: trial.endsAt,
+        dodoCustomerId: sub?.dodoCustomerId ?? null,
+        dodoSubscriptionId: sub?.dodoSubscriptionId ?? null,
+      };
+    }
+  }
+  if (!sub && !shopify) return null;
   // A store paying through Shopify grants its plan to the workspace it is
   // linked to; if the workspace also pays MyKavo directly, the higher wins.
   const fromShopify = shopify !== null && higherPlan(dodoPlan, shopify.planId) !== dodoPlan;

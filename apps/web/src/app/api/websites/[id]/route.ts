@@ -6,6 +6,7 @@ import {
   collectWebsiteArtifactKeys,
   findUnreferencedScreenshotKeys,
   queueArtifactDeletions,
+  resumeStatusFor,
 } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
@@ -116,6 +117,31 @@ export async function PATCH(request: Request, { params }: Params) {
     }
   }
 
+  // Resuming: within the plan's website limit, back to monitoring if the
+  // site has a baseline (PENDING was never picked up by the scheduler), and
+  // scanned again soon. MyKavo's own pause record goes with it.
+  let resumeTo: "ACTIVE" | "PENDING" | undefined;
+  if (input.paused === false && website.status === "PAUSED") {
+    const [plan, monitoring] = await Promise.all([
+      getWorkspacePlan(ctx.workspace.id),
+      prisma.website.count({
+        where: { workspaceId: ctx.workspace.id, id: { not: website.id }, status: { in: ["ACTIVE", "ERROR", "PENDING", "DISCOVERING", "BASELINING"] } },
+      }),
+    ]);
+    if (monitoring >= plan.limits.websites) {
+      return NextResponse.json(
+        {
+          error: `Your ${plan.name} plan monitors ${plan.limits.websites} website${plan.limits.websites === 1 ? "" : "s"}. Upgrade to Pro to resume this one.`,
+          code: "PLAN_LIMIT",
+          upgrade: true,
+        },
+        { status: 403 },
+      );
+    }
+    resumeTo = await resumeStatusFor(prisma, website.id);
+    await prisma.websiteAutoPause.deleteMany({ where: { websiteId: website.id } }).catch(() => undefined);
+  }
+
   const updated = await prisma.website.update({
     where: { id: website.id },
     data: {
@@ -126,7 +152,8 @@ export async function PATCH(request: Request, { params }: Params) {
           ? undefined
           : input.paused
             ? "PAUSED"
-            : "PENDING",
+            : (resumeTo ?? undefined),
+      nextScanAt: resumeTo === "ACTIVE" ? new Date() : undefined,
       muteAlertsUntil:
         input.muteHours === undefined
           ? undefined

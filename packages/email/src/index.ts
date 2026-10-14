@@ -1,6 +1,7 @@
 export { sendEmail, type EmailMessage, type SendResult } from "./send";
 export {
   scanSummaryEmail,
+  freePlanGapNote,
   failureAlertEmail,
   deployVerdictEmail,
   type DeployVerdictData,
@@ -22,6 +23,12 @@ export {
   BASELINE_READY_SUBJECT_PREFIX,
   type BaselineReadyData,
   type WordPressConnectData,
+  trialEndingEmail,
+  trialEndedEmail,
+  monitoringPausedEmail,
+  type TrialEndingData,
+  type TrialEndedData,
+  type MonitoringPausedData,
   appAccessApprovedEmail,
   day3StatsEmail,
   day3SetupEmail,

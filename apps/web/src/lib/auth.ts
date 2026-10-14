@@ -3,7 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { twoFactor } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
 import { createAuthMiddleware, APIError } from "better-auth/api";
-import { prisma } from "@mykavo/database";
+import { prisma, startTrial } from "@mykavo/database";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { validateSignupEmail, EMAIL_VALIDATION_MESSAGES } from "@/lib/email-validation";
@@ -121,6 +121,11 @@ export const auth = betterAuth({
           logger.info("workspace auto-created", {
             userId: user.id,
             workspaceId: workspace.id,
+          });
+          // Every new account starts on a 14-day Pro trial, no card. Never
+          // allowed to fail the signup: Free is a fine fallback.
+          await startTrial(prisma, workspace.id, { source: "signup" }).catch((err: unknown) => {
+            logger.warn("could not start trial", { workspaceId: workspace.id, error: err instanceof Error ? err.message : String(err) });
           });
           // Marketing export - fire-and-forget, never blocks signup.
           recordSignupToSheet({ email: user.email, name: user.name });

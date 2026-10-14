@@ -14,11 +14,33 @@ import { getPlan, PAID_PLAN_ID, formatLimit } from "@/config/plans";
 export function UpgradeCard({
   websitesUsed,
   websiteLimit,
+  trialDaysLeft = null,
 }: {
   websitesUsed: number;
   websiteLimit: number;
+  /** Set during a free Pro trial: the card counts down instead of upselling. */
+  trialDaysLeft?: number | null;
 }) {
   const pro = getPlan(PAID_PLAN_ID);
+  if (trialDaysLeft !== null) {
+    return (
+      <div className="rounded-xl bg-primary-soft p-3.5">
+        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+          <Sparkles aria-hidden className="size-3.5 text-accent" />
+          {pro.name} trial: {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left
+        </p>
+        <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
+          Daily scans and update checks. Keep them for ${pro.priceMonthlyUsd}/mo.
+        </p>
+        <Link
+          href="/dashboard/billing?from=sidebar:trial"
+          className="mt-2.5 inline-flex h-8 w-full items-center justify-center rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none motion-reduce:transition-none motion-reduce:active:scale-100"
+        >
+          Keep {pro.name}
+        </Link>
+      </div>
+    );
+  }
   const atLimit = websiteLimit !== Infinity && websitesUsed >= websiteLimit;
 
   return (

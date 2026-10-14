@@ -6,6 +6,7 @@ import { Globe, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageSelector, type SelectablePage } from "@/components/dashboard/page-selector";
 import { track } from "@/lib/analytics";
+import { LimitAwareError } from "@/components/dashboard/limit-aware-error";
 
 async function requestJson<T>(url: string, body?: unknown, method = "POST"): Promise<T> {
   const res = await fetch(url, {
@@ -238,11 +239,7 @@ export function AddWebsiteWizard({
               className="h-12 w-full rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
             />
           </div>
-          {error && (
-            <p className="text-sm text-critical-strong" role="alert">
-              {error}
-            </p>
-          )}
+          {error && <LimitAwareError message={error} placement="limit:add-website" />}
           <button
             type="submit"
             disabled={loading}
@@ -276,11 +273,7 @@ export function AddWebsiteWizard({
         truncated={truncated}
       />
 
-      {error && (
-        <p className="text-sm text-critical-strong" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <LimitAwareError message={error} placement="limit:add-pages" />}
 
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-ink-faint">

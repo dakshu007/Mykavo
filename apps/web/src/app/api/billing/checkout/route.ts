@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     new URL(request.url).searchParams.get("plan") === "agency" ? "agency" : "pro";
 
   const current = await getWorkspaceSubscription(workspace.id);
-  if (current && current.planId !== "free") {
+  if (current && current.planId !== "free" && current.billedBy !== "trial") {
     return NextResponse.redirect(`${appBaseUrl()}/dashboard/billing`);
   }
 

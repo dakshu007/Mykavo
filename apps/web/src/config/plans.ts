@@ -16,7 +16,7 @@
  * included when they bought it.
  */
 
-import { PLAN_HISTORY_DAYS, PLAN_PRICES_USD, type PlanTier } from "@mykavo/shared";
+import { PLAN_HISTORY_DAYS, PLAN_PRICES_USD, TRIAL_MAX_WEBSITES, type PlanTier } from "@mykavo/shared";
 
 export type PlanId = PlanTier;
 
@@ -25,6 +25,8 @@ export type ScanFrequency = "WEEKLY" | "DAILY";
 export interface Plan {
   id: PlanId;
   name: string;
+  /** Set while this plan comes from a free trial, not a payment. */
+  trial?: { endsAt: Date } | null;
   priceMonthlyUsd: number;
   headline: string;
   limits: {
@@ -198,8 +200,14 @@ export function getPlan(id: PlanId): Plan {
  * before Agency existed: white-label client reports (and their automatic
  * emails) and 5 seats. Only Pro can be grandfathered.
  */
-export function resolvePlan(id: PlanId, grandfathered = false, unlimited = false): Plan {
+export function resolvePlan(
+  id: PlanId,
+  grandfathered = false,
+  unlimited = false,
+  trialEndsAt: Date | null = null,
+): Plan {
   if (unlimited) return unlimitedAgencyPlan();
+  if (trialEndsAt) return trialPlan(id, trialEndsAt);
   const plan = getPlan(id);
   if (id !== "pro" || !grandfathered) return plan;
   return {
@@ -211,6 +219,20 @@ export function resolvePlan(id: PlanId, grandfathered = false, unlimited = false
       "White-label client reports",
       "Automatic client report emails",
     ],
+  };
+}
+
+/**
+ * A free trial: the plan's features with a smaller website cap, so a trial
+ * shows what paying gets without the footprint of a full paid account.
+ */
+export function trialPlan(id: PlanId, endsAt: Date): Plan {
+  const plan = getPlan(id);
+  return {
+    ...plan,
+    name: `${plan.name} trial`,
+    trial: { endsAt },
+    limits: { ...plan.limits, websites: Math.min(plan.limits.websites, TRIAL_MAX_WEBSITES) },
   };
 }
 

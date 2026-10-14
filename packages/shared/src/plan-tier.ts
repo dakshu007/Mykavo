@@ -6,7 +6,20 @@
  * worker cannot import web modules.
  */
 
+import type { ScanFrequency } from "./schedule";
+
 export type PlanTier = "free" | "pro" | "agency";
+
+/** How often a tier's websites are scanned. Paid plans scan daily. */
+export function scanFrequencyForTier(tier: PlanTier): ScanFrequency {
+  return tier === "free" ? "WEEKLY" : "DAILY";
+}
+
+/** Free Pro trial: length, and the websites it allows (Pro features, smaller footprint). */
+export const TRIAL_DAYS = 14;
+export const TRIAL_MAX_WEBSITES = 3;
+/** The "trial ending" email goes out when this many days are left. */
+export const TRIAL_REMINDER_DAYS_LEFT = 3;
 
 /** Monthly price per tier, in USD. The one place a price is written down. */
 export const PLAN_PRICES_USD: Record<PlanTier, number> = {

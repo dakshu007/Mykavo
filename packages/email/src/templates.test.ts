@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  trialEndingEmail,
+  trialEndedEmail,
+  monitoringPausedEmail,
+  freePlanGapNote,
   welcomeEmail,
   appAccessApprovedEmail,
   scanSummaryEmail,
@@ -604,5 +608,52 @@ describe("appAccessApprovedEmail", () => {
 
   it("has a plain-text part that is not HTML", () => {
     expect(appAccessApprovedEmail(data).text).not.toContain("<");
+  });
+});
+
+describe("plan emails", () => {
+  it("reminds about the trial with real numbers only", () => {
+    const mail = trialEndingEmail({
+      name: "Asha Rao",
+      daysLeft: 3,
+      endsOn: "Friday, October 24",
+      price: 20,
+      scans: 9,
+      changes: 0,
+      websites: 1,
+      upgradeUrl: "https://mykavo.app/dashboard/billing",
+    });
+    expect(mail.subject).toBe("3 days left of MyKavo Pro");
+    expect(mail.text).toContain("9 scans run");
+    expect(mail.text).not.toContain("0 changes");
+    expect(mail.text).toContain("$20 a month");
+  });
+
+  it("names websites paused when the trial ends", () => {
+    const mail = trialEndedEmail({ name: "Asha", pausedWebsites: ["Shop", "Blog"], upgradeUrl: "https://mykavo.app/dashboard/billing" });
+    expect(mail.text).toContain("2 websites: Shop, Blog");
+  });
+
+  it("explains a dormant pause and how to resume", () => {
+    const mail = monitoringPausedEmail({ name: "Asha", websites: ["Northstar"], resumeUrl: "https://mykavo.app/dashboard" });
+    expect(mail.subject).toBe("We paused monitoring for Northstar");
+    expect(mail.text).toContain("Resume monitoring: https://mykavo.app/dashboard");
+  });
+
+  it("adds the Free gap note to a change summary only for real gaps", () => {
+    const base = {
+      websiteName: "Shop",
+      websiteHost: "shop.example",
+      scanTime: "Oct 15",
+      totalChanges: 1,
+      highestSeverity: "HIGH" as const,
+      changes: [{ severity: "HIGH" as const, title: "Title changed", pagePath: "/" }],
+      dashboardUrl: "https://mykavo.app/dashboard/changes",
+    };
+    expect(scanSummaryEmail({ ...base, freePlanGap: { days: 6, upgradeUrl: "https://mykavo.app/dashboard/billing" } }).text).toContain(
+      "live for up to 6 days",
+    );
+    expect(scanSummaryEmail({ ...base, freePlanGap: { days: 1, upgradeUrl: "x" } }).text).not.toContain("live for up to");
+    expect(freePlanGapNote(null)).toBeNull();
   });
 });

@@ -20,6 +20,7 @@ import {
   createCheckoutIntent,
   consumeCheckoutIntent,
 } from "./subscription";
+import { startTrial } from "./trial";
 
 const prisma = new PrismaClient();
 const RUN = `test-sub-${process.pid}-${Math.floor(process.hrtime()[1])}`;
@@ -310,5 +311,33 @@ describe("website add-ons", () => {
       eventAt: t0,
     });
     expect(await getWorkspaceAddonWebsites(prisma, workspaceId)).toBe(1);
+  });
+});
+
+describe("free Pro trial", () => {
+  it("grants Pro while it runs, then returns to Free", async () => {
+    const started = await startTrial(prisma, workspaceId, { source: "signup" });
+    expect(started?.planId).toBe("pro");
+    const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+    expect(ent?.planId).toBe("pro");
+    expect(ent?.billedBy).toBe("trial");
+    expect(ent?.trialEndsAt?.getTime()).toBe(started?.endsAt.getTime());
+
+    await prisma.workspaceTrial.update({ where: { workspaceId }, data: { endsAt: new Date(Date.now() - 1000) } });
+    const after = await getWorkspaceEntitlement(prisma, workspaceId);
+    expect(after === null || after.planId === "free").toBe(true);
+  });
+
+  it("is given once per workspace", async () => {
+    expect(await startTrial(prisma, workspaceId, { source: "signup" })).not.toBeNull();
+    expect(await startTrial(prisma, workspaceId, { source: "reactivation" })).toBeNull();
+  });
+
+  it("never outranks a paid plan", async () => {
+    await startTrial(prisma, workspaceId, { source: "signup" });
+    await grantPaidPlan(prisma, { workspaceId, planId: "agency", status: "active", dodoSubscriptionId: `${RUN}-agency` });
+    const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+    expect(ent?.planId).toBe("agency");
+    expect(ent?.billedBy).toBe("dodo");
   });
 });

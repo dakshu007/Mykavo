@@ -40,6 +40,12 @@ import {
   type PluginUpdateData,
   type WelcomeEmailData,
   type WordPressConnectData,
+  type TrialEndingData,
+  type TrialEndedData,
+  type MonitoringPausedData,
+  trialEndingEmail,
+  trialEndedEmail,
+  monitoringPausedEmail,
 } from "./templates";
 
 export { AUTOMATION_KEYS, DEFAULT_COPY, PLACEHOLDERS, isAutomationKey, type AutomationKey, type EmailCopy };
@@ -47,7 +53,7 @@ export { AUTOMATION_KEYS, DEFAULT_COPY, PLACEHOLDERS, isAutomationKey, type Auto
 export interface AutomationMeta {
   key: AutomationKey;
   name: string;
-  group: "Onboarding" | "Lifecycle series" | "Product updates";
+  group: "Onboarding" | "Lifecycle series" | "Plan & monitoring" | "Product updates";
   /** When it goes out, in words. Lifecycle steps leave out the day: it is editable. */
   trigger: string;
   /** Carries an unsubscribe link (optional mail) or not (transactional). */
@@ -157,6 +163,37 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
     offer: false,
     legacySubject: null,
   },
+  trial_ending: {
+    key: "trial_ending",
+    name: "Pro trial ending",
+    group: "Plan & monitoring",
+    trigger: "Once per trial, 3 days before a free Pro trial ends, unless the workspace already pays.",
+    unsubscribable: false,
+    timing: null,
+    offer: false,
+    legacySubject: null,
+  },
+  trial_ended: {
+    key: "trial_ended",
+    name: "Pro trial ended",
+    group: "Plan & monitoring",
+    trigger: "Once per trial, when it ends without a paid plan. Names any websites paused for being over the Free limit.",
+    unsubscribable: false,
+    timing: null,
+    offer: false,
+    legacySubject: null,
+  },
+  monitoring_paused: {
+    key: "monitoring_paused",
+    name: "Monitoring paused",
+    group: "Plan & monitoring",
+    trigger:
+      "When a Free workspace has not been opened for 30 days and its websites are paused. Opening MyKavo resumes them.",
+    unsubscribable: false,
+    timing: null,
+    offer: false,
+    legacySubject: null,
+  },
   app_update: {
     key: "app_update",
     name: "Android app update",
@@ -176,7 +213,7 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
  * site somebody tried to connect.
  */
 export const FLOW_EMAIL_KEYS: AutomationKey[] = AUTOMATION_KEYS.filter(
-  (k) => AUTOMATIONS[k].group !== "Product updates" && k !== "wordpress_connect",
+  (k) => AUTOMATIONS[k].group !== "Product updates" && AUTOMATIONS[k].group !== "Plan & monitoring" && k !== "wordpress_connect",
 );
 
 /** Keys whose emails count against the REMINDER budget and carry unsubscribe. */
@@ -303,7 +340,10 @@ export type AutomationData =
   | { key: "day6_android"; data: Day6AndroidData }
   | { key: "day10_offer"; data: Omit<Day10OfferData, "code" | "percent" | "price" | "days"> }
   | { key: "plugin_update"; data: PluginUpdateData }
-  | { key: "app_update"; data: AppUpdateData };
+  | { key: "app_update"; data: AppUpdateData }
+  | { key: "trial_ending"; data: TrialEndingData }
+  | { key: "trial_ended"; data: TrialEndedData }
+  | { key: "monitoring_paused"; data: MonitoringPausedData };
 
 /**
  * Render an automation with its saved settings. The offer's code, percent,
@@ -334,6 +374,12 @@ export function renderAutomation(
       return pluginUpdateEmail(input.data, copy);
     case "app_update":
       return appUpdateEmail(input.data, copy);
+    case "trial_ending":
+      return trialEndingEmail(input.data, copy);
+    case "trial_ended":
+      return trialEndedEmail(input.data, copy);
+    case "monitoring_paused":
+      return monitoringPausedEmail(input.data, copy);
     case "day10_offer": {
       const s = settings.day10_offer;
       const percent = s?.offerPercent ?? DEFAULT_OFFER.percent;
@@ -420,6 +466,24 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
           unsubscribeUrl,
         },
       };
+    case "trial_ending":
+      return {
+        key,
+        data: {
+          name,
+          daysLeft: 3,
+          endsOn: "Friday, October 24",
+          price: 20,
+          scans: 11,
+          changes: 2,
+          websites: 1,
+          upgradeUrl: `${appBase}/dashboard/billing`,
+        },
+      };
+    case "trial_ended":
+      return { key, data: { name, pausedWebsites: ["Client shop"], upgradeUrl: `${appBase}/dashboard/billing` } };
+    case "monitoring_paused":
+      return { key, data: { name, websites: ["Northstar"], resumeUrl: `${appBase}/dashboard` } };
   }
 }
 

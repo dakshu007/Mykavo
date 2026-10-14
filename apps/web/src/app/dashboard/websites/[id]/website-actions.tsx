@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Pause, Play, Trash2 } from "lucide-react";
+import { LimitAwareError } from "@/components/dashboard/limit-aware-error";
 
 export function WebsiteActions({
   websiteId,
@@ -26,10 +27,15 @@ export function WebsiteActions({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ paused: !paused }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        // The plan limit message (resuming beyond Free) is shown as-is, with
+        // the way to upgrade next to it.
+        const data = (await res.json().catch(() => null)) as { error?: string; upgrade?: boolean } | null;
+        throw new Error(data?.upgrade && data.error ? data.error : "Could not update the website. Please try again.");
+      }
       router.refresh();
-    } catch {
-      setError("Could not update the website. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "Could not update the website. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -84,9 +90,9 @@ export function WebsiteActions({
         </button>
       </div>
       {error && (
-        <p className="mt-2 text-sm text-critical-strong" role="alert">
-          {error}
-        </p>
+        <div className="mt-2">
+          <LimitAwareError message={error} placement="limit:resume-website" />
+        </div>
       )}
     </div>
   );

@@ -623,7 +623,7 @@ export interface UserTrackingResponse {
 export interface AutomationItem {
   key: string;
   name: string;
-  group: "Onboarding" | "Lifecycle series" | "Product updates";
+  group: "Onboarding" | "Lifecycle series" | "Plan & monitoring" | "Product updates";
   /** When it goes out, in words. */
   trigger: string;
   unsubscribable: boolean;

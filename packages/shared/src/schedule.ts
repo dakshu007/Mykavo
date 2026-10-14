@@ -37,3 +37,17 @@ export function isScanDue(
     website.nextScanAt.getTime() <= now.getTime()
   );
 }
+
+/**
+ * A website moving to daily scans (an upgrade, a trial) should not wait out
+ * the rest of a weekly interval: its next scan becomes a day after the last
+ * one, or now if that has passed. Null when it is already due sooner.
+ */
+export function pulledForwardNextScan(
+  current: { nextScanAt: Date | null; lastScanAt: Date | null },
+  now: Date,
+): Date | null {
+  const dueBy = current.lastScanAt ? new Date(Math.max(now.getTime(), current.lastScanAt.getTime() + DAY_MS)) : now;
+  if (!current.nextScanAt || current.nextScanAt > dueBy) return dueBy;
+  return null;
+}

@@ -28,7 +28,7 @@ import { useLive } from "@/lib/live";
 import { useTheme } from "@/lib/theme-context";
 import type { AutomationItem, FlowListItem, UpdateEmailPanel } from "@/lib/types";
 
-const GROUPS: AutomationItem["group"][] = ["Onboarding", "Lifecycle series", "Product updates"];
+const GROUPS: AutomationItem["group"][] = ["Onboarding", "Lifecycle series", "Plan & monitoring", "Product updates"];
 
 function errorMessage(err: unknown): string {
   if (err instanceof ApiError) return err.message;

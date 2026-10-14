@@ -22,6 +22,8 @@ export const AUDIT_SWEEP_QUEUE = "audit-sweep";
 export const BILLING_SWEEP_QUEUE = "billing-sweep";
 /** Re-checks stores that pay through Shopify (cancellations, freezes). */
 export const SHOPIFY_BILLING_SWEEP_QUEUE = "shopify-billing-sweep";
+/** Plan upkeep: scan frequency by plan, ended trials, dormant Free workspaces. */
+export const PLAN_SWEEP_QUEUE = "plan-sweep";
 export const CLIENT_REPORT_SWEEP_QUEUE = "client-report-sweep";
 export const GSC_SYNC_QUEUE = "gsc-sync";
 export const GSC_SYNC_SWEEP_QUEUE = "gsc-sync-sweep";

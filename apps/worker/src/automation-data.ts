@@ -175,6 +175,11 @@ export async function buildAutomationData(
     case "wordpress_connect":
       // Sent by wordpress-connect-email.ts, which knows the site.
       return null;
+    case "trial_ending":
+    case "trial_ended":
+    case "monitoring_paused":
+      // Sent by plan-sweep.ts, which knows the trial and the paused websites.
+      return null;
   }
 }
 

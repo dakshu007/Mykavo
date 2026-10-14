@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { prisma } from "@mykavo/database";
+import { prisma, resumeAutoPaused, trialDaysLeft } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { isPlatformAdmin } from "@/lib/platform-admin";
@@ -30,6 +30,9 @@ export default async function DashboardLayout({
 }) {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  // Back after a month away: websites MyKavo paused for inactivity start
+  // again (see plan-sweep.ts in the worker). Never blocks the page.
+  await resumeAutoPaused(prisma, workspace.id, ["DORMANT"]).catch(() => []);
 
   // Greeting follows the visitor's clock, not the server's (Netlify = UTC).
   // Server guess from the request's geo timezone; the client re-derives from
@@ -80,8 +83,12 @@ export default async function DashboardLayout({
           workspaces={memberships.map((m) => m.workspace)}
           currentWorkspaceId={workspace.id}
           upgradeCard={
-            plan.id === "free" ? (
-              <UpgradeCard websitesUsed={websitesUsed} websiteLimit={websiteLimit} />
+            plan.id === "free" || plan.trial ? (
+              <UpgradeCard
+                websitesUsed={websitesUsed}
+                websiteLimit={websiteLimit}
+                trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
+              />
             ) : null
           }
         />

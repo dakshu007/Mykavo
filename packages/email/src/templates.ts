@@ -22,6 +22,18 @@ export interface ScanSummaryData {
   highestSeverity: Severity;
   changes: ChangeLine[];
   dashboardUrl: string;
+  /**
+   * Free plan only: days between MyKavo's previous check of this website and
+   * this one, with where to upgrade. The changes happened sometime in that
+   * gap - said honestly, it is the clearest case for daily checks.
+   */
+  freePlanGap?: { days: number; upgradeUrl: string } | null;
+}
+
+/** The Free-plan line under a change summary (null when the gap is under 2 days). */
+export function freePlanGapNote(gap: { days: number } | null | undefined): string | null {
+  if (!gap || gap.days < 2) return null;
+  return `MyKavo's previous check of this website was ${gap.days} days before this one, so these changes may have been live for up to ${gap.days} days. Pro checks every day, so you would know the next morning.`;
 }
 
 export interface FailureAlertData {
@@ -110,6 +122,7 @@ export function scanSummaryEmail(data: ScanSummaryData): { subject: string; html
   const isCritical = data.highestSeverity === "CRITICAL";
   const severityWord = isCritical ? "Critical" : label(data.highestSeverity);
   const subject = `${severityWord} changes detected on ${data.websiteHost}`;
+  const gapNote = freePlanGapNote(data.freePlanGap);
 
   const rows = data.changes
     .map(
@@ -131,13 +144,22 @@ export function scanSummaryEmail(data: ScanSummaryData): { subject: string; html
     <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)} · scanned ${esc(data.scanTime)}</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:24px">${rows}</table>
     ${button(data.dashboardUrl, "Review changes")}
+    ${
+      gapNote && data.freePlanGap
+        ? `<div style="margin:24px 0 0;padding:14px 16px;border-radius:10px;background:#f4f6ff">
+      <p style="margin:0 0 8px;font-size:13px;color:#16181d">${esc(gapNote)}</p>
+      <a href="${esc(data.freePlanGap.upgradeUrl)}" style="font-size:13px;font-weight:600;color:#3556f4;text-decoration:none">Get daily checks with Pro &rarr;</a>
+    </div>`
+        : ""
+    }
   `;
 
   const text =
     `${severityWord} changes detected on ${data.websiteHost}\n\n` +
     `${data.totalChanges} change(s) on ${data.websiteName} (scanned ${data.scanTime}):\n` +
     data.changes.map((c) => `- [${label(c.severity)}] ${c.title} (${c.pagePath})`).join("\n") +
-    `\n\nReview: ${data.dashboardUrl}`;
+    `\n\nReview: ${data.dashboardUrl}` +
+    (gapNote && data.freePlanGap ? `\n\n${gapNote}\nGet daily checks with Pro: ${data.freePlanGap.upgradeUrl}` : "");
 
   return { subject, html: shell(inner), text };
 }
@@ -1685,4 +1707,143 @@ export function campaignEmail(d: CampaignEmailData, mode: { kind: "brevo" } | { 
     "</body>",
     `${campaignSourceComment({ heading: d.heading, body: d.body, buttonLabel: d.buttonLabel, buttonUrl: d.buttonUrl })}</body>`,
   );
+}
+
+// ---------- Pro trial: ending soon ----------
+
+export interface TrialEndingData {
+  name: string;
+  /** Whole days left (at least 1). */
+  daysLeft: number;
+  /** The day it ends, already formatted, e.g. "Friday, October 24". */
+  endsOn: string;
+  /** Pro's monthly price in USD. */
+  price: number;
+  scans: number;
+  changes: number;
+  websites: number;
+  upgradeUrl: string;
+}
+
+/**
+ * A few days before a free Pro trial ends: what the trial did for them, and
+ * what changes when it ends. Real numbers only; zeros are left out rather
+ * than shown as a sad "0 changes".
+ */
+export function trialEndingEmail(data: TrialEndingData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const d = DEFAULT_COPY.trial_ending;
+  const days = `${data.daysLeft} day${data.daysLeft === 1 ? "" : "s"}`;
+  const vars = { firstName: firstNameOf(data.name), days, date: data.endsOn, price: String(data.price) };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
+
+  const facts = [
+    data.websites > 0 ? `${data.websites} website${data.websites === 1 ? "" : "s"} monitored` : null,
+    data.scans > 0 ? `${data.scans} scan${data.scans === 1 ? "" : "s"} run` : null,
+    data.changes > 0 ? `${data.changes} change${data.changes === 1 ? "" : "s"} caught` : null,
+  ].filter((f): f is string => f !== null);
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Pro trial</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
+    ${
+      facts.length
+        ? `<p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#16181d">During your trial so far</p>
+    <ul style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">${facts.map((f) => `<li style="margin:0 0 6px">${esc(f)}</li>`).join("")}</ul>`
+        : ""
+    }
+    ${button(data.upgradeUrl, cta)}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">No need to do anything if Free is enough: nothing is deleted when the trial ends.</p>
+  `;
+  const text =
+    `${intro}\n\n` +
+    (facts.length ? `During your trial so far:\n${facts.map((f) => `- ${f}`).join("\n")}\n\n` : "") +
+    `${cta}: ${data.upgradeUrl}\n\nNo need to do anything if Free is enough: nothing is deleted when the trial ends.`;
+  return { subject, html: shell(inner), text };
+}
+
+// ---------- Pro trial: ended ----------
+
+export interface TrialEndedData {
+  name: string;
+  /** Websites paused because Free covers fewer than the trial did. */
+  pausedWebsites: string[];
+  upgradeUrl: string;
+}
+
+export function trialEndedEmail(data: TrialEndedData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const d = DEFAULT_COPY.trial_ended;
+  const vars = { firstName: firstNameOf(data.name) };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
+  const paused = data.pausedWebsites;
+  const pausedLine = paused.length
+    ? `The Free plan covers one website, so monitoring is paused for ${paused.length === 1 ? paused[0] : `${paused.length} websites: ${paused.join(", ")}`}. Upgrade and ${paused.length === 1 ? "it starts" : "they start"} again straight away.`
+    : null;
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Pro trial</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
+    ${pausedLine ? paragraphs(pausedLine, "margin:0 0 14px;font-size:14px;color:#16181d") : ""}
+    <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#16181d">Pro gives you back</p>
+    <ul style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">
+      <li style="margin:0 0 6px">Daily checks instead of weekly</li>
+      <li style="margin:0 0 6px">A check after every WordPress and Shopify update</li>
+      <li style="margin:0 0 6px">Up to 8 websites and 15 pages each</li>
+    </ul>
+    ${button(data.upgradeUrl, cta)}
+  `;
+  const text =
+    `${intro}\n\n` +
+    (pausedLine ? `${pausedLine}\n\n` : "") +
+    `Pro gives you back:\n- Daily checks instead of weekly\n- A check after every WordPress and Shopify update\n- Up to 8 websites and 15 pages each\n\n${cta}: ${data.upgradeUrl}`;
+  return { subject, html: shell(inner), text };
+}
+
+// ---------- Monitoring paused (inactive account) ----------
+
+export interface MonitoringPausedData {
+  name: string;
+  /** Names of the paused websites. */
+  websites: string[];
+  /** The dashboard: opening it resumes monitoring. */
+  resumeUrl: string;
+}
+
+export function monitoringPausedEmail(
+  data: MonitoringPausedData,
+  copy: EmailCopy = {},
+): { subject: string; html: string; text: string } {
+  const d = DEFAULT_COPY.monitoring_paused;
+  const website = data.websites.length === 1 ? data.websites[0] : `${data.websites.length} websites`;
+  const vars = { firstName: firstNameOf(data.name), website };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
+  const note =
+    "If MyKavo stays unopened for another 90 days, we keep your approved baselines and clear the older scan history.";
+
+  const inner = `
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
+    ${
+      data.websites.length > 1
+        ? `<ul style="margin:0 0 18px;padding-left:20px;font-size:14px;color:#16181d">${data.websites.map((w) => `<li style="margin:0 0 6px">${esc(w)}</li>`).join("")}</ul>`
+        : ""
+    }
+    ${button(data.resumeUrl, cta)}
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">${esc(note)}</p>
+  `;
+  const text =
+    `${intro}\n\n` +
+    (data.websites.length > 1 ? `${data.websites.map((w) => `- ${w}`).join("\n")}\n\n` : "") +
+    `${cta}: ${data.resumeUrl}\n\n${note}`;
+  return { subject, html: shell(inner), text };
 }

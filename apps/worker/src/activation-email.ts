@@ -56,6 +56,7 @@ import { runFlows } from "./flow-engine";
 import { sendLifecycleEmails } from "./lifecycle-email";
 import { sendWordPressConnectReminders } from "./wordpress-connect-email";
 import { logger } from "./logger";
+import { sendPlanEmails } from "./plan-emails";
 
 const appBase = (process.env.APP_URL ?? "https://mykavo.app").replace(/\/+$/, "");
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -340,6 +341,14 @@ export async function runActivationSweep(): Promise<void> {
     );
   } catch (err) {
     logger.error("wordpress connect reminders skipped this run", { error: err instanceof Error ? err.message : String(err) });
+  }
+
+  // Plan emails (trial ending/ended, monitoring paused): about the person's
+  // own account, on the same share.
+  try {
+    await sendPlanEmails(emailAllowance("ACTIVATION", limits, await currentUsage(automations)), automations);
+  } catch (err) {
+    logger.error("plan emails skipped this run", { error: err instanceof Error ? err.message : String(err) });
   }
 
   // Re-read: the baseline emails just spent some of the same budget.

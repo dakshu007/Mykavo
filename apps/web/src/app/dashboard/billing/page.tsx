@@ -94,7 +94,10 @@ export default async function BillingPage({
     getEffectiveWebsiteLimit(workspace.id),
     prisma.website.count({ where: { workspaceId: workspace.id } }),
   ]);
-  const isPaid = plan.id !== "free";
+  // A free trial grants Pro but nothing is paid: billing treats it as Free
+  // (checkout offers, no "manage billing"), with a countdown on top.
+  const trialEndsAt = plan.trial?.endsAt ?? null;
+  const isPaid = plan.id !== "free" && !trialEndsAt;
   const pro = getPlan("pro");
   const agency = getPlan("agency");
   // Paid for through Shopify by a linked store (Shopify App Pricing): the
@@ -138,7 +141,7 @@ export default async function BillingPage({
         <div className="flex flex-wrap items-baseline gap-3">
           <p className="text-3xl font-semibold tracking-tight text-ink">{plan.name}</p>
           <p className="text-sm text-ink-secondary">
-            {plan.unlimited ? "Admin workspace - no charge" : `$${plan.priceMonthlyUsd}/month`}
+            {plan.unlimited ? "Admin workspace - no charge" : trialEndsAt ? "Free for 14 days" : `$${plan.priceMonthlyUsd}/month`}
           </p>
           {isPaid && (
             <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
@@ -151,6 +154,20 @@ export default async function BillingPage({
             </span>
           )}
         </div>
+
+        {trialEndsAt && (
+          <div className="mt-4 flex items-start gap-2.5 rounded-field bg-primary-soft px-4 py-3">
+            <CalendarClock className="mt-0.5 size-4.5 shrink-0 text-accent" aria-hidden />
+            <p className="text-sm text-ink">
+              Your free Pro trial ends on{" "}
+              <span className="font-semibold">
+                {trialEndsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+              </span>
+              . Then your workspace moves to Free: 1 website, checked weekly. Nothing is deleted. Choose a
+              plan below to keep daily scans.
+            </p>
+          </div>
+        )}
 
         {plan.grandfathered && (
           <p className="mt-3 text-[13px] text-ink-secondary">
@@ -243,7 +260,7 @@ export default async function BillingPage({
               Manage or cancel your subscription from your Dodo Payments account.
             </p>
           )
-        ) : (
+        ) : trialEndsAt ? null : (
           <p className="mt-6 text-sm text-ink-secondary">
             You&apos;re on the Free plan - 1 website and 5 monitored pages.
           </p>
@@ -276,7 +293,7 @@ export default async function BillingPage({
       )}
 
       {/* Pro -> Agency: changes the existing subscription, never a second one. */}
-      {plan.id === "pro" && (
+      {plan.id === "pro" && !trialEndsAt && (
         <Card className="ring-2 ring-accent">
           <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft">
             <Sparkles className="size-5 text-accent" aria-hidden />

@@ -1684,3 +1684,44 @@ model SignupAttribution {
   @@index([createdAt(sort: Desc)])
   @@map("signup_attribution")
 }
+
+/// A free trial of a paid plan for one workspace (packages/database/src/trial.ts).
+/// One row per workspace, ever: a workspace gets one trial. While endsAt is
+/// in the future and nothing is paid, the workspace's entitlement is the
+/// trial plan. Kept apart from Subscription so billing webhooks never touch it.
+model WorkspaceTrial {
+  workspaceId String    @id
+  /// "pro"
+  planId      String
+  startedAt   DateTime  @default(now())
+  endsAt      DateTime
+  /// "signup" | "reactivation"
+  source      String
+  /// The "3 days left" email went out.
+  reminderSentAt DateTime?
+  /// The trial-end handling ran (over-limit sites paused).
+  endedAt     DateTime?
+  /// The "trial ended" email went out (or was skipped because they pay).
+  endedEmailAt DateTime?
+
+  @@index([endsAt])
+  @@map("workspace_trial")
+}
+
+/// A website MyKavo paused by itself, and why, so it can be resumed by the
+/// same rule (packages/database/src/auto-pause.ts). A website the owner
+/// paused has no row here.
+model WebsiteAutoPause {
+  websiteId   String   @id
+  workspaceId String
+  /// "DORMANT" (nobody active for 30 days on Free) | "OVER_LIMIT" (trial
+  /// ended with more websites than the plan allows)
+  reason      String
+  pausedAt    DateTime @default(now())
+  /// The paused email went out.
+  notifiedAt  DateTime?
+
+  @@index([workspaceId])
+  @@index([reason, pausedAt])
+  @@map("website_auto_pause")
+}

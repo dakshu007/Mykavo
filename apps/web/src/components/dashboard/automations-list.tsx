@@ -164,11 +164,13 @@ export function AutomationsList({ overview }: { overview: AutomationsOverview })
     }
   }
 
-  const groups = ["Onboarding", "Lifecycle series", "Product updates"] as const;
+  const groups = ["Onboarding", "Lifecycle series", "Plan & monitoring", "Product updates"] as const;
   const blurb: Record<(typeof groups)[number], string> = {
     Onboarding: "Transactional: sent once each, no unsubscribe link, and only to workspaces with email switched on.",
     "Lifecycle series":
       "Optional: each carries an unsubscribe link, stops for paying and unsubscribed accounts, and never sends two within a day.",
+    "Plan & monitoring":
+      "Transactional: the Pro trial reminder and end, and the notice when MyKavo pauses an inactive Free workspace. Once each, no unsubscribe link.",
     "Product updates":
       "Optional: once per person per version, never two within 72 hours, with an unsubscribe link. Send them from Update emails below.",
   };
