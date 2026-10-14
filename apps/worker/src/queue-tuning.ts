@@ -20,7 +20,8 @@ import type { PgBoss } from "pg-boss";
  *    its own if the LISTEN connection is ever unavailable.
  *  - The housekeeping loops run every few minutes instead of every few
  *    seconds. The shortest cron here is every 5 minutes and every queue
- *    expiry is 1 minute or more, so nothing waits on them.
+ *    expiry is 1 minute or more, so nothing waits on them. The cron CHECK is
+ *    the exception: see cronMonitorIntervalSeconds below.
  *  - `flowIntervalSeconds` drives job flows (dependencies between jobs),
  *    which MyKavo does not use; at its 5 s default it was the largest single
  *    cost once polling was fixed.
@@ -32,7 +33,15 @@ export const BOSS_TUNING = {
   monitorIntervalSeconds: 600,
   queueCacheIntervalSeconds: 300,
   cronWorkerIntervalSeconds: 30,
-  cronMonitorIntervalSeconds: 45,
+  // Must stay well under 30. pg-boss fires a schedule only when a cron check
+  // lands within 60 s after the cron time, and it throttles checks with this
+  // same number: a check is skipped unless the last one is at least this many
+  // seconds old. With the timer and the throttle equal, about half the checks
+  // were skipped, the gap between real checks reached 90 s, and roughly one
+  // cron tick in four never fired (the hourly email sweep missed 14:20, 15:20
+  // and 17:20 UTC on 2026-10-14; a missed daily or weekly tick loses a whole
+  // day or week). At 20 the worst gap between checks is 40 s.
+  cronMonitorIntervalSeconds: 20,
   flowIntervalSeconds: 600,
   bamIntervalSeconds: 600,
 } as const;
