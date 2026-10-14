@@ -43,8 +43,10 @@ import {
   type TrialEndingData,
   type TrialEndedData,
   type MonitoringPausedData,
+  type TrialStartedData,
   trialEndingEmail,
   trialEndedEmail,
+  trialStartedEmail,
   monitoringPausedEmail,
 } from "./templates";
 
@@ -189,6 +191,17 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
     group: "Plan & monitoring",
     trigger:
       "When a Free workspace has not been opened for 30 days and its websites are paused. Opening MyKavo resumes them.",
+    unsubscribable: false,
+    timing: null,
+    offer: false,
+    legacySubject: null,
+  },
+  trial_started: {
+    key: "trial_started",
+    name: "Pro trial added",
+    group: "Plan & monitoring",
+    trigger:
+      "Once, when MyKavo adds a 14-day Pro trial to an account that signed up before trials existed. Not sent for signup or self-started trials.",
     unsubscribable: false,
     timing: null,
     offer: false,
@@ -343,7 +356,8 @@ export type AutomationData =
   | { key: "app_update"; data: AppUpdateData }
   | { key: "trial_ending"; data: TrialEndingData }
   | { key: "trial_ended"; data: TrialEndedData }
-  | { key: "monitoring_paused"; data: MonitoringPausedData };
+  | { key: "monitoring_paused"; data: MonitoringPausedData }
+  | { key: "trial_started"; data: TrialStartedData };
 
 /**
  * Render an automation with its saved settings. The offer's code, percent,
@@ -380,6 +394,8 @@ export function renderAutomation(
       return trialEndedEmail(input.data, copy);
     case "monitoring_paused":
       return monitoringPausedEmail(input.data, copy);
+    case "trial_started":
+      return trialStartedEmail(input.data, copy);
     case "day10_offer": {
       const s = settings.day10_offer;
       const percent = s?.offerPercent ?? DEFAULT_OFFER.percent;
@@ -484,6 +500,8 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
       return { key, data: { name, pausedWebsites: ["Client shop"], upgradeUrl: `${appBase}/dashboard/billing` } };
     case "monitoring_paused":
       return { key, data: { name, websites: ["Northstar"], resumeUrl: `${appBase}/dashboard` } };
+    case "trial_started":
+      return { key, data: { name, endsOn: "Friday, October 24", maxWebsites: 3, dashboardUrl: `${appBase}/dashboard` } };
   }
 }
 

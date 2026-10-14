@@ -98,7 +98,7 @@ export {
   type ConsumedIntent,
 } from "./subscription";
 export { isInternalEmail, isPlatformAdminEmail, platformAdminEmails } from "./platform-admin";
-export { TRIAL_DAYS, getActiveTrial, startTrial, trialDaysLeft, type ActiveTrial } from "./trial";
+export { TRIAL_DAYS, canStartTrial, getActiveTrial, startTrial, trialDaysLeft, type ActiveTrial, type TrialSource } from "./trial";
 export {
   DORMANT_AFTER_DAYS,
   DORMANT_TRIM_AFTER_DAYS,

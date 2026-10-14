@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { getPlan, PAID_PLAN_ID, formatLimit } from "@/config/plans";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
+import { StartTrialButton } from "@/components/dashboard/start-trial-button";
+
+const BUTTON =
+  "mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100";
 
 /**
  * Sidebar upsell, shown only on the free plan.
@@ -15,13 +20,30 @@ export function UpgradeCard({
   websitesUsed,
   websiteLimit,
   trialDaysLeft = null,
+  trialAvailable = false,
 }: {
   websitesUsed: number;
   websiteLimit: number;
   /** Set during a free Pro trial: the card counts down instead of upselling. */
   trialDaysLeft?: number | null;
+  /** Free and never trialed (signed up before trials existed): offer one. */
+  trialAvailable?: boolean;
 }) {
   const pro = getPlan(PAID_PLAN_ID);
+  if (trialDaysLeft === null && trialAvailable) {
+    return (
+      <div className="rounded-xl bg-primary-soft p-3.5">
+        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+          <Sparkles aria-hidden className="size-3.5 text-accent" />
+          Try {pro.name} free for {TRIAL_DAYS} days
+        </p>
+        <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
+          Daily scans, up to {TRIAL_MAX_WEBSITES} websites. No card needed.
+        </p>
+        <StartTrialButton label="Start free trial" className={BUTTON} />
+      </div>
+    );
+  }
   if (trialDaysLeft !== null) {
     return (
       <div className="rounded-xl bg-primary-soft p-3.5">
@@ -34,7 +56,7 @@ export function UpgradeCard({
         </p>
         <Link
           href="/dashboard/billing?from=sidebar:trial"
-          className="mt-2.5 inline-flex h-8 w-full items-center justify-center rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none motion-reduce:transition-none motion-reduce:active:scale-100"
+          className={BUTTON}
         >
           Keep {pro.name}
         </Link>
@@ -68,7 +90,7 @@ export function UpgradeCard({
       </p>
       <Link
         href="/dashboard/billing"
-        className="mt-2.5 inline-flex h-8 w-full items-center justify-center rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none motion-reduce:transition-none motion-reduce:active:scale-100"
+        className={BUTTON}
       >
         See plans
       </Link>

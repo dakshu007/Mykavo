@@ -1695,8 +1695,10 @@ model WorkspaceTrial {
   planId      String
   startedAt   DateTime  @default(now())
   endsAt      DateTime
-  /// "signup" | "reactivation"
+  /// "signup" | "reactivation" | "self_serve"
   source      String
+  /// The "your trial has started" email went out (reactivation trials only).
+  startedEmailAt DateTime?
   /// The "3 days left" email went out.
   reminderSentAt DateTime?
   /// The trial-end handling ran (over-limit sites paused).

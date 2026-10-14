@@ -1847,3 +1847,50 @@ export function monitoringPausedEmail(
     `${cta}: ${data.resumeUrl}\n\n${note}`;
   return { subject, html: shell(inner), text };
 }
+
+// ---------- Pro trial: granted to an existing account ----------
+
+export interface TrialStartedData {
+  name: string;
+  /** The day it ends, already formatted, e.g. "Friday, October 24". */
+  endsOn: string;
+  /** Websites the trial covers. */
+  maxWebsites: number;
+  dashboardUrl: string;
+}
+
+/**
+ * For accounts made before trials existed: a trial was added to their
+ * workspace, and this says so, once. Signup trials need no email (the
+ * dashboard shows the countdown from the first visit).
+ */
+export function trialStartedEmail(data: TrialStartedData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const d = DEFAULT_COPY.trial_started;
+  const vars = { firstName: firstNameOf(data.name), date: data.endsOn };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
+  const perks = [
+    "Daily scans instead of weekly, so a broken page or a lost tracking script is caught within a day, not a week.",
+    `Up to ${data.maxWebsites} websites monitored.`,
+    "Conversion element monitoring: get alerted if your signup button, checkout or contact form goes missing.",
+  ];
+  const after = `If you do nothing, your account goes back to Free on ${data.endsOn}. Your first website keeps being monitored, and nothing is deleted.`;
+  const signoff = "Dakshesh\nFounder, MyKavo";
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Pro trial</p>
+    <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
+    <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#16181d">What changes for the next 14 days</p>
+    <ul style="margin:0 0 18px;padding-left:20px;font-size:14px;color:#16181d">${perks.map((p) => `<li style="margin:0 0 6px">${esc(p)}</li>`).join("")}</ul>
+    ${paragraphs(after, "margin:0 0 22px;font-size:14px;color:#5c6270")}
+    ${button(data.dashboardUrl, cta)}
+    <p style="margin:22px 0 0;font-size:14px;color:#16181d">Dakshesh<br>Founder, MyKavo</p>
+  `;
+  const text =
+    `${intro}\n\nWhat changes for the next 14 days:\n${perks.map((p) => `- ${p}`).join("\n")}\n\n${after}\n\n` +
+    `${cta}: ${data.dashboardUrl}\n\n${signoff}`;
+  return { subject, html: shell(inner), text };
+}

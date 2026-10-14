@@ -8,7 +8,8 @@ import {
   Globe,
   Sparkles,
 } from "lucide-react";
-import { prisma } from "@mykavo/database";
+import { prisma, canStartTrial } from "@mykavo/database";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
 import {
@@ -22,6 +23,7 @@ import { Card, CardHeader, IconChip } from "@/components/ui/card";
 import { ValueQuoteCard } from "@/components/value-quote";
 import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscription-button";
 import { ChangePlanButton } from "@/components/dashboard/change-plan-button";
+import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
 
 function FeatureList({ features, columns = false }: { features: string[]; columns?: boolean }) {
@@ -98,6 +100,8 @@ export default async function BillingPage({
   // (checkout offers, no "manage billing"), with a countdown on top.
   const trialEndsAt = plan.trial?.endsAt ?? null;
   const isPaid = plan.id !== "free" && !trialEndsAt;
+  // Signed up before trials existed: they never got one, so offer it here.
+  const trialAvailable = plan.id === "free" && (await canStartTrial(prisma, workspace.id).catch(() => false));
   const pro = getPlan("pro");
   const agency = getPlan("agency");
   // Paid for through Shopify by a linked store (Shopify App Pricing): the
@@ -264,6 +268,22 @@ export default async function BillingPage({
           <p className="mt-6 text-sm text-ink-secondary">
             You&apos;re on the Free plan - 1 website and 5 monitored pages.
           </p>
+        )}
+
+        {trialAvailable && (
+          <div className="mt-4 rounded-field bg-primary-soft px-4 py-4">
+            <p className="text-sm font-semibold text-ink">Try {pro.name} free for {TRIAL_DAYS} days</p>
+            <p className="mt-1 text-sm text-ink-secondary">
+              Daily scans, a check after every WordPress or Shopify update, and up to {TRIAL_MAX_WEBSITES}{" "}
+              websites. No card needed. When it ends you go back to Free and nothing is deleted.
+            </p>
+            <div className="mt-3 max-w-60">
+              <StartTrialButton
+                label="Start free trial"
+                className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-70"
+              />
+            </div>
+          </div>
         )}
       </Card>
 

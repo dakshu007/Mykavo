@@ -178,6 +178,7 @@ export async function buildAutomationData(
     case "trial_ending":
     case "trial_ended":
     case "monitoring_paused":
+    case "trial_started":
       // Sent by plan-sweep.ts, which knows the trial and the paused websites.
       return null;
   }

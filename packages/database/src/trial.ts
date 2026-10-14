@@ -16,6 +16,8 @@ export const TRIAL_DAYS = 14;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export type TrialSource = "signup" | "reactivation" | "self_serve";
+
 export interface ActiveTrial {
   planId: "pro";
   startedAt: Date;
@@ -35,6 +37,21 @@ export async function getActiveTrial(db: Db, workspaceId: string, now: Date = ne
 }
 
 /**
+ * Whether the workspace can still start its one trial. Accounts created
+ * before trials existed have none yet, so they get a "try Pro" button. A
+ * missing table means trials are not live: nothing to offer.
+ */
+export async function canStartTrial(db: Db, workspaceId: string): Promise<boolean> {
+  try {
+    const existing = await db.workspaceTrial.findUnique({ where: { workspaceId }, select: { workspaceId: true } });
+    return existing === null;
+  } catch (err) {
+    if (isMissingTableError(err)) return false;
+    throw err;
+  }
+}
+
+/**
  * Starts a trial unless the workspace already had one. Returns the trial
  * when it was started now, null when it already existed (or the table is
  * missing). Never extends or restarts an existing trial.
@@ -42,7 +59,7 @@ export async function getActiveTrial(db: Db, workspaceId: string, now: Date = ne
 export async function startTrial(
   db: Db,
   workspaceId: string,
-  options: { source: "signup" | "reactivation"; now?: Date; days?: number } ,
+  options: { source: TrialSource; now?: Date; days?: number },
 ): Promise<ActiveTrial | null> {
   const now = options.now ?? new Date();
   const endsAt = new Date(now.getTime() + (options.days ?? TRIAL_DAYS) * DAY_MS);

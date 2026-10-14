@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { prisma, resumeAutoPaused, trialDaysLeft } from "@mykavo/database";
+import { prisma, canStartTrial, resumeAutoPaused, trialDaysLeft } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { isPlatformAdmin } from "@/lib/platform-admin";
@@ -62,6 +62,7 @@ export default async function DashboardLayout({
       recordSignupAttribution(session.user),
     ]);
   const appApproved = canDownloadApp(appStatus);
+  const trialAvailable = plan.id === "free" && (await canStartTrial(prisma, workspace.id).catch(() => false));
 
   return (
     // data-clarity-mask: if Clarity is already running (a visitor came in from a
@@ -88,6 +89,7 @@ export default async function DashboardLayout({
                 websitesUsed={websitesUsed}
                 websiteLimit={websiteLimit}
                 trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
+                trialAvailable={trialAvailable}
               />
             ) : null
           }

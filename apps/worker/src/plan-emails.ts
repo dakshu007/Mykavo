@@ -1,5 +1,5 @@
 /**
- * Emails about the plan: "3 days left of your Pro trial", "your trial has
+ * Emails about the plan: "we added a Pro trial", "3 days left of your Pro trial", "your trial has
  * ended" and "we paused monitoring". The state changes behind them happen in
  * plan-sweep.ts regardless of email; these only tell people, once each, on
  * the ACTIVATION share of the email budget (they are about the person's own
@@ -8,7 +8,7 @@
 
 import { prisma, getWorkspaceEntitlement, trialDaysLeft, isMissingTableError } from "@mykavo/database";
 import { renderAutomation } from "@mykavo/email";
-import { PLAN_PRICES_USD, TRIAL_REMINDER_DAYS_LEFT, displayPersonName } from "@mykavo/shared";
+import { PLAN_PRICES_USD, TRIAL_MAX_WEBSITES, TRIAL_REMINDER_DAYS_LEFT, displayPersonName } from "@mykavo/shared";
 import { appBase } from "./automation-data";
 import { sendAutomatedEmail } from "./automation-send";
 import type { Automations } from "./automation-settings";
@@ -34,6 +34,54 @@ async function owner(workspaceId: string): Promise<{ name: string; email: string
 async function notPaying(workspaceId: string): Promise<boolean> {
   const ent = await getWorkspaceEntitlement(prisma, workspaceId);
   return !ent || ent.planId === "free" || ent.billedBy === "trial";
+}
+
+/** "We added a trial to your account": only for trials MyKavo granted (reactivation), once. */
+async function sendTrialStarted(budget: number, a: Automations, now: Date): Promise<number> {
+  if (budget <= 0) return 0;
+  const due = await prisma.workspaceTrial.findMany({
+    where: { source: "reactivation", startedEmailAt: null, endedAt: null, endsAt: { gt: now } },
+    orderBy: { startedAt: "asc" },
+    take: 50,
+  });
+  let sent = 0;
+  for (const trial of due) {
+    if (sent >= budget) break;
+    const mark = () => prisma.workspaceTrial.update({ where: { workspaceId: trial.workspaceId }, data: { startedEmailAt: now } });
+    const to = await owner(trial.workspaceId);
+    if (!a.settings.trial_started.enabled || !to || !(await notPaying(trial.workspaceId)) || !(await resolveEmailConfig(trial.workspaceId))) {
+      await mark();
+      continue;
+    }
+    const result = await sendAutomatedEmail({
+      workspaceId: trial.workspaceId,
+      to: to.email,
+      key: "trial_started",
+      unsubscribable: false,
+      a,
+      render: () =>
+        renderAutomation(
+          {
+            key: "trial_started",
+            data: {
+              name: to.name,
+              endsOn: dayFormat.format(trial.endsAt),
+              maxWebsites: TRIAL_MAX_WEBSITES,
+              dashboardUrl: `${appBase}/dashboard?from=email:trial_started`,
+            },
+          },
+          a.settings,
+        ),
+    });
+    if (!result.ok) {
+      logger.warn("trial started email failed, stopping this run", { workspaceId: trial.workspaceId, error: result.error });
+      break;
+    }
+    await mark();
+    sent++;
+    await pause();
+  }
+  return sent;
 }
 
 async function sendTrialReminders(budget: number, a: Automations, now: Date): Promise<number> {
@@ -193,12 +241,13 @@ async function sendPausedNotices(budget: number, a: Automations, now: Date): Pro
   return sent;
 }
 
-/** All three, sharing one budget. Returns emails sent. */
+/** All four, sharing one budget. Returns emails sent. */
 export async function sendPlanEmails(budget: number, a: Automations): Promise<number> {
   if (budget <= 0) return 0;
   const now = new Date();
   try {
-    let sent = await sendTrialReminders(budget, a, now);
+    let sent = await sendTrialStarted(budget, a, now);
+    sent += await sendTrialReminders(budget - sent, a, now);
     sent += await sendTrialEnded(budget - sent, a, now);
     sent += await sendPausedNotices(budget - sent, a, now);
     return sent;

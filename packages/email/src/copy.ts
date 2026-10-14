@@ -30,6 +30,7 @@ export const AUTOMATION_KEYS = [
   "trial_ending",
   "trial_ended",
   "monitoring_paused",
+  "trial_started",
 ] as const;
 export type AutomationKey = (typeof AUTOMATION_KEYS)[number];
 
@@ -121,6 +122,13 @@ export const DEFAULT_COPY: Record<AutomationKey, { subject: string; heading: str
       "Hi {firstName}, nobody has opened MyKavo for a month, so we paused the checks on {website}. Nothing is deleted: your baseline and history are kept. Open MyKavo and monitoring starts again right away.",
     buttonLabel: "Resume monitoring",
   },
+  trial_started: {
+    subject: "Your MyKavo account now has 14 days of Pro",
+    heading: "14 days of Pro, on us",
+    intro:
+      "Hi {firstName}, you signed up for MyKavo before we had a trial, so we've added one to your account: 14 days of Pro, no card needed.",
+    buttonLabel: "Open your dashboard",
+  },
   app_update: {
     subject: "MyKavo for Android {version} is ready",
     heading: "A new MyKavo app is ready",
@@ -176,6 +184,10 @@ export const PLACEHOLDERS: Record<AutomationKey, { token: string; meaning: strin
   app_update: [
     { token: "{firstName}", meaning: "first name (dropped when unknown)" },
     { token: "{version}", meaning: "the new version, e.g. 1.0.2" },
+  ],
+  trial_started: [
+    { token: "{firstName}", meaning: "first name (dropped when unknown)" },
+    { token: "{date}", meaning: 'the day the trial ends, e.g. "Friday, October 24"' },
   ],
 };
 
