@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertCircle, ArrowRight, Check, Globe, Lock, Plus } from "lucide-react";
 import { prisma } from "@mykavo/database";
+import { TRIAL_DAYS } from "@mykavo/shared";
 import { googleEnabled } from "@/lib/auth";
 import { getSession, getCurrentMembership } from "@/lib/session";
-import { getEffectiveWebsiteLimit } from "@/lib/limits";
+import { getWorkspacePlan } from "@/lib/limits";
+import { formatLimit, getPlan } from "@/config/plans";
 import { logActivityEvent } from "@/lib/activity/record";
 import { recordExtensionMilestone } from "@/lib/extension-tracking";
 import { bareHost } from "@/lib/integrations/site-connection";
@@ -179,7 +181,7 @@ export default async function ConnectChromePage({ searchParams }: { searchParams
             Sign up with email <ArrowRight className="size-4" aria-hidden />
           </Link>
         </div>
-        <p className="mt-3 text-center text-[12px] text-ink-faint">Free plan · no credit card</p>
+        <p className="mt-3 text-center text-[12px] text-ink-faint">Includes a {TRIAL_DAYS}-day Pro trial · no credit card</p>
         <p className="mt-5 border-t border-line pt-4 text-center text-[13px] text-ink-secondary">
           Already have an account?{" "}
           <Link href={`/login?next=${loginNext}`} className="font-semibold text-ink underline-offset-2 hover:underline">
@@ -221,17 +223,21 @@ export default async function ConnectChromePage({ searchParams }: { searchParams
     return <Problem message="Viewers can't connect websites. Ask an owner or admin of this workspace to connect it." />;
   }
 
-  const [websites, websiteLimit] = await Promise.all([
+  const [websites, plan] = await Promise.all([
     prisma.website.findMany({
       where: { workspaceId: workspace.id },
       select: { id: true, name: true, url: true },
       orderBy: { createdAt: "asc" },
     }),
-    getEffectiveWebsiteLimit(workspace.id),
+    getWorkspacePlan(workspace.id),
   ]);
+  const websiteLimit = plan.limits.websites;
   const matches = websites.filter((w) => hostOf(w.url) === req.siteHost);
   const others = websites.filter((w) => hostOf(w.url) !== req.siteHost);
   const atLimit = websites.length >= websiteLimit;
+  // A trial is capped below the plan it trials, so the limit note names the
+  // trial's own cap and what the paid plan covers.
+  const trialPaidPlan = plan.trial ? getPlan(plan.id) : null;
 
   return (
     <>
@@ -282,8 +288,15 @@ export default async function ConnectChromePage({ searchParams }: { searchParams
 
         {matches.length === 0 && atLimit ? (
           <div className="rounded-field border border-line px-3.5 py-3">
-            <p className="text-sm font-medium text-ink">Your plan&apos;s website limit is reached</p>
+            <p className="text-sm font-medium text-ink">
+              {trialPaidPlan
+                ? `All ${formatLimit(websiteLimit)} website${websiteLimit === 1 ? "" : "s"} on your ${plan.name} are in use`
+                : "Your plan's website limit is reached"}
+            </p>
             <p className="mt-1 text-[13px] text-ink-secondary">
+              {trialPaidPlan
+                ? `${trialPaidPlan.name} covers up to ${formatLimit(trialPaidPlan.limits.websites)}. `
+                : ""}
               Upgrade to add {req.siteHost}, or connect the extension to one of your existing websites.
             </p>
             <Link href="/dashboard/billing" className={`${primaryButton} mt-3`}>

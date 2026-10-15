@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { prisma, canStartTrial, resumeAutoPaused, trialDaysLeft } from "@mykavo/database";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { requireSession, getCurrentMembership } from "@/lib/session";
+import { canManageBilling } from "@/lib/team";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { isPlatformAdmin } from "@/lib/platform-admin";
 import { greetingForHour, hourInTimeZone, timezoneFromNetlifyGeo } from "@/lib/greeting";
@@ -29,7 +30,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await requireSession();
-  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
   // Back after a month away: websites MyKavo paused for inactivity start
   // again (see plan-sweep.ts in the worker). Never blocks the page.
   await resumeAutoPaused(prisma, workspace.id, ["DORMANT"]).catch(() => []);
@@ -62,7 +63,18 @@ export default async function DashboardLayout({
       recordSignupAttribution(session.user),
     ]);
   const appApproved = canDownloadApp(appStatus);
-  const trialAvailable = plan.id === "free" && (await canStartTrial(prisma, workspace.id).catch(() => false));
+  // Only the owner can start it (POST /api/billing/trial), so only the owner is offered it.
+  const trialAvailable =
+    plan.id === "free" && canManageBilling(role) && (await canStartTrial(prisma, workspace.id).catch(() => false));
+  const upgradeCard =
+    plan.id === "free" || plan.trial ? (
+      <UpgradeCard
+        websitesUsed={websitesUsed}
+        websiteLimit={websiteLimit}
+        trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
+        trialAvailable={trialAvailable}
+      />
+    ) : null;
 
   return (
     // data-clarity-mask: if Clarity is already running (a visitor came in from a
@@ -83,16 +95,7 @@ export default async function DashboardLayout({
           isPlatformAdmin={isPlatformAdmin(session.user.email)}
           workspaces={memberships.map((m) => m.workspace)}
           currentWorkspaceId={workspace.id}
-          upgradeCard={
-            plan.id === "free" || plan.trial ? (
-              <UpgradeCard
-                websitesUsed={websitesUsed}
-                websiteLimit={websiteLimit}
-                trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
-                trialAvailable={trialAvailable}
-              />
-            ) : null
-          }
+          upgradeCard={upgradeCard}
         />
       </div>
       <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">
@@ -102,6 +105,13 @@ export default async function DashboardLayout({
           isBlogAdmin={isBlogAdmin(session.user.email)}
           isPlatformAdmin={isPlatformAdmin(session.user.email)}
         />
+        {/* The sidebar (and its card) is hidden below lg. Without this copy a
+            phone never sees the trial countdown or the offer to start one.
+            The plain Free upsell stays in the sidebar: on a phone it would
+            sit above every page's content. */}
+        {plan.trial || trialAvailable ? (
+          <div className="mb-4 max-w-md lg:hidden">{upgradeCard}</div>
+        ) : null}
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <Greeting

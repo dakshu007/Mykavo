@@ -13,7 +13,13 @@
  */
 
 export type FlowTrigger = "signup" | "first_website";
-export type FlowCondition = "has_website" | "is_paid" | "has_android_app" | "has_open_changes" | "has_urgent_changes";
+export type FlowCondition =
+  | "has_website"
+  | "is_paid"
+  | "on_trial"
+  | "has_android_app"
+  | "has_open_changes"
+  | "has_urgent_changes";
 export type FlowStatus = "DRAFT" | "ACTIVE" | "PAUSED";
 
 export interface CustomFlowEmail {
@@ -34,7 +40,7 @@ export type FlowStep =
 
 export interface FlowDefinition {
   version: 1;
-  /** Stop an account's run as soon as it is on a paid plan. */
+  /** Stop an account's run as soon as it pays for a plan. A running Pro trial is not paying. */
   exitOnPaid: boolean;
   steps: FlowStep[];
 }
@@ -49,7 +55,11 @@ export const FLOW_TRIGGERS: Record<FlowTrigger, { label: string; description: st
 
 export const FLOW_CONDITIONS: Record<FlowCondition, { label: string; question: string }> = {
   has_website: { label: "Has a website", question: "Has the account added a website?" },
-  is_paid: { label: "On a paid plan", question: "Is the account on a paid plan?" },
+  is_paid: {
+    label: "Paying for a plan",
+    question: "Is the account paying for a plan? A running Pro trial counts as not paying.",
+  },
+  on_trial: { label: "On the Pro trial", question: "Is the account on a running Pro trial?" },
   has_android_app: { label: "Has the Android app", question: "Has the account requested or installed the app?" },
   has_open_changes: { label: "Has open changes", question: "Are changes waiting for review?" },
   has_urgent_changes: { label: "Has High or Critical changes", question: "Is a High or Critical change open?" },

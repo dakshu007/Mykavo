@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight, Building2, Plug } from "lucide-react";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
@@ -34,7 +35,7 @@ const faqs = [
   },
   {
     q: "Do I need to be an existing MyKavo customer?",
-    a: "For the agency track it helps, because the conversation is much more concrete if you have monitored a few client sites already - the free plan is enough for that. For the technology track it is not required.",
+    a: `For the agency track it helps, because the conversation is much more concrete if you have monitored a few client sites already - a new account's ${TRIAL_DAYS}-day Pro trial covers up to ${TRIAL_MAX_WEBSITES} websites, no card. For the technology track it is not required.`,
   },
 ];
 

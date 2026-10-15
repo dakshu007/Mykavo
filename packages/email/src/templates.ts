@@ -835,6 +835,19 @@ export interface WelcomeEmailData {
   alertsUrl: string;
   /** Absolute link to the docs, for the "how it works" line. */
   docsUrl: string;
+  /**
+   * The workspace's running Pro trial (every signup starts one), or null.
+   * The numbers come from the caller (TRIAL_DAYS and TRIAL_MAX_WEBSITES in
+   * @mykavo/shared), so this package never writes them down.
+   */
+  trial?: {
+    /** The day it ends, already formatted, e.g. "Friday, October 24". */
+    endsOn: string;
+    /** Trial length in days. */
+    days: number;
+    /** Websites the trial covers. */
+    maxWebsites: number;
+  } | null;
 }
 
 /**
@@ -853,6 +866,10 @@ export interface WelcomeEmailData {
  * this address (EMAIL_ALERTS_ON_BY_DEFAULT in @mykavo/shared), so the reader
  * should know to expect them - and where the switch is if they would rather
  * route them to a teammate, Slack, or nowhere.
+ *
+ * When the workspace is on its Pro trial, it says so and when it ends: this
+ * is the only email a signup gets before the "3 days left" reminder, and
+ * without it a new account can read itself as being on Free.
  */
 export function welcomeEmail(
   data: WelcomeEmailData,
@@ -896,6 +913,13 @@ export function welcomeEmail(
     )
     .join("");
 
+  const trial = data.trial ?? null;
+  const trialHeading = trial ? `Your ${trial.days}-day Pro trial is on` : null;
+  const trialBody = trial
+    ? `Every Pro feature on up to ${trial.maxWebsites} website${trial.maxWebsites === 1 ? "" : "s"} until ${trial.endsOn}, no card needed. ` +
+      `After that your account moves to the Free plan unless you upgrade. Your websites and baselines are kept.`
+    : null;
+
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Welcome aboard</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
@@ -903,6 +927,14 @@ export function welcomeEmail(
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 24px">${stepsHtml}</table>
     ${button(data.addWebsiteUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">Adding a website starts its baseline scan straight away - you will see the first results in a couple of minutes. <a href="${esc(data.docsUrl)}" style="color:#3556f4;text-decoration:none">How MyKavo works</a></p>
+    ${
+      trialHeading && trialBody
+        ? `<div style="margin:22px 0 0;background:#eaeefe;border-radius:12px;padding:14px 16px">
+      <p style="margin:0 0 4px;font-size:14px;font-weight:600">${esc(trialHeading)}</p>
+      <p style="margin:0;font-size:13px;color:#5c6270">${esc(trialBody)}</p>
+    </div>`
+        : ""
+    }
     <div style="margin:22px 0 0;background:#f4f6fb;border-radius:12px;padding:14px 16px">
       <p style="margin:0 0 4px;font-size:14px;font-weight:600">Alerts come to this address</p>
       <p style="margin:0;font-size:13px;color:#5c6270">When MyKavo finds a high or critical change, the alert lands here - one email per scan, never one per change. <a href="${esc(data.alertsUrl)}" style="color:#3556f4;text-decoration:none">Change where alerts go</a> to add a teammate or Slack, or switch email off.</p>
@@ -917,6 +949,7 @@ export function welcomeEmail(
     `Adding a website starts its baseline scan straight away - you will see the first ` +
     `results in a couple of minutes.\n` +
     `How MyKavo works: ${data.docsUrl}\n\n` +
+    (trialHeading && trialBody ? `${trialHeading.toUpperCase()}\n${trialBody}\n\n` : "") +
     `ALERTS COME TO THIS ADDRESS\n` +
     `When MyKavo finds a high or critical change, the alert lands here - one email per ` +
     `scan, never one per change. Change where alerts go (add a teammate or Slack, or ` +
@@ -1726,7 +1759,7 @@ export interface TrialEndingData {
 }
 
 /**
- * A few days before a free Pro trial ends: what the trial did for them, and
+ * A few days before a Pro trial ends: what the trial did for them, and
  * what changes when it ends. Real numbers only; zeros are left out rather
  * than shown as a sad "0 changes".
  */
@@ -1756,12 +1789,12 @@ export function trialEndingEmail(data: TrialEndingData, copy: EmailCopy = {}): {
         : ""
     }
     ${button(data.upgradeUrl, cta)}
-    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">No need to do anything if Free is enough: nothing is deleted when the trial ends.</p>
+    <p style="margin:22px 0 0;font-size:13px;color:#5c6270">No need to do anything if Free is enough: your websites and baselines are kept when the trial ends.</p>
   `;
   const text =
     `${intro}\n\n` +
     (facts.length ? `During your trial so far:\n${facts.map((f) => `- ${f}`).join("\n")}\n\n` : "") +
-    `${cta}: ${data.upgradeUrl}\n\nNo need to do anything if Free is enough: nothing is deleted when the trial ends.`;
+    `${cta}: ${data.upgradeUrl}\n\nNo need to do anything if Free is enough: your websites and baselines are kept when the trial ends.`;
   return { subject, html: shell(inner), text };
 }
 
@@ -1771,6 +1804,12 @@ export interface TrialEndedData {
   name: string;
   /** Websites paused because Free covers fewer than the trial did. */
   pausedWebsites: string[];
+  /**
+   * Websites the trial covered (TRIAL_MAX_WEBSITES in @mykavo/shared). When
+   * given, the Pro line says so, so paid Pro's 8 is never read as what the
+   * trial had.
+   */
+  trialWebsites?: number;
   upgradeUrl: string;
 }
 
@@ -1783,26 +1822,29 @@ export function trialEndedEmail(data: TrialEndedData, copy: EmailCopy = {}): { s
   const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
   const paused = data.pausedWebsites;
   const pausedLine = paused.length
-    ? `The Free plan covers one website, so monitoring is paused for ${paused.length === 1 ? paused[0] : `${paused.length} websites: ${paused.join(", ")}`}. Upgrade and ${paused.length === 1 ? "it starts" : "they start"} again straight away.`
+    ? `The Free plan covers one website, so monitoring is paused for ${paused.length === 1 ? paused[0] : `${paused.length} websites: ${paused.join(", ")}`}. Upgrade to Pro to monitor ${paused.length === 1 ? "it" : "them"} again.`
     : null;
+  // Paid Pro covers more websites than the trial did, so this list is what
+  // Pro gives, not what the trial had.
+  const websitesPerk =
+    data.trialWebsites !== undefined && data.trialWebsites > 0
+      ? `Up to 8 websites with 15 pages each (your trial covered ${data.trialWebsites})`
+      : "Up to 8 websites with 15 pages each";
+  const perks = ["Daily checks instead of weekly", "A check after every WordPress and Shopify update", websitesPerk];
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Pro trial</p>
     <h1 style="margin:0 0 14px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
     ${paragraphs(intro, "margin:0 0 14px;font-size:14px;color:#5c6270")}
     ${pausedLine ? paragraphs(pausedLine, "margin:0 0 14px;font-size:14px;color:#16181d") : ""}
-    <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#16181d">Pro gives you back</p>
-    <ul style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">
-      <li style="margin:0 0 6px">Daily checks instead of weekly</li>
-      <li style="margin:0 0 6px">A check after every WordPress and Shopify update</li>
-      <li style="margin:0 0 6px">Up to 8 websites and 15 pages each</li>
-    </ul>
+    <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#16181d">With Pro you get</p>
+    <ul style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">${perks.map((p) => `<li style="margin:0 0 6px">${esc(p)}</li>`).join("")}</ul>
     ${button(data.upgradeUrl, cta)}
   `;
   const text =
     `${intro}\n\n` +
     (pausedLine ? `${pausedLine}\n\n` : "") +
-    `Pro gives you back:\n- Daily checks instead of weekly\n- A check after every WordPress and Shopify update\n- Up to 8 websites and 15 pages each\n\n${cta}: ${data.upgradeUrl}`;
+    `With Pro you get:\n${perks.map((p) => `- ${p}`).join("\n")}\n\n${cta}: ${data.upgradeUrl}`;
   return { subject, html: shell(inner), text };
 }
 
@@ -1861,8 +1903,8 @@ export interface TrialStartedData {
 
 /**
  * For accounts made before trials existed: a trial was added to their
- * workspace, and this says so, once. Signup trials need no email (the
- * dashboard shows the countdown from the first visit).
+ * workspace, and this says so, once. Signup trials need no email of their
+ * own: the welcome email says so, and the dashboard shows the countdown.
  */
 export function trialStartedEmail(data: TrialStartedData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
   const d = DEFAULT_COPY.trial_started;
@@ -1876,7 +1918,7 @@ export function trialStartedEmail(data: TrialStartedData, copy: EmailCopy = {}):
     `Up to ${data.maxWebsites} websites monitored.`,
     "Conversion element monitoring: get alerted if your signup button, checkout or contact form goes missing.",
   ];
-  const after = `If you do nothing, your account goes back to Free on ${data.endsOn}. Your first website keeps being monitored, and nothing is deleted.`;
+  const after = `If you do nothing, your account moves to Free on ${data.endsOn}: one website, checked once a week. Your oldest monitored website stays monitored and any others are paused. Your websites and baselines are kept.`;
   const signoff = "Dakshesh\nFounder, MyKavo";
 
   const inner = `

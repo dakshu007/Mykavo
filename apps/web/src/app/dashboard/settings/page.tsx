@@ -9,7 +9,7 @@ import {
   type PendingInviteView,
   type TeamMemberView,
 } from "@/components/dashboard/team-settings";
-import { formatLimit } from "@/config/plans";
+import { formatLimit, getPlan } from "@/config/plans";
 import { getWorkspacePlan } from "@/lib/limits";
 import { appBaseUrl } from "@/lib/app-url";
 import { canManageMembers } from "@/lib/team";
@@ -75,8 +75,14 @@ export default async function SettingsPage() {
   }));
 
   // Key limits straight from the plan config - never hardcoded (spec §37).
+  // A trial's website cap is below the plan it trials, so say so next to
+  // the number (e.g. "3 during the trial (Pro has 8)").
+  const paidPlan = plan.trial ? getPlan(plan.id) : null;
+  const websitesLimit = paidPlan
+    ? `${formatLimit(plan.limits.websites)} during the trial (${paidPlan.name} has ${formatLimit(paidPlan.limits.websites)})`
+    : formatLimit(plan.limits.websites);
   const planLimits: Array<[string, string]> = [
-    ["Websites", formatLimit(plan.limits.websites)],
+    ["Websites", websitesLimit],
     ["Pages per website", formatLimit(plan.limits.pagesPerWebsite)],
     ["Scan frequency", plan.limits.scanFrequency === "DAILY" ? "Daily" : "Weekly"],
     ["History", `${formatLimit(plan.limits.historyDays)} days`],
@@ -103,7 +109,11 @@ export default async function SettingsPage() {
         />
         <div className="flex items-baseline gap-2">
           <p className="text-xl font-semibold tracking-tight text-ink">{plan.name}</p>
-          <p className="text-sm text-ink-secondary">${plan.priceMonthlyUsd}/month</p>
+          <p className="text-sm text-ink-secondary">
+            {plan.trial
+              ? `Trial ends ${plan.trial.endsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, no charge`
+              : `$${plan.priceMonthlyUsd}/month`}
+          </p>
         </div>
         <dl className="mt-4 grid gap-2 sm:grid-cols-2">
           {planLimits.map(([k, v]) => (

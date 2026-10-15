@@ -182,7 +182,15 @@ async function sendTrialEnded(budget: number, a: Automations, now: Date): Promis
       a,
       render: () =>
         renderAutomation(
-          { key: "trial_ended", data: { name: to.name, pausedWebsites, upgradeUrl: `${appBase}/dashboard/billing?from=email:trial_ended` } },
+          {
+            key: "trial_ended",
+            data: {
+              name: to.name,
+              pausedWebsites,
+              trialWebsites: TRIAL_MAX_WEBSITES,
+              upgradeUrl: `${appBase}/dashboard/billing?from=email:trial_ended`,
+            },
+          },
           a.settings,
         ),
     });

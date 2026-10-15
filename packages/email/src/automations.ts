@@ -169,7 +169,7 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
     key: "trial_ending",
     name: "Pro trial ending",
     group: "Plan & monitoring",
-    trigger: "Once per trial, 3 days before a free Pro trial ends, unless the workspace already pays.",
+    trigger: "Once per trial, 3 days before a Pro trial ends, unless the workspace already pays.",
     unsubscribable: false,
     timing: null,
     offer: false,
@@ -418,7 +418,17 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
   const unsubscribeUrl = `${appBase}/unsubscribe?n=preview`;
   switch (key) {
     case "welcome":
-      return { key, data: { name, addWebsiteUrl: `${appBase}/dashboard/websites/new`, alertsUrl: `${appBase}/dashboard/notifications`, docsUrl: `${appBase}/docs` } };
+      return {
+        key,
+        data: {
+          name,
+          addWebsiteUrl: `${appBase}/dashboard/websites/new`,
+          alertsUrl: `${appBase}/dashboard/notifications`,
+          docsUrl: `${appBase}/docs`,
+          // Every signup starts a Pro trial; TRIAL_DAYS and TRIAL_MAX_WEBSITES in @mykavo/shared.
+          trial: { endsOn: "Friday, October 24", days: 14, maxWebsites: 3 },
+        },
+      };
     case "first_website":
       return { key, data: { name, addWebsiteUrl: `${appBase}/dashboard/websites/new`, docsUrl: `${appBase}/docs` } };
     case "baseline_ready":
@@ -497,7 +507,7 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
         },
       };
     case "trial_ended":
-      return { key, data: { name, pausedWebsites: ["Client shop"], upgradeUrl: `${appBase}/dashboard/billing` } };
+      return { key, data: { name, pausedWebsites: ["Client shop"], trialWebsites: 3, upgradeUrl: `${appBase}/dashboard/billing` } };
     case "monitoring_paused":
       return { key, data: { name, websites: ["Northstar"], resumeUrl: `${appBase}/dashboard` } };
     case "trial_started":

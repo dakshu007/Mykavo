@@ -247,6 +247,11 @@ export function trialPlan(id: PlanId, endsAt: Date): Plan {
   };
 }
 
+/** "Free plan", "Pro plan", or "Pro trial": a trial's name already says what it is. */
+export function planLabel(plan: Plan): string {
+  return plan.trial ? plan.name : `${plan.name} plan`;
+}
+
 /**
  * The platform admin's own workspace (owner on ADMIN_EMAILS): everything in
  * Agency with the numeric limits lifted. Scans stay daily and site audits keep

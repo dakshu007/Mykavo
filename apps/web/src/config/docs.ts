@@ -55,7 +55,7 @@ export interface DocSection {
   articles: DocArticle[];
 }
 
-export const DOCS_UPDATED = "September 25, 2026";
+export const DOCS_UPDATED = "October 14, 2026";
 export const DOCS_PUBLISHED_ISO = "2026-09-20";
 
 export const DOC_SECTIONS: DocSection[] = [
@@ -82,11 +82,11 @@ export const DOC_SECTIONS: DocSection[] = [
             items: [
               {
                 title: "Create an account",
-                text: "Sign up at mykavo.app with an email address and password, or with Google. A personal workspace is created for you automatically - the workspace owns your websites, your plan and your notification settings.",
+                text: "Sign up at mykavo.app with an email address and password, or with Google. A personal workspace is created for you automatically - the workspace owns your websites, your plan and your notification settings. Every new account starts on a free 14-day Pro trial, with no card required: every Pro feature on up to three websites.",
               },
               {
                 title: "Add a website",
-                text: "Enter the full URL including https://. MyKavo validates that the address resolves and is reachable, and rejects addresses that point at private or internal networks. The free plan allows one website; Pro allows eight.",
+                text: "Enter the full URL including https://. MyKavo validates that the address resolves and is reachable, and rejects addresses that point at private or internal networks. During the Pro trial you can add up to three websites. Paid Pro allows eight, and the Free plan one.",
               },
               {
                 title: "Let MyKavo discover your pages",
@@ -94,7 +94,7 @@ export const DOC_SECTIONS: DocSection[] = [
               },
               {
                 title: "Choose the pages to monitor",
-                text: "Select the pages that carry revenue or risk: homepage, pricing, checkout, key landing pages, the contact form. Monitoring everything is rarely useful; monitoring the pages you would be woken up for is. Free allows five monitored pages, Pro allows fifteen per website.",
+                text: "Select the pages that carry revenue or risk: homepage, pricing, checkout, key landing pages, the contact form. Monitoring everything is rarely useful; monitoring the pages you would be woken up for is. Free allows five monitored pages; Pro, and the Pro trial every new account starts on, allow fifteen per website.",
               },
               {
                 title: "Run the baseline scan",
@@ -106,7 +106,7 @@ export const DOC_SECTIONS: DocSection[] = [
               },
               {
                 title: "Turn on alerts and let it run",
-                text: "Email alerts are on by default and go to your account's address - one summary per scan, for high and critical changes. Change the recipients, the severity, or switch email off in Notifications. Scans then run weekly on Free and daily on Pro, and you can run one manually at any time.",
+                text: "Email alerts are on by default and go to your account's address - one summary per scan, for high and critical changes. Change the recipients, the severity, or switch email off in Notifications. Scans then run daily during the trial and on Pro and Agency, and weekly on Free. Manual scans come with the trial, Pro and Agency, not with Free.",
               },
             ],
           },
@@ -398,10 +398,10 @@ export const DOC_SECTIONS: DocSection[] = [
         slug: "plans-and-limits",
         title: "Plans and limits",
         description:
-          "What the Free, Pro and Agency plans include, what the limits are, and how they are enforced.",
-        keywords: ["mykavo pricing", "website monitoring pricing", "free website monitoring"],
+          "What the Free, Pro and Agency plans include, how the Pro trial works, what the limits are, and how they are enforced.",
+        keywords: ["mykavo pricing", "website monitoring pricing", "free website monitoring", "mykavo free trial"],
         capsule:
-          "MyKavo has three plans. Free covers one website with five monitored pages, weekly scans and 30 days of history, with no card required. Pro is $20 a month for eight websites with fifteen monitored pages each, daily scans, a year of history and three seats. Agency is $79 a month for thirty websites with twenty-five pages each, white-label client reports and fifteen seats. Limits are enforced on the server, not in the interface.",
+          "MyKavo has three plans. Free covers one website with five monitored pages, weekly scans and 30 days of history. Pro is $20 a month for eight websites with fifteen pages each, daily scans and a year of history. Agency is $79 a month for thirty websites with twenty-five pages each and white-label client reports. New accounts start on a 14-day Pro trial that covers up to three websites.",
         blocks: [
           {
             type: "table",
@@ -422,6 +422,19 @@ export const DOC_SECTIONS: DocSection[] = [
               ["WordPress Safe Updates (a check after every update)", "-", "Included", "Included"],
             ],
           },
+          { type: "h2", text: "The 14-day Pro trial" },
+          {
+            type: "p",
+            text: "Every new account starts on a 14-day Pro trial. It starts automatically at signup and no card is required. The trial includes every Pro feature with one difference: it covers up to three websites, where paid Pro covers eight. Each website gets fifteen monitored pages and daily scans, as on Pro. You can pay for Pro at any time during the trial.",
+          },
+          {
+            type: "p",
+            text: "If the trial ends without a payment, the workspace moves to Free: one website, scanned weekly. The oldest monitored website keeps being monitored and any others are paused, not deleted. Baselines are kept (other history follows Free's 30-day window), and upgrading resumes the paused websites automatically. A reminder email goes out three days before the trial ends, and another when it ends.",
+          },
+          {
+            type: "p",
+            text: "Accounts created before the trial existed can start it themselves from the Billing page or the dashboard sidebar. Each workspace gets one trial. The Free plan itself is not a trial: it has no time limit.",
+          },
           { type: "h2", text: "Changing plans" },
           {
             type: "p",
@@ -436,6 +449,20 @@ export const DOC_SECTIONS: DocSection[] = [
           {
             type: "p",
             text: "Scans and change events older than your plan's retention window are deleted by a nightly sweep, along with their screenshots and diff images. Snapshots referenced by an approved baseline are protected from that sweep regardless of age - your reference point is never deleted out from under you.",
+          },
+        ],
+        faqs: [
+          {
+            q: "Is there a free trial?",
+            a: "Yes. Every new account starts with a 14-day Pro trial, with no card required. The trial includes every Pro feature but covers up to three websites; paid Pro covers eight.",
+          },
+          {
+            q: "What happens when the trial ends?",
+            a: "Without a payment the workspace moves to the Free plan: one website, scanned weekly. The oldest monitored website stays monitored, the others are paused rather than deleted, and upgrading resumes them.",
+          },
+          {
+            q: "Is the Free plan a trial?",
+            a: "No. Free is a working plan with no time limit and no card.",
           },
         ],
       },

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   trialEndingEmail,
   trialEndedEmail,
+  trialStartedEmail,
   monitoringPausedEmail,
   freePlanGapNote,
   welcomeEmail,
@@ -549,6 +550,57 @@ describe("welcomeEmail", () => {
     expect(mail.text).not.toContain("<");
     expect(mail.text.length).toBeGreaterThan(100);
   });
+
+  /**
+   * Every signup starts on a Pro trial, and this is the only email before the
+   * "3 days left" reminder. Without the trial in it, a new account can read
+   * itself as being on Free.
+   */
+  describe("with a Pro trial", () => {
+    const trial = { endsOn: "Friday, October 24", days: 14, maxWebsites: 3 };
+
+    it("says the trial is on, what it covers and when it ends", () => {
+      const mail = welcomeEmail({ ...data, trial });
+      for (const part of [mail.html, mail.text]) {
+        expect(part).toContain("Every Pro feature on up to 3 websites until Friday, October 24, no card needed.");
+        expect(part).toContain("After that your account moves to the Free plan unless you upgrade.");
+        expect(part).toContain("Your websites and baselines are kept.");
+      }
+      expect(mail.html).toContain("Your 14-day Pro trial is on");
+      expect(mail.text).toContain("YOUR 14-DAY PRO TRIAL IS ON");
+    });
+
+    it("takes its numbers from the caller", () => {
+      const mail = welcomeEmail({ ...data, trial: { endsOn: "Monday, November 2", days: 7, maxWebsites: 1 } });
+      expect(mail.text).toContain("YOUR 7-DAY PRO TRIAL IS ON");
+      expect(mail.text).toContain("up to 1 website until Monday, November 2");
+    });
+
+    it("puts the trial above the alerts box", () => {
+      const { text } = welcomeEmail({ ...data, trial });
+      expect(text.indexOf("PRO TRIAL IS ON")).toBeLessThan(text.indexOf("ALERTS COME TO THIS ADDRESS"));
+    });
+
+    it("never claims history is kept or that nothing is deleted", () => {
+      const { text } = welcomeEmail({ ...data, trial });
+      expect(text).not.toMatch(/history/i);
+      expect(text).not.toMatch(/nothing is deleted/i);
+    });
+
+    it("leaves the block out without a trial", () => {
+      for (const t of [undefined, null]) {
+        const mail = welcomeEmail({ ...data, trial: t });
+        expect(mail.text).not.toContain("Pro trial");
+        expect(mail.html).not.toContain("Pro trial");
+      }
+    });
+
+    it("escapes the date it is given", () => {
+      const mail = welcomeEmail({ ...data, trial: { ...trial, endsOn: "<b>soon</b>" } });
+      expect(mail.html).not.toContain("<b>soon");
+      expect(mail.html).toContain("&lt;b&gt;soon");
+    });
+  });
 });
 
 describe("appAccessApprovedEmail", () => {
@@ -623,15 +675,78 @@ describe("plan emails", () => {
       websites: 1,
       upgradeUrl: "https://mykavo.app/dashboard/billing",
     });
-    expect(mail.subject).toBe("3 days left of MyKavo Pro");
+    expect(mail.subject).toBe("3 days left of your MyKavo Pro trial");
     expect(mail.text).toContain("9 scans run");
     expect(mail.text).not.toContain("0 changes");
     expect(mail.text).toContain("$20 a month");
+    expect(mail.text).toContain("Your oldest monitored website stays monitored and any others are paused");
+    expect(mail.text).toContain("your websites and baselines are kept when the trial ends");
+    expect(mail.text).not.toMatch(/nothing is deleted/i);
   });
 
   it("names websites paused when the trial ends", () => {
     const mail = trialEndedEmail({ name: "Asha", pausedWebsites: ["Shop", "Blog"], upgradeUrl: "https://mykavo.app/dashboard/billing" });
     expect(mail.text).toContain("2 websites: Shop, Blog");
+    expect(mail.text).toContain("Upgrade to Pro to monitor them again.");
+  });
+
+  /**
+   * New signups were never on Free, so "back on the Free plan" is wrong for
+   * them; and only websites and baselines outlast the trial (other scan
+   * history follows Free's retention), so the email promises no more.
+   */
+  it("says the account moved to Free and keeps only what is kept", () => {
+    const mail = trialEndedEmail({ name: "Asha", pausedWebsites: [], upgradeUrl: "https://mykavo.app/dashboard/billing" });
+    expect(mail.html).toContain("Your account has moved to the Free plan");
+    expect(mail.html).not.toMatch(/back on the Free plan/i);
+    expect(mail.text).toContain("Your websites and baselines are all still here.");
+    expect(mail.text).not.toMatch(/history/i);
+  });
+
+  it("says what the trial covered next to paid Pro's websites only when told", () => {
+    const base = { name: "Asha", pausedWebsites: [], upgradeUrl: "https://mykavo.app/dashboard/billing" };
+    expect(trialEndedEmail({ ...base, trialWebsites: 3 }).text).toContain("Up to 8 websites with 15 pages each (your trial covered 3)");
+    expect(trialEndedEmail(base).text).toContain("Up to 8 websites with 15 pages each\n");
+    expect(trialEndedEmail(base).text).not.toContain("your trial covered");
+  });
+
+  it("tells a granted trial what happens when it ends", () => {
+    const mail = trialStartedEmail({
+      name: "Asha",
+      endsOn: "Friday, October 24",
+      maxWebsites: 3,
+      dashboardUrl: "https://mykavo.app/dashboard",
+    });
+    expect(mail.subject).toBe("Your MyKavo account now has a 14-day Pro trial");
+    expect(mail.text).toContain("Up to 3 websites monitored.");
+    expect(mail.text).toContain("moves to Free on Friday, October 24");
+    expect(mail.text).toContain("Your oldest monitored website stays monitored and any others are paused. Your websites and baselines are kept.");
+    expect(mail.text).not.toMatch(/nothing is deleted/i);
+  });
+
+  it("keeps em and en dashes out of the trial emails", () => {
+    const mails = [
+      trialEndingEmail({
+        name: "Asha",
+        daysLeft: 1,
+        endsOn: "Friday, October 24",
+        price: 20,
+        scans: 1,
+        changes: 1,
+        websites: 1,
+        upgradeUrl: "https://mykavo.app/dashboard/billing",
+      }),
+      trialEndedEmail({ name: "Asha", pausedWebsites: ["Shop"], trialWebsites: 3, upgradeUrl: "https://mykavo.app/dashboard/billing" }),
+      trialStartedEmail({ name: "Asha", endsOn: "Friday, October 24", maxWebsites: 3, dashboardUrl: "https://mykavo.app/dashboard" }),
+      welcomeEmail({
+        name: "Asha",
+        addWebsiteUrl: "https://mykavo.app/dashboard/websites/new",
+        alertsUrl: "https://mykavo.app/dashboard/notifications",
+        docsUrl: "https://mykavo.app/docs",
+        trial: { endsOn: "Friday, October 24", days: 14, maxWebsites: 3 },
+      }),
+    ];
+    for (const mail of mails) expect(`${mail.subject}\n${mail.text}`).not.toMatch(/[\u2013\u2014]/);
   });
 
   it("explains a dormant pause and how to resume", () => {

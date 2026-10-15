@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { LeadForm } from "@/components/marketing/lead-form";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
@@ -96,8 +97,9 @@ export default function AgencyPartnerPage() {
 
       <h2>Before you apply</h2>
       <p>
-        If you have not used MyKavo yet, put one client site on{" "}
-        <Link href="/pricing">the free plan</Link> first - one website, five pages, no card. The
+        If you have not used MyKavo yet, try it on a few client sites first: new accounts start
+        with a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites, no card, and{" "}
+        <Link href="/pricing">the free plan</Link> keeps one website monitored after that. The
         conversation is far more useful when you have seen a real baseline and a real change. The{" "}
         <Link href="/docs/getting-started/quick-start">quick start</Link> takes about ten minutes.
       </p>

@@ -171,7 +171,7 @@ export function SiteAuditSection() {
             </ul>
             <p className="mt-8 text-[14px] leading-6 text-[#6B6B60]">
               <span className="font-semibold text-[#151515]">Audits like the big tools, priced like neither.</span>{" "}
-              Included in every plan - free accounts audit 150 pages a day, Pro runs ten
+              Included in every plan - the Free plan audits 150 pages a day, Pro runs ten
               1,500-page audits daily for <span className="font-semibold text-[#151515]">$20/mo</span>,
               monitoring included. The dedicated audit tools start at $129/mo.
             </p>

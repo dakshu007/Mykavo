@@ -59,6 +59,13 @@ export interface MeResponse {
   plan: {
     id: PlanId;
     name: string;
+    /**
+     * Set only during a Pro trial (ISO date). OPTIONAL on purpose: a
+     * server that predates the trial does not send it.
+     */
+    trialEndsAt?: string | null;
+    /** During a trial, the paid plan's website cap. Absent on older servers. */
+    paidWebsites?: number | null;
     /** null = unlimited (JSON has no Infinity). */
     limits: {
       websites: number | null;
@@ -257,8 +264,14 @@ export interface WebsiteIncident {
   detail: string;
 }
 
+/** Why MyKavo paused a website by itself: a Pro trial ended, or nobody opened it. */
+export type AutoPauseReason = "OVER_LIMIT" | "DORMANT";
+
 export interface WebsiteDetailResponse {
-  website: WebsiteRow;
+  website: WebsiteRow & {
+    /** null when not auto-paused. Absent on servers that predate it. */
+    autoPause?: AutoPauseReason | null;
+  };
   pages: (MonitoredPageRow & { baselineVersion: number | null })[];
   stats: {
     monitoredPages: number;

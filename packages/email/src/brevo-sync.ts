@@ -7,8 +7,11 @@
  *
  *   MyKavo · All users        every account holder
  *   MyKavo · Free plan        on Free
- *   MyKavo · Paid plans       on Starter, Pro or Agency
+ *   MyKavo · Paid plans       on Pro or Agency
  *   MyKavo · No website yet   signed up, never added a site
+ *
+ * A running Pro trial pays nothing but is not on Free either, so those
+ * accounts are in neither the Free nor the Paid list.
  *
  * Unsubscribes travel both ways: MyKavo's opt-outs are blocklisted in Brevo,
  * and addresses Brevo blocklisted (someone clicked unsubscribe in a
@@ -32,8 +35,8 @@ export const AUDIENCE_KEYS = Object.keys(AUDIENCES) as AudienceKey[];
 
 export const AUDIENCE_DESCRIPTIONS: Record<AudienceKey, string> = {
   all: "Every MyKavo account holder",
-  free: "Accounts on the Free plan",
-  paid: "Starter, Pro and Agency customers",
+  free: "Accounts on the Free plan, not on a Pro trial",
+  paid: "Pro and Agency customers",
   no_website: "Signed up but never added a website",
 };
 
@@ -44,6 +47,8 @@ export interface SyncContact {
   lastName: string;
   plan: string;
   paid: boolean;
+  /** On a Pro trial (nothing paid): in neither the Free nor the Paid list. */
+  trial?: boolean;
   websites: number;
   signedUpAt: Date;
   optedOut: boolean;
@@ -57,8 +62,10 @@ export interface Audience {
 }
 
 /** Which lists a contact belongs in. Pure. */
-export function membership(c: Pick<SyncContact, "paid" | "websites">): AudienceKey[] {
-  const out: AudienceKey[] = ["all", c.paid ? "paid" : "free"];
+export function membership(c: Pick<SyncContact, "paid" | "trial" | "websites">): AudienceKey[] {
+  const out: AudienceKey[] = ["all"];
+  if (c.paid) out.push("paid");
+  else if (!c.trial) out.push("free");
   if (c.websites === 0) out.push("no_website");
   return out;
 }
@@ -181,7 +188,7 @@ export async function pushContacts(contacts: SyncContact[], audiences: Record<Au
   await Promise.all([
     ...[...groups].map(([key, group]) => importContacts(group, key.split(",").map((k) => audiences[k as AudienceKey].id), false)),
     ...(optedOut.length ? [importContacts(optedOut, [audiences.all.id], true)] : []),
-    // Out of the segment lists they have left (Free -> Paid, first website added).
+    // Out of the segment lists they have left (Free -> Paid, Free -> Pro trial, first website added).
     ...(["free", "paid", "no_website"] as const).map((key) => {
       const leaving = active.filter((c) => !membership(c).includes(key)).map((c) => c.email);
       return leaving.length ? removeFromList(audiences[key].id, leaving) : Promise.resolve();

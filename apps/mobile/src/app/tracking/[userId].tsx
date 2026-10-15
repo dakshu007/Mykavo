@@ -62,7 +62,7 @@ export default function TrackingUserScreen() {
       {header}
 
       <Card style={{ marginBottom: 14 }}>
-        <KeyRow label="Plan" value={row.plan} note={row.paid ? "Paying" : null} />
+        <KeyRow label="Plan" value={row.plan === "pro_trial" ? "Pro trial" : row.plan} note={row.paid ? "Paying" : null} />
         <Divider />
         <KeyRow label="Signed up" value={timeAgo(row.signedUpAt)} note={formatDateTime(row.signedUpAt)} />
         <Divider />
@@ -200,7 +200,7 @@ export default function TrackingUserScreen() {
           {data.workspaces.map((w, i) => (
             <View key={w.id}>
               {i > 0 ? <Divider /> : null}
-              <KeyRow label={w.name} note={w.role.toLowerCase()} value={w.plan} />
+              <KeyRow label={w.name} note={w.role.toLowerCase()} value={w.plan === "pro_trial" ? "Pro trial" : w.plan} />
             </View>
           ))}
         </Card>

@@ -4,6 +4,7 @@ import { prisma } from "@mykavo/database";
 import { getSession } from "@/lib/session";
 import { resolveWorkspaceSelection, WORKSPACE_COOKIE } from "@/lib/team";
 import { getWorkspacePlan } from "@/lib/limits";
+import { getPlan } from "@/config/plans";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { isPlatformAdmin } from "@/lib/platform-admin";
 
@@ -69,6 +70,11 @@ export async function GET() {
     plan: {
       id: plan.id,
       name: plan.name,
+      // Set only while the plan is a free trial, so the app can say when it ends.
+      trialEndsAt: plan.trial?.endsAt.toISOString() ?? null,
+      // During a trial, the paid plan's website cap, so the app can show what
+      // upgrading adds without hardcoding it. Null when not on a trial.
+      paidWebsites: plan.trial ? finiteOrNull(getPlan(plan.id).limits.websites) : null,
       // JSON has no Infinity: an unlimited limit goes out as null.
       limits: {
         websites: finiteOrNull(plan.limits.websites),

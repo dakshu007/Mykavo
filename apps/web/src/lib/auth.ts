@@ -124,8 +124,9 @@ export const auth = betterAuth({
           });
           // Every new account starts on a 14-day Pro trial, no card. Never
           // allowed to fail the signup: Free is a fine fallback.
-          await startTrial(prisma, workspace.id, { source: "signup" }).catch((err: unknown) => {
+          const trial = await startTrial(prisma, workspace.id, { source: "signup" }).catch((err: unknown) => {
             logger.warn("could not start trial", { workspaceId: workspace.id, error: err instanceof Error ? err.message : String(err) });
+            return null;
           });
           // Marketing export - fire-and-forget, never blocks signup.
           recordSignupToSheet({ email: user.email, name: user.name });
@@ -145,7 +146,7 @@ export const auth = betterAuth({
 
           // Into Brevo's lists right away, for campaigns. Capped and
           // error-swallowing: it can never slow or fail the signup.
-          await addSignupToBrevo(user);
+          await addSignupToBrevo(user, { trial: trial !== null });
         },
       },
     },

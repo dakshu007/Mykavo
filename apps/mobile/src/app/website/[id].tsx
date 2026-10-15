@@ -8,7 +8,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { CalendarClock, ChevronLeft, ChevronRight, Layers } from "lucide-react-native";
 import { Fragment, useState, type ReactNode } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Alert, Linking, Pressable, Text, View } from "react-native";
 
 import { HealthDot, ScanStatusBadge, WebsiteStatusBadge } from "@/components/badges";
 import { Screen } from "@/components/screen";
@@ -425,6 +425,8 @@ export default function WebsiteDetailScreen() {
     data;
   const mutedUntil = isInFuture(website.muteAlertsUntil) ? website.muteAlertsUntil : null;
   const sslDaysLeft = health.sslDaysLeft;
+  // Paused by MyKavo because a Pro trial ended (absent on servers that predate it).
+  const overLimitPause = website.autoPause === "OVER_LIMIT";
 
   return (
     <Screen refreshing={refreshing} onRefresh={() => void refresh()}>
@@ -441,6 +443,32 @@ export default function WebsiteDetailScreen() {
           ) : null}
         </View>
       </View>
+
+      {overLimitPause ? (
+        <View
+          style={{
+            gap: 10,
+            padding: 14,
+            borderRadius: radius.field,
+            backgroundColor: palette.warningSoft,
+          }}
+        >
+          <Small color={palette.ink}>
+            Monitoring is paused: your Pro trial ended and the Free plan covers 1 website.{" "}
+            {stats.baselinedPages > 0
+              ? "Your baseline is kept."
+              : "After you upgrade, run its baseline scan to start monitoring."}
+          </Small>
+          <Button
+            title="Resume with Pro on mykavo.app"
+            size="sm"
+            onPress={() =>
+              void Linking.openURL("https://mykavo.app/dashboard/billing?from=paused:over-limit")
+            }
+            style={{ alignSelf: "flex-start" }}
+          />
+        </View>
+      ) : null}
 
       {/* Primary action */}
       {scanInProgress ? (

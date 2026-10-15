@@ -9,6 +9,7 @@ const base = (over: Partial<LifecycleFacts> = {}): LifecycleFacts => ({
   now: NOW,
   hasWebsite: true,
   isPaid: false,
+  onTrial: false,
   optedOut: false,
   emailOff: false,
   hasAndroidApp: false,
@@ -54,6 +55,14 @@ describe("lifecycle series", () => {
     expect(decideLifecycleStep(base({ emailOff: true }))).toBeNull();
     expect(decideLifecycleStep(base({ isPaid: true }))).toBeNull();
     expect(decideLifecycleStep(base({ signedUpAt: daysAgo(10.5), sentDay3: true, sentDay6: true, isPaid: true }))).toBeNull();
+  });
+
+  it("sends day 3 and day 6 on the Pro trial, but never the day 10 offer written for Free", () => {
+    expect(decideLifecycleStep(base({ onTrial: true }))).toBe("DAY3_STATS");
+    expect(decideLifecycleStep(base({ signedUpAt: daysAgo(6.1), sentDay3: true, onTrial: true }))).toBe("DAY6_ANDROID");
+    const day11 = base({ signedUpAt: daysAgo(11), sentDay3: true, sentDay6: true, hasWebsite: true });
+    expect(decideLifecycleStep(day11)).toBe("DAY10_OFFER");
+    expect(decideLifecycleStep({ ...day11, onTrial: true })).toBeNull();
   });
 
   it("never sends two lifecycle emails within a day, even when catching up", () => {

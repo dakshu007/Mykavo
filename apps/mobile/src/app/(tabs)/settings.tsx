@@ -299,6 +299,13 @@ export default function SettingsScreen() {
   }
 
   const { user, workspaces, plan } = data;
+  // Set only while the workspace is on its Pro trial (absent on servers
+  // that predate it).
+  const trialEnds = plan.trialEndsAt ? new Date(plan.trialEndsAt) : null;
+  const trialEndLabel =
+    trialEnds && !Number.isNaN(trialEnds.getTime())
+      ? trialEnds.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+      : null;
   // Operator-only links. The server re-checks the same allowlist on every
   // admin endpoint, so these flags are convenience rather than the boundary -
   // but a row that 404s on tap is its own kind of broken.
@@ -314,7 +321,11 @@ export default function SettingsScreen() {
   const limitRows = [
     plan.limits.websites === null
       ? "Unlimited websites"
-      : `Up to ${plan.limits.websites} website${plan.limits.websites === 1 ? "" : "s"}`,
+      : `Up to ${plan.limits.websites} website${plan.limits.websites === 1 ? "" : "s"}${
+          trialEndLabel
+            ? ` during the trial${typeof plan.paidWebsites === "number" ? ` (Pro has ${plan.paidWebsites})` : ""}`
+            : ""
+        }`,
     plan.limits.pagesPerSite === null ? "Unlimited pages per site" : `${plan.limits.pagesPerSite} pages per site`,
     plan.limits.scanFrequency === "DAILY" ? "Daily scans" : "Weekly scans",
     plan.limits.seats === null ? "Unlimited seats" : `${plan.limits.seats} seat${plan.limits.seats === 1 ? "" : "s"}`,
@@ -388,8 +399,15 @@ export default function SettingsScreen() {
             </View>
           ))}
         </View>
+        {trialEndLabel ? (
+          <Small style={{ marginTop: 12 }}>
+            Your Pro trial ends on {trialEndLabel}. If you don&apos;t upgrade by then, this workspace
+            moves to Free: 1 website, checked weekly. Your oldest monitored website stays monitored and any
+            others are paused, not deleted. Baselines are kept; Free keeps 30 days of history.
+          </Small>
+        ) : null}
         <Button
-          title="Manage billing on mykavo.app"
+          title={trialEndLabel ? "Keep Pro on mykavo.app" : "Manage billing on mykavo.app"}
           variant="secondary"
           onPress={() => void Linking.openURL("https://mykavo.app/dashboard/billing")}
           style={{ marginTop: 16 }}

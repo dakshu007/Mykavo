@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-/** Starts the free Pro trial in one click, then refreshes the page into trial mode. */
+/** Starts the Pro trial in one click, then refreshes the page into trial mode. */
 export function StartTrialButton({ label, className }: { label: string; className: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

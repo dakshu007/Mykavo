@@ -12,17 +12,35 @@
  * sent exactly once (see the de-duplication below), and it tells the reader
  * that alerts will come to this address, and where to change that.
  *
+ * Every signup starts a Pro trial, and this is the first email that can say
+ * so: it carries when the trial ends and what happens after.
+ *
  * The wording lives in @mykavo/email, which CI tests; this file is lookup,
  * de-duplication and delivery.
  */
 
-import { prisma, recordAutomationSend } from "@mykavo/database";
+import { getActiveTrial, prisma, recordAutomationSend } from "@mykavo/database";
 import { renderAutomation, sendEmail } from "@mykavo/email";
-import { displayPersonName } from "@mykavo/shared";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES, displayPersonName } from "@mykavo/shared";
 import { loadAutomations, sentBy } from "./automation-settings";
 import { logger } from "./logger";
 
 const appBase = (process.env.APP_URL ?? "https://mykavo.app").replace(/\/+$/, "");
+
+/** Same format as the trial emails (plan-emails.ts), e.g. "Friday, October 24". */
+const dayFormat = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+
+/**
+ * The welcome email's trial block: the workspace's running Pro trial, or
+ * null. The signup hook starts the trial before it queues the welcome, so
+ * null means it could not (Free is the fallback) or the account has none.
+ */
+export async function welcomeTrial(
+  workspaceId: string,
+): Promise<{ endsOn: string; days: number; maxWebsites: number } | null> {
+  const trial = await getActiveTrial(prisma, workspaceId);
+  return trial ? { endsOn: dayFormat.format(trial.endsAt), days: TRIAL_DAYS, maxWebsites: TRIAL_MAX_WEBSITES } : null;
+}
 
 export async function runWelcomeEmailJob(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -79,6 +97,8 @@ export async function runWelcomeEmailJob(userId: string): Promise<void> {
     return;
   }
 
+  const trial = await welcomeTrial(workspaceId);
+
   const mail = renderAutomation(
     {
       key: "welcome",
@@ -90,6 +110,7 @@ export async function runWelcomeEmailJob(userId: string): Promise<void> {
         addWebsiteUrl: `${appBase}/dashboard/websites/new`,
         alertsUrl: `${appBase}/dashboard/notifications`,
         docsUrl: `${appBase}/docs`,
+        trial,
       },
     },
     automations.settings,

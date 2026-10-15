@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   prisma,
+  autoPauseReasons,
   getLatestHealthCheck,
   getRecentHealthIncidents,
   getUptimeStats,
@@ -72,6 +73,12 @@ export async function GET(_request: Request, { params }: Params) {
     ]);
   if (!website) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // Paused by MyKavo (not by the owner): the app says why, as the dashboard does.
+  const autoPause =
+    website.status === "PAUSED"
+      ? ((await autoPauseReasons(prisma, [website.id])).get(website.id) ?? null)
+      : null;
+
   const activeScan = website.scans.find(
     (s) => s.status === "QUEUED" || s.status === "RUNNING",
   );
@@ -98,6 +105,8 @@ export async function GET(_request: Request, { params }: Params) {
       ignoredSelectors: website.ignoredSelectors,
       screenshotMasks: website.screenshotMasks,
       tags: website.tags,
+      // "OVER_LIMIT" (a Pro trial ended), "DORMANT", or null when not auto-paused.
+      autoPause,
       createdAt: website.createdAt,
       updatedAt: website.updatedAt,
     },

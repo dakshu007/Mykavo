@@ -8,7 +8,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { isMissingTableError } from "./automations";
 import { isInternalEmail } from "./platform-admin";
-import { planIdFromSubscription } from "./subscription";
+import { higherPlan, planIdFromSubscription, type PaidPlanId } from "./subscription";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -19,6 +19,8 @@ export interface MarketingContact {
   lastName: string;
   plan: string;
   paid: boolean;
+  /** On a free Pro trial (nothing paid): in neither the Free nor the Paid list. */
+  trial: boolean;
   websites: number;
   signedUpAt: Date;
   optedOut: boolean;
@@ -34,7 +36,8 @@ export function marketingName(name: string | null): { firstName: string; lastNam
 
 /**
  * Account holders as contacts: all of them, or (with `since`) only those who
- * signed up, added a website or unsubscribed since then.
+ * signed up, added a website, unsubscribed, or started or ended a Pro trial
+ * since then.
  */
 export async function loadMarketingContacts(db: Db, since: Date | null): Promise<MarketingContact[]> {
   // Before the email_opt_out migration nobody can have unsubscribed through
@@ -46,6 +49,26 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
   const optedOut = new Set(optOuts.map((o) => o.email.toLowerCase()));
   const recentlyOptedOut = since ? optOuts.filter((o) => o.createdAt >= since).map((o) => o.email) : [];
 
+  // Workspaces on a running Pro trial. They pay nothing but are not on Free
+  // either, so they must not get Free-plan campaigns. The trial only counts
+  // when nothing is paid (getWorkspaceEntitlement), checked per contact
+  // below. A trial starting or ending moves an account between lists with
+  // nothing else changing, so those count as changed too. A missing table
+  // means no trials yet. Only trials ending at or after `since` (now, on a
+  // full sync) can be running or have changed: one that started since then
+  // also ends after it.
+  const now = new Date();
+  const trials = await db.workspaceTrial
+    .findMany({ where: { endsAt: { gte: since ?? now } }, select: { workspaceId: true, startedAt: true, endsAt: true } })
+    .catch((err: unknown) => {
+      if (isMissingTableError(err)) return [];
+      throw err;
+    });
+  const trialing = new Set(trials.filter((t) => t.endsAt > now).map((t) => t.workspaceId));
+  const trialChanged = since
+    ? trials.filter((t) => t.startedAt >= since || (t.endsAt >= since && t.endsAt <= now)).map((t) => t.workspaceId)
+    : [];
+
   const users = await db.user.findMany({
     where: {
       ownedWorkspaces: { some: {} },
@@ -55,6 +78,7 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
               { createdAt: { gte: since } },
               { ownedWorkspaces: { some: { websites: { some: { createdAt: { gte: since } } } } } },
               ...(recentlyOptedOut.length ? [{ email: { in: recentlyOptedOut, mode: "insensitive" as const } }] : []),
+              ...(trialChanged.length ? [{ ownedWorkspaces: { some: { id: { in: trialChanged } } } }] : []),
             ],
           }
         : {}),
@@ -75,6 +99,22 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
     },
   });
 
+  // Plans paid through a linked Shopify store, read once for everyone. Same
+  // rule as getWorkspaceEntitlement: the store only counts while the app is
+  // installed and its link to the workspace is live, and the higher plan wins.
+  const shopifyPlans = new Map<string, PaidPlanId>();
+  const shops = await db.shopifyShop.findMany({
+    where: { billingPlan: { in: ["pro", "agency"] }, uninstalledAt: null, siteConnection: { is: { revokedAt: null } } },
+    select: { billingPlan: true, siteConnection: { select: { workspaceId: true } } },
+  });
+  for (const shop of shops) {
+    const planId = shop.billingPlan;
+    const workspaceId = shop.siteConnection?.workspaceId;
+    if (!workspaceId || (planId !== "pro" && planId !== "agency")) continue;
+    const prev = shopifyPlans.get(workspaceId);
+    if (!prev || higherPlan(prev, planId) === planId) shopifyPlans.set(workspaceId, planId);
+  }
+
   const out: MarketingContact[] = [];
   for (const u of users) {
     const ws = u.ownedWorkspaces[0];
@@ -83,13 +123,15 @@ export async function loadMarketingContacts(db: Db, since: Date | null): Promise
     // The team's own accounts are not an audience. Leaving them out here also
     // makes the full sync's prune take them OUT of the lists.
     if (isInternalEmail(email)) continue;
-    const plan = planIdFromSubscription(ws.subscription);
+    const plan = higherPlan(planIdFromSubscription(ws.subscription), shopifyPlans.get(ws.id) ?? "free");
+    const trial = plan === "free" && trialing.has(ws.id);
     out.push({
       email,
       userId: u.id,
       ...marketingName(u.name),
-      plan,
+      plan: trial ? "pro_trial" : plan,
       paid: plan !== "free",
+      trial,
       websites: ws._count.websites,
       signedUpAt: u.createdAt,
       optedOut: optedOut.has(email),

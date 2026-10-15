@@ -7,7 +7,7 @@ import { isPlatformAdmin } from "@/lib/platform-admin";
 import { Card, CardHeader } from "@/components/ui/card";
 import { CHANNEL_LABEL } from "@/lib/activity/core";
 import { loadUserTracking } from "@/lib/admin/tracking";
-import { ago, hostOf } from "@/lib/admin/tracking-core";
+import { ago, hostOf, planDisplay } from "@/lib/admin/tracking-core";
 import { CHANNEL_DOT, CHANNEL_ICON, ChannelCard } from "@/components/dashboard/tracking";
 import { CHANNELS } from "@/lib/activity/core";
 import { cn } from "@/lib/utils";
@@ -46,8 +46,8 @@ export default async function UserTrackingPage({ params }: { params: Promise<{ u
           <div className="min-w-0">
             <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight text-ink">
               <span className="truncate">{row.name || row.email}</span>
-              {row.paid && (
-                <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold uppercase text-accent">{row.plan}</span>
+              {(row.paid || row.plan === "pro_trial") && (
+                <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold uppercase text-accent">{planDisplay(row.plan)}</span>
               )}
               {row.internal && (
                 <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase text-ink-faint">team</span>
@@ -202,7 +202,7 @@ export default async function UserTrackingPage({ params }: { params: Promise<{ u
             )}
             {workspaces.length > 0 && (
               <p className="mt-3 text-[11px] text-ink-faint">
-                {workspaces.map((w) => `${w.name} (${w.role.toLowerCase()}, ${w.plan})`).join(" · ")}
+                {workspaces.map((w) => `${w.name} (${w.role.toLowerCase()}, ${planDisplay(w.plan)})`).join(" · ")}
               </p>
             )}
           </Card>

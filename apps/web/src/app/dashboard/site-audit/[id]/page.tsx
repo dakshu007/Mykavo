@@ -6,6 +6,8 @@ import { prisma } from "@mykavo/database";
 import { AUDIT_CHECKS, type AuditCategory, type AuditIssueGroup } from "@mykavo/seo-audit";
 import { Card } from "@/components/ui/card";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { getWorkspacePlan } from "@/lib/limits";
+import { formatLimit, nextPlanUp, type Plan } from "@/config/plans";
 import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
 import { RunAuditButton } from "../run-audit-button";
 import { FixTip } from "../fix-tip";
@@ -41,6 +43,16 @@ export default async function SiteAuditReportPage({ params }: Params) {
     include: { website: { select: { id: true, name: true, url: true } } },
   });
   if (!audit) notFound();
+
+  // Only a crawl cut short by the page limit needs the plan, so the
+  // entitlement lookup stays off the 6s refreshes while an audit runs.
+  let crawlUpgrade: Plan | null = null;
+  if (audit.stoppedReason === "page-limit") {
+    const plan = await getWorkspacePlan(workspace.id);
+    // The trial has Pro's crawl size, so its next step up is Agency, not Pro.
+    const nextUp = nextPlanUp(plan.id);
+    if (nextUp && nextUp.limits.siteAuditPages > plan.limits.siteAuditPages) crawlUpgrade = nextUp;
+  }
 
   const running = isAuditRunning(audit);
   const timedOut = !running && ["QUEUED", "RUNNING"].includes(audit.status);
@@ -174,11 +186,16 @@ export default async function SiteAuditReportPage({ params }: Params) {
           )}
           {audit.stoppedReason === "page-limit" && (
             <p className="text-[12.5px] text-ink-faint">
-              Crawl stopped at your plan&apos;s page limit - more URLs exist.{" "}
-              <Link href="/dashboard/billing" className="font-medium text-accent hover:underline">
-                Upgrade for 1,500-page crawls
-              </Link>
-              .
+              Crawl stopped at your plan&apos;s page limit - more URLs exist.
+              {crawlUpgrade ? (
+                <>
+                  {" "}
+                  <Link href="/dashboard/billing" className="font-medium text-accent hover:underline">
+                    Upgrade to {crawlUpgrade.name} for {formatLimit(crawlUpgrade.limits.siteAuditPages)}-page crawls
+                  </Link>
+                  .
+                </>
+              ) : null}
             </p>
           )}
 

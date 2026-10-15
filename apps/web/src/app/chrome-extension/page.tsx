@@ -26,6 +26,7 @@ import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/land
 import { ChromeExtensionAnimation } from "@/components/landing/chrome-extension-animation";
 import { ChromeMark, ChromeStoreButton } from "@/components/landing/chrome-store-button";
 import { TrackOnView } from "@/components/track-on-view";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { site } from "@/config/site";
 import {
   CHROME_EXTENSION_PAGE_PATH,
@@ -132,7 +133,7 @@ const privacy = [
 const faqs = [
   {
     q: "Is the MyKavo Chrome extension free?",
-    a: "Yes. The extension is free, and so is the on-page SEO check - no account needed. Connecting a website uses your MyKavo plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. On-demand scans from the extension come with Pro and Agency.",
+    a: `Yes. The extension is free, and so is the on-page SEO check - no account needed. Connecting a website uses your MyKavo plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. On-demand scans from the extension come with Pro and Agency, and every new account can try them free with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card.`,
   },
   {
     q: "Does the extension send the pages I check anywhere?",

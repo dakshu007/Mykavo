@@ -42,7 +42,8 @@ import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
-import { getPlan, plans } from "@/config/plans";
+import { formatLimit, getPlan, plans } from "@/config/plans";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { site } from "@/config/site";
 import { FEATURE_LIST, organizationNode, websiteNode } from "@/lib/seo/structured-data";
 
@@ -273,7 +274,7 @@ const faqs = [
   },
   {
     q: "How many websites can I monitor?",
-    a: "The free plan monitors 1 website with 5 pages. Pro is $20/month for 8 websites with 15 monitored pages each - ideal for freelancers and small teams. Agency is $79/month for 30 websites with 25 pages each, plus white-label client reports and up to 15 team members.",
+    a: `The free plan monitors 1 website with 5 pages. Pro is $20/month for 8 websites with 15 monitored pages each - ideal for freelancers and small teams. Agency is $79/month for 30 websites with 25 pages each, plus white-label client reports and up to 15 team members. New accounts start with a ${TRIAL_DAYS}-day Pro trial, which covers up to ${TRIAL_MAX_WEBSITES} websites.`,
   },
   {
     q: "Is it safe to point MyKavo at my site?",
@@ -297,7 +298,7 @@ const faqs = [
   },
   {
     q: "Is there a free website monitoring tool?",
-    a: "MyKavo has a genuinely free plan: one website, five monitored pages, weekly scans, 30-day history and email alerts, with no card required. Free accounts also get a 150-page site audit each day and all six free tools without an account at all. Paid plans exist for more sites, daily scans and team seats, but the free tier is a working product rather than a trial.",
+    a: `MyKavo has a genuinely free plan: one website, five monitored pages, weekly scans, 30-day history and email alerts, with no card required. It is a working plan, not a trial, and it does not expire. New accounts also start with a ${TRIAL_DAYS}-day Pro trial, again with no card: every Pro feature on up to ${TRIAL_MAX_WEBSITES} websites, then the account moves to Free unless you upgrade. The Free plan includes a 150-page site audit each day, and all ${TOOLS.length} free tools work without an account at all.`,
   },
 ];
 
@@ -691,11 +692,27 @@ export default function HomePage() {
                       ))}
                     </ul>
                     <Link
-                      href="/signup"
+                      href={plan.id === "agency" ? "/signup?next=/dashboard/billing" : "/signup"}
                       className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                     >
-                      {plan.priceMonthlyUsd === 0 ? "Start free" : `Start with ${plan.name}`}
+                      {plan.priceMonthlyUsd === 0
+                        ? "Start free"
+                        : plan.id === "pro"
+                          ? `Try ${plan.name} free for ${TRIAL_DAYS} days`
+                          : `Start with ${plan.name}`}
                     </Link>
+                    {plan.id === "pro" && (
+                      <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
+                        The trial covers up to {TRIAL_MAX_WEBSITES} websites ({plan.name} has{" "}
+                        {formatLimit(plan.limits.websites)}). No card. Then Free unless you upgrade.
+                      </p>
+                    )}
+                    {plan.id === "agency" && (
+                      <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
+                        New accounts start on the {TRIAL_DAYS}-day Pro trial. Switch to {plan.name} from
+                        Billing at any time.
+                      </p>
+                    )}
                   </div>
                 );
               })}

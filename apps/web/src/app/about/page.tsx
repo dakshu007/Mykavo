@@ -7,6 +7,7 @@ import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { site } from "@/config/site";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import {
   breadcrumbList,
   jsonLdScript,
@@ -242,7 +243,8 @@ export default function AboutPage() {
               Put a guardian on your websites.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#F5F5F0]/70">
-              Free for your first website - monitoring in minutes, no credit card required.
+              Start with a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites, then keep one
+              free. Monitoring in minutes, no credit card required.
             </p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Link

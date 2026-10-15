@@ -29,7 +29,12 @@ export async function POST(request: Request) {
   }
 
   const sub = await getWorkspaceSubscription(ctx.workspace.id);
-  if (!sub || sub.planId === "free" || !sub.dodoSubscriptionId) {
+  // Only a plan Dodo bills is changed here. A Pro trial or a Shopify-billed
+  // plan can carry an old, lapsed Dodo subscription id that must not be
+  // touched. Admin workspaces report no billedBy but keep a real Dodo
+  // subscription manageable (see getWorkspaceEntitlement).
+  const billedByDodo = sub?.billedBy === "dodo" || (sub?.unlimited === true && !sub.billedBy);
+  if (!sub || sub.planId === "free" || !billedByDodo || !sub.dodoSubscriptionId) {
     return NextResponse.json(
       { error: "There is no active subscription to change. Start one from Billing." },
       { status: 400 },

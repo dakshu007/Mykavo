@@ -8,6 +8,7 @@ import {
   queueArtifactDeletions,
   resumeStatusFor,
 } from "@mykavo/database";
+import { formatLimit, getPlan, nextPlanUp } from "@/config/plans";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
 import { logger } from "@/lib/logger";
@@ -129,12 +130,21 @@ export async function PATCH(request: Request, { params }: Params) {
       }),
     ]);
     if (monitoring >= plan.limits.websites) {
+      const n = plan.limits.websites;
+      const sites = `${formatLimit(n)} website${n === 1 ? "" : "s"}`;
+      // A trial is capped below the plan it trials, so the way up is that
+      // plan itself (Pro trial -> Pro), not the plan above it.
+      const paid = plan.trial ? getPlan(plan.id) : null;
+      const next = nextPlanUp(plan.id);
+      const error = paid
+        ? `Your ${plan.name} covers up to ${sites}. Upgrade to ${paid.name} to monitor up to ${formatLimit(paid.limits.websites)} and resume this one.`
+        : next
+          ? `Your ${plan.name} plan monitors up to ${sites}. Upgrade to ${next.name} to resume this one.`
+          : `Your ${plan.name} plan monitors up to ${sites}. Pause another website to resume this one.`;
       return NextResponse.json(
-        {
-          error: `Your ${plan.name} plan monitors ${plan.limits.websites} website${plan.limits.websites === 1 ? "" : "s"}. Upgrade to Pro to resume this one.`,
-          code: "PLAN_LIMIT",
-          upgrade: true,
-        },
+        // `upgrade` is what lets the dashboard show this text instead of a
+        // generic failure, so it stays set even on the top plan.
+        { error, code: "PLAN_LIMIT", upgrade: true },
         { status: 403 },
       );
     }

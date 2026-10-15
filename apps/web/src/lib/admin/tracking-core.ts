@@ -37,6 +37,11 @@ export interface RawWorkspace {
   memberIds: string[];
   planId: string;
   subscriptionStatus: string | null;
+  /**
+   * On a running Pro trial (trials live outside the subscription row). A paid
+   * plan still wins, as in getWorkspaceEntitlement.
+   */
+  onTrial?: boolean;
   websites: Array<{ id: string; name: string; url: string; createdAt: Date; lastScanAt: Date | null }>;
 }
 export interface RawSession {
@@ -298,6 +303,18 @@ export function hostOf(url: string): string {
 
 const PAID_STATUSES = new Set(["active", "on_hold"]);
 
+const isPaid = (w: RawWorkspace) => w.planId !== "free" && PAID_STATUSES.has(w.subscriptionStatus ?? "");
+
+/** How a plan id reads in the admin views: the trial id is spelled out, the rest stay as they are. */
+export function planDisplay(plan: string): string {
+  return plan === "pro_trial" ? "Pro trial" : plan;
+}
+
+/** A workspace's plan as shown to the operator: "pro_trial" while a trial runs and nothing is paid. */
+export function workspacePlan(w: RawWorkspace): string {
+  return !isPaid(w) && w.onTrial ? "pro_trial" : w.planId;
+}
+
 export function buildTrackingRows(input: TrackingInput): TrackingRow[] {
   const now = input.now ?? new Date();
   const days14 = lastDays(14, now);
@@ -357,7 +374,7 @@ export function buildTrackingRows(input: TrackingInput): TrackingRow[] {
     }
 
     const websites = ws.flatMap((w) => w.websites);
-    const paidWs = ws.find((w) => w.planId !== "free" && PAID_STATUSES.has(w.subscriptionStatus ?? ""));
+    const paidWs = ws.find(isPaid);
     const activeDaySet = new Set(myDays.filter((d) => utcDay(d.day) >= since30).map((d) => utcDay(d.day)));
     return {
       id: u.id,
@@ -365,7 +382,7 @@ export function buildTrackingRows(input: TrackingInput): TrackingRow[] {
       email: u.email,
       internal: input.isInternal(u.email),
       signedUpAt: u.createdAt.toISOString(),
-      plan: (paidWs ?? primary)?.planId ?? "free",
+      plan: paidWs ? paidWs.planId : primary ? workspacePlan(primary) : "free",
       paid: !!paidWs,
       websites: websites.length,
       monitoring: websites.some((w) => w.lastScanAt),

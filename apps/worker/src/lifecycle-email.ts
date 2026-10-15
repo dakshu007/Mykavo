@@ -108,6 +108,8 @@ export async function sendLifecycleEmails(budget: number, a: Automations): Promi
       now,
       hasWebsite: facts.has_website,
       isPaid: facts.is_paid,
+      // The Day 10 offer is written for Free; a trial account is not on Free.
+      onTrial: facts.onTrial,
       optedOut: facts.optedOut,
       emailOff: facts.emailOff,
       hasAndroidApp: facts.has_android_app,

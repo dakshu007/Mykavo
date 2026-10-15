@@ -5,7 +5,7 @@ import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 
 /**
- * Sidebar upsell, shown only on the free plan.
+ * Sidebar upsell, shown on the Free plan and during the Pro trial.
  *
  * Every number is READ FROM THE PLAN CONFIG (spec §37: never hardcode plan
  * limits). The first version of this card hardcoded "{formatLimit(pro.limits.websites)} websites, a year of
@@ -21,7 +21,7 @@ export function UpgradeCard({
 }: {
   websitesUsed: number;
   websiteLimit: number;
-  /** Set during a free Pro trial: the card counts down instead of upselling. */
+  /** Set during the Pro trial: the card counts down instead of upselling. */
   trialDaysLeft?: number | null;
   /** Free and never trialed (signed up before trials existed): offer one. */
   trialAvailable?: boolean;
@@ -37,7 +37,7 @@ export function UpgradeCard({
         <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
           Daily scans, up to {TRIAL_MAX_WEBSITES} websites. No card needed.
         </p>
-        <StartTrialButton label="Start free trial" className="mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100" />
+        <StartTrialButton label={`Start ${pro.name} trial`} className="mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100" />
       </div>
     );
   }
@@ -48,8 +48,13 @@ export function UpgradeCard({
           <Sparkles aria-hidden className="size-3.5 text-accent" />
           {pro.name} trial: {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left
         </p>
+        {/* Same two-line budget as the Free card below. websiteLimit is the
+            trial's cap (TRIAL_MAX_WEBSITES), so say it plainly next to Pro's. */}
         <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
-          Daily scans and update checks. Keep them for ${pro.priceMonthlyUsd}/mo.
+          {websitesUsed >= websiteLimit
+            ? `All ${formatLimit(websiteLimit)} trial website${websiteLimit === 1 ? "" : "s"} in use.`
+            : `The trial covers ${formatLimit(websiteLimit)} website${websiteLimit === 1 ? "" : "s"}.`}{" "}
+          {`${pro.name} has ${formatLimit(pro.limits.websites)} for $${pro.priceMonthlyUsd}/mo.`}
         </p>
         <Link
           href="/dashboard/billing?from=sidebar:trial"

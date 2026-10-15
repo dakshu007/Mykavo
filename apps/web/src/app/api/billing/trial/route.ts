@@ -6,7 +6,7 @@ import { getWorkspaceSubscription } from "@/lib/billing/subscription";
 import { logger } from "@/lib/logger";
 
 /**
- * Starts the workspace's one free Pro trial, for accounts that did not get
+ * Starts the workspace's one Pro trial, for accounts that did not get
  * one at signup (they signed up before trials existed). No card. A workspace
  * that pays, or already had a trial, is refused. Daily scans switch on with
  * the worker's next plan sweep (every 15 minutes).
@@ -25,7 +25,7 @@ export async function POST() {
 
   const trial = await startTrial(prisma, workspace.id, { source: "self_serve" });
   if (!trial) {
-    return NextResponse.json({ error: "This workspace has already used its free trial." }, { status: 409 });
+    return NextResponse.json({ error: "This workspace has already used its Pro trial." }, { status: 409 });
   }
 
   logger.info("trial started", { workspaceId: workspace.id, source: "self_serve" });

@@ -4,7 +4,7 @@ import { SearchCheck } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
-import { formatLimit } from "@/config/plans";
+import { formatLimit, planLabel } from "@/config/plans";
 import { getWorkspacePlan } from "@/lib/limits";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
@@ -57,7 +57,7 @@ export default async function SiteAuditPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Site Audit</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             Technical SEO crawl - up to {formatLimit(plan.limits.siteAuditPages)} pages per
-            audit on your {plan.name} plan,{" "}
+            audit on your {planLabel(plan)},{" "}
             {plan.limits.siteAuditsPerDay === Infinity ? "as many a day as you like" : `${plan.limits.siteAuditsPerDay}/day`}.
           </p>
         </div>

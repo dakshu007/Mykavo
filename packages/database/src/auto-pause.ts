@@ -11,7 +11,7 @@
  * resumed by these rules.
  */
 
-import type { PrismaClient, Prisma } from "@prisma/client";
+import type { PrismaClient, Prisma, WebsiteStatus } from "@prisma/client";
 import { isMissingTableError } from "./automations";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -33,8 +33,22 @@ export async function resumeStatusFor(db: Db, websiteId: string): Promise<"ACTIV
 }
 
 /**
- * Pauses monitored websites and records why. Only websites that are being
- * scanned (ACTIVE or ERROR) are paused; returns those that were.
+ * The statuses each rule pauses from. DORMANT stops scanning, so only sites
+ * being scanned (ACTIVE or ERROR) are paused. OVER_LIMIT is about how many
+ * websites the plan covers, so a site still being set up (PENDING,
+ * DISCOVERING, BASELINING) is paused too: otherwise it would start
+ * monitoring as soon as its baseline finishes. Resuming such a site brings
+ * it back as PENDING until it has a baseline (resumeStatusFor).
+ */
+const AUTO_PAUSABLE_STATUSES: Record<AutoPauseReason, readonly WebsiteStatus[]> = {
+  DORMANT: ["ACTIVE", "ERROR"],
+  OVER_LIMIT: ["ACTIVE", "ERROR", "PENDING", "DISCOVERING", "BASELINING"],
+};
+
+/**
+ * Pauses websites and records why. Only websites in one of the reason's
+ * AUTO_PAUSABLE_STATUSES are paused (never one already paused, so an owner's
+ * own pause is not turned into MyKavo's); returns those that were.
  */
 export async function autoPauseWebsites(
   db: Db,
@@ -45,7 +59,7 @@ export async function autoPauseWebsites(
   const paused: string[] = [];
   for (const w of websites) {
     const res = await db.website.updateMany({
-      where: { id: w.id, status: { in: ["ACTIVE", "ERROR"] } },
+      where: { id: w.id, status: { in: [...AUTO_PAUSABLE_STATUSES[reason]] } },
       data: { status: "PAUSED" },
     });
     if (res.count !== 1) continue;

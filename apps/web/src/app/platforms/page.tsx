@@ -10,6 +10,7 @@ import { PlatformLogo, WORKS_WITH_LOGO, isBrandedPlatform } from "@/components/l
 import { PlatformsOrbitAnimation } from "@/components/landing/platforms-orbit-animation";
 import { PlatformsRelayAnimation } from "@/components/landing/platforms-relay-animation";
 import { TrackOnView } from "@/components/track-on-view";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { site } from "@/config/site";
 import { PLATFORMS, PLATFORMS_PAGE_PATH, STATUS_LABEL, platformsByStatus, type Platform } from "@/config/platforms";
 import { WP_PLUGIN_DIRECTORY_URL } from "@/config/wordpress-plugin";
@@ -109,7 +110,7 @@ const principles = [
   {
     icon: ShieldCheck,
     title: "Plans per workspace",
-    body: "There is no per-platform fee. Start on the free plan with one website, then add websites and daily scans when you need them.",
+    body: `There is no per-platform fee. New accounts start with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, then the free plan with one. Add websites and daily scans when you need them.`,
   },
 ];
 
@@ -354,7 +355,7 @@ export default function PlatformsPage() {
                 </TrackedLink>
               </div>
               <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-[#9C9E93]">
-                Free plan · 1 website · no card required
+                {TRIAL_DAYS}-day Pro trial · up to {TRIAL_MAX_WEBSITES} websites · no card required
               </p>
             </div>
 
@@ -378,15 +379,16 @@ export default function PlatformsPage() {
             <p className="mt-3 text-[16px] leading-7 text-[#E9EBDF]">
               MyKavo is a website change and regression monitor you can use from the web app at mykavo.app, a WordPress
               plugin, a Chrome extension, an MCP server for AI assistants and deploy hooks for CI. An Android app is
-              available by request and a Shopify app is coming soon. Every platform uses the same MyKavo account, and the
-              free plan covers one website.
+              available by request and a Shopify app is coming soon. Every platform uses the same MyKavo account, and new
+              accounts start with a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites; the free plan covers
+              one.
             </p>
             <dl className="mt-5 grid gap-x-6 gap-y-3 border-t border-white/12 pt-5 sm:grid-cols-2">
               {[
                 { label: "Live today", value: "Web app, WordPress plugin, Chrome extension, AI assistants, deploy hooks" },
                 { label: "By request", value: "Android app" },
                 { label: "Coming soon", value: "Shopify app" },
-                { label: "Price", value: "Free plan, then Pro and Agency per workspace" },
+                { label: "Price", value: `${TRIAL_DAYS}-day Pro trial for new accounts, then Free, Pro or Agency per workspace` },
               ].map((f) => (
                 <div key={f.label} className="flex flex-col gap-0.5">
                   <dt className="font-mono text-[10.5px] font-bold uppercase tracking-[0.12em] text-[#9C9E93]">{f.label}</dt>
@@ -557,7 +559,8 @@ export default function PlatformsPage() {
               Fix what matters.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[#151515]/75">
-              Start on the web in a minute, then add the platforms you work in. The free plan covers one website.
+              Start on the web in a minute, then add the platforms you work in. New accounts get a {TRIAL_DAYS}-day Pro
+              trial on up to {TRIAL_MAX_WEBSITES} websites, then the free plan covers one.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <TrackedLink

@@ -91,8 +91,8 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["monitoring", "automatic", "alerts", "schedule", "baseline"],
     answer:
-      "The free tools check a page once, when you ask. MyKavo monitoring watches your pages for you.\n\nWith a MyKavo account you:\n\n- Approve a baseline of the pages that matter\n- Get them re-scanned automatically, weekly on Free or daily on paid plans\n- Receive a severity-ranked email alert, with before-and-after evidence, when a title, canonical, noindex, script, link or layout changes\n\nA free account covers 1 website and 5 pages. [Sign up](/signup) to turn a one-off check into monitoring.",
-    related: ["tool-website-change-detector", "tool-free-tools-hub", "tool-free-no-signup"],
+      "The free tools check a page once, when you ask. MyKavo monitoring watches your pages for you.\n\nWith a MyKavo account you:\n\n- Approve a baseline of the pages that matter\n- Get them re-scanned automatically, weekly on Free or daily on Pro, Agency and the Pro trial\n- Receive a severity-ranked email alert, with before-and-after evidence, when a title, canonical, noindex, script, link or layout changes\n\nEvery new account starts with a 14-day Pro trial on up to 3 websites, no card needed. If you don't upgrade, you then move to the Free plan: 1 website and 5 pages. [Sign up](/signup) to turn a one-off check into monitoring.",
+    related: ["tool-website-change-detector", "billing-pro-trial", "tool-free-tools-hub", "tool-free-no-signup"],
     evalQuestions: [
       "can a checker keep watching my page and ping me",
       "why would i make an account if the checkers are free",

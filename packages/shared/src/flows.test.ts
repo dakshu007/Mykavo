@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  FLOW_CONDITIONS,
   emptyFlow,
   flowIssues,
+  isFlowCondition,
   isSafeButtonUrl,
   parseFlowDefinition,
   planFrom,
@@ -15,6 +17,7 @@ const KEYS = ["welcome", "day10_offer"];
 const facts = (over: Partial<FlowFacts> = {}): FlowFacts => ({
   has_website: false,
   is_paid: false,
+  on_trial: false,
   has_android_app: false,
   has_open_changes: false,
   has_urgent_changes: false,
@@ -69,6 +72,36 @@ describe("walking a flow", () => {
     const f: FlowDefinition = { ...flow, steps: [{ id: "d", type: "decision", condition: "is_paid", yes: [], no: [{ id: "x", type: "email", email: custom }] }, { id: "y", type: "email", email: custom }] };
     expect(planFrom(f, null, facts({ is_paid: true }))).toMatchObject({ kind: "send", step: { id: "y" } });
     expect(planFrom(f, "y", facts())).toMatchObject({ kind: "send", step: { id: "y" }, nextId: null });
+  });
+
+  it("branches on the Pro trial separately from paying", () => {
+    expect(isFlowCondition("on_trial")).toBe(true);
+    expect(FLOW_CONDITIONS.on_trial.label).toBe("On the Pro trial");
+    expect(FLOW_CONDITIONS.is_paid.question).toMatch(/Pro trial counts as not paying/);
+    const f: FlowDefinition = {
+      ...flow,
+      steps: [
+        {
+          id: "paid",
+          type: "decision",
+          condition: "is_paid",
+          yes: [],
+          no: [
+            {
+              id: "trial",
+              type: "decision",
+              condition: "on_trial",
+              yes: [{ id: "tip", type: "email", email: custom }],
+              no: [{ id: "offer", type: "email", email: { kind: "builtin", key: "day10_offer" } }],
+            },
+          ],
+        },
+      ],
+    };
+    // A running trial is not paying, but it does not get the Free-to-Pro offer either.
+    expect(simulateFlow(f, facts({ on_trial: true })).emails.map((e) => e.stepId)).toEqual(["tip"]);
+    expect(simulateFlow(f, facts()).emails.map((e) => e.stepId)).toEqual(["offer"]);
+    expect(simulateFlow(f, facts({ is_paid: true })).emails).toEqual([]);
   });
 
   it("simulates the days each email goes out", () => {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { auth, googleEnabled } from "@/lib/auth";
 import { AuthForm } from "@/components/auth-form";
 import { safeNextPath } from "@/lib/team";
@@ -29,7 +30,7 @@ export default async function SignupPage({
         Create your account
       </h1>
       <p className="mb-6 text-sm text-ink-secondary">
-        Free plan included - no credit card required.
+        Includes a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites, then the Free plan unless you upgrade. No credit card required.
       </p>
       <AuthForm
         mode="signup"

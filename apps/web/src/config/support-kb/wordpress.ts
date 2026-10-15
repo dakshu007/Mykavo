@@ -244,7 +244,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["run scan", "manual scan", "scan now", "on demand"],
     answer:
-      "Yes, on Pro and Agency. Press **Run scan** on the MyKavo screen and watch the progress live; results appear as pages finish. From a terminal, **wp mykavo scan --wait** does the same and waits for the verdict.\n\nOn the Free plan, manual scans aren't included, so **Run scan** is greyed out after your first baseline (hover it to see why). Your pages are still scanned automatically every week. Pro and Agency scan daily and include manual scans: 20 a day on Pro, 100 a day on Agency. See [pricing](/pricing).",
+      "Yes, on Pro, Agency and the Pro trial. Press **Run scan** on the MyKavo screen and watch the progress live; results appear as pages finish. From a terminal, **wp mykavo scan --wait** does the same and waits for the verdict.\n\nOn the Free plan, manual scans aren't included, so **Run scan** is greyed out after your first baseline (hover it to see why). Your pages are still scanned automatically every week. Pro, Agency and the Pro trial scan daily and include manual scans: 20 a day on Pro and the trial, 100 a day on Agency. See [pricing](/pricing).",
     related: ["wp-wp-cli", "wp-safe-updates-free-plan", "wp-plugin-screens"],
     evalQuestions: [
       "Why is the scan button disabled on my MyKavo WordPress screen?",

@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { prisma, canStartTrial } from "@mykavo/database";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { requireSession, getCurrentMembership } from "@/lib/session";
+import { canManageBilling } from "@/lib/team";
 import { getWorkspacePlan } from "@/lib/limits";
 import {
   getWorkspaceSubscription,
@@ -39,17 +40,19 @@ function FeatureList({ features, columns = false }: { features: string[]; column
   );
 }
 
-/** One plan offered to a Free workspace, with its own checkout. */
+/** One plan offered to a Free or trial workspace, with its own checkout. */
 function PlanOffer({
   plan,
   checkoutHref,
   available,
   highlighted,
+  note,
 }: {
   plan: Plan;
   checkoutHref: string;
   available: boolean;
   highlighted: boolean;
+  note?: string | null;
 }) {
   return (
     <Card className={highlighted ? "ring-2 ring-accent" : undefined}>
@@ -60,6 +63,7 @@ function PlanOffer({
         {plan.name} - ${plan.priceMonthlyUsd}/month
       </h2>
       <p className="mt-1 text-sm text-ink-secondary">{plan.headline}</p>
+      {note && <p className="mt-2 text-sm font-medium text-ink">{note}</p>}
       <FeatureList features={plan.features} />
       {available ? (
         <a
@@ -87,7 +91,7 @@ export default async function BillingPage({
   searchParams: Promise<{ checkout?: string }>;
 }) {
   const session = await requireSession();
-  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
   const sp = await searchParams;
 
   const [plan, subscription, websiteLimit, websiteCount] = await Promise.all([
@@ -101,7 +105,9 @@ export default async function BillingPage({
   const trialEndsAt = plan.trial?.endsAt ?? null;
   const isPaid = plan.id !== "free" && !trialEndsAt;
   // Signed up before trials existed: they never got one, so offer it here.
-  const trialAvailable = plan.id === "free" && (await canStartTrial(prisma, workspace.id).catch(() => false));
+  const trialAvailable =
+    plan.id === "free" && canManageBilling(role) && (await canStartTrial(prisma, workspace.id).catch(() => false));
+  const free = getPlan("free");
   const pro = getPlan("pro");
   const agency = getPlan("agency");
   // Paid for through Shopify by a linked store (Shopify App Pricing): the
@@ -145,7 +151,7 @@ export default async function BillingPage({
         <div className="flex flex-wrap items-baseline gap-3">
           <p className="text-3xl font-semibold tracking-tight text-ink">{plan.name}</p>
           <p className="text-sm text-ink-secondary">
-            {plan.unlimited ? "Admin workspace - no charge" : trialEndsAt ? "Free for 14 days" : `$${plan.priceMonthlyUsd}/month`}
+            {plan.unlimited ? "Admin workspace - no charge" : trialEndsAt ? `Trial ends ${trialEndsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, no charge` : `$${plan.priceMonthlyUsd}/month`}
           </p>
           {isPaid && (
             <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
@@ -163,12 +169,15 @@ export default async function BillingPage({
           <div className="mt-4 flex items-start gap-2.5 rounded-field bg-primary-soft px-4 py-3">
             <CalendarClock className="mt-0.5 size-4.5 shrink-0 text-accent" aria-hidden />
             <p className="text-sm text-ink">
-              Your free Pro trial ends on{" "}
+              Your Pro trial ends on{" "}
               <span className="font-semibold">
                 {trialEndsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </span>
-              . Then your workspace moves to Free: 1 website, checked weekly. Nothing is deleted. Choose a
-              plan below to keep daily scans.
+              . If you don&apos;t upgrade by then, your workspace moves to Free:{" "}
+              {free.limits.websites} website{free.limits.websites === 1 ? "" : "s"}, checked weekly. Your
+              oldest monitored website stays monitored and any others are paused, not deleted. Baselines are kept;
+              other scan history follows Free&apos;s {formatLimit(free.limits.historyDays)}-day window. Upgrade
+              to {pro.name} below to keep daily scans and monitor up to {formatLimit(pro.limits.websites)} websites.
             </p>
           </div>
         )}
@@ -275,11 +284,13 @@ export default async function BillingPage({
             <p className="text-sm font-semibold text-ink">Try {pro.name} free for {TRIAL_DAYS} days</p>
             <p className="mt-1 text-sm text-ink-secondary">
               Daily scans, a check after every WordPress or Shopify update, and up to {TRIAL_MAX_WEBSITES}{" "}
-              websites. No card needed. When it ends you go back to Free and nothing is deleted.
+              websites. No card needed. When it ends your workspace moves back to Free: your oldest monitored website
+              stays monitored and any others are paused, not deleted. Baselines are kept; other scan
+              history follows Free&apos;s {formatLimit(free.limits.historyDays)}-day window.
             </p>
             <div className="mt-3 max-w-60">
               <StartTrialButton
-                label="Start free trial"
+                label={`Start ${pro.name} trial`}
                 className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-70"
               />
             </div>
@@ -287,8 +298,8 @@ export default async function BillingPage({
         )}
       </Card>
 
-      {/* Website capacity (paid plans) */}
-      {isPaid && (
+      {/* Website capacity (paid plans and the trial) */}
+      {(isPaid || trialEndsAt) && (
         <Card>
           <CardHeader
             title="Website capacity"
@@ -306,8 +317,9 @@ export default async function BillingPage({
             <p className="text-sm text-ink-secondary">websites in use</p>
           </div>
           <p className="mt-1 text-[13px] text-ink-faint">
-            {plan.name} includes {formatLimit(plan.limits.websites)} websites with{" "}
-            {formatLimit(plan.limits.pagesPerWebsite)} monitored pages each.
+            {trialEndsAt
+              ? `Your ${plan.name} covers ${formatLimit(plan.limits.websites)} websites with ${formatLimit(plan.limits.pagesPerWebsite)} monitored pages each. Paid ${pro.name} covers ${formatLimit(pro.limits.websites)}.`
+              : `${plan.name} includes ${formatLimit(plan.limits.websites)} websites with ${formatLimit(plan.limits.pagesPerWebsite)} monitored pages each.`}
           </p>
         </Card>
       )}
@@ -365,7 +377,7 @@ export default async function BillingPage({
         </Card>
       )}
 
-      {/* Free: both plans, each with its own checkout. */}
+      {/* Free or trial: both plans, each with its own checkout. */}
       {!isPaid && (
         <>
           <PlanOffer
@@ -373,12 +385,22 @@ export default async function BillingPage({
             checkoutHref="/api/billing/checkout"
             available={billingEnabled}
             highlighted
+            note={
+              trialEndsAt
+                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(pro.limits.websites)} websites. Everything else stays the same.`
+                : null
+            }
           />
           <PlanOffer
             plan={agency}
             checkoutHref="/api/billing/checkout?plan=agency"
             available={agencyBillingEnabled}
             highlighted={false}
+            note={
+              trialEndsAt
+                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(agency.limits.websites)} websites, with ${formatLimit(agency.limits.pagesPerWebsite)} pages each.`
+                : null
+            }
           />
           <p className="-mt-3 text-center text-[13px] text-ink-faint">
             Secure checkout by Dodo Payments. Cancel anytime.

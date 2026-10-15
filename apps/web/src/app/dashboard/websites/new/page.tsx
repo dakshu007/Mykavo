@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
+import { planLabel } from "@/config/plans";
 import { connectReturnPath } from "@/lib/integrations/site-connection";
 import { AddWebsiteWizard } from "./add-website-wizard";
 
@@ -59,8 +60,8 @@ export default async function NewWebsitePage({
         </h1>
         <p className="mt-1 text-sm text-ink-secondary">
           {pageBudget === Infinity
-            ? `Your ${plan.name} plan monitors unlimited pages per website.`
-            : `Your ${plan.name} plan monitors up to ${pageBudget} pages per website.`}
+            ? `Your ${planLabel(plan)} monitors unlimited pages per website.`
+            : `Your ${planLabel(plan)} monitors up to ${pageBudget} pages per website.`}
         </p>
       </div>
       <AddWebsiteWizard

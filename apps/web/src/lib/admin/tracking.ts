@@ -8,6 +8,7 @@ import {
   hostOf,
   summarizeRows,
   topPages,
+  workspacePlan,
   type ExtensionFunnel,
   type RawActivityDay,
   type RawEvent,
@@ -53,7 +54,7 @@ async function loadInput(scope: Scope = {}): Promise<TrackingInput> {
   });
   const wsIds = [...new Set(memberships.map((m) => m.workspaceId))];
 
-  const [workspaces, sessions, pushDevices, appRequests, connections, apiKeys, activityDays, events] = await Promise.all([
+  const [workspaces, sessions, pushDevices, appRequests, connections, apiKeys, activityDays, events, trials, shopifyPaid] = await Promise.all([
     prisma.workspace.findMany({
       where: { id: { in: wsIds } },
       select: {
@@ -116,7 +117,23 @@ async function loadInput(scope: Scope = {}): Promise<TrackingInput> {
         take: 5000,
       })
       .catch(tolerant<RawEvent[]>("activity events", [])),
+    prisma.workspaceTrial
+      .findMany({ where: { workspaceId: { in: wsIds }, endsAt: { gt: new Date() } }, select: { workspaceId: true } })
+      .catch(tolerant<Array<{ workspaceId: string }>>("trials", [])),
+    // A store paying through Shopify rules the trial out, as in getWorkspaceEntitlement.
+    prisma.shopifyShop
+      .findMany({
+        where: {
+          billingPlan: { in: ["pro", "agency"] },
+          uninstalledAt: null,
+          siteConnection: { is: { workspaceId: { in: wsIds }, revokedAt: null } },
+        },
+        select: { siteConnection: { select: { workspaceId: true } } },
+      })
+      .catch(tolerant<Array<{ siteConnection: { workspaceId: string } | null }>>("shopify plans", [])),
   ]);
+  const paidOnShopify = new Set(shopifyPaid.flatMap((s) => (s.siteConnection ? [s.siteConnection.workspaceId] : [])));
+  const trialing = new Set(trials.map((t) => t.workspaceId).filter((id) => !paidOnShopify.has(id)));
 
   return {
     users,
@@ -127,6 +144,7 @@ async function loadInput(scope: Scope = {}): Promise<TrackingInput> {
       memberIds: w.members.map((m) => m.userId),
       planId: w.subscription?.planId ?? "free",
       subscriptionStatus: w.subscription?.status ?? null,
+      onTrial: trialing.has(w.id),
       websites: w.websites,
     })),
     sessions,
@@ -337,12 +355,15 @@ export async function loadUserTracking(userId: string): Promise<UserTracking | n
 
   return {
     row,
-    workspaces: memberships.map((m) => ({
-      id: m.workspace.id,
-      name: m.workspace.name,
-      role: m.role,
-      plan: m.workspace.subscription?.planId ?? "free",
-    })),
+    workspaces: memberships.map((m) => {
+      const raw = ws.find((w) => w.id === m.workspace.id);
+      return {
+        id: m.workspace.id,
+        name: m.workspace.name,
+        role: m.role,
+        plan: raw ? workspacePlan(raw) : (m.workspace.subscription?.planId ?? "free"),
+      };
+    }),
     websites: ws.flatMap((w) =>
       w.websites.map((s) => ({
         id: s.id,

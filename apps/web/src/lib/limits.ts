@@ -6,7 +6,7 @@
 
 import { isMissingTableError, prisma } from "@mykavo/database";
 import { logger } from "@/lib/logger";
-import { formatLimit, getPlan, nextPlanUp, type Plan } from "@/config/plans";
+import { formatLimit, getPlan, nextPlanUp, planLabel, type Plan } from "@/config/plans";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/billing/subscription";
 import { hasSeatAvailable } from "@/lib/team";
 
@@ -108,7 +108,7 @@ export async function assertScanAllowed(
       const n = plan.limits.baselineScansPer24h;
       throw new LimitError(
         "BASELINE_SCAN_QUOTA",
-        `The ${plan.name} plan includes ${n} new baseline scan${n === 1 ? "" : "s"} per 24 hours, and ${n === 1 ? "it has" : "they have"} been used - including for websites that were removed. You can start another ${use.oldest ? retryIn(use.oldest) : "tomorrow"}, or upgrade for more.`,
+        `The ${planLabel(plan)} includes ${n} new baseline scan${n === 1 ? "" : "s"} per 24 hours, and ${n === 1 ? "it has" : "they have"} been used - including for websites that were removed. You can start another ${use.oldest ? retryIn(use.oldest) : "tomorrow"}, or upgrade for more.`,
       );
     }
   }
@@ -179,7 +179,7 @@ export async function assertCanInviteMember(workspaceId: string): Promise<void> 
   const message =
     plan.id === "free"
       ? `Team members come with a paid plan. Upgrade to ${next?.name ?? "Pro"} to invite up to ${next?.limits.maxMembers ?? 3} people.`
-      : `Your ${plan.name} plan includes ${plan.limits.maxMembers} seats (members plus pending invites). Remove a member or revoke an invite to free one up${
+      : `Your ${planLabel(plan)} includes ${plan.limits.maxMembers} seats (members plus pending invites). Remove a member or revoke an invite to free one up${
           next && next.limits.maxMembers > plan.limits.maxMembers
             ? `, or upgrade to ${next.name} for ${next.limits.maxMembers}.`
             : "."
@@ -206,7 +206,7 @@ export async function assertPageLimit(
       : "";
     throw new LimitError(
       "PAGE_LIMIT",
-      `Your ${plan.name} plan monitors up to ${formatLimit(plan.limits.pagesPerWebsite)} pages per website.${upsell}`,
+      `Your ${planLabel(plan)} monitors up to ${formatLimit(plan.limits.pagesPerWebsite)} pages per website.${upsell}`,
     );
   }
 }

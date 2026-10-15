@@ -7,7 +7,7 @@ import { isPlatformAdmin } from "@/lib/platform-admin";
 import { Card, CardHeader } from "@/components/ui/card";
 import { CHANNELS, CHANNEL_LABEL } from "@/lib/activity/core";
 import { loadTrackingOverview } from "@/lib/admin/tracking";
-import { ago } from "@/lib/admin/tracking-core";
+import { ago, planDisplay } from "@/lib/admin/tracking-core";
 import { TRACKING_SHOWS, visibleRows, type TrackingShow } from "@/lib/admin/tracking-filter";
 import {
   ActivitySpark,
@@ -254,7 +254,7 @@ export default async function TrackingPage({
                     </span>
                     <span className="shrink-0 text-right text-[12px] text-ink-secondary">
                       {r.lastActiveAt ? ago(r.lastActiveAt) : "Never"}
-                      {r.paid && <span className="block font-semibold uppercase text-accent">{r.plan}</span>}
+                      {(r.paid || r.plan === "pro_trial") && <span className="block font-semibold uppercase text-accent">{planDisplay(r.plan)}</span>}
                     </span>
                   </span>
                   <span className="flex items-center justify-between gap-2">
@@ -290,9 +290,9 @@ export default async function TrackingPage({
                         <Link href={`/dashboard/tracking/${r.id}`} className="block min-w-0">
                           <span className="flex items-center gap-2">
                             <span className="truncate font-medium text-ink group-hover:underline">{r.name || r.email}</span>
-                            {r.paid && (
+                            {(r.paid || r.plan === "pro_trial") && (
                               <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent">
-                                {r.plan}
+                                {planDisplay(r.plan)}
                               </span>
                             )}
                             {r.internal && (

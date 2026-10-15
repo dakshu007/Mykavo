@@ -25,6 +25,7 @@ import {
 import { daysUntil, parseSelectorList } from "@mykavo/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
+import { formatLimit, getPlan } from "@/config/plans";
 import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
@@ -249,6 +250,8 @@ export default async function WebsiteDetailPage({
 
   // Paused by MyKavo (not by the owner): say why, and what brings it back.
   const autoPause = website.status === "PAUSED" ? (await autoPauseReasons(prisma, [website.id])).get(website.id) ?? null : null;
+  // OVER_LIMIT means the workspace is on Free now, whatever plan it had.
+  const freeWebsites = getPlan("free").limits.websites;
 
   return (
     <div className="space-y-6">
@@ -256,8 +259,8 @@ export default async function WebsiteDetailPage({
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-warning-soft px-5 py-4">
           <p className="max-w-2xl text-[13.5px] leading-6 text-ink">
             {autoPause === "OVER_LIMIT"
-              ? "Monitoring is paused: your Pro trial ended and the Free plan covers 1 website. Your baseline and history are kept."
-              : "Monitoring was paused because nobody had opened MyKavo for a month. Your baseline and history are kept. Press Resume monitoring below to start again."}
+              ? `Monitoring is paused: your Pro trial ended and the Free plan covers ${formatLimit(freeWebsites)} website${freeWebsites === 1 ? "" : "s"}. ${pagesWithBaseline > 0 ? "Your baseline is kept." : "After you upgrade, run its baseline scan to start monitoring."}`
+              : "Monitoring was paused because nobody had opened MyKavo for a month. Your baseline is kept. Press Resume monitoring below to start again."}
           </p>
           {autoPause === "OVER_LIMIT" && (
             <Link

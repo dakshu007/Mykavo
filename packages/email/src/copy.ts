@@ -101,32 +101,35 @@ export const DEFAULT_COPY: Record<AutomationKey, { subject: string; heading: str
       "Hi {firstName}, a new version of the MyKavo plugin is out. Updating takes a few seconds: open Plugins in WordPress and click \"Update now\" next to MyKavo. Your connection, settings and history stay as they are.",
     buttonLabel: "Update in WordPress",
   },
+  // Trial copy (trial_ending, trial_ended, trial_started): "14" is TRIAL_DAYS
+  // and "3" is TRIAL_MAX_WEBSITES (packages/shared/src/plan-tier.ts); "8" is
+  // paid Pro (apps/web/src/config/plans.ts). Keep them in step.
   trial_ending: {
-    subject: "{days} left of MyKavo Pro",
+    subject: "{days} left of your MyKavo Pro trial",
     heading: "Your Pro trial ends {date}",
     intro:
-      "Hi {firstName}, your free Pro trial ends on {date}. After that your websites go back to the Free plan: one website, checked once a week. Pro keeps daily checks, a check after every WordPress or Shopify update and up to 8 websites, for ${price} a month.",
+      "Hi {firstName}, your Pro trial ends on {date}. After that your account moves to the Free plan: one website, checked once a week. Your oldest monitored website stays monitored and any others are paused, not deleted. Pro is ${price} a month for daily checks, a check after every WordPress or Shopify update and up to 8 websites (your trial covers 3).",
     buttonLabel: "Keep Pro for ${price} a month",
   },
   trial_ended: {
     subject: "Your MyKavo Pro trial has ended",
-    heading: "You're back on the Free plan",
+    heading: "Your account has moved to the Free plan",
     intro:
-      "Hi {firstName}, your 14-day Pro trial has ended. Your websites, baselines and history are all still here. From now on MyKavo checks your website once a week instead of every day.",
+      "Hi {firstName}, your 14-day Pro trial has ended. Your websites and baselines are all still here. From now on MyKavo checks your website once a week instead of every day.",
     buttonLabel: "Upgrade to Pro",
   },
   monitoring_paused: {
     subject: "We paused monitoring for {website}",
     heading: "Monitoring is paused for {website}",
     intro:
-      "Hi {firstName}, nobody has opened MyKavo for a month, so we paused the checks on {website}. Nothing is deleted: your baseline and history are kept. Open MyKavo and monitoring starts again right away.",
+      "Hi {firstName}, nobody has opened MyKavo for a month, so we paused the checks on {website}. Your baseline is kept. Open MyKavo and monitoring starts again right away.",
     buttonLabel: "Resume monitoring",
   },
   trial_started: {
-    subject: "Your MyKavo account now has 14 days of Pro",
-    heading: "14 days of Pro, on us",
+    subject: "Your MyKavo account now has a 14-day Pro trial",
+    heading: "A 14-day Pro trial, on us",
     intro:
-      "Hi {firstName}, you signed up for MyKavo before we had a trial, so we've added one to your account: 14 days of Pro, no card needed.",
+      "Hi {firstName}, you signed up for MyKavo before we had a trial, so we've added a 14-day Pro trial to your account: every Pro feature on up to 3 websites, no card needed.",
     buttonLabel: "Open your dashboard",
   },
   app_update: {

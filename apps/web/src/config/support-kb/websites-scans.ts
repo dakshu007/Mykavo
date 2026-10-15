@@ -38,8 +38,8 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["limit", "pages", "websites", "quota", "plan"],
     answer:
-      "Limits by plan:\n\n- **Free** - 1 website, 5 monitored pages\n- **Pro** - 8 websites, 15 monitored pages per website\n- **Agency** - 30 websites, 25 monitored pages per website\n\nThe page limit is per website, so every website you add gets the full allowance. When choosing pages, the counter shows how many you have used, for example \"3 of 5 selected\". Limits are enforced on the server. To raise them, upgrade in [Billing](/dashboard/billing) or compare plans on the [pricing page](/pricing).",
-    related: ["scan-edit-pages", "trouble-website-limit"],
+      "Limits by plan:\n\n- **Free** - 1 website, 5 monitored pages\n- **Pro trial** (free for 14 days) - 3 websites, 15 monitored pages per website\n- **Pro** - 8 websites, 15 monitored pages per website\n- **Agency** - 30 websites, 25 monitored pages per website\n\nThe page limit is per website, so every website you add gets the full allowance. When choosing pages, the counter shows how many you have used, for example \"3 of 5 selected\". Limits are enforced on the server. To raise them, upgrade in [Billing](/dashboard/billing) or compare plans on the [pricing page](/pricing).",
+    related: ["scan-edit-pages", "trouble-website-limit", "billing-trial-websites"],
     evalQuestions: [
       "what's the maximum number of urls I can watch on each tier",
       "does the 15 page allowance cover all my sites together",
@@ -111,7 +111,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["frequency", "schedule", "daily", "weekly", "interval"],
     answer:
-      "Full page scans run automatically on your plan's schedule:\n\n- **Free** - weekly\n- **Pro** and **Agency** - daily\n\nThe next scan is timed from when the last one finished. If a scan fails, MyKavo tries again within a day.\n\nSeparately, your homepage gets a quick uptime and SSL check every 5 minutes on every plan. On Pro and Agency you can also run a scan yourself at any time.",
+      "Full page scans run automatically on your plan's schedule:\n\n- **Free** - weekly\n- **Pro**, **Agency** and the free **Pro trial** - daily\n\nThe next scan is timed from when the last one finished. If a scan fails, MyKavo tries again within a day.\n\nSeparately, your homepage gets a quick uptime and SSL check every 5 minutes on every plan. On Pro, Agency and the Pro trial you can also run a scan yourself at any time.",
     related: ["scan-manual", "scan-uptime-ssl"],
     evalQuestions: [
       "how regularly does the scanner revisit my pages",
@@ -148,7 +148,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["run scan", "manual", "rescan", "on-demand", "now"],
     answer:
-      "Open the website from [Websites](/dashboard/websites) and press **Run scan** at the top. You are taken to the live scan, and you can close the tab while it runs.\n\n- **Pro** - 20 manual scans a day\n- **Agency** - 100 manual scans a day\n- **Free** - scans run on the weekly schedule. Only the first baseline scan can be started by hand.\n\nDaily limits reset at midnight UTC. Only one scan runs per website at a time; if one is already going, the button shows **Scan in progress** instead.",
+      "Open the website from [Websites](/dashboard/websites) and press **Run scan** at the top. You are taken to the live scan, and you can close the tab while it runs.\n\n- **Pro** - 20 manual scans a day\n- **Pro trial** - 20 manual scans a day, as on Pro\n- **Agency** - 100 manual scans a day\n- **Free** - scans run on the weekly schedule. Only the first baseline scan can be started by hand.\n\nDaily limits reset at midnight UTC. Only one scan runs per website at a time; if one is already going, the button shows **Scan in progress** instead.",
     related: ["scan-frequency", "trouble-cant-run-scan"],
     evalQuestions: [
       "I just fixed a broken page, how do I get it checked immediately",
@@ -332,7 +332,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["pause", "resume", "stop", "disable", "hold"],
     answer:
-      "1. Open the website from [Websites](/dashboard/websites).\n2. Expand **Settings & integrations** and go to **Danger zone**.\n3. Press **Pause monitoring**.\n\nA paused website is not scanned and gets no uptime checks, but its pages, baselines and history are kept. It still counts toward your plan's website limit. To restart, press **Resume monitoring** in the same place. On Pro and Agency you can then press **Run scan** to check it straight away.\n\nOnly want to silence alerts for a few hours? Use **Mute alerts** instead.",
+      "1. Open the website from [Websites](/dashboard/websites).\n2. Expand **Settings & integrations** and go to **Danger zone**.\n3. Press **Pause monitoring**.\n\nA paused website is not scanned and gets no uptime checks, but its pages and baselines are kept (scan history follows your plan's retention window). It still counts toward your plan's website limit. To restart, press **Resume monitoring** in the same place. On Pro, Agency and the Pro trial you can then press **Run scan** to check it straight away.\n\nOnly want to silence alerts for a few hours? Use **Mute alerts** instead.",
     related: ["alert-mute-maintenance", "scan-delete"],
     evalQuestions: [
       "the client site is offline for a rebuild, can I stop scanning it for a while",

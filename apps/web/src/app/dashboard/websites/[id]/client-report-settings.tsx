@@ -235,8 +235,8 @@ export function ClientReportSettings({
             </div>
           ) : (
             <p className="mt-3 border-t border-line pt-3 text-[12px] text-ink-faint">
-              Pro also emails this report to your clients automatically, weekly
-              or monthly.
+              Agency also emails this report to your clients automatically,
+              weekly or monthly.
             </p>
           )}
         </div>

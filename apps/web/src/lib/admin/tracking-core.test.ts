@@ -5,6 +5,7 @@ import {
   groupVisits,
   summarizeRows,
   topPages,
+  workspacePlan,
   type RawExtensionInstall,
   type TrackingInput,
 } from "./tracking-core";
@@ -95,6 +96,21 @@ describe("buildTrackingRows", () => {
     expect(asha.spark.at(-1)).toEqual(["web"]);
     expect(asha.spark.at(-2)).toEqual(["android"]);
     expect(rows.find((r) => r.id === "me")!.internal).toBe(true);
+  });
+
+  it("shows a running Pro trial as pro_trial, unless a plan is paid", () => {
+    const base = input();
+    const trialRows = buildTrackingRows({ ...base, workspaces: base.workspaces.map((w) => ({ ...w, onTrial: true })) });
+    expect(trialRows.find((r) => r.id === "u2")).toMatchObject({ plan: "pro_trial", paid: false });
+    expect(trialRows.find((r) => r.id === "u1")).toMatchObject({ plan: "pro", paid: true });
+  });
+
+  it("names a workspace's plan for the operator", () => {
+    const w = input().workspaces[1];
+    expect(workspacePlan(w)).toBe("free");
+    expect(workspacePlan({ ...w, onTrial: true })).toBe("pro_trial");
+    expect(workspacePlan({ ...w, planId: "pro", subscriptionStatus: "cancelled", onTrial: true })).toBe("pro_trial");
+    expect(workspacePlan({ ...w, planId: "agency", subscriptionStatus: "active", onTrial: true })).toBe("agency");
   });
 
   it("counts adoption and the funnel", () => {

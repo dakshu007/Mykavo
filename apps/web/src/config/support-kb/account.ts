@@ -29,8 +29,8 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["signup", "register", "account", "create"],
     answer:
-      "Creating an account is free and needs no credit card:\n\n1. Go to [Sign up](/signup).\n2. Enter your name, email and a password of at least 8 characters, or click **Continue with Google**.\n3. Optionally scan the QR code to turn on two-factor authentication, or choose **Set up later in Settings**.\n\nA workspace is created for you automatically. At signup we check that your email address can actually receive mail, so disposable addresses and domains that don't accept email are refused. Use a real inbox, since that's where your alerts go.",
-    related: ["account-google-sign-in", "account-two-factor-setup", "account-sign-in-problems"],
+      "Creating an account is free and needs no credit card:\n\n1. Go to [Sign up](/signup).\n2. Enter your name, email and a password of at least 8 characters, or click **Continue with Google**.\n3. Optionally scan the QR code to turn on two-factor authentication, or choose **Set up later in Settings**.\n\nA workspace is created for you automatically, and it starts on a **14-day Pro trial**: every Pro feature on up to 3 websites. When it ends you move to the Free plan unless you upgrade.\n\nAt signup we check that your email address can actually receive mail, so disposable addresses and domains that don't accept email are refused. Use a real inbox, since that's where your alerts go.",
+    related: ["account-google-sign-in", "billing-pro-trial", "account-two-factor-setup", "account-sign-in-problems"],
     evalQuestions: [
       "what do i need to open a mykavo login",
       "the register form keeps refusing my address",
@@ -288,7 +288,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["invite", "team", "seats", "users", "members"],
     answer:
-      "Team members come with paid plans. Seats per workspace:\n\n- **Free**: just you\n- **Pro**: up to 3 people\n- **Agency**: up to 15 people\n\nTo invite someone (Owner or Admin only):\n\n1. Open [Settings](/dashboard/settings) and find **Team**.\n2. Enter their email, pick a role (Admin, Member or Viewer) and click **Send invite**.\n\nThey get an email with a link that works for 7 days. You can also use **Copy link** to send it yourself. Pending invites hold a seat until they're accepted or revoked.",
+      "Team members come with Pro and Agency, including the 14-day Pro trial. Seats per workspace:\n\n- **Free**: just you\n- **Pro** and the **Pro trial**: up to 3 people\n- **Agency**: up to 15 people\n\nTo invite someone (Owner or Admin only):\n\n1. Open [Settings](/dashboard/settings) and find **Team**.\n2. Enter their email, pick a role (Admin, Member or Viewer) and click **Send invite**.\n\nThey get an email with a link that works for 7 days. You can also use **Copy link** to send it yourself. Pending invites hold a seat until they're accepted or revoked.",
     related: ["account-roles", "account-remove-member", "account-invite-problems"],
     evalQuestions: [
       "how do i bring my coworker into our dashboard",

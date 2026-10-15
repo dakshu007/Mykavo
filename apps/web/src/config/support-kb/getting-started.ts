@@ -255,7 +255,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["first results", "after baseline", "next scan", "working"],
     answer:
-      "After the baseline finishes, the website shows **Monitoring** and two things start:\n\n- **Health** - the first uptime and SSL check runs within 5 minutes, then every 5 minutes.\n- **Change detection** - the next full scan compares your pages with the baseline. It runs daily on Pro and Agency and weekly on Free. On Pro and Agency you can press **Run scan** to compare sooner.\n\nIf nothing differs, there is nothing to report, and that is good news. Any differences appear on [Changes](/dashboard/changes), and you can follow every scan in [Scan History](/dashboard/scans).",
+      "After the baseline finishes, the website shows **Monitoring** and two things start:\n\n- **Health** - the first uptime and SSL check runs within 5 minutes, then every 5 minutes.\n- **Change detection** - the next full scan compares your pages with the baseline. It runs daily on Pro, Agency and the Pro trial, and weekly on Free. On Pro, Agency and the trial you can press **Run scan** to compare sooner.\n\nIf nothing differs, there is nothing to report, and that is good news. Any differences appear on [Changes](/dashboard/changes), and you can follow every scan in [Scan History](/dashboard/scans).",
     related: ["start-first-baseline-scan", "scan-frequency", "scan-manual"],
     evalQuestions: [
       "my baseline finished yesterday and I see no changes, is that normal",

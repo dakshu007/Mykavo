@@ -48,6 +48,12 @@ describe("automation registry", () => {
     expect(welcome.html).toContain("Welcome to MyKavo");
   });
 
+  it("previews the welcome email as a signup gets it, with the Pro trial", () => {
+    const welcome = renderAutomation(sampleAutomationData("welcome", APP, "Ana"), defaultSettings());
+    expect(welcome.html).toContain("Your 14-day Pro trial is on");
+    expect(welcome.text).toContain("up to 3 websites until Friday, October 24");
+  });
+
   it("takes the offer code, percent, price and day from settings", () => {
     const s = defaultSettings();
     expect(renderAutomation(sampleAutomationData("day10_offer", APP, "Ana"), s).subject).toBe(DAY10_OFFER_SUBJECT);

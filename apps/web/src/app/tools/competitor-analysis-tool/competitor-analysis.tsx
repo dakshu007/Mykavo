@@ -6,6 +6,7 @@ import { ToolError } from "@/components/tools/tool-error";
 import { ToolCta } from "@/components/tools/tool-cta";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import type { CompetitorReport, ComparisonRow, Verdict } from "@/lib/tools/competitor";
 
 /** Two URL fields rather than the shared single-URL form, styled to match it. */
@@ -246,7 +247,7 @@ export function CompetitorAnalysis() {
 
           <ToolCta
             heading="This is one moment in time. Watch what changes next."
-            body="MyKavo can keep checking their pricing page on a schedule and email you the before-and-after the day it moves. Free plan, one site, no card."
+            body={`MyKavo can keep checking their pricing page on a schedule and email you the before-and-after the day it moves. New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card.`}
             tool="competitor-analysis-tool"
           />
         </>

@@ -56,7 +56,9 @@ function UserRow({ row, onPress }: { row: TrackingRow; onPress: () => void }) {
           <Small color={palette.ink} style={{ fontWeight: "600", flexShrink: 1 }} numberOfLines={1}>
             {row.name}
           </Small>
-          {row.paid ? <Chip label={row.plan} fg={palette.successStrong} bg={palette.successSoft} /> : null}
+          {row.paid || row.plan === "pro_trial" ? (
+            <Chip label={row.plan === "pro_trial" ? "Pro trial" : row.plan} fg={palette.successStrong} bg={palette.successSoft} />
+          ) : null}
         </View>
         <Mono numberOfLines={1}>{row.email}</Mono>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>

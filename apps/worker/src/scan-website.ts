@@ -99,8 +99,11 @@ export async function runScanWebsiteJob(
     },
   });
   if (scan.triggerType === "BASELINE") {
-    await prisma.website.update({
-      where: { id: website.id },
+    // A website paused meanwhile (by its owner, or at a trial's end) stays
+    // paused: the baseline is still recorded, and stillPaused below keeps it
+    // PAUSED, so a Free workspace cannot baseline its way past the limit.
+    await prisma.website.updateMany({
+      where: { id: website.id, status: { not: "PAUSED" } },
       data: { status: "BASELINING" },
     });
   }

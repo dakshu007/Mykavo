@@ -44,11 +44,12 @@ function PlanBadge({ plan, paid }: { plan: string; paid: boolean }) {
   return (
     <span
       className={cn(
-        "rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize",
-        paid ? "bg-primary text-primary-contrast" : "bg-ink/5 text-ink-secondary",
+        "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+        paid ? "bg-primary text-primary-contrast capitalize" : "bg-ink/5 text-ink-secondary",
       )}
     >
-      {paid ? `${plan} · paid` : "Free"}
+      {/* A running Pro trial pays nothing but is not on Free either. */}
+      {paid ? `${plan} · paid` : plan === "pro_trial" ? "Pro trial" : "Free"}
     </span>
   );
 }

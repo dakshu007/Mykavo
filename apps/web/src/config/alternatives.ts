@@ -29,6 +29,8 @@
  * they stay correct as the product changes.
  */
 
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
+
 /** The day every competitor fact on these pages was last checked. */
 export const VERIFIED_ON = "September 20, 2026";
 
@@ -443,7 +445,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Entry price",
         them: "Pro at $29/month. A free trial rather than a free plan.",
-        us: "Free plan (1 website, 5 pages, weekly, no card), then $20/month for 8 websites with 15 pages each, or $79/month for 30 websites.",
+        us: `Free plan that does not expire (1 website, 5 pages, weekly, no card), and a ${TRIAL_DAYS}-day Pro trial for new accounts (up to ${TRIAL_MAX_WEBSITES} websites, no card). Then $20/month for 8 websites with 15 pages each, or $79/month for 30 websites.`,
       },
     ],
     whereTheyWin: [
@@ -466,7 +468,7 @@ export const ALTERNATIVES: Alternative[] = [
       },
       {
         q: "How does pricing compare?",
-        a: "They are metered differently, which matters more than the headline figures. Hexowatch sells a pool of monthly checks (4,500 on Pro at $29/month), so frequency and page count compete for the same budget. MyKavo sells websites and pages ($20/month for 8 websites with 15 monitored pages each, scanned daily), so adding a page does not force you to slow down the others. MyKavo also has a genuinely free plan rather than a trial.",
+        a: `They are metered differently, which matters more than the headline figures. Hexowatch sells a pool of monthly checks (4,500 on Pro at $29/month), so frequency and page count compete for the same budget. MyKavo sells websites and pages ($20/month for 8 websites with 15 monitored pages each, scanned daily), so adding a page does not force you to slow down the others. MyKavo also has a free plan that does not expire, and new accounts start with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, with no card.`,
       },
       {
         q: "How current is this comparison?",

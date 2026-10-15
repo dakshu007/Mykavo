@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
+import { formatLimit, getPlan } from "@/config/plans";
 
 export const metadata: Metadata = withSocial({
   title: "Terms of Service - MyKavo Website Monitoring",
@@ -22,7 +24,7 @@ export default function TermsPage() {
       eyebrowText="legal"
       title="Terms of Service"
       intro="These terms are a plain-English agreement between you and MyKavo. By creating an account or using the service, you agree to them. If anything here is unclear, email support@mykavo.app and we will explain it."
-      updated="September 23, 2026"
+      updated="October 14, 2026"
     >
       <h2>1. Who we are and what MyKavo does</h2>
       <p>
@@ -67,7 +69,7 @@ export default function TermsPage() {
         </li>
         <li>
           Not attempt to circumvent plan limits, rate limits or security controls, including by
-          creating multiple accounts to stack free-plan quotas.
+          creating multiple accounts to stack free-plan quotas or repeat the Pro trial.
         </li>
         <li>Not resell, scrape or reverse engineer the service without written permission.</li>
       </ul>
@@ -108,6 +110,13 @@ export default function TermsPage() {
         </tbody>
       </table>
       <ul>
+        <li>
+          New accounts start with a free {TRIAL_DAYS}-day Pro trial. No card is needed and nothing
+          is charged when it ends. The trial includes Pro&apos;s features on up to{" "}
+          {TRIAL_MAX_WEBSITES} websites (paid Pro covers {formatLimit(getPlan("pro").limits.websites)}). If you do not upgrade, the workspace
+          moves to the Free plan when the trial ends: the oldest monitored website stays monitored and any
+          others are paused, not deleted. Each workspace gets one trial.
+        </li>
         <li>
           Payments are processed by <strong>Dodo Payments</strong>, our merchant of record. MyKavo
           never sees or stores your card number.

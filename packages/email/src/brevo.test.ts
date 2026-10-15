@@ -91,6 +91,23 @@ describe("contact sync", () => {
     expect(membership({ paid: true, websites: 3 })).toEqual(["all", "paid"]);
   });
 
+  it("keeps Pro trial accounts out of both the Free and the Paid list", async () => {
+    expect(membership({ paid: false, trial: true, websites: 1 })).toEqual(["all"]);
+    expect(membership({ paid: false, trial: true, websites: 0 })).toEqual(["all", "no_website"]);
+
+    await pushContacts([contact({ email: "trial@x.co", plan: "pro_trial", trial: true })], audiences);
+    const imports = calls.filter((c) => c.url.endsWith("/contacts/import")).map((c) => c.body as { listIds: number[]; jsonBody: { email: string; attributes: Record<string, unknown> }[] });
+    expect(imports.map((i) => [i.listIds, i.jsonBody.map((j) => j.email)])).toEqual([[[100], ["trial@x.co"]]]);
+    expect(imports[0].jsonBody[0].attributes).toMatchObject({ MYKAVO_PLAN: "pro_trial" });
+    // Someone who was on Free before the trial leaves the Free list.
+    const removals = calls.filter((c) => c.url.includes("/contacts/remove")).map((c) => [c.url.match(/lists\/(\d+)/)?.[1], (c.body as { emails: string[] }).emails]);
+    expect(removals).toEqual([
+      ["101", ["trial@x.co"]],
+      ["102", ["trial@x.co"]],
+      ["103", ["trial@x.co"]],
+    ]);
+  });
+
   it("imports by list group, blocklists opt-outs, and removes people from lists they left", async () => {
     const res = await pushContacts(
       [
@@ -144,20 +161,29 @@ describe("campaign subject lines", () => {
 });
 
 describe("adding a signup straight away", () => {
+  const listsExist = (c: Call) => {
+    if (c.url.includes("/contacts/folders?")) return { status: 200, body: { folders: [{ id: 12, name: "MyKavo" }] } };
+    if (c.url.includes("/contacts/folders/12/lists")) {
+      return {
+        status: 200,
+        body: { lists: [["MyKavo · All users", 13], ["MyKavo · Free plan", 14], ["MyKavo · Paid plans", 15], ["MyKavo · No website yet", 16]].map(([name, id]) => ({ name, id })) },
+      };
+    }
+    return { status: 201, body: { id: 1 } };
+  };
+
   it("creates the contact in All, Free and No website, with its fields", async () => {
-    respond = (c) => {
-      if (c.url.includes("/contacts/folders?")) return { status: 200, body: { folders: [{ id: 12, name: "MyKavo" }] } };
-      if (c.url.includes("/contacts/folders/12/lists")) {
-        return {
-          status: 200,
-          body: { lists: [["MyKavo · All users", 13], ["MyKavo · Free plan", 14], ["MyKavo · Paid plans", 15], ["MyKavo · No website yet", 16]].map(([name, id]) => ({ name, id })) },
-        };
-      }
-      return { status: 201, body: { id: 1 } };
-    };
+    respond = listsExist;
     expect(await addContactNow(contact({ email: "new@x.co", websites: 0 }))).toBe(true);
     const create = calls.find((c) => c.method === "POST" && c.url.endsWith("/v3/contacts"));
     expect(create?.body).toMatchObject({ email: "new@x.co", listIds: [13, 14, 16], updateEnabled: true, attributes: { FIRSTNAME: "Ana", MYKAVO_PLAN: "free" } });
+  });
+
+  it("leaves a signup on the Pro trial out of the Free list", async () => {
+    respond = listsExist;
+    expect(await addContactNow(contact({ email: "new@x.co", websites: 0, plan: "pro_trial", trial: true }))).toBe(true);
+    const create = calls.find((c) => c.method === "POST" && c.url.endsWith("/v3/contacts"));
+    expect(create?.body).toMatchObject({ email: "new@x.co", listIds: [13, 16], attributes: { MYKAVO_PLAN: "pro_trial" } });
   });
 
   it("waits for the first sync when the lists do not exist yet", async () => {

@@ -15,7 +15,9 @@
  *     lifecycle series too. Too soon: wait until the gap has passed.
  *   - Unsubscribed accounts stop; workspaces with email off skip emails.
  *   - A built-in email an account already got is never sent twice.
- *   - "Stop when the account upgrades" ends runs on paid plans.
+ *   - "Stop when the account upgrades" ends runs on paid plans. The Pro
+ *     trial is not paid, so its runs carry on, but the built-in Pro offer
+ *     (day10_offer) is skipped for it.
  *
  * Everything that happens is written to automation_flow_event, which is
  * where the builder's per-step counts and activity log come from.
@@ -175,6 +177,11 @@ async function advance(
     if (unsubscribable && facts.optedOut) {
       await finish("STOPPED", "Unsubscribed from optional emails.", step.id);
       return done();
+    }
+    // The Day 10 offer compares Free with Pro. A trial account is on neither.
+    if (builtin === "day10_offer" && facts.onTrial) {
+      await skip("On the Pro trial: the Day 10 offer is written for Free.");
+      continue;
     }
     const already = await prisma.notification.findFirst({
       where: {

@@ -76,6 +76,8 @@ const input =
 const label = "mb-1 block text-[12.5px] font-medium text-ink";
 
 const FACT_KEYS = Object.keys(FLOW_CONDITIONS) as FlowCondition[];
+/** Facts that cannot both be true: a running Pro trial is never paying. */
+const EXCLUSIVE_FACTS: Partial<Record<FlowCondition, FlowCondition>> = { is_paid: "on_trial", on_trial: "is_paid" };
 
 function ago(iso: string): string {
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -156,6 +158,7 @@ export function FlowBuilder(p: FlowBuilderProps) {
   const [facts, setFacts] = useState<FlowFacts>({
     has_website: true,
     is_paid: false,
+    on_trial: false,
     has_android_app: false,
     has_open_changes: false,
     has_urgent_changes: false,
@@ -426,7 +429,11 @@ export function FlowBuilder(p: FlowBuilderProps) {
                 <input
                   type="checkbox"
                   checked={facts[k]}
-                  onChange={(e) => setFacts((f) => ({ ...f, [k]: e.target.checked }))}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    const other = EXCLUSIVE_FACTS[k];
+                    setFacts((f) => ({ ...f, [k]: on, ...(on && other ? { [other]: false } : {}) }));
+                  }}
                   className="size-4 accent-primary"
                 />
               </label>
@@ -435,20 +442,26 @@ export function FlowBuilder(p: FlowBuilderProps) {
           <div>
             <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-faint">What this account gets</p>
             {def.exitOnPaid && facts.is_paid ? (
-              <p className="text-[13px] text-ink-secondary">Nothing - the flow stops for accounts on a paid plan.</p>
+              <p className="text-[13px] text-ink-secondary">Nothing - the flow stops for paying accounts.</p>
             ) : sim.emails.length === 0 ? (
               <p className="text-[13px] text-ink-secondary">No emails on this path.</p>
             ) : (
               <ol className="relative space-y-3 border-l-2 border-line pl-4">
                 {sim.emails.map((e) => {
                   const s = findStep(e.stepId);
+                  // The worker skips the Day 10 offer for accounts on the Pro trial.
+                  const skipped = facts.on_trial && e.email.kind === "builtin" && e.email.key === "day10_offer";
                   return (
                     <li key={e.stepId} className="relative">
-                      <span className="absolute -left-[23px] top-1 size-3 rounded-full border-2 border-card bg-success" aria-hidden />
+                      <span
+                        className={cn("absolute -left-[23px] top-1 size-3 rounded-full border-2 border-card", skipped ? "bg-ink-faint" : "bg-success")}
+                        aria-hidden
+                      />
                       <p className="text-[11.5px] font-semibold text-ink-faint">Day {e.day}</p>
                       <button className="text-left text-[13px] font-medium text-accent hover:underline" onClick={() => setSelected(e.stepId)}>
                         {s ? stepTitle(s, p.emails).title : "Email"}
                       </button>
+                      {skipped && <p className="text-[12px] text-ink-secondary">Skipped: the Day 10 offer is not sent on the Pro trial.</p>}
                     </li>
                   );
                 })}
@@ -670,7 +683,7 @@ export function FlowBuilder(p: FlowBuilderProps) {
               />
               <span>
                 <span className="block text-[13px] font-medium text-ink">Stop when the account upgrades</span>
-                <span className="block text-[12px] text-ink-secondary">Paying customers leave the flow straight away.</span>
+                <span className="block text-[12px] text-ink-secondary">Paying customers leave the flow straight away. Accounts on the Pro trial stay in it.</span>
               </span>
             </label>
           </>

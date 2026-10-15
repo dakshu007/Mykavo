@@ -75,6 +75,9 @@ export default function NewWebsiteScreen() {
   // here instead of failing server-side after the user has chosen.
   const { data: me } = useLive(api.me, [], { interval: 0 });
   const pageBudget = me?.plan.limits.pagesPerSite ?? null;
+  // Set only during the Pro trial (plan name "Pro trial"), so the hint
+  // reads "Your Pro trial monitors..." rather than "Your Pro trial plan...".
+  const onTrial = Boolean(me?.plan.trialEndsAt);
 
   const atBudget = pageBudget !== null && selected.size >= pageBudget;
 
@@ -219,7 +222,8 @@ export default function NewWebsiteScreen() {
         </Card>
         {pageBudget !== null ? (
           <Small color={palette.inkFaint} style={{ textAlign: "center" }}>
-            Your {me?.plan.name} plan monitors up to {pageBudget} pages per website.
+            Your {me?.plan.name}
+            {onTrial ? "" : " plan"} monitors up to {pageBudget} pages per website.
           </Small>
         ) : null}
       </Screen>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { LeadForm } from "@/components/marketing/lead-form";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
@@ -24,7 +25,7 @@ const faqs = [
   },
   {
     q: "Is a demo required to use MyKavo?",
-    a: "No. The free plan covers one website with five monitored pages and needs no card, and most people never book a demo. Demos exist for teams evaluating MyKavo across many client sites, where it is faster to be shown the workflow than to infer it.",
+    a: `No. The free plan covers one website with five monitored pages, and every new account starts with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites. Neither needs a card, and most people never book a demo. Demos exist for teams evaluating MyKavo across many client sites, where it is faster to be shown the workflow than to infer it.`,
   },
   {
     q: "How soon will someone reply?",

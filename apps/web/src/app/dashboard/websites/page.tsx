@@ -4,7 +4,7 @@ import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { matchesTagFilter, parseTagFilterParam, parseTags } from "@/lib/tags";
-import { formatLimit } from "@/config/plans";
+import { formatLimit, getPlan } from "@/config/plans";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
@@ -38,6 +38,9 @@ export default async function WebsitesPage({
   ]);
 
   const atLimit = websites.length >= websiteLimit;
+  // A trial's website cap is smaller than the plan it trials, so the limit
+  // label names the trial's cap and the paid plan's own number.
+  const trialPaidPlan = plan.trial ? getPlan(plan.id) : null;
   // Maintenance window chip - a past muteAlertsUntil simply means not muted.
   const now = new Date();
 
@@ -124,7 +127,11 @@ export default async function WebsitesPage({
                 href="/dashboard/billing"
                 className="rounded-full bg-surface px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:text-accent"
               >
-                {plan.id === "agency" ? "Agency limit reached" : `${plan.name} limit reached - upgrade`}
+                {plan.id === "agency"
+                  ? "Agency limit reached"
+                  : trialPaidPlan
+                    ? `${plan.name} covers ${formatLimit(websiteLimit)} website${websiteLimit === 1 ? "" : "s"} - upgrade to ${trialPaidPlan.name} for ${formatLimit(trialPaidPlan.limits.websites)}`
+                    : `${plan.name} limit reached - upgrade`}
               </Link>
             ) : (
               <Link

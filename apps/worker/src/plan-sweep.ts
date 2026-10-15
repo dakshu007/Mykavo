@@ -5,8 +5,9 @@
  *    decides; website.scanFrequency follows it (it is what the dashboard
  *    shows). A website moving to daily has its next scan pulled forward, so
  *    an upgrade is felt the same day rather than up to a week later.
- * 2. Trials that ended. Websites over the Free limit are paused (OVER_LIMIT),
- *    newest first, so the site they started with keeps being monitored.
+ * 2. Trials that ended. The oldest monitored website (or, with none, the
+ *    oldest one) stays; every other website not already paused is paused
+ *    (OVER_LIMIT), including ones still being set up.
  * 3. Dormant Free workspaces. Nobody has opened MyKavo in 30 days: their
  *    websites pause (DORMANT) until someone comes back.
  *
@@ -21,6 +22,7 @@ import {
   resumeAutoPaused,
   DORMANT_AFTER_DAYS,
   isMissingTableError,
+  platformAdminEmails,
   type Entitlement,
 } from "@mykavo/database";
 import { pulledForwardNextScan, scanFrequencyForTier, toPlanTier, type ScanFrequency } from "@mykavo/shared";
@@ -29,6 +31,10 @@ import { logger } from "./logger";
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Free plan website limit (mirrors apps/web/src/config/plans.ts). */
 export const FREE_WEBSITE_LIMIT = 1;
+/** Plans a Dodo subscription or a Shopify store can pay for. */
+const PAID_PLAN_IDS = ["pro", "agency"];
+/** Workspace ids per website_auto_pause lookup, to keep each IN list small. */
+const RESUME_LOOKUP_BATCH = 500;
 
 /** The scan frequency a workspace's plan gives right now. */
 export async function planScanFrequency(workspaceId: string): Promise<ScanFrequency> {
@@ -65,16 +71,81 @@ async function syncScanFrequencies(now: Date): Promise<number> {
   return changed;
 }
 
-/** Upgraded (or started a trial) after MyKavo paused their websites: resume them. */
+/**
+ * Workspaces that may be on more than Free right now, from the same sources
+ * getWorkspaceEntitlement reads: an active Dodo Pro or Agency subscription,
+ * a store paying through Shopify (app installed, link live), a running
+ * trial, or a platform admin's own workspace. Sorted, so every run works
+ * through them in the same order.
+ */
+async function possiblyPaidWorkspaceIds(now: Date): Promise<string[]> {
+  const admins = platformAdminEmails();
+  const [subscriptions, shops, trials, adminWorkspaces] = await Promise.all([
+    prisma.subscription.findMany({
+      // "active" is the only status that grants a paid plan (planIdFromSubscription).
+      where: { status: "active", planId: { in: PAID_PLAN_IDS } },
+      select: { workspaceId: true },
+    }),
+    prisma.shopifyShop.findMany({
+      where: { billingPlan: { in: PAID_PLAN_IDS }, uninstalledAt: null, siteConnection: { is: { revokedAt: null } } },
+      select: { siteConnection: { select: { workspaceId: true } } },
+    }),
+    prisma.workspaceTrial.findMany({ where: { endsAt: { gt: now } }, select: { workspaceId: true } }),
+    admins.length > 0
+      ? prisma.workspace.findMany({
+          where: { owner: { email: { in: admins, mode: "insensitive" } } },
+          select: { id: true },
+        })
+      : Promise.resolve<{ id: string }[]>([]),
+  ]);
+  const ids = new Set<string>([
+    ...subscriptions.map((s) => s.workspaceId),
+    ...shops.flatMap((s) => (s.siteConnection ? [s.siteConnection.workspaceId] : [])),
+    ...trials.map((t) => t.workspaceId),
+    ...adminWorkspaces.map((w) => w.id),
+  ]);
+  return [...ids].sort();
+}
+
+/**
+ * Upgraded (or started a trial) after MyKavo paused their websites: resume
+ * them. The candidates are the workspaces that may be paying, which stay
+ * few, and only those of them with auto-paused websites are looked at.
+ * Starting from website_auto_pause instead would not scale: every abandoned
+ * Free workspace and every trial that ends unpaid leaves rows there that
+ * never resume. getWorkspaceEntitlement still decides for each one.
+ */
 async function resumeForPaidWorkspaces(now: Date): Promise<number> {
-  const rows = await prisma.websiteAutoPause.findMany({ select: { workspaceId: true }, distinct: ["workspaceId"], take: 500 });
+  const candidates = await possiblyPaidWorkspaceIds(now);
   let resumed = 0;
-  for (const { workspaceId } of rows) {
-    const ent = await getWorkspaceEntitlement(prisma, workspaceId);
-    if (!ent || ent.planId === "free") continue;
-    resumed += (await resumeAutoPaused(prisma, workspaceId, ["OVER_LIMIT", "DORMANT"], { now })).length;
+  for (let i = 0; i < candidates.length; i += RESUME_LOOKUP_BATCH) {
+    const rows = await prisma.websiteAutoPause.findMany({
+      where: { workspaceId: { in: candidates.slice(i, i + RESUME_LOOKUP_BATCH) } },
+      select: { workspaceId: true },
+      distinct: ["workspaceId"],
+      orderBy: { workspaceId: "asc" },
+    });
+    for (const { workspaceId } of rows) {
+      const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+      if (!ent || ent.planId === "free") continue;
+      resumed += (await resumeAutoPaused(prisma, workspaceId, ["OVER_LIMIT", "DORMANT"], { now })).length;
+    }
   }
   return resumed;
+}
+
+/**
+ * Which websites a trial's end pauses: all but the FREE_WEBSITE_LIMIT kept
+ * ones. Websites already monitored (ACTIVE or ERROR) are kept first, oldest
+ * first; only when there are none is the oldest one still being set up
+ * kept. Takes the workspace's websites that are not paused, oldest first.
+ */
+function websitesOverFreeLimit<T extends { status: string; baselines: unknown[] }>(websites: T[]): T[] {
+  // ERROR is also where a site lands when its FIRST discovery or baseline
+  // fails, so only a site with an approved baseline counts as monitored.
+  const monitored = (w: T) => (w.status === "ACTIVE" || w.status === "ERROR") && w.baselines.length > 0;
+  const keepFirst = [...websites.filter(monitored), ...websites.filter((w) => !monitored(w))];
+  return keepFirst.slice(FREE_WEBSITE_LIMIT);
 }
 
 async function endExpiredTrials(now: Date): Promise<number> {
@@ -87,13 +158,21 @@ async function endExpiredTrials(now: Date): Promise<number> {
   for (const { workspaceId } of ended) {
     const ent = await getWorkspaceEntitlement(prisma, workspaceId);
     if (!ent || ent.planId === "free") {
-      // Keep the oldest websites up to the Free limit; pause the rest.
+      // Keep the oldest monitored website (Free's limit); pause the rest,
+      // including any still being set up, which would otherwise start
+      // monitoring once its baseline lands. The trial is not looked at again
+      // after this, so nothing may be left for later.
       const websites = await prisma.website.findMany({
-        where: { workspaceId, status: { in: ["ACTIVE", "ERROR"] } },
+        where: { workspaceId, status: { not: "PAUSED" } },
         orderBy: { createdAt: "asc" },
-        select: { id: true, workspaceId: true },
+        select: {
+          id: true,
+          workspaceId: true,
+          status: true,
+          baselines: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 },
+        },
       });
-      const paused = await autoPauseWebsites(prisma, websites.slice(FREE_WEBSITE_LIMIT), "OVER_LIMIT", now);
+      const paused = await autoPauseWebsites(prisma, websitesOverFreeLimit(websites), "OVER_LIMIT", now);
       pausedTotal += paused.length;
     }
     await prisma.workspaceTrial.update({ where: { workspaceId }, data: { endedAt: now } });

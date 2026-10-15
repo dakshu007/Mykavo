@@ -11,6 +11,7 @@ import {
 } from "@/components/landing/seo-page";
 import { breadcrumbList } from "@/lib/seo/structured-data";
 import { site } from "@/config/site";
+import { TRIAL_DAYS } from "@mykavo/shared";
 import { CompetitorAnalysis } from "./competitor-analysis";
 
 /**
@@ -77,7 +78,7 @@ const faqs = [
   },
   {
     q: "How often does it check?",
-    a: "Daily on the Pro plan, weekly on the free plan. You can also run a check manually whenever you want - handy the day a rival announces something and you want to see precisely what moved on the site.",
+    a: `Daily on Pro and Agency, and during the ${TRIAL_DAYS}-day Pro trial that every new account starts with. Weekly on the Free plan. On Pro, Agency and the trial you can also run a check manually whenever you want - handy the day a rival announces something and you want to see precisely what moved on the site.`,
   },
   {
     q: "Is there a free competitor monitoring plan?",

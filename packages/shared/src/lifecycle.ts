@@ -19,6 +19,11 @@ export interface LifecycleFacts {
   now: Date;
   hasWebsite: boolean;
   isPaid: boolean;
+  /**
+   * On the free Pro trial (isPaid is false). Day 3 and Day 6 still go out;
+   * the Day 10 offer is written for Free, so it is skipped.
+   */
+  onTrial: boolean;
   optedOut: boolean;
   /** The workspace switched email off in Notifications. */
   emailOff: boolean;
@@ -85,6 +90,6 @@ export function decideLifecycleStep(f: LifecycleFacts): LifecycleStep | null {
   // Both later steps are about a site being monitored: an app with nothing
   // to alert about, or an upgrade to watch more of nothing, is noise.
   if (!f.sentDay6 && within(windows.day6) && f.hasWebsite && !f.hasAndroidApp && on("DAY6_ANDROID")) return "DAY6_ANDROID";
-  if (!f.sentDay10 && within(windows.day10) && f.hasWebsite && on("DAY10_OFFER")) return "DAY10_OFFER";
+  if (!f.sentDay10 && !f.onTrial && within(windows.day10) && f.hasWebsite && on("DAY10_OFFER")) return "DAY10_OFFER";
   return null;
 }

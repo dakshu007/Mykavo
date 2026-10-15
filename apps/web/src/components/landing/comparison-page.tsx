@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check, Minus } from "lucide-react";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
@@ -105,6 +106,7 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
       <ul className="not-prose my-6 space-y-2.5">
         {[
           "Free plan: 1 website, 5 monitored pages, weekly scans, 30-day history, no card",
+          `New accounts: a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card`,
           "Pro at $20/month: 8 websites, 15 pages each, daily scans, 1-year history, 3 seats",
           "Agency at $79/month: 30 websites, 25 pages each, white-label client reports, 15 seats",
           "Site audit on every plan: 98 checks across 23 categories",

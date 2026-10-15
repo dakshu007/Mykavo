@@ -7,7 +7,8 @@ import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
 import { ValueQuoteBanner } from "@/components/value-quote";
-import { plans, formatLimit } from "@/config/plans";
+import { plans, formatLimit, getPlan } from "@/config/plans";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES, TRIAL_REMINDER_DAYS_LEFT } from "@mykavo/shared";
 import {
   FEATURE_LIST,
   breadcrumbList,
@@ -19,8 +20,7 @@ import {
 
 export const metadata: Metadata = withSocial({
   title: "Pricing - Website Monitoring Plans from $0",
-  description:
-    "Simple, transparent pricing for website change monitoring. Start free with one website. Pro is $20/month for 8 websites, Agency is $79/month for 30 websites with white-label client reports.",
+  description: `Website change monitoring from $0. New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites. Pro is $20/month for 8 websites, Agency $79/month for 30.`,
   keywords: [
     "website monitoring pricing",
     "site monitoring tools pricing",
@@ -30,8 +30,7 @@ export const metadata: Metadata = withSocial({
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "MyKavo Pricing - Website Monitoring from $0",
-    description:
-      "Free plan for one website. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.",
+    description: `New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, then a free plan for one. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.`,
     url: "/pricing",
     type: "website",
   },
@@ -70,7 +69,14 @@ const comparisonRows: Array<{
   { label: "Site audit", value: (p) => `${formatLimit(p.limits.siteAuditPages)} pages per crawl` },
 ];
 
+const proPlan = getPlan("pro");
+const freePlan = getPlan("free");
+
 const pricingFaqs = [
+  {
+    q: "Is there a free trial?",
+    a: `Yes. Every new account starts with a ${TRIAL_DAYS}-day Pro trial, no card needed. You get every Pro feature, including daily scans and ${formatLimit(proPlan.limits.pagesPerWebsite)} monitored pages per website, on up to ${TRIAL_MAX_WEBSITES} websites. Paid Pro covers ${formatLimit(proPlan.limits.websites)} websites. You can upgrade at any time during the trial, and we email you ${TRIAL_REMINDER_DAYS_LEFT} days before it ends. If you don't upgrade, the account moves to the Free plan: your oldest monitored website stays monitored, checked weekly. Any others are paused, not deleted, and their baselines are kept (Free keeps ${freePlan.limits.historyDays} days of history). Upgrading resumes paused websites. Already on Free and never had a trial? Start it from Billing in your dashboard.`,
+  },
   {
     q: "Should I pick Pro or Agency?",
     a: "Pro fits freelancers and in-house teams looking after up to 8 websites. Agency is for teams running client websites: 30 websites, reports under your own brand that email themselves to clients, and room for 15 people.",
@@ -93,7 +99,7 @@ const pricingFaqs = [
   },
   {
     q: "What happens if I hit my plan limits?",
-    a: "MyKavo keeps monitoring everything already configured. It simply asks you to upgrade before adding more websites or pages - nothing is silently dropped.",
+    a: "MyKavo keeps monitoring everything already configured. It simply asks you to upgrade before adding more websites or pages - nothing is silently dropped. The one exception is a Pro trial that ends without an upgrade: the oldest monitored website stays monitored and any others are paused, not deleted, until you upgrade.",
   },
   {
     q: "Do you offer annual billing?",
@@ -155,8 +161,10 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
-            One missed regression costs more than a year of MyKavo. Start free with one website,
-            go Pro for $20/month, or run every client site on Agency for $79/month.
+            One missed regression costs more than a year of MyKavo. Every new account starts with
+            a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites. After that, stay
+            free with one website, go Pro for $20/month, or run every client site on Agency for
+            $79/month.
           </p>
         </div>
 
@@ -202,11 +210,27 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/signup"
+                  href={plan.id === "agency" ? "/signup?next=/dashboard/billing" : "/signup"}
                   className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                 >
-                  {plan.priceMonthlyUsd === 0 ? "Start free" : `Start with ${plan.name}`}
+                  {plan.priceMonthlyUsd === 0
+                    ? "Start free"
+                    : plan.id === "pro"
+                      ? `Try ${plan.name} free for ${TRIAL_DAYS} days`
+                      : `Start with ${plan.name}`}
                 </Link>
+                {plan.id === "pro" && (
+                  <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
+                    The trial covers up to {TRIAL_MAX_WEBSITES} websites ({plan.name} has{" "}
+                    {formatLimit(plan.limits.websites)}). No card. Then Free unless you upgrade.
+                  </p>
+                )}
+                {plan.id === "agency" && (
+                  <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
+                    New accounts start on the {TRIAL_DAYS}-day Pro trial. Switch to {plan.name} from
+                    Billing at any time.
+                  </p>
+                )}
               </div>
             );
           })}
@@ -295,7 +319,9 @@ export default function PricingPage() {
               Ready when <span className="text-[#FFD400]">you are.</span>
             </h2>
             <p className="mx-auto mb-8 mt-3 max-w-md text-[15px] leading-7 text-[#9C9E93]">
-              Start on the free plan - upgrade whenever your websites need more.
+              Every new account starts with a {TRIAL_DAYS}-day Pro trial on up to{" "}
+              {TRIAL_MAX_WEBSITES} websites, no card. Then stay on Free, or upgrade whenever your
+              websites need more.
             </p>
             <Link
               href="/signup"

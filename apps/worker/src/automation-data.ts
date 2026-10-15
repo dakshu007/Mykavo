@@ -9,6 +9,7 @@ import { getWorkspaceEntitlement, prisma } from "@mykavo/database";
 import { type AutomationData, type AutomationKey } from "@mykavo/email";
 import { PLAN_PRICES_USD, type FlowFacts } from "@mykavo/shared";
 import { resolveEmailConfig } from "./notify";
+import { welcomeTrial } from "./welcome-email";
 
 export const appBase = (process.env.APP_URL ?? "https://mykavo.app").replace(/\/+$/, "");
 
@@ -27,6 +28,8 @@ export interface AccountFacts extends FlowFacts {
   /** The workspace switched email off in Notifications. */
   emailOff: boolean;
   websites: number;
+  /** On a running Pro trial, nothing paid yet. Same as `on_trial`. */
+  onTrial: boolean;
 }
 
 /**
@@ -44,12 +47,16 @@ export async function gatherFacts(ctx: AccountCtx): Promise<AccountFacts> {
     prisma.changeEvent.count({ where: inWorkspace }),
     prisma.changeEvent.count({ where: { ...inWorkspace, severity: { in: ["HIGH", "CRITICAL"] } } }),
   ]);
+  // A running trial reports the Pro plan, but nobody has paid for it.
+  const onTrial = entitlement?.billedBy === "trial";
   return {
     optedOut: Boolean(optOut),
     emailOff: !emailConfig,
     websites,
+    onTrial,
     has_website: websites > 0,
-    is_paid: (entitlement?.planId ?? "free") !== "free",
+    is_paid: !onTrial && (entitlement?.planId ?? "free") !== "free",
+    on_trial: onTrial,
     has_android_app: Boolean(appRequest) || ctx.pushDevices > 0,
     has_open_changes: openChanges > 0,
     has_urgent_changes: urgentChanges > 0,
@@ -84,6 +91,8 @@ export async function buildAutomationData(
           addWebsiteUrl: `${appBase}/dashboard/websites/new`,
           alertsUrl: `${appBase}/dashboard/notifications`,
           docsUrl: `${appBase}/docs`,
+          // Same trial block as the signup welcome (welcome-email.ts).
+          trial: await welcomeTrial(ctx.workspaceId),
         },
       };
     case "first_website":

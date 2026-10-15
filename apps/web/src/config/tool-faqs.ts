@@ -1,3 +1,4 @@
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import type { ToolFaq } from "@/components/landing/tool-faq";
 
 /**
@@ -26,7 +27,7 @@ export const CHANGE_DETECTOR_FAQS: readonly ToolFaq[] = [
   },
   {
     q: "Is this website change detector free?",
-    a: "Yes, and it needs no account. The tool runs entirely in the browser session with no signup, no card and no trial period. A free MyKavo account adds scheduled re-scans of one website and five pages, which is what turns a one-off comparison into monitoring.",
+    a: `Yes, and it needs no account. The tool runs entirely in the browser session with no signup and no card, and it does not expire. A free MyKavo account adds scheduled re-scans, which is what turns a one-off comparison into monitoring: new accounts start with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card, and the Free plan then keeps one website and five pages.`,
   },
   {
     q: "Can I monitor a page for changes automatically?",
@@ -57,7 +58,7 @@ export const META_TAG_FAQS: readonly ToolFaq[] = [
   },
   {
     q: "Is the meta tag checker free?",
-    a: "Yes, with no account required. It checks one URL at a time. To watch these same tags over time and get alerted when a title, description, canonical or robots directive changes, a free MyKavo account monitors five pages on a weekly schedule.",
+    a: `Yes, with no account required. It checks one URL at a time. To watch these same tags over time and get alerted when a title, description, canonical or robots directive changes, create a free MyKavo account: it starts with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card, and the Free plan then monitors five pages on a weekly schedule.`,
   },
 ];
 

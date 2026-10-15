@@ -146,8 +146,8 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["limit", "upgrade", "websites", "maximum", "slot"],
     answer:
-      "Each plan has a website limit: **Free 1**, **Pro 8**, **Agency 30**. When you reach it, the **Add website** button on [Websites](/dashboard/websites) becomes a \"limit reached\" link to Billing.\n\nTo add another site you can:\n\n- Upgrade in [Billing](/dashboard/billing).\n- Delete a website you no longer need, which frees its slot. Paused websites still count.\n\nIf you need more than the Agency plan's 30 websites, email support@mykavo.app.",
-    related: ["scan-page-limits", "scan-delete"],
+      "Each plan has a website limit: **Free 1**, **Pro 8**, **Agency 30**. The free **Pro trial** covers up to **3**, so on the trial you reach the limit at 3 even though paid Pro covers 8. When you reach it, the **Add website** button on [Websites](/dashboard/websites) becomes a link to Billing, for example \"Free limit reached - upgrade\". On the Pro trial it reads \"Pro trial covers 3 websites - upgrade to Pro for 8\".\n\nTo add another site you can:\n\n- Upgrade in [Billing](/dashboard/billing). On the Pro trial, paying for Pro raises your limit from 3 to 8.\n- Delete a website you no longer need, which frees its slot. Paused websites still count.\n\nIf you need more than the Agency plan's 30 websites, email support@mykavo.app.",
+    related: ["billing-trial-websites", "scan-page-limits", "scan-delete"],
     evalQuestions: [
       "the button to add a new domain disappeared from my list",
       "I'm on free and want to watch a second site",
@@ -545,7 +545,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["baseline", "quota", "24 hours", "limit"],
     answer:
-      "Each plan allows a set number of new baseline scans in any 24 hours, counted across your workspace:\n\n- **Free** - 2\n- **Pro** - 30\n- **Agency** - 100\n\nThe count includes websites you have since deleted, so deleting and re-adding a site does not give you a fresh scan. The error message tells you roughly when you can start another. Until then, wait, or upgrade in [Billing](/dashboard/billing). On Pro and Agency, websites that already have a baseline can use **Run scan** instead.",
+      "Each plan allows a set number of new baseline scans in any 24 hours, counted across your workspace:\n\n- **Free** - 2\n- **Pro** and the **Pro trial** - 30\n- **Agency** - 100\n\nThe count includes websites you have since deleted, so deleting and re-adding a site does not give you a fresh scan. The error message tells you roughly when you can start another. Until then, wait, or upgrade in [Billing](/dashboard/billing). On Pro, Agency and the Pro trial, websites that already have a baseline can use **Run scan** instead.",
     related: ["trouble-cant-run-scan", "scan-delete"],
     evalQuestions: [
       "I removed my site and added it back and now it won't scan",
@@ -581,7 +581,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["manual scan", "quota", "limit", "rescan", "unavailable"],
     answer:
-      "The message tells you which limit you hit:\n\n- **\"Manual re-scans require a paid plan.\"** On Free, scans after the baseline run on the weekly schedule. Upgrade to Pro or Agency in [Billing](/dashboard/billing) for on-demand scans.\n- **\"You've used all ... manual scans for today.\"** Pro allows 20 and Agency 100 a day. They reset at midnight UTC.\n- **\"Too many scans running at once (limit 10).\"** Wait for some scans in your workspace to finish.\n- **\"Select at least one page to monitor before scanning.\"** Choose pages first.\n- **\"Too many scan requests.\"** Wait a moment and try again.",
+      "The message tells you which limit you hit:\n\n- **\"Manual re-scans require a paid plan.\"** On Free, scans after the baseline run on the weekly schedule. Upgrade to Pro or Agency in [Billing](/dashboard/billing) for on-demand scans.\n- **\"You've used all ... manual scans for today.\"** Pro and the Pro trial allow 20 a day, Agency 100. They reset at midnight UTC.\n- **\"Too many scans running at once (limit 10).\"** Wait for some scans in your workspace to finish.\n- **\"Select at least one page to monitor before scanning.\"** Choose pages first.\n- **\"Too many scan requests.\"** Wait a moment and try again.",
     related: ["scan-manual", "trouble-baseline-quota"],
     evalQuestions: [
       "there's no button to rescan on my free account",
