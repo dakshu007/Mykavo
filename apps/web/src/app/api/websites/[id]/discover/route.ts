@@ -3,7 +3,7 @@ import { prisma } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { discoverPages, DiscoveryError } from "@/lib/discovery";
 import { rateLimit } from "@/lib/security/rate-limit";
-import { normalizeUrl } from "@/lib/url";
+import { isSameSite, normalizeUrl } from "@/lib/url";
 import { logger } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
@@ -60,7 +60,22 @@ export async function POST(_request: Request, { params }: Params) {
 
   try {
     const result = await discoverPages(website.url);
-    if (!onboarding) return NextResponse.json(result);
+    if (!onboarding) {
+      // A monitored site keeps its address. If its homepage now redirects to
+      // a different host, those pages cannot be saved here, so do not offer
+      // them; say why instead. (www and https variants are the same site.)
+      const base = new URL(website.url);
+      if (isSameSite(new URL(result.finalUrl), base)) return NextResponse.json(result);
+      const movedTo = new URL(result.finalUrl).hostname;
+      return NextResponse.json({
+        ...result,
+        pages: result.pages.filter((p) => isSameSite(new URL(p.url), base)),
+        warnings: [
+          ...result.warnings,
+          `The homepage now redirects to ${movedTo}, a different website. Pages there can't be monitored under ${base.hostname}; add ${movedTo} as its own website to monitor it.`,
+        ],
+      });
+    }
 
     // The homepage may redirect (apex → www, http → https). Adopt the final
     // URL as the website's base so monitored pages pass same-origin checks.

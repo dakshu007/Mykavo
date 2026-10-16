@@ -92,3 +92,20 @@ export function resolveHref(href: string, base: string): URL | null {
 export function isSameOrigin(a: URL, b: URL): boolean {
   return a.protocol === b.protocol && a.hostname === b.hostname && a.port === b.port;
 }
+
+const bareHost = (h: string) => h.toLowerCase().replace(/^www\./, "");
+const webPort = (u: URL) => u.port || (u.protocol === "https:" ? "443" : "80");
+
+/**
+ * The same website for monitoring purposes: same origin, or the same host
+ * with and without "www." and/or over http vs https on default ports. A site
+ * whose homepage starts redirecting apex -> www (or http -> https) keeps its
+ * existing pages and can add the new ones; a different host never matches.
+ */
+export function isSameSite(a: URL, b: URL): boolean {
+  if (isSameOrigin(a, b)) return true;
+  const web = (u: URL) => u.protocol === "http:" || u.protocol === "https:";
+  if (!web(a) || !web(b) || bareHost(a.hostname) !== bareHost(b.hostname)) return false;
+  const defaults = ["80", "443"];
+  return defaults.includes(webPort(a)) && defaults.includes(webPort(b)) ? true : webPort(a) === webPort(b);
+}

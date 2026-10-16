@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSameOrigin, normalizeUrl, parseUrlInput, resolveHref } from "./url";
+import { isSameOrigin, isSameSite, normalizeUrl, parseUrlInput, resolveHref } from "./url";
 
 describe("parseUrlInput", () => {
   it("accepts full URLs", () => {
@@ -64,5 +64,19 @@ describe("resolveHref / isSameOrigin", () => {
     const b = new URL("https://staging.example.com/");
     expect(isSameOrigin(a, b)).toBe(false);
     expect(isSameOrigin(a, new URL("https://www.example.com/x"))).toBe(true);
+  });
+});
+
+describe("isSameSite", () => {
+  const u = (s: string) => new URL(s);
+  it("treats www and https variants of a host as the same website", () => {
+    expect(isSameSite(u("https://www.example.com/a"), u("https://example.com/"))).toBe(true);
+    expect(isSameSite(u("http://example.com/"), u("https://www.example.com/"))).toBe(true);
+  });
+  it("never matches a different host or a non-default port mismatch", () => {
+    expect(isSameSite(u("https://shop.example.com/"), u("https://example.com/"))).toBe(false);
+    expect(isSameSite(u("https://example.org/"), u("https://example.com/"))).toBe(false);
+    expect(isSameSite(u("https://example.com:8443/"), u("https://example.com/"))).toBe(false);
+    expect(isSameSite(u("ftp://example.com/"), u("https://example.com/"))).toBe(false);
   });
 });

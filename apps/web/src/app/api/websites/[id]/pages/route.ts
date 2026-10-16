@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { assertPageLimit, LimitError } from "@/lib/limits";
-import { isSameOrigin, normalizeUrl, parseUrlInput } from "@/lib/url";
+import { isSameSite, normalizeUrl, parseUrlInput } from "@/lib/url";
 import { logger } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
@@ -37,7 +37,9 @@ export async function PUT(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  // Validate every page: parseable, same origin as the website, deduplicated.
+  // Validate every page: parseable, on the website (www and https variants
+  // included, so a homepage that starts redirecting apex -> www keeps both its
+  // old and new pages valid), deduplicated.
   const websiteOrigin = new URL(website.url);
   const seen = new Set<string>();
   const pages: Array<{ url: string; normalizedUrl: string; name: string | null }> = [];
@@ -49,7 +51,7 @@ export async function PUT(request: Request, { params }: Params) {
         { status: 400 },
       );
     }
-    if (!isSameOrigin(parsed, websiteOrigin)) {
+    if (!isSameSite(parsed, websiteOrigin)) {
       return NextResponse.json(
         { error: `Page must belong to ${websiteOrigin.hostname}: ${parsed.href.slice(0, 100)}` },
         { status: 400 },

@@ -131,6 +131,24 @@ describe("POST /api/websites/[id]/discover", () => {
     expect(site.status).toBe("ERROR");
   });
 
+  it("keeps a monitored site's pages on www after the homepage starts redirecting there", async () => {
+    reset("ACTIVE", true, true);
+    discover.mockResolvedValue(found("https://www.example.com/"));
+    const body = await (await run()).json();
+    expect(body.pages).toHaveLength(1);
+    expect(body.warnings).toEqual([]);
+    expect(site.url).toBe("https://example.com/");
+  });
+
+  it("drops pages on a different host a monitored site now redirects to, and says why", async () => {
+    reset("ACTIVE", true, true);
+    discover.mockResolvedValue(found("https://other.net/"));
+    const body = await (await run()).json();
+    expect(body.pages).toHaveLength(0);
+    expect(body.warnings[0]).toContain("other.net");
+    expect(site.url).toBe("https://example.com/");
+  });
+
   it("does not mark a paused website ERROR when discovery fails", async () => {
     reset("PAUSED", true);
     discover.mockRejectedValue(new DiscoveryError("HOMEPAGE_ERROR_STATUS", "The homepage returned HTTP 500."));
