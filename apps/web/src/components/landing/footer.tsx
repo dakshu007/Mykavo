@@ -101,6 +101,8 @@ const columns = [
     links: [
       { href: "/about", label: "About" },
       { href: "/demo", label: "Book a demo" },
+      { href: "/services", label: "Services" },
+      { href: "/products", label: "Our products" },
       { href: "/partners", label: "Partner program" },
       { href: "/brand", label: "Brand assets" },
       { href: "/write-for-us", label: "Write for us" },

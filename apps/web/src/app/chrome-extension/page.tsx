@@ -28,6 +28,7 @@ import { ChromeMark, ChromeStoreButton } from "@/components/landing/chrome-store
 import { TrackOnView } from "@/components/track-on-view";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { site } from "@/config/site";
+import { OUR_PRODUCTS_PAGE_PATH, ourProductsByKind, productHref } from "@/config/our-products";
 import {
   CHROME_EXTENSION_PAGE_PATH,
   CHROME_EXTENSION_VERSION,
@@ -204,6 +205,9 @@ function Popup({ src, alt, w, h, className = "" }: { src: string; alt: string; w
     />
   );
 }
+
+/** Our other Chrome extensions, named in the "More extensions" line. */
+const moreExtensions = ourProductsByKind("extension");
 
 export default function ChromeExtensionPage() {
   return (
@@ -493,6 +497,42 @@ export default function ChromeExtensionPage() {
                 <p className="mt-1.5 text-[14px] leading-6 text-[#6B6B60]">{c.desc}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Other extensions by the same team */}
+        <section aria-labelledby="more-extensions" className="mx-auto max-w-6xl px-5 pb-20 lg:px-8">
+          <div className="flex flex-col gap-4 rounded-2xl border border-black/10 bg-[#F3F1E6] p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 id="more-extensions" className={`${fontDisplay} text-[20px] text-[#151515]`}>
+                More extensions from the MyKavo team
+              </h2>
+              <p className="mt-1.5 text-[14px] leading-6 text-[#6B6B60]">
+                We also build{" "}
+                {moreExtensions.map((p, i) => (
+                  <span key={p.slug}>
+                    {i > 0 && (i === moreExtensions.length - 1 ? " and " : ", ")}
+                    <a
+                      href={productHref(p)}
+                      target="_blank"
+                      rel="noopener"
+                      className="font-medium text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
+                    >
+                      {p.name}
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  </span>
+                ))}
+                . Free, and made by the same team.
+              </p>
+            </div>
+            <Link
+              href={OUR_PRODUCTS_PAGE_PATH}
+              className="inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-[#151515] bg-white px-5 py-2.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#FFD400] sm:self-auto"
+            >
+              See all our products
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
           </div>
         </section>
 

@@ -5,7 +5,10 @@ import { logger } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** Disconnect a WordPress site from the MyKavo side: its token stops working now. */
+/**
+ * Disconnect a site connection from the MyKavo side - a WordPress site, a
+ * Shopify store or a Chrome extension: its token stops working now.
+ */
 export async function DELETE(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

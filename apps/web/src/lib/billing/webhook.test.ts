@@ -3,6 +3,8 @@ import { createHmac } from "node:crypto";
 import {
   verifyDodoWebhook,
   classifyDodoEvent,
+  grantPrecheck,
+  parseToleranceSeconds,
   resolveGrantedPlan,
   DodoWebhookError,
 } from "./webhook";
@@ -168,7 +170,7 @@ describe("resolveGrantedPlan", () => {
     ).toBe("pro");
   });
 
-  it("falls back to the checkout intent when the event has no product (payment.*)", () => {
+  it("falls back to the checkout intent when a subscription event has no product", () => {
     expect(
       resolveGrantedPlan({ productPlan: null, intentKind: "agency", recordedPlan: null }),
     ).toBe("agency");
@@ -190,5 +192,152 @@ describe("resolveGrantedPlan", () => {
     expect(resolveGrantedPlan({ productPlan: null, intentKind: null, recordedPlan: null })).toBe(
       "pro",
     );
+  });
+});
+
+describe("parseToleranceSeconds", () => {
+  it("reads a positive number", () => {
+    expect(parseToleranceSeconds("600")).toBe(600);
+  });
+
+  it("falls back to 300 for missing, empty, non-numeric or non-positive values", () => {
+    expect(parseToleranceSeconds(undefined)).toBe(300);
+    expect(parseToleranceSeconds("")).toBe(300);
+    expect(parseToleranceSeconds("five minutes")).toBe(300);
+    expect(parseToleranceSeconds("-10")).toBe(300);
+    expect(parseToleranceSeconds("0")).toBe(300);
+  });
+});
+
+describe("grant gating (security review)", () => {
+  it("refuses an unknown product, whatever the checkout token says", () => {
+    expect(
+      grantPrecheck({
+        eventType: "subscription.active",
+        productId: "pdt_cheap_other_product",
+        productPlan: null,
+        subscriptionId: "sub_1",
+      }),
+    ).toEqual({ ok: false, reason: "UNKNOWN_PRODUCT" });
+    expect(
+      resolveGrantedPlan({
+        eventType: "subscription.active",
+        productId: "pdt_cheap_other_product",
+        productPlan: null,
+        intentKind: "agency",
+        recordedPlan: null,
+      }),
+    ).toBeNull();
+  });
+
+  it("refuses a one-time payment with no subscription_id", () => {
+    expect(
+      grantPrecheck({
+        eventType: "payment.succeeded",
+        productId: null,
+        productPlan: null,
+        subscriptionId: null,
+      }),
+    ).toEqual({ ok: false, reason: "PAYMENT_WITHOUT_SUBSCRIPTION" });
+    expect(
+      grantPrecheck({
+        eventType: "payment.succeeded",
+        productId: "pdt_pro",
+        productPlan: "pro",
+        subscriptionId: null,
+      }),
+    ).toEqual({ ok: false, reason: "PAYMENT_WITHOUT_SUBSCRIPTION" });
+  });
+
+  it("never lets a product-less payment use the checkout token", () => {
+    expect(
+      grantPrecheck({
+        eventType: "payment.succeeded",
+        productId: null,
+        productPlan: null,
+        subscriptionId: "sub_new",
+      }),
+    ).toEqual({ ok: true, mayUseCheckoutIntent: false });
+    // Even if an intent kind leaks in, an unbound payment does not grant.
+    expect(
+      resolveGrantedPlan({
+        eventType: "payment.succeeded",
+        productId: null,
+        productPlan: null,
+        intentKind: "agency",
+        recordedPlan: null,
+        boundBySubscription: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("renews an already-bound subscription from a product-less payment, keeping its plan", () => {
+    expect(
+      resolveGrantedPlan({
+        eventType: "payment.succeeded",
+        productId: null,
+        productPlan: null,
+        intentKind: null,
+        recordedPlan: "agency",
+        boundBySubscription: true,
+      }),
+    ).toBe("agency");
+    expect(
+      resolveGrantedPlan({
+        eventType: "payment.succeeded",
+        productId: null,
+        productPlan: null,
+        intentKind: null,
+        recordedPlan: null,
+        boundBySubscription: true,
+      }),
+    ).toBe("pro");
+  });
+
+  it("keeps normal Pro and Agency subscription flows unchanged", () => {
+    for (const [plan, intentKind] of [
+      ["pro", "pro"],
+      ["agency", "agency"],
+    ] as const) {
+      const precheck = grantPrecheck({
+        eventType: "subscription.active",
+        productId: `pdt_${plan}`,
+        productPlan: plan,
+        subscriptionId: "sub_ok",
+      });
+      expect(precheck).toEqual({ ok: true, mayUseCheckoutIntent: true });
+      expect(
+        resolveGrantedPlan({
+          eventType: "subscription.active",
+          productId: `pdt_${plan}`,
+          productPlan: plan,
+          intentKind,
+          recordedPlan: null,
+          boundBySubscription: false,
+        }),
+      ).toBe(plan);
+      // Renewal on the bound subscription.
+      expect(
+        resolveGrantedPlan({
+          eventType: "subscription.renewed",
+          productId: `pdt_${plan}`,
+          productPlan: plan,
+          intentKind: null,
+          recordedPlan: plan,
+          boundBySubscription: true,
+        }),
+      ).toBe(plan);
+    }
+  });
+
+  it("grants a payment that names a known product and a subscription", () => {
+    expect(
+      grantPrecheck({
+        eventType: "payment.succeeded",
+        productId: "pdt_agency",
+        productPlan: "agency",
+        subscriptionId: "sub_ok",
+      }),
+    ).toEqual({ ok: true, mayUseCheckoutIntent: true });
   });
 });

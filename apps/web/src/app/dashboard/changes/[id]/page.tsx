@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { freePlanGapNote } from "@mykavo/email";
 import { getWorkspacePlan } from "@/lib/limits";
@@ -178,6 +178,15 @@ export default async function ChangeDetailPage({
             canUpdateBaseline={canUpdateBaseline}
           />
         </div>
+        <p className="mt-4 border-t border-line pt-3 text-[13px] text-ink-secondary">
+          No developer on hand?{" "}
+          <Link
+            href={`/services?change=${encodeURIComponent(change.id)}#request`}
+            className="inline-flex items-center gap-1 font-medium text-accent hover:underline"
+          >
+            Need help fixing this? <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        </p>
       </Card>
 
       {/* Notes thread */}

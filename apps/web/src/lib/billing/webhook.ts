@@ -13,8 +13,21 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const DEFAULT_TOLERANCE_SECONDS = Number(
-  process.env.DODO_WEBHOOK_TOLERANCE_SECONDS ?? 300,
+const FALLBACK_TOLERANCE_SECONDS = 300;
+
+/**
+ * Replay window from DODO_WEBHOOK_TOLERANCE_SECONDS. A non-numeric, negative
+ * or empty value falls back to 300s: NaN would make every comparison false
+ * and silently disable replay protection.
+ */
+export function parseToleranceSeconds(raw: string | undefined): number {
+  if (raw === undefined || raw.trim() === "") return FALLBACK_TOLERANCE_SECONDS;
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? value : FALLBACK_TOLERANCE_SECONDS;
+}
+
+const DEFAULT_TOLERANCE_SECONDS = parseToleranceSeconds(
+  process.env.DODO_WEBHOOK_TOLERANCE_SECONDS,
 );
 
 export type WebhookVerifyError =
@@ -168,24 +181,85 @@ export function classifyDodoEvent(type: string, status: string): DodoEventAction
 
 export type GrantedPlan = "pro" | "agency";
 
+export type GrantRefusal =
+  /** The event names a product that is not our Pro or Agency product. */
+  | "UNKNOWN_PRODUCT"
+  /** A payment.* event with no subscription (a one-time payment). */
+  | "PAYMENT_WITHOUT_SUBSCRIPTION"
+  /** A product-less payment.* event for a subscription we have not bound. */
+  | "PAYMENT_UNBOUND";
+
+export type GrantPrecheck =
+  | {
+      ok: true;
+      /**
+       * Whether the server-issued checkout token may attribute this event.
+       * False for product-less payment.* events: they may only renew a
+       * subscription already bound, and must not burn the token the
+       * subscription.* grant right behind them needs.
+       */
+      mayUseCheckoutIntent: boolean;
+    }
+  | { ok: false; reason: GrantRefusal };
+
 /**
- * Which paid plan a granting event is for. Pure and unit-tested.
+ * Whether a granting event may grant at all, decided BEFORE attribution.
+ * Pure and unit-tested (security review): the checkout token only proves
+ * which workspace started a checkout, not what was paid for, so a token
+ * replayed on another product's checkout must never grant a plan.
+ *
+ *  - A product on the event must be one of ours (Pro or Agency).
+ *  - payment.* events must belong to a subscription; one-time payments
+ *    never grant.
+ *  - A product-less payment.* event can only renew a subscription that is
+ *    already bound to a workspace (enforced after the binding lookup).
+ */
+export function grantPrecheck(input: {
+  eventType: string;
+  productId: string | null;
+  productPlan: GrantedPlan | null;
+  subscriptionId: string | null;
+}): GrantPrecheck {
+  if (input.productId && !input.productPlan) return { ok: false, reason: "UNKNOWN_PRODUCT" };
+  const isPayment = input.eventType.startsWith("payment.");
+  if (isPayment && !input.subscriptionId) {
+    return { ok: false, reason: "PAYMENT_WITHOUT_SUBSCRIPTION" };
+  }
+  return { ok: true, mayUseCheckoutIntent: !(isPayment && !input.productPlan) };
+}
+
+/**
+ * Which paid plan a granting event is for, or null to refuse the grant.
+ * Pure and unit-tested. Call after grantPrecheck passed and the workspace
+ * was attributed.
  *
  *  1. The product on the event is the truth when we recognise it -
  *     subscription.* events always carry it, and after a plan change it is
- *     the only thing that says which plan the customer is on now.
- *  2. Otherwise the server-issued checkout intent says what was bought.
- *     payment.* events carry no product, and can arrive first.
- *  3. Otherwise keep the plan already recorded, so a renewal payment never
- *     quietly turns an Agency workspace back into Pro.
- *  4. Otherwise Pro - the plan every subscription before Agency was on.
+ *     the only thing that says which plan the customer is on now. An
+ *     unrecognised product never grants.
+ *  2. A product-less payment.* event only renews a subscription already
+ *     bound to the workspace, and keeps the plan recorded for it so a
+ *     renewal payment never quietly turns an Agency workspace into Pro.
+ *  3. Otherwise (a product-less subscription.* event) the server-issued
+ *     checkout intent says what was bought.
+ *  4. Otherwise keep the plan already recorded.
+ *  5. Otherwise Pro - the plan every subscription before Agency was on.
  */
 export function resolveGrantedPlan(input: {
+  productId?: string | null;
   productPlan: GrantedPlan | null;
   intentKind: string | null;
   recordedPlan: GrantedPlan | null;
-}): GrantedPlan {
+  eventType?: string;
+  /** True when an existing subscription binding attributed the event. */
+  boundBySubscription?: boolean;
+}): GrantedPlan | null {
   if (input.productPlan) return input.productPlan;
+  if (input.productId) return null;
+  if (input.eventType?.startsWith("payment.")) {
+    if (!input.boundBySubscription) return null;
+    return input.recordedPlan ?? "pro";
+  }
   if (input.intentKind === "agency" || input.intentKind === "pro") return input.intentKind;
   return input.recordedPlan ?? "pro";
 }

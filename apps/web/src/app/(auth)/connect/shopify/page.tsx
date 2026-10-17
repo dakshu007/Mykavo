@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { Check, CheckCircle2, Lock, Plus, RefreshCw, ShoppingBag } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { getSession, getCurrentMembership } from "@/lib/session";
-import { bareHost } from "@/lib/integrations/site-connection";
 import { adminAppUrl, isShopDomain, verifyLinkToken } from "@/lib/integrations/shopify";
 import { shopifyConfig } from "@/lib/integrations/shopify-server";
+import { hostOfUrl, websiteMatchesHost } from "@/lib/site-connections";
 
 // Per request: it depends on the signed-in member, the link token and the
 // Shopify credentials, none of which exist at build time.
@@ -22,14 +22,6 @@ type Search = Record<string, string | string[] | undefined>;
 
 function first(value: string | string[] | undefined): string | null {
   return typeof value === "string" ? value : null;
-}
-
-function hostOf(url: string): string | null {
-  try {
-    return bareHost(new URL(url).hostname);
-  } catch {
-    return null;
-  }
 }
 
 function Problem({ message }: { message: string }) {
@@ -101,7 +93,7 @@ export default async function ConnectShopifyPage({ searchParams }: { searchParam
     return <Problem message="MyKavo is not installed on this store. Install the app from Shopify, then press Connect in it." />;
   }
   const storeUrl = store.primaryDomain ?? `https://${shop}`;
-  const storeHost = hostOf(storeUrl);
+  const storeHost = hostOfUrl(storeUrl);
 
   const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
   if (role === "VIEWER") {
@@ -113,12 +105,9 @@ export default async function ConnectShopifyPage({ searchParams }: { searchParam
     select: { id: true, name: true, url: true },
     orderBy: { createdAt: "asc" },
   });
-  const isStore = (url: string) => {
-    const host = hostOf(url);
-    return host !== null && (host === storeHost || host === shop);
-  };
-  const matches = websites.filter((w) => isStore(w.url));
-  const others = websites.filter((w) => !isStore(w.url));
+  // Only the store's own website can be linked (the approve route enforces
+  // the same match): its primary domain or its myshopify.com host.
+  const matches = websites.filter((w) => websiteMatchesHost(w.url, [storeHost, shop]));
   const addUrl = `/dashboard/websites/new?url=${encodeURIComponent(storeUrl)}`;
   const selfUrl = `/connect/shopify?t=${encodeURIComponent(t)}`;
 
@@ -136,12 +125,11 @@ export default async function ConnectShopifyPage({ searchParams }: { searchParam
 
       {matches.length === 0 && (
         <div className="mt-6">
-          <p className="text-sm text-ink">
-            <span className="font-semibold">{storeHost ?? shop}</span> isn&apos;t monitored in{" "}
-            <span className="font-semibold">{workspace.name}</span> yet.
-          </p>
+          <p className="text-sm text-ink">This site doesn&apos;t match any of your websites. Add it as a new website.</p>
           <p className="mt-1 text-[13px] text-ink-secondary">
-            Add it first - it takes a minute and MyKavo finds your pages for you. Then come back to this tab.
+            <span className="font-semibold">{storeHost ?? shop}</span> isn&apos;t monitored in{" "}
+            <span className="font-semibold">{workspace.name}</span> yet. Adding it takes a minute and MyKavo
+            finds your pages for you. Then come back to this tab.
           </p>
           <a
             href={addUrl}
@@ -160,21 +148,19 @@ export default async function ConnectShopifyPage({ searchParams }: { searchParam
         </div>
       )}
 
-      {websites.length > 0 && (
+      {matches.length > 0 && (
         <form method="post" action="/api/shopify/connect/approve" className="mt-6">
           <input type="hidden" name="t" value={t} />
           <fieldset>
-            <legend className="mb-2 text-[13px] font-medium text-ink">
-              {matches.length > 0 ? "Which MyKavo website is this store?" : "Or connect it to an existing website"}
-            </legend>
+            <legend className="mb-2 text-[13px] font-medium text-ink">Which MyKavo website is this store?</legend>
             <div className="space-y-2">
-              {[...matches, ...(matches.length > 0 ? [] : others)].map((w, i) => (
+              {matches.map((w, i) => (
                 <label key={w.id} className={radio}>
                   <input
                     type="radio"
                     name="websiteId"
                     value={w.id}
-                    defaultChecked={i === 0 && matches.length > 0}
+                    defaultChecked={i === 0}
                     required
                     className="size-4 accent-[#151515]"
                   />
@@ -185,22 +171,6 @@ export default async function ConnectShopifyPage({ searchParams }: { searchParam
                 </label>
               ))}
             </div>
-            {matches.length > 0 && others.length > 0 && (
-              <details className="mt-2">
-                <summary className="cursor-pointer text-[13px] text-ink-secondary hover:text-ink">Another website</summary>
-                <div className="mt-2 space-y-2">
-                  {others.map((w) => (
-                    <label key={w.id} className={radio}>
-                      <input type="radio" name="websiteId" value={w.id} className="size-4 accent-[#151515]" />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-ink">{w.name}</span>
-                        <span className="block truncate font-mono text-xs text-ink-faint">{w.url}</span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </details>
-            )}
           </fieldset>
 
           <div className="mt-5 rounded-field bg-surface px-3.5 py-3">

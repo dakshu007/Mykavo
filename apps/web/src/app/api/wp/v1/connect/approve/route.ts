@@ -10,6 +10,7 @@ import {
   sha256Hex,
 } from "@/lib/integrations/site-connection";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { websiteMatchesHost } from "@/lib/site-connections";
 import { logger } from "@/lib/logger";
 
 function field(form: FormData, name: string): string | null {
@@ -60,10 +61,18 @@ export async function POST(request: Request) {
   const websiteId = field(form, "websiteId") ?? "";
   const website = await prisma.website.findFirst({
     where: { id: websiteId, workspaceId: ctx.workspace.id },
-    select: { id: true },
+    select: { id: true, url: true },
   });
   if (!website) {
     return NextResponse.json({ error: "Choose one of your websites." }, { status: 400 });
+  }
+  // The plugin may only be linked to the website it runs on: a token for one
+  // site must never read or act on another website in the workspace.
+  if (!websiteMatchesHost(website.url, [req.siteHost])) {
+    return NextResponse.json(
+      { error: "This site doesn't match any of your websites. Add it as a new website." },
+      { status: 400 },
+    );
   }
 
   const now = new Date();

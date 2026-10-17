@@ -7,6 +7,8 @@ import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
 import { site } from "@/config/site";
+import { OurProductCard } from "@/components/landing/our-product-card";
+import { OUR_PRODUCTS_PAGE_PATH, ourProductsByKind } from "@/config/our-products";
 
 export const metadata: Metadata = withSocial({
   title: "Free Website & SEO Tools - No Signup",
@@ -111,6 +113,30 @@ export default function ToolsHubPage() {
             </div>
           </section>
         ))}
+
+        <section aria-labelledby="team-extensions" className="mt-16">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-2 border-b border-[#151515]/10 pb-3">
+            <h2 id="team-extensions" className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>
+              Chrome extensions from the MyKavo team
+            </h2>
+            <p className="text-[14px] text-[#6B6B60]">
+              Free extensions we build alongside MyKavo.{" "}
+              <Link
+                href={OUR_PRODUCTS_PAGE_PATH}
+                className="font-medium text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
+              >
+                See all our products
+              </Link>
+            </p>
+          </div>
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ourProductsByKind("extension").map((p) => (
+              <li key={p.slug}>
+                <OurProductCard product={p} />
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <ToolConversionCta
           heading="These tools check a page once. MyKavo watches it every day."

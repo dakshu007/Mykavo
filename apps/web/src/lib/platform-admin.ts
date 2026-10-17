@@ -12,17 +12,24 @@
  * before - but an explicit `ADMIN_EMAILS` always wins, including when it is
  * set to a narrower list.
  *
+ * Only a VERIFIED email counts (see AdminCandidate in blog-admin.ts): an
+ * address typed into the signup form proves nothing about who owns it.
+ *
  * Server-only imports are avoided so this stays unit-testable.
  */
 
-import { parseAdminEmails } from "./blog-admin";
+import { parseAdminEmails, verifiedAdminEmail, type AdminCandidateInput } from "./blog-admin";
+
+export type { AdminCandidate, AdminCandidateInput } from "./blog-admin";
 
 /**
- * True when the email is on the platform admin allowlist.
- * Case-insensitive. An unset allowlist means nobody is an admin, which is the
- * right default: a fresh deployment should not expose its usage figures.
+ * True when the candidate's verified email is on the platform admin
+ * allowlist. Case-insensitive. An unset allowlist means nobody is an admin,
+ * which is the right default: a fresh deployment should not expose its usage
+ * figures. Pass `session.user`; a bare email string is always refused.
  */
-export function isPlatformAdmin(email: string | null | undefined): boolean {
+export function isPlatformAdmin(candidate: AdminCandidateInput): boolean {
+  const email = verifiedAdminEmail(candidate);
   if (!email) return false;
   // PRESENCE decides, not content. `ADMIN_EMAILS=""` is an operator turning
   // this page off, and falling back to BLOG_ADMIN_EMAILS there would quietly
@@ -33,5 +40,5 @@ export function isPlatformAdmin(email: string | null | undefined): boolean {
     raw === undefined
       ? parseAdminEmails(process.env.BLOG_ADMIN_EMAILS)
       : parseAdminEmails(raw);
-  return allowlist.includes(email.trim().toLowerCase());
+  return allowlist.includes(email);
 }

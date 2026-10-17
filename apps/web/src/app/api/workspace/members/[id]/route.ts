@@ -57,6 +57,7 @@ export async function PATCH(request: Request, { params }: Params) {
 /**
  * Remove a member (OWNER/ADMIN). Nobody can remove the OWNER, and an ADMIN
  * cannot remove a fellow ADMIN - only the owner can (see canRemoveMember).
+ * Site connections and API keys the member created here are revoked too.
  */
 export async function DELETE(_request: Request, { params }: Params) {
   const ctx = await getApiContext();
@@ -79,11 +80,29 @@ export async function DELETE(_request: Request, { params }: Params) {
     return NextResponse.json({ error: message }, { status: 403 });
   }
 
-  await prisma.workspaceMember.delete({ where: { id: member.id } });
+  // Credentials the removed user created in this workspace (WordPress,
+  // Shopify and Chrome site connections, API keys) stop working with their
+  // membership - otherwise a removed member keeps access through them.
+  // One transaction, so they never outlive the membership.
+  const workspaceId = ctx.workspace.id;
+  const now = new Date();
+  const [, connections, apiKeys] = await prisma.$transaction([
+    prisma.workspaceMember.delete({ where: { id: member.id } }),
+    prisma.siteConnection.updateMany({
+      where: { workspaceId, createdByUserId: member.userId, revokedAt: null },
+      data: { revokedAt: now },
+    }),
+    prisma.apiKey.updateMany({
+      where: { workspaceId, createdByUserId: member.userId, revokedAt: null },
+      data: { revokedAt: now },
+    }),
+  ]);
   logger.info("workspace member removed", {
-    workspaceId: ctx.workspace.id,
+    workspaceId,
     memberId: member.id,
     removedUserId: member.userId,
+    revokedConnections: connections.count,
+    revokedApiKeys: apiKeys.count,
   });
   return NextResponse.json({ ok: true });
 }

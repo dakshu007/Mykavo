@@ -11,6 +11,7 @@ import {
 import {
   verifyDodoWebhook,
   classifyDodoEvent,
+  grantPrecheck,
   resolveGrantedPlan,
   DodoWebhookError,
 } from "@/lib/billing/webhook";
@@ -96,6 +97,26 @@ export async function POST(request: Request) {
   const grants = action === "grant";
   const revokes = action === "revoke";
 
+  // A grant must be for one of our products and, for payment.* events, for
+  // a subscription (see grantPrecheck). Refusals return BEFORE the
+  // transaction so they never consume the checkout token.
+  const productId = data.product_id ? data.product_id : null;
+  const productPlan = planForProductId(productId);
+  let mayUseCheckoutIntent = true;
+  if (grants) {
+    const precheck = grantPrecheck({ eventType: type, productId, productPlan, subscriptionId });
+    if (!precheck.ok) {
+      logger.warn("dodo webhook grant refused", {
+        webhookId,
+        type,
+        status,
+        reason: precheck.reason,
+      });
+      return NextResponse.json({ ok: true, result: "refused" });
+    }
+    mayUseCheckoutIntent = precheck.mayUseCheckoutIntent;
+  }
+
   /**
    * Attribute the event to a workspace WITHOUT trusting client-editable
    * metadata (security review): an existing subscription binding wins; a
@@ -130,7 +151,8 @@ export async function POST(request: Request) {
       if (subscriptionId) {
         workspaceId = await findWorkspaceByDodoSubscription(tx, subscriptionId);
       }
-      if (!workspaceId && token) {
+      const boundBySubscription = workspaceId !== null;
+      if (!workspaceId && token && mayUseCheckoutIntent) {
         const intent = await consumeCheckoutIntent(tx, token);
         if (intent) {
           workspaceId = intent.workspaceId;
@@ -141,10 +163,14 @@ export async function POST(request: Request) {
 
       if (grants) {
         const planId = resolveGrantedPlan({
-          productPlan: planForProductId(data.product_id),
+          eventType: type,
+          productId,
+          productPlan,
           intentKind,
+          boundBySubscription,
           recordedPlan: await getRecordedPaidPlan(tx, workspaceId),
         });
+        if (!planId) return "refused" as const;
         await grantPaidPlan(tx, {
           workspaceId,
           planId,

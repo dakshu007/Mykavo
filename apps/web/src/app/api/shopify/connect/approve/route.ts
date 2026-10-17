@@ -5,6 +5,7 @@ import { appBaseUrl } from "@/lib/app-url";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { verifyLinkToken } from "@/lib/integrations/shopify";
+import { hostOfUrl, websiteMatchesHost } from "@/lib/site-connections";
 import { shopifyConfig } from "@/lib/integrations/shopify-server";
 
 function field(form: FormData, name: string): string {
@@ -48,9 +49,15 @@ export async function POST(request: Request) {
   }
   const website = await prisma.website.findFirst({
     where: { id: field(form, "websiteId"), workspaceId: ctx.workspace.id },
-    select: { id: true },
+    select: { id: true, url: true },
   });
   if (!website) return NextResponse.json({ error: "Choose one of your websites." }, { status: 400 });
+  // The store may only be linked to its own website: its primary domain or
+  // its myshopify.com host, the same match the consent screen offers.
+  const storeHost = hostOfUrl(store.primaryDomain ?? `https://${shop}`);
+  if (!websiteMatchesHost(website.url, [storeHost, shop])) {
+    return NextResponse.json({ error: "This site doesn't match any of your websites. Add it as a new website." }, { status: 400 });
+  }
 
   // The workspace the store was linked to before, which loses any plan the
   // store pays for through Shopify once it moves.

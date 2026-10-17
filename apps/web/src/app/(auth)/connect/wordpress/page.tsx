@@ -5,7 +5,8 @@ import { Check, Globe, Lock, Plus } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { getSession, getCurrentMembership } from "@/lib/session";
 import { logActivityEvent } from "@/lib/activity/record";
-import { bareHost, parseConnectRequest } from "@/lib/integrations/site-connection";
+import { parseConnectRequest } from "@/lib/integrations/site-connection";
+import { websiteMatchesHost } from "@/lib/site-connections";
 
 export const metadata: Metadata = {
   title: "Connect WordPress",
@@ -17,14 +18,6 @@ type Search = Record<string, string | string[] | undefined>;
 
 function first(value: string | string[] | undefined): string | null {
   return typeof value === "string" ? value : null;
-}
-
-function hostOf(url: string): string | null {
-  try {
-    return bareHost(new URL(url).hostname);
-  } catch {
-    return null;
-  }
 }
 
 function Problem({ message }: { message: string }) {
@@ -98,8 +91,9 @@ export default async function ConnectWordPressPage({
     select: { id: true, name: true, url: true },
     orderBy: { createdAt: "asc" },
   });
-  const matches = websites.filter((w) => hostOf(w.url) === req.siteHost);
-  const others = websites.filter((w) => hostOf(w.url) !== req.siteHost);
+  // Only the website this WordPress site IS can be connected (the approve
+  // route enforces the same host match).
+  const matches = websites.filter((w) => websiteMatchesHost(w.url, [req.siteHost]));
   const cancelUrl = (() => {
     const url = new URL(req.returnUrl);
     url.searchParams.set("mykavo_error", "cancelled");
@@ -142,12 +136,11 @@ export default async function ConnectWordPressPage({
 
       {matches.length === 0 ? (
         <div className="mt-6">
-          <p className="text-sm text-ink">
-            <span className="font-semibold">{req.siteHost}</span> isn&apos;t monitored in{" "}
-            <span className="font-semibold">{workspace.name}</span> yet.
-          </p>
+          <p className="text-sm text-ink">This site doesn&apos;t match any of your websites. Add it as a new website.</p>
           <p className="mt-1 text-[13px] text-ink-secondary">
-            Add it first. It takes a minute, and you come straight back here to finish connecting.
+            <span className="font-semibold">{req.siteHost}</span> isn&apos;t monitored in{" "}
+            <span className="font-semibold">{workspace.name}</span> yet. Adding it takes a minute, and you
+            come straight back here to finish connecting.
           </p>
           <Link
             href={addUrl}
@@ -158,15 +151,13 @@ export default async function ConnectWordPressPage({
         </div>
       ) : null}
 
-      {websites.length > 0 && (
+      {matches.length > 0 && (
         <form method="post" action="/api/wp/v1/connect/approve" className="mt-6">
           {hidden}
           <fieldset>
-            <legend className="mb-2 text-[13px] font-medium text-ink">
-              {matches.length > 0 ? "Which MyKavo website is this?" : "Or connect it to an existing website"}
-            </legend>
+            <legend className="mb-2 text-[13px] font-medium text-ink">Which MyKavo website is this?</legend>
             <div className="space-y-2">
-              {[...matches, ...(matches.length > 0 ? [] : others)].map((w, i) => (
+              {matches.map((w, i) => (
                 <label
                   key={w.id}
                   className="flex cursor-pointer items-center gap-3 rounded-field border border-line px-3.5 py-3 has-checked:border-ink has-checked:bg-surface"
@@ -175,7 +166,7 @@ export default async function ConnectWordPressPage({
                     type="radio"
                     name="websiteId"
                     value={w.id}
-                    defaultChecked={i === 0 && matches.length > 0}
+                    defaultChecked={i === 0}
                     required
                     className="size-4 accent-[#151515]"
                   />
@@ -186,27 +177,6 @@ export default async function ConnectWordPressPage({
                 </label>
               ))}
             </div>
-            {matches.length > 0 && others.length > 0 && (
-              <details className="mt-2">
-                <summary className="cursor-pointer text-[13px] text-ink-secondary hover:text-ink">
-                  Another website
-                </summary>
-                <div className="mt-2 space-y-2">
-                  {others.map((w) => (
-                    <label
-                      key={w.id}
-                      className="flex cursor-pointer items-center gap-3 rounded-field border border-line px-3.5 py-3 has-checked:border-ink has-checked:bg-surface"
-                    >
-                      <input type="radio" name="websiteId" value={w.id} className="size-4 accent-[#151515]" />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-ink">{w.name}</span>
-                        <span className="block truncate font-mono text-xs text-ink-faint">{w.url}</span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </details>
-            )}
           </fieldset>
 
           <div className="mt-5 rounded-field bg-surface px-3.5 py-3">

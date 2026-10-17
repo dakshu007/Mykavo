@@ -13,6 +13,15 @@ export interface ConnectedSiteView {
   connectedAt: string | null;
   lastUsedAt: string | null;
   pluginVersion: string | null;
+  /** When the connection was approved, and by whom (null once that user is gone). */
+  createdAt?: string | null;
+  createdByName?: string | null;
+}
+
+function platformLabel(platform: string): string {
+  if (platform === "shopify") return "Shopify";
+  if (platform === "chrome") return "Chrome extension";
+  return "WordPress";
 }
 
 function shortDate(iso: string | null): string {
@@ -20,15 +29,23 @@ function shortDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-US", { dateStyle: "medium" });
 }
 
-/** WordPress sites (plugin) and Shopify stores (app) connected to MyKavo, with a kill switch. */
+/**
+ * WordPress sites (plugin), Shopify stores (app) and Chrome extension
+ * connections to MyKavo, with a kill switch.
+ */
 export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[]; canManage: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function disconnect(site: ConnectedSiteView) {
-    const what = site.platform === "shopify" ? "The MyKavo app in that store" : "The plugin on that site";
-    if (!window.confirm(`Disconnect ${site.siteUrl}? ${what} stops showing monitoring until it's connected again.`)) {
+    const message =
+      site.platform === "chrome"
+        ? `Revoke the Chrome extension connection for ${site.siteUrl}? The extension stops showing monitoring until it's connected again.`
+        : `Disconnect ${site.siteUrl}? ${
+            site.platform === "shopify" ? "The MyKavo app in that store" : "The plugin on that site"
+          } stops showing monitoring until it's connected again.`;
+    if (!window.confirm(message)) {
       return;
     }
     setBusy(site.id);
@@ -36,7 +53,11 @@ export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[
     const res = await fetch(`/api/site-connections/${site.id}`, { method: "DELETE" });
     setBusy(null);
     if (!res.ok) {
-      setError("Couldn't disconnect that site. Try again.");
+      setError(
+        site.platform === "chrome"
+          ? "Couldn't revoke that connection. Try again."
+          : "Couldn't disconnect that site. Try again.",
+      );
       return;
     }
     router.refresh();
@@ -63,10 +84,16 @@ export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-ink">{site.siteName ?? site.siteUrl}</p>
               <p className="truncate text-xs text-ink-faint">
-                {site.platform === "shopify" ? "Shopify" : "WordPress"} ·{" "}
+                {platformLabel(site.platform)} ·{" "}
                 <span className="font-mono">{site.siteUrl}</span> · {site.websiteName} · last used{" "}
                 {shortDate(site.lastUsedAt)}
-                {site.pluginVersion ? ` · plugin ${site.pluginVersion}` : ""}
+                {site.pluginVersion
+                  ? ` · ${site.platform === "chrome" ? "version" : "plugin"} ${site.pluginVersion}`
+                  : ""}
+              </p>
+              <p className="truncate text-xs text-ink-faint">
+                Created {shortDate(site.createdAt ?? site.connectedAt)}
+                {site.createdByName ? ` by ${site.createdByName}` : ""}
               </p>
             </div>
             {canManage && (
@@ -76,7 +103,7 @@ export function ConnectedSites({ sites, canManage }: { sites: ConnectedSiteView[
                 className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line px-3 text-[12px] font-medium text-ink-secondary transition-colors hover:text-critical disabled:opacity-50"
               >
                 {busy === site.id && <Loader2 className="size-3 animate-spin" aria-hidden />}
-                Disconnect
+                {site.platform === "chrome" ? "Revoke" : "Disconnect"}
               </button>
             )}
           </li>
