@@ -14,7 +14,7 @@ export default async function EditBlogPostPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await requireSession();
-  if (!isBlogAdmin(session.user.email)) notFound();
+  if (!isBlogAdmin(session.user)) notFound();
 
   const { id } = await params;
   const post = await prisma.blogPost.findUnique({

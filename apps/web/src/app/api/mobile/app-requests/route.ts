@@ -22,7 +22,7 @@ import { logger } from "@/lib/logger";
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isPlatformAdmin(session.user.email)) {
+  if (!isPlatformAdmin(session.user)) {
     logger.warn("non-admin hit the mobile app-requests endpoint", {
       userId: session.user.id,
     });

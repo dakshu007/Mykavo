@@ -425,7 +425,7 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
           addWebsiteUrl: `${appBase}/dashboard/websites/new`,
           alertsUrl: `${appBase}/dashboard/notifications`,
           docsUrl: `${appBase}/docs`,
-          // Every signup starts a Pro trial; TRIAL_DAYS and TRIAL_MAX_WEBSITES in @mykavo/shared.
+          // A verified signup starts a Pro trial; TRIAL_DAYS and TRIAL_MAX_WEBSITES in @mykavo/shared.
           trial: { endsOn: "Friday, October 24", days: 14, maxWebsites: 3 },
         },
       };

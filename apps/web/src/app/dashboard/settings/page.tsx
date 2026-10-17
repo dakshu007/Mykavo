@@ -14,6 +14,8 @@ import { getWorkspacePlan } from "@/lib/limits";
 import { appBaseUrl } from "@/lib/app-url";
 import { canManageMembers } from "@/lib/team";
 import { requireSession, getCurrentMembership } from "@/lib/session";
+import { loadConnectedSites } from "@/lib/site-connections";
+import { ConnectedSites } from "@/components/dashboard/connected-sites";
 
 function roleLabel(role: string): string {
   return role.charAt(0) + role.slice(1).toLowerCase();
@@ -57,6 +59,9 @@ export default async function SettingsPage() {
   ]);
 
   const manager = canManageMembers(role);
+  // Each browser that pressed Connect holds a token for this workspace;
+  // listing them is the only way to see and revoke one.
+  const chromeConnections = await loadConnectedSites(workspace.id, "chrome");
   const members: TeamMemberView[] = memberRows.map((m) => ({
     id: m.id,
     userId: m.userId,
@@ -163,6 +168,13 @@ export default async function SettingsPage() {
           hasPassword={(account?.accounts.length ?? 0) > 0}
         />
       </Card>
+
+      {chromeConnections.length > 0 && (
+        <Card>
+          <CardHeader title="Chrome extension connections" />
+          <ConnectedSites sites={chromeConnections} canManage={manager} />
+        </Card>
+      )}
 
       <Card>
         <CardHeader title="Workspace" />

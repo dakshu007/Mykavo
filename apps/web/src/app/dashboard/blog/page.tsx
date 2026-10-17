@@ -37,7 +37,7 @@ const scheduleFormat = new Intl.DateTimeFormat("en-US", {
 export default async function DashboardBlogPage() {
   const now = requestNow();
   const session = await requireSession();
-  if (!isBlogAdmin(session.user.email)) notFound();
+  if (!isBlogAdmin(session.user)) notFound();
 
   const posts = await prisma.blogPost.findMany({
     orderBy: { updatedAt: "desc" },

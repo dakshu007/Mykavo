@@ -25,7 +25,7 @@ export const metadata: Metadata = {
  */
 export default async function AutomationsPage() {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
 
   const [overview, updates] = await Promise.all([getAutomationsOverview(), loadUpdateEmailsPanel()]);
 

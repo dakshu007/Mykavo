@@ -11,6 +11,7 @@ interface EmailArgs {
   subject: string;
   html: string;
   headers?: Record<string, string>;
+  replyTo?: string;
 }
 
 const create = vi.fn<(args: CreateArgs) => Promise<{ id: string }>>(async () => ({ id: "req_123" }));

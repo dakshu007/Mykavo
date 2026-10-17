@@ -33,7 +33,7 @@ function SignupsSkeleton() {
  */
 export default async function UsersPage() {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
 
   return (
     <div className="max-w-2xl space-y-6">

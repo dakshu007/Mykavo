@@ -108,7 +108,7 @@ function Setup({ o }: { o: MarketingOverview }) {
  */
 export default async function EmailMarketingPage() {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   const o = await getMarketingOverview();
   const onBrevo = o.provider === "brevo";
   const r = o.report;

@@ -427,10 +427,20 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
     include: { monitoredPage: { select: { url: true } } },
     orderBy: { detectedAt: "desc" },
   });
-  const eligible = changes.filter(
+  const aboveThreshold = changes.filter(
     (c) => SEVERITY_RANK[c.severity as Severity] >= minRank,
   );
-  if (eligible.length === 0) return false;
+  // Each scan compares against the approved baseline, so an unapproved
+  // change is raised again on every scan until someone acts on it. Those
+  // repeats were most of what people were emailed. The dashboard still lists
+  // them; the alert only goes out for conditions not already reported.
+  const eligible = await withoutRepeats(website.id, scan.id, aboveThreshold);
+  if (eligible.length === 0) {
+    if (aboveThreshold.length > 0) {
+      logger.info("scan summary skipped: only repeats", { scanId, repeats: aboveThreshold.length });
+    }
+    return false;
+  }
 
   const severityRank = (s: ChangeSeverity) => SEVERITY_RANK[s as Severity];
   const highest = eligible.reduce<Severity>(
@@ -496,4 +506,57 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
     }),
   );
   return ok;
+}
+
+interface RepeatCandidate {
+  monitoredPageId: string | null;
+  previousSnapshotId: string | null;
+  changeType: string;
+  category: string;
+  currentValue: string | null;
+}
+
+/** How far back a matching event still counts as "already reported". */
+const REPEAT_LOOKBACK_DAYS = 30;
+
+/**
+ * Same page, same kind of change, same baseline, same new value. Visual
+ * changes leave the value out: the percentage moves a little on every scan
+ * even when nothing new happened.
+ */
+function repeatKey(c: RepeatCandidate): string {
+  const value = c.category === "VISUAL" ? "" : (c.currentValue ?? "");
+  return [c.monitoredPageId ?? "site", c.changeType, c.previousSnapshotId ?? "", value].join("|");
+}
+
+async function withoutRepeats<T extends RepeatCandidate>(
+  websiteId: string,
+  scanId: string,
+  changes: T[],
+): Promise<T[]> {
+  if (changes.length === 0) return changes;
+  try {
+    const since = new Date(Date.now() - REPEAT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+    const earlier = await prisma.changeEvent.findMany({
+      where: {
+        websiteId,
+        scanId: { not: scanId },
+        detectedAt: { gte: since },
+        changeType: { in: [...new Set(changes.map((c) => c.changeType))] },
+      },
+      select: {
+        monitoredPageId: true,
+        previousSnapshotId: true,
+        changeType: true,
+        category: true,
+        currentValue: true,
+      },
+    });
+    const seen = new Set(earlier.map(repeatKey));
+    return changes.filter((c) => !seen.has(repeatKey(c)));
+  } catch (err) {
+    // Better a repeated alert than a missed one.
+    logger.warn("repeat check failed", { scanId, error: err instanceof Error ? err.message : String(err) });
+    return changes;
+  }
 }

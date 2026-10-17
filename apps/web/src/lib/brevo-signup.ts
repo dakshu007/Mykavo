@@ -4,9 +4,9 @@ import { logger } from "@/lib/logger";
 
 /**
  * Put a brand-new account into Brevo's "All users" and "No website yet"
- * lists the moment it signs up - no waiting for a sync. Signup starts the
- * Pro trial, which keeps it out of the "Free plan" list; only an account
- * whose trial did not start goes in there too. Runs inside the signup
+ * lists the moment it signs up - no waiting for a sync. A verified signup
+ * starts the Pro trial, which keeps it out of the "Free plan" list; only an
+ * account whose trial did not start goes in there too. Runs inside the signup
  * request, so it is capped at a few seconds and never throws: a Brevo
  * hiccup must not cost anyone their signup, and the next sync adds whoever
  * this missed (and moves the contact to Free once the trial ends).

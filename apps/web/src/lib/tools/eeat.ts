@@ -12,7 +12,7 @@
  */
 
 import { parse, type HTMLElement } from "node-html-parser";
-import { capHtml } from "./html";
+import { capHtml, removeRegions } from "./html";
 
 export type EeatPillar = "EXPERIENCE" | "EXPERTISE" | "AUTHORITATIVENESS" | "TRUST";
 export type EeatStatus = "pass" | "warn" | "fail";
@@ -93,13 +93,26 @@ interface PageFacts {
   linkedPages: EeatAuxSignals;
 }
 
+/**
+ * The page without its comments, for node-html-parser - which drops comments
+ * anyway, but rescans the rest of the page from every "<!--" that never
+ * closes (200,000 of them took over 15 s). A browser treats an unclosed
+ * comment as running to the end of the document, so the page is cut there.
+ */
+function withoutComments(html: string): string {
+  const stripped = removeRegions(html, { comments: true }, "");
+  // Every "<!--" still left has no "-->" after it.
+  const unclosed = stripped.indexOf("<!--");
+  return unclosed === -1 ? stripped : stripped.slice(0, unclosed);
+}
+
 /** Parse once into the facts every check reads. Exported for the aux-probe
  *  short-circuit (linked pages found on-page need no network probes). */
 export function extractEeatFacts(url: string, fullHtml: string): PageFacts {
   // Pages longer than MAX_PARSE_CHARS are analysed on their first MAX_PARSE_CHARS characters.
   const html = capHtml(fullHtml);
   const base = new URL(url);
-  const root = parse(html, { blockTextElements: { script: true, style: true, noscript: true } });
+  const root = parse(withoutComments(html), { blockTextElements: { script: true, style: true, noscript: true } });
 
   const text = (root.querySelector("body")?.text ?? root.text).replace(/\s+/g, " ").trim();
 

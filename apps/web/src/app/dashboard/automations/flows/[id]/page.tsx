@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 /** The flow builder canvas. Built-in flows open read-only. Operator only. */
 export default async function FlowPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   const { id } = await params;
   const emails = builtinEmailOptions();
 

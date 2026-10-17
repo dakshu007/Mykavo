@@ -32,7 +32,7 @@ const schema = z.object({ action: z.enum(["approve", "decline"]) });
 export async function PATCH(request: Request, { params }: Params) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isPlatformAdmin(session.user.email)) {
+  if (!isPlatformAdmin(session.user)) {
     logger.warn("non-admin tried to decide an app access request", {
       userId: session.user.id,
     });

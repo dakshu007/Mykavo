@@ -34,7 +34,7 @@ type Params = { params: Promise<{ id: string }> };
  */
 export default async function EditCampaignPage({ params }: Params) {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   if (!brevoConfigured()) notFound();
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();

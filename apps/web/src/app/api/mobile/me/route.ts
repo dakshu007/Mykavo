@@ -51,15 +51,15 @@ export async function GET() {
       twoFactorEnabled: Boolean(session.user.twoFactorEnabled),
     },
     admin: {
-      usage: isPlatformAdmin(session.user.email),
+      usage: isPlatformAdmin(session.user),
       // Same predicate as usage today, sent as its own flag so that changing
       // who may see the user list later does not change who sees the meters.
-      users: isPlatformAdmin(session.user.email),
-      appRequests: isPlatformAdmin(session.user.email),
-      tracking: isPlatformAdmin(session.user.email),
-      automations: isPlatformAdmin(session.user.email),
-      marketing: isPlatformAdmin(session.user.email),
-      blog: isBlogAdmin(session.user.email),
+      users: isPlatformAdmin(session.user),
+      appRequests: isPlatformAdmin(session.user),
+      tracking: isPlatformAdmin(session.user),
+      automations: isPlatformAdmin(session.user),
+      marketing: isPlatformAdmin(session.user),
+      blog: isBlogAdmin(session.user),
     },
     workspaces: memberships.map((m) => ({
       id: m.workspaceId,

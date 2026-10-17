@@ -115,7 +115,10 @@ describe("compareSnapshots", () => {
   });
 
   it("detects a page-weight regression over 50% as HIGH", () => {
-    const changes = compareSnapshots(BASE, withChanges({ pageWeightBytes: 170_000 }));
+    const changes = compareSnapshots(
+      withChanges({ pageWeightBytes: 1_000_000 }),
+      withChanges({ pageWeightBytes: 1_700_000 }),
+    );
     const perf = changes.find((c) => c.changeType === "page_weight_increased");
     expect(perf?.severity).toBe("HIGH");
   });
@@ -240,5 +243,72 @@ describe("platform fingerprint via compareSnapshots", () => {
   it("emits no platform change when neither side was fingerprinted", () => {
     const changes = compareSnapshots(BASE, { ...BASE, title: "New" });
     expect(changes.some((c) => c.category === "PLATFORM")).toBe(false);
+  });
+});
+
+describe("noise seen in production alerts", () => {
+  it("ignores a final URL that differs only by a session/state query token", () => {
+    const changes = compareSnapshots(
+      withChanges({ finalUrl: "https://accounts.example/login?state=6bcba41d" }),
+      withChanges({ finalUrl: "https://accounts.example/login?state=1c8c6802" }),
+    );
+    expect(changes.find((c) => c.changeType === "final_url_changed")).toBeUndefined();
+  });
+
+  it("still reports a final URL that lands on a different path", () => {
+    const changes = compareSnapshots(
+      withChanges({ finalUrl: "https://shop.test/" }),
+      withChanges({ finalUrl: "https://shop.test/login/?next=%2F" }),
+    );
+    expect(changes.find((c) => c.changeType === "final_url_changed")?.severity).toBe("HIGH");
+  });
+
+  it("reports only a LOW recovery against a baseline captured while the page was 404", () => {
+    const changes = compareSnapshots(
+      withChanges({ httpStatus: 404, canonicalUrl: null, title: "Not found", pageWeightBytes: 20_000 }),
+      withChanges({ finalUrl: "https://shop.test/about-us", canonicalUrl: "https://shop.test/about-us/" }),
+    );
+    expect(changes).toHaveLength(1);
+    expect(changes[0].changeType).toBe("http_status_recovered");
+    expect(changes[0].severity).toBe("LOW");
+  });
+
+  it("scores a canonical that now points at the page itself as LOW", () => {
+    const changes = compareSnapshots(
+      withChanges({ canonicalUrl: "https://shop.test" }),
+      withChanges({ canonicalUrl: "https://shop.test/pricing/" }),
+    );
+    const c = changes.find((x) => x.category === "SEO" && x.changeType.startsWith("canonical"));
+    expect(c?.changeType).toBe("canonical_now_self");
+    expect(c?.severity).toBe("LOW");
+  });
+
+  it("still scores a canonical moved to another page as HIGH", () => {
+    const changes = compareSnapshots(BASE, withChanges({ canonicalUrl: "https://shop.test/" }));
+    expect(changes.find((c) => c.changeType === "canonical_changed")?.severity).toBe("HIGH");
+  });
+
+  it("replaces every diff with one MEDIUM event when the scanner hit a bot challenge", () => {
+    const changes = compareSnapshots(
+      BASE,
+      withChanges({ httpStatus: 403, title: "Just a moment...", h1Values: [], canonicalUrl: null, links: [] }),
+    );
+    expect(changes).toHaveLength(1);
+    expect(changes[0].changeType).toBe("bot_challenge");
+    expect(changes[0].severity).toBe("MEDIUM");
+  });
+
+  it("does not treat a plain 403 as a bot challenge", () => {
+    const changes = compareSnapshots(BASE, withChanges({ httpStatus: 403 }));
+    expect(changes[0].changeType).toBe("http_status_changed");
+    expect(changes[0].severity).toBe("CRITICAL");
+  });
+
+  it("does not suppress noindex or a 200 -> 500", () => {
+    expect(
+      compareSnapshots(BASE, withChanges({ robotsMeta: "noindex" })).find((c) => c.changeType === "robots_noindex")
+        ?.severity,
+    ).toBe("CRITICAL");
+    expect(compareSnapshots(BASE, withChanges({ httpStatus: 500 }))[0].severity).toBe("CRITICAL");
   });
 });

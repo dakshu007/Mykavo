@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "New Post" };
 
 export default async function NewBlogPostPage() {
   const session = await requireSession();
-  if (!isBlogAdmin(session.user.email)) notFound();
+  if (!isBlogAdmin(session.user)) notFound();
 
   return <BlogPostEditor authors={await authorNames()} />;
 }

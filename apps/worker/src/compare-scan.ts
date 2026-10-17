@@ -18,6 +18,7 @@ import {
   compareScreenshots,
   compareSiteMeta,
   highestSeverity,
+  isBotChallengeTitle,
   isPageRedesign,
   scoreChange,
   siteRedesignSignal,
@@ -285,8 +286,13 @@ export async function runComparisonForScan(
         compareSnapshots(base.comparable, curr.comparable);
 
       // Visual diff (skipped when the page is broken - screenshot is unreliable).
+      // Also skipped when the baseline was an error page or either capture
+      // is a bot challenge: the screenshots show different things, so the
+      // diff says nothing about the page itself.
       const currentBroken = (snapshot.httpStatus ?? 0) >= 400;
-      if (!currentBroken && baselineSnap.screenshotStorageKey && snapshot.screenshotStorageKey) {
+      const baselineBroken = (baselineSnap.httpStatus ?? 0) >= 400;
+      const challenged = isBotChallengeTitle(snapshot.title) || isBotChallengeTitle(baselineSnap.title);
+      if (!currentBroken && !baselineBroken && !challenged && baselineSnap.screenshotStorageKey && snapshot.screenshotStorageKey) {
         try {
           const [baseImg, currImg] = await Promise.all([
             storage.get(baselineSnap.screenshotStorageKey),
@@ -321,6 +327,7 @@ export async function runComparisonForScan(
               const scored = scoreChange({
                 kind: "visual_diff",
                 percentage: visual.contentDifferencePercentage,
+                pixelPercentage: visual.differencePercentage,
                 redesign,
               });
               if (scored) {

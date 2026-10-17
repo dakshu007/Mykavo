@@ -26,7 +26,7 @@ import { logger } from "@/lib/logger";
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isPlatformAdmin(session.user.email)) {
+  if (!isPlatformAdmin(session.user)) {
     logger.warn("non-admin hit the mobile users endpoint", { userId: session.user.id });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

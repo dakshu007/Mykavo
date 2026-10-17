@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 /** Edit one automated email. Operator only, like the list. */
 export default async function AutomationPage({ params }: { params: Promise<{ key: string }> }) {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   const { key } = await params;
   if (!isAutomationKey(key)) notFound();
 

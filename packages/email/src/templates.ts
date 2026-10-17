@@ -836,7 +836,7 @@ export interface WelcomeEmailData {
   /** Absolute link to the docs, for the "how it works" line. */
   docsUrl: string;
   /**
-   * The workspace's running Pro trial (every signup starts one), or null.
+   * The workspace's running Pro trial (a verified signup starts one), or null.
    * The numbers come from the caller (TRIAL_DAYS and TRIAL_MAX_WEBSITES in
    * @mykavo/shared), so this package never writes them down.
    */

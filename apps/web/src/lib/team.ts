@@ -129,7 +129,6 @@ export function safeNextPath(raw: string | null | undefined): string | null {
   if (!raw) return null;
   if (!raw.startsWith("/")) return null;
   // Raw control characters (tab, CR, LF, NUL, DEL...) and backslashes.
-  // eslint-disable-next-line no-control-regex -- matching control characters is the point
   if (/[\u0000-\u001f\u007f\\]/.test(raw)) return null;
   // The same, percent-encoded: a later decode must not be able to revive them.
   if (/%(?:[01][0-9a-f]|7f|5c)/i.test(raw)) return null;

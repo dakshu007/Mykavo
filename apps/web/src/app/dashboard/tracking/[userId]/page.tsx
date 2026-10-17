@@ -27,7 +27,7 @@ const when = (iso: string) =>
  */
 export default async function UserTrackingPage({ params }: { params: Promise<{ userId: string }> }) {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   const { userId } = await params;
   const data = await loadUserTracking(userId);
   if (!data) notFound();

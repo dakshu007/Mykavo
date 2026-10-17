@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 /** Compose a Brevo campaign. Operator only. */
 export default async function NewCampaignPage() {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   if (!brevoConfigured()) notFound();
 
   const found = await findAudiences().catch(() => null);

@@ -63,7 +63,7 @@ function QuestionList({ rows, empty }: { rows: SupportQuestionRow[]; empty: stri
  */
 export default async function SupportQuestionsPage() {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
 
   const report = await loadSupportReport();
   const t = report.totals;

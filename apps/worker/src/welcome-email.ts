@@ -12,8 +12,9 @@
  * sent exactly once (see the de-duplication below), and it tells the reader
  * that alerts will come to this address, and where to change that.
  *
- * Every signup starts a Pro trial, and this is the first email that can say
- * so: it carries when the trial ends and what happens after.
+ * A verified signup starts a Pro trial (Google sign-ins at once, email
+ * signups when they confirm the address), and when one is running this email
+ * says when it ends and what happens after.
  *
  * The wording lives in @mykavo/email, which CI tests; this file is lookup,
  * de-duplication and delivery.
@@ -32,8 +33,9 @@ const dayFormat = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "lo
 
 /**
  * The welcome email's trial block: the workspace's running Pro trial, or
- * null. The signup hook starts the trial before it queues the welcome, so
- * null means it could not (Free is the fallback) or the account has none.
+ * null. A verified signup has its trial before the welcome is queued; an
+ * email signup that has not confirmed its address yet has none, and the
+ * welcome simply leaves the trial out.
  */
 export async function welcomeTrial(
   workspaceId: string,

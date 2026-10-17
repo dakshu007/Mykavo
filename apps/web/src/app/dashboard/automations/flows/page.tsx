@@ -33,7 +33,7 @@ const STATUS: Record<FlowListItem["status"], [string, string]> = {
  */
 export default async function FlowsPage() {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   const { ready, flows, system } = await listFlows();
 
   return (

@@ -25,7 +25,7 @@ async function Queue() {
  */
 export default async function AppRequestsPage() {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
 
   return (
     <div className="max-w-3xl space-y-6">

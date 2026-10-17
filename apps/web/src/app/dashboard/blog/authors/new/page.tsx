@@ -8,6 +8,6 @@ export const metadata: Metadata = { title: "Add author" };
 
 export default async function NewBlogAuthorPage() {
   const session = await requireSession();
-  if (!isBlogAdmin(session.user.email)) notFound();
+  if (!isBlogAdmin(session.user)) notFound();
   return <AuthorForm />;
 }

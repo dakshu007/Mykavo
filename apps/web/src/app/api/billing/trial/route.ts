@@ -13,6 +13,11 @@ import { logger } from "@/lib/logger";
  */
 export async function POST() {
   const session = await requireSession();
+  // Trials start only for verified addresses, same as at signup, so a
+  // throwaway address cannot farm one.
+  if (session.user.emailVerified !== true) {
+    return NextResponse.json({ error: "Verify your email to start the Pro trial." }, { status: 403 });
+  }
   const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
   if (!canManageBilling(role)) {
     return NextResponse.json({ error: "Only the workspace owner can start a trial." }, { status: 403 });

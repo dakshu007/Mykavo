@@ -25,8 +25,25 @@ describe("availability rules (spec §19)", () => {
   it("200 → 500 is CRITICAL", () => {
     expect(score({ kind: "http_status", previous: 200, current: 500 })!.severity).toBe("CRITICAL");
   });
-  it("500 → 200 (recovery) is HIGH, not critical", () => {
-    expect(score({ kind: "http_status", previous: 500, current: 200 })!.severity).toBe("HIGH");
+  it("500 → 200 / 404 → 200 (recovery) is LOW and never emails", () => {
+    // Recovery is only ever seen against a baseline captured while broken; at
+    // HIGH it re-emailed on every scan until someone re-approved (production).
+    for (const previous of [500, 404]) {
+      const c = score({ kind: "http_status", previous, current: 200 })!;
+      expect(c.severity).toBe("LOW");
+      expect(c.changeType).toBe("http_status_recovered");
+      expect(c.notify).toBe(false);
+    }
+  });
+  it("200 → 403 / 502 stay CRITICAL (real regressions are never downgraded)", () => {
+    expect(score({ kind: "http_status", previous: 200, current: 403 })!.severity).toBe("CRITICAL");
+    expect(score({ kind: "http_status", previous: 200, current: 502 })!.severity).toBe("CRITICAL");
+  });
+  it("a bot-protection challenge is MEDIUM and does not email", () => {
+    const c = score({ kind: "bot_challenge", title: "Just a moment...", httpStatus: 403 })!;
+    expect(c.severity).toBe("MEDIUM");
+    expect(c.category).toBe("AVAILABILITY");
+    expect(c.notify).toBe(false);
   });
   it("new redirect is MEDIUM", () => {
     expect(score({ kind: "redirect_appeared", hops: 1 })!.severity).toBe("MEDIUM");
@@ -46,6 +63,19 @@ describe("SEO rules (spec §19)", () => {
   it("canonical changed and removed are both HIGH", () => {
     expect(score({ kind: "canonical", previous: "a", current: "b" })!.severity).toBe("HIGH");
     expect(score({ kind: "canonical", previous: "a", current: null })!.severity).toBe("HIGH");
+    // Removal stays HIGH even if a caller (wrongly) claims it matches the page.
+    expect(score({ kind: "canonical", previous: "a", current: null, matchesPage: true })!.severity).toBe("HIGH");
+  });
+  it("canonical moving TO the page itself is LOW good news, not HIGH", () => {
+    const c = score({ kind: "canonical", previous: "https://a.com", current: "https://a.com/contact", matchesPage: true })!;
+    expect(c.severity).toBe("LOW");
+    expect(c.changeType).toBe("canonical_now_self");
+  });
+  it("canonical added where there was none is LOW when self-referencing, MEDIUM otherwise", () => {
+    expect(score({ kind: "canonical", previous: null, current: "https://a.com/x", matchesPage: true })!.severity).toBe("LOW");
+    const other = score({ kind: "canonical", previous: null, current: "https://a.com/" })!;
+    expect(other.severity).toBe("MEDIUM");
+    expect(other.changeType).toBe("canonical_added");
   });
   it("index → noindex is CRITICAL and notifies", () => {
     const c = score({ kind: "robots", previous: "index, follow", current: "noindex" })!;
@@ -94,9 +124,17 @@ describe("script rules (spec §21)", () => {
 
 describe("performance rules (spec §22)", () => {
   it("page weight +>50% is HIGH, +>20% is MEDIUM, <=20% is ignored", () => {
-    expect(score({ kind: "page_weight", previousBytes: 100_000, currentBytes: 160_000 })!.severity).toBe("HIGH");
-    expect(score({ kind: "page_weight", previousBytes: 100_000, currentBytes: 130_000 })!.severity).toBe("MEDIUM");
-    expect(score({ kind: "page_weight", previousBytes: 100_000, currentBytes: 110_000 })).toBeNull();
+    expect(score({ kind: "page_weight", previousBytes: 1_000_000, currentBytes: 1_600_000 })!.severity).toBe("HIGH");
+    expect(score({ kind: "page_weight", previousBytes: 1_000_000, currentBytes: 1_300_000 })!.severity).toBe("MEDIUM");
+    expect(score({ kind: "page_weight", previousBytes: 1_000_000, currentBytes: 1_100_000 })).toBeNull();
+  });
+  it("page weight growth needs an absolute floor: tiny pages do not alert", () => {
+    // Production: 25 KB -> 55 KB (+120%) was a HIGH alert.
+    expect(score({ kind: "page_weight", previousBytes: 25 * 1024, currentBytes: 55 * 1024 })!.severity).toBe("LOW");
+    // +60% but only ~60 KB: MEDIUM, not HIGH.
+    expect(score({ kind: "page_weight", previousBytes: 100_000, currentBytes: 160_000 })!.severity).toBe("MEDIUM");
+    // Real multi-megabyte growth is still HIGH.
+    expect(score({ kind: "page_weight", previousBytes: 1675 * 1024, currentBytes: 4856 * 1024 })!.severity).toBe("HIGH");
   });
   it("request count +>25% is MEDIUM, else ignored", () => {
     expect(score({ kind: "request_count", previous: 20, current: 30 })!.severity).toBe("MEDIUM");
@@ -293,5 +331,17 @@ describe("platform (plugin/theme/core) rules", () => {
     expect(c?.severity).toBe("HIGH");
     expect(c?.notify).toBe(true);
     expect(c?.title).toBe("Theme changed from Astra 4.6.2 to Kadence 1.2.3");
+  });
+});
+
+describe("visual noise guard", () => {
+  it("caps the visual score at LOW when under 1% of pixels changed in place", () => {
+    const c = score({ kind: "visual_diff", percentage: 27, pixelPercentage: 0.5 })!;
+    expect(c.severity).toBe("LOW");
+    expect(c.notify).toBe(false);
+  });
+  it("keeps the spec bands when pixels really changed, or when the caller has no pixel figure", () => {
+    expect(score({ kind: "visual_diff", percentage: 27, pixelPercentage: 12 })!.severity).toBe("HIGH");
+    expect(score({ kind: "visual_diff", percentage: 27 })!.severity).toBe("HIGH");
   });
 });

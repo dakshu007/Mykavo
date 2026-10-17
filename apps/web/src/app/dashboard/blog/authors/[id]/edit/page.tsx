@@ -11,7 +11,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export default async function EditBlogAuthorPage({ params }: Params) {
   const session = await requireSession();
-  if (!isBlogAdmin(session.user.email)) notFound();
+  if (!isBlogAdmin(session.user)) notFound();
   const { id } = await params;
   const author = await prisma.blogAuthor.findUnique({ where: { id } }).catch(() => null);
   if (!author) notFound();

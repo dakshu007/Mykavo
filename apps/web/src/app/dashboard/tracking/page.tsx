@@ -55,7 +55,7 @@ export default async function TrackingPage({
   searchParams: Promise<{ show?: string; internal?: string }>;
 }) {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user.email)) notFound();
+  if (!isPlatformAdmin(session.user)) notFound();
   const sp = await searchParams;
   const show: Show = (SHOWS.find((s) => s.id === sp.show)?.id ?? "all") as Show;
   const includeInternal = sp.internal === "1";

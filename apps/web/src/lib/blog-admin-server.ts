@@ -15,7 +15,7 @@ export type BlogAdminGate =
 export async function getBlogAdminGate(): Promise<BlogAdminGate> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { ok: false, status: 401, error: "Unauthorized" };
-  if (!isBlogAdmin(session.user.email)) {
+  if (!isBlogAdmin(session.user)) {
     return { ok: false, status: 403, error: "Forbidden" };
   }
   return { ok: true, userId: session.user.id, email: session.user.email };

@@ -33,7 +33,7 @@ async function loadAuthors() {
 
 export default async function BlogAuthorsPage() {
   const session = await requireSession();
-  if (!isBlogAdmin(session.user.email)) notFound();
+  if (!isBlogAdmin(session.user)) notFound();
   const { ok, authors, error } = await loadAuthors();
 
   const back = (
