@@ -65,12 +65,21 @@ export async function getLatestHealthChecksForWorkspace(
   db: Db,
   workspaceId: string,
 ): Promise<LatestHealthCheckSummary[]> {
-  return db.healthCheck.findMany({
-    where: { website: { workspaceId } },
-    orderBy: { checkedAt: "desc" },
-    distinct: ["websiteId"],
-    select: { websiteId: true, up: true, checkedAt: true },
-  });
+  // Not findMany + distinct: Prisma applies `distinct` in memory, so that
+  // pulled every check the workspace ever had (50,000+ rows) out of the
+  // database on each dashboard load, and was most of the database egress.
+  // One indexed lookup per website returns exactly one row each.
+  return db.$queryRaw<LatestHealthCheckSummary[]>`
+    SELECT w.id AS "websiteId", h.up, h."checkedAt"
+    FROM website w
+    CROSS JOIN LATERAL (
+      SELECT up, "checkedAt" FROM health_check
+      WHERE "websiteId" = w.id
+      ORDER BY "checkedAt" DESC
+      LIMIT 1
+    ) h
+    WHERE w."workspaceId" = ${workspaceId}
+  `;
 }
 
 /** The open (unresolved) incident of a kind for a website, if any. */
