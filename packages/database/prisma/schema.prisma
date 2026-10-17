@@ -1727,3 +1727,38 @@ model WebsiteAutoPause {
   @@index([reason, pausedAt])
   @@map("website_auto_pause")
 }
+
+/// Better Auth's shared rate-limit counters (rateLimit.storage = "database"),
+/// so sign-in and 2FA limits hold across every serverless instance.
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limit")
+}
+
+/// "Fix this for me" requests from /services and the change page. Leads only:
+/// a person replies with a fixed quote; nothing is charged from here.
+model ServiceRequest {
+  id            String   @id @default(cuid())
+  name          String
+  email         String
+  websiteUrl    String
+  platform      String?
+  urgency       String
+  /// "fix" | "care_plan" | "other"
+  kind          String
+  message       String
+  /// Set when sent from a change in the dashboard.
+  changeEventId String?
+  userId        String?
+  workspaceId   String?
+  /// "new" | "quoted" | "won" | "lost"
+  status        String   @default("new")
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("service_request")
+}
