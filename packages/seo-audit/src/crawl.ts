@@ -3,12 +3,14 @@
  * a 1,500-page audit costs a few minutes of worker time and nothing else -
  * the zero-budget answer to Ahrefs/Semrush credits.
  *
- * Safety: every URL passes the shared SSRF validation, robots.txt is
- * respected, concurrency/size/duration are capped, and crawling never leaves
- * the start host.
+ * Safety: every request (pages, redirect hops, robots.txt, sitemaps,
+ * llms.txt, link and image probes) goes through the shared safeFetch, which
+ * validates each hop, pins the socket to the vetted IP and caps the body.
+ * robots.txt is respected, concurrency/size/duration are capped, and
+ * crawling never leaves the start host.
  */
 
-import { assertSafeUrl } from "@mykavo/shared/ssrf";
+import { safeFetch } from "@mykavo/shared/ssrf";
 import { blockedAiCrawlers } from "@mykavo/shared/ai-crawlers";
 import { extractFacts, pageIssues, type PageFacts, type PageIssue } from "./page";
 import { AUDIT_CHECKS, SEVERITY_ORDER, type AuditSeverity } from "./registry";
@@ -65,6 +67,11 @@ const FOUND_ON_CHECKS = new Set([
   "redirect-loop",
 ]);
 const USER_AGENT = "Mozilla/5.0 (compatible; MyKavoAudit/1.0; +https://mykavo.app)";
+/** Page fetches follow at most this many redirects (each one revalidated). */
+const MAX_PAGE_REDIRECTS = 10;
+const MAX_ROBOTS_BYTES = 512 * 1024;
+const MAX_LLMS_BYTES = 64 * 1024;
+const MAX_SITEMAP_BYTES = 5_000_000;
 const GENERIC_DIRECTIVE_BLOCK = /^user-agent:\s*\*/im;
 
 interface Fetched {
@@ -81,54 +88,30 @@ interface Fetched {
 async function fetchPage(url: string, limits: CrawlLimits): Promise<Fetched> {
   const started = Date.now();
   try {
-    await assertSafeUrl(url);
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20_000);
-    try {
-      const res = await fetch(url, {
-        redirect: "follow",
-        signal: controller.signal,
-        headers: { "user-agent": USER_AGENT, accept: "text/html,*/*;q=0.8" },
-      });
-      const fetchMs = Date.now() - started;
-      const contentType = res.headers.get("content-type") ?? "";
-      let html = "";
-      if (contentType.includes("text/html") && res.status < 400) {
-        const reader = res.body?.getReader();
-        if (reader) {
-          const chunks: Uint8Array[] = [];
-          let total = 0;
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            total += value.byteLength;
-            chunks.push(value);
-            if (total > limits.maxHtmlBytes) {
-              await reader.cancel();
-              break;
-            }
-          }
-          html = Buffer.concat(chunks).toString("utf8");
-        }
-      } else {
-        await res.body?.cancel().catch(() => {});
-      }
-      return {
-        url,
-        status: res.status,
-        html,
-        fetchMs,
-        finalUrl: res.url || url,
-        hops: res.redirected ? 1 : 0,
-        headers: {
-          contentEncoding: res.headers.get("content-encoding"),
-          cacheControl: res.headers.get("cache-control"),
-          hsts: res.headers.has("strict-transport-security"),
-        },
-      };
-    } finally {
-      clearTimeout(timer);
-    }
+    // Only HTML under 400 is downloaded, and only up to maxHtmlBytes - the
+    // rest is cut, as before, rather than failing the page.
+    const res = await safeFetch(url, {
+      timeoutMs: 20_000,
+      maxRedirects: MAX_PAGE_REDIRECTS,
+      maxBytes: limits.maxHtmlBytes,
+      truncate: true,
+      userAgent: USER_AGENT,
+      readBody: (status, headers) =>
+        status < 400 && (headers.get("content-type") ?? "").includes("text/html"),
+    });
+    return {
+      url,
+      status: res.status,
+      html: res.body,
+      fetchMs: res.responseTimeMs,
+      finalUrl: res.finalUrl,
+      hops: res.redirectChain.length > 0 ? 1 : 0,
+      headers: {
+        contentEncoding: res.headers.get("content-encoding"),
+        cacheControl: res.headers.get("cache-control"),
+        hsts: res.headers.has("strict-transport-security"),
+      },
+    };
   } catch (err) {
     return {
       url,
@@ -152,26 +135,19 @@ async function walkRedirects(
   let current = startUrl;
   for (let hop = 0; hop < 6; hop++) {
     try {
-      await assertSafeUrl(current);
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10_000);
-      try {
-        const res = await fetch(current, {
-          redirect: "manual",
-          signal: controller.signal,
-          headers: { "user-agent": USER_AGENT },
-        });
-        await res.body?.cancel().catch(() => {});
-        if (res.status < 300 || res.status >= 400) return { hops: hop, loop: false, finalUrl: current };
-        const location = res.headers.get("location");
-        if (!location) return { hops: hop, loop: false, finalUrl: current };
-        const next = new URL(location, current).href;
-        if (seen.has(next)) return { hops: hop + 1, loop: true, finalUrl: next };
-        seen.add(next);
-        current = next;
-      } finally {
-        clearTimeout(timer);
-      }
+      const res = await safeFetch(current, {
+        timeoutMs: 10_000,
+        userAgent: USER_AGENT,
+        followRedirects: false,
+        readBody: () => false,
+      });
+      if (res.status < 300 || res.status >= 400) return { hops: hop, loop: false, finalUrl: current };
+      const location = res.headers.get("location");
+      if (!location) return { hops: hop, loop: false, finalUrl: current };
+      const next = new URL(location, current).href;
+      if (seen.has(next)) return { hops: hop + 1, loop: true, finalUrl: next };
+      seen.add(next);
+      current = next;
     } catch {
       return { hops: 0, loop: false, finalUrl: current };
     }
@@ -179,26 +155,31 @@ async function walkRedirects(
   return { hops: 6, loop: false, finalUrl: current };
 }
 
-/** HEAD-ish liveness probe (GET with immediate cancel - HEAD is often 405'd). */
+/** Liveness probe: GET, status only - the body is never downloaded. */
 async function probeStatus(url: string): Promise<number> {
   try {
-    await assertSafeUrl(url);
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10_000);
-    try {
-      const res = await fetch(url, {
-        redirect: "manual",
-        signal: controller.signal,
-        headers: { "user-agent": USER_AGENT },
-      });
-      await res.body?.cancel().catch(() => {});
-      return res.status;
-    } finally {
-      clearTimeout(timer);
-    }
+    const res = await safeFetch(url, {
+      timeoutMs: 10_000,
+      userAgent: USER_AGENT,
+      followRedirects: false,
+      readBody: () => false,
+    });
+    return res.status;
   } catch {
     return 0;
   }
+}
+
+/** GET a small text resource; null unless 2xx. Body capped at maxBytes. */
+async function fetchSmallText(url: string, timeoutMs: number, maxBytes: number): Promise<string | null> {
+  const res = await safeFetch(url, {
+    timeoutMs,
+    maxBytes,
+    truncate: true,
+    userAgent: USER_AGENT,
+    readBody: (status) => status >= 200 && status < 300,
+  });
+  return res.status >= 200 && res.status < 300 ? res.body : null;
 }
 
 function normalizeForQueue(raw: string): string | null {
@@ -225,12 +206,9 @@ interface RobotsInfo {
 
 async function fetchRobots(origin: string): Promise<RobotsInfo> {
   try {
-    const res = await fetch(`${origin}/robots.txt`, {
-      headers: { "user-agent": USER_AGENT },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) return { present: false, text: "", disallows: [], sitemaps: [], blocksAssets: false };
-    const text = (await res.text()).slice(0, 100_000);
+    const body = await fetchSmallText(`${origin}/robots.txt`, 10_000, MAX_ROBOTS_BYTES);
+    if (body === null) return { present: false, text: "", disallows: [], sitemaps: [], blocksAssets: false };
+    const text = body.slice(0, 100_000);
     const sitemaps = [...text.matchAll(/^sitemap:\s*(\S+)/gim)].map((m) => m[1]);
     // Only honor the generic (*) group - we crawl as a generic bot.
     const disallows: string[] = [];
@@ -256,16 +234,9 @@ type LlmsTxtState = "ok" | "missing" | "html";
 
 async function fetchLlmsTxt(origin: string): Promise<LlmsTxtState> {
   try {
-    const res = await fetch(`${origin}/llms.txt`, {
-      headers: { "user-agent": USER_AGENT },
-      signal: AbortSignal.timeout(10_000),
-      redirect: "follow",
-    });
-    if (!res.ok) {
-      await res.body?.cancel().catch(() => undefined);
-      return "missing";
-    }
-    const text = (await res.text()).slice(0, 5_000).trim();
+    const body = await fetchSmallText(`${origin}/llms.txt`, 10_000, MAX_LLMS_BYTES);
+    if (body === null) return "missing";
+    const text = body.slice(0, 5_000).trim();
     if (!text) return "missing";
     return /^<(!doctype|html|head|body)\b/i.test(text) ? "html" : "ok";
   } catch {
@@ -327,12 +298,10 @@ async function fetchSitemapUrls(origin: string, robotsSitemaps: string[]): Promi
     const next = queue.shift()!;
     fetched++;
     try {
-      const res = await fetch(next, {
-        headers: { "user-agent": USER_AGENT },
-        signal: AbortSignal.timeout(15_000),
-      });
-      if (!res.ok) continue;
-      const xml = (await res.text()).slice(0, 5_000_000);
+      // Sitemap URLs come from robots.txt and index files - site-controlled,
+      // so each one goes through the guard like any page.
+      const xml = await fetchSmallText(next, 15_000, MAX_SITEMAP_BYTES);
+      if (xml === null) continue;
       const locs = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]);
       if (/<sitemapindex/i.test(xml)) queue.push(...locs.slice(0, 10));
       else for (const loc of locs) urls.add(loc);

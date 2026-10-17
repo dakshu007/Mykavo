@@ -102,15 +102,20 @@ export interface Entitlement {
   dodoSubscriptionId: string | null;
 }
 
-/** True when the workspace's owner is a platform admin (ADMIN_EMAILS). */
+/**
+ * True when the workspace's owner is a platform admin (ADMIN_EMAILS) AND has
+ * verified that address. Signup does not prove ownership of an email, so an
+ * unverified allowlisted address must never unlock unlimited Agency.
+ */
 async function ownedByPlatformAdmin(db: Db, workspaceId: string): Promise<boolean> {
   // No allowlist configured: skip the lookup entirely.
   if (platformAdminEmails().length === 0) return false;
   const ws = await db.workspace.findUnique({
     where: { id: workspaceId },
-    select: { owner: { select: { email: true } } },
+    select: { owner: { select: { email: true, emailVerified: true } } },
   });
-  return isPlatformAdminEmail(ws?.owner.email);
+  if (ws?.owner.emailVerified !== true) return false;
+  return isPlatformAdminEmail(ws.owner.email);
 }
 
 export async function getWorkspaceEntitlement(

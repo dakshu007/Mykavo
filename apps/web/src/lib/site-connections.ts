@@ -76,7 +76,7 @@ export async function loadConnectedSites(
       })),
     )
     .catch((err: unknown) => {
-      logger.error("could not load site connections", { workspaceId, platforms }, err);
+      logger.error("could not load site connections", { workspaceId, platforms: platforms.join(",") }, err);
       return [];
     });
 }

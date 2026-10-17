@@ -11,7 +11,15 @@ import { resolveMx } from "node:dns/promises";
  *     hiccup never blocks signups; a definitive NXDOMAIN/NODATA fails closed.
  */
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+/**
+ * Linear-time on purpose. Domain labels exclude "." so each dot can only end
+ * one label: the old `[^\s@]+\.[^\s@]{2,}` let the engine try every dot as
+ * the TLD split, which backtracks badly on long dotted input.
+ */
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)*\.[^\s@.]{2,}$/;
+
+/** RFC 5321 caps a forward-path at 254 characters; anything longer is not an address. */
+export const MAX_EMAIL_LENGTH = 254;
 
 /** Well-known throwaway email domains (kept deliberately small and safe). */
 const DISPOSABLE_DOMAINS = new Set([
@@ -40,6 +48,8 @@ export type EmailValidationResult =
 
 /** Extract the lowercase domain part, or null when structurally invalid. */
 export function emailDomain(email: string): string | null {
+  // Length first: never hand an unbounded string to the regex.
+  if (email.length > MAX_EMAIL_LENGTH) return null;
   if (!EMAIL_PATTERN.test(email)) return null;
   const at = email.lastIndexOf("@");
   return email.slice(at + 1).toLowerCase();

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  EMAIL_PATTERN,
   emailDomain,
   isDisposableDomain,
   validateSignupEmail,
@@ -28,6 +29,33 @@ describe("emailDomain", () => {
     for (const bad of ["", "plain", "a@b", "a b@c.com", "a@@b.com", "a@b.c"]) {
       expect(emailDomain(bad)).toBeNull();
     }
+  });
+
+  it("accepts subdomains and multi-label TLDs", () => {
+    expect(emailDomain("a@mail.example.co.uk")).toBe("mail.example.co.uk");
+  });
+
+  it("rejects empty domain labels", () => {
+    expect(emailDomain("a@b..com")).toBeNull();
+    expect(emailDomain("a@.example.com")).toBeNull();
+    expect(emailDomain("a@example.com.")).toBeNull();
+  });
+
+  it("rejects anything over 254 characters before running the regex", () => {
+    const long = `${"a".repeat(64)}@${"b".repeat(186)}.com`;
+    expect(long.length).toBe(255);
+    expect(emailDomain(long)).toBeNull();
+    expect(emailDomain(long.slice(1))).toBe(`${"b".repeat(186)}.com`);
+  });
+
+  it("stays fast on pathological dotted input", () => {
+    // The old pattern backtracked over every dot as a possible TLD split.
+    const evil = `a@${"a.".repeat(5000)}`;
+    const started = Date.now();
+    expect(emailDomain(evil)).toBeNull();
+    // Even without the length cap the new pattern is linear.
+    expect(EMAIL_PATTERN.test(`a@${"a.".repeat(50_000)}!`)).toBe(false);
+    expect(Date.now() - started).toBeLessThan(500);
   });
 });
 

@@ -23,7 +23,7 @@ import {
   type HealthIncidentKind,
 } from "@mykavo/database";
 import { daysUntil, parseSelectorList } from "@mykavo/shared";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { requireSession, getCurrentMembership, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
 import { formatLimit, getPlan } from "@/config/plans";
 import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
@@ -224,16 +224,18 @@ export default async function WebsiteDetailPage({
       ? website.muteAlertsUntil
       : null;
   const appBase = process.env.APP_URL ?? "http://localhost:3000";
-  const badgeUrl = website.publicToken
-    ? `${appBase}/api/badge/${website.publicToken}`
-    : null;
-  const statusPageUrl = website.publicToken
-    ? `${appBase}/status/${website.publicToken}`
-    : null;
-  const reportUrl = website.reportToken ? `${appBase}/r/${website.reportToken}` : null;
-  const deployHookUrl = website.deployToken
-    ? `${appBase}/api/hooks/deploy/${website.deployToken}`
-    : null;
+  // The badge, status page, report and deploy hook URLs carry their secret
+  // tokens: viewers see the settings but never the URLs (GET
+  // /api/websites/[id] withholds the tokens from them the same way).
+  const { role } = await getCurrentMembership(session.user.id, session.user.name);
+  const canSeeTokens = role !== "VIEWER";
+  const publicToken = canSeeTokens ? website.publicToken : null;
+  const reportToken = canSeeTokens ? website.reportToken : null;
+  const deployToken = canSeeTokens ? website.deployToken : null;
+  const badgeUrl = publicToken ? `${appBase}/api/badge/${publicToken}` : null;
+  const statusPageUrl = publicToken ? `${appBase}/status/${publicToken}` : null;
+  const reportUrl = reportToken ? `${appBase}/r/${reportToken}` : null;
+  const deployHookUrl = deployToken ? `${appBase}/api/hooks/deploy/${deployToken}` : null;
   const workspaceBrand = await prisma.workspace.findUnique({
     where: { id: workspace.id },
     select: { brandName: true },

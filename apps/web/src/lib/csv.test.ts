@@ -36,4 +36,17 @@ describe("toCsv", () => {
   it("returns just the trailing CRLF for an empty row set", () => {
     expect(toCsv([])).toBe("\r\n");
   });
+
+  it("prefixes formula-looking fields with a single quote (CSV injection)", () => {
+    expect(toCsv([["=HYPERLINK(\"http://evil\")"]])).toBe('"\'=HYPERLINK(""http://evil"")"\r\n');
+    expect(toCsv([["+cmd"]])).toBe("'+cmd\r\n");
+    expect(toCsv([["-2+3"]])).toBe("'-2+3\r\n");
+    expect(toCsv([["@SUM(A1:A2)"]])).toBe("'@SUM(A1:A2)\r\n");
+    expect(toCsv([["\tlead"]])).toBe("'\tlead\r\n");
+    expect(toCsv([["\rlead"]])).toBe('"\'\rlead"\r\n');
+  });
+
+  it("leaves plain numbers and inner formula characters alone", () => {
+    expect(toCsv([["-12", "+3.5", "42", "a=b", "x-y"]])).toBe("-12,+3.5,42,a=b,x-y\r\n");
+  });
 });

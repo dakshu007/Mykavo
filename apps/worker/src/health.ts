@@ -1,12 +1,13 @@
 /**
  * Site-health sweep (uptime + SSL expiry). Runs on a pg-boss cron every
- * HEALTH_CRON (default 5 minutes): one plain GET per ACTIVE website - no
+ * HEALTH_CRON (default 5 minutes): one SSRF-guarded GET per ACTIVE website - no
  * Playwright - recording the result and driving the incident state machine
  * in @mykavo/shared. Alerts go through email and the workspace's chat
  * channels. Framed as site health inside change monitoring, not a
  * standalone uptime product (spec §1).
  */
 
+import { isIP } from "node:net";
 import { connect as tlsConnect } from "node:tls";
 import { prisma } from "@mykavo/database";
 import {
@@ -24,6 +25,11 @@ import {
   daysUntil,
   shouldRenotify,
   formatDowntime,
+  safeFetch,
+  resolveSafeHost,
+  pinnedLookup,
+  UnsafeUrlError,
+  type SafeAddress,
 } from "@mykavo/shared";
 import {
   sendEmail,
@@ -56,52 +62,72 @@ interface ProbeResult {
   errorCode: string | null;
 }
 
-/** One availability probe: GET the homepage, following redirects. */
+/**
+ * One availability probe: GET the homepage through safeFetch, so every
+ * redirect hop is revalidated and the socket is pinned to the vetted IP
+ * (spec §11). The body is never downloaded - the status is the answer.
+ */
 async function probe(url: string): Promise<ProbeResult> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-  const started = Date.now();
   try {
-    const res = await fetch(url, {
-      method: "GET",
-      redirect: "follow",
-      signal: controller.signal,
-      headers: { "user-agent": USER_AGENT },
+    const res = await safeFetch(url, {
+      timeoutMs: PROBE_TIMEOUT_MS,
+      userAgent: USER_AGENT,
+      readBody: () => false,
     });
-    const responseTimeMs = Date.now() - started;
-    res.body?.cancel().catch(() => undefined);
     return {
       up: isHttpUp(res.status),
       httpStatus: res.status,
-      responseTimeMs,
+      responseTimeMs: res.responseTimeMs,
       errorCode: isHttpUp(res.status) ? null : `HTTP_${res.status}`,
     };
   } catch (err) {
-    const timedOut = err instanceof Error && err.name === "AbortError";
+    const code = err instanceof UnsafeUrlError ? err.code : null;
     return {
       up: false,
       httpStatus: null,
       responseTimeMs: null,
-      errorCode: timedOut ? "TIMEOUT" : "NETWORK_ERROR",
+      errorCode:
+        code === "TIMEOUT"
+          ? "TIMEOUT"
+          : code === "BLOCKED_IP" || code === "BLOCKED_HOST" || code === "SCHEME_NOT_ALLOWED" || code === "CREDENTIALS_IN_URL"
+            ? "BLOCKED_ADDRESS"
+            : "NETWORK_ERROR",
     };
-  } finally {
-    clearTimeout(timer);
   }
 }
 
-/** Certificate expiry for an https host; null for http or on any failure. */
-function probeSslValidTo(url: string): Promise<Date | null> {
+/**
+ * Certificate expiry for an https host; null for http or on any failure.
+ * The host is vetted first and the TLS socket connects only to a vetted
+ * address (pinnedLookup), with SNI and the hostname kept for the handshake.
+ */
+async function probeSslValidTo(url: string): Promise<Date | null> {
   let host: string;
+  let port: number;
   try {
     const u = new URL(url);
-    if (u.protocol !== "https:") return Promise.resolve(null);
-    host = u.hostname;
+    if (u.protocol !== "https:") return null;
+    host = u.hostname.replace(/^\[|\]$/g, "");
+    port = u.port ? Number(u.port) : 443;
   } catch {
-    return Promise.resolve(null);
+    return null;
+  }
+
+  let addresses: SafeAddress[];
+  try {
+    addresses = await resolveSafeHost(host);
+  } catch {
+    return null;
   }
 
   return new Promise((resolve) => {
-    const socket = tlsConnect({ host, port: 443, servername: host, timeout: PROBE_TIMEOUT_MS });
+    const socket = tlsConnect({
+      host,
+      port,
+      servername: isIP(host) ? undefined : host,
+      lookup: pinnedLookup(addresses),
+      timeout: PROBE_TIMEOUT_MS,
+    });
     const done = (value: Date | null) => {
       socket.destroy();
       resolve(value);
@@ -119,6 +145,7 @@ function probeSslValidTo(url: string): Promise<Date | null> {
 function describeFailure(result: ProbeResult): string {
   if (result.errorCode === "TIMEOUT") return "request timed out";
   if (result.errorCode === "NETWORK_ERROR") return "connection failed";
+  if (result.errorCode === "BLOCKED_ADDRESS") return "the site now points to an address MyKavo does not connect to";
   return result.httpStatus !== null ? `HTTP ${result.httpStatus}` : "no response";
 }
 

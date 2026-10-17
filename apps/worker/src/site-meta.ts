@@ -1,5 +1,5 @@
 /**
- * Per-scan robots.txt + sitemap + llms.txt capture. One plain fetch each (no Playwright),
+ * Per-scan robots.txt + sitemap + llms.txt capture. One safeFetch each (no Playwright),
  * persisted as a SiteMetaSnapshot for the comparison step. Every failure is
  * recorded as a status/null - capture must never fail the scan.
  */
@@ -7,6 +7,7 @@
 import { createHash } from "node:crypto";
 import { prisma } from "@mykavo/database";
 import { parseSitemap } from "@mykavo/comparison-engine";
+import { safeFetch } from "@mykavo/shared";
 import { logger } from "./logger";
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -20,30 +21,27 @@ function sha256(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
 
+/**
+ * One SSRF-guarded GET (spec §11): robots.txt Sitemap: lines and sitemap
+ * index children are site-controlled URLs, and every redirect hop is
+ * revalidated, connected to the vetted IP only, and size-capped by safeFetch.
+ * Oversized sitemaps are cut at MAX_BODY_BYTES rather than dropped.
+ */
 async function fetchText(
   url: string,
 ): Promise<{ status: number | null; body: string | null }> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(url, {
-      redirect: "follow",
-      signal: controller.signal,
-      headers: { "user-agent": USER_AGENT, accept: "text/plain, application/xml, text/xml" },
+    const res = await safeFetch(url, {
+      timeoutMs: FETCH_TIMEOUT_MS,
+      maxBytes: MAX_BODY_BYTES,
+      truncate: true,
+      userAgent: USER_AGENT,
+      readBody: (status) => status >= 200 && status < 300,
     });
-    if (!res.ok) {
-      res.body?.cancel().catch(() => undefined);
-      return { status: res.status, body: null };
-    }
-    const raw = await res.arrayBuffer();
-    const body = new TextDecoder("utf-8", { fatal: false }).decode(
-      raw.byteLength > MAX_BODY_BYTES ? raw.slice(0, MAX_BODY_BYTES) : raw,
-    );
-    return { status: res.status, body };
+    if (res.status < 200 || res.status >= 300) return { status: res.status, body: null };
+    return { status: res.status, body: res.body };
   } catch {
     return { status: null, body: null };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

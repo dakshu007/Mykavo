@@ -1,206 +1,70 @@
-import Link from "next/link";
 import { cookies } from "next/headers";
-import { Bell, FileSearch, Globe, Plus, ShieldCheck } from "lucide-react";
-import { prisma, getLatestHealthChecksForWorkspace } from "@mykavo/database";
-import { WEBHOOK_CHANNEL_TYPES } from "@mykavo/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
-import { deriveOnboarding, ONBOARDING_DISMISSED_COOKIE } from "@/lib/onboarding";
-import { Card, CardHeader, IconChip } from "@/components/ui/card";
-import { LogoMark } from "@/components/brand/logo";
-import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
-import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
+import { ONBOARDING_DISMISSED_COOKIE } from "@/lib/onboarding";
+import { loadOverview } from "@/components/dashboard/overview/load-overview";
+import { NeedsAttention } from "@/components/dashboard/overview/needs-attention";
+import { SetupGuide } from "@/components/dashboard/overview/setup-guide";
+import { AllClear } from "@/components/dashboard/overview/all-clear";
+import { SummaryRow } from "@/components/dashboard/overview/summary-row";
+import { WebsitesList } from "@/components/dashboard/overview/websites-list";
+import { FirstWebsite } from "@/components/dashboard/overview/first-website";
 
+/**
+ * Overview: answers "what needs my attention right now?".
+ *
+ * Top to bottom: the attention list (open HIGH/CRITICAL/MEDIUM changes and
+ * website problems, grouped by website, worst first), the setup guide while
+ * a new account is still setting up, the all-clear card when nothing needs
+ * anyone, then the summary numbers and the websites list. Trial and upgrade
+ * prompts live in the dashboard layout and appear here as on every page.
+ */
 export default async function DashboardOverviewPage() {
   const session = await requireSession();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
+  // Workspaces that dismissed the earlier checklist card keep it dismissed.
   const cookieStore = await cookies();
-  const checklistDismissed =
-    cookieStore.get(ONBOARDING_DISMISSED_COOKIE)?.value === workspace.id;
+  const setupDismissed = cookieStore.get(ONBOARDING_DISMISSED_COOKIE)?.value === workspace.id;
 
-  // Checklist-only counts are skipped entirely once the card is dismissed -
-  // websites/pages/baselines below already cover the first three steps.
-  const skip = Promise.resolve(0);
-  const [
-    websites,
-    pageCount,
-    baselineCount,
-    openChanges,
-    healthChecks,
-    completedScans,
-    extraChannels,
-    memberCount,
-    pendingInvites,
-  ] = await Promise.all([
-    prisma.website.findMany({
-      where: { workspaceId: workspace.id },
-      include: {
-        _count: { select: { monitoredPages: true } },
-      },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.monitoredPage.count({ where: { website: { workspaceId: workspace.id } } }),
-    prisma.baseline.count({
-      where: { status: "ACTIVE", website: { workspaceId: workspace.id } },
-    }),
-    prisma.changeEvent.count({
-      where: { website: { workspaceId: workspace.id }, status: { in: ["NEW", "REVIEWED"] } },
-    }),
-    getLatestHealthChecksForWorkspace(prisma, workspace.id),
-    checklistDismissed
-      ? skip
-      : prisma.scan.count({
-          where: {
-            website: { workspaceId: workspace.id },
-            status: { in: ["COMPLETED", "PARTIAL"] },
-          },
-        }),
-    checklistDismissed
-      ? skip
-      : prisma.notificationChannel.count({
-          where: { workspaceId: workspace.id, type: { in: [...WEBHOOK_CHANNEL_TYPES] } },
-        }),
-    checklistDismissed
-      ? skip
-      : prisma.workspaceMember.count({ where: { workspaceId: workspace.id } }),
-    checklistDismissed
-      ? skip
-      : prisma.workspaceInvite.count({
-          where: {
-            workspaceId: workspace.id,
-            acceptedAt: null,
-            expiresAt: { gt: new Date() },
-          },
-        }),
-  ]);
-  const healthByWebsite = new Map(healthChecks.map((h) => [h.websiteId, h.up]));
-
-  const onboarding = deriveOnboarding({
-    websites: websites.length,
-    monitoredPages: pageCount,
-    completedScans,
-    activeBaselines: baselineCount,
-    extraChannels,
-    members: memberCount,
-    pendingInvites,
+  const data = await loadOverview({
+    workspace,
+    user: { id: session.user.id, email: session.user.email },
+    setupDismissed,
   });
-  const showChecklist = !checklistDismissed && !onboarding.allRequiredDone;
-
-  const stats = [
-    { label: "Websites monitored", value: websites.length, icon: Globe },
-    { label: "Pages monitored", value: pageCount, icon: FileSearch },
-    { label: "Baselined pages", value: baselineCount, icon: ShieldCheck },
-    { label: "Open changes", value: openChanges, icon: Bell },
-  ];
+  const hasWebsites = data.websites.length > 0;
+  const nothingNeedsAttention = data.attention.groups.length === 0;
 
   return (
     <div className="space-y-6">
-      {showChecklist && (
-        <OnboardingChecklist
-          steps={onboarding.steps}
-          requiredDoneCount={onboarding.requiredDoneCount}
-          requiredCount={onboarding.requiredCount}
+      <h1 className="sr-only">Overview</h1>
+
+      <NeedsAttention attention={data.attention} now={data.now} />
+
+      {data.setupGuide && <SetupGuide guide={data.setupGuide} />}
+
+      {!hasWebsites && !data.setupGuide && <FirstWebsite />}
+
+      {hasWebsites && nothingNeedsAttention && (
+        <AllClear
+          health={data.health}
+          lastScan={data.lastScan}
+          nextScan={data.nextScan}
+          lowerPriorityOpen={data.lowerPriorityOpen}
+          now={data.now}
         />
       )}
 
-      {websites.length === 0 ? (
-        // Zero websites: a grid of zeros says nothing - lead with the one
-        // action that matters instead.
-        <div className="rounded-card bg-card px-8 py-14 text-center shadow-card">
-          <span className="mb-5 inline-flex size-14 items-center justify-center rounded-2xl bg-primary-soft">
-            <LogoMark size={30} aria-hidden />
-          </span>
-          <h2 className="text-2xl font-semibold tracking-tight text-ink">
-            Monitor your first website
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-secondary">
-            MyKavo discovers your pages, captures an approved baseline, then alerts you when
-            something important changes or breaks.
-          </p>
-          <Link
-            href="/dashboard/websites/new"
-            className="mt-7 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
-          >
-            <Plus className="size-4" aria-hidden /> Add website
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-          {stats.map((s) => (
-            <Card key={s.label}>
-              <CardHeader
-                title={s.label}
-                action={
-                  <IconChip className="bg-surface">
-                    <s.icon className="size-4.5 text-ink-secondary" aria-hidden />
-                  </IconChip>
-                }
-              />
-              <p className="text-5xl font-semibold tracking-tight text-ink">{s.value}</p>
-            </Card>
-          ))}
-        </div>
+      {hasWebsites && (
+        <SummaryRow
+          websites={data.websites.length}
+          monitoredPages={data.monitoredPages}
+          health={data.health}
+          scansLast7Days={data.scansLast7Days}
+          changesLast30Days={data.changesLast30Days}
+        />
       )}
 
-      {websites.length > 0 && (
-        <Card>
-          <CardHeader
-            title="Your websites"
-            action={
-              <Link
-                href="/dashboard/websites"
-                className="text-[13px] font-medium text-accent hover:underline"
-              >
-                View all →
-              </Link>
-            }
-          />
-          <ul className="divide-y divide-line">
-            {websites.slice(0, 5).map((w) => (
-              <li key={w.id}>
-                <Link
-                  href={`/dashboard/websites/${w.id}`}
-                  className="group flex items-center gap-4 py-3.5"
-                >
-                  <span
-                    aria-label={
-                      healthByWebsite.get(w.id) === undefined
-                        ? "Health unknown"
-                        : healthByWebsite.get(w.id)
-                          ? "Up"
-                          : "Down"
-                    }
-                    title={
-                      healthByWebsite.get(w.id) === undefined
-                        ? "Health unknown"
-                        : healthByWebsite.get(w.id)
-                          ? "Up"
-                          : "Down"
-                    }
-                    className={`inline-block size-2.5 shrink-0 rounded-full ${
-                      healthByWebsite.get(w.id) === undefined
-                        ? "bg-line"
-                        : healthByWebsite.get(w.id)
-                          ? "bg-success"
-                          : "bg-critical"
-                    }`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink group-hover:text-accent">
-                      {w.name}
-                    </p>
-                    <p className="truncate font-mono text-xs text-ink-faint">
-                      {new URL(w.url).hostname} · {w._count.monitoredPages} page
-                      {w._count.monitoredPages === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                  <WebsiteStatusBadge status={w.status} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
+      <WebsitesList websites={data.websites} />
     </div>
   );
 }

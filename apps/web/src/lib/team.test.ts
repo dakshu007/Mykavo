@@ -145,4 +145,25 @@ describe("safeNextPath", () => {
     expect(safeNextPath(null)).toBeNull();
     expect(safeNextPath(undefined)).toBeNull();
   });
+
+  it("keeps a normal path with its query and hash", () => {
+    expect(safeNextPath("/dashboard/websites?x=1#y")).toBe("/dashboard/websites?x=1#y");
+  });
+
+  it.each([
+    "/\t/evil.com",
+    "/%09/evil.com",
+    "//evil.com",
+    "/\\evil.com",
+    "https://evil.com",
+    "/\n/evil.com",
+    "/%0a/evil.com",
+    "/%5cevil.com",
+    "/%2F/evil.com",
+    "///evil.com",
+    "/a/..//evil.com",
+    "/\u0000x",
+  ])("rejects %j, which a browser could send off-site", (raw) => {
+    expect(safeNextPath(raw)).toBeNull();
+  });
 });

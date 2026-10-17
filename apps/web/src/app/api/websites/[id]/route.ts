@@ -28,6 +28,13 @@ export async function GET(_request: Request, { params }: Params) {
   });
   if (!website) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // The badge/status, client report and deploy hook tokens are credentials:
+  // a viewer may read the website but not the links that act for it.
+  if (ctx.role === "VIEWER") {
+    return NextResponse.json({
+      website: { ...website, publicToken: null, reportToken: null, deployToken: null },
+    });
+  }
   return NextResponse.json({ website });
 }
 

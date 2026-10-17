@@ -49,9 +49,27 @@ export function rateLimit(
   return { allowed: true, remaining: limit - bucket.timestamps.length, retryAfterSeconds: 0 };
 }
 
-/** Best-effort client identifier for public endpoints. */
+/**
+ * Best-effort client identifier for public endpoints.
+ *
+ * Order matters, because only some of these headers are set by
+ * infrastructure we trust:
+ *  1. `x-nf-client-connection-ip` - set by Netlify's edge from the TCP
+ *     connection itself, overwriting anything the client sent. The one
+ *     header here a caller cannot forge in production.
+ *  2. `x-real-ip` - a single address set by a reverse proxy, for running
+ *     behind something other than Netlify.
+ *  3. The FIRST `x-forwarded-for` entry - the original client as the first
+ *     proxy saw it. A client can prepend fake entries, so this is only a
+ *     fallback for local and non-Netlify setups; it is never preferred over
+ *     the two above.
+ */
 export function clientKey(request: Request): string {
+  const netlify = request.headers.get("x-nf-client-connection-ip")?.trim();
+  if (netlify) return netlify;
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
   const forwarded = request.headers.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
-  return ip;
+  const first = forwarded?.split(",")[0]?.trim();
+  return first || "unknown";
 }

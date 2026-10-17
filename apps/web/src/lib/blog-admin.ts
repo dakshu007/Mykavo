@@ -21,9 +21,8 @@ export interface AdminCandidate {
 /**
  * Anything an allowlist check accepts. A bare string is still accepted by
  * the type so older call sites compile, but it carries no proof of
- * ownership and is always refused.
- *
- * @deprecated string form: pass `session.user` instead of `session.user.email`.
+ * ownership and is always refused: pass `session.user`, not
+ * `session.user.email`.
  */
 export type AdminCandidateInput = AdminCandidate | string | null | undefined;
 

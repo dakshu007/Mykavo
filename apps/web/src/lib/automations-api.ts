@@ -16,7 +16,8 @@ export type AdminRequest = { ok: true; userId: string; email: string; name: stri
 export async function adminRequest(bucket: string, limit: number): Promise<AdminRequest> {
   const session = await getSession();
   if (!session) return { ok: false, response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  if (!isPlatformAdmin(session.user.email)) {
+  // The whole user, not just the email: admin rights need a VERIFIED address.
+  if (!isPlatformAdmin(session.user)) {
     logger.warn("non-admin tried an automations admin route", { userId: session.user.id });
     return { ok: false, response: NextResponse.json({ error: "Not found" }, { status: 404 }) };
   }

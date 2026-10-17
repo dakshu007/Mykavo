@@ -9,7 +9,7 @@ describe("Clarity page scope", () => {
   });
 
   it("never records the app, personal pages or sign-in", () => {
-    for (const p of ["/dashboard", "/dashboard/websites/abc", "/r/tok_123", "/invite/xyz", "/unsubscribe/abc", "/login", "/signup", "/connect", "/shopify-app"]) {
+    for (const p of ["/dashboard", "/dashboard/websites/abc", "/r/tok_123", "/status/tok_456", "/invite/xyz", "/unsubscribe/abc", "/login", "/signup", "/connect", "/connect/wordpress", "/shopify-app"]) {
       expect(isClarityPath(p), p).toBe(false);
     }
   });

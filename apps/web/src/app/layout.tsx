@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import { Suspense } from "react";
 import { Clarity } from "@/components/analytics/clarity";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { AttributionCapture } from "@/components/analytics/attribution-capture";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { NavigationProgress } from "@/components/navigation-progress";
@@ -122,22 +123,20 @@ export default function RootLayout({
         {/* Google tag (gtag.js) - production only.
             lazyOnload: analytics waits until the page has loaded and the
             browser is idle, so it never competes with first paint.
-            Google signals and ad personalisation are off: they add
-            doubleclick.net third-party cookies (a Lighthouse best-practices
-            failure and a privacy cost) for advertising features MyKavo does
-            not use. Page views and events are unaffected. */}
+            Page URLs are redacted before gtag sees them: private pages
+            (/r/, /status/, /invite/, /unsubscribe, /connect/, /dashboard,
+            sign-in) carry tokens in the path or query - see
+            components/analytics/google-analytics.tsx. Google signals and ad
+            personalisation are off: they add doubleclick.net third-party
+            cookies (a Lighthouse best-practices failure and a privacy cost)
+            for advertising features MyKavo does not use. Suspense: the
+            component reads the query string, which must not opt the whole
+            page out of prerendering. */}
         {process.env.NODE_ENV === "production" && (
           <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-              strategy="lazyOnload"
-            />
-            <Script id="ga-gtag" strategy="lazyOnload">
-              {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', '${GA_MEASUREMENT_ID}', { allow_google_signals: false, allow_ad_personalization_signals: false });`}
-            </Script>
+            <Suspense fallback={null}>
+              <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} />
+            </Suspense>
             {/* Microsoft Clarity: public pages only - see components/analytics/clarity.tsx. */}
             <Clarity />
           </>

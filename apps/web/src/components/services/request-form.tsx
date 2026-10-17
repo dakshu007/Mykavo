@@ -146,20 +146,29 @@ function RequestFormInner({
   const [kind, setKind] = useState<ServiceKind>(isServiceKind(kindParam) ? kindParam : "fix");
   const [honeypot, setHoneypot] = useState("");
   const [changeEventId, setChangeEventId] = useState<string | null>(null);
-  const [prefill, setPrefill] = useState<PrefillState>({ state: "none" });
+  const [prefill, setPrefill] = useState<PrefillState>(
+    isChangeId(changeParam) ? { state: "loading" } : { state: "none" },
+  );
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState("");
 
-  // "Get a quote" links change ?kind= without remounting the form.
-  useEffect(() => {
+  // "Get a quote" links change ?kind= without remounting the form, so the
+  // choice follows the URL (adjusted during render, not in an effect).
+  const [seenKindParam, setSeenKindParam] = useState(kindParam);
+  if (kindParam !== seenKindParam) {
+    setSeenKindParam(kindParam);
     if (isServiceKind(kindParam)) setKind(kindParam);
-  }, [kindParam]);
+  }
+  const [seenChangeParam, setSeenChangeParam] = useState(changeParam);
+  if (changeParam !== seenChangeParam) {
+    setSeenChangeParam(changeParam);
+    setPrefill(isChangeId(changeParam) ? { state: "loading" } : { state: "none" });
+  }
 
   useEffect(() => {
     if (!isChangeId(changeParam)) return;
     const controller = new AbortController();
-    setPrefill({ state: "loading" });
     fetch(`/api/services/request?change=${encodeURIComponent(changeParam)}`, {
       signal: controller.signal,
       credentials: "same-origin",

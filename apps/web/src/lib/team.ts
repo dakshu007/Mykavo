@@ -110,16 +110,38 @@ export function resolveWorkspaceSelection<T extends { workspaceId: string }>(
 
 // ---------- Post-auth redirect validation ----------
 
+/** Throwaway origin used only to resolve `next` values; never navigated to. */
+const NEXT_PATH_BASE = "https://next-path.invalid";
+
 /**
  * Validates a `?next=` value used to return users to the invite page after
- * sign-in. Only same-origin relative paths are allowed - never absolute URLs,
- * protocol-relative ("//evil.com"), backslash tricks, or auth-scheme paths.
+ * sign-in. Only same-origin paths survive.
+ *
+ * String prefix checks are not enough: browsers strip tabs and newlines from
+ * URLs and treat "\" as "/", so "/\t/evil.com" is "//evil.com" to them. So
+ * the value is RESOLVED the way a browser would, against a placeholder
+ * origin, and kept only when it stays on that origin. Control characters and
+ * backslashes are refused outright, raw or percent-encoded, as is anything
+ * that resolves to a path starting "//" (protocol-relative once echoed back).
+ * Returns the normalized pathname + search + hash.
  */
 export function safeNextPath(raw: string | null | undefined): string | null {
   if (!raw) return null;
   if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  if (raw.includes("\\")) return null;
-  if (/[\r\n]/.test(raw)) return null;
-  return raw;
+  // Raw control characters (tab, CR, LF, NUL, DEL...) and backslashes.
+  // eslint-disable-next-line no-control-regex -- matching control characters is the point
+  if (/[\u0000-\u001f\u007f\\]/.test(raw)) return null;
+  // The same, percent-encoded: a later decode must not be able to revive them.
+  if (/%(?:[01][0-9a-f]|7f|5c)/i.test(raw)) return null;
+  let url: URL;
+  try {
+    url = new URL(raw, NEXT_PATH_BASE);
+  } catch {
+    return null;
+  }
+  if (url.origin !== NEXT_PATH_BASE) return null;
+  // "/%2F/evil.com" or a "//" left after normalization would turn
+  // protocol-relative when echoed back as a Location.
+  if (url.pathname.startsWith("//") || /^\/%2f/i.test(url.pathname)) return null;
+  return `${url.pathname}${url.search}${url.hash}`;
 }

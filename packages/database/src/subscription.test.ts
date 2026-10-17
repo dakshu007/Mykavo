@@ -56,7 +56,11 @@ describe("getWorkspaceEntitlement", () => {
       else process.env.ADMIN_EMAILS = saved.admin;
     });
 
+    // Admin status needs a VERIFIED owner email; the default test user is not.
+    const verifyOwner = () => prisma.user.update({ where: { id: RUN }, data: { emailVerified: true } });
+
     it("resolves to unlimited Agency with no subscription", async () => {
+      await verifyOwner();
       process.env.ADMIN_EMAILS = `someone@else.test, ${RUN.toUpperCase()}@TEST.LOCAL`;
       const ent = await getWorkspaceEntitlement(prisma, workspaceId);
       expect(ent?.planId).toBe("agency");
@@ -65,12 +69,21 @@ describe("getWorkspaceEntitlement", () => {
     });
 
     it("keeps a real subscription's billing details", async () => {
+      await verifyOwner();
       process.env.ADMIN_EMAILS = `${RUN}@test.local`;
       await grantPaidPlan(prisma, { workspaceId, planId: "pro", status: "active", dodoSubscriptionId: `sub_${RUN}` });
       const ent = await getWorkspaceEntitlement(prisma, workspaceId);
       expect(ent?.planId).toBe("agency");
       expect(ent?.unlimited).toBe(true);
       expect(ent?.dodoSubscriptionId).toBe(`sub_${RUN}`);
+    });
+
+    it("does not apply while the owner's email is unverified", async () => {
+      // Signup does not prove the address: an allowlisted but unverified
+      // email must not unlock unlimited Agency.
+      await prisma.user.update({ where: { id: RUN }, data: { emailVerified: false } });
+      process.env.ADMIN_EMAILS = `${RUN}@test.local`;
+      expect(await getWorkspaceEntitlement(prisma, workspaceId)).toBeNull();
     });
 
     it("does not apply to anyone else", async () => {

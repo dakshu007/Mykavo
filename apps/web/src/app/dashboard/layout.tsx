@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { prisma, canStartTrial, resumeAutoPaused, trialDaysLeft } from "@mykavo/database";
+import { prisma, canStartTrial, resumeAutoPaused, trialDaysLeft, TRIAL_DAYS } from "@mykavo/database";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { canManageBilling } from "@/lib/team";
 import { isBlogAdmin } from "@/lib/blog-admin";
@@ -14,6 +14,7 @@ import { SignupTracker } from "@/components/analytics/signup-tracker";
 import { recordSignupAttribution } from "@/lib/attribution/record";
 import { Greeting } from "@/components/dashboard/greeting";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
+import { VerifyEmailBanner } from "@/components/dashboard/verify-email-banner";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { isMonitoringLive } from "@/lib/monitoring-live";
 import { getAppAccessStatus } from "@/lib/app-access";
@@ -63,9 +64,18 @@ export default async function DashboardLayout({
       recordSignupAttribution(session.user),
     ]);
   const appApproved = canDownloadApp(appStatus);
-  // Only the owner can start it (POST /api/billing/trial), so only the owner is offered it.
+  // Only the owner can start it (POST /api/billing/trial), so only the owner is
+  // offered it. An unverified owner is not offered it either: verifying the
+  // email starts the trial, and the banner below says so.
+  const emailVerified = session.user.emailVerified === true;
   const trialAvailable =
-    plan.id === "free" && canManageBilling(role) && (await canStartTrial(prisma, workspace.id).catch(() => false));
+    plan.id === "free" &&
+    emailVerified &&
+    canManageBilling(role) &&
+    (await canStartTrial(prisma, workspace.id).catch(() => false));
+  // Admin rights follow a VERIFIED allowlisted email, so pass the whole user.
+  const blogAdmin = isBlogAdmin(session.user);
+  const platformAdmin = isPlatformAdmin(session.user);
   const upgradeCard =
     plan.id === "free" || plan.trial ? (
       <UpgradeCard
@@ -83,16 +93,16 @@ export default async function DashboardLayout({
       <ActivityBeacon />
       {newSignup ? <SignupTracker userId={session.user.id} {...newSignup} /> : null}
       <CommandPalette
-        isBlogAdmin={isBlogAdmin(session.user.email)}
-        isPlatformAdmin={isPlatformAdmin(session.user.email)}
+        isBlogAdmin={blogAdmin}
+        isPlatformAdmin={platformAdmin}
       />
       <div className="sticky top-6 hidden h-[calc(100vh-3rem)] w-60 shrink-0 overflow-hidden rounded-card bg-card p-3 shadow-card lg:block">
         <DashboardSidebar
           workspaceName={workspace.name}
           monitoringLive={monitoringLive}
           appApproved={appApproved}
-          isBlogAdmin={isBlogAdmin(session.user.email)}
-          isPlatformAdmin={isPlatformAdmin(session.user.email)}
+          isBlogAdmin={blogAdmin}
+          isPlatformAdmin={platformAdmin}
           workspaces={memberships.map((m) => m.workspace)}
           currentWorkspaceId={workspace.id}
           upgradeCard={upgradeCard}
@@ -102,13 +112,14 @@ export default async function DashboardLayout({
         <DashboardMobileNav
           monitoringLive={monitoringLive}
           appApproved={appApproved}
-          isBlogAdmin={isBlogAdmin(session.user.email)}
-          isPlatformAdmin={isPlatformAdmin(session.user.email)}
+          isBlogAdmin={blogAdmin}
+          isPlatformAdmin={platformAdmin}
         />
         {/* The sidebar (and its card) is hidden below lg. Without this copy a
             phone never sees the trial countdown or the offer to start one.
             The plain Free upsell stays in the sidebar: on a phone it would
             sit above every page's content. */}
+        {emailVerified ? null : <VerifyEmailBanner email={session.user.email} trialDays={TRIAL_DAYS} />}
         {plan.trial || trialAvailable ? (
           <div className="mb-4 max-w-md lg:hidden">{upgradeCard}</div>
         ) : null}
