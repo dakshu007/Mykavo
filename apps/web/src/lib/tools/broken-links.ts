@@ -1,4 +1,4 @@
-import { attr, stripTags } from "./html";
+import { attr, capHtml, findTags, lowerAscii, removeRegions, stripTags } from "./html";
 import { SAFE_FETCH_USER_MESSAGES } from "./user-messages";
 
 /**
@@ -65,16 +65,14 @@ function cleanText(s: string): string {
 
 /** Remove regions that look like links but are never followed by visitors. */
 function stripNonContent(html: string): string {
-  return html
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, " ")
-    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, " ")
-    .replace(/<template\b[\s\S]*?<\/template\s*>/gi, " ");
+  let out = removeRegions(html, { comments: true }, " ");
+  for (const name of ["script", "style", "template"]) out = removeRegions(out, { elements: [name], open: "loose" }, " ");
+  return out;
 }
 
 /** The document base: <base href> if present and valid, else the page URL. */
 function documentBase(html: string, pageUrl: string): string {
-  const tag = html.match(/<base\b[^>]*>/i)?.[0];
+  const tag = findTags(html, ["base"], { limit: 1 })[0]?.tag;
   const href = tag ? attr(tag, "href") : null;
   if (href) {
     try {
@@ -87,20 +85,62 @@ function documentBase(html: string, pageUrl: string): string {
 }
 
 /**
+ * The first index at or after `from` where `find` matches, for `from` values
+ * that never decrease. A cached answer is reused while it is still ahead, so
+ * the whole sequence of lookups scans the text once.
+ */
+function forwardSearch(find: (from: number) => number): (from: number) => number {
+  let found: number | null = null;
+  return (from) => {
+    if (found === null || (found !== -1 && found < from)) found = find(from);
+    return found;
+  };
+}
+
+/**
+ * Each `<a ...>` tag with the content that follows it, up to the next </a>,
+ * the next <a or the end of the page: the matches of
+ * `/<a\b([^>]*)>([\s\S]*?)(?=<\/a\s*>|<a\b|$)/gi`, which rescans the page
+ * from every unclosed anchor.
+ */
+function anchors(html: string): Array<{ attrs: string; inner: string }> {
+  const lower = lowerAscii(html);
+  const nextOpen = forwardSearch((from) => {
+    for (let i = lower.indexOf("<a", from); i !== -1; i = lower.indexOf("<a", i + 1)) {
+      if (!/[A-Za-z0-9_]/.test(lower[i + 2] ?? "")) return i;
+    }
+    return -1;
+  });
+  const nextClose = forwardSearch((from) => {
+    for (let i = lower.indexOf("</a", from); i !== -1; i = lower.indexOf("</a", i + 1)) {
+      let j = i + 3;
+      while (j < lower.length && /\s/.test(lower[j])) j++;
+      if (lower[j] === ">") return i;
+    }
+    return -1;
+  });
+  return findTags(html, ["a"]).map((t) => {
+    const ends = [nextOpen(t.end), nextClose(t.end)].filter((i) => i !== -1);
+    return { attrs: t.attrs, inner: html.slice(t.end, ends.length > 0 ? Math.min(...ends) : html.length) };
+  });
+}
+
+/**
  * Every followable http(s) link on the page, deduped by URL (fragment
  * removed) in document order. Drops fragment-only links, mailto:, tel:,
- * javascript: and any other non-http scheme.
+ * javascript: and any other non-http scheme. Pages longer than
+ * MAX_PARSE_CHARS are read up to that point.
  */
-export function extractLinks(html: string, pageUrl: string): ExtractedLink[] {
+export function extractLinks(fullHtml: string, pageUrl: string): ExtractedLink[] {
+  const html = capHtml(fullHtml);
   const page = new URL(pageUrl);
   const pageHost = siteHost(page);
   const base = documentBase(html, pageUrl);
   const clean = stripNonContent(html);
 
   const byUrl = new Map<string, ExtractedLink>();
-  const re = /<a\b([^>]*)>([\s\S]*?)(?=<\/a\s*>|<a\b|$)/gi;
-  for (const m of clean.matchAll(re)) {
-    const tag = `<a ${m[1]}>`;
+  for (const { attrs, inner } of anchors(clean)) {
+    const tag = `<a ${attrs}>`;
     const href = attr(tag, "href")?.trim();
     if (!href || href.startsWith("#")) continue;
 
@@ -116,8 +156,8 @@ export function extractLinks(html: string, pageUrl: string): ExtractedLink[] {
 
     const existing = byUrl.get(url);
     const text = cleanText(
-      stripTags(m[2]) ||
-        attr(m[2].match(/<img\b[^>]*>/i)?.[0] ?? "", "alt") ||
+      stripTags(inner) ||
+        attr(findTags(inner, ["img"], { limit: 1 })[0]?.tag ?? "", "alt") ||
         attr(tag, "aria-label") ||
         attr(tag, "title") ||
         "",

@@ -192,9 +192,14 @@ interface RowSignaturePair {
   b: number;
   /** A flat row of one colour: page background, padding, the gap between lines. */
   blank: boolean;
-  /** Block averages, for the tolerant comparison. */
-  averages: Float32Array;
-  /** Mean of all block-channel averages: a cheap pre-filter for rowsEquivalent. */
+  /**
+   * Block averages over this row and its two neighbours, for the tolerant
+   * comparison. A rescaled or re-encoded screenshot puts every text edge a
+   * fraction of a pixel higher or lower; a single anti-aliased edge row then
+   * differs by tens of levels while the three-row band around it barely moves.
+   */
+  smooth: Float32Array;
+  /** Mean of `smooth`: a cheap pre-filter for rowsEquivalent. */
   mean: number;
 }
 
@@ -224,17 +229,25 @@ function isBlankRow(averages: Float32Array): boolean {
 }
 
 function rowSignatures(img: RGBAImage): RowSignaturePair[] {
+  const averages = new Array<Float32Array>(img.height);
+  for (let y = 0; y < img.height; y++) averages[y] = rowBlockAverages(img.data, img.width, y);
   const out = new Array<RowSignaturePair>(img.height);
   for (let y = 0; y < img.height; y++) {
-    const averages = rowBlockAverages(img.data, img.width, y);
+    const own = averages[y];
+    const above = averages[Math.max(0, y - 1)];
+    const below = averages[Math.min(img.height - 1, y + 1)];
+    const smooth = new Float32Array(own.length);
     let sum = 0;
-    for (let i = 0; i < averages.length; i++) sum += averages[i];
+    for (let i = 0; i < own.length; i++) {
+      smooth[i] = (above[i] + own[i] + below[i]) / 3;
+      sum += smooth[i];
+    }
     out[y] = {
-      a: rowSignature(averages, 0),
-      b: rowSignature(averages, QUANTIZE_STEP / 2),
-      blank: isBlankRow(averages),
-      averages,
-      mean: averages.length > 0 ? sum / averages.length : 0,
+      a: rowSignature(own, 0),
+      b: rowSignature(own, QUANTIZE_STEP / 2),
+      blank: isBlankRow(own),
+      smooth,
+      mean: own.length > 0 ? sum / own.length : 0,
     };
   }
   return out;
@@ -251,16 +264,18 @@ function rowSignatures(img: RGBAImage): RowSignaturePair[] {
  * lands on a bucket edge on both grids, and an untouched page scored 27%
  * changed (HIGH) between quality 72 and 44. Averaged over a 16px block, that
  * encoder noise stays within a few levels; replacing a word, an image or a
- * colour moves the block average by tens of levels.
+ * colour moves the block average by tens of levels. 20 sits just under the
+ * 24-level quantisation step the exact hashes already tolerate, and keeps a
+ * one-word edit visible (see visual.test.ts).
  */
-const ROW_TOLERANCE = 12;
+const ROW_TOLERANCE = 20;
 
 /** True when two rows are visually the same within encoder noise. */
 function rowsEquivalent(x: RowSignaturePair, y: RowSignaturePair): boolean {
   if (x.a === y.a || x.b === y.b) return true;
   if (Math.abs(x.mean - y.mean) > ROW_TOLERANCE) return false;
-  const a = x.averages;
-  const b = y.averages;
+  const a = x.smooth;
+  const b = y.smooth;
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
     if (Math.abs(a[i] - b[i]) > ROW_TOLERANCE) return false;
@@ -302,7 +317,7 @@ function rowWeight(row: RowSignaturePair): number {
  * any two designs - margins, section padding, the gaps between lines of text -
  * matches itself and drowns out a page whose every word and image changed.
  */
-/** Upper bound on tolerant comparisons per unmatched row, so a page of near-identical rows stays linear. */
+/** Upper bound on full tolerant comparisons per unmatched row, so a page of near-identical rows stays linear. */
 const MAX_TOLERANT_CANDIDATES = 256;
 
 function contentDifferencePercentage(baseline: RGBAImage, current: RGBAImage): number {
@@ -334,39 +349,45 @@ function contentDifferencePercentage(baseline: RGBAImage, current: RGBAImage): n
     return -1;
   }
 
-  // Pass 1: exact signature matches (fast, and the common case).
+  // Pass 1: rows that did not move and look the same within encoder noise.
+  // This is the common case - an unchanged page - and the one exact hashes
+  // get wrong when the stored JPEG was re-encoded (see ROW_TOLERANCE).
+  const matchedCurrent = new Uint8Array(currRows.length);
+  const overlap = Math.min(baseRows.length, currRows.length);
+  for (let y = 0; y < overlap; y++) {
+    if (rowsEquivalent(currRows[y], baseRows[y])) {
+      claimed[y] = 1;
+      matchedCurrent[y] = 1;
+    }
+  }
+
+  // Pass 2: exact signature matches anywhere on the page - content that moved.
   const unmatched: number[] = [];
   currRows.forEach((sig, y) => {
+    if (matchedCurrent[y]) return;
     let index = claim(byA.get(sig.a));
     if (index === -1) index = claim(byB.get(sig.b));
     if (index === -1) unmatched.push(y);
   });
 
-  // Pass 2: rows that differ only by encoder noise (see ROW_TOLERANCE).
-  // Baseline rows are bucketed by mean colour so each lookup only inspects
-  // rows that could possibly be within tolerance.
-  const byMean = new Map<number, number[]>();
-  baseRows.forEach((sig, index) => {
-    if (claimed[index]) return;
-    const key = Math.floor(sig.mean / ROW_TOLERANCE);
-    (byMean.get(key) ?? byMean.set(key, []).get(key)!).push(index);
-  });
+  // Pass 3: content that moved AND was re-encoded - a tolerant match against
+  // unclaimed baseline rows near where this row now sits.
   let changed = 0;
   let total = 0;
   for (const sig of currRows) total += rowWeight(sig);
   for (const y of unmatched) {
     const sig = currRows[y];
-    const key = Math.floor(sig.mean / ROW_TOLERANCE);
     let found = false;
     let inspected = 0;
-    for (let k = key - 1; k <= key + 1 && !found; k++) {
-      const bucket = byMean.get(k);
-      if (!bucket) continue;
-      for (let j = 0; j < bucket.length && inspected < MAX_TOLERANT_CANDIDATES; j++) {
-        const index = bucket[j];
-        if (claimed[index]) continue;
+    const lo = Math.max(0, y - MAX_LOOKAHEAD);
+    const hi = Math.min(baseRows.length - 1, y + MAX_LOOKAHEAD);
+    for (let d = 0; !found && inspected < MAX_TOLERANT_CANDIDATES && (y - d >= lo || y + d <= hi); d++) {
+      for (const index of d === 0 ? [y] : [y - d, y + d]) {
+        if (index < lo || index > hi || claimed[index]) continue;
+        const candidate = baseRows[index];
+        if (Math.abs(candidate.mean - sig.mean) > ROW_TOLERANCE) continue;
         inspected++;
-        if (rowsEquivalent(sig, baseRows[index])) {
+        if (rowsEquivalent(sig, candidate)) {
           claimed[index] = 1;
           found = true;
           break;

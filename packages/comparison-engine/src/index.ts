@@ -1,5 +1,6 @@
 export {
   compareSnapshots,
+  isBotChallengeTitle,
   type ComparableSnapshot,
   type SnapshotLink,
   type SnapshotScript,

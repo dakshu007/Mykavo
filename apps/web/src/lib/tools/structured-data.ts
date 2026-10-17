@@ -1,4 +1,4 @@
-import { decodeEntities } from "./html";
+import { capHtml, decodeEntities, findRegions, findTags, removeRegions } from "./html";
 
 /**
  * Structured data reading for the free Structured Data Checker.
@@ -122,15 +122,17 @@ function typesOf(obj: JsonObject): string[] {
 
 /* ---------- Script extraction ---------- */
 
-/** Raw text of every JSON-LD block outside HTML comments, in document order. */
+/**
+ * Raw text of every JSON-LD block outside HTML comments, in document order.
+ * Pages longer than MAX_PARSE_CHARS are read up to that point.
+ */
 export function extractJsonLdTexts(html: string): string[] {
   const out: string[] = [];
-  const re = /<!--[\s\S]*?-->|<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
-  for (let m = re.exec(html); m !== null; m = re.exec(html)) {
-    if (m[0].startsWith("<!--")) continue;
-    const typeMatch = /\stype\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(` ${m[1]}`);
+  for (const region of findRegions(capHtml(html), { comments: true, elements: ["script"] })) {
+    if (region.name === "!--") continue;
+    const typeMatch = /\stype\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(` ${region.attrs}`);
     const type = (typeMatch?.[2] ?? typeMatch?.[3] ?? typeMatch?.[4] ?? "").split(";")[0].trim().toLowerCase();
-    if (type === "application/ld+json") out.push(m[2]);
+    if (type === "application/ld+json") out.push(region.inner);
   }
   return out;
 }
@@ -411,14 +413,14 @@ function tally(values: string[]): TypeCount[] {
 }
 
 export function detectMicrodataAndRdfa(html: string): Pick<StructuredDataReport, "microdata" | "rdfa"> {
-  const cleaned = html.replace(/<!--[\s\S]*?-->|<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ");
+  const cleaned = removeRegions(capHtml(html), { comments: true, elements: ["script", "style"] }, " ");
   let microCount = 0;
   let rdfaCount = 0;
   const microTypes: string[] = [];
   const rdfaTypes: string[] = [];
   const vocabs = new Set<string>();
 
-  for (const tag of cleaned.match(/<[a-z][a-z0-9-]*\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(cleaned, "any")) {
     if (/\sitemscope(?=[\s=/>])/i.test(tag)) {
       microCount += 1;
       const itemtype = exactAttr(tag, "itemtype");

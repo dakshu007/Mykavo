@@ -314,3 +314,133 @@ describe("redesigns on a white page", () => {
     expect(result.contentDifferencePercentage).toBeLessThan(15);
   });
 });
+
+/* --------- the same page, stored two ways, must not read as changed -------- */
+
+/**
+ * A text-like page laid out in a fixed 720-unit coordinate space and rendered
+ * at `width` with anti-aliased (coverage-weighted) edges - so a 640px render
+ * is what the same page looks like after the scanner's width ladder scaled it,
+ * not a resample this module could trivially undo. `editLine` rewrites one
+ * line's words, `seed` picks the design.
+ */
+function renderedPage(opts: { width: number; quality: number; seed?: number; editLine?: number }): Buffer {
+  const BASE_W = 720;
+  const LINES = 60;
+  const LINE_H = 10;
+  const PITCH = 26;
+  const scale = opts.width / BASE_W;
+  const width = opts.width;
+  const height = Math.round(LINES * PITCH * scale);
+  const ink = new Float32Array(width * height);
+
+  // Paint a base-space rectangle with fractional coverage at the target scale.
+  const rect = (bx0: number, by0: number, bx1: number, by1: number) => {
+    const x0 = bx0 * scale, x1 = bx1 * scale, y0 = by0 * scale, y1 = by1 * scale;
+    for (let y = Math.floor(y0); y < Math.min(height, Math.ceil(y1)); y++) {
+      const cy = Math.min(y1, y + 1) - Math.max(y0, y);
+      for (let x = Math.floor(x0); x < Math.min(width, Math.ceil(x1)); x++) {
+        const cx = Math.min(x1, x + 1) - Math.max(x0, x);
+        ink[y * width + x] = Math.min(1, ink[y * width + x] + cx * cy);
+      }
+    }
+  };
+
+  for (let line = 0; line < LINES; line++) {
+    const rowSeed = line === opts.editLine ? 9999 : line;
+    let state = (Math.imul(rowSeed + 1, 0x9e3779b1) ^ Math.imul((opts.seed ?? 0) + 1, 0x85ebca6b)) >>> 0;
+    const rand = () => {
+      state = (Math.imul(state ^ (state >>> 15), 0x2c1b3c6d) + 0x6d2b79f5) >>> 0;
+      return ((state ^ (state >>> 12)) >>> 0) / 4294967296;
+    };
+    const top = 20 + line * PITCH;
+    let x = 40;
+    while (x < BASE_W - 60) {
+      const glyphs = 2 + Math.floor(rand() * 8);
+      for (let g = 0; g < glyphs && x < BASE_W - 40; g++) {
+        const w = 2 + rand() * 4;
+        rect(x, top + (rand() < 0.3 ? 0 : 3), x + w, top + LINE_H);
+        x += w + 1.5;
+      }
+      x += 6; // word gap
+    }
+  }
+
+  const data = new Uint8Array(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
+    const v = Math.round(255 - ink[i] * 225);
+    data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = v;
+    data[i * 4 + 3] = 255;
+  }
+  return jpeg.encode({ data: Buffer.from(data), width, height }, opts.quality).data;
+}
+
+describe("storage re-encoding is not a page change", () => {
+  it("scores the same page at two JPEG qualities as (nearly) unchanged", () => {
+    // Production stored identical pages at quality 72 one scan and 44 the next;
+    // exact row hashes read that as 27% changed - a HIGH alert for nothing.
+    const result = compareScreenshots(
+      renderedPage({ width: 720, quality: 92 }),
+      renderedPage({ width: 720, quality: 40 }),
+    )!;
+    expect(result.contentDifferencePercentage).toBeLessThan(5);
+  });
+
+  it("scores the same page stored at two widths as (nearly) unchanged", () => {
+    // The width ladder / pixel cap stored the same page at different widths;
+    // every row fingerprint differed, so it scored 100% and was labelled a
+    // CRITICAL "Page redesigned" on every scan.
+    const result = compareScreenshots(
+      renderedPage({ width: 720, quality: 80 }),
+      renderedPage({ width: 640, quality: 60 }),
+    )!;
+    expect(result.contentDifferencePercentage).toBeLessThan(5);
+  });
+
+  it("survives a width difference of a couple of pixels", () => {
+    const result = compareScreenshots(
+      renderedPage({ width: 720, quality: 80 }),
+      renderedPage({ width: 718, quality: 80 }),
+    )!;
+    expect(result.contentDifferencePercentage).toBeLessThan(5);
+  });
+
+  it("still sees one rewritten line through a quality change", () => {
+    const unchanged = compareScreenshots(
+      renderedPage({ width: 720, quality: 92 }),
+      renderedPage({ width: 720, quality: 40 }),
+    )!.contentDifferencePercentage;
+    const edited = compareScreenshots(
+      renderedPage({ width: 720, quality: 92 }),
+      renderedPage({ width: 720, quality: 40, editLine: 30 }),
+    )!.contentDifferencePercentage;
+    expect(edited).toBeGreaterThan(unchanged);
+    expect(edited).toBeGreaterThan(0.5);
+  });
+
+  it("still sees one rewritten line at the same quality", () => {
+    const result = compareScreenshots(
+      renderedPage({ width: 720, quality: 80 }),
+      renderedPage({ width: 720, quality: 80, editLine: 30 }),
+    )!;
+    expect(result.contentDifferencePercentage).toBeGreaterThan(0.5);
+    expect(result.contentDifferencePercentage).toBeLessThan(15);
+  });
+
+  it("still scores a different page at a different width as a large change", () => {
+    const result = compareScreenshots(
+      renderedPage({ width: 720, quality: 80, seed: 1 }),
+      renderedPage({ width: 640, quality: 60, seed: 2 }),
+    )!;
+    expect(result.contentDifferencePercentage).toBeGreaterThan(60);
+  });
+
+  it("compares at the narrower width", () => {
+    const result = compareScreenshots(
+      renderedPage({ width: 720, quality: 80 }),
+      renderedPage({ width: 640, quality: 80 }),
+    )!;
+    const png = PNG.sync.read(result.diffPng);
+    expect(png.width).toBe(640);
+  });
+});

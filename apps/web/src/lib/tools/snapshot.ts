@@ -7,7 +7,7 @@
 import { identifyScriptService } from "@mykavo/shared/script-services";
 import { normalizeUrl, resolveHref, isSameOrigin } from "@/lib/url";
 import type { SafeFetchResult } from "@/lib/security/ssrf";
-import { attr, stripTags } from "./html";
+import { attr, capHtml, findRegions, findTags, stripTags } from "./html";
 
 export interface ScriptInfo {
   src: string;
@@ -47,7 +47,7 @@ export function extractScripts(html: string, baseUrl: string): ScriptInfo[] {
   const base = new URL(baseUrl);
   const scripts: ScriptInfo[] = [];
   const seen = new Set<string>();
-  for (const tag of html.match(/<script\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(capHtml(html), ["script"])) {
     const src = attr(tag, "src");
     if (!src) continue;
     const resolved = resolveHref(src, baseUrl);
@@ -65,16 +65,17 @@ export function extractScripts(html: string, baseUrl: string): ScriptInfo[] {
   return scripts;
 }
 
+/** Pages longer than MAX_PARSE_CHARS are read up to that point. */
 export function extractSnapshot(fetched: SafeFetchResult, requestedUrl: string): PageToolSnapshot {
-  const html = fetched.body;
+  const html = capHtml(fetched.body);
   const base = fetched.finalUrl;
 
-  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const title = titleMatch ? stripTags(titleMatch[1]) || null : null;
+  const titleMatch = findRegions(html, { elements: ["title"], boundary: false, closeSpace: false, limit: 1 })[0];
+  const title = titleMatch ? stripTags(titleMatch.inner) || null : null;
 
   let metaDescription: string | null = null;
   let robotsMeta: string | null = null;
-  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(html, ["meta"])) {
     const name = attr(tag, "name")?.toLowerCase();
     if (name === "description" && metaDescription === null) {
       metaDescription = attr(tag, "content");
@@ -84,22 +85,23 @@ export function extractSnapshot(fetched: SafeFetchResult, requestedUrl: string):
   }
 
   let canonicalUrl: string | null = null;
-  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(html, ["link"])) {
     if (attr(tag, "rel")?.toLowerCase() === "canonical") {
       canonicalUrl = attr(tag, "href");
       break;
     }
   }
 
-  const h1Values = (html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi) ?? [])
-    .map((h) => stripTags(h.replace(/<\/?h1\b[^>]*>/gi, "")))
+  const h1Values = findRegions(html, { elements: ["h1"], closeSpace: false })
+    // Every match ends in "</h1>", so this replace always finds its ">" and stays linear.
+    .map((h) => stripTags(html.slice(h.start, h.end).replace(/<\/?h1\b[^>]*>/gi, "")))
     .filter(Boolean)
     .slice(0, 10);
 
   const baseUrl = new URL(base);
   let internalLinkCount = 0;
   let externalLinkCount = 0;
-  for (const tag of html.match(/<a\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(html, ["a"])) {
     const href = attr(tag, "href");
     if (!href || href.startsWith("#") || /^(mailto:|tel:|javascript:)/i.test(href)) continue;
     const resolved = resolveHref(href, base);

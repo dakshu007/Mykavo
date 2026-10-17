@@ -31,6 +31,154 @@ export interface PageFingerprint {
   words: number;
 }
 
+/**
+ * Fingerprints read at most this much of a page: 512 K characters (~512 KB).
+ * The worker fetches up to 3 MB, but a page's head, headings and opening copy
+ * sit far inside this, and what lies past it is ignored rather than parsed.
+ */
+export const FINGERPRINT_MAX_CHARS = 512 * 1024;
+
+/* ---------- Linear HTML scanning ----------
+ * The HTML comes from whatever a monitored URL serves. Regexes such as
+ * `<!--[\s\S]*?-->` or `<h1\b[^>]*>([\s\S]*?)<\/h1>` rescan to the end of the
+ * page from every opening that never closes: 100 KB of "<svg " took a second
+ * and 3 MB would have blocked the worker - and every customer's checks - for
+ * many minutes. These helpers return the same matches using indexOf, looking
+ * at each character a bounded number of times.
+ */
+
+/** Lowercase A-Z only, so every index still lines up with the original. */
+function lowerAscii(s: string): string {
+  return s.replace(/[A-Z]+/g, (m) => m.toLowerCase());
+}
+
+/** Is the char at `i` a regex word character ([A-Za-z0-9_])? False past the end. */
+function isWordChar(s: string, i: number): boolean {
+  const c = s.charCodeAt(i);
+  return (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 95;
+}
+
+/** The first of `names` that starts at `at` and ends on a word boundary (`\b`). */
+function nameAt(lower: string, at: number, names: readonly string[], dead?: Set<string>): string | null {
+  for (const name of names) {
+    if (!dead?.has(name) && lower.startsWith(name, at) && !isWordChar(lower, at + name.length)) return name;
+  }
+  return null;
+}
+
+/** Same result as `s.replace(/<[^>]*>/g, " ")`, without rescanning from every unclosed "<". */
+function replaceTags(s: string): string {
+  let out = "";
+  let pos = 0;
+  for (let lt = s.indexOf("<"); lt !== -1; lt = s.indexOf("<", pos)) {
+    const gt = s.indexOf(">", lt + 1);
+    if (gt === -1) break;
+    out += `${s.slice(pos, lt)} `;
+    pos = gt + 1;
+  }
+  return pos === 0 ? s : out + s.slice(pos);
+}
+
+interface Span {
+  start: number;
+  end: number;
+  inner: string;
+}
+
+/** `html` with each span (in order, disjoint) replaced by a space. */
+function blankSpans(html: string, spans: Span[]): string {
+  if (spans.length === 0) return html;
+  let out = "";
+  let pos = 0;
+  for (const s of spans) {
+    out += `${html.slice(pos, s.start)} `;
+    pos = s.end;
+  }
+  return out + html.slice(pos);
+}
+
+/** Matches of `/<!--[\s\S]*?-->/g`. */
+function comments(html: string): Span[] {
+  const out: Span[] = [];
+  for (let open = html.indexOf("<!--"); open !== -1; open = html.indexOf("<!--", open)) {
+    const close = html.indexOf("-->", open + 4);
+    // No "-->" after this one means none after any later "<!--" either.
+    if (close === -1) break;
+    out.push({ start: open, end: close + 3, inner: html.slice(open + 4, close) });
+    open = close + 3;
+  }
+  return out;
+}
+
+/**
+ * Matches of `/<(names)\b[^>]*>([\s\S]*?)<\/\1>/gi` - or, with `loose`,
+ * `/<(names)\b[\s\S]*?<\/\1>/gi` - leftmost first. `boundary: false` drops
+ * the `\b`. A name with no closing tag after one opening has none after any
+ * later opening either, so it is dropped rather than searched for again.
+ */
+function elements(
+  html: string,
+  names: readonly string[],
+  opts: { loose?: boolean; boundary?: boolean; limit?: number } = {},
+): Span[] {
+  const lower = lowerAscii(html);
+  const limit = opts.limit ?? Infinity;
+  const dead = new Set<string>();
+  const out: Span[] = [];
+  let pos = 0;
+  while (out.length < limit && dead.size < names.length) {
+    const lt = lower.indexOf("<", pos);
+    if (lt === -1) break;
+    pos = lt + 1;
+    const name =
+      opts.boundary === false
+        ? (names.find((n) => !dead.has(n) && lower.startsWith(n, lt + 1)) ?? null)
+        : nameAt(lower, lt + 1, names, dead);
+    if (name === null) continue;
+    let contentStart = lt + 1 + name.length;
+    if (!opts.loose) {
+      const gt = lower.indexOf(">", contentStart);
+      if (gt === -1) break;
+      contentStart = gt + 1;
+    }
+    const close = lower.indexOf(`</${name}>`, contentStart);
+    if (close === -1) {
+      dead.add(name);
+      continue;
+    }
+    out.push({ start: lt, end: close + name.length + 3, inner: html.slice(contentStart, close) });
+    pos = close + name.length + 3;
+  }
+  return out;
+}
+
+/** Matches of `/<(names)\b[^>]*>/gi`, as tag strings. */
+function openTags(html: string, names: readonly string[]): Array<{ name: string; tag: string }> {
+  const lower = lowerAscii(html);
+  const out: Array<{ name: string; tag: string }> = [];
+  for (let lt = lower.indexOf("<"); lt !== -1; lt = lower.indexOf("<", lt + 1)) {
+    const name = nameAt(lower, lt + 1, names);
+    if (name === null) continue;
+    const gt = lower.indexOf(">", lt + 1 + name.length);
+    // No ">" left, so no later tag can close either.
+    if (gt === -1) break;
+    out.push({ name, tag: html.slice(lt, gt + 1) });
+    lt = gt;
+  }
+  return out;
+}
+
+/** Inner HTML of `/<body[^>]*>([\s\S]*)<\/body>/i` (up to the LAST </body>), or null. */
+function bodyInner(html: string): string | null {
+  const lower = lowerAscii(html);
+  const open = lower.indexOf("<body");
+  if (open === -1) return null;
+  const gt = lower.indexOf(">", open + 5);
+  const close = lower.lastIndexOf("</body>");
+  // Every later "<body" closes its tag later still, so the first one decides.
+  return gt !== -1 && close > gt ? html.slice(gt + 1, close) : null;
+}
+
 /** Shingles kept per page. Plenty for a similarity estimate, tiny in memory. */
 const SHINGLE_SAMPLE = 512;
 const SHINGLE_SIZE = 4;
@@ -64,7 +212,7 @@ function decodeEntities(text: string): string {
 }
 
 function clean(text: string): string {
-  return decodeEntities(text.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+  return decodeEntities(replaceTags(text)).replace(/\s+/g, " ").trim();
 }
 
 /** Value of `name` in a tag's attribute string, or "". */
@@ -89,11 +237,12 @@ function assetKey(raw: string, pageUrl: string): string | null {
  * Visible words, lowercased. Numbers collapse to "#" so a copyright year, a
  * stock count or a "3 hours ago" does not read as new content every check.
  */
+const HIDDEN_ELEMENTS = ["script", "style", "noscript", "svg", "template", "iframe"] as const;
+
 function visibleWords(html: string): string[] {
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  const body = (bodyMatch ? bodyMatch[1] : html)
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<(script|style|noscript|svg|template|iframe)\b[\s\S]*?<\/\1>/gi, " ");
+  const source = bodyInner(html) ?? html;
+  const withoutComments = blankSpans(source, comments(source));
+  const body = blankSpans(withoutComments, elements(withoutComments, HIDDEN_ELEMENTS, { loose: true }));
   return clean(body)
     .toLowerCase()
     .replace(/\d+([.,:]\d+)*/g, "#")
@@ -101,16 +250,20 @@ function visibleWords(html: string): string[] {
     .filter((w) => w.length > 0);
 }
 
-export function fingerprintPage(html: string, status: number, pageUrl: string): PageFingerprint {
+/**
+ * Pages longer than FINGERPRINT_MAX_CHARS are fingerprinted on their first
+ * FINGERPRINT_MAX_CHARS characters.
+ */
+export function fingerprintPage(fullHtml: string, status: number, pageUrl: string): PageFingerprint {
+  const html = fullHtml.length > FINGERPRINT_MAX_CHARS ? fullHtml.slice(0, FINGERPRINT_MAX_CHARS) : fullHtml;
   const head = html.slice(0, 200_000);
-  const title = clean(head.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "");
-  const h1 = clean(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "");
+  const title = clean(elements(head, ["title"], { boundary: false, limit: 1 })[0]?.inner ?? "");
+  const h1 = clean(elements(html, ["h1"], { limit: 1 })[0]?.inner ?? "");
 
   let canonical = "";
   let robots = "";
   const assets = new Set<string>();
-  for (const tag of html.match(/<(link|meta|script)\b[^>]*>/gi) ?? []) {
-    const name = tag.slice(1, tag.search(/[\s>]/)).toLowerCase();
+  for (const { name, tag } of openTags(html, ["link", "meta", "script"])) {
     if (name === "link") {
       const rel = attr(tag, "rel").toLowerCase();
       if (rel.split(/\s+/).includes("canonical")) canonical = attr(tag, "href");

@@ -1,4 +1,4 @@
-import { attr } from "./html";
+import { attr, capHtml, findTags, lowerAscii } from "./html";
 
 /**
  * WordPress theme & plugin detection from a page's delivered HTML.
@@ -12,9 +12,13 @@ import { attr } from "./html";
  *    and - for a child theme - its parent ("Template:").
  * Plugins that load nothing on the front end (security, backup, admin tools)
  * are invisible to any outside detector, and the page says so.
+ *
+ * Pages longer than MAX_PARSE_CHARS are analysed on their first
+ * MAX_PARSE_CHARS characters.
  */
 
-const SLUG = "[a-z0-9][a-z0-9._-]{0,80}";
+/** A theme/plugin folder name and the "/" after it, read from lowercased text. */
+const SLUG_AT = /[a-z0-9][a-z0-9._-]{0,80}\//y;
 
 export interface ThemeHeader {
   name: string | null;
@@ -106,17 +110,38 @@ const KNOWN_PLUGIN_NAMES: Record<string, string> = {
   "mykavo": "MyKavo",
 };
 
+/**
+ * Does a `<meta ... name="generator" ... {word}` tag appear? Same answer as
+ * `/<meta[^>]+name=["']generator["'][^>]+{word}/i`, whose two `[^>]+` runs
+ * backtrack across each other - quadratic on a long tag. `word` is lowercase.
+ */
+function generatorMentions(html: string, word: string): boolean {
+  const lower = lowerAscii(html);
+  for (let open = lower.indexOf("<meta"); open !== -1; open = lower.indexOf("<meta", open)) {
+    const gt = lower.indexOf(">", open + 5);
+    const end = gt === -1 ? lower.length : gt;
+    // A later "<meta" before the same ">" sees a suffix of this tag, so if this
+    // one fails that one fails too: test only the first.
+    const tag = lower.slice(open, end);
+    const name = /name=["']generator["']/.exec(tag.slice(6));
+    if (name && tag.slice(6 + name.index + name[0].length + 1).includes(word)) return true;
+    if (gt === -1) break;
+    open = gt;
+  }
+  return false;
+}
+
 /** Plugins that identify themselves in markup even without an asset path. */
-const FINGERPRINTS: Array<{ slug: string; test: RegExp }> = [
-  { slug: "wordpress-seo", test: /This site is optimized with the Yoast SEO/i },
-  { slug: "seo-by-rank-math", test: /Search Engine Optimization by Rank Math/i },
-  { slug: "all-in-one-seo-pack", test: /All in One SEO( Pro)? \d/i },
-  { slug: "woocommerce", test: /<meta[^>]+name=["']generator["'][^>]+WooCommerce/i },
-  { slug: "elementor", test: /<meta[^>]+name=["']generator["'][^>]+Elementor/i },
-  { slug: "wp-rocket", test: /This website is like a Rocket/i },
-  { slug: "litespeed-cache", test: /Page optimized by LiteSpeed Cache/i },
-  { slug: "w3-total-cache", test: /Performance optimized by W3 Total Cache/i },
-  { slug: "js_composer", test: /<meta[^>]+name=["']generator["'][^>]+WPBakery/i },
+const FINGERPRINTS: Array<{ slug: string; test: (html: string) => boolean }> = [
+  { slug: "wordpress-seo", test: (h) => /This site is optimized with the Yoast SEO/i.test(h) },
+  { slug: "seo-by-rank-math", test: (h) => /Search Engine Optimization by Rank Math/i.test(h) },
+  { slug: "all-in-one-seo-pack", test: (h) => /All in One SEO( Pro)? \d/i.test(h) },
+  { slug: "woocommerce", test: (h) => generatorMentions(h, "woocommerce") },
+  { slug: "elementor", test: (h) => generatorMentions(h, "elementor") },
+  { slug: "wp-rocket", test: (h) => /This website is like a Rocket/i.test(h) },
+  { slug: "litespeed-cache", test: (h) => /Page optimized by LiteSpeed Cache/i.test(h) },
+  { slug: "w3-total-cache", test: (h) => /Performance optimized by W3 Total Cache/i.test(h) },
+  { slug: "js_composer", test: (h) => generatorMentions(h, "wpbakery") },
 ];
 
 /** "contact-form-7" -> "Contact Form 7". */
@@ -133,12 +158,41 @@ export function pluginName(slug: string): string {
   return KNOWN_PLUGIN_NAMES[slug] ?? humanizeSlug(slug);
 }
 
-/** Every URL-ish string in the HTML that points into wp-content. */
+/** Characters a URL run cannot contain (the `[^"'\s()<>]` class). */
+const URL_STOP = /["'\s()<>]/;
+
+/**
+ * Every URL-ish string in the HTML that points into wp-content: the matches of
+ * `((?:https?:)?//[^"'\s()<>]+?|)(/wp-content/{kind}/)({slug})/` (case-
+ * insensitive), found from each "/wp-content/{kind}/" instead. That regex
+ * tried a lazy URL run from every "//", which took seconds on a page of
+ * slashes; here each character is looked at a bounded number of times.
+ */
 function wpContentRefs(html: string, kind: "themes" | "plugins"): Array<{ slug: string; base: string }> {
-  const re = new RegExp(`((?:https?:)?//[^"'\\s()<>]+?|)(/wp-content/${kind}/)(${SLUG})/`, "gi");
+  const lower = lowerAscii(html);
+  const marker = `/wp-content/${kind}/`;
   const out: Array<{ slug: string; base: string }> = [];
-  for (const m of html.matchAll(re)) {
-    out.push({ slug: m[3].toLowerCase(), base: `${m[1]}${m[2]}` });
+  let lastEnd = 0;
+  for (let at = lower.indexOf(marker); at !== -1; at = lower.indexOf(marker, at + 1)) {
+    if (at < lastEnd) continue;
+    SLUG_AT.lastIndex = at + marker.length;
+    const slug = SLUG_AT.exec(lower)?.[0].slice(0, -1);
+    if (!slug) continue;
+    // The URL this path belongs to: back over URL characters (not into the
+    // previous match), then the leftmost "//", "http://" or "https://" that
+    // leaves at least one character before the path.
+    let from = at;
+    while (from > lastEnd && !URL_STOP.test(html[from - 1])) from--;
+    let start = at;
+    for (let s = from; s < at; s++) {
+      const scheme = lower.startsWith("https://", s) ? 8 : lower.startsWith("http://", s) ? 7 : lower.startsWith("//", s) ? 2 : 0;
+      if (scheme > 0 && s + scheme < at) {
+        start = s;
+        break;
+      }
+    }
+    out.push({ slug, base: html.slice(start, at + marker.length) });
+    lastEnd = at + marker.length + slug.length + 1;
   }
   return out;
 }
@@ -149,7 +203,7 @@ function wpContentRefs(html: string, kind: "themes" | "plugins"): Array<{ slug: 
  */
 export function detectThemes(html: string, pageUrl: string): Omit<DetectedTheme, "header">[] {
   const counts = new Map<string, { n: number; base: string }>();
-  for (const ref of wpContentRefs(html, "themes")) {
+  for (const ref of wpContentRefs(capHtml(html), "themes")) {
     const prev = counts.get(ref.slug);
     counts.set(ref.slug, { n: (prev?.n ?? 0) + 1, base: prev?.base ?? ref.base });
   }
@@ -167,23 +221,25 @@ export function detectThemes(html: string, pageUrl: string): Omit<DetectedTheme,
     });
 }
 
-export function detectPlugins(html: string): DetectedPlugin[] {
+export function detectPlugins(fullHtml: string): DetectedPlugin[] {
+  const html = capHtml(fullHtml);
   const found = new Map<string, DetectedPlugin>();
   for (const { slug } of wpContentRefs(html, "plugins")) {
     if (!found.has(slug)) found.set(slug, { slug, name: pluginName(slug), evidence: "assets" });
   }
   for (const fp of FINGERPRINTS) {
-    if (!found.has(fp.slug) && fp.test.test(html)) {
+    if (!found.has(fp.slug) && fp.test(html)) {
       found.set(fp.slug, { slug: fp.slug, name: pluginName(fp.slug), evidence: "fingerprint" });
     }
   }
   return [...found.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function detectWordPressSignals(html: string): { signals: string[]; version: string | null } {
+export function detectWordPressSignals(fullHtml: string): { signals: string[]; version: string | null } {
+  const html = capHtml(fullHtml);
   const signals: string[] = [];
   let version: string | null = null;
-  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(html, ["meta"])) {
     if (attr(tag, "name")?.toLowerCase() !== "generator") continue;
     const m = /WordPress\s*([\d.]+)?/i.exec(attr(tag, "content") ?? "");
     if (m) {

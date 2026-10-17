@@ -16,6 +16,8 @@ export interface EmailMessage {
    * mail). Transactional alerts do not set any.
    */
   headers?: Record<string, string>;
+  /** Where replies go, e.g. the person who sent a service request. */
+  replyTo?: string;
 }
 
 export interface SendResult {
@@ -109,6 +111,8 @@ export async function sendEmail(message: EmailMessage): Promise<SendResult> {
         html: message.html,
         text: message.text,
         ...(message.headers ? { headers: message.headers } : {}),
+        // Resend's own field; a raw Reply-To header is not reliable there.
+        ...(message.replyTo ? { reply_to: message.replyTo } : {}),
       }),
     });
     if (!res.ok) {

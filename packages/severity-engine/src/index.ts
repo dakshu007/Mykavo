@@ -45,11 +45,27 @@ export function compareSeverity(a: Severity, b: Severity): number {
 /** Semantic signals produced by the comparison engine. */
 export type ChangeSignal =
   | { kind: "http_status"; previous: number; current: number }
+  /**
+   * The scanner was served a bot-protection / challenge page (e.g. Cloudflare
+   * "Just a moment...") instead of the page itself. Says nothing about what
+   * real visitors see, so it replaces the page's other diffs.
+   */
+  | { kind: "bot_challenge"; title: string | null; httpStatus: number | null }
   | { kind: "final_url"; previous: string; current: string }
   | { kind: "redirect_appeared"; hops: number }
   | { kind: "title"; previous: string | null; current: string | null }
   | { kind: "meta_description"; previous: string | null; current: string | null }
-  | { kind: "canonical"; previous: string | null; current: string | null }
+  | {
+      kind: "canonical";
+      previous: string | null;
+      current: string | null;
+      /**
+       * The new canonical points at the page itself (self-referencing). That
+       * is the normal, healthy state, so arriving at it is good news, not a
+       * HIGH alert. Optional so older callers keep the previous behaviour.
+       */
+      matchesPage?: boolean;
+    }
   | { kind: "robots"; previous: string | null; current: string | null }
   | { kind: "h1"; previous: string[]; current: string[] }
   | { kind: "content_text" }
@@ -74,6 +90,12 @@ export type ChangeSignal =
   | {
       kind: "visual_diff";
       percentage: number;
+      /**
+       * Raw positional pixel difference, when the caller has it. Under 1% of
+       * pixels changed in place means the page looks the same; whatever the
+       * content score says is an artefact, so severity is capped at LOW.
+       */
+      pixelPercentage?: number;
       /**
        * The page was redesigned, not edited: the screenshot, the visible text
        * and the markup all changed at once (see isPageRedesign in
@@ -181,6 +203,21 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
     case "http_status": {
       const wasOk = signal.previous >= 200 && signal.previous < 400;
       const nowError = signal.current >= 400;
+      const recovered = signal.previous >= 400 && signal.current >= 200 && signal.current < 400;
+      if (recovered) {
+        // Good news, and only ever seen against a baseline captured while the
+        // page was broken - which re-raised this as HIGH on every scan until
+        // someone re-approved. Recorded, never emailed.
+        return finalize({
+          category: "AVAILABILITY",
+          changeType: "http_status_recovered",
+          severity: "LOW",
+          title: `Page is reachable again (HTTP ${signal.previous} → ${signal.current})`,
+          description: `The approved baseline was captured while this page returned HTTP ${signal.previous}; it now loads normally. Approve the current scan as the new baseline so future changes are compared against the working page.`,
+          previousValue: fmt(signal.previous),
+          currentValue: fmt(signal.current),
+        });
+      }
       const severity: Severity = wasOk && nowError ? "CRITICAL" : "HIGH";
       return finalize({
         category: "AVAILABILITY",
@@ -195,6 +232,17 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         currentValue: fmt(signal.current),
       });
     }
+
+    case "bot_challenge":
+      return finalize({
+        category: "AVAILABILITY",
+        changeType: "bot_challenge",
+        severity: "MEDIUM",
+        title: "Scan was blocked by bot protection",
+        description: `MyKavo was shown a bot-protection check${signal.title ? ` ("${signal.title}")` : ""} instead of the page, so this page could not be compared this time. Real visitors usually pass it automatically. If this repeats, allow MyKavo's scanner in your firewall or CDN bot settings.`,
+        previousValue: "Page",
+        currentValue: signal.httpStatus === null ? "Challenge page" : `Challenge page (HTTP ${signal.httpStatus})`,
+      });
 
     case "final_url":
       return finalize({
@@ -251,6 +299,22 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
 
     case "canonical": {
       const removed = !signal.current && !!signal.previous;
+      const added = !signal.previous && !!signal.current;
+      if (added || (!removed && signal.matchesPage)) {
+        return finalize({
+          category: "SEO",
+          changeType: added ? "canonical_added" : "canonical_now_self",
+          severity: signal.matchesPage ? "LOW" : "MEDIUM",
+          title: added
+            ? "Canonical URL added"
+            : "Canonical URL now points at this page",
+          description: signal.matchesPage
+            ? "The page now declares itself as its canonical URL - the standard, healthy setup."
+            : "The page now declares a canonical URL where it had none. Check it points at the right page.",
+          previousValue: fmt(signal.previous),
+          currentValue: fmt(signal.current),
+        });
+      }
       return finalize({
         category: "SEO",
         changeType: removed ? "canonical_removed" : "canonical_changed",
@@ -404,13 +468,22 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
     case "page_weight": {
       const delta = pctDelta(signal.previousBytes, signal.currentBytes);
       if (delta <= 20) return null; // only regressions beyond +20% matter (spec §22)
-      const severity: Severity = delta > 50 ? "HIGH" : "MEDIUM";
+      // Percentages alone over-alert on light pages: 25 KB -> 55 KB is +120%
+      // and was a HIGH alert, yet 30 KB is noise on any connection. The
+      // spec's bands still apply, but only above an absolute floor.
+      const grewBy = signal.currentBytes - signal.previousBytes;
+      const severity: Severity =
+        grewBy < PAGE_WEIGHT_MEDIUM_MIN_BYTES
+          ? "LOW"
+          : delta > 50 && grewBy >= PAGE_WEIGHT_HIGH_MIN_BYTES
+            ? "HIGH"
+            : "MEDIUM";
       return finalize({
         category: "PERFORMANCE",
         changeType: "page_weight_increased",
         severity,
         title: `Page weight increased ${Math.round(delta)}%`,
-        description: `The HTML payload grew from ${kb(signal.previousBytes)} to ${kb(signal.currentBytes)}.`,
+        description: `The total weight of the page and the resources it loads grew from ${kb(signal.previousBytes)} to ${kb(signal.currentBytes)}.`,
         previousValue: kb(signal.previousBytes),
         currentValue: kb(signal.currentBytes),
       });
@@ -464,8 +537,11 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
       if (p < 1) return null; // 0-1% ignored (spec §18)
       // Spec §18 bands. 30%+ is the CRITICAL candidate tier - it previously
       // returned HIGH from both arms of the ternary, so it could never fire.
-      const severity: Severity =
+      const banded: Severity =
         p >= 30 ? "CRITICAL" : p >= 15 ? "HIGH" : p >= 5 ? "MEDIUM" : "LOW";
+      const looksIdentical =
+        signal.pixelPercentage !== undefined && signal.pixelPercentage < 1;
+      const severity: Severity = looksIdentical ? "LOW" : banded;
       return finalize({
         category: "VISUAL",
         changeType: "visual_difference",
@@ -801,6 +877,11 @@ function byImportance(importance: ElementImportance): Severity {
       ? "HIGH"
       : "MEDIUM";
 }
+
+/** Page-weight growth below this is LOW whatever the percentage (spec §22 noise floor). */
+const PAGE_WEIGHT_MEDIUM_MIN_BYTES = 50 * 1024;
+/** HIGH needs both >50% and at least this much absolute growth. */
+const PAGE_WEIGHT_HIGH_MIN_BYTES = 250 * 1024;
 
 function kb(bytes: number): string {
   return `${Math.round(bytes / 1024)} KB`;

@@ -26,6 +26,13 @@ const REDESIGN_CONTENT = 40;
 /** A lower content bar, accepted only when nearly every pixel moved as well. */
 const REDESIGN_CONTENT_WITH_PIXELS = 20;
 const REDESIGN_PIXELS = 50;
+/**
+ * Below this share of positionally-changed pixels the page cannot have been
+ * replaced: at least 95% of it is pixel-for-pixel where it was. Production
+ * data showed "Page redesigned" CRITICAL alerts with 3% of pixels changed -
+ * screenshot re-encoding artefacts, not redesigns (see visual.ts).
+ */
+const REDESIGN_MIN_PIXELS = 5;
 
 export function isPageRedesign(e: RedesignEvidence): boolean {
   const visuallyReplaced =
@@ -34,7 +41,7 @@ export function isPageRedesign(e: RedesignEvidence): boolean {
   // Words AND structure: markup alone churns on busy pages (a slider, a
   // rotating banner), and calling that a redesign would cheapen the label.
   // A rebuild that kept every word is still reported by the visual score.
-  return visuallyReplaced && e.textChanged && e.domChanged;
+  return visuallyReplaced && e.pixelPercentage >= REDESIGN_MIN_PIXELS && e.textChanged && e.domChanged;
 }
 
 /**

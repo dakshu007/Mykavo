@@ -4,7 +4,7 @@
  * and can run in the client for rendering.
  */
 
-import { attr, stripTags } from "./html";
+import { attr, capHtml, findRegions, findTags, stripTags } from "./html";
 
 export interface MetaTagExtraction {
   title: string | null;
@@ -26,9 +26,11 @@ export interface MetaTagReport {
   tags: MetaTagExtraction;
 }
 
-export function extractMetaTags(html: string): MetaTagExtraction {
-  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const title = titleMatch ? stripTags(titleMatch[1]) || null : null;
+/** Pages longer than MAX_PARSE_CHARS are read up to that point. */
+export function extractMetaTags(fullHtml: string): MetaTagExtraction {
+  const html = capHtml(fullHtml);
+  const titleMatch = findRegions(html, { elements: ["title"], boundary: false, closeSpace: false, limit: 1 })[0];
+  const title = titleMatch ? stripTags(titleMatch.inner) || null : null;
 
   let metaDescription: string | null = null;
   let robotsMeta: string | null = null;
@@ -36,7 +38,7 @@ export function extractMetaTags(html: string): MetaTagExtraction {
   let ogDescription: string | null = null;
   let ogImage: string | null = null;
 
-  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(html, ["meta"])) {
     const name = attr(tag, "name")?.toLowerCase();
     const property = attr(tag, "property")?.toLowerCase();
     if (name === "description" && metaDescription === null) {
@@ -53,15 +55,16 @@ export function extractMetaTags(html: string): MetaTagExtraction {
   }
 
   let canonicalUrl: string | null = null;
-  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(html, ["link"])) {
     if (attr(tag, "rel")?.toLowerCase() === "canonical") {
       canonicalUrl = attr(tag, "href");
       break;
     }
   }
 
-  const allH1s = (html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi) ?? [])
-    .map((h) => stripTags(h.replace(/<\/?h1\b[^>]*>/gi, "")))
+  const allH1s = findRegions(html, { elements: ["h1"], closeSpace: false })
+    // Every match ends in "</h1>", so this replace always finds its ">" and stays linear.
+    .map((h) => stripTags(html.slice(h.start, h.end).replace(/<\/?h1\b[^>]*>/gi, "")))
     .filter(Boolean);
 
   return {

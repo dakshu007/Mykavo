@@ -1,4 +1,4 @@
-import { attr } from "./html";
+import { attr, capHtml, findTags } from "./html";
 
 /**
  * Hreflang checks for the Hreflang Checker.
@@ -22,10 +22,13 @@ export interface HreflangLink {
   source: "html" | "header";
 }
 
-/** <link rel="alternate" hreflang="..." href="..."> tags in the HTML. */
+/**
+ * <link rel="alternate" hreflang="..." href="..."> tags in the HTML. Pages
+ * longer than MAX_PARSE_CHARS are read up to that point.
+ */
 export function extractHreflangLinks(html: string): HreflangLink[] {
   const out: HreflangLink[] = [];
-  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(capHtml(html), ["link"])) {
     const rel = attr(tag, "rel")?.toLowerCase().split(/\s+/) ?? [];
     const hreflang = attr(tag, "hreflang");
     const href = attr(tag, "href");

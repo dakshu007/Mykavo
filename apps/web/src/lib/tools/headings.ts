@@ -1,4 +1,4 @@
-import { attr, stripTags } from "./html";
+import { attr, capHtml, findRegions, findTags, removeRegions, stripTags, type FindRegionsOptions } from "./html";
 
 /**
  * Heading outline for the free Heading Structure Checker.
@@ -70,18 +70,25 @@ export interface HeadingsReport {
 }
 
 /** Regions whose contents are never rendered as page headings. */
-const IGNORED_REGIONS = /<!--[\s\S]*?-->|<(script|style|template|noscript|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+const IGNORED_REGIONS: FindRegionsOptions = {
+  comments: true,
+  elements: ["script", "style", "template", "noscript", "textarea"],
+};
 
+/**
+ * The page with comments, scripts, styles, templates and textareas blanked
+ * out. Pages longer than MAX_PARSE_CHARS are cut to that length first.
+ */
 export function stripIgnoredRegions(html: string): string {
-  return html.replace(IGNORED_REGIONS, " ");
+  return removeRegions(capHtml(html), IGNORED_REGIONS, " ");
 }
 
 /** The document <title>, ignoring <title> elements inside inline SVGs. */
 export function extractTitle(html: string): string | null {
-  const cleaned = stripIgnoredRegions(html).replace(/<svg\b[\s\S]*?<\/svg\s*>/gi, " ");
-  const m = /<title\b[^>]*>([\s\S]*?)<\/title\s*>/i.exec(cleaned);
+  const cleaned = removeRegions(stripIgnoredRegions(html), { elements: ["svg"], open: "loose" }, " ");
+  const m = findRegions(cleaned, { elements: ["title"], limit: 1 })[0];
   if (!m) return null;
-  return stripTags(m[1]) || null;
+  return stripTags(m.inner) || null;
 }
 
 interface RawHeading {
@@ -89,21 +96,23 @@ interface RawHeading {
   inner: string;
 }
 
+/** Opening and closing h1-h6 tags, as matched by `<(\/?)h([1-6])\b[^>]*>`. */
+const HEADING_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6", "/h1", "/h2", "/h3", "/h4", "/h5", "/h6"];
+
 /** Every h1-h6 in document order, with its raw inner HTML. */
 function scanHeadings(html: string): RawHeading[] {
   const cleaned = stripIgnoredRegions(html);
-  const tag = /<(\/?)h([1-6])\b[^>]*>/gi;
   const out: RawHeading[] = [];
   let open: { level: HeadingLevel; start: number } | null = null;
 
-  for (let m = tag.exec(cleaned); m !== null; m = tag.exec(cleaned)) {
+  for (const m of findTags(cleaned, HEADING_TAGS)) {
     if (open) {
       // Cap the slice so an unclosed heading can't drag in the whole page.
-      out.push({ level: open.level, inner: cleaned.slice(open.start, Math.min(m.index, open.start + 5_000)) });
+      out.push({ level: open.level, inner: cleaned.slice(open.start, Math.min(m.start, open.start + 5_000)) });
       open = null;
     }
-    if (m[1] !== "/") {
-      open = { level: Number(m[2]) as HeadingLevel, start: m.index + m[0].length };
+    if (!m.name.startsWith("/")) {
+      open = { level: Number(m.name.slice(1)) as HeadingLevel, start: m.end };
     }
   }
   if (open) out.push({ level: open.level, inner: cleaned.slice(open.start, open.start + 5_000) });
@@ -113,8 +122,8 @@ function scanHeadings(html: string): RawHeading[] {
 function headingText(inner: string): { text: string; fromAlt: boolean } {
   const text = stripTags(inner);
   if (text) return { text, fromAlt: false };
-  for (const img of inner.match(/<img\b[^>]*>/gi) ?? []) {
-    const alt = attr(img, "alt")?.trim();
+  for (const img of findTags(inner, ["img"])) {
+    const alt = attr(img.tag, "alt")?.trim();
     if (alt) return { text: alt, fromAlt: true };
   }
   return { text: "", fromAlt: false };

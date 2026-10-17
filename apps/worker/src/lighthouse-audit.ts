@@ -2,8 +2,10 @@
  * LIGHTHOUSE_AUDIT job: runs a Lighthouse performance audit (on-demand or from
  * the weekly sweep) for one PerformanceAudit row and persists the scores.
  * Idempotent - a row already in a terminal state is skipped. The URL is
- * re-validated through the SSRF guard immediately before auditing (spec §11)
- * since Chrome will fetch it directly.
+ * re-validated through the SSRF guard immediately before auditing (spec §11);
+ * runLighthouse then routes all of Chrome's traffic through the scanner's
+ * egress proxy (vetted addresses only) and rejects an unsafe final URL with
+ * LighthouseError("UNSAFE_URL"), which is stored as the audit's errorCode.
  *
  * After a successful run, the score is compared against the previous completed
  * audit of the SAME url; a fall that passes shouldAlertPerformanceDrop

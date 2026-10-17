@@ -12,6 +12,7 @@
  */
 
 import { parse, type HTMLElement } from "node-html-parser";
+import { capHtml } from "./html";
 
 export type EeatPillar = "EXPERIENCE" | "EXPERTISE" | "AUTHORITATIVENESS" | "TRUST";
 export type EeatStatus = "pass" | "warn" | "fail";
@@ -94,7 +95,9 @@ interface PageFacts {
 
 /** Parse once into the facts every check reads. Exported for the aux-probe
  *  short-circuit (linked pages found on-page need no network probes). */
-export function extractEeatFacts(url: string, html: string): PageFacts {
+export function extractEeatFacts(url: string, fullHtml: string): PageFacts {
+  // Pages longer than MAX_PARSE_CHARS are analysed on their first MAX_PARSE_CHARS characters.
+  const html = capHtml(fullHtml);
   const base = new URL(url);
   const root = parse(html, { blockTextElements: { script: true, style: true, noscript: true } });
 

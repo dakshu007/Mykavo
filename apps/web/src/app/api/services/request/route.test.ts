@@ -117,7 +117,7 @@ describe("POST /api/services/request", () => {
     expect(sendEmail).toHaveBeenCalledTimes(1);
     const mail = sendEmail.mock.calls[0]?.[0];
     expect(mail?.to).toEqual(["support@mykavo.app"]);
-    expect(mail?.headers).toEqual({ "Reply-To": "sam@example.com" });
+    expect(mail?.replyTo).toBe("sam@example.com");
   });
 
   it("still succeeds when the email fails, because the request is saved", async () => {

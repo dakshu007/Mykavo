@@ -1,4 +1,4 @@
-import { attr } from "./html";
+import { attr, capHtml, findRegions } from "./html";
 
 /**
  * Analytics tag detection from a page's delivered HTML.
@@ -99,17 +99,17 @@ const VENDORS: readonly VendorRule[] = [
     key: "ga4",
     name: "Google Analytics 4",
     category: "analytics",
-    src: [re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]*&)?id=(${GA4_ID})`, "")],
+    src: [re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]{0,512}&)?id=(${GA4_ID})`, "")],
     inline: [
       re(`gtag\\(\\s*['"]config['"]\\s*,\\s*['"](${GA4_ID})['"]`),
-      re(`gtag/js\\?(?:[^"'\\s]*&)?id=(${GA4_ID})`),
+      re(`gtag/js\\?(?:[^"'\\s]{0,512}&)?id=(${GA4_ID})`),
     ],
   },
   {
     key: "google-tag",
     name: "Google tag (GT- ID)",
     category: "analytics",
-    src: [re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]*&)?id=(${GT_ID})`, "")],
+    src: [re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]{0,512}&)?id=(${GT_ID})`, "")],
     inline: [re(`gtag\\(\\s*['"]config['"]\\s*,\\s*['"](${GT_ID})['"]`)],
   },
   {
@@ -117,7 +117,7 @@ const VENDORS: readonly VendorRule[] = [
     name: "Universal Analytics (retired)",
     category: "analytics",
     src: [
-      re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]*&)?id=(${UA_ID})`, ""),
+      re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]{0,512}&)?id=(${UA_ID})`, ""),
       /google-analytics\.com\/(?:analytics|ga)\.js/,
     ],
     inline: [re(`['"](${UA_ID})['"]`), /google-analytics\.com\/(?:analytics|ga)\.js/g],
@@ -126,15 +126,15 @@ const VENDORS: readonly VendorRule[] = [
     key: "gtm",
     name: "Google Tag Manager",
     category: "tag manager",
-    src: [re(`googletagmanager\\.com/gtm\\.js\\?(?:[^"'\\s]*&)?id=(${GTM_ID})`, "")],
+    src: [re(`googletagmanager\\.com/gtm\\.js\\?(?:[^"'\\s]{0,512}&)?id=(${GTM_ID})`, "")],
     inline: [re(`['"](${GTM_ID})['"]`)],
-    noscript: [re(`googletagmanager\\.com/ns\\.html\\?(?:[^"'\\s]*&)?id=(${GTM_ID})`)],
+    noscript: [re(`googletagmanager\\.com/ns\\.html\\?(?:[^"'\\s]{0,512}&)?id=(${GTM_ID})`)],
   },
   {
     key: "google-ads",
     name: "Google Ads",
     category: "advertising",
-    src: [re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]*&)?id=(${ADS_ID})`, "")],
+    src: [re(`googletagmanager\\.com/gtag/js\\?(?:[^"'\\s]{0,512}&)?id=(${ADS_ID})`, "")],
     inline: [re(`['"](${ADS_ID})(?:/[^'"]*)?['"]`)],
   },
   {
@@ -143,7 +143,7 @@ const VENDORS: readonly VendorRule[] = [
     category: "advertising",
     src: [/connect\.facebook\.net\/[^/]+\/fbevents\.js/],
     inline: [/fbq\(\s*['"]init['"]\s*,\s*['"]?(\d{5,20})/g, /connect\.facebook\.net\/[^/'"]+\/fbevents\.js/g],
-    noscript: [/facebook\.com\/tr\/?\?(?:[^"'\s]*&(?:amp;)?)?id=(\d{5,20})/g],
+    noscript: [/facebook\.com\/tr\/?\?(?:[^"'\s]{0,512}&(?:amp;)?)?id=(\d{5,20})/g],
   },
   {
     key: "linkedin",
@@ -151,13 +151,13 @@ const VENDORS: readonly VendorRule[] = [
     category: "advertising",
     src: [/snap\.licdn\.com\/li\.lms-analytics\/insight(?:\.min)?\.js/],
     inline: [/_linkedin_partner_id\s*=\s*["']?(\d{3,12})/g, /snap\.licdn\.com\/li\.lms-analytics/g],
-    noscript: [/px\.ads\.linkedin\.com\/collect\/?\?(?:[^"'\s]*&(?:amp;)?)?pid=(\d{3,12})/g],
+    noscript: [/px\.ads\.linkedin\.com\/collect\/?\?(?:[^"'\s]{0,512}&(?:amp;)?)?pid=(\d{3,12})/g],
   },
   {
     key: "tiktok",
     name: "TikTok Pixel",
     category: "advertising",
-    src: [/analytics\.tiktok\.com\/i18n\/pixel\/events\.js(?:\?(?:[^"'\s]*&)?sdkid=([A-Z0-9]{10,30}))?/],
+    src: [/analytics\.tiktok\.com\/i18n\/pixel\/events\.js(?:\?(?:[^"'\s]{0,512}&)?sdkid=([A-Z0-9]{10,30}))?/],
     inline: [/ttq\.load\(\s*['"]([A-Z0-9]{10,30})['"]/g, /analytics\.tiktok\.com\/i18n\/pixel/g],
   },
   {
@@ -234,16 +234,14 @@ interface ScriptBlock {
 }
 
 function scriptBlocks(html: string): ScriptBlock[] {
-  const out: ScriptBlock[] = [];
-  for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
-    const tag = `<script${m[1]}>`;
-    out.push({ tag, src: attr(tag, "src"), body: m[2] });
-  }
-  return out;
+  return findRegions(html, { elements: ["script"] }).map((r) => {
+    const tag = `<script${r.attrs}>`;
+    return { tag, src: attr(tag, "src"), body: r.inner };
+  });
 }
 
 function noscriptBodies(html: string): string[] {
-  return [...html.matchAll(/<noscript\b[^>]*>([\s\S]*?)<\/noscript\s*>/gi)].map((m) => m[1]);
+  return findRegions(html, { elements: ["noscript"] }).map((r) => r.inner);
 }
 
 /** Inline JS often escapes slashes in URLs ("https:\/\/..."); undo that before matching. */
@@ -274,7 +272,9 @@ function count(pattern: RegExp, text: string): number {
   return [...text.matchAll(pattern)].length;
 }
 
-export function analyzeAnalyticsTags(html: string): AnalyticsTagsResult {
+/** Pages longer than MAX_PARSE_CHARS are analysed on their first MAX_PARSE_CHARS characters. */
+export function analyzeAnalyticsTags(fullHtml: string): AnalyticsTagsResult {
+  const html = capHtml(fullHtml);
   const scripts = scriptBlocks(html);
   const inlineBodies = scripts.filter((s) => !s.src && s.body.trim()).map((s) => unescapeSlashes(s.body));
   const noscripts = noscriptBodies(html);

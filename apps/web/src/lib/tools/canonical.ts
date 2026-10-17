@@ -1,4 +1,4 @@
-import { attr } from "./html";
+import { attr, capHtml, findTags, removeRegions } from "./html";
 import { appliesToGoogle, extractRobotsMetas, hasNoindex, parseXRobotsTag } from "./noindex";
 
 /**
@@ -87,14 +87,13 @@ export function relIncludes(rel: string | null | undefined, name: string): boole
 
 /** Remove comments, scripts, styles and templates so their contents can't produce fake tags. */
 export function stripNonMarkup(html: string): string {
-  return html
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1\s*>/gi, "");
+  const withoutComments = removeRegions(html, { comments: true }, "");
+  return removeRegions(withoutComments, { elements: ["script", "style", "template", "noscript"], open: "loose" }, "");
 }
 
 /** The URL relative links on this page resolve against: the first <base href>, else the page URL. */
 export function documentBase(html: string, pageUrl: string): string {
-  const tag = /<base\b[^>]*>/i.exec(html)?.[0];
+  const tag = findTags(html, ["base"], { limit: 1 })[0]?.tag;
   const href = tag ? attr(tag, "href") : null;
   if (href) {
     try {
@@ -121,14 +120,17 @@ export function resolveAgainst(href: string, base: string): string | null {
   }
 }
 
-/** Every <link rel="canonical"> in the document, in source order. */
+/**
+ * Every <link rel="canonical"> in the document, in source order. Pages longer
+ * than MAX_PARSE_CHARS are read up to that point.
+ */
 export function extractHtmlCanonicals(html: string, pageUrl: string): DeclaredCanonical[] {
-  const clean = stripNonMarkup(html);
+  const clean = stripNonMarkup(capHtml(html));
   const base = documentBase(clean, pageUrl);
   const bodyAt = clean.search(/<body\b/i);
   const out: DeclaredCanonical[] = [];
-  for (const m of clean.matchAll(/<link\b[^>]*>/gi)) {
-    const tag = m[0];
+  for (const m of findTags(clean, ["link"])) {
+    const tag = m.tag;
     if (!relIncludes(attr(tag, "rel"), "canonical")) continue;
     const href = attr(tag, "href") ?? "";
     out.push({
@@ -136,7 +138,7 @@ export function extractHtmlCanonicals(html: string, pageUrl: string): DeclaredCa
       href,
       resolved: resolveAgainst(href, base),
       relative: href.trim() !== "" && !isAbsoluteHttpUrl(href),
-      inBody: bodyAt !== -1 && (m.index ?? 0) > bodyAt,
+      inBody: bodyAt !== -1 && m.start > bodyAt,
     });
   }
   return out;
@@ -185,7 +187,7 @@ export function differsOnlyByTrailingSlash(a: string, b: string): boolean {
 
 /** Is the page told not to be indexed by Google (meta robots/googlebot or X-Robots-Tag)? */
 export function isNoindex(html: string, xRobotsTag: string | null): boolean {
-  return [...extractRobotsMetas(stripNonMarkup(html)), ...parseXRobotsTag(xRobotsTag)].some(
+  return [...extractRobotsMetas(stripNonMarkup(capHtml(html))), ...parseXRobotsTag(xRobotsTag)].some(
     (s) => appliesToGoogle(s) && hasNoindex(s.value),
   );
 }

@@ -1,4 +1,4 @@
-import { attr } from "./html";
+import { attr, capHtml, findRegions, findTags } from "./html";
 import { humanizeSlug } from "./wordpress-detect";
 
 /**
@@ -172,7 +172,7 @@ export function detectShopifySignals(html: string): { signals: string[]; shop: s
   if (shop) signals.push("myshopify.com store address");
   if (/cdn\.shopify\.com\//i.test(html)) signals.push("cdn.shopify.com assets");
   if (/["'(]\/cdn\/shop\//i.test(html) || /\/\/[^/"'\s]+\/cdn\/shop\//i.test(html)) signals.push("/cdn/shop/ asset paths");
-  const metaNames = (html.match(/<meta\b[^>]*>/gi) ?? []).map((t) => attr(t, "name")?.toLowerCase());
+  const metaNames = findTags(html, ["meta"]).map((t) => attr(t.tag, "name")?.toLowerCase());
   if (metaNames.includes("shopify-checkout-api-token")) signals.push("Shopify checkout meta tag");
   if (metaNames.includes("shopify-digital-wallet")) signals.push("Shopify digital wallet meta tag");
   if (/ShopifyAnalytics\s*=|window\.ShopifyAnalytics/.test(html)) signals.push("ShopifyAnalytics script");
@@ -182,12 +182,13 @@ export function detectShopifySignals(html: string): { signals: string[]; shop: s
 /** Every resource URL the page loads: script src, link href, and URLs inside inline scripts. */
 function resourceUrls(html: string): string[] {
   const urls: string[] = [];
-  for (const m of html.matchAll(/<(script|link)\b[^>]*>/gi)) {
-    const value = attr(m[0], m[1].toLowerCase() === "script" ? "src" : "href");
+  for (const t of findTags(html, ["script", "link"])) {
+    const value = attr(t.tag, t.name === "script" ? "src" : "href");
     if (value) urls.push(value);
   }
-  for (const m of html.matchAll(/<script\b(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script\s*>/gi)) {
-    for (const u of unescapeSlashes(m[1]).matchAll(/(?:https?:)?\/\/[a-z0-9.-]+\.[a-z]{2,}[^\s"'<>`)]*/gi)) urls.push(u[0]);
+  for (const script of findRegions(html, { elements: ["script"] })) {
+    if (/\bsrc\s*=/i.test(script.attrs)) continue;
+    for (const u of unescapeSlashes(script.inner).matchAll(/(?:https?:)?\/\/[a-z0-9.-]+\.[a-z]{2,}[^\s"'<>`)]*/gi)) urls.push(u[0]);
   }
   return urls;
 }
@@ -234,7 +235,9 @@ export function detectShopifyApps(html: string, pageUrl: string): ShopifyApp[] {
   return [...found.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function analyzeShopify(html: string, finalUrl: string): Omit<ShopifyReport, "url" | "finalUrl" | "httpStatus"> {
+/** Pages longer than MAX_PARSE_CHARS are analysed on their first MAX_PARSE_CHARS characters. */
+export function analyzeShopify(fullHtml: string, finalUrl: string): Omit<ShopifyReport, "url" | "finalUrl" | "httpStatus"> {
+  const html = capHtml(fullHtml);
   const { signals, shop } = detectShopifySignals(html);
   const themeObject = parseThemeObject(html);
   const theme = themeObject ?? parseBoomrTheme(html);

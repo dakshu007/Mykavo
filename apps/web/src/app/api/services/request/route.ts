@@ -191,7 +191,7 @@ export async function POST(request: Request) {
       text: email.text,
       // The email address passed the schema's email check, so it carries no
       // line breaks and cannot inject a header.
-      headers: { "Reply-To": data.email },
+      replyTo: data.email,
     });
     if (!result.ok) {
       logger.error("services: notification email failed", {

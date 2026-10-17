@@ -58,6 +58,28 @@ export interface ComparableSnapshot {
   elements: ComparableElement[];
 }
 
+/**
+ * Titles of bot-protection interstitials served instead of the real page.
+ * Matched only when the BASELINE did not carry the same title, so a site that
+ * genuinely uses one of these words as its title is never affected.
+ */
+const BOT_CHALLENGE_TITLES: RegExp[] = [
+  /^just a moment\.*$/i, // Cloudflare managed challenge
+  /^attention required!? \| cloudflare$/i, // Cloudflare block page
+  /^checking your browser/i,
+  /^ddos-guard$/i,
+  /^please wait while we verify/i,
+  /^verifying you are human/i,
+  /^human verification$/i,
+  /^access denied \| .*cloudflare/i,
+];
+
+/** True when a page title is a known bot-protection challenge, not page content. */
+export function isBotChallengeTitle(title: string | null): boolean {
+  const t = (title ?? "").trim();
+  return t !== "" && BOT_CHALLENGE_TITLES.some((re) => re.test(t));
+}
+
 /** Known-service detection so script identity survives cache-busting query strings. */
 function scriptKey(s: SnapshotScript): string {
   return s.service ? `service:${s.service}` : `domain:${s.domain}`;
@@ -75,6 +97,18 @@ export function compareSnapshots(
 ): ScoredChange[] {
   const signals: ChangeSignal[] = [];
 
+  // --- Bot protection: the scanner saw a challenge page, not the site. Every
+  // other diff would compare the real page against an interstitial, so this
+  // one MEDIUM signal replaces them all.
+  if (isBotChallengeTitle(current.title) && !isBotChallengeTitle(baseline.title)) {
+    const challenge = scoreChange({
+      kind: "bot_challenge",
+      title: current.title,
+      httpStatus: current.httpStatus,
+    });
+    return challenge ? [challenge] : [];
+  }
+
   // --- Availability (spec §19) ---
   const statusChanged =
     baseline.httpStatus !== null &&
@@ -89,13 +123,20 @@ export function compareSnapshots(
   }
 
   const currentBroken = (current.httpStatus ?? 0) >= 400;
+  // A baseline captured while the page was an error has nothing meaningful to
+  // compare a working page against: its "title", links and canonical belong
+  // to an error page. Report the recovery and nothing else.
+  const baselineBroken = (baseline.httpStatus ?? 0) >= 400;
 
   // When the page is now an error, only availability matters - skip the rest.
-  if (!currentBroken) {
+  if (!currentBroken && !baselineBroken) {
     if (
       baseline.finalUrl &&
       current.finalUrl &&
-      normalizeForCompare(baseline.finalUrl) !== normalizeForCompare(current.finalUrl)
+      // Query strings are ignored here: a redirect that lands on the same
+      // page with a fresh session/state token (login?state=<uuid>) was a
+      // HIGH "Final URL changed" alert on every scan.
+      withoutQuery(baseline.finalUrl) !== withoutQuery(current.finalUrl)
     ) {
       signals.push({ kind: "final_url", previous: baseline.finalUrl, current: current.finalUrl });
     } else if (baseline.redirectCount === 0 && current.redirectCount > 0) {
@@ -118,6 +159,10 @@ export function compareSnapshots(
         kind: "canonical",
         previous: baseline.canonicalUrl,
         current: current.canonicalUrl,
+        matchesPage:
+          !!current.canonicalUrl &&
+          !!current.finalUrl &&
+          normalizeForCompare(current.canonicalUrl) === normalizeForCompare(current.finalUrl),
       });
     }
     if ((baseline.robotsMeta ?? "") !== (current.robotsMeta ?? "")) {
@@ -267,6 +312,17 @@ export function compareSnapshots(
 
 function normalizeText(v: string | null): string {
   return (v ?? "").replace(/\s+/g, " ").trim();
+}
+
+/** Origin + path only, normalized - for comparing redirect destinations. */
+function withoutQuery(url: string): string {
+  try {
+    const u = new URL(url);
+    u.search = "";
+    return normalizeForCompare(u.href);
+  } catch {
+    return url;
+  }
 }
 
 function normalizeForCompare(url: string): string {

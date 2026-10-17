@@ -1,4 +1,4 @@
-import { attr } from "./html";
+import { attr, capHtml, findTags } from "./html";
 
 /**
  * Indexability signals for the Noindex Checker. A page stays out of Google
@@ -22,10 +22,13 @@ export interface RobotsDirectiveSource {
   value: string;
 }
 
-/** Every robots/googlebot meta tag on the page (there can be several). */
+/**
+ * Every robots/googlebot meta tag on the page (there can be several). Pages
+ * longer than MAX_PARSE_CHARS are read up to that point.
+ */
 export function extractRobotsMetas(html: string): RobotsDirectiveSource[] {
   const out: RobotsDirectiveSource[] = [];
-  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(capHtml(html), ["meta"])) {
     const name = attr(tag, "name")?.toLowerCase();
     if (name !== "robots" && name !== "googlebot") continue;
     const content = attr(tag, "content");
@@ -105,7 +108,7 @@ export interface NoindexReport {
 }
 
 export function readCanonical(html: string): string | null {
-  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+  for (const { tag } of findTags(capHtml(html), ["link"])) {
     const rel = attr(tag, "rel")?.toLowerCase().split(/\s+/) ?? [];
     if (rel.includes("canonical")) return attr(tag, "href");
   }

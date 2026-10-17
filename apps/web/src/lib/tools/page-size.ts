@@ -1,4 +1,4 @@
-import { attr } from "./html";
+import { attr, capHtml, findTags, removeRegions } from "./html";
 import { siteHost } from "./broken-links";
 
 /**
@@ -54,9 +54,11 @@ function isFirstParty(resource: URL, pageHost: string): boolean {
  * document order. Inline data: URIs are skipped - their bytes are already
  * part of the HTML size.
  */
-export function extractResources(html: string, pageUrl: string): ExtractedResource[] {
+export function extractResources(fullHtml: string, pageUrl: string): ExtractedResource[] {
+  // Pages longer than MAX_PARSE_CHARS are read up to that point.
+  const html = capHtml(fullHtml);
   const pageHost = siteHost(new URL(pageUrl));
-  const baseTag = html.match(/<base\b[^>]*>/i)?.[0];
+  const baseTag = findTags(html, ["base"], { limit: 1 })[0]?.tag;
   let base = pageUrl;
   const baseHref = baseTag ? attr(baseTag, "href") : null;
   if (baseHref) {
@@ -66,7 +68,7 @@ export function extractResources(html: string, pageUrl: string): ExtractedResour
       // keep page URL
     }
   }
-  const clean = html.replace(/<!--[\s\S]*?-->/g, " ");
+  const clean = removeRegions(html, { comments: true }, " ");
 
   const byUrl = new Map<string, ExtractedResource>();
   const add = (raw: string | null, type: ResourceType) => {
@@ -83,9 +85,8 @@ export function extractResources(html: string, pageUrl: string): ExtractedResour
     if (!byUrl.has(u.href)) byUrl.set(u.href, { url: u.href, type, firstParty: isFirstParty(u, pageHost) });
   };
 
-  for (const m of clean.matchAll(/<(script|link|img|iframe)\b[^>]*>/gi)) {
-    const tag = m[0];
-    switch (m[1].toLowerCase()) {
+  for (const { name, tag } of findTags(clean, ["script", "link", "img", "iframe"])) {
+    switch (name) {
       case "script":
         add(attr(tag, "src"), "script");
         break;

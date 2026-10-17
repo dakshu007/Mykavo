@@ -29,6 +29,14 @@ describe("isPageRedesign", () => {
     ).toBe(false);
   });
 
+  it("does not call it a redesign when almost no pixels moved", () => {
+    // Seen in production: content score 72-100% from a re-encoded screenshot,
+    // 3% of pixels actually different, dynamic text - labelled CRITICAL.
+    expect(
+      isPageRedesign({ contentPercentage: 90, pixelPercentage: 3, textChanged: true, domChanged: true }),
+    ).toBe(false);
+  });
+
   it("does not call a routine edit a redesign", () => {
     // New paragraph near the top: text and DOM change, content score small.
     expect(
