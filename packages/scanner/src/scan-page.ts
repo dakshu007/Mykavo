@@ -2,12 +2,23 @@
  * Single-page scan (spec §14, §15, §17). Validates the URL through the
  * SSRF guard, navigates with stabilization, extracts a normalized snapshot,
  * and captures a deterministic full-page screenshot.
+ *
+ * Egress (spec §11) is enforced in three layers:
+ *  1. context.route checks every request the page makes (scheme + guard,
+ *     DNS cached per scan) and aborts the unsafe ones. Playwright only calls
+ *     the handler for the FIRST url of a redirect chain, so this layer alone
+ *     does not cover redirects.
+ *  2. The browser's egress proxy (egress-proxy.ts, set by BrowserPool) sees
+ *     every connection, redirects and WebSockets included, and connects only
+ *     to vetted addresses - this closes the redirect and DNS-rebinding gaps.
+ *  3. The final document URL is revalidated before anything is stored.
  */
 
 import { createHash } from "node:crypto";
 import type { Browser, Locator, Page } from "playwright";
 import {
   assertSafeUrl,
+  createSafeHostResolver,
   UnsafeUrlError,
   normalizeUrl,
   fingerprintPlatform,
@@ -28,12 +39,21 @@ import {
 import type { ArtifactStorage } from "./storage";
 import {
   ScanPageError,
+  type PageResourceLimit,
   type PageScanResult,
   type ScanPageOptions,
   type MonitoredElementCheck,
 } from "./types";
 
 const VIEWPORT = { width: 1440, height: 900 };
+/**
+ * Per-page resource budget (spec §43, §60). Past either limit every further
+ * request is aborted and the result records which limit was hit. A real
+ * page sits far below both; the budget exists for pages that never stop
+ * loading (infinite feeds, media loops) or are built to burn our bandwidth.
+ */
+export const MAX_REQUESTS_PER_PAGE = 300;
+export const MAX_PAGE_BYTES = 25 * 1024 * 1024;
 const MAX_SCREENSHOT_HEIGHT = 8000;
 /**
  * Stored screenshot budget (spec §60).
@@ -185,34 +205,119 @@ export async function scanPage(
     timezoneId: "UTC",
     userAgent: USER_AGENT,
     reducedMotion: "reduce",
+    // Nothing a scanned page offers is ever saved to the worker's disk.
+    acceptDownloads: false,
+    // Service-worker fetches bypass context.route; a monitoring snapshot
+    // never needs one.
+    serviceWorkers: "block",
   });
 
-  try {
-    const page = await context.newPage();
+  // One DNS answer per host for the whole page scan: a page with 150
+  // requests to 6 hosts costs 6 lookups, not 150.
+  const resolver = createSafeHostResolver();
+  const isSafe = async (candidate: string): Promise<boolean> => {
+    try {
+      await assertSafeUrl(candidate, { resolver });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const unsafeDestination = (): ScanPageError =>
+    new ScanPageError(
+      "UNSAFE_URL",
+      "The page redirected to an address MyKavo does not connect to (a private, local or reserved network).",
+    );
 
-    // Performance accounting via network events.
-    let requestCount = 0;
-    let pageWeightBytes = 0;
-    page.on("request", () => {
+  // Performance accounting and the per-page budget.
+  let requestCount = 0;
+  let pageWeightBytes = 0;
+  let resourceLimit: PageResourceLimit | null = null;
+  let page: Page | null = null;
+  let blockedMainNavigation = false;
+
+  const addBytes = (bytes: number) => {
+    if (!(bytes > 0)) return;
+    pageWeightBytes += bytes;
+    if (pageWeightBytes > MAX_PAGE_BYTES && resourceLimit === null) resourceLimit = "BYTES";
+  };
+  const isMainFrameNavigation = (request: { isNavigationRequest(): boolean; frame(): unknown }): boolean => {
+    try {
+      return request.isNavigationRequest() && page !== null && request.frame() === page.mainFrame();
+    } catch {
+      // Service-worker requests have no frame.
+      return false;
+    }
+  };
+
+  try {
+    // Layer 1: every request the page starts (documents, frames,
+    // subresources, fetch/XHR) is checked before it leaves the browser.
+    await context.route("**/*", async (route) => {
+      const request = route.request();
+      const requestUrl = request.url();
+      // data: and blob: never touch the network.
+      if (requestUrl.startsWith("data:") || requestUrl.startsWith("blob:")) {
+        await route.continue().catch(() => {});
+        return;
+      }
+      if (!(await isSafe(requestUrl))) {
+        if (isMainFrameNavigation(request)) blockedMainNavigation = true;
+        await route.abort("blockedbyclient").catch(() => {});
+        return;
+      }
+      if (resourceLimit === null && requestCount >= MAX_REQUESTS_PER_PAGE) resourceLimit = "REQUESTS";
+      if (resourceLimit !== null) {
+        await route.abort("blockedbyclient").catch(() => {});
+        return;
+      }
       requestCount++;
+      await route.continue().catch(() => {});
     });
-    page.on("response", (response) => {
-      response
-        .body()
-        .then((body) => {
-          pageWeightBytes += body.byteLength;
-        })
-        .catch(() => {});
+
+    const activePage = await context.newPage();
+    page = activePage;
+
+    // Page weight from decoded bytes as they arrive (Network.dataReceived),
+    // so nothing is buffered just to be measured and the byte budget trips
+    // while a huge response is still streaming. Falls back to transfer
+    // sizes if the CDP session is unavailable.
+    let countingViaCdp = false;
+    try {
+      const cdp = await context.newCDPSession(activePage);
+      await cdp.send("Network.enable");
+      cdp.on("Network.dataReceived", (event) => addBytes(event.dataLength));
+      countingViaCdp = true;
+    } catch {
+      countingViaCdp = false;
+    }
+    if (!countingViaCdp) {
+      activePage.on("requestfinished", (request) => {
+        request
+          .sizes()
+          .then((sizes) => addBytes(sizes.responseBodySize))
+          .catch(() => {});
+      });
+    }
+
+    // The last main-frame navigation that failed, to tell "the egress proxy
+    // refused a redirect hop" apart from an ordinary network failure.
+    let failedNavigationUrl: string | null = null;
+    activePage.on("requestfailed", (request) => {
+      if (isMainFrameNavigation(request)) failedNavigationUrl = request.url();
     });
 
     const startedAt = Date.now();
     let response;
     try {
-      response = await page.goto(target.href, {
+      response = await activePage.goto(target.href, {
         waitUntil: "domcontentloaded",
         timeout: timeoutMs,
       });
     } catch (err) {
+      if (blockedMainNavigation || (failedNavigationUrl !== null && !(await isSafe(failedNavigationUrl)))) {
+        throw unsafeDestination();
+      }
       const message = err instanceof Error ? err.message : "Navigation failed.";
       throw new ScanPageError(
         message.includes("Timeout") ? "NAVIGATION_TIMEOUT" : "NAVIGATION_FAILED",
@@ -224,6 +329,11 @@ export async function scanPage(
     if (!response) {
       throw new ScanPageError("NAVIGATION_FAILED", "Navigation returned no response.");
     }
+
+    // Layer 3: the document we are about to read must itself be on a safe
+    // address. A plain-HTTP redirect to an internal host comes back from the
+    // proxy as a 403 "response", so the URL is what gives it away.
+    if (!(await isSafe(response.url()))) throw unsafeDestination();
 
     // Response headers identify the host and CDN, which no amount of reading
     // the HTML can. Playwright already lowercases the keys. Wrapped because a
@@ -238,14 +348,14 @@ export async function scanPage(
 
     // Stabilization (spec §15): fonts, bounded network quiet, settle delay,
     // animations disabled.
-    await page.addStyleTag({ content: STABILIZATION_CSS }).catch(() => {});
-    await page
+    await activePage.addStyleTag({ content: STABILIZATION_CSS }).catch(() => {});
+    await activePage
       .evaluate(() => (document as Document & { fonts: { ready: Promise<unknown> } }).fonts.ready)
       .catch(() => {});
-    await waitForNetworkQuiet(page, 5_000);
-    await page.waitForTimeout(postLoadDelayMs);
+    await waitForNetworkQuiet(activePage, 5_000);
+    await activePage.waitForTimeout(postLoadDelayMs);
 
-    const rawHtml = await page.content();
+    const rawHtml = await activePage.content();
 
     // Ignored selectors (spec §25/§36): remove matching elements from the
     // live DOM after stabilization and BEFORE extraction, so they are
@@ -257,7 +367,7 @@ export async function scanPage(
     // to "nothing removed" rather than failing the scan.
     const ignoredSelectors = parseSelectorList(options.ignoredSelectors);
     if (ignoredSelectors.length > 0) {
-      await page
+      await activePage
         .evaluate(
           `(() => { const __name = (fn) => fn; const selectors = ${JSON.stringify(ignoredSelectors)}; return (${removeElementsInPage.toString()})(selectors); })()`,
         )
@@ -268,7 +378,7 @@ export async function scanPage(
     // stack traces. Passing such a function to page.evaluate serializes those
     // calls into the browser, where `__name` is undefined. Inject the function
     // as source with a local `__name` shim so it resolves in-page.
-    const extraction: InPageExtraction = await page.evaluate(
+    const extraction: InPageExtraction = await activePage.evaluate(
       `(() => { const __name = (fn) => fn; return (${extractInPage.toString()})(` +
         `${JSON.stringify(PROBED_GLOBALS)}, ${JSON.stringify(PROBED_SELECTORS)}); })()`,
     );
@@ -279,7 +389,7 @@ export async function scanPage(
     let elements: MonitoredElementCheck[] = [];
     if (elementInputs.length > 0) {
       const probes = elementInputs.map((e) => ({ id: e.id, selector: e.selector }));
-      const observed: ElementObservation[] = await page.evaluate(
+      const observed: ElementObservation[] = await activePage.evaluate(
         `(() => { const __name = (fn) => fn; const probes = ${JSON.stringify(probes)}; return (${checkElementsInPage.toString()})(probes); })()`,
       );
       const byId = new Map(observed.map((o) => [o.id, o]));
@@ -295,7 +405,10 @@ export async function scanPage(
       });
     }
 
-    const finalUrl = page.url();
+    // Revalidated again here: client-side navigation during stabilization
+    // can move the page after goto returned.
+    const finalUrl = activePage.url();
+    if (!(await isSafe(finalUrl))) throw unsafeDestination();
     const base = new URL(finalUrl);
 
     // Classify links/scripts outside the page context.
@@ -369,12 +482,12 @@ export async function scanPage(
     const maskSelectors = parseSelectorList(options.screenshotMasks);
     let maskLocators: Locator[] = [];
     if (maskSelectors.length > 0) {
-      const validMaskSelectors = await page
+      const validMaskSelectors = await activePage
         .evaluate<string[]>(
           `(() => { const __name = (fn) => fn; const selectors = ${JSON.stringify(maskSelectors)}; return (${filterValidSelectorsInPage.toString()})(selectors); })()`,
         )
         .catch((): string[] => []);
-      maskLocators = validMaskSelectors.map((selector) => page.locator(selector));
+      maskLocators = validMaskSelectors.map((selector) => activePage.locator(selector));
     }
 
     // Deterministic screenshot (spec §17), height-capped. Stored artifacts
@@ -384,8 +497,8 @@ export async function scanPage(
     let screenshotStorageKey: string | null = null;
     let screenshotHash: string | null = null;
     try {
-      const bodyHeight = await page.evaluate(() => document.body?.scrollHeight ?? 0);
-      const raw = await page.screenshot({
+      const bodyHeight = await activePage.evaluate(() => document.body?.scrollHeight ?? 0);
+      const raw = await activePage.screenshot({
         type: "jpeg",
         quality: 80,
         ...(maskLocators.length > 0 ? { mask: maskLocators, maskColor: MASK_COLOR } : {}),
@@ -435,6 +548,12 @@ export async function scanPage(
       }
     }
 
+    if (resourceLimit !== null) {
+      console.warn(
+        `[scan-page] resource budget hit (${resourceLimit}): ${requestCount} requests, ${pageWeightBytes} bytes for ${url}`,
+      );
+    }
+
     return {
       url,
       finalUrl,
@@ -453,6 +572,7 @@ export async function scanPage(
       structuredDataHash: extraction.structuredData ? sha256(extraction.structuredData) : null,
       pageWeightBytes,
       requestCount,
+      resourceLimit,
       links,
       scripts,
       platformFingerprint,

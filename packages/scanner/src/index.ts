@@ -1,5 +1,12 @@
-export { BrowserPool, type BrowserPoolOptions } from "./browser-pool";
-export { scanPage, compressScreenshot, MAX_SCREENSHOT_BYTES } from "./scan-page";
+export { BrowserPool, SCAN_BROWSER_ARGS, type BrowserPoolOptions } from "./browser-pool";
+export {
+  scanPage,
+  compressScreenshot,
+  MAX_SCREENSHOT_BYTES,
+  MAX_REQUESTS_PER_PAGE,
+  MAX_PAGE_BYTES,
+} from "./scan-page";
+export { startEgressProxy, type EgressProxy } from "./egress-proxy";
 export {
   runLighthouse,
   parseLighthouseResult,
@@ -17,6 +24,7 @@ export {
 export {
   ScanPageError,
   type PageScanResult,
+  type PageResourceLimit,
   type ScanPageOptions,
   type ScannedLink,
   type ScannedScript,

@@ -14,7 +14,13 @@
  * reports a failed request; the scan never sees an internal response.
  */
 
-import { createServer, request as httpRequest, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  request as httpRequest,
+  type IncomingHttpHeaders,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import { connect, type AddressInfo, type Socket } from "node:net";
 import type { Duplex } from "node:stream";
 import {
@@ -81,6 +87,9 @@ function refuseTunnel(client: Duplex, status: 400 | 403 | 502): void {
 export async function startEgressProxy(options: EgressProxyOptions = {}): Promise<EgressProxy> {
   const resolve = options.resolver ?? createSafeHostResolver({ ttlMs: DNS_CACHE_TTL_MS });
   let refused = 0;
+  // Tunnels leave the HTTP server's bookkeeping once CONNECT is answered,
+  // so close() has to end them itself.
+  const tunnels = new Set<Duplex>();
 
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     // Plain-HTTP proxying: the request line carries an absolute URL.
@@ -99,7 +108,7 @@ export async function startEgressProxy(options: EgressProxyOptions = {}): Promis
 
     resolve(target.hostname)
       .then((addresses) => {
-        const headers = { ...req.headers, host: target.host };
+        const headers: IncomingHttpHeaders = { ...req.headers, host: target.host };
         for (const name of HOP_HEADERS) delete headers[name];
         const upstream = httpRequest(
           target,
@@ -126,6 +135,8 @@ export async function startEgressProxy(options: EgressProxyOptions = {}): Promis
   // HTTPS and WebSockets arrive as CONNECT tunnels.
   server.on("connect", (req: IncomingMessage, client: Duplex, head: Buffer) => {
     client.on("error", () => client.destroy());
+    tunnels.add(client);
+    client.on("close", () => tunnels.delete(client));
     const target = parseAuthority(req.url ?? "");
     if (!target) {
       refuseTunnel(client, 400);
@@ -173,6 +184,7 @@ export async function startEgressProxy(options: EgressProxyOptions = {}): Promis
     },
     close: () =>
       new Promise<void>((done) => {
+        for (const tunnel of tunnels) tunnel.destroy();
         server.closeAllConnections();
         server.close(() => done());
       }),

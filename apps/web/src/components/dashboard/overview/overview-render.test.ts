@@ -36,7 +36,7 @@ const baseInput: AttentionInput = {
 const health = { healthy: 1, needsAttention: 0, settingUp: 0, paused: 0 };
 
 /** No en or em dashes in user-facing copy. */
-const noDashes = (html: string) => expect(html).not.toMatch(/[–—]/);
+const noDashes = (html: string) => expect(html).not.toMatch(/[\u2013\u2014]/);
 
 describe("NeedsAttention", () => {
   it("renders grouped rows with a single Review action per change", () => {

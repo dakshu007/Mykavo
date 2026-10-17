@@ -15,6 +15,11 @@ function svgPage(height: number, variant = 0): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="${height}"><rect width="100%" height="100%" fill="#fff"/>${body}</svg>`;
 }
 async function capture(height: number, variant = 0) {
+  if (variant === 9) {
+    let body = ""; let y = 0; let i = 0;
+    while (y < height) { body += `<rect x="0" y="${y}" width="1440" height="300" fill="hsl(${(i*71)%360},40%,${20+(i%3)*20}%)"/><text x="700" y="${y+150}" font-family="DejaVu Serif" font-size="40" fill="#fff">Brand new section ${i}</text>`; y += 300; i++; }
+    return sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="${height}">${body}</svg>`)).jpeg({ quality: 80 }).toBuffer();
+  }
   return sharp(Buffer.from(svgPage(height, variant))).jpeg({ quality: 80 }).toBuffer();
 }
 const CAP = 1440 * 2600;
@@ -34,6 +39,10 @@ it("experiment", async () => {
     ["tall 4000 vs 4012 (pixel cap)", 4000, 4012, { quality: 72 }, { quality: 72 }, 0],
     ["tall 4000 vs 4000", 4000, 4000, { quality: 72 }, { quality: 72 }, 0],
     ["same h, one-word edit", 2400, 2400, { quality: 72 }, { quality: 72 }, 1],
+    ["one-word edit + q72 vs q44", 2400, 2400, { quality: 72 }, { quality: 44 }, 1],
+    ["tall 4000 vs 4400 (content appended), cap", 4000, 4400, { quality: 72 }, { quality: 72 }, 0],
+    ["q72 vs 720w", 2400, 2400, { quality: 72 }, { quality: 40, width: 720 }, 0],
+    ["redesign: page vs different page", 2400, 2400, { quality: 72 }, { quality: 72 }, 9],
   ];
   for (const [name, h1, h2, r1, r2, v] of cases) {
     const a = await store(await capture(h1), r1);

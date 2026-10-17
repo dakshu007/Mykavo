@@ -52,6 +52,9 @@ export interface ScanPageOptions {
   screenshotMasks?: string[];
 }
 
+/** Which per-page budget stopped further requests (scan-page.ts). */
+export type PageResourceLimit = "REQUESTS" | "BYTES";
+
 export interface ScannedLink {
   url: string;
   normalizedUrl: string;
@@ -82,6 +85,12 @@ export interface PageScanResult {
   structuredDataHash: string | null;
   pageWeightBytes: number;
   requestCount: number;
+  /**
+   * Set when the page hit the request or byte budget and later requests
+   * were aborted; the snapshot is then of a partially loaded page. null for
+   * every normal page.
+   */
+  resourceLimit: PageResourceLimit | null;
   links: ScannedLink[];
   scripts: ScannedScript[];
   /**

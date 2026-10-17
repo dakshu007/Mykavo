@@ -52,6 +52,63 @@ function decode(buffer: Buffer): RGBAImage {
   return { width: raw.width, height: raw.height, data: raw.data };
 }
 
+/**
+ * Area-average (box filter) downscale of an RGBA image to `targetWidth`,
+ * keeping the aspect ratio. Never upscales.
+ *
+ * WHY: the scanner re-encodes long or heavy screenshots down a quality/width
+ * ladder to fit the storage budget, and its pixel cap derives the width from
+ * the page HEIGHT - so the same unchanged page is stored at 1440px one scan
+ * and 1280px, or 1161px vs 1159px, the next. Row fingerprints are built from
+ * 16px blocks of a row, so a different width means no row can ever match:
+ * an untouched page scored 100% "changed", and with any dynamic text that
+ * became a CRITICAL "Page redesigned" alert on every scan. Comparing both
+ * images at one common width removes the artefact at its source.
+ */
+function resampleToWidth(img: RGBAImage, targetWidth: number): RGBAImage {
+  if (targetWidth >= img.width || targetWidth <= 0) return img;
+  const scale = img.width / targetWidth;
+  const targetHeight = Math.max(1, Math.round(img.height / scale));
+  const yScale = img.height / targetHeight;
+
+  // Horizontal pass: img.width -> targetWidth, every source row.
+  const horizontal = new Float32Array(targetWidth * img.height * 4);
+  for (let tx = 0; tx < targetWidth; tx++) {
+    const x0 = tx * scale;
+    const x1 = x0 + scale;
+    for (let sx = Math.floor(x0); sx < Math.min(img.width, Math.ceil(x1)); sx++) {
+      const weight = (Math.min(x1, sx + 1) - Math.max(x0, sx)) / scale;
+      if (weight <= 0) continue;
+      for (let y = 0; y < img.height; y++) {
+        const src = (y * img.width + sx) * 4;
+        const dst = (y * targetWidth + tx) * 4;
+        horizontal[dst] += img.data[src] * weight;
+        horizontal[dst + 1] += img.data[src + 1] * weight;
+        horizontal[dst + 2] += img.data[src + 2] * weight;
+        horizontal[dst + 3] += img.data[src + 3] * weight;
+      }
+    }
+  }
+
+  // Vertical pass: img.height -> targetHeight.
+  const out = new Uint8Array(targetWidth * targetHeight * 4);
+  const row = new Float32Array(targetWidth * 4);
+  for (let ty = 0; ty < targetHeight; ty++) {
+    row.fill(0);
+    const y0 = ty * yScale;
+    const y1 = y0 + yScale;
+    for (let sy = Math.floor(y0); sy < Math.min(img.height, Math.ceil(y1)); sy++) {
+      const weight = (Math.min(y1, sy + 1) - Math.max(y0, sy)) / yScale;
+      if (weight <= 0) continue;
+      const base = sy * targetWidth * 4;
+      for (let i = 0; i < row.length; i++) row[i] += horizontal[base + i] * weight;
+    }
+    const base = ty * targetWidth * 4;
+    for (let i = 0; i < row.length; i++) out[base + i] = Math.round(row[i]);
+  }
+  return { width: targetWidth, height: targetHeight, data: out };
+}
+
 /** Copy an RGBA image onto a white canvas of the given size (top-left origin). */
 function padToCanvas(img: RGBAImage, width: number, height: number): Uint8Array {
   const out = new Uint8Array(width * height * 4).fill(255); // white background
@@ -76,16 +133,17 @@ const BLOCK_WIDTH = 16;
 const QUANTIZE_STEP = 24;
 
 /**
- * A compact fingerprint of one pixel row: the row is divided into 16px blocks,
- * each block's average colour is quantised, and the result is folded into a
- * 32-bit FNV-1a hash. Quantising is what makes this survive JPEG re-encoding -
- * two visually identical rows must hash identically or the whole approach
- * collapses into the pixel-diff problem it exists to solve.
+ * Per-block colour averages for one pixel row: the row is divided into 16px
+ * blocks and each block's mean R, G and B is kept. Everything the row
+ * comparison does - hashing, blank detection, tolerant matching - is derived
+ * from this one pass over the pixels.
  */
-function rowSignature(data: Uint8Array, width: number, y: number, offset: number): number {
-  let hash = 0x811c9dc5;
+function rowBlockAverages(data: Uint8Array, width: number, y: number): Float32Array {
+  const blocks = Math.ceil(width / BLOCK_WIDTH);
+  const out = new Float32Array(blocks * 3);
   const rowStart = y * width * 4;
-  for (let blockStart = 0; blockStart < width; blockStart += BLOCK_WIDTH) {
+  for (let k = 0; k < blocks; k++) {
+    const blockStart = k * BLOCK_WIDTH;
     const blockEnd = Math.min(blockStart + BLOCK_WIDTH, width);
     let r = 0;
     let g = 0;
@@ -97,14 +155,25 @@ function rowSignature(data: Uint8Array, width: number, y: number, offset: number
       b += data[i + 2];
     }
     const count = blockEnd - blockStart;
+    out[k * 3] = r / count;
+    out[k * 3 + 1] = g / count;
+    out[k * 3 + 2] = b / count;
+  }
+  return out;
+}
+
+/**
+ * A compact fingerprint of one pixel row: each block's average colour is
+ * quantised, and the result is folded into a 32-bit FNV-1a hash. Quantising
+ * absorbs most JPEG re-encoding wobble; whatever slips through a bucket
+ * boundary is caught by the tolerant comparison (rowsEquivalent) instead.
+ */
+function rowSignature(averages: Float32Array, offset: number): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < averages.length; i++) {
     // Quantise each channel average so small compression wobble collapses.
-    const qr = Math.floor((r / count + offset) / QUANTIZE_STEP);
-    const qg = Math.floor((g / count + offset) / QUANTIZE_STEP);
-    const qb = Math.floor((b / count + offset) / QUANTIZE_STEP);
-    for (const value of [qr, qg, qb]) {
-      hash ^= value;
-      hash = Math.imul(hash, 0x01000193);
-    }
+    hash ^= Math.floor((averages[i] + offset) / QUANTIZE_STEP);
+    hash = Math.imul(hash, 0x01000193);
   }
   return hash >>> 0;
 }
@@ -123,6 +192,10 @@ interface RowSignaturePair {
   b: number;
   /** A flat row of one colour: page background, padding, the gap between lines. */
   blank: boolean;
+  /** Block averages, for the tolerant comparison. */
+  averages: Float32Array;
+  /** Mean of all block-channel averages: a cheap pre-filter for rowsEquivalent. */
+  mean: number;
 }
 
 /** Largest per-channel spread between block averages that still reads as one flat colour. */
@@ -133,25 +206,13 @@ const BLANK_SPREAD = 12;
  * Such rows carry no content of their own - they are the background a page
  * sits on - so they must not be allowed to vouch for "nothing changed".
  */
-function isBlankRow(data: Uint8Array, width: number, y: number): boolean {
-  const rowStart = y * width * 4;
+function isBlankRow(averages: Float32Array): boolean {
   let minR = 255, minG = 255, minB = 255;
   let maxR = 0, maxG = 0, maxB = 0;
-  for (let blockStart = 0; blockStart < width; blockStart += BLOCK_WIDTH) {
-    const blockEnd = Math.min(blockStart + BLOCK_WIDTH, width);
-    let r = 0;
-    let g = 0;
-    let b = 0;
-    for (let x = blockStart; x < blockEnd; x++) {
-      const i = rowStart + x * 4;
-      r += data[i];
-      g += data[i + 1];
-      b += data[i + 2];
-    }
-    const count = blockEnd - blockStart;
-    r /= count;
-    g /= count;
-    b /= count;
+  for (let i = 0; i < averages.length; i += 3) {
+    const r = averages[i];
+    const g = averages[i + 1];
+    const b = averages[i + 2];
     if (r < minR) minR = r;
     if (g < minG) minG = g;
     if (b < minB) minB = b;
@@ -165,13 +226,46 @@ function isBlankRow(data: Uint8Array, width: number, y: number): boolean {
 function rowSignatures(img: RGBAImage): RowSignaturePair[] {
   const out = new Array<RowSignaturePair>(img.height);
   for (let y = 0; y < img.height; y++) {
+    const averages = rowBlockAverages(img.data, img.width, y);
+    let sum = 0;
+    for (let i = 0; i < averages.length; i++) sum += averages[i];
     out[y] = {
-      a: rowSignature(img.data, img.width, y, 0),
-      b: rowSignature(img.data, img.width, y, QUANTIZE_STEP / 2),
-      blank: isBlankRow(img.data, img.width, y),
+      a: rowSignature(averages, 0),
+      b: rowSignature(averages, QUANTIZE_STEP / 2),
+      blank: isBlankRow(averages),
+      averages,
+      mean: averages.length > 0 ? sum / averages.length : 0,
     };
   }
   return out;
+}
+
+/**
+ * Largest per-block, per-channel difference (0-255) at which two rows still
+ * count as the same row.
+ *
+ * Stored screenshots are re-encoded at whatever JPEG quality - and, for long
+ * pages, whatever width - gets them under the storage budget, so the SAME
+ * page is routinely stored two different ways. Exact bucket hashes alone
+ * cannot survive that: with ~270 block-channel values per row, some value
+ * lands on a bucket edge on both grids, and an untouched page scored 27%
+ * changed (HIGH) between quality 72 and 44. Averaged over a 16px block, that
+ * encoder noise stays within a few levels; replacing a word, an image or a
+ * colour moves the block average by tens of levels.
+ */
+const ROW_TOLERANCE = 12;
+
+/** True when two rows are visually the same within encoder noise. */
+function rowsEquivalent(x: RowSignaturePair, y: RowSignaturePair): boolean {
+  if (x.a === y.a || x.b === y.b) return true;
+  if (Math.abs(x.mean - y.mean) > ROW_TOLERANCE) return false;
+  const a = x.averages;
+  const b = y.averages;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (Math.abs(a[i] - b[i]) > ROW_TOLERANCE) return false;
+  }
+  return true;
 }
 
 /**
@@ -208,6 +302,9 @@ function rowWeight(row: RowSignaturePair): number {
  * any two designs - margins, section padding, the gaps between lines of text -
  * matches itself and drowns out a page whose every word and image changed.
  */
+/** Upper bound on tolerant comparisons per unmatched row, so a page of near-identical rows stays linear. */
+const MAX_TOLERANT_CANDIDATES = 256;
+
 function contentDifferencePercentage(baseline: RGBAImage, current: RGBAImage): number {
   const baseRows = rowSignatures(baseline);
   const currRows = rowSignatures(current);
@@ -237,14 +334,46 @@ function contentDifferencePercentage(baseline: RGBAImage, current: RGBAImage): n
     return -1;
   }
 
-  let changed = 0;
-  let total = 0;
-  for (const sig of currRows) {
-    const weight = rowWeight(sig);
-    total += weight;
+  // Pass 1: exact signature matches (fast, and the common case).
+  const unmatched: number[] = [];
+  currRows.forEach((sig, y) => {
     let index = claim(byA.get(sig.a));
     if (index === -1) index = claim(byB.get(sig.b));
-    if (index === -1) changed += weight; // appeared
+    if (index === -1) unmatched.push(y);
+  });
+
+  // Pass 2: rows that differ only by encoder noise (see ROW_TOLERANCE).
+  // Baseline rows are bucketed by mean colour so each lookup only inspects
+  // rows that could possibly be within tolerance.
+  const byMean = new Map<number, number[]>();
+  baseRows.forEach((sig, index) => {
+    if (claimed[index]) return;
+    const key = Math.floor(sig.mean / ROW_TOLERANCE);
+    (byMean.get(key) ?? byMean.set(key, []).get(key)!).push(index);
+  });
+  let changed = 0;
+  let total = 0;
+  for (const sig of currRows) total += rowWeight(sig);
+  for (const y of unmatched) {
+    const sig = currRows[y];
+    const key = Math.floor(sig.mean / ROW_TOLERANCE);
+    let found = false;
+    let inspected = 0;
+    for (let k = key - 1; k <= key + 1 && !found; k++) {
+      const bucket = byMean.get(k);
+      if (!bucket) continue;
+      for (let j = 0; j < bucket.length && inspected < MAX_TOLERANT_CANDIDATES; j++) {
+        const index = bucket[j];
+        if (claimed[index]) continue;
+        inspected++;
+        if (rowsEquivalent(sig, baseRows[index])) {
+          claimed[index] = 1;
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) changed += rowWeight(sig); // appeared
   }
   baseRows.forEach((sig, index) => {
     const weight = rowWeight(sig);
@@ -290,8 +419,7 @@ function classifyRows(baseline: RGBAImage, current: RGBAImage): Uint8Array {
   const currRows = rowSignatures(current);
   const flags = new Uint8Array(currRows.length);
 
-  const matches = (a: RowSignaturePair, b: RowSignaturePair): boolean =>
-    a.a === b.a || a.b === b.b;
+  const matches = rowsEquivalent;
 
   let basePos = 0;
   for (let y = 0; y < currRows.length; y++) {
@@ -383,6 +511,14 @@ export function compareScreenshots(
     current = decode(currentJpeg);
   } catch {
     return null;
+  }
+
+  // Different stored widths are an encoding artefact, not a page change -
+  // compare at the narrower width (see resampleToWidth).
+  if (baseline.width !== current.width) {
+    const commonWidth = Math.min(baseline.width, current.width);
+    baseline = resampleToWidth(baseline, commonWidth);
+    current = resampleToWidth(current, commonWidth);
   }
 
   const width = Math.max(baseline.width, current.width);

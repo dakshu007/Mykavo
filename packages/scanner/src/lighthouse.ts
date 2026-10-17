@@ -8,9 +8,18 @@
  *
  * Audits are heavyweight (~10-40s, hundreds of MB) - callers must run them
  * one-at-a-time. Cost/§22: this is on-demand, never per-scan.
+ *
+ * Egress (spec §11): Lighthouse drives Chrome over CDP itself, so Playwright
+ * routing is not available. Instead this Chrome is launched with
+ * --proxy-server pointing at a private egress proxy (egress-proxy.ts) that
+ * resolves every host through the SSRF guard and connects only to vetted
+ * addresses - redirects, subresources and WebSockets included. The audited
+ * page's final URL is revalidated before any result is returned.
  */
 
 import { chromium } from "playwright";
+import { assertSafeUrl } from "@mykavo/shared";
+import { startEgressProxy } from "./egress-proxy";
 
 /** Parsed, storage-ready audit result. Scores are 0-100; vitals are ms (CLS unitless). */
 export interface LighthouseResult {
@@ -28,6 +37,9 @@ export interface LighthouseResult {
 
 /** Minimal structural shape of the Lighthouse Result (LHR) fields we read. */
 interface Lhr {
+  finalDisplayedUrl?: string;
+  mainDocumentUrl?: string;
+  finalUrl?: string;
   categories?: Record<string, { score?: number | null } | undefined>;
   audits?: Record<string, { numericValue?: number | null } | undefined>;
 }
@@ -61,7 +73,7 @@ export function parseLighthouseResult(lhr: Lhr): LighthouseResult {
 
 export class LighthouseError extends Error {
   constructor(
-    public readonly code: "AUDIT_TIMEOUT" | "AUDIT_FAILED" | "NO_RESULT",
+    public readonly code: "AUDIT_TIMEOUT" | "AUDIT_FAILED" | "NO_RESULT" | "UNSAFE_URL",
     message: string,
   ) {
     super(message);
@@ -106,10 +118,27 @@ export async function runLighthouse(
   // NOTE: this launches its own Chromium outside the BrowserPool's concurrency
   // accounting; a scan running on the same host simultaneously will contend for
   // CPU. Acceptable for an on-demand, rate-limited feature - audits are rare.
-  const chrome = await chromeLauncher.launch({
-    chromePath: chromium.executablePath(),
-    chromeFlags: ["--headless=new", "--disable-gpu", "--disable-dev-shm-usage"],
-  });
+  const egress = await startEgressProxy();
+  let chrome: Awaited<ReturnType<typeof chromeLauncher.launch>>;
+  try {
+    chrome = await chromeLauncher.launch({
+      chromePath: chromium.executablePath(),
+      chromeFlags: [
+        "--headless=new",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        // All page traffic through the vetted egress proxy; <-loopback>
+        // stops Chrome's implicit "loopback goes direct" rule, so even
+        // localhost URLs reach the proxy and are refused there.
+        `--proxy-server=${egress.server}`,
+        "--proxy-bypass-list=<-loopback>",
+        "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
+      ],
+    });
+  } catch (err) {
+    await egress.close().catch(() => {});
+    throw err;
+  }
 
   try {
     const runnerResult = await withTimeout(
@@ -124,7 +153,21 @@ export async function runLighthouse(
     if (!runnerResult) {
       throw new LighthouseError("NO_RESULT", "Lighthouse returned no result.");
     }
-    return parseLighthouseResult(runnerResult.lhr as unknown as Lhr);
+    const lhr = runnerResult.lhr as unknown as Lhr;
+    // The proxy already refused any unsafe hop; this makes sure we never
+    // report scores for a page that ended up somewhere it should not be.
+    const finalUrl = lhr.finalDisplayedUrl ?? lhr.mainDocumentUrl ?? lhr.finalUrl;
+    if (finalUrl) {
+      try {
+        await assertSafeUrl(finalUrl);
+      } catch {
+        throw new LighthouseError(
+          "UNSAFE_URL",
+          "The page redirected to an address MyKavo does not connect to (a private, local or reserved network).",
+        );
+      }
+    }
+    return parseLighthouseResult(lhr);
   } catch (err) {
     if (err instanceof LighthouseError) throw err;
     throw new LighthouseError(
@@ -139,5 +182,6 @@ export async function runLighthouse(
     } catch {
       /* ignore cleanup failure */
     }
+    await egress.close().catch(() => {});
   }
 }
