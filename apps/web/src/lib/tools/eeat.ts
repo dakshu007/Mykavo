@@ -112,7 +112,13 @@ export function extractEeatFacts(url: string, fullHtml: string): PageFacts {
   // Pages longer than MAX_PARSE_CHARS are analysed on their first MAX_PARSE_CHARS characters.
   const html = capHtml(fullHtml);
   const base = new URL(url);
-  const root = parse(withoutComments(html), { blockTextElements: { script: true, style: true, noscript: true } });
+  // parseNoneClosedTags keeps unclosed elements nested, as a browser does. The
+  // default re-parents them one by one at the end, which is quadratic: 3,000
+  // unclosed <div>s (15 KB) took over 4 s.
+  const root = parse(withoutComments(html), {
+    blockTextElements: { script: true, style: true, noscript: true },
+    parseNoneClosedTags: true,
+  });
 
   const text = (root.querySelector("body")?.text ?? root.text).replace(/\s+/g, " ").trim();
 

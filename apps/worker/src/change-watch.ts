@@ -18,6 +18,7 @@
 import type { PgBoss } from "pg-boss";
 import { prisma, getWorkspaceEntitlement } from "@mykavo/database";
 import {
+  FINGERPRINT_MAX_CHARS,
   SCAN_WEBSITE_QUEUE,
   compareFingerprints,
   fingerprintPage,
@@ -47,6 +48,12 @@ const WEBSITES_PER_SWEEP = 25;
 /** Concurrent page fetches across the whole sweep. */
 const FETCH_CONCURRENCY = 6;
 const FETCH_TIMEOUT_MS = 10_000;
+/**
+ * Pages up to this size are accepted (a bigger body fails the fetch), but
+ * only the first FINGERPRINT_MAX_CHARS (512 K characters) are fingerprinted:
+ * the parsing runs on this process's event loop, shared by every customer's
+ * checks, so its cost must stay bounded whatever a page serves.
+ */
 const FETCH_MAX_BYTES = 3 * 1024 * 1024;
 
 /** monitoredPageId -> fingerprint at the last check. */
@@ -73,7 +80,7 @@ async function fetchFingerprint(url: string): Promise<PageFingerprint | null> {
     const res = await safeFetch(url, { timeoutMs: FETCH_TIMEOUT_MS, maxBytes: FETCH_MAX_BYTES });
     const type = res.headers.get("content-type") ?? "";
     if (type && !/html|xml/i.test(type)) return null;
-    return fingerprintPage(res.body, res.status, res.finalUrl);
+    return fingerprintPage(res.body.slice(0, FINGERPRINT_MAX_CHARS), res.status, res.finalUrl);
   } catch {
     // Unreachable right now: the site-health sweep reports downtime, and a
     // missing fingerprint just means this page sits the round out.

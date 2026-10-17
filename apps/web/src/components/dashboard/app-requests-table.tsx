@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, CircleUser, Loader2, MailCheck, X } from "lucide-react";
-import { requestedAgo, type AppAccessStatus } from "@mykavo/shared";
+// Subpath, not the barrel: the barrel also carries the Node-only SSRF fetcher,
+// which a browser bundle cannot include.
+import { requestedAgo, type AppAccessStatus } from "@mykavo/shared/app-access";
 import { Card, CardHeader } from "@/components/ui/card";
 import type { AppRequestRow, AppRequestsReport } from "@/lib/app-access";
 

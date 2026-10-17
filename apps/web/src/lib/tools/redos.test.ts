@@ -84,11 +84,21 @@ describe("free-tool parsers finish quickly on hostile HTML", () => {
   }
 
   it("E-E-A-T analysis stays bounded on large and hostile pages", () => {
-    // node-html-parser is slower per byte than the scanners above, so it gets
-    // a looser budget; the cap is what keeps it bounded.
+    // node-html-parser is slower per byte than the scanners above (~1 s for
+    // 512 KB of dense markup), so it gets a looser budget. Very deep nesting
+    // may overflow the parser's recursion instead - fast, and reported as a
+    // failed analysis rather than a stalled server.
     const big = "<p>hello <a href='/x'>x</a> <!-- c --> <script>var a=1</script></p>\n".repeat(40_000);
-    for (const html of [big, HOSTILE["unclosed comments"], HOSTILE["unclosed svg tags"], HOSTILE["unclosed anchors"]]) {
-      expect(timed(() => extractEeatFacts(PAGE, html))).toBeLessThan(5_000);
+    const inputs = [big, ...Object.values(HOSTILE), "<div>".repeat(3_000), "<span>".repeat(100_000)];
+    for (const html of inputs) {
+      const ms = timed(() => {
+        try {
+          extractEeatFacts(PAGE, html);
+        } catch (err) {
+          if (!(err instanceof RangeError)) throw err;
+        }
+      });
+      expect(ms).toBeLessThan(3_000);
     }
   });
 });

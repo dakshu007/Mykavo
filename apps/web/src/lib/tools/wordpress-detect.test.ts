@@ -43,4 +43,16 @@ describe("wordpress detection", () => {
     expect(safeHttpUrl("javascript:alert(1)")).toBeNull();
     expect(safeHttpUrl("https://wpastra.com/")).toBe("https://wpastra.com/");
   });
+  it("keeps subdirectory and protocol-relative bases, case-insensitively", () => {
+    const html = `<link href="//cdn.example.com/blog/WP-CONTENT/Themes/Kadence/style.css">
+<img src="https://example.com/site/wp-content/themes/kadence/a.png">`;
+    expect(detectThemes(html, "https://example.com/")).toEqual([
+      { slug: "kadence", stylesheetUrl: "https://cdn.example.com/blog/WP-CONTENT/Themes/kadence/style.css" },
+    ]);
+  });
+
+  it("finds generator-tag plugins only inside a generator meta tag", () => {
+    expect(detectPlugins(`<meta name="generator" content="WooCommerce 9.1">`).map((p) => p.slug)).toEqual(["woocommerce"]);
+    expect(detectPlugins(`<meta name="generator" content="WordPress"> WooCommerce`).map((p) => p.slug)).toEqual([]);
+  });
 });

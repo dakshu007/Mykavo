@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareFingerprints, fingerprintPage, textSimilarity } from "./page-fingerprint";
+import { FINGERPRINT_MAX_CHARS, compareFingerprints, fingerprintPage, textSimilarity } from "./page-fingerprint";
 
 const URL = "https://boutique.example/";
 
@@ -104,4 +104,55 @@ describe("textSimilarity", () => {
     expect(textSimilarity([1, 2, 3], [1, 2, 3])).toBe(1);
     expect(textSimilarity([1, 2, 3], [4, 5, 6])).toBe(0);
   });
+});
+
+describe("fingerprintPage on real-world markup", () => {
+  it("reads the same title, H1 and words the original regexes did", () => {
+    const html = `<!DOCTYPE html><HTML><Head><TITLE data-x="1">Shop &amp; Save</TITLE>
+<link rel="canonical" href="https://boutique.example/shop"><META NAME="robots" CONTENT="INDEX">
+</head><Body class="home"><!-- promo --><H1 class="hero">New <em>season</em></H1>
+<svg><title>icon</title></svg><script>var x = "<h1>no</h1>";</script><noscript>enable js</noscript>
+<template><p>hidden</p></template><iframe src="/x"></iframe><p>Visible copy here</p></BODY></HTML>`;
+    const f = fp(html);
+    expect(f.title).toBe("Shop & Save");
+    expect(f.h1).toBe("New season");
+    expect(f.canonical).toBe("https://boutique.example/shop");
+    expect(f.robots).toBe("index");
+    // Same visible words as the old `<body[^>]*>([\s\S]*)<\/body>` + comment/element strip.
+    expect(f.words).toBe(["new", "season", "visible", "copy", "here"].length);
+  });
+
+  it("falls back to the whole page when there is no </body>", () => {
+    expect(fp("<title>T</title><p>one two three four five</p>").words).toBe(6);
+  });
+
+  it("fingerprints only the first FINGERPRINT_MAX_CHARS characters", () => {
+    const filler = "word ".repeat(FINGERPRINT_MAX_CHARS / 5);
+    const a = fp(`<body><h1>Same</h1>${filler}<p>tail one</p></body>`);
+    const b = fp(`<body><h1>Same</h1>${filler}<p>tail two</p></body>`);
+    expect(compareFingerprints(a, b).changed).toBe(false);
+  });
+});
+
+describe("fingerprintPage on hostile markup", () => {
+  // Each of these made the old regexes rescan the rest of the page from every
+  // opening: "<svg " x 20,000 (100 KB) took ~1 s and 3 MB would take minutes.
+  const hostile: Record<string, string> = {
+    "unclosed comments": "<!--".repeat(200_000),
+    "unclosed svg tags": "<svg ".repeat(50_000),
+    "a run of slashes": "/".repeat(200_000),
+    "bare angle brackets": "<".repeat(200_000),
+    "unclosed h1 elements": "<h1>".repeat(50_000),
+    "unclosed title elements": "<title>".repeat(50_000),
+    "unclosed body tags": "<body>".repeat(50_000),
+    "unclosed link tags": "<link ".repeat(50_000),
+    "3 MB of unclosed scripts": "<script>".repeat(400_000),
+  };
+  for (const [label, html] of Object.entries(hostile)) {
+    it(`${label} finishes in well under a second`, () => {
+      const start = performance.now();
+      fp(html);
+      expect(performance.now() - start).toBeLessThan(500);
+    });
+  }
 });

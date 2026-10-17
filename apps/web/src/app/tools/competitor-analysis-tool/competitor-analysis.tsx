@@ -6,7 +6,8 @@ import { ToolError } from "@/components/tools/tool-error";
 import { ToolCta } from "@/components/tools/tool-cta";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
+// Subpath, not the barrel: the barrel also carries Node-only modules.
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared/plan-tier";
 import type { CompetitorReport, ComparisonRow, Verdict } from "@/lib/tools/competitor";
 
 /** Two URL fields rather than the shared single-URL form, styled to match it. */

@@ -12,7 +12,9 @@
     "./stabilization": "./src/stabilization.ts",
     "./script-services": "./src/script-services.ts",
     "./flows": "./src/flows.ts",
-    "./ai-crawlers": "./src/ai-crawlers.ts"
+    "./ai-crawlers": "./src/ai-crawlers.ts",
+    "./app-access": "./src/app-access.ts",
+    "./plan-tier": "./src/plan-tier.ts"
   },
   "scripts": {
     "test": "vitest run"
