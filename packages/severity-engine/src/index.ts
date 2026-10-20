@@ -51,6 +51,12 @@ export type ChangeSignal =
    * real visitors see, so it replaces the page's other diffs.
    */
   | { kind: "bot_challenge"; title: string | null; httpStatus: number | null }
+  /**
+   * The page now sends visitors to a sign-in page it didn't before. Its other
+   * diffs (canonical, final URL, headings, links, screenshot) all describe the
+   * login screen, so this one signal replaces them.
+   */
+  | { kind: "login_wall"; previous: string | null; current: string }
   | { kind: "final_url"; previous: string; current: string }
   | { kind: "redirect_appeared"; hops: number }
   | { kind: "title"; previous: string | null; current: string | null }
@@ -242,6 +248,18 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
         description: `MyKavo was shown a bot-protection check${signal.title ? ` ("${signal.title}")` : ""} instead of the page, so this page could not be compared this time. Real visitors usually pass it automatically. If this repeats, allow MyKavo's scanner in your firewall or CDN bot settings.`,
         previousValue: "Page",
         currentValue: signal.httpStatus === null ? "Challenge page" : `Challenge page (HTTP ${signal.httpStatus})`,
+      });
+
+    case "login_wall":
+      return finalize({
+        category: "AVAILABILITY",
+        changeType: "login_wall",
+        severity: "HIGH",
+        title: "Page now redirects to a sign-in page",
+        description:
+          "Visitors who aren't signed in are sent to a login screen instead of this page. If the page should be public, check its access settings or membership plugin. If it was always meant to be private, remove it from monitoring.",
+        previousValue: signal.previous ?? "Page",
+        currentValue: signal.current,
       });
 
     case "final_url":
@@ -519,7 +537,16 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
     }
 
     case "visual_diff": {
-      const p = signal.percentage;
+      // Severity follows the SMALLER of the two measures. The content score
+      // overstates a narrow change (a sidebar, an ad slot or a video thumbnail
+      // marks every row it crosses as changed); the pixel score overstates a
+      // shift (one new paragraph moves every pixel below it). A real redesign
+      // is large on both. Production: CRITICAL alerts with 1.7% of pixels
+      // changed, all from the content score alone.
+      const p =
+        signal.pixelPercentage === undefined
+          ? signal.percentage
+          : Math.min(signal.percentage, signal.pixelPercentage);
       if (signal.redesign) {
         return finalize({
           category: "VISUAL",
@@ -537,11 +564,8 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
       if (p < 1) return null; // 0-1% ignored (spec §18)
       // Spec §18 bands. 30%+ is the CRITICAL candidate tier - it previously
       // returned HIGH from both arms of the ternary, so it could never fire.
-      const banded: Severity =
+      const severity: Severity =
         p >= 30 ? "CRITICAL" : p >= 15 ? "HIGH" : p >= 5 ? "MEDIUM" : "LOW";
-      const looksIdentical =
-        signal.pixelPercentage !== undefined && signal.pixelPercentage < 1;
-      const severity: Severity = looksIdentical ? "LOW" : banded;
       return finalize({
         category: "VISUAL",
         changeType: "visual_difference",

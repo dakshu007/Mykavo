@@ -8,6 +8,7 @@
 import { safeFetch, UnsafeUrlError } from "@/lib/security/ssrf";
 import { normalizeUrl } from "@/lib/url";
 import { logger } from "@/lib/logger";
+import { isPrivatePage } from "@/lib/private-pages";
 import {
   extractInternalLinks,
   parseRobotsSitemaps,
@@ -152,6 +153,8 @@ export async function discoverPages(websiteUrl: string): Promise<DiscoveryResult
 
   // Homepage first, then shallow paths before deep ones, then alphabetical.
   const sorted = [...pages.entries()]
+    // Admin and sign-in pages are never offered (lib/private-pages).
+    .filter(([url]) => !isPrivatePage(url))
     .map(([url, source]) => ({ url, source }))
     .sort((a, b) => {
       if (a.source === "homepage") return -1;

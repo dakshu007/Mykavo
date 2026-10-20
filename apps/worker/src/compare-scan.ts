@@ -18,8 +18,11 @@ import {
   compareScreenshots,
   compareSiteMeta,
   highestSeverity,
+  changeConditionKey,
   isBotChallengeTitle,
+  isLoginUrl,
   isPageRedesign,
+  KNOWN_CHANGE_STATUSES,
   scoreChange,
   siteRedesignSignal,
   type ComparableSnapshot,
@@ -291,7 +294,11 @@ export async function runComparisonForScan(
       // diff says nothing about the page itself.
       const currentBroken = (snapshot.httpStatus ?? 0) >= 400;
       const baselineBroken = (baselineSnap.httpStatus ?? 0) >= 400;
-      const challenged = isBotChallengeTitle(snapshot.title) || isBotChallengeTitle(baselineSnap.title);
+      const challenged =
+        isBotChallengeTitle(snapshot.title) ||
+        isBotChallengeTitle(baselineSnap.title) ||
+        // A login wall replaces the page's other diffs (compareSnapshots).
+        (isLoginUrl(snapshot.finalUrl) && !isLoginUrl(baselineSnap.finalUrl));
       if (!currentBroken && !baselineBroken && !challenged && baselineSnap.screenshotStorageKey && snapshot.screenshotStorageKey) {
         try {
           const [baseImg, currImg] = await Promise.all([
@@ -361,7 +368,14 @@ export async function runComparisonForScan(
         }
       }
 
+      // Already reported against this baseline and still open (or ignored):
+      // not a new change, so no new event (see changeConditionKey).
+      const known = await knownConditions({
+        monitoredPageId: snapshot.monitoredPageId,
+        previousSnapshotId: baselineSnap.id,
+      });
       for (const change of changes) {
+        if (known.has(changeConditionKey(change))) continue;
         await prisma.changeEvent.create({
           data: {
             websiteId: scan.websiteId,
@@ -394,13 +408,18 @@ export async function runComparisonForScan(
     }
   }
 
+  // Site-wide events (no page) already open or ignored on this website.
+  const knownSite = await knownConditions({ websiteId: scan.websiteId, monitoredPageId: null }).catch(
+    () => new Set<string>(),
+  );
+
   // Site-wide redesign headline: when most pages were rebuilt in the same
   // scan, lead with one CRITICAL event that says so, rather than leaving the
   // owner to piece it together from a page-by-page list.
   try {
     const signal = siteRedesignSignal(pagesRedesigned, pagesCompared);
     const scored = signal ? scoreChange(signal) : null;
-    if (scored) {
+    if (scored && !knownSite.has(changeConditionKey(scored))) {
       await prisma.changeEvent.create({
         data: {
           websiteId: scan.websiteId,
@@ -432,7 +451,7 @@ export async function runComparisonForScan(
       excludeUrls: monitoredPageUrls,
     });
     const scored = brokenSignal ? scoreChange(brokenSignal) : null;
-    if (brokenSignal && scored) {
+    if (brokenSignal && scored && !knownSite.has(changeConditionKey(scored))) {
       await prisma.changeEvent.create({
         data: {
           websiteId: scan.websiteId,
@@ -501,6 +520,7 @@ export async function runComparisonForScan(
         return looked ? { ...m, llmsTxtStatus: row.llmsTxtStatus, llmsTxtHash: row.llmsTxtHash } : m;
       };
       for (const change of compareSiteMeta(previousMeta ? withLlms(previousMeta) : null, withLlms(currentMeta))) {
+        if (knownSite.has(changeConditionKey(change))) continue;
         await prisma.changeEvent.create({
           data: {
             websiteId: scan.websiteId,
@@ -539,4 +559,22 @@ export async function runComparisonForScan(
     pagesRedesigned,
   });
   return { changes: totalChanges, highest, pagesCompared, pagesFailed };
+}
+
+/**
+ * Condition keys of events already reported and still open or ignored, for a
+ * page against one baseline, or for a website's site-wide events. This scan's
+ * own events were deleted at the top, so a retried comparison recreates them
+ * rather than skipping them as repeats.
+ */
+async function knownConditions(
+  where:
+    | { monitoredPageId: string; previousSnapshotId: string }
+    | { websiteId: string; monitoredPageId: null },
+): Promise<Set<string>> {
+  const rows = await prisma.changeEvent.findMany({
+    where: { ...where, status: { in: [...KNOWN_CHANGE_STATUSES] } },
+    select: { changeType: true, category: true, severity: true, currentValue: true },
+  });
+  return new Set(rows.map((r) => changeConditionKey(r)));
 }

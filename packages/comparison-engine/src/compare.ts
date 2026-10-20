@@ -80,6 +80,25 @@ export function isBotChallengeTitle(title: string | null): boolean {
   return t !== "" && BOT_CHALLENGE_TITLES.some((re) => re.test(t));
 }
 
+/**
+ * Sign-in pages a site sends logged-out visitors to: a path segment like
+ * /login, /signin, /sign-in, /auth, /sso, /checkpoint or /wp-login.php, or a
+ * host like login.example.com / accounts.example.com.
+ */
+const LOGIN_PATH = /\/(log-?in|sign-?in|signin|auth|sso|checkpoint|wp-login\.php)(\/|\.|$)/i;
+const LOGIN_HOST = /^(login|signin|auth|accounts|sso|id)\./i;
+
+/** True when a URL is a sign-in page. */
+export function isLoginUrl(url: string | null): boolean {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    return LOGIN_PATH.test(u.pathname) || LOGIN_HOST.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Known-service detection so script identity survives cache-busting query strings. */
 function scriptKey(s: SnapshotScript): string {
   return s.service ? `service:${s.service}` : `domain:${s.domain}`;
@@ -107,6 +126,16 @@ export function compareSnapshots(
       httpStatus: current.httpStatus,
     });
     return challenge ? [challenge] : [];
+  }
+
+  // --- Login wall: the page now lands on a sign-in screen it didn't before.
+  // Canonical, final URL, headings, links and the screenshot would all
+  // describe the login screen (five HIGH alerts per scan in production), so
+  // this one signal replaces them. A page whose baseline already landed on a
+  // sign-in screen (a monitored login page) is compared normally.
+  if (isLoginUrl(current.finalUrl) && !isLoginUrl(baseline.finalUrl)) {
+    const wall = scoreChange({ kind: "login_wall", previous: baseline.finalUrl, current: current.finalUrl! });
+    return wall ? [wall] : [];
   }
 
   // --- Availability (spec §19) ---

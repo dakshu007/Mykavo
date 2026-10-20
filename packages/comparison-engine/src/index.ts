@@ -1,6 +1,7 @@
 export {
   compareSnapshots,
   isBotChallengeTitle,
+  isLoginUrl,
   type ComparableSnapshot,
   type SnapshotLink,
   type SnapshotScript,
@@ -33,3 +34,4 @@ export {
   type SiteMetaComparable,
   type ParsedSitemap,
 } from "./site-meta";
+export { changeConditionKey, KNOWN_CHANGE_STATUSES, type ChangeConditionInput } from "./dedupe";

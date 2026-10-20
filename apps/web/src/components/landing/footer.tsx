@@ -185,6 +185,10 @@ export function LandingFooter() {
                   <li key={l.label}>
                     <Link
                       href={l.href}
+                      // Dozens of footer links, all in view at the bottom of
+                      // every page: prefetching them cost every visitor
+                      // hundreds of KB for pages they rarely open.
+                      prefetch={false}
                       className="inline-flex items-center gap-2 text-sm leading-snug text-pretty text-[#151515]/75 transition-colors hover:text-[#151515]"
                     >
                       {l.label}

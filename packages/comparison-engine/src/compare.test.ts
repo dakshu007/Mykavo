@@ -258,9 +258,34 @@ describe("noise seen in production alerts", () => {
   it("still reports a final URL that lands on a different path", () => {
     const changes = compareSnapshots(
       withChanges({ finalUrl: "https://shop.test/" }),
-      withChanges({ finalUrl: "https://shop.test/login/?next=%2F" }),
+      withChanges({ finalUrl: "https://shop.test/home/" }),
     );
     expect(changes.find((c) => c.changeType === "final_url_changed")?.severity).toBe("HIGH");
+  });
+
+  it("reports a new login wall once instead of five HIGH diffs of the login screen", () => {
+    // Production: canonical, final URL, H1, links and the screenshot all
+    // changed every scan when facebook.com sent the scanner to /login.
+    const changes = compareSnapshots(
+      withChanges({ finalUrl: "https://shop.test/" }),
+      withChanges({
+        finalUrl: "https://shop.test/login/?next=%2F",
+        canonicalUrl: "https://shop.test/login",
+        title: "Log in",
+        h1Values: [],
+      }),
+    );
+    expect(changes).toHaveLength(1);
+    expect(changes[0]).toMatchObject({ changeType: "login_wall", severity: "HIGH" });
+  });
+
+  it("compares a monitored login page normally", () => {
+    const changes = compareSnapshots(
+      withChanges({ finalUrl: "https://shop.test/login" }),
+      withChanges({ finalUrl: "https://shop.test/login", title: "Sign in to Shop" }),
+    );
+    expect(changes.some((c) => c.changeType === "login_wall")).toBe(false);
+    expect(changes.some((c) => c.changeType === "title_changed")).toBe(true);
   });
 
   it("reports only a LOW recovery against a baseline captured while the page was 404", () => {

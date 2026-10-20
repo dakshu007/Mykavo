@@ -4,6 +4,7 @@ import { prisma } from "@mykavo/database";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { assertPageLimit, LimitError } from "@/lib/limits";
 import { isSameSite, normalizeUrl, parseUrlInput } from "@/lib/url";
+import { isPrivatePage, privatePageError } from "@/lib/private-pages";
 import { logger } from "@/lib/logger";
 
 type Params = { params: Promise<{ id: string }> };
@@ -41,6 +42,13 @@ export async function PUT(request: Request, { params }: Params) {
   // included, so a homepage that starts redirecting apex -> www keeps both its
   // old and new pages valid), deduplicated.
   const websiteOrigin = new URL(website.url);
+  // Admin and sign-in pages can't be added (lib/private-pages); one that is
+  // already monitored keeps working, so saving the list never fails over it.
+  const alreadyMonitored = new Set(
+    (
+      await prisma.monitoredPage.findMany({ where: { websiteId: website.id }, select: { normalizedUrl: true } })
+    ).map((p) => p.normalizedUrl),
+  );
   const seen = new Set<string>();
   const pages: Array<{ url: string; normalizedUrl: string; name: string | null }> = [];
   for (const page of input.pages) {
@@ -58,6 +66,9 @@ export async function PUT(request: Request, { params }: Params) {
       );
     }
     const normalized = normalizeUrl(parsed);
+    if (isPrivatePage(parsed) && !alreadyMonitored.has(normalized)) {
+      return NextResponse.json({ error: privatePageError(parsed.href) }, { status: 400 });
+    }
     if (seen.has(normalized)) continue;
     seen.add(normalized);
     pages.push({ url: parsed.href, normalizedUrl: normalized, name: page.name ?? null });

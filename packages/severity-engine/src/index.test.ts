@@ -335,13 +335,24 @@ describe("platform (plugin/theme/core) rules", () => {
 });
 
 describe("visual noise guard", () => {
-  it("caps the visual score at LOW when under 1% of pixels changed in place", () => {
-    const c = score({ kind: "visual_diff", percentage: 27, pixelPercentage: 0.5 })!;
-    expect(c.severity).toBe("LOW");
-    expect(c.notify).toBe(false);
+  it("ignores a change when under 1% of pixels changed in place", () => {
+    expect(score({ kind: "visual_diff", percentage: 27, pixelPercentage: 0.5 })).toBeNull();
   });
-  it("keeps the spec bands when pixels really changed, or when the caller has no pixel figure", () => {
-    expect(score({ kind: "visual_diff", percentage: 27, pixelPercentage: 12 })!.severity).toBe("HIGH");
+  it("scores the smaller of the content and pixel measures", () => {
+    // Production: facebook.com/watch was CRITICAL at 45.9% content, 1.7% pixels.
+    expect(score({ kind: "visual_diff", percentage: 45.9, pixelPercentage: 1.7 })!.severity).toBe("LOW");
+    expect(score({ kind: "visual_diff", percentage: 66.5, pixelPercentage: 8.7 })!.severity).toBe("MEDIUM");
+    // A real redesign-sized change is large on both and stays CRITICAL.
+    expect(score({ kind: "visual_diff", percentage: 83, pixelPercentage: 46 })!.severity).toBe("CRITICAL");
+  });
+  it("keeps the spec bands when the caller has no pixel figure", () => {
     expect(score({ kind: "visual_diff", percentage: 27 })!.severity).toBe("HIGH");
+  });
+});
+
+describe("login wall", () => {
+  it("is one HIGH availability change", () => {
+    const c = score({ kind: "login_wall", previous: "https://a.test/", current: "https://a.test/login" })!;
+    expect(c).toMatchObject({ changeType: "login_wall", severity: "HIGH", category: "AVAILABILITY" });
   });
 });

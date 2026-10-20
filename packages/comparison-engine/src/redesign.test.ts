@@ -74,3 +74,16 @@ describe("siteRedesignSignal", () => {
     expect(siteRedesignSignal(1, 1)).toBeNull();
   });
 });
+
+describe("redesign pixel floor", () => {
+  it("does not call 5-6% pixel change a redesign, however high the content score", () => {
+    // Production: facebook.com/help at 5.7% pixels, 93% content, title and H1 unchanged.
+    expect(
+      isPageRedesign({ contentPercentage: 93, pixelPercentage: 5.7, textChanged: true, domChanged: true }),
+    ).toBe(false);
+    // harshdesignerboutique.com: a real redesign at 35% of pixels.
+    expect(
+      isPageRedesign({ contentPercentage: 98, pixelPercentage: 35, textChanged: true, domChanged: true }),
+    ).toBe(true);
+  });
+});

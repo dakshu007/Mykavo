@@ -57,4 +57,15 @@ describe("planPageAdditions", () => {
     );
     expect(plan.ok).toBe(false);
   });
+
+  it("refuses an admin or sign-in page, but not one already monitored", () => {
+    const refused = planPageAdditions([{ url: "https://shop.test/wp-admin/" }], "https://shop.test/", []);
+    expect(refused.ok).toBe(false);
+    const kept = planPageAdditions(
+      [{ url: "https://shop.test/my-account/" }],
+      "https://shop.test/",
+      ["https://shop.test/my-account"],
+    );
+    expect(kept).toMatchObject({ ok: true, fresh: [], alreadyMonitored: 1 });
+  });
 });

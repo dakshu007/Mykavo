@@ -129,6 +129,9 @@ function NavMenu({
                 <Link
                   key={t.href}
                   href={t.href}
+                  // Hidden menu items stay in the page; prefetching them all
+                  // cost every visitor ~60 requests and ~500 KB per page.
+                  prefetch={false}
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
@@ -164,6 +167,7 @@ function ToolsPanel({ close }: { close: () => void }) {
               <Link
                 key={t.slug}
                 href={toolHref(t.slug)}
+                prefetch={false}
                 role="menuitem"
                 onClick={close}
                 className="group flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
@@ -178,6 +182,7 @@ function ToolsPanel({ close }: { close: () => void }) {
       </div>
       <Link
         href={TOOLS_HUB_PATH}
+        prefetch={false}
         role="menuitem"
         onClick={close}
         className="group flex items-center justify-between border-t border-[#151515]/10 bg-[#FBFAF3] px-5 py-3 text-[13px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"

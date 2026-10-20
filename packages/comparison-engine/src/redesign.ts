@@ -28,11 +28,13 @@ const REDESIGN_CONTENT_WITH_PIXELS = 20;
 const REDESIGN_PIXELS = 50;
 /**
  * Below this share of positionally-changed pixels the page cannot have been
- * replaced: at least 95% of it is pixel-for-pixel where it was. Production
- * data showed "Page redesigned" CRITICAL alerts with 3% of pixels changed -
- * screenshot re-encoding artefacts, not redesigns (see visual.ts).
+ * replaced: at least 80% of it is pixel-for-pixel where it was. Production
+ * showed "Page redesigned" CRITICAL alerts at 3%, then (after the encoding
+ * fix) at 5-6% on pages whose title and heading never changed - a rotating
+ * feed or a narrow sidebar, which the row-based content score overstates.
+ * Every real redesign seen in production changed at least 35% of pixels.
  */
-const REDESIGN_MIN_PIXELS = 5;
+const REDESIGN_MIN_PIXELS = 20;
 
 export function isPageRedesign(e: RedesignEvidence): boolean {
   const visuallyReplaced =

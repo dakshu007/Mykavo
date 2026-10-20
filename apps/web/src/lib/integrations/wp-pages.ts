@@ -10,6 +10,7 @@
  * website's own origin, so nothing outside that website can be added.
  */
 
+import { isPrivatePage, privatePageError } from "@/lib/private-pages";
 import { normalizeUrl, parseUrlInput } from "@/lib/url";
 
 function siteHost(hostname: string): string {
@@ -45,6 +46,7 @@ export function planPageAdditions(
     const onSite = new URL(parsed.pathname + parsed.search, origin);
     const normalizedUrl = normalizeUrl(onSite);
     if (known.has(normalizedUrl)) continue;
+    if (isPrivatePage(onSite)) return { ok: false, error: privatePageError(onSite.href) };
     known.add(normalizedUrl);
     fresh.push({ url: onSite.href, normalizedUrl, name: page.name?.trim() || null });
   }
