@@ -18,6 +18,9 @@ import {
 } from "@/components/dashboard/change-notes";
 import { ScreenshotCompare } from "@/components/dashboard/screenshot-compare";
 import { defaultCompareMode } from "@/lib/screenshot-compare";
+import { ChangeExplanationCard } from "@/components/dashboard/change-explanation";
+import { aiConfigured } from "@/lib/ai/client";
+import { findChangeExplanation } from "@/lib/ai/explain-change";
 
 function pathOf(url: string): string {
   try {
@@ -114,6 +117,9 @@ export default async function ChangeDetailPage({
     }
   }
 
+  const showAi = aiConfigured();
+  const explanation = showAi ? await findChangeExplanation(change.id) : null;
+
   // Notes are mutations - viewers read the thread but cannot write to it.
   const canWriteNotes = role === "OWNER" || role === "ADMIN" || role === "MEMBER";
   const canModerateNotes = role === "OWNER" || role === "ADMIN";
@@ -188,6 +194,14 @@ export default async function ChangeDetailPage({
           </Link>
         </p>
       </Card>
+
+      {showAi && (
+        <ChangeExplanationCard
+          changeId={change.id}
+          initial={explanation}
+          autoLoad={change.severity === "HIGH" || change.severity === "CRITICAL"}
+        />
+      )}
 
       {/* Notes thread */}
       <Card>

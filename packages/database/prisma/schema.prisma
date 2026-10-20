@@ -281,6 +281,7 @@ model Website {
   healthChecks      HealthCheck[]
   healthIncidents   HealthIncident[]
   siteMetaSnapshots SiteMetaSnapshot[]
+  aiInsights        AiInsight[]
   gscConnection     GscConnection?
   gscPageDaily      GscPageDaily[]
   gscDaily          GscDaily[]
@@ -739,6 +740,7 @@ model ChangeEvent {
   updatedAt          DateTime       @updatedAt
 
   notes ChangeNote[]
+  aiInsights AiInsight[]
 
   @@index([websiteId, status, severity])
   @@index([monitoredPageId])
@@ -1761,4 +1763,34 @@ model ServiceRequest {
 
   @@index([createdAt])
   @@map("service_request")
+}
+
+/// AI-written text (lib/ai): a plain-English explanation of one change, or a
+/// website's weekly summary. Generated once and kept - the cached row is what
+/// makes every later view free - with the tokens and cost of the call that
+/// wrote it, which the monthly budget cap and per-plan quotas add up.
+model AiInsight {
+  id            String       @id @default(cuid())
+  workspaceId   String
+  /// "change_explanation" | "weekly_summary"
+  kind          String
+  changeEventId String?
+  changeEvent   ChangeEvent? @relation(fields: [changeEventId], references: [id], onDelete: Cascade)
+  websiteId     String?
+  website       Website?     @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  /// Monday 00:00 UTC of the week a weekly summary covers.
+  periodStart   DateTime?
+  content       Json
+  model         String
+  inputTokens   Int
+  outputTokens  Int
+  /// Cost of the call in millionths of a US dollar.
+  costMicroUsd  Int
+  createdAt     DateTime     @default(now())
+
+  @@unique([kind, changeEventId])
+  @@unique([kind, websiteId, periodStart])
+  @@index([workspaceId, createdAt])
+  @@index([createdAt])
+  @@map("ai_insight")
 }

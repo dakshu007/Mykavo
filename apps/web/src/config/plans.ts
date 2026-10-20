@@ -68,6 +68,11 @@ export interface Plan {
     siteAuditPages: number;
     /** Site audits per workspace per UTC day. */
     siteAuditsPerDay: number;
+    /**
+     * AI change explanations per workspace per calendar month (lib/ai). Each
+     * is generated once and kept, so re-opening one never counts again.
+     */
+    aiExplanationsPerMonth: number;
   };
   features: string[];
   highlighted?: boolean;
@@ -97,6 +102,7 @@ export const plans: Plan[] = [
       deployChecks: false,
       siteAuditPages: 150,
       siteAuditsPerDay: 1,
+      aiExplanationsPerMonth: 10,
     },
     features: [
       "1 website",
@@ -129,6 +135,7 @@ export const plans: Plan[] = [
       deployChecks: true,
       siteAuditPages: 1500,
       siteAuditsPerDay: 10,
+      aiExplanationsPerMonth: 100,
     },
     features: [
       "8 websites",
@@ -165,6 +172,7 @@ export const plans: Plan[] = [
       // worker caps audits there too. Never advertise more than it can crawl.
       siteAuditPages: 2000,
       siteAuditsPerDay: 25,
+      aiExplanationsPerMonth: 500,
     },
     features: [
       "30 websites",
@@ -272,6 +280,7 @@ export function unlimitedAgencyPlan(): Plan {
       baselineScansPer24h: Infinity,
       maxMembers: Infinity,
       siteAuditsPerDay: Infinity,
+      aiExplanationsPerMonth: Infinity,
     },
     features: [
       "Unlimited websites",

@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.131.0",
     "@better-auth/expo": "1.6.23",
     "@hookform/resolvers": "^5.4.0",
     "@mykavo/comparison-engine": "workspace:*",

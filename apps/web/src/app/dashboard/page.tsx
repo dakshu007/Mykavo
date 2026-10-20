@@ -8,6 +8,9 @@ import { AllClear } from "@/components/dashboard/overview/all-clear";
 import { SummaryRow } from "@/components/dashboard/overview/summary-row";
 import { WebsitesList } from "@/components/dashboard/overview/websites-list";
 import { FirstWebsite } from "@/components/dashboard/overview/first-website";
+import { WeeklySummaryCard } from "@/components/dashboard/overview/weekly-summary";
+import { aiConfigured } from "@/lib/ai/client";
+import { findWeeklySummary } from "@/lib/ai/weekly-summary";
 
 /**
  * Overview: answers "what needs my attention right now?".
@@ -34,6 +37,13 @@ export default async function DashboardOverviewPage() {
   const hasWebsites = data.websites.length > 0;
   const nothingNeedsAttention = data.attention.groups.length === 0;
 
+  // The AI note covers websites that have been scanned at least once; it opens
+  // on the website that most needs attention.
+  const scanned = data.websites.filter((w) => w.lastScanAt !== null);
+  const summaryWebsiteId =
+    data.attention.groups.find((g) => scanned.some((w) => w.id === g.websiteId))?.websiteId ?? scanned[0]?.id;
+  const stored = aiConfigured() && summaryWebsiteId ? await findWeeklySummary(summaryWebsiteId) : null;
+
   return (
     <div className="space-y-6">
       <h1 className="sr-only">Overview</h1>
@@ -51,6 +61,18 @@ export default async function DashboardOverviewPage() {
           nextScan={data.nextScan}
           lowerPriorityOpen={data.lowerPriorityOpen}
           now={data.now}
+        />
+      )}
+
+      {aiConfigured() && summaryWebsiteId && (
+        <WeeklySummaryCard
+          websites={scanned.map((w) => ({ id: w.id, name: w.name }))}
+          defaultWebsiteId={summaryWebsiteId}
+          initial={
+            stored
+              ? { websiteId: summaryWebsiteId, summary: stored.summary, createdAt: stored.createdAt.toISOString() }
+              : null
+          }
         />
       )}
 

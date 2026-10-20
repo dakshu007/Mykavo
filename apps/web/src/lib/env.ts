@@ -164,6 +164,12 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   QUOTA_RESEND_DAILY: z.string().optional(),
   QUOTA_RESEND_MONTHLY: z.string().optional(),
   QUOTA_NETLIFY_BANDWIDTH_GB: z.string().optional(),
+  // AI explanations and weekly summaries (lib/ai). Optional: without a key
+  // the AI cards simply don't appear. The budget is a hard monthly cap in US
+  // dollars across every workspace; calls stop for the rest of the month
+  // once it is reached.
+  ANTHROPIC_API_KEY: z.string().optional(),
+  AI_MONTHLY_BUDGET_USD: z.string().optional(),
   // Dodo Payments (optional - billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
   // The $79/mo Agency product. Defaults to the live product in
