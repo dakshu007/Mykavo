@@ -1794,3 +1794,18 @@ model AiInsight {
   @@index([createdAt])
   @@map("ai_insight")
 }
+
+/// Periodic readings of a cumulative counter from outside the database, such
+/// as the database server's bytes sent (Supabase Metrics API). The worker
+/// writes one an hour; the admin usage page turns consecutive readings into
+/// usage for a period. Values are counters, so only differences mean anything,
+/// and a drop means the counter restarted. Kept 120 days.
+model UsageSample {
+  id        String   @id @default(cuid())
+  metric    String
+  value     Float
+  sampledAt DateTime @default(now())
+
+  @@index([metric, sampledAt])
+  @@map("usage_sample")
+}

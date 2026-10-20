@@ -39,7 +39,14 @@ export async function GET() {
   try {
     const report = await collectUsage();
     logUsageProblems(report);
-    return NextResponse.json(report, { headers: { "cache-control": "no-store" } });
+    // Shipped apps know only "bytes" and "count" and would render a dollar
+    // figure as a bare number, so dollar rows (AI spend) stay on the web page.
+    const forApp = {
+      ...report,
+      meters: report.meters.filter((m) => m.unit !== "usd"),
+      stats: report.stats.filter((s) => s.unit !== "usd"),
+    };
+    return NextResponse.json(forApp, { headers: { "cache-control": "no-store" } });
   } catch (err) {
     logger.error("mobile usage collection failed", {
       userId: session.user.id,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatBytes,
   formatCount,
+  formatUsd,
   formatPercent,
   formatValue,
   meterWidth,
@@ -79,5 +80,15 @@ describe("formatValue", () => {
   it("dispatches on the unit", () => {
     expect(formatValue(2048, "bytes")).toBe("2.0 KB");
     expect(formatValue(2048, "count")).toBe("2,048");
+  });
+});
+
+describe("formatUsd", () => {
+  it("keeps fractions of a cent visible", () => {
+    expect(formatUsd(0)).toBe("$0");
+    expect(formatUsd(0.0019)).toBe("$0.0019");
+    expect(formatUsd(40)).toBe("$40.00");
+    expect(formatUsd(1234.5)).toBe("$1,234.50");
+    expect(formatUsd(Number.NaN)).toBe("-");
   });
 });

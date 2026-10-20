@@ -170,6 +170,10 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   // once it is reached.
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MONTHLY_BUDGET_USD: z.string().optional(),
+  // Day of the month the Supabase billing cycle renews (1-28, Supabase >
+  // Billing), for the admin egress meter. Defaults to the 1st. The readings
+  // themselves come from the worker (SUPABASE_METRICS_KEY, worker env).
+  SUPABASE_BILLING_CYCLE_DAY: z.string().optional(),
   // Dodo Payments (optional - billing degrades gracefully when unset).
   DODO_PRODUCT_ID: z.string().optional(),
   // The $79/mo Agency product. Defaults to the live product in

@@ -32,6 +32,8 @@ import { prisma } from "@mykavo/database";
 // package uses the subpath for the same reason.
 import { getDefaultStorage } from "@mykavo/scanner/storage";
 import { QUOTAS, type Quota } from "@/config/quotas";
+import { collectAiSpend, collectEgress } from "./costs";
+import { formatBytes } from "./format";
 import type { UsageUnit } from "./format";
 import { logger } from "@/lib/logger";
 
@@ -333,18 +335,127 @@ export async function collectUsage(now: Date = new Date()): Promise<UsageReport>
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
 
-  const [database, email, storage, netlify, volumes] = await Promise.allSettled([
+  const [database, email, storage, netlify, volumes, ai, egress] = await Promise.allSettled([
     withTimeout(collectDatabase(), PROBE_TIMEOUT_MS, "Database probe"),
     withTimeout(collectEmail(now), PROBE_TIMEOUT_MS, "Email count"),
     withTimeout(collectStorage(), PROBE_TIMEOUT_MS * 3, "Storage walk"),
     withTimeout(collectNetlify(controller.signal), PROBE_TIMEOUT_MS, "Netlify"),
     withTimeout(collectVolumes(now), PROBE_TIMEOUT_MS, "Volume counts"),
+    withTimeout(collectAiSpend(now), PROBE_TIMEOUT_MS, "AI spend"),
+    withTimeout(collectEgress(now), PROBE_TIMEOUT_MS, "Egress readings"),
   ]);
   clearTimeout(timer);
 
   const meters: UsageMeter[] = [];
   const stats: UsageStat[] = [];
   const problems: string[] = [];
+
+  // --- AI spend: first, because it is the meter that grows with customers.
+  if (ai.status === "fulfilled") {
+    const a = ai.value;
+    meters.push({
+      id: "ai-spend",
+      label: "AI spend this month",
+      provider: "Anthropic (Claude Haiku)",
+      used: a.monthUsd,
+      limit: a.budgetUsd,
+      unit: "usd",
+      state: a.configured ? "measured" : "unconfigured",
+      detail: a.configured
+        ? `Exact: every call's price is stored with it. AI calls stop for the month at the cap (AI_MONTHLY_BUDGET_USD). ${a.explanations} explanation${a.explanations === 1 ? "" : "s"}, ${a.weeklyNotes} weekly note${a.weeklyNotes === 1 ? "" : "s"} this month (UTC).`
+        : "ANTHROPIC_API_KEY is not set, so the AI cards are hidden and nothing is spent.",
+    });
+    stats.push(
+      { id: "ai-24h", label: "AI spend, last 24h", provider: "Anthropic", value: a.last24hUsd, unit: "usd", state: "measured", order: 7, detail: "" },
+      { id: "ai-all-time", label: "AI spend, all time", provider: "Anthropic", value: a.allTimeUsd, unit: "usd", state: "measured", order: 7.1, detail: "" },
+      {
+        id: "ai-per-explanation",
+        label: "Average cost per explanation",
+        provider: "Anthropic",
+        value: a.perExplanationUsd,
+        unit: "usd",
+        state: a.perExplanationUsd === null ? "unavailable" : "measured",
+        order: 7.2,
+        detail: a.perExplanationUsd === null ? "No explanations yet this month." : "This month.",
+      },
+      {
+        id: "ai-wasted",
+        label: "AI calls with no usable answer",
+        provider: "Anthropic",
+        value: a.wastedCalls,
+        unit: "count",
+        state: "measured",
+        order: 7.3,
+        detail: "Refused or unreadable answers this month. Still billed, so still counted against the cap.",
+      },
+      ...a.topWorkspaces.map((w, i) => ({
+        id: `ai-ws-${i}`,
+        label: `AI: ${w.name}`,
+        provider: "Anthropic",
+        value: w.usd,
+        unit: "usd" as const,
+        state: "measured" as const,
+        order: 7.5 + i / 100,
+        detail: `${w.calls} call${w.calls === 1 ? "" : "s"} this month.`,
+      })),
+    );
+  } else {
+    problems.push(`AI spend: ${message(ai.reason)}`);
+  }
+
+  // --- database egress (estimated from the server's bytes-sent counter)
+  const egressQuota = QUOTAS.databaseEgressBytes();
+  if (egress.status === "fulfilled") {
+    const e = egress.value;
+    const day = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    const cycle = `Cycle ${day(e.cycleStart)} to ${day(e.cycleEnd)}`;
+    if (!e.sampling) {
+      meters.push(
+        missingMeter(
+          "db-egress",
+          "Database egress this cycle",
+          "Supabase",
+          egressQuota,
+          "bytes",
+          "unconfigured",
+          "Set SUPABASE_METRICS_KEY (a Supabase secret API key) in the worker's environment. It then reads the database's network counter every hour.",
+        ),
+      );
+    } else {
+      const stale = e.lastReadingAt !== null && now.getTime() - e.lastReadingAt.getTime() > 3 * 3_600_000;
+      const projection =
+        e.projectedBytes === null
+          ? ""
+          : ` At this rate about ${formatBytes(e.projectedBytes)} by ${day(e.cycleEnd)}${e.projectedBytes > egressQuota.limit ? " - OVER the cap" : ""}.`;
+      meters.push(
+        meter(
+          "db-egress",
+          "Database egress this cycle",
+          "Supabase",
+          e.cycleBytes,
+          egressQuota,
+          "bytes",
+          e.partial ? "partial" : "measured",
+          `Estimated from the database server's bytes sent; Supabase's own figure can differ a little. ${cycle}${e.partial ? ", readings started mid-cycle, so this is a floor" : ""}.${projection}${stale ? " Last reading over 3 hours ago: is the worker running?" : ""}`,
+        ),
+      );
+      stats.push({
+        id: "db-egress-24h",
+        label: "Database egress, last 24h",
+        provider: "Supabase",
+        value: e.last24hBytes,
+        unit: "bytes",
+        state: e.last24hBytes === null ? "unavailable" : "measured",
+        order: 8,
+        detail: e.last24hBytes === null ? "Needs two readings in the last day." : "Estimated, from hourly readings.",
+      });
+    }
+  } else {
+    problems.push(`Egress: ${message(egress.reason)}`);
+    meters.push(
+      missingMeter("db-egress", "Database egress this cycle", "Supabase", egressQuota, "bytes", "unavailable", message(egress.reason)),
+    );
+  }
 
   // --- database
   const dbQuota = QUOTAS.databaseBytes();

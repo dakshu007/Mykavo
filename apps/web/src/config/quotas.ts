@@ -95,6 +95,13 @@ export const QUOTAS = {
       3_000,
       "Resend free tier sends 3,000 emails per month.",
     ),
+  databaseEgressBytes: () =>
+    quota(
+      "QUOTA_SUPABASE_EGRESS_GB",
+      5 * GB,
+      "Supabase free tier includes 5 GB of egress per billing cycle (Pro: 250 GB). Raise QUOTA_SUPABASE_EGRESS_GB after upgrading.",
+      GB,
+    ),
   bandwidthBytes: () =>
     quota(
       "QUOTA_NETLIFY_BANDWIDTH_GB",

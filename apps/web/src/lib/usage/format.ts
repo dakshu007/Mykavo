@@ -34,9 +34,21 @@ export function formatCount(value: number): string {
   return value.toLocaleString("en-US");
 }
 
-export type UsageUnit = "bytes" | "count";
+export type UsageUnit = "bytes" | "count" | "usd";
+
+/**
+ * US dollars. AI calls cost fractions of a cent, so small amounts keep four
+ * decimals ("$0.0035") rather than rounding to a misleading "$0.00".
+ */
+export function formatUsd(value: number): string {
+  if (!Number.isFinite(value) || value < 0) return "-";
+  if (value === 0) return "$0";
+  if (value < 1) return `$${value.toFixed(4)}`;
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 export function formatValue(value: number, unit: UsageUnit): string {
+  if (unit === "usd") return formatUsd(value);
   return unit === "bytes" ? formatBytes(value) : formatCount(value);
 }
 

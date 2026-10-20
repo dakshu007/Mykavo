@@ -64,6 +64,7 @@ import { runGscSync, runGscSweep } from "./gsc-sync";
 import { runDomainSweep } from "./domain-check";
 import { startWatchdog } from "./watchdog";
 import { startKeepWarm } from "./keep-warm";
+import { startEgressSampler } from "./egress-sample";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
@@ -328,11 +329,16 @@ async function main() {
   // wait on a cold start (see keep-warm.ts).
   const stopKeepWarm = startKeepWarm();
 
+  // Hourly reading of the database server's bytes sent, for the admin
+  // usage page's egress meter (see egress-sample.ts).
+  const stopEgressSampler = startEgressSampler();
+
   async function shutdown(signal: string) {
     logger.info("shutting down", { signal });
     try {
       stopDatabaseWatch();
       stopKeepWarm();
+      stopEgressSampler();
       await boss.stop({ graceful: true, timeout: 30_000 });
       await pool.close();
     } finally {
