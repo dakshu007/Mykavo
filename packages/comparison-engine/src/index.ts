@@ -34,4 +34,9 @@ export {
   type SiteMetaComparable,
   type ParsedSitemap,
 } from "./site-meta";
-export { changeConditionKey, KNOWN_CHANGE_STATUSES, type ChangeConditionInput } from "./dedupe";
+export {
+  changeConditionKey,
+  KNOWN_CHANGE_STATUSES,
+  KNOWN_PAGE_CHANGE_STATUSES,
+  type ChangeConditionInput,
+} from "./dedupe";

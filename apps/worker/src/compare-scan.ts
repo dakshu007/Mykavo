@@ -24,6 +24,7 @@ import {
   isLoginUrl,
   isPageRedesign,
   KNOWN_CHANGE_STATUSES,
+  KNOWN_PAGE_CHANGE_STATUSES,
   scoreChange,
   siteRedesignSignal,
   type ComparableSnapshot,
@@ -648,8 +649,9 @@ export async function runComparisonForScan(
 }
 
 /**
- * Condition keys of events already reported and still open or ignored, for a
- * page against one baseline, or for a website's site-wide events. This scan's
+ * Condition keys of events already reported and still open or ignored (or,
+ * on a page, approved), for a page against one baseline, or for a website's
+ * site-wide events. This scan's
  * own events were deleted at the top, so a retried comparison recreates them
  * rather than skipping them as repeats.
  */
@@ -658,8 +660,10 @@ async function knownConditions(
     | { monitoredPageId: string; previousSnapshotId: string }
     | { websiteId: string; monitoredPageId: null },
 ): Promise<Set<string>> {
+  // Approved counts as known on a page (one baseline), not site-wide.
+  const statuses = where.monitoredPageId === null ? KNOWN_CHANGE_STATUSES : KNOWN_PAGE_CHANGE_STATUSES;
   const rows = await prisma.changeEvent.findMany({
-    where: { ...where, status: { in: [...KNOWN_CHANGE_STATUSES] } },
+    where: { ...where, status: { in: [...statuses] } },
     select: { changeType: true, category: true, severity: true, currentValue: true },
   });
   return new Set(rows.map((r) => changeConditionKey(r)));
