@@ -680,3 +680,35 @@ html[data-promo] {
     display: none;
   }
 }
+
+/*
+ * Big monitors. The dashboard is sized in CSS pixels, so on a 27" 1440p
+ * screen at 100% (2560 CSS px wide) it rendered small in the middle of a lot
+ * of empty space. Past these widths the whole dashboard is zoomed, the way a
+ * reader would with Ctrl +, so it fills the screen at a readable size.
+ * Media queries still see the real width (zoom does not change them).
+ *
+ * Chrome scales vh units by the zoom too, so anything sized against the
+ * viewport divides by --dash-zoom (the sidebar's height).
+ */
+@media (min-width: 1800px) {
+  html:has([data-dashboard]) {
+    --dash-zoom: 1.1;
+    zoom: var(--dash-zoom);
+  }
+}
+@media (min-width: 2200px) {
+  html:has([data-dashboard]) {
+    --dash-zoom: 1.2;
+  }
+}
+@media (min-width: 2800px) {
+  html:has([data-dashboard]) {
+    --dash-zoom: 1.4;
+  }
+}
+@media (min-width: 3400px) {
+  html:has([data-dashboard]) {
+    --dash-zoom: 1.6;
+  }
+}

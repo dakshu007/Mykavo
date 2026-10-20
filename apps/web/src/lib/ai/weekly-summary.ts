@@ -5,9 +5,9 @@ import { platformsFrom } from "./explain-change";
 
 /**
  * "Your site this week": a short read of one website's last 7 days for the
- * Overview. It is keyed to the website's latest finished scan, so it is
- * written again only when there is something new to read, never on a timer
- * or per visit.
+ * Overview. It is keyed to the website's latest finished scan or change
+ * review, so it is written again only when there is something new to read,
+ * never on a timer or per visit.
  */
 
 export const SUMMARY_STATUSES = ["healthy", "watch", "action_needed"] as const;
@@ -78,16 +78,23 @@ export function tidySummary(s: z.infer<typeof weeklySummaryOutput>): WeeklySumma
 }
 
 /**
- * What the summary is keyed to: the latest finished scan, or the website's
- * creation for a site never scanned. A new scan means a new summary.
+ * What the summary is keyed to: the later of the latest finished scan and the
+ * latest change to a change event (approved, ignored, resolved), or the
+ * website's creation when neither exists. Either one means a new summary: a
+ * note still calling approved changes "open" would contradict the attention
+ * card right above it.
  */
 async function summaryBasis(websiteId: string, createdAt: Date): Promise<Date> {
-  const scan = await prisma.scan.findFirst({
-    where: { websiteId, status: { in: ["COMPLETED", "PARTIAL", "FAILED"] }, completedAt: { not: null } },
-    orderBy: { createdAt: "desc" },
-    select: { completedAt: true },
-  });
-  return scan?.completedAt ?? createdAt;
+  const [scan, changes] = await Promise.all([
+    prisma.scan.findFirst({
+      where: { websiteId, status: { in: ["COMPLETED", "PARTIAL", "FAILED"] }, completedAt: { not: null } },
+      orderBy: { createdAt: "desc" },
+      select: { completedAt: true },
+    }),
+    prisma.changeEvent.aggregate({ where: { websiteId }, _max: { updatedAt: true } }),
+  ]);
+  const times = [scan?.completedAt, changes._max.updatedAt].filter((d): d is Date => d instanceof Date);
+  return times.length > 0 ? new Date(Math.max(...times.map((d) => d.getTime()))) : createdAt;
 }
 
 /** The stored summary for the website's current basis, without generating. */

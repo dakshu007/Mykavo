@@ -95,14 +95,19 @@ export default async function DashboardLayout({
   return (
     // data-clarity-mask: if Clarity is already running (a visitor came in from a
     // public page without a reload), it masks everything in the signed-in app.
-    <div data-clarity-mask="True" className="mx-auto flex min-h-screen w-full max-w-360 gap-6 p-4 lg:p-6">
+    // data-dashboard: big monitors scale the whole dashboard up (globals.css).
+    <div
+      data-clarity-mask="True"
+      data-dashboard=""
+      className="mx-auto flex min-h-[calc(100vh/var(--dash-zoom,1))] w-full max-w-360 gap-6 p-4 lg:p-6 min-[1800px]:max-w-400"
+    >
       <ActivityBeacon />
       {newSignup ? <SignupTracker userId={session.user.id} {...newSignup} /> : null}
       <CommandPalette
         isBlogAdmin={blogAdmin}
         isPlatformAdmin={platformAdmin}
       />
-      <div className="sticky top-6 hidden h-[calc(100vh-3rem)] w-60 shrink-0 overflow-hidden rounded-card bg-card p-3 shadow-card lg:block">
+      <div className="sticky top-6 hidden h-[calc(100vh/var(--dash-zoom,1)-3rem)] w-60 shrink-0 overflow-hidden rounded-card bg-card p-3 shadow-card lg:block">
         <DashboardSidebar
           workspaceName={workspace.name}
           monitoringLive={monitoringLive}
