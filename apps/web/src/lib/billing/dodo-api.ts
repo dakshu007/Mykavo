@@ -93,6 +93,11 @@ export async function createCheckoutSession(params: {
   email: string;
   metadata: Record<string, string>;
   returnUrl: string;
+  /**
+   * Campaign codes to pre-apply. The code box is then hidden, so a running
+   * campaign's code can't be stacked with another (Dodo accepts up to 20).
+   */
+  discountCodes?: string[];
 }): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10_000);
@@ -107,6 +112,9 @@ export async function createCheckoutSession(params: {
         metadata: params.metadata,
         return_url: params.returnUrl,
         mandate_min_amount_inr_paise: DODO_MANDATE_FLOOR_INR * 100,
+        ...(params.discountCodes?.length
+          ? { discount_codes: params.discountCodes, feature_flags: { allow_discount_code: false } }
+          : {}),
       }),
     });
     if (!res.ok) {

@@ -3,6 +3,7 @@ import { Sparkles } from "lucide-react";
 import { getPlan, PAID_PLAN_ID, formatLimit } from "@/config/plans";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
+import { campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
 
 /**
  * Sidebar upsell, shown on the Free plan and during the Pro trial.
@@ -18,6 +19,7 @@ export function UpgradeCard({
   websiteLimit,
   trialDaysLeft = null,
   trialAvailable = false,
+  campaign = null,
 }: {
   websitesUsed: number;
   websiteLimit: number;
@@ -25,8 +27,13 @@ export function UpgradeCard({
   trialDaysLeft?: number | null;
   /** Free and never trialed (signed up before trials existed): offer one. */
   trialAvailable?: boolean;
+  /** A running offer (config/campaign.ts): the price line shows it. */
+  campaign?: Campaign | null;
 }) {
   const pro = getPlan(PAID_PLAN_ID);
+  const offer = campaign
+    ? `${campaign.name}: ${formatUsd(campaignPrice(pro.priceMonthlyUsd, campaign.percent))}/mo for ${campaign.cycles} months, then $${pro.priceMonthlyUsd}.`
+    : null;
   if (trialDaysLeft === null && trialAvailable) {
     return (
       <div className="rounded-xl bg-primary-soft p-3.5">
@@ -54,7 +61,7 @@ export function UpgradeCard({
           {websitesUsed >= websiteLimit
             ? `All ${formatLimit(websiteLimit)} trial website${websiteLimit === 1 ? "" : "s"} in use.`
             : `The trial covers ${formatLimit(websiteLimit)} website${websiteLimit === 1 ? "" : "s"}.`}{" "}
-          {`${pro.name} has ${formatLimit(pro.limits.websites)} for $${pro.priceMonthlyUsd}/mo.`}
+          {offer ?? `${pro.name} has ${formatLimit(pro.limits.websites)} for $${pro.priceMonthlyUsd}/mo.`}
         </p>
         <Link
           href="/dashboard/billing?from=sidebar:trial"
@@ -71,12 +78,14 @@ export function UpgradeCard({
     <div className="rounded-xl bg-primary-soft p-3.5">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
         <Sparkles aria-hidden className="size-3.5 text-accent" />
-        Upgrade to {pro.name}
+        {campaign ? `${campaign.percent}% off ${pro.name}` : `Upgrade to ${pro.name}`}
       </p>
       {/* Two lines at most. This sits in a fixed-height column above sign-out,
           so every extra line of copy is height taken from the nav. */}
       <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
-        {atLimit ? (
+        {offer ? (
+          offer
+        ) : atLimit ? (
           <>
             All {formatLimit(websiteLimit)} Free website
             {websiteLimit === 1 ? "" : "s"} in use. {pro.name} monitors{" "}

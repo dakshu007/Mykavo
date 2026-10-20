@@ -3,6 +3,7 @@ import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { Check, CheckCircle2, Minus } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
+import { PricingCampaignBanner } from "@/components/landing/campaign-announcement";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
@@ -172,6 +173,9 @@ export default function PricingPage() {
         <div className="mb-14">
           <ValueQuoteBanner />
         </div>
+
+        {/* A running campaign's offer; nothing outside one. */}
+        <PricingCampaignBanner />
 
         {/* Plan cards */}
         <div className="mx-auto grid max-w-3xl gap-6 lg:max-w-6xl lg:grid-cols-3">

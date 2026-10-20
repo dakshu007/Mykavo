@@ -12,6 +12,7 @@ import {
 import { createCheckoutSession, dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
 import { appBaseUrl } from "@/lib/app-url";
+import { activeCampaign } from "@/config/campaign";
 import { logger } from "@/lib/logger";
 
 /**
@@ -62,21 +63,34 @@ export async function GET(request: Request) {
   // failure falls back to the static link, so checkout never breaks over it.
   const productId = productIdForPlan(plan)!;
   if (dodoApiConfigured()) {
-    try {
-      const sessionUrl = await createCheckoutSession({
-        productId,
-        email: session.user.email,
-        metadata: { checkoutToken: token, kind: plan },
-        returnUrl: checkoutRedirectUrl(),
-      });
-      logger.info("checkout started", { workspaceId: workspace.id, plan, via: "session" });
-      return NextResponse.redirect(sessionUrl);
-    } catch (err) {
-      logger.warn("checkout session failed, using static link", {
-        workspaceId: workspace.id,
-        plan,
-        error: err instanceof Error ? err.message : String(err),
-      });
+    // A running campaign's code is applied for the buyer. If Dodo refuses it
+    // (expired early, mistyped in the dashboard), the second attempt is a
+    // plain session: a promotion must never be the reason checkout fails.
+    const campaign = activeCampaign();
+    const attempts: (string[] | undefined)[] = campaign ? [[campaign.code], undefined] : [undefined];
+    for (const discountCodes of attempts) {
+      try {
+        const sessionUrl = await createCheckoutSession({
+          productId,
+          email: session.user.email,
+          metadata: { checkoutToken: token, kind: plan, ...(discountCodes ? { campaign: campaign!.id } : {}) },
+          returnUrl: checkoutRedirectUrl(),
+          discountCodes,
+        });
+        logger.info("checkout started", {
+          workspaceId: workspace.id,
+          plan,
+          via: "session",
+          campaign: discountCodes ? campaign!.id : null,
+        });
+        return NextResponse.redirect(sessionUrl);
+      } catch (err) {
+        logger.warn(discountCodes ? "checkout session with campaign code failed" : "checkout session failed, using static link", {
+          workspaceId: workspace.id,
+          plan,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
   }
 

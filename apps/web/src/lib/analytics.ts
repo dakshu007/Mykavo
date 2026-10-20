@@ -54,7 +54,10 @@ export type AnalyticsEvent =
   // props: placement, target (signup | pricing | all_platforms | lineup)
   | "platforms_cta_clicked"
   // Video tutorials page
-  | "tutorial_played";
+  | "tutorial_played"
+  // A time-boxed offer (config/campaign.ts). props: campaign (id), placement
+  | "campaign_banner_viewed"
+  | "campaign_banner_clicked";
 
 export type EventProps = Record<string, string | number | boolean>;
 

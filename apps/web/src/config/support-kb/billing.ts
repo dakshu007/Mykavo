@@ -700,7 +700,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["discount", "coupon", "promo", "code", "offer", "voucher"],
     answer:
-      "There's no public coupon list. From time to time, Free accounts get an email with a Pro offer and a discount code. If you received one, here's how to use it:\n\n1. Open [Billing](/dashboard/billing).\n2. Click **Upgrade to Pro**.\n3. Enter the code from the email at checkout.\n\nIf a code from one of our emails doesn't work, email [support@mykavo.app](mailto:support@mykavo.app) with the code and your account email.",
+      "There's no public coupon list. During a seasonal offer (shown as a banner on mykavo.app and on your Billing page), the discount is applied automatically when you upgrade from [Billing](/dashboard/billing), so there's no code to type. Outside those, Free accounts sometimes get an email with a Pro offer and a discount code. If you received one, here's how to use it:\n\n1. Open [Billing](/dashboard/billing).\n2. Click **Upgrade to Pro**.\n3. Enter the code from the email at checkout.\n\nIf a code from one of our emails doesn't work, email [support@mykavo.app](mailto:support@mykavo.app) with the code and your account email.",
     related: ["billing-upgrade", "billing-annual-plan", "billing-plans-prices"],
     evalQuestions: [
       "got a 15% off email, how do i apply it",

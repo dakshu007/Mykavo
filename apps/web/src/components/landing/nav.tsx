@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
-import { AppAnnouncement } from "./app-announcement";
+import { SiteAnnouncement } from "./campaign-announcement";
 import { GoogleIcon } from "@/components/brand/integration-icons";
 import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
 
@@ -203,7 +203,7 @@ export function LandingNav() {
     <>
       {/* Travels with the nav so it reaches all thirteen marketing pages -
           most arrivals land on a blog post or a tool, never on `/`. */}
-      <AppAnnouncement />
+      <SiteAnnouncement />
       <header className="fixed inset-x-0 top-4 z-50 px-4 sm:top-5">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 rounded-full border border-[#151515]/15 bg-white/95 pl-5 pr-2 shadow-[0_2px_0_#15151522,0_18px_40px_-18px_rgba(21,21,21,0.35)] backdrop-blur">
         <Link href="/" aria-label="MyKavo home" className="flex shrink-0 items-center gap-2">

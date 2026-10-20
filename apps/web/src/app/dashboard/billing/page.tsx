@@ -26,6 +26,7 @@ import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscrip
 import { ChangePlanButton } from "@/components/dashboard/change-plan-button";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
+import { activeCampaign, campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
 
 function FeatureList({ features, columns = false }: { features: string[]; columns?: boolean }) {
   return (
@@ -47,21 +48,39 @@ function PlanOffer({
   available,
   highlighted,
   note,
+  campaign,
 }: {
   plan: Plan;
   checkoutHref: string;
   available: boolean;
   highlighted: boolean;
   note?: string | null;
+  campaign?: Campaign | null;
 }) {
+  const offerPrice = campaign ? formatUsd(campaignPrice(plan.priceMonthlyUsd, campaign.percent)) : null;
   return (
     <Card className={highlighted ? "ring-2 ring-accent" : undefined}>
       <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft">
         <Sparkles className="size-5 text-accent" aria-hidden />
       </span>
       <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
-        {plan.name} - ${plan.priceMonthlyUsd}/month
+        {campaign && offerPrice ? (
+          <>
+            {plan.name} - {offerPrice}/month{" "}
+            <span className="text-base font-normal text-ink-faint line-through">${plan.priceMonthlyUsd}</span>
+          </>
+        ) : (
+          <>
+            {plan.name} - ${plan.priceMonthlyUsd}/month
+          </>
+        )}
       </h2>
+      {campaign && (
+        <p className="mt-1 text-sm font-medium text-[#C2410C]">
+          {campaign.name}: {campaign.percent}% off your first {campaign.cycles} months, then $
+          {plan.priceMonthlyUsd}/month. Applied automatically at checkout.
+        </p>
+      )}
       <p className="mt-1 text-sm text-ink-secondary">{plan.headline}</p>
       {note && <p className="mt-2 text-sm font-medium text-ink">{note}</p>}
       <FeatureList features={plan.features} />
@@ -119,6 +138,8 @@ export default async function BillingPage({
   // Server component: one clock read per request (also keeps the React
   // Compiler purity lint happy - Date.now() inline in render is flagged).
   const requestedAt = new Date();
+  // Offered only where checkout applies it: Free and trial workspaces.
+  const campaign = activeCampaign(requestedAt);
   const periodEnd = subscription?.currentPeriodEnd ?? null;
   const renewalLabel = periodEnd
     ? periodEnd.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
@@ -384,6 +405,7 @@ export default async function BillingPage({
             plan={pro}
             checkoutHref="/api/billing/checkout"
             available={billingEnabled}
+            campaign={campaign}
             highlighted
             note={
               trialEndsAt
@@ -395,6 +417,7 @@ export default async function BillingPage({
             plan={agency}
             checkoutHref="/api/billing/checkout?plan=agency"
             available={agencyBillingEnabled}
+            campaign={campaign}
             highlighted={false}
             note={
               trialEndsAt

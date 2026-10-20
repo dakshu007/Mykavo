@@ -15,6 +15,7 @@ import { recordSignupAttribution } from "@/lib/attribution/record";
 import { Greeting } from "@/components/dashboard/greeting";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
 import { VerifyEmailBanner } from "@/components/dashboard/verify-email-banner";
+import { activeCampaign } from "@/config/campaign";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { isMonitoringLive } from "@/lib/monitoring-live";
 import { getAppAccessStatus } from "@/lib/app-access";
@@ -83,6 +84,7 @@ export default async function DashboardLayout({
         websiteLimit={websiteLimit}
         trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
         trialAvailable={trialAvailable}
+        campaign={activeCampaign()}
       />
     ) : null;
 
