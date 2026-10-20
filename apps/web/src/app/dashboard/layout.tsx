@@ -15,7 +15,8 @@ import { recordSignupAttribution } from "@/lib/attribution/record";
 import { Greeting } from "@/components/dashboard/greeting";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
 import { VerifyEmailBanner } from "@/components/dashboard/verify-email-banner";
-import { activeCampaign } from "@/config/campaign";
+import { getLiveCampaign } from "@/lib/billing/campaign-server";
+import { PromoBar } from "@/components/promo/promo-bar";
 import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { isMonitoringLive } from "@/lib/monitoring-live";
 import { getAppAccessStatus } from "@/lib/app-access";
@@ -77,6 +78,9 @@ export default async function DashboardLayout({
   // Admin rights follow a VERIFIED allowlisted email, so pass the whole user.
   const blogAdmin = isBlogAdmin(session.user);
   const platformAdmin = isPlatformAdmin(session.user);
+  // A seasonal offer, confirmed with Dodo, for workspaces that could buy:
+  // Free or on the trial. Paying customers never see it.
+  const liveCampaign = plan.id === "free" || plan.trial ? await getLiveCampaign().catch(() => null) : null;
   const upgradeCard =
     plan.id === "free" || plan.trial ? (
       <UpgradeCard
@@ -84,7 +88,7 @@ export default async function DashboardLayout({
         websiteLimit={websiteLimit}
         trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
         trialAvailable={trialAvailable}
-        campaign={activeCampaign()}
+        campaign={liveCampaign}
       />
     ) : null;
 
@@ -121,6 +125,9 @@ export default async function DashboardLayout({
             phone never sees the trial countdown or the offer to start one.
             The plain Free upsell stays in the sidebar: on a phone it would
             sit above every page's content. */}
+        {liveCampaign && canManageBilling(role) ? (
+          <PromoBar campaign={liveCampaign} variant="inline" href="/dashboard/billing" placement="dashboard_bar" />
+        ) : null}
         {emailVerified ? null : <VerifyEmailBanner email={session.user.email} trialDays={TRIAL_DAYS} />}
         {plan.trial || trialAvailable ? (
           <div className="mb-4 max-w-md lg:hidden">{upgradeCard}</div>

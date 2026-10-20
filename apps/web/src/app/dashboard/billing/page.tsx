@@ -26,7 +26,8 @@ import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscrip
 import { ChangePlanButton } from "@/components/dashboard/change-plan-button";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
-import { activeCampaign, campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
+import { campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
+import { getLiveCampaign } from "@/lib/billing/campaign-server";
 
 function FeatureList({ features, columns = false }: { features: string[]; columns?: boolean }) {
   return (
@@ -139,7 +140,7 @@ export default async function BillingPage({
   // Compiler purity lint happy - Date.now() inline in render is flagged).
   const requestedAt = new Date();
   // Offered only where checkout applies it: Free and trial workspaces.
-  const campaign = activeCampaign(requestedAt);
+  const campaign = isPaid ? null : await getLiveCampaign(requestedAt).catch(() => null);
   const periodEnd = subscription?.currentPeriodEnd ?? null;
   const renewalLabel = periodEnd
     ? periodEnd.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })

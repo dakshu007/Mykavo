@@ -12,7 +12,7 @@ import {
 import { createCheckoutSession, dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
 import { appBaseUrl } from "@/lib/app-url";
-import { activeCampaign } from "@/config/campaign";
+import { getLiveCampaign } from "@/lib/billing/campaign-server";
 import { logger } from "@/lib/logger";
 
 /**
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
     // A running campaign's code is applied for the buyer. If Dodo refuses it
     // (expired early, mistyped in the dashboard), the second attempt is a
     // plain session: a promotion must never be the reason checkout fails.
-    const campaign = activeCampaign();
+    const campaign = await getLiveCampaign().catch(() => null);
     const attempts: (string[] | undefined)[] = campaign ? [[campaign.code], undefined] : [undefined];
     for (const discountCodes of attempts) {
       try {

@@ -600,3 +600,83 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Seasonal offer bar (components/promo/promo-bar.tsx).
+   The <head> boot script sets html[data-promo] while an offer's calendar
+   window is open, BEFORE first paint, so the bar's height is reserved and
+   nothing below it jumps when it arrives. LandingNav reads --promo-h for its
+   spacer and its own offset. */
+html[data-promo] {
+  --promo-h: 40px;
+}
+
+@keyframes promo-shimmer {
+  0% { transform: translateX(-120%); }
+  60%, 100% { transform: translateX(320%); }
+}
+.promo-shimmer {
+  animation: promo-shimmer 5s ease-in-out infinite;
+}
+
+@keyframes promo-bob {
+  0%, 100% { transform: translateY(1px) rotate(-4deg); }
+  50% { transform: translateY(-2px) rotate(4deg); }
+}
+.promo-bob {
+  animation: promo-bob 2.4s ease-in-out infinite;
+}
+
+/* A bat crosses the bar on a gentle wave; each one has its own pace. */
+@keyframes promo-fly {
+  0% { transform: translate(-6vw, 6px); opacity: 0; }
+  8% { opacity: 0.85; }
+  25% { transform: translate(22vw, -3px); }
+  50% { transform: translate(50vw, 7px); }
+  75% { transform: translate(78vw, -2px); }
+  92% { opacity: 0.85; }
+  100% { transform: translate(106vw, 5px); opacity: 0; }
+}
+.promo-bat {
+  animation: promo-fly var(--fly, 14s) linear var(--delay, 0s) infinite;
+}
+@keyframes promo-flap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.35); }
+}
+.promo-flap {
+  animation: promo-flap 0.32s ease-in-out infinite;
+  transform-origin: 50% 40%;
+}
+
+/* Each new second slides in from above. */
+@keyframes promo-tick {
+  from { transform: translateY(-60%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.promo-tick {
+  animation: promo-tick 0.28s ease-out;
+}
+
+/* A slow glow on the call to action, like a lantern. */
+@keyframes promo-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(255 122 26 / 0); }
+  50% { box-shadow: 0 0 14px 2px rgb(255 122 26 / 0.55); }
+}
+.promo-glow {
+  animation: promo-glow 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-shimmer,
+  .promo-bat,
+  .promo-flap,
+  .promo-bob,
+  .promo-tick,
+  .promo-glow {
+    animation: none !important;
+  }
+  .promo-bat {
+    display: none;
+  }
+}

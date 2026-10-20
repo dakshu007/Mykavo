@@ -7,6 +7,7 @@ import { SmoothScroll } from "@/components/smooth-scroll";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
 import { site } from "@/config/site";
+import { campaignWindows } from "@/config/campaign";
 import "./globals.css";
 
 // Google Analytics 4 property for mykavo.app - loaded in production only so
@@ -95,6 +96,12 @@ export const metadata: Metadata = {
 // with THEME_STORAGE_KEY + applyThemePreference in src/lib/theme.ts.
 const themeBootScript = `try{var t=localStorage.getItem("mykavo-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
 
+// Reserves the seasonal offer bar's height before first paint while an
+// offer's calendar window is open (config/campaign.ts), so the page never
+// jumps when the bar arrives. The bar itself then checks the code with Dodo
+// and gives the space back if the code isn't live.
+const promoBootScript = `try{var n=Date.now(),w=${JSON.stringify(campaignWindows(new Date().getUTCFullYear()))};for(var i=0;i<w.length;i++)if(n>=w[i][0]&&n<w[i][1]){document.documentElement.setAttribute("data-promo","");break}}catch(e){}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -109,6 +116,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: promoBootScript }} />
       </head>
       <body className="flex min-h-full flex-col">
         {/* Site-wide, including the dashboard. Self-disables for

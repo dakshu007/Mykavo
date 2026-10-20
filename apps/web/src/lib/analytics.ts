@@ -57,7 +57,8 @@ export type AnalyticsEvent =
   | "tutorial_played"
   // A time-boxed offer (config/campaign.ts). props: campaign (id), placement
   | "campaign_banner_viewed"
-  | "campaign_banner_clicked";
+  | "campaign_banner_clicked"
+  | "campaign_code_copied";
 
 export type EventProps = Record<string, string | number | boolean>;
 
