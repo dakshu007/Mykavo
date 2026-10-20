@@ -33,7 +33,7 @@ export const CHANGELOG: ChangelogRelease[] = [
     items: [
       {
         kind: "new",
-        text: "Explain this change: every alert gets a plain-English card with what changed, why it matters, step-by-step fixes for WordPress, Shopify, Webflow and more, and an urgency call. High and critical alerts are explained as soon as you open them. Included on every plan: 10 a month on Free, 100 on Pro, 500 on Agency.",
+        text: "Explain this change: every alert gets a plain-English card with what changed, why it matters, step-by-step fixes for WordPress, Shopify, Webflow and more, and an urgency call. One click on any alert, and the answer is kept for the whole team. Included on every plan: 10 a month on Free, 100 on Pro, 500 on Agency.",
         href: "/ai-website-insights",
       },
       {

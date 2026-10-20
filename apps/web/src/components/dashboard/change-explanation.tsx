@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { track } from "@/lib/analytics";
@@ -23,25 +23,23 @@ const URGENCY: Record<Explanation["urgency"], { label: string; className: string
 
 /**
  * "Explain this change": a plain-language read of the change with fix steps.
- * Shown already when one is stored; HIGH and CRITICAL changes ask for one on
- * open, everything else waits for the button so the monthly allowance goes
- * to what matters.
+ * Shown already when one is stored; otherwise it is written only when
+ * someone presses the button, so the monthly allowance is spent on the
+ * changes people actually want explained, never on a page view.
  */
 export function ChangeExplanationCard({
   changeId,
   initial,
-  autoLoad,
 }: {
   changeId: string;
   initial: Explanation | null;
-  autoLoad: boolean;
 }) {
   const [explanation, setExplanation] = useState<Explanation | null>(initial);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const asked = useRef(false);
 
-  const explain = useCallback(async () => {
+  async function explain() {
     if (asked.current) return;
     asked.current = true;
     setLoading(true);
@@ -63,13 +61,7 @@ export function ChangeExplanationCard({
     } finally {
       setLoading(false);
     }
-  }, [changeId]);
-
-  useEffect(() => {
-    if (!autoLoad || initial) return;
-    const timer = window.setTimeout(() => void explain(), 0);
-    return () => window.clearTimeout(timer);
-  }, [autoLoad, initial, explain]);
+  }
 
   return (
     <Card>

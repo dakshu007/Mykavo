@@ -196,11 +196,7 @@ export default async function ChangeDetailPage({
       </Card>
 
       {showAi && (
-        <ChangeExplanationCard
-          changeId={change.id}
-          initial={explanation}
-          autoLoad={change.severity === "HIGH" || change.severity === "CRITICAL"}
-        />
+        <ChangeExplanationCard changeId={change.id} initial={explanation} />
       )}
 
       {/* Notes thread */}

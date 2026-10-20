@@ -296,7 +296,7 @@ export default function AiWebsiteInsightsPage() {
               </h2>
               <p className="mt-5 max-w-md text-[15px] leading-7 text-[#6B6B60]">
                 Every alert gets a card that answers the three questions you would otherwise ask a developer.
-                High and critical alerts are explained the moment you open them; anything else is one click away.
+                One click on any alert writes it, and it is kept with the alert for the whole team.
               </p>
               <ul className="mt-7 space-y-3">
                 {[

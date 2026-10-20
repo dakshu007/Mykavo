@@ -50,7 +50,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 2. Run a baseline scan and approve it as the known-good state
 3. Recurring scans compare every page against the approved baseline using deterministic checks (no AI guesswork)
 4. Changes are scored by severity (info, low, medium, high, critical) and grouped into one alert per scan
-5. MyKavo AI explains each change in plain English with fix steps, on request or automatically for high and critical alerts
+5. MyKavo AI explains each change in plain English with fix steps, with one click on any alert
 6. Fix regressions, or approve expected changes as the new baseline
 
 ## Pricing
