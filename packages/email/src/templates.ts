@@ -272,8 +272,6 @@ export function deployVerdictEmail(data: DeployVerdictData): { subject: string; 
     return { subject, html: shell(inner), text };
   }
 
-  const severityWord = label(data.highestSeverity ?? "INFO");
-  const subject = `Deploy check${releaseTag}: ${data.totalChanges} change${data.totalChanges === 1 ? "" : "s"} on ${data.websiteHost} - highest ${severityWord}`;
   const rows = data.changes
     .map(
       (c) => `<tr>
@@ -287,6 +285,31 @@ export function deployVerdictEmail(data: DeployVerdictData): { subject: string; 
       </tr>`,
     )
     .join("");
+  // Only LOW/INFO differences (a reworded line, a link added): the update
+  // passed. "2 changes - highest Low" read like a problem to people whose
+  // WordPress plugin had just auto-updated without breaking anything.
+  const minorOnly = data.highestSeverity === "LOW" || data.highestSeverity === "INFO";
+  if (minorOnly) {
+    const n = data.totalChanges;
+    const subject = `✅ Deploy verified${releaseTag} - ${data.websiteHost} looks right`;
+    const inner = `
+      <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#18794e">Deploy verified</p>
+      <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Nothing important changed on ${esc(data.websiteName)}</h1>
+      <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)}${esc(releaseTag)} · checked ${esc(data.scanTime)}</p>
+      <div style="background:#e6f6ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#18794e;margin-bottom:20px">Availability, SEO tags, scripts and layout all match the approved baseline. ${n} minor difference${n === 1 ? "" : "s"} below - nothing you need to do.</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px">${rows}</table>
+      ${button(data.dashboardUrl, "Open dashboard")}
+    `;
+    const text =
+      `Deploy verified${releaseTag} - ${data.websiteHost} looks right\n\n` +
+      `Nothing important changed on ${data.websiteName} (checked ${data.scanTime}). ${n} minor difference${n === 1 ? "" : "s"}:\n` +
+      data.changes.map((c) => `- [${label(c.severity)}] ${c.title} (${c.pagePath})`).join("\n") +
+      `\n\nDashboard: ${data.dashboardUrl}`;
+    return { subject, html: shell(inner), text };
+  }
+
+  const severityWord = label(data.highestSeverity ?? "INFO");
+  const subject = `Deploy check${releaseTag}: ${data.totalChanges} change${data.totalChanges === 1 ? "" : "s"} on ${data.websiteHost} - highest ${severityWord}`;
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${SEVERITY_COLOR[data.highestSeverity ?? "INFO"]}">Deploy check</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${data.totalChanges} change${data.totalChanges === 1 ? "" : "s"} after deploying ${esc(data.websiteName)}</h1>

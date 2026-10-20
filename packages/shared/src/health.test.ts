@@ -5,6 +5,7 @@ import {
   decideSslIncident,
   daysUntil,
   shouldRenotify,
+  sslReminderDue,
   formatDowntime,
   HEALTH_RENOTIFY_INTERVAL_MS,
 } from "./health";
@@ -165,5 +166,24 @@ describe("formatDowntime", () => {
 
   it("floors at one minute", () => {
     expect(formatDowntime(5_000)).toBe("1m");
+  });
+});
+
+describe("sslReminderDue", () => {
+  const expiry = daysFromNow(12);
+  const at = (daysLeft: number) => new Date(expiry.getTime() - daysLeft * 86_400_000);
+
+  it("stays quiet between marks instead of repeating daily", () => {
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(12), now: at(11) })).toBe(false);
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(12), now: at(8) })).toBe(false);
+  });
+
+  it("reminds at 7, 3 and 1 days left, and once expired", () => {
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(12), now: at(7) })).toBe(true);
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(7), now: at(3) })).toBe(true);
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(3), now: at(2) })).toBe(false);
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(3), now: at(1) })).toBe(true);
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(1), now: at(-0.5) })).toBe(true);
+    expect(sslReminderDue({ sslValidTo: expiry, lastNotifiedAt: at(-0.5), now: at(-3) })).toBe(false);
   });
 });

@@ -219,7 +219,7 @@ export function scoreChange(signal: ChangeSignal): ScoredChange | null {
           changeType: "http_status_recovered",
           severity: "LOW",
           title: `Page is reachable again (HTTP ${signal.previous} → ${signal.current})`,
-          description: `The approved baseline was captured while this page returned HTTP ${signal.previous}; it now loads normally. Approve the current scan as the new baseline so future changes are compared against the working page.`,
+          description: `The approved baseline was captured while this page returned HTTP ${signal.previous}; it now loads normally. MyKavo has made the working page its new baseline, so from now on changes are compared against it. Nothing to do unless the page looks wrong.`,
           previousValue: fmt(signal.previous),
           currentValue: fmt(signal.current),
         });

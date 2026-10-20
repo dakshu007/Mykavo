@@ -9,6 +9,7 @@
 
 import {
   prisma,
+  setSnapshotAsBaseline,
   type ChangeSeverity,
   type ChangeCategory as ChangeCategoryEnum,
 } from "@mykavo/database";
@@ -69,6 +70,47 @@ interface SnapshotRow {
   screenshotStorageKey: string | null;
   platformFingerprint: unknown;
   errorCode: string | null;
+}
+
+/** The columns SnapshotRow needs. */
+const SNAPSHOT_SELECT = {
+  id: true,
+  monitoredPageId: true,
+  url: true,
+  httpStatus: true,
+  finalUrl: true,
+  domHash: true,
+  textHash: true,
+  title: true,
+  metaDescription: true,
+  canonicalUrl: true,
+  robotsMeta: true,
+  h1Values: true,
+  pageWeightBytes: true,
+  requestCount: true,
+  platformFingerprint: true,
+  responseTimeMs: true,
+  screenshotStorageKey: true,
+  errorCode: true,
+} as const;
+
+/**
+ * Changes that are often a one-scan blip rather than a real change: a
+ * tracking script that loads late (consent banners, tag managers) and was
+ * missed once, or a 5xx while the server restarted. Production: "Meta Pixel
+ * removed" HIGH emails for scripts that were back on the next scan, and
+ * 200 -> 502 CRITICAL for an outage the uptime check had already reported.
+ * These are raised only when the previous scan of the page saw them too.
+ * (Real downtime is the uptime check's job: it confirms within minutes.)
+ */
+function needsConfirmation(change: ScoredChange): boolean {
+  if (change.changeType === "script_removed") return true;
+  return change.changeType === "http_status_changed" && Number(change.currentValue) >= 500;
+}
+
+/** The same change, as far as confirmation goes: type and what was there before. */
+function confirmationKey(change: ScoredChange): string {
+  return `${change.changeType}|${change.previousValue ?? ""}`;
 }
 
 async function toComparable(
@@ -368,6 +410,30 @@ export async function runComparisonForScan(
         }
       }
 
+      // Blips: keep a change that needs confirmation only when the previous
+      // scan of this page, against the same baseline, showed it as well.
+      if (changes.some(needsConfirmation)) {
+        const previous = (await prisma.pageSnapshot.findFirst({
+          where: {
+            monitoredPageId: snapshot.monitoredPageId,
+            scanId: { not: scanId },
+            errorCode: null,
+            id: { not: baselineSnap.id },
+            createdAt: { gt: baseline.createdAt },
+          },
+          orderBy: { createdAt: "desc" },
+          select: SNAPSHOT_SELECT,
+        })) as SnapshotRow | null;
+        const seenBefore = new Set(
+          previous
+            ? compareSnapshots(base.comparable, (await toComparable(previous)).comparable).map(confirmationKey)
+            : [],
+        );
+        for (let i = changes.length - 1; i >= 0; i--) {
+          if (needsConfirmation(changes[i]) && !seenBefore.has(confirmationKey(changes[i]))) changes.splice(i, 1);
+        }
+      }
+
       // Already reported against this baseline and still open (or ignored):
       // not a new change, so no new event (see changeConditionKey).
       const known = await knownConditions({
@@ -396,6 +462,26 @@ export async function runComparisonForScan(
         });
         severities.push(change.severity);
         totalChanges++;
+      }
+      // The baseline was captured while the page was an error (404/500) and
+      // the page works now: comparing against the error page would flag the
+      // whole working page on every scan. The working page becomes the
+      // baseline; the LOW "reachable again" event above says so.
+      const baselineWasError = (baselineSnap.httpStatus ?? 0) >= 400;
+      const nowWorking = snapshot.httpStatus !== null && snapshot.httpStatus < 400;
+      if (baselineWasError && nowWorking && !isBotChallengeTitle(snapshot.title) && !isLoginUrl(snapshot.finalUrl)) {
+        await setSnapshotAsBaseline(prisma, {
+          websiteId: scan.websiteId,
+          monitoredPageId: snapshot.monitoredPageId,
+          pageSnapshotId: snapshot.id,
+          approvedByUserId: null,
+        });
+        logger.info("baseline replaced: page recovered from an error", {
+          scanId,
+          monitoredPageId: snapshot.monitoredPageId,
+          from: baselineSnap.httpStatus,
+          to: snapshot.httpStatus,
+        });
       }
       pagesCompared++;
     } catch (err) {

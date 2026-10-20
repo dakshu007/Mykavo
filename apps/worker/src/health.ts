@@ -24,6 +24,7 @@ import {
   decideSslIncident,
   daysUntil,
   shouldRenotify,
+  sslReminderDue,
   formatDowntime,
   safeFetch,
   resolveSafeHost,
@@ -300,8 +301,9 @@ async function checkWebsite(website: HealthWebsite): Promise<void> {
       websiteId: website.id,
       workspaceId: website.workspaceId,
     });
-  } else if (openSsl && sslValidTo && shouldRenotify(openSsl.lastNotifiedAt, now)) {
-    // Still expiring - daily reminder with the updated countdown.
+  } else if (openSsl && sslValidTo && sslReminderDue({ sslValidTo, lastNotifiedAt: openSsl.lastNotifiedAt, now })) {
+    // Still expiring - remind at 7, 3 and 1 days left and once expired, not
+    // daily (SSL_REMINDER_DAYS).
     const daysLeft = daysUntil(sslValidTo, now);
     const expiresOn = sslValidTo.toLocaleDateString("en-US", { dateStyle: "medium" });
     await alertHealth(

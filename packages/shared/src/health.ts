@@ -79,6 +79,27 @@ export function decideSslIncident(params: {
   return "none";
 }
 
+/**
+ * Days-left marks at which an expiring certificate is mentioned again, after
+ * the first alert (at SSL_EXPIRY_THRESHOLD_DAYS). It used to repeat every
+ * day: a site whose certificate sat in the window got the same warning
+ * daily (facebook.com: five in five days) - an alert people learn to ignore.
+ */
+export const SSL_REMINDER_DAYS = [7, 3, 1, 0] as const;
+
+/**
+ * Whether an open SSL_EXPIRING incident deserves another email now: only when
+ * the countdown has crossed a reminder mark (7, 3, 1 days, then expired)
+ * since the last one. `lastNotifiedAt` null means it was never sent.
+ */
+export function sslReminderDue(params: { sslValidTo: Date; lastNotifiedAt: Date | null; now: Date }): boolean {
+  const { sslValidTo, lastNotifiedAt, now } = params;
+  if (lastNotifiedAt === null) return true;
+  const before = daysUntil(sslValidTo, lastNotifiedAt);
+  const left = daysUntil(sslValidTo, now);
+  return SSL_REMINDER_DAYS.some((mark) => left <= mark && before > mark);
+}
+
 /** Whole days until `date` (ceiling - "13.2 days left" counts as 14). */
 export function daysUntil(date: Date, now: Date): number {
   return Math.ceil((date.getTime() - now.getTime()) / DAY_MS);

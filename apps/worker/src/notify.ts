@@ -345,6 +345,8 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
                 : top,
             "INFO",
           );
+    // Only LOW/INFO differences: the deploy passed (see deployVerdictEmail).
+    const minorOnly = highest === "LOW" || highest === "INFO";
     const lines: ChangeLine[] = changes.slice(0, 20).map((c) => ({
       severity: c.severity as Severity,
       title: c.title,
@@ -383,7 +385,9 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
       title:
         changes.length === 0
           ? `✅ Deploy verified${releaseTag} - ${host} matches its baseline`
-          : `Deploy check${releaseTag}: ${changes.length} change${changes.length === 1 ? "" : "s"} on ${host} - highest ${highest}`,
+          : minorOnly
+            ? `✅ Deploy verified${releaseTag} - ${host} looks right (${changes.length} minor difference${changes.length === 1 ? "" : "s"})`
+            : `Deploy check${releaseTag}: ${changes.length} change${changes.length === 1 ? "" : "s"} on ${host} - highest ${highest}`,
       lines: [
         ...lines.slice(0, 6).map((l) => `${l.severity} · ${l.title} - ${l.pagePath}`),
         ...(changes.length > 6 ? [`…and ${changes.length - 6} more`] : []),
@@ -397,12 +401,14 @@ export async function notifyForScan(scanId: string): Promise<boolean> {
       website.workspaceId,
       website.id,
       scan.id,
-      changes.length === 0
+      changes.length === 0 || minorOnly
         ? {
             title: `Deploy verified on ${host}`,
-            body: scan.note
-              ? `${scan.note} matches its baseline.`
-              : "Everything matches its baseline.",
+            body: minorOnly
+              ? `${scan.note ? `${scan.note}: n` : "N"}othing important changed (${changes.length} minor difference${changes.length === 1 ? "" : "s"}).`
+              : scan.note
+                ? `${scan.note} matches its baseline.`
+                : "Everything matches its baseline.",
             severity: "INFO",
             path: `/website/${website.id}`,
             websiteId: website.id,

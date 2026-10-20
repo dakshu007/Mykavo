@@ -334,6 +334,25 @@ describe("deployVerdictEmail", () => {
     expect(html).toContain("Review changes");
   });
 
+  it("reads as a pass when only minor differences turned up", () => {
+    // Production: "Deploy check (Auto-updated NextGEN Gallery ...): 2 changes
+    // - highest Low" looked like a problem for an update that broke nothing.
+    const { subject, html, text } = deployVerdictEmail({
+      ...base,
+      note: "Auto-updated NextGEN Gallery 3.59 → 3.60",
+      totalChanges: 2,
+      highestSeverity: "LOW",
+      changes: [
+        { severity: "LOW", title: "Visible text changed", pagePath: "/gallery" },
+        { severity: "INFO", title: "2 internal links added", pagePath: "/" },
+      ],
+    });
+    expect(subject).toBe("✅ Deploy verified (Auto-updated NextGEN Gallery 3.59 → 3.60) - aurora-outdoor.com looks right");
+    expect(html).toContain("Nothing important changed");
+    expect(html).toContain("Visible text changed");
+    expect(text).toContain("2 minor differences");
+  });
+
   it("HTML-escapes the note and website name", () => {
     const evil = deployVerdictEmail({
       ...base,
