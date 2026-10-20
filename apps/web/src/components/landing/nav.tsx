@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, Sparkles, Wrench, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { AppAnnouncement } from "./app-announcement";
 import { SitePromoBar } from "./campaign-announcement";
@@ -17,6 +17,9 @@ const links = [
 ];
 
 type MenuItem = { href: string; label: string; badge?: string };
+
+/** The AI feature page: first in the nav, with its spark, so it is never missed. */
+const AI_LINK = { href: "/ai-website-insights", label: "AI Insights" };
 
 const integrations: MenuItem[] = [
   { href: "/platforms", label: "All platforms", badge: "New" },
@@ -216,13 +219,20 @@ export function LandingNav() {
       <SitePromoBar />
       <div aria-hidden className="h-[var(--promo-h,0px)]" />
       <header className="fixed inset-x-0 top-[calc(var(--promo-h,0px)+1rem)] z-50 px-4 sm:top-[calc(var(--promo-h,0px)+1.25rem)]">
-      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 rounded-full border border-[#151515]/15 bg-white/95 pl-5 pr-2 shadow-[0_2px_0_#15151522,0_18px_40px_-18px_rgba(21,21,21,0.35)] backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 whitespace-nowrap rounded-full xl:max-w-5xl border border-[#151515]/15 bg-white/95 pl-5 pr-2 shadow-[0_2px_0_#15151522,0_18px_40px_-18px_rgba(21,21,21,0.35)] backdrop-blur">
         <Link href="/" aria-label="MyKavo home" className="flex shrink-0 items-center gap-2">
           <LogoMark size={24} />
           <span className="text-[16px] font-semibold tracking-tight text-[#151515]">MyKavo</span>
         </Link>
 
         <nav aria-label="Main" className="hidden items-center lg:flex">
+          <Link
+            href={AI_LINK.href}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13.5px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
+          >
+            <Sparkles className="size-3.5 text-[#151515]" aria-hidden />
+            {AI_LINK.label}
+          </Link>
           <Link
             href="/pricing"
             className="rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
@@ -234,7 +244,11 @@ export function LandingNav() {
             <Link
               key={l.label}
               href={l.href}
-              className="rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
+              // Android steps aside on narrower desktops to make room for the
+              // AI link; it stays in the mobile menu and the footer.
+              className={`rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515] ${
+                l.href === "/android-app" ? "hidden xl:inline-flex" : ""
+              }`}
             >
               {l.label}
             </Link>
@@ -287,6 +301,15 @@ export function LandingNav() {
           className="mx-auto mt-2 max-w-4xl rounded-3xl border border-[#151515]/15 bg-white p-4 shadow-[0_24px_60px_-20px_rgba(21,21,21,0.4)] lg:hidden"
         >
           <nav aria-label="Main mobile" className="flex flex-col">
+            <Link
+              href={AI_LINK.href}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-xl px-3 py-3 text-[15px] font-semibold text-[#151515] transition-colors hover:bg-[#151515]/[0.04]"
+            >
+              <Sparkles className="size-4" aria-hidden />
+              {AI_LINK.label}
+              <SoonBadge>New</SoonBadge>
+            </Link>
             {links.map((l) => (
               <Link
                 key={l.label}

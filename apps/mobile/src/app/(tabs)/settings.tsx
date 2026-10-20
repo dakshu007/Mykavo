@@ -329,6 +329,13 @@ export default function SettingsScreen() {
     plan.limits.pagesPerSite === null ? "Unlimited pages per site" : `${plan.limits.pagesPerSite} pages per site`,
     plan.limits.scanFrequency === "DAILY" ? "Daily scans" : "Weekly scans",
     plan.limits.seats === null ? "Unlimited seats" : `${plan.limits.seats} seat${plan.limits.seats === 1 ? "" : "s"}`,
+    ...(plan.limits.aiExplanationsPerMonth === undefined
+      ? []
+      : [
+          plan.limits.aiExplanationsPerMonth === null
+            ? "Unlimited AI explanations"
+            : `${plan.limits.aiExplanationsPerMonth} AI explanations a month`,
+        ]),
   ];
 
   return (

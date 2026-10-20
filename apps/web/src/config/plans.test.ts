@@ -197,3 +197,14 @@ describe("no component hardcodes a plan number", () => {
     expect(getPlan("agency").limits.baselineScansPer24h).toBeGreaterThanOrEqual(getPlan("agency").limits.websites);
   });
 });
+
+describe("AI Website Insights in the plan lists", () => {
+  it("advertises exactly the allowance each plan enforces", () => {
+    for (const plan of plans) {
+      const line = plan.features.find((f) => f.startsWith("AI Website Insights"));
+      expect(line, plan.id).toBe(
+        `AI Website Insights - ${plan.limits.aiExplanationsPerMonth.toLocaleString("en-US")} explanations a month`,
+      );
+    }
+  });
+});

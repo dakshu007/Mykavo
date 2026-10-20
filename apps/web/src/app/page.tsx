@@ -38,6 +38,7 @@ import { WordPressPluginSection } from "@/components/landing/wordpress-plugin";
 import { SiteAuditSection } from "@/components/landing/site-audit";
 import { ClientReportsSection } from "@/components/landing/client-reports";
 import { SearchConsoleSection } from "@/components/landing/search-console";
+import { AiInsightsSection } from "@/components/landing/ai-insights";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
@@ -266,7 +267,11 @@ const faqs = [
   },
   {
     q: "Does MyKavo use AI to detect changes?",
-    a: "No. Detection is fully deterministic: previous value versus current value, normalized DOM hashes, and pixel comparison. Results are consistent, reproducible, and explainable.",
+    a: "No. Detection is fully deterministic: previous value versus current value, normalized DOM hashes, and pixel comparison. Results are consistent, reproducible, and explainable. AI comes in after a change is found, to explain it.",
+  },
+  {
+    q: "What does MyKavo AI do?",
+    a: "MyKavo AI Website Insights explains every alert in plain English: what changed, why it matters and step-by-step fixes for your platform (WordPress, Shopify, Webflow and more), with an urgency call of act now, check this week or probably fine. It also writes a short weekly status note for each website. It is included on every plan, free plan too.",
   },
   {
     q: "What is a baseline?",
@@ -463,6 +468,11 @@ export default function HomePage() {
           </div>
           <SplitPill />
         </Section>
+
+        {/* AI Website Insights - the loop above, explained in plain English.
+            Straight after "how it works": it is what turns an alert into a
+            next step, and the first thing many visitors now look for. */}
+        <AiInsightsSection />
 
         {/* What it watches - interactive category tabs */}
         <Section id="categories">

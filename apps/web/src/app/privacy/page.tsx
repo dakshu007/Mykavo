@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
       eyebrowText="legal"
       title="Privacy Policy"
       intro="This policy explains, in plain English, what data MyKavo collects, why we collect it, where it lives, and the choices you have. MyKavo is operated by Dakshesh Babu, an independent developer. If anything here is unclear, email support@mykavo.app and you will get a straight answer."
-      updated="October 5, 2026"
+      updated="October 20, 2026"
     >
       <h2>1. What data we collect</h2>
       <h3>Account data</h3>
@@ -165,6 +165,11 @@ export default function PrivacyPolicyPage() {
             <td>Resend</td>
             <td>Transactional email</td>
             <td>Your email address, alert content</td>
+          </tr>
+          <tr>
+            <td>Anthropic (US)</td>
+            <td>AI Website Insights: change explanations and weekly website summaries</td>
+            <td>Details of detected changes (page addresses, before and after values) and website status counts; not used to train AI models</td>
           </tr>
           <tr>
             <td>Google</td>

@@ -145,6 +145,8 @@ export function softwareApplicationNode(params: {
  */
 export const FEATURE_LIST = [
   "Website change detection",
+  "AI explanations of every change, with fix steps",
+  "AI weekly website status summaries",
   "Visual regression monitoring with pixel diffs",
   "SEO change monitoring",
   "Technical SEO site audit",

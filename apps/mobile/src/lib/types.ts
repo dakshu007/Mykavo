@@ -72,6 +72,8 @@ export interface MeResponse {
       pagesPerSite: number | null;
       scanFrequency: "WEEKLY" | "DAILY";
       seats: number | null;
+      /** AI change explanations a month. Absent on older servers. */
+      aiExplanationsPerMonth?: number | null;
     };
   };
 }

@@ -81,6 +81,7 @@ export async function GET() {
         pagesPerSite: finiteOrNull(plan.limits.pagesPerWebsite),
         scanFrequency: plan.limits.scanFrequency,
         seats: finiteOrNull(plan.limits.maxMembers),
+        aiExplanationsPerMonth: finiteOrNull(plan.limits.aiExplanationsPerMonth),
       },
     },
   });

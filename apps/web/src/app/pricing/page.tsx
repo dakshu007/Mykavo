@@ -54,6 +54,11 @@ const comparisonRows: Array<{
   { label: "History retention", value: (p) => (p.limits.historyDays >= 365 ? "1 year" : `${p.limits.historyDays} days`) },
   { label: "Email alerts", value: () => true },
   {
+    label: "AI change explanations",
+    value: (p) => `${formatLimit(p.limits.aiExplanationsPerMonth)} a month`,
+  },
+  { label: "AI weekly website notes", value: () => true },
+  {
     label: "Manual scans",
     value: (p) => (p.limits.manualScans ? `${formatLimit(p.limits.manualScansPerDay)} a day` : false),
   },
@@ -74,6 +79,10 @@ const proPlan = getPlan("pro");
 const freePlan = getPlan("free");
 
 const pricingFaqs = [
+  {
+    q: "Is AI included?",
+    a: `Yes, on every plan. MyKavo AI Website Insights explains each alert in plain English with fix steps for your platform, and writes a weekly status note for every website. Free includes ${formatLimit(freePlan.limits.aiExplanationsPerMonth)} change explanations a month, Pro ${formatLimit(proPlan.limits.aiExplanationsPerMonth)} and Agency ${formatLimit(getPlan("agency").limits.aiExplanationsPerMonth)}. Weekly notes don't count toward the allowance.`,
+  },
   {
     q: "Is there a free trial?",
     a: `Yes. Every new account starts with a ${TRIAL_DAYS}-day Pro trial, no card needed. You get every Pro feature, including daily scans and ${formatLimit(proPlan.limits.pagesPerWebsite)} monitored pages per website, on up to ${TRIAL_MAX_WEBSITES} websites. Paid Pro covers ${formatLimit(proPlan.limits.websites)} websites. You can upgrade at any time during the trial, and we email you ${TRIAL_REMINDER_DAYS_LEFT} days before it ends. If you don't upgrade, the account moves to the Free plan: your oldest monitored website stays monitored, checked weekly. Any others are paused, not deleted, and their baselines are kept (Free keeps ${freePlan.limits.historyDays} days of history). Upgrading resumes paused websites. Already on Free and never had a trial? Start it from Billing in your dashboard.`,

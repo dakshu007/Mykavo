@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { CHROME_EXTENSION_PAGE_PATH } from "@/config/chrome-extension";
+import { AI_INSIGHTS_PATH } from "./ai-insights";
 import { GoogleCta } from "./google-cta";
 import { LandingUrlInput } from "./url-input";
 import { HeroStoryAnimation } from "./hero-story-animation";
@@ -22,11 +22,11 @@ export function LandingHero() {
       />
 
       <div className="relative mx-auto max-w-6xl">
-        {/* Launch pill: the Chrome extension is live. A link, not a badge -
-            the one place on the page that says what's new, and where to try it. */}
+        {/* Launch pill: AI Website Insights. A link, not a badge - the one
+            place on the page that says what's new, and where to see it. */}
         <div className="flex justify-center">
           <Link
-            href={CHROME_EXTENSION_PAGE_PATH}
+            href={AI_INSIGHTS_PATH}
             className="hero-launch group relative flex items-center gap-2.5 overflow-hidden rounded-full border border-[#151515] bg-white py-1 pl-1 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
           >
             <span className="flex items-center gap-1.5 rounded-full bg-[#151515] px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFD400]">
@@ -34,11 +34,11 @@ export function LandingHero() {
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#FFD400] opacity-70 motion-reduce:animate-none" />
                 <span className="relative inline-flex size-1.5 rounded-full bg-[#FFD400]" />
               </span>
-              Just launched
+              New
             </span>
-            <span>MyKavo for Chrome is live</span>
+            <span>AI explains every alert</span>
             <span className="hidden items-center gap-1 text-[#151515]/60 transition-colors group-hover:text-[#151515] sm:inline-flex">
-              Try it now <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              See how <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
             </span>
             <span aria-hidden className="hero-launch-shine pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-[#FFD400]/40 to-transparent" />
           </Link>
@@ -89,7 +89,7 @@ export function LandingHero() {
         <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg">
           Pick the pages that matter on every website you manage. MyKavo approves a known-good
           baseline of each, re-checks them around the clock, and tells you the moment one
-          changes - with before-and-after proof.
+          changes - with before-and-after proof and an AI explanation of how to fix it.
         </p>
 
         {/* Product-led URL input - instant value, no signup */}

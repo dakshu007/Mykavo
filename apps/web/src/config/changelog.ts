@@ -27,6 +27,27 @@ export const CHANGELOG_PATH = "/whats-new-on-mykavo";
 
 export const CHANGELOG: ChangelogRelease[] = [
   {
+    date: "2026-10-20",
+    title: "AI Website Insights: every change, explained",
+    summary: "MyKavo AI now explains your alerts in plain English, with fix steps for your platform, and writes a weekly note for every website.",
+    items: [
+      {
+        kind: "new",
+        text: "Explain this change: every alert gets a plain-English card with what changed, why it matters, step-by-step fixes for WordPress, Shopify, Webflow and more, and an urgency call. High and critical alerts are explained as soon as you open them. Included on every plan: 10 a month on Free, 100 on Pro, 500 on Agency.",
+        href: "/ai-website-insights",
+      },
+      {
+        kind: "new",
+        text: "Your site this week: a short AI status note on each website's last 7 days, at the top of the Overview, rewritten after every scan and every review.",
+        href: "/ai-website-insights",
+      },
+      {
+        kind: "improved",
+        text: "On large monitors (1440p and up at 100% zoom) the dashboard now scales up and uses the extra width instead of sitting small in the middle.",
+      },
+    ],
+  },
+  {
     date: "2026-10-12",
     title: "A new help center with an instant assistant",
     summary: "Ask the MyKavo Assistant on the support page and get an answer in seconds, any time of day.",
