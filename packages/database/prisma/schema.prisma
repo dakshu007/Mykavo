@@ -961,6 +961,8 @@ model BlogPost {
   primaryKeyword   String?
   secondaryKeyword String?
   tags             String[]       @default([])
+  // "Key takeaways" bullets shown in the AI Overview box under the excerpt.
+  keyTakeaways     String[]       @default([])
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 

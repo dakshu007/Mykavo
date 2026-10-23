@@ -79,12 +79,9 @@ export const BLOCK_SNIPPETS: readonly BlockSnippet[] = [
     snippet:
       "{{faq}}\nQ: First question?\nA: First answer.\nQ: Second question?\nA: Second answer.\n{{/faq}}",
   },
-  {
-    command: "toc",
-    label: "Table of contents",
-    description: "Linked list of this post's headings.",
-    snippet: "{{toc}}",
-  },
+  // No "toc" snippet: every post gets a table of contents automatically (the
+  // right rail on desktop, "On this page" on mobile). {{toc}} still parses so
+  // older posts that contain it don't show the raw token.
 ];
 
 const CTA_TOKEN = /^\{\{\s*cta\s*\}\}$/;

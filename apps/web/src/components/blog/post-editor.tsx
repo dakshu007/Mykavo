@@ -23,6 +23,7 @@ export interface EditorPost {
   primaryKeyword: string | null;
   secondaryKeyword: string | null;
   tags: string[];
+  keyTakeaways: string[];
   /** ISO string (serialized server-side) or null when never published. */
   publishedAt: string | null;
 }
@@ -77,6 +78,8 @@ export function BlogPostEditor({
   // For existing posts the slug never auto-follows the title.
   const [slugTouched, setSlugTouched] = useState(Boolean(post));
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
+  // One takeaway per line in the textarea; stored as an array.
+  const [takeaways, setTakeaways] = useState((post?.keyTakeaways ?? []).join("\n"));
   const [content, setContent] = useState(post?.content ?? "");
   const [authorName, setAuthorName] = useState(
     // A new post starts with the first author profile, when there is one.
@@ -211,6 +214,10 @@ export function BlogPostEditor({
           primaryKeyword,
           secondaryKeyword,
           tags,
+          keyTakeaways: takeaways
+            .split("\n")
+            .map((line) => line.replace(/^\s*[-*•]\s*/, "").trim())
+            .filter(Boolean),
           publishedAt: publishedAtOverride !== undefined ? publishedAtOverride : publishedAtPayload(),
         }),
       });
@@ -324,7 +331,7 @@ export function BlogPostEditor({
 
           <div>
             <label htmlFor="post-excerpt" className="mb-1.5 block text-sm font-medium text-ink">
-              In short <span className="font-normal text-ink-faint">(excerpt)</span>
+              AI Overview answer <span className="font-normal text-ink-faint">(excerpt)</span>
             </label>
             <textarea
               id="post-excerpt"
@@ -335,8 +342,25 @@ export function BlogPostEditor({
               className={fieldClass}
             />
             <p className="mt-1.5 text-[13px] text-ink-faint">
-              Shown in an &quot;In short&quot; box at the top of the post, on the blog index and in
+              Shown in the &quot;AI Overview&quot; box at the top of the post, on the blog index and in
               search results. Write the answer, not a teaser - that is the part AI answers quote.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="post-takeaways" className="mb-1.5 block text-sm font-medium text-ink">
+              Key takeaways <span className="font-normal text-ink-faint">(one per line, up to 6)</span>
+            </label>
+            <textarea
+              id="post-takeaways"
+              rows={4}
+              value={takeaways}
+              onChange={(e) => setTakeaways(e.target.value)}
+              placeholder={"A 301 is permanent; a 302 is temporary.\nKeep redirects for at least a year."}
+              className={fieldClass}
+            />
+            <p className="mt-1.5 text-[13px] text-ink-faint">
+              Listed under the answer in the AI Overview box. One short, self-contained fact per line.
             </p>
           </div>
 

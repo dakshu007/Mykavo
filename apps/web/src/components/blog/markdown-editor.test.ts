@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { BLOCK_SNIPPETS } from "./blocks";
 import { filterSnippets } from "./markdown-editor";
 
 describe("markdown editor / menu", () => {
   it("shows every block for a bare slash", () => {
-    expect(filterSnippets("").length).toBeGreaterThan(3);
+    expect(filterSnippets("")).toEqual(BLOCK_SNIPPETS);
   });
 
   it("/cta-wordpress finds exactly the WordPress plugin CTA", () => {

@@ -22,6 +22,7 @@ const basePost = {
   primaryKeyword: null,
   secondaryKeyword: null,
   tags: [],
+  keyTakeaways: [],
   publishedAt: null,
 };
 

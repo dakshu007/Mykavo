@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         primaryKeyword: input.primaryKeyword,
         secondaryKeyword: input.secondaryKeyword,
         tags: input.tags,
+        keyTakeaways: input.keyTakeaways ?? [],
         publishedAt:
           input.publishedAt ?? (input.status === "PUBLISHED" ? new Date() : null),
       },

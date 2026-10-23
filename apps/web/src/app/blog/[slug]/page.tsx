@@ -12,7 +12,6 @@ import { resolveAuthor } from "@/lib/blog-authors-server";
 import { AuthorBox } from "@/components/blog/author-box";
 import { displayTags, showUpdated } from "@/lib/blog-display";
 import { toolForPost } from "@/lib/blog-tools";
-import { AnswerCapsule } from "@/components/landing/answer-capsule";
 import { SummarizeWithAi } from "@/components/blog/summarize-with-ai";
 import { livePostWhere } from "@/lib/blog-schedule";
 import { prisma } from "@mykavo/database";
@@ -20,7 +19,8 @@ import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { fontSans, fontDisplay, gold } from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
-import { PostContent, PostTocRail } from "@/components/blog/post-content";
+import { PostContent, PostTocMobile, PostTocRail } from "@/components/blog/post-content";
+import { AiOverview } from "@/components/blog/ai-overview";
 import { site } from "@/config/site";
 import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
@@ -318,8 +318,9 @@ export default async function BlogPostPage({ params }: Params) {
               {/* The post's answer, stated up front - the excerpt, written as
                   a self-contained answer, is what AI answers and readers in
                   a hurry both want first. */}
-              {post.excerpt && <AnswerCapsule answer={post.excerpt} className="mb-8" />}
+              <AiOverview answer={post.excerpt} takeaways={post.keyTakeaways} className="mb-8" />
               <SummarizeWithAi url={`${site.url}/blog/${post.slug}`} />
+              {showTocRail && <PostTocMobile headings={headings} className="mb-6" />}
               <div
                 data-post-body
                 className="rounded-[28px] bg-card p-7 shadow-[0_20px_50px_rgba(38,54,115,0.12)] sm:p-10"

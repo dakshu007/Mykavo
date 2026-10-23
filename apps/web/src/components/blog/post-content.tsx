@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
 import { WpPluginInstall } from "@/components/landing/wp-plugin-download";
+import { TRIAL_DAYS } from "@mykavo/shared";
 import { WP_PLUGIN_PAGE_PATH, WP_PLUGIN_REQUIRES } from "@/config/wordpress-plugin";
 import { cn } from "@/lib/utils";
 import { parsePost, withMidpointSlot, type FaqItem, type PostHeading, type SegmentOrSlot } from "./blocks";
@@ -13,7 +14,7 @@ import { BlogMarkdown } from "./markdown";
  * the editor live preview, so the preview shows exactly what readers see.
  */
 export function PostContent({ content, midpoint }: { content: string; midpoint?: React.ReactNode }) {
-  const { segments: parsed, headings } = parsePost(content);
+  const { segments: parsed } = parsePost(content);
   // An in-article block (the post's free tool) goes between sections, mid-read.
   const segments: SegmentOrSlot[] = midpoint ? withMidpointSlot(parsed) : parsed;
   return (
@@ -35,7 +36,8 @@ export function PostContent({ content, midpoint }: { content: string; midpoint?:
           case "cta-wordpress":
             return <WordpressCtaBlock key={index} />;
           case "toc":
-            return <TocBlock key={index} headings={headings} />;
+            // Superseded by the automatic table of contents; see TocBlock.
+            return null;
           case "faq":
             return <FaqBlock key={index} items={segment.items} />;
         }
@@ -45,30 +47,78 @@ export function PostContent({ content, midpoint }: { content: string; midpoint?:
 }
 
 /**
- * {{cta}} - inline "Try MyKavo" card. The button is fixed brand gold (ink
- * text) so it reads the same on the light public page and in the editor
- * preview's dark theme; the surrounding text stays theme-tokened.
+ * {{cta}} - inline "Try MyKavo" card, placed mid-article by the author.
+ * Built to stop a skimming reader: dark, high-contrast, a concrete example of
+ * what an alert looks like, the three reasons to start and one clear action.
+ * Fixed colors (not theme tokens) so it reads the same on the public page and
+ * in the editor preview's dark theme. The example alert is labelled as one.
  */
+const CTA_POINTS = [
+  "Titles, canonicals, noindex, scripts, links and buy buttons checked on every scan",
+  "Before-and-after proof, ranked by severity",
+  "Email, Slack and push alerts the day it happens",
+];
+
 function CtaBlock() {
   return (
-    <aside className="my-8 rounded-tile border border-[#FFD400]/60 bg-[#FFD400]/10 px-6 py-8 text-center sm:px-8">
-      <p className="text-2xl font-semibold leading-tight tracking-tight text-ink">
-        Website monitoring,
-        <br />
-        page by page.
-      </p>
-      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-ink-secondary">
-        MyKavo checks every page that matters for visual, SEO, link, script and
-        performance changes - and shows you exactly what changed, before your
-        customers notice.
-      </p>
-      <div className="mt-6 flex flex-col items-center gap-3">
-        <GoogleButton size="md" />
-        <Link href="/signup" className="text-[12.5px] text-ink-secondary underline underline-offset-4 hover:text-ink">
-          or sign up with email
-        </Link>
+    <aside className="my-10 overflow-hidden rounded-[24px] border border-[#151515] bg-[#151515] text-left shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
+      <div className="grid gap-8 px-6 py-8 sm:px-9 sm:py-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center">
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFD400]">
+            Stop finding out from customers
+          </p>
+          <p className="mt-3 text-[28px] font-semibold leading-[1.1] tracking-tight text-[#F4F5EE] sm:text-[32px]">
+            Know the moment your site breaks.{" "}
+            <span className="text-[#FFD400]">Not weeks later.</span>
+          </p>
+          <ul className="mt-5 space-y-2.5">
+            {CTA_POINTS.map((point) => (
+              <li key={point} className="flex items-start gap-2.5 text-[14px] leading-6 text-[#D9DBD0]">
+                <Check className="mt-0.5 size-4 shrink-0 rounded-full bg-[#FFD400] p-0.5 text-[#151515]" aria-hidden />
+                {point}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <GoogleButton size="md" from="blog:inline" />
+            <Link
+              href="/signup"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-[#FFD400] px-6 text-[14px] font-semibold text-[#151515] transition-colors hover:bg-[#FFE14D]"
+            >
+              Start free with email
+            </Link>
+          </div>
+          <p className="mt-4 text-[12.5px] text-[#9C9E93]">
+            Free plan · {TRIAL_DAYS}-day Pro trial · No credit card required
+          </p>
+        </div>
+        <div aria-hidden className="hidden min-w-0 md:block">
+          <div className="rounded-2xl border border-white/10 bg-[#1F2023] p-4">
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-[#9C9E93]">Example alert</p>
+            <div className="mt-3 rounded-xl bg-white p-4 text-[#151515]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FDE2E1] px-2.5 py-1 text-[12px] font-semibold text-[#B42318]">
+                  <span className="size-1.5 rounded-full bg-current" />
+                  Critical
+                </span>
+                <span className="font-mono text-[11px] text-[#6B6B60]">2 min ago</span>
+              </div>
+              <p className="mt-2.5 text-[15px] font-semibold leading-snug">&quot;Add to cart&quot; is missing</p>
+              <p className="mt-1 font-mono text-[11.5px] text-[#6B6B60]">yourstore.com/products/coffee</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-[11.5px]">
+                <div className="rounded-lg bg-[#F1F2EC] px-2.5 py-2">
+                  <p className="font-semibold text-[#6B6B60]">Baseline</p>
+                  <p className="mt-0.5">Button visible</p>
+                </div>
+                <div className="rounded-lg bg-[#FDE2E1] px-2.5 py-2">
+                  <p className="font-semibold text-[#B42318]">Current</p>
+                  <p className="mt-0.5">Not found</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <p className="mt-3 text-[12px] text-ink-faint">Free plan, no credit card required</p>
     </aside>
   );
 }
@@ -155,17 +205,24 @@ function FaqBlock({ items }: { items: FaqItem[] }) {
   );
 }
 
-/** {{toc}} - inline table-of-contents card, placed where the author put it. */
-function TocBlock({ headings }: { headings: PostHeading[] }) {
-  if (headings.length === 0) return null;
+/**
+ * Collapsible table of contents for screens without the right rail (below
+ * lg). It replaces the old inline {{toc}} card, which duplicated the rail on
+ * desktop; {{toc}} tokens left in older posts now render nothing.
+ */
+export function PostTocMobile({ headings, className }: { headings: PostHeading[]; className?: string }) {
   return (
-    <nav
-      aria-label="Table of contents"
-      className="my-8 rounded-tile border border-line bg-surface px-6 py-5"
-    >
-      <p className="label-micro">Table of contents</p>
-      <TocList headings={headings} className="mt-3" />
-    </nav>
+    <details className={cn("group rounded-card bg-card px-5 py-4 shadow-card lg:hidden", className)}>
+      <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
+        On this page
+        <span aria-hidden className="text-ink-faint transition-transform group-open:rotate-45">
+          +
+        </span>
+      </summary>
+      <nav aria-label="Table of contents" className="mt-3 border-t border-line pt-3">
+        <TocList headings={headings} />
+      </nav>
+    </details>
   );
 }
 

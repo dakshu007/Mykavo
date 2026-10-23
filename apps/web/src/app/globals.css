@@ -491,7 +491,13 @@
     border: 1px solid var(--fx-line);
     padding: 1em 1.25em;
   }
+  /* Reset the inline-code chip: without this every line of a block gets its
+     own bordered, rounded box (inline boxes decorate each line fragment). */
   .blog-prose pre code {
+    display: block;
+    border: 0;
+    border-radius: 0;
+    white-space: pre;
     background: none;
     padding: 0;
     color: #f6f7fb;

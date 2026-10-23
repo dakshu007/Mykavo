@@ -45,6 +45,16 @@ const tagsInput = z
     });
   });
 
+/**
+ * Key takeaways: one short sentence each, blanks dropped, at most 6.
+ * Optional so a client that doesn't send the field leaves saved ones alone.
+ */
+const keyTakeawaysInput = z
+  .array(z.string().trim().max(300, "Each takeaway must be 300 characters or less."))
+  .transform((items) => items.filter(Boolean))
+  .refine((items) => items.length <= 6, { message: "At most 6 key takeaways." })
+  .optional();
+
 export const blogPostInputSchema = z.object({
   title: z.string().trim().min(1, "Title is required.").max(200),
   slug: z
@@ -62,6 +72,7 @@ export const blogPostInputSchema = z.object({
   primaryKeyword: optionalText(120),
   secondaryKeyword: optionalText(120),
   tags: tagsInput,
+  keyTakeaways: keyTakeawaysInput,
   publishedAt: publishedAtInput,
 });
 

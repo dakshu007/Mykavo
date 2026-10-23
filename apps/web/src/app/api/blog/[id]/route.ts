@@ -61,6 +61,7 @@ export async function PATCH(request: Request, { params }: Params) {
         primaryKeyword: input.primaryKeyword,
         secondaryKeyword: input.secondaryKeyword,
         tags: input.tags,
+        ...(input.keyTakeaways !== undefined ? { keyTakeaways: input.keyTakeaways } : {}),
         publishedAt:
           input.publishedAt ??
           (input.status === "PUBLISHED" && !existing.publishedAt

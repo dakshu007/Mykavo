@@ -32,6 +32,7 @@ export default async function EditBlogPostPage({
       primaryKeyword: true,
       secondaryKeyword: true,
       tags: true,
+      keyTakeaways: true,
       publishedAt: true,
     },
   });
