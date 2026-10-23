@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
 import { WpPluginInstall } from "@/components/landing/wp-plugin-download";
-import { TRIAL_DAYS } from "@mykavo/shared";
+import { TRIAL_DAYS } from "@mykavo/shared/plan-tier";
 import { WP_PLUGIN_PAGE_PATH, WP_PLUGIN_REQUIRES } from "@/config/wordpress-plugin";
 import { cn } from "@/lib/utils";
 import { parsePost, withMidpointSlot, type FaqItem, type PostHeading, type SegmentOrSlot } from "./blocks";
