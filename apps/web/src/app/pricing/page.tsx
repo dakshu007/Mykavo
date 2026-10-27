@@ -177,8 +177,8 @@ export default function PricingPage() {
           <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
             One missed regression costs more than a year of MyKavo. Every new account starts with
             a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites. After that, stay
-            free with one website, go Pro for $20/month, or run every client site on Agency for
-            $79/month.
+            free with one website, start small on Starter for $7/month, go Pro for $20/month, or run
+            every client site on Agency for $79/month.
           </p>
         </div>
 
