@@ -21,7 +21,7 @@ import {
 
 export const metadata: Metadata = withSocial({
   title: "Pricing - Website Monitoring Plans from $0",
-  description: `Website change monitoring from $0. New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites. Pro is $20/month for 8 websites, Agency $79/month for 30.`,
+  description: `Website change monitoring from $0. New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites. Starter $7/month for 2 websites, Pro $20/month for 8, Agency $79/month for 30.`,
   keywords: [
     "website monitoring pricing",
     "site monitoring tools pricing",
@@ -31,7 +31,7 @@ export const metadata: Metadata = withSocial({
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "MyKavo Pricing - Website Monitoring from $0",
-    description: `New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, then a free plan for one. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.`,
+    description: `New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, then a free plan for one. Starter at $7/month for 2 websites. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.`,
     url: "/pricing",
     type: "website",
   },
