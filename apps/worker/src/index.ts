@@ -24,6 +24,7 @@ import {
   ACTIVATION_SWEEP_QUEUE,
   CLIENT_REPORT_SWEEP_QUEUE,
   SITE_AUDIT_QUEUE,
+  LEAD_AUDIT_QUEUE,
   GSC_SYNC_QUEUE,
   GSC_SYNC_SWEEP_QUEUE,
   DOMAIN_SWEEP_QUEUE,
@@ -37,6 +38,7 @@ import {
   type ScanWebsiteJob,
   type LighthouseAuditJob,
   type SiteAuditJob,
+  type LeadAuditJob,
   type GscSyncJob,
 } from "@mykavo/shared";
 import { logger } from "./logger";
@@ -61,6 +63,7 @@ import { runPlanSweep } from "./plan-sweep";
 import { runActivationSweep } from "./activation-email";
 import { runClientReportSweep } from "./client-report";
 import { runSiteAuditJob } from "./site-audit";
+import { runLeadAuditJob } from "./lead-audit";
 import { runGscSync, runGscSweep } from "./gsc-sync";
 import { runDomainSweep } from "./domain-check";
 import { runDatabaseBackup } from "./db-backup";
@@ -288,6 +291,19 @@ async function main() {
     async ([job]) => {
       logger.info("site audit job received", { jobId: job.id, siteAuditId: job.data.siteAuditId });
       await runSiteAuditJob(job.data);
+    },
+  );
+
+  // "Email me a free site audit" from the homepage. Its own queue, one at a
+  // time, so anonymous visitors never delay a customer's audit. Not retried:
+  // a crawl that failed once already produced its "could not audit" email.
+  await ensureQueue(boss, LEAD_AUDIT_QUEUE, { retryLimit: 0, expireInSeconds: 10 * 60 });
+  await boss.work<LeadAuditJob>(
+    LEAD_AUDIT_QUEUE,
+    { batchSize: 1, ...ON_DEMAND_POLL },
+    async ([job]) => {
+      logger.info("lead audit job received", { jobId: job.id, leadId: job.data.leadId });
+      await runLeadAuditJob(job.data);
     },
   );
 

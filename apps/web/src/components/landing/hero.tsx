@@ -2,7 +2,9 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AI_INSIGHTS_PATH } from "./ai-insights";
 import { GoogleCta } from "./google-cta";
-import { LandingUrlInput } from "./url-input";
+import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
+import { getPlan } from "@/config/plans";
+import { LandingAuditForm } from "./audit-form";
 import { HeroStoryAnimation } from "./hero-story-animation";
 import { fontDisplay } from "./style";
 
@@ -92,11 +94,12 @@ export function LandingHero() {
           changes - with before-and-after proof and an AI explanation of how to fix it.
         </p>
 
-        {/* Product-led URL input - instant value, no signup */}
+        {/* Product-led: a free site audit by email - real value, no signup */}
         <div className="mt-9">
-          <LandingUrlInput />
+          <LandingAuditForm />
           <p className="mt-3 text-center text-[13px] text-[#6B6B60]">
-            Free instant inspection - status, SEO tags, links &amp; scripts. No signup needed.
+            Free site audit: up to {getPlan("free").limits.siteAuditPages} pages, {AUDIT_CHECK_COUNT} checks,
+            emailed to you in minutes. No signup needed.
           </p>
         </div>
 

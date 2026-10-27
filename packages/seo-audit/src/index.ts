@@ -23,3 +23,9 @@ export {
   NEVER_LEAD,
   type LeadFinding,
 } from "./lead";
+export {
+  summarizeAuditReport,
+  FREE_REPORT_ISSUES,
+  type AuditIssueSummary,
+  type AuditReportSummary,
+} from "./report";

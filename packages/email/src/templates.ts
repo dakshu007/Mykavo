@@ -455,6 +455,141 @@ export function workerDbRecoveryEmail(data: WorkerDbRecoveryData): {
   return { subject, html: shell(inner), text };
 }
 
+export interface AuditReportIssue {
+  title: string;
+  severity: "ERROR" | "WARNING" | "NOTICE";
+  explain: string;
+  fix: string;
+  /** Affected URLs or occurrences across the crawl. */
+  count: number;
+  exampleUrl: string | null;
+}
+
+export interface AuditReportEmailData {
+  host: string;
+  pagesCrawled: number;
+  healthScore: number;
+  checkCount: number;
+  errorCount: number;
+  warningCount: number;
+  noticeCount: number;
+  /** The issues shown in full (a few); the rest stay in the dashboard. */
+  issues: AuditReportIssue[];
+  hidden: { types: number; errors: number; warnings: number; notices: number };
+  /** Signup link that lands on adding this site. */
+  fullReportUrl: string;
+  /** Pricing / trial link. */
+  proUrl: string;
+  trialDays: number | null;
+  proAuditPages: number;
+}
+
+const AUDIT_SEVERITY_STYLE: Record<AuditReportIssue["severity"], { label: string; color: string; bg: string }> = {
+  ERROR: { label: "Error", color: "#b42318", bg: "#fdeaeb" },
+  WARNING: { label: "Warning", color: "#9a3412", bg: "#fff4e5" },
+  NOTICE: { label: "Notice", color: "#2a44c4", bg: "#eef1fe" },
+};
+
+const countOf = (n: number, word: string) => `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
+
+const AUDIT_REQUEST_NOTE =
+  "You are getting this because this address was entered at mykavo.app to receive this report. We will not email you again unless you sign up.";
+
+/** "Email me a free site audit" from the homepage: the report itself. */
+export function auditReportEmail(data: AuditReportEmailData): { subject: string; html: string; text: string } {
+  const subject = `Your free site audit for ${data.host}: ${data.healthScore}/100`;
+  const stat = (value: number, name: string, color: string) =>
+    `<td style="padding:12px 14px;background:#f4f5f7;border-radius:10px;text-align:center;width:33%"><div style="font-size:22px;font-weight:600;color:${color}">${value.toLocaleString("en-US")}</div><div style="font-size:12px;color:#5c6270">${name}</div></td>`;
+  const issueHtml = data.issues
+    .map((issue) => {
+      const style = AUDIT_SEVERITY_STYLE[issue.severity];
+      const where = issue.exampleUrl
+        ? `<div style="margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#5c6270;word-break:break-all">${esc(issue.exampleUrl)}</div>`
+        : "";
+      return `<div style="border:1px solid #e4e7ee;border-radius:12px;padding:14px 16px;margin-bottom:10px">
+        <span style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${style.color};background:${style.bg};border-radius:9999px;padding:2px 9px">${style.label}</span>
+        <span style="font-size:12px;color:#5c6270;margin-left:6px">${countOf(issue.count, "page")}</span>
+        <div style="margin-top:8px;font-size:15px;font-weight:600">${esc(issue.title)}</div>
+        <div style="margin-top:4px;font-size:14px;color:#3a3f4b">${esc(issue.explain)}</div>
+        <div style="margin-top:6px;font-size:14px;color:#16181d"><strong>Fix:</strong> ${esc(issue.fix)}</div>
+        ${where}
+      </div>`;
+    })
+    .join("");
+  const hiddenParts = [
+    data.hidden.errors > 0 ? countOf(data.hidden.errors, "error") : null,
+    data.hidden.warnings > 0 ? countOf(data.hidden.warnings, "warning") : null,
+    data.hidden.notices > 0 ? countOf(data.hidden.notices, "notice") : null,
+  ].filter((p): p is string => p !== null);
+  const locked =
+    data.hidden.types > 0
+      ? `<div style="background:#fff9db;border:1px solid #f5d90a;border-radius:12px;padding:16px;margin:18px 0 8px">
+          <div style="font-size:15px;font-weight:600">${countOf(data.hidden.types, "more issue type")} in your full report</div>
+          <div style="margin-top:4px;font-size:14px;color:#3a3f4b">${esc(hiddenParts.join(", "))}, with every affected URL and how to fix each one. Free, no card needed.</div>
+          <div style="margin-top:14px">${button(data.fullReportUrl, "See the full report free")}</div>
+        </div>`
+      : `<div style="margin:18px 0 8px">${button(data.fullReportUrl, "Monitor this site free")}</div>`;
+  const trial = data.trialDays ? ` Try Pro free for ${data.trialDays} days.` : "";
+  const pro = `<div style="border-top:1px solid #e4e7ee;margin-top:20px;padding-top:16px;font-size:14px;color:#3a3f4b">
+      <strong>Want this every week?</strong> MyKavo Pro re-audits up to ${data.proAuditPages.toLocaleString("en-US")} pages, watches your key pages around the clock and alerts you the moment something breaks.${trial}
+      <a href="${esc(data.proUrl)}" style="color:#3556f4;text-decoration:none;font-weight:500">See Pro</a>
+    </div>`;
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Free site audit</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.host)} scored ${data.healthScore}/100</h1>
+    <p style="margin:0 0 18px;font-size:14px;color:#5c6270">We crawled ${countOf(data.pagesCrawled, "page")} and ran ${data.checkCount} technical SEO checks.</p>
+    <table role="presentation" cellspacing="6" cellpadding="0" style="width:100%;margin:0 0 18px -6px"><tr>
+      ${stat(data.errorCount, "Errors", "#b42318")}${stat(data.warningCount, "Warnings", "#9a3412")}${stat(data.noticeCount, "Notices", "#2a44c4")}
+    </tr></table>
+    ${data.issues.length > 0 ? `<p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#5c6270">Fix these first</p>${issueHtml}` : `<p style="margin:0 0 10px;font-size:14px">No issues worth fixing. Nice work.</p>`}
+    ${locked}
+    ${pro}
+    <p style="margin:20px 0 0;font-size:12px;color:#9aa1b1">${esc(AUDIT_REQUEST_NOTE)}</p>
+  `;
+  const textIssues = data.issues
+    .map(
+      (i) =>
+        `- [${AUDIT_SEVERITY_STYLE[i.severity].label}] ${i.title} (${countOf(i.count, "page")})\n  ${i.explain}\n  Fix: ${i.fix}${i.exampleUrl ? `\n  Example: ${i.exampleUrl}` : ""}`,
+    )
+    .join("\n\n");
+  const text =
+    `Free site audit: ${data.host} scored ${data.healthScore}/100\n` +
+    `We crawled ${countOf(data.pagesCrawled, "page")} and ran ${data.checkCount} technical SEO checks.\n` +
+    `Errors: ${data.errorCount}  Warnings: ${data.warningCount}  Notices: ${data.noticeCount}\n\n` +
+    (textIssues ? `Fix these first:\n\n${textIssues}\n\n` : "") +
+    (data.hidden.types > 0
+      ? `${countOf(data.hidden.types, "more issue type")} (${hiddenParts.join(", ")}) are in your full report, free: ${data.fullReportUrl}\n\n`
+      : `Monitor this site free: ${data.fullReportUrl}\n\n`) +
+    `Want this every week? MyKavo Pro re-audits up to ${data.proAuditPages.toLocaleString("en-US")} pages and alerts you the moment something breaks.${trial} ${data.proUrl}\n\n` +
+    AUDIT_REQUEST_NOTE;
+  return { subject, html: shell(inner), text };
+}
+
+export interface AuditUnavailableEmailData {
+  host: string;
+  /** Signup link that lands on adding this site. */
+  monitorUrl: string;
+}
+
+/** The audit could not say anything true (blocked crawler, site down): say so plainly. */
+export function auditUnavailableEmail(data: AuditUnavailableEmailData): { subject: string; html: string; text: string } {
+  const subject = `We could not audit ${data.host}`;
+  const body =
+    "Our crawler could not read enough of the site to audit it reliably. Usually a firewall or bot protection (Cloudflare, for example) blocks automated tools, or the site was down when we tried. Rather than send you a report that might be wrong, we are sending none.";
+  const next =
+    "MyKavo monitors your pages with a real browser, so it works on most sites that block simple crawlers. Add the site free and see what we find.";
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#c2410c">Audit incomplete</p>
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:600;letter-spacing:-0.01em">We could not audit ${esc(data.host)}</h1>
+    <p style="margin:0 0 12px;font-size:14px;color:#3a3f4b">${esc(body)}</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#3a3f4b">${esc(next)}</p>
+    ${button(data.monitorUrl, "Monitor this site free")}
+    <p style="margin:20px 0 0;font-size:12px;color:#9aa1b1">${esc(AUDIT_REQUEST_NOTE)}</p>
+  `;
+  const text = `We could not audit ${data.host}\n\n${body}\n\n${next}\n${data.monitorUrl}\n\n${AUDIT_REQUEST_NOTE}`;
+  return { subject, html: shell(inner), text };
+}
+
 export interface WorkerBackupFailedData {
   /** Which step failed: "dump", "restore check" or "off-server copy". */
   step: string;

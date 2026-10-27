@@ -1064,6 +1064,36 @@ model SiteAudit {
   @@map("site_audit")
 }
 
+/// "Email me a free site audit" from the homepage: an anonymous visitor gives
+/// a URL and an email, the worker crawls the site and emails the report.
+/// Rows double as the durable rate limit (per email, IP and site per day) -
+/// the in-memory limiter is per serverless instance and cannot protect an
+/// endpoint that sends email to an address someone typed in.
+model AuditLead {
+  id           String          @id @default(cuid())
+  email        String
+  url          String
+  host         String
+  /// sha256 of the requester's IP, for rate limiting only.
+  ipHash       String?
+  status       SiteAuditStatus @default(QUEUED)
+  pagesCrawled Int             @default(0)
+  healthScore  Int?
+  errorCount   Int             @default(0)
+  warningCount Int             @default(0)
+  noticeCount  Int             @default(0)
+  emailedAt    DateTime?
+  errorMessage String?
+  createdAt    DateTime        @default(now())
+  completedAt  DateTime?
+
+  @@index([email, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([host, createdAt])
+  @@index([status, createdAt])
+  @@map("audit_lead")
+}
+
 // ---------- Google Search Console integration ----------
 
 enum GscDimension {

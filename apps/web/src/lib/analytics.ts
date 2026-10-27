@@ -33,6 +33,8 @@ export type AnalyticsEvent =
   | "tool_used"
   | "preview_viewed"
   | "cta_clicked"
+  // Homepage "Email me a free site audit" accepted. props: placement
+  | "audit_requested"
   // WordPress plugin page
   | "wp_plugin_viewed"
   | "wp_plugin_downloaded"

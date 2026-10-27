@@ -39,6 +39,11 @@ export const DB_BACKUP_QUEUE = "db-backup";
 export const ARTIFACT_PURGE_QUEUE = "artifact-purge";
 export const SITE_AUDIT_QUEUE = "site-audit";
 /**
+ * "Email me a free site audit" from the homepage. Its own queue so an
+ * anonymous visitor's crawl never waits behind - or delays - a customer's.
+ */
+export const LEAD_AUDIT_QUEUE = "lead-audit";
+/**
  * "Send me a test alert" from the app. Deliberately goes through the queue and
  * the worker rather than sending from the web request, so a green result
  * proves the REAL delivery path - web -> pg-boss -> worker -> Expo -> phone -
@@ -89,6 +94,18 @@ export interface SiteAuditJob {
   siteAuditId: string;
   /** Plan-resolved crawl cap, decided by the web app at enqueue time. */
   maxPages: number;
+}
+
+export interface LeadAuditJob {
+  /** The audit_lead row; the worker reads the URL and address from it. */
+  leadId: string;
+  /** Crawl cap - the Free plan's, decided by the web app (plans.ts). */
+  maxPages: number;
+  /** Pro's crawl cap, quoted in the upsell. */
+  proAuditPages: number;
+  /** Same-origin paths for the email's buttons (signup prefilled with the site, pricing). */
+  fullReportPath: string;
+  proPath: string;
 }
 
 export interface GscSyncJob {

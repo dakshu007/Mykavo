@@ -8,6 +8,7 @@ import {
   SCAN_WEBSITE_QUEUE,
   LIGHTHOUSE_AUDIT_QUEUE,
   SITE_AUDIT_QUEUE,
+  LEAD_AUDIT_QUEUE,
   GSC_SYNC_QUEUE,
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
@@ -19,6 +20,7 @@ import {
   type ArtifactPurgeJob,
   type ScanWebsiteJob,
   type SiteAuditJob,
+  type LeadAuditJob,
   type GscSyncJob,
   type LighthouseAuditJob,
 } from "@mykavo/shared";
@@ -129,6 +131,17 @@ export async function enqueueWelcomeEmail(job: WelcomeEmailJob): Promise<void> {
   } catch {
     // A missing welcome must never cost us the signup it was welcoming.
   }
+}
+
+/**
+ * "Email me a free site audit". Ensures the queue first (as the welcome email
+ * does) so the very first request after a deploy works even if the worker
+ * has not restarted yet. Throws: the caller marks the lead failed.
+ */
+export async function enqueueLeadAudit(job: LeadAuditJob): Promise<void> {
+  const boss = await getBoss();
+  await boss.createQueue(LEAD_AUDIT_QUEUE, { retryLimit: 0, expireInSeconds: 10 * 60 }).catch(() => {});
+  await boss.send(LEAD_AUDIT_QUEUE, { ...job });
 }
 
 /** Enqueue a website scan. Returns the pg-boss job id. */
