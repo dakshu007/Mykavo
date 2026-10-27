@@ -25,10 +25,11 @@ import { site } from "@/config/site";
 import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
 // Cached per slug on first visit and served from the CDN after that,
-// regenerated at most every two minutes; dashboard edits revalidate it on the
-// spot (lib/blog-revalidate.ts). Was force-dynamic: every visit rendered from
-// scratch on a serverless function, often a cold one.
-export const revalidate = 120;
+// regenerated at most every hour; dashboard edits revalidate it on the spot
+// (lib/blog-revalidate.ts). Every regeneration reads the post from Supabase,
+// so a short timer cost egress on every crawl. Was force-dynamic: every visit
+// rendered from scratch on a serverless function, often a cold one.
+export const revalidate = 3600;
 
 // No slugs at build time - each page is rendered on its first request and
 // then cached. Unknown slugs still 404 (notFound below).

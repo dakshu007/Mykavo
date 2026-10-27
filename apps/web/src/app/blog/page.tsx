@@ -8,20 +8,21 @@ import { prisma } from "@mykavo/database";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { card, eyebrow, fontSans, fontDisplay } from "@/components/landing/style";
-import { readingTimeMinutes } from "@/components/blog/blocks";
+import { readingMinutesForWords } from "@/components/blog/blocks";
 import { BlogIndexList, type BlogTopic } from "@/components/blog/blog-index-list";
 import { authorNameResolver } from "@/lib/blog-authors-server";
 import { displayTags } from "@/lib/blog-display";
 import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
-// Cached and served from the CDN, regenerated at most every 30 seconds.
+// Cached and served from the CDN, regenerated at most every 10 minutes.
 // Publishing, editing or deleting a post from the dashboard revalidates it on
 // the spot (lib/blog-revalidate.ts), so new posts still appear immediately;
 // the timer covers scheduled posts going live and the first regeneration
-// after a deploy (see livePosts).
+// after a deploy (see livePosts). It was 30 seconds, and every regeneration
+// read the whole blog out of Supabase - most of the project's egress.
 // This page used to be force-dynamic, and every click on "Blog" waited on a
 // cold serverless function and the database - several seconds of nothing.
-export const revalidate = 30;
+export const revalidate = 600;
 
 export const metadata: Metadata = withSocial({
   title: "Blog",
@@ -66,20 +67,36 @@ function topicsOf(posts: readonly { tags: readonly string[] }[]): BlogTopic[] {
  * deploy workflow makes that first visit itself right after going live.
  */
 async function livePosts() {
-  const query = () =>
-    prisma.blogPost.findMany({
-      where: livePostWhere(),
-      orderBy: { publishedAt: "desc" },
-      select: {
-        slug: true,
-        title: true,
-        excerpt: true,
-        authorName: true,
-        publishedAt: true,
-        content: true,
-        tags: true,
-      },
-    });
+  const query = async () => {
+    const now = new Date();
+    // No `content`: the cards only need a read time, and the full text of
+    // every post (~1 MB) was being downloaded for it on each regeneration.
+    // Postgres counts the words instead - same rule as readingTimeMinutes.
+    const [posts, counts] = await Promise.all([
+      prisma.blogPost.findMany({
+        where: livePostWhere(now),
+        orderBy: { publishedAt: "desc" },
+        select: {
+          slug: true,
+          title: true,
+          excerpt: true,
+          authorName: true,
+          publishedAt: true,
+          tags: true,
+        },
+      }),
+      prisma.$queryRaw<Array<{ slug: string; words: number }>>`
+        SELECT slug,
+          CASE WHEN content ~ '[^[:space:]]'
+            THEN cardinality(regexp_split_to_array(btrim(regexp_replace(content, '[[:space:]]+', ' ', 'g')), ' '))
+            ELSE 0 END AS words
+        FROM blog_post
+        WHERE status = 'PUBLISHED' AND "publishedAt" <= ${now}
+      `,
+    ]);
+    const words = new Map(counts.map((c) => [c.slug, Number(c.words)]));
+    return posts.map((post) => ({ ...post, words: words.get(post.slug) ?? 0 }));
+  };
   try {
     return { posts: await query(), unavailable: false };
   } catch (err) {
@@ -108,7 +125,7 @@ export default async function BlogIndexPage() {
     authorName: displayAuthor(post.authorName),
     publishedAtIso: post.publishedAt?.toISOString() ?? null,
     publishedAtLabel: post.publishedAt ? dateFormat.format(post.publishedAt) : null,
-    readMinutes: readingTimeMinutes(post.content),
+    readMinutes: readingMinutesForWords(post.words),
     tags: displayTags(post.tags),
   }));
   const topics = topicsOf(posts);

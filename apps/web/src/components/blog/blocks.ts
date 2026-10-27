@@ -314,7 +314,11 @@ const WORDS_PER_MINUTE = 200;
 
 /** Estimated read time in whole minutes (words / 200, rounded up, min 1). */
 export function readingTimeMinutes(markdown: string): number {
-  const words = markdown.split(/\s+/).filter(Boolean).length;
+  return readingMinutesForWords(markdown.split(/\s+/).filter(Boolean).length);
+}
+
+/** The same estimate from a word count already taken (e.g. in SQL). */
+export function readingMinutesForWords(words: number): number {
   return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
 }
 
