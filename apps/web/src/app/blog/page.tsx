@@ -14,15 +14,15 @@ import { authorNameResolver } from "@/lib/blog-authors-server";
 import { displayTags } from "@/lib/blog-display";
 import { blogIndexGraph, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
-// Cached and served from the CDN, regenerated at most every 10 minutes.
+// Cached and served from the CDN, regenerated at most every 30 seconds.
 // Publishing, editing or deleting a post from the dashboard revalidates it on
 // the spot (lib/blog-revalidate.ts), so new posts still appear immediately;
 // the timer covers scheduled posts going live and the first regeneration
-// after a deploy (see livePosts). It was 30 seconds, and every regeneration
-// read the whole blog out of Supabase - most of the project's egress.
+// after a deploy (see livePosts). Kept short on purpose: the blog brings the
+// visitors, so freshness wins; egress is kept down by never reading content.
 // This page used to be force-dynamic, and every click on "Blog" waited on a
 // cold serverless function and the database - several seconds of nothing.
-export const revalidate = 600;
+export const revalidate = 30;
 
 export const metadata: Metadata = withSocial({
   title: "Blog",
