@@ -15,8 +15,6 @@ import { parseUrlInput } from "@/lib/url";
 const bodySchema = z.object({
   url: z.string().trim().min(1).max(2048),
   email: z.string().trim().min(3).max(254),
-  /** Honeypot: hidden from people, filled in by naive bots. */
-  company: z.string().max(200).optional(),
 });
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -53,11 +51,6 @@ export async function POST(request: Request) {
   // Origin + path, no query or fragment: the crawl's starting point.
   const url = `${parsed.origin}${parsed.pathname === "/" ? "/" : parsed.pathname}`;
   const host = displayHost(url);
-
-  if (input.company) {
-    // A bot filled the hidden field. Look successful, do nothing.
-    return NextResponse.json({ ok: true, host });
-  }
 
   const email = input.email.toLowerCase();
   // Cheap format check first, so a typo is reported before any DNS lookup.

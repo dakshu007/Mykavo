@@ -20,7 +20,6 @@ type State =
 export function LandingAuditForm() {
   const [url, setUrl] = useState("");
   const [email, setEmail] = useState("");
-  const [company, setCompany] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
 
   async function submit(e: React.FormEvent) {
@@ -32,7 +31,7 @@ export function LandingAuditForm() {
       const res = await fetch("/api/audit-report", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url, email, company }),
+        body: JSON.stringify({ url, email }),
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; host?: string; error?: string };
       if (!res.ok || !data.ok) {
@@ -114,17 +113,6 @@ export function LandingAuditForm() {
             className="h-11 min-w-0 flex-1 bg-transparent px-2 text-[15px] text-[#151515] placeholder:text-[#151515]/40 focus:outline-none"
           />
         </div>
-        {/* Honeypot: off-screen and skipped by keyboard and screen readers. */}
-        <input
-          type="text"
-          name="company"
-          tabIndex={-1}
-          autoComplete="off"
-          aria-hidden
-          value={company}
-          onChange={(e) => setCompany(e.target.value)}
-          className="absolute -left-[9999px] h-0 w-0 opacity-0"
-        />
         <button
           type="submit"
           disabled={sending}
