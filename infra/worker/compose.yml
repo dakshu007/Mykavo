@@ -20,6 +20,10 @@ services:
     # Copy the Mac's apps/worker/.env.production to infra/worker/worker.env.
     env_file:
       - worker.env
+    environment:
+      # This image ships pg_dump; if it ever lacks it, alert instead of
+      # quietly skipping the nightly backup (apps/worker/src/db-backup.ts).
+      BACKUPS_REQUIRED: "1"
 
     # SECURITY: Playwright's profile permits the syscalls Chromium's sandbox
     # needs to build user namespaces, so the sandbox stays ON without running
@@ -34,6 +38,12 @@ services:
     # browser-pool.ts passes --disable-dev-shm-usage, so Chromium writes to
     # /tmp rather than /dev/shm. This is headroom for the cases that don't.
     shm_size: 1gb
+
+    # Data that must outlive a rebuild: nightly database backups. A named
+    # volume lives on the server's own disk (the free Oracle block storage)
+    # and survives `up --build`, which replaces the container every deploy.
+    volumes:
+      - mykavo-data:/data
 
     # The pool runs 3 concurrent pages and Lighthouse launches its own
     # Chromium beside them. Comfortable inside Oracle's free 12GB; the cap
@@ -50,3 +60,6 @@ services:
       options:
         max-size: "20m"
         max-file: "3"
+
+volumes:
+  mykavo-data:

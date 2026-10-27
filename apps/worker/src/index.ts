@@ -27,6 +27,7 @@ import {
   GSC_SYNC_QUEUE,
   GSC_SYNC_SWEEP_QUEUE,
   DOMAIN_SWEEP_QUEUE,
+  DB_BACKUP_QUEUE,
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
   WELCOME_EMAIL_QUEUE,
@@ -62,6 +63,7 @@ import { runClientReportSweep } from "./client-report";
 import { runSiteAuditJob } from "./site-audit";
 import { runGscSync, runGscSweep } from "./gsc-sync";
 import { runDomainSweep } from "./domain-check";
+import { runDatabaseBackup } from "./db-backup";
 import { startWatchdog } from "./watchdog";
 import { startKeepWarm } from "./keep-warm";
 import { startEgressSampler } from "./egress-sample";
@@ -85,6 +87,8 @@ const GSC_CRON = process.env.GSC_CRON ?? "0 7 * * *"; // daily 07:00 UTC
 // A registration changes once a year; weekly is already far more often than
 // it can move, and keeps us a polite visitor to the registries.
 const DOMAIN_CRON = process.env.DOMAIN_CRON ?? "0 5 * * 3"; // Wednesdays 05:00 UTC
+// Before the 03:00 retention sweep, so each dump holds the day's data intact.
+const BACKUP_CRON = process.env.BACKUP_CRON ?? "30 2 * * *"; // daily 02:30 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -250,6 +254,14 @@ async function main() {
     await runDomainSweep();
   });
   await boss.schedule(DOMAIN_SWEEP_QUEUE, DOMAIN_CRON);
+
+  // Nightly database backup + restore check (db-backup.ts). Never retried:
+  // a failure emails the operators, and tomorrow night is the next attempt.
+  await ensureQueue(boss, DB_BACKUP_QUEUE, { retryLimit: 0, expireInSeconds: 60 * 60 });
+  await boss.work(DB_BACKUP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
+    await runDatabaseBackup();
+  });
+  await boss.schedule(DB_BACKUP_QUEUE, BACKUP_CRON);
 
   // "Send me a test alert" from the app. Short expiry: a test nobody receives
   // within a minute has failed its purpose, and a stale one arriving later

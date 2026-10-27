@@ -141,6 +141,47 @@ connection), so set that up first.
 
 Secrets: see `docs/SECRET_ROTATION.md`.
 
+## Database backups
+
+The worker backs up the database every night at 02:30 UTC
+(`apps/worker/src/db-backup.ts`). Nothing to set up: it ships with the image
+and uses the existing `DATABASE_URL` and R2 settings.
+
+- **Sundays: full dump.** Every table in the `public` schema.
+- **Other nights: core dump.** Every table, but without the rows of the three
+  high-volume history tables (`page_link`, `page_script`, `health_check`).
+  A full dump every night would use about half of Supabase's 5 GB monthly
+  egress quota on its own.
+- **Proven, not assumed.** Each dump is restored into a throwaway Postgres
+  (unix socket only, deleted afterwards) and key tables' row counts are
+  compared with the live database.
+- **Off the server.** Sunday's full dump is also copied to R2 under
+  `backups/db/` (last 8 weeks). The bucket is private, and no app route
+  serves that prefix.
+- **Kept on the server** in the `mykavo-data` Docker volume: core dumps for
+  30 days, full dumps for 180 days. A few GB at most.
+- **Failures email** `ALERT_EMAILS` (or `ADMIN_EMAILS`). Monitoring never
+  depends on this job.
+
+List the backups:
+
+```bash
+docker exec mykavo-worker ls -lh /data/backups/db
+```
+
+Restore one into a NEW empty Postgres 17 database (never straight over
+production):
+
+```bash
+docker cp mykavo-worker:/data/backups/db/mykavo-YYYY-MM-DD-full.dump .
+psql "$TARGET_URL" -c "drop schema public cascade"
+pg_restore --no-owner --no-privileges --exit-on-error -d "$TARGET_URL" mykavo-YYYY-MM-DD-full.dump
+```
+
+For a core dump, restore the latest full dump's `page_link`, `page_script`
+and `health_check` rows afterwards if you need the history:
+`pg_restore --data-only -t page_link -t page_script -t health_check ...`.
+
 ## Troubleshooting
 
 **Container exits immediately.** `docker logs mykavo-worker`. Usually a

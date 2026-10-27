@@ -19,6 +19,33 @@ ENV TZ=UTC \
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
+# Postgres 17 binaries for the nightly backup (apps/worker/src/db-backup.ts):
+# pg_dump to take it, and a server to prove it restores. From the PGDG apt
+# repo because Ubuntu noble ships 16, and pg_dump refuses a newer server
+# (Supabase runs 17). No cluster is created and no server runs at boot - the
+# restore check starts a throwaway one on a unix socket and deletes it after.
+# Wrapped so an unreachable package mirror can never block a worker deploy:
+# monitoring matters more than backups. If it fails, the worker emails the
+# operators every night that backups are off (BACKUPS_REQUIRED in compose).
+RUN ( apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && install -d /usr/share/postgresql-common/pgdg \
+ && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+      https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+ && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" \
+      > /etc/apt/sources.list.d/pgdg.list \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-common \
+ && sed -ri 's/#(create_main_cluster) .*$/\1 = false/' /etc/postgresql-common/createcluster.conf \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends postgresql-17 postgresql-client-17 \
+ ) || echo "WARNING: Postgres 17 install failed - database backups disabled in this image" ; \
+ rm -rf /var/lib/apt/lists/*
+
+# Persistent worker data (backups now, more later) lives on a named volume
+# mounted here by compose.yml. Created and owned in the image so the volume
+# inherits pwuser ownership the first time Docker populates it.
+RUN mkdir -p /data && chown pwuser:pwuser /data
+
 WORKDIR /app
 
 # pnpm via corepack, pinned to the repo's packageManager field.

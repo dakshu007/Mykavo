@@ -455,6 +455,37 @@ export function workerDbRecoveryEmail(data: WorkerDbRecoveryData): {
   return { subject, html: shell(inner), text };
 }
 
+export interface WorkerBackupFailedData {
+  /** Which step failed: "dump", "restore check" or "off-server copy". */
+  step: string;
+  /** The dump file the run was working on. */
+  fileName: string;
+  /** What went wrong, already trimmed to something readable. */
+  reason: string;
+}
+
+/** To the operators when the nightly database backup or its restore check fails. */
+export function workerBackupFailedEmail(data: WorkerBackupFailedData): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `\u{1F7E0} MyKavo database backup failed (${data.step})`;
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#c2410c">Backup failed</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">Last night's database backup did not complete</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">Step: ${esc(data.step)} &middot; ${esc(data.fileName)}</p>
+    <div style="background:#fff4e5;border-radius:12px;padding:14px 16px;font-size:14px;color:#9a3412;margin-bottom:16px">Monitoring is not affected. Earlier backups are still on the worker server, and the weekly full backup is also in R2. The next attempt runs tomorrow night.</div>
+    <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#5c6270">What went wrong</p>
+    <div style="background:#f4f5f7;border-radius:10px;padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#3a3f4b;word-break:break-word">${esc(data.reason)}</div>
+  `;
+  const text =
+    `MyKavo database backup failed (${data.step}) - ${data.fileName}\n\n` +
+    `Monitoring is not affected. Earlier backups are still on the worker server, and the weekly full backup is also in R2. The next attempt runs tomorrow night.\n\n` +
+    `What went wrong:\n${data.reason}`;
+  return { subject, html: shell(inner), text };
+}
+
 export function sslExpiryAlertEmail(data: SslExpiryAlertData): { subject: string; html: string; text: string } {
   const expired = data.daysLeft <= 0;
   const when = expired

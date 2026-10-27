@@ -11,6 +11,8 @@ export {
   recoveryAlertEmail,
   workerDbOutageEmail,
   workerDbRecoveryEmail,
+  workerBackupFailedEmail,
+  type WorkerBackupFailedData,
   sslExpiryAlertEmail,
   weeklyReportEmail,
   workspaceInviteEmail,

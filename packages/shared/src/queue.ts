@@ -29,6 +29,8 @@ export const GSC_SYNC_QUEUE = "gsc-sync";
 export const GSC_SYNC_SWEEP_QUEUE = "gsc-sync-sweep";
 /** Weekly RDAP pass: when does each monitored domain expire? */
 export const DOMAIN_SWEEP_QUEUE = "domain-sweep";
+/** Nightly pg_dump onto the worker's disk, proven by a restore (db-backup.ts). */
+export const DB_BACKUP_QUEUE = "db-backup";
 /**
  * Delete object-storage keys whose owning rows are already gone. Enqueued the
  * moment a website is deleted so the bucket shrinks in seconds rather than

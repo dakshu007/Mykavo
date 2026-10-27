@@ -34,3 +34,4 @@ export * from "./product-updates";
 export * from "./wordpress-connect";
 export * from "./shopify-billing";
 export * from "./egress";
+export * from "./db-backup";
