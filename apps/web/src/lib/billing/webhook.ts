@@ -179,10 +179,10 @@ export function classifyDodoEvent(type: string, status: string): DodoEventAction
 
 /* ---------------------------- granted plan ------------------------------- */
 
-export type GrantedPlan = "pro" | "agency";
+export type GrantedPlan = "starter" | "pro" | "agency";
 
 export type GrantRefusal =
-  /** The event names a product that is not our Pro or Agency product. */
+  /** The event names a product that is not our Starter, Pro or Agency product. */
   | "UNKNOWN_PRODUCT"
   /** A payment.* event with no subscription (a one-time payment). */
   | "PAYMENT_WITHOUT_SUBSCRIPTION"
@@ -260,7 +260,9 @@ export function resolveGrantedPlan(input: {
     if (!input.boundBySubscription) return null;
     return input.recordedPlan ?? "pro";
   }
-  if (input.intentKind === "agency" || input.intentKind === "pro") return input.intentKind;
+  if (input.intentKind === "agency" || input.intentKind === "pro" || input.intentKind === "starter") {
+    return input.intentKind;
+  }
   return input.recordedPlan ?? "pro";
 }
 

@@ -22,6 +22,7 @@ import {
   computeNextScanAt,
   computeRetryAfterFailure,
   includesConversionMonitoring,
+  pageLimitFor,
   parseSelectorList,
   resolveScanOutcome,
   screenshotPrefix,
@@ -74,7 +75,7 @@ export async function runScanWebsiteJob(
     websiteId: website.id,
     workspaceId: website.workspaceId,
   };
-  const pages = website.monitoredPages;
+  const enabledPages = website.monitoredPages;
 
   // Stabilization settings (spec §25/§36): website-level ignored selectors
   // and screenshot masks apply to every page scan. The Json? columns are
@@ -90,6 +91,10 @@ export async function runScanWebsiteJob(
   // downgraded workspace's configured elements simply stop being checked.
   const entitlement = await getWorkspaceEntitlement(prisma, website.workspaceId);
   const conversionEnabled = includesConversionMonitoring(entitlement?.planId ?? "free");
+  // The plan's pages per website, oldest first. Adding pages is limited when
+  // they are added; this keeps the limit after a move to a smaller plan
+  // (Pro -> Starter) without deleting the pages over it.
+  const pages = enabledPages.slice(0, pageLimitFor(entitlement));
 
   await prisma.scan.update({
     where: { id: scanId },

@@ -179,6 +179,7 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   // The $79/mo Agency product. Defaults to the live product in
   // lib/billing/config.ts; set it only to point at a different product.
   DODO_AGENCY_PRODUCT_ID: z.string().optional(),
+  DODO_STARTER_PRODUCT_ID: z.string().optional(),
   // Retired website add-on product - nothing reads it any more.
   DODO_ADDON_PRODUCT_ID: z.string().optional(),
   DODO_WEBHOOK_SECRET: z.string().optional(),

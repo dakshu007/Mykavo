@@ -170,6 +170,13 @@ describe("resolveGrantedPlan", () => {
     ).toBe("pro");
   });
 
+  it("grants Starter from its product or its checkout intent", () => {
+    expect(resolveGrantedPlan({ productPlan: "starter", intentKind: null, recordedPlan: null })).toBe("starter");
+    expect(resolveGrantedPlan({ productPlan: null, intentKind: "starter", recordedPlan: null })).toBe("starter");
+    // An upgrade from Starter lands as the Pro product.
+    expect(resolveGrantedPlan({ productPlan: "pro", intentKind: null, recordedPlan: "starter" })).toBe("pro");
+  });
+
   it("falls back to the checkout intent when a subscription event has no product", () => {
     expect(
       resolveGrantedPlan({ productPlan: null, intentKind: "agency", recordedPlan: null }),

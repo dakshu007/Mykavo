@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 
 /**
- * Moves an existing subscription between Pro and Agency. The plan itself
+ * Moves an existing subscription between Starter, Pro and Agency. The plan itself
  * flips when Dodo's webhook confirms the change (seconds for an upgrade, the
  * next billing date for a downgrade), so success shows a note rather than
  * pretending the page already reflects it.
@@ -16,7 +16,7 @@ export function ChangePlanButton({
   confirmMessage,
   variant = "primary",
 }: {
-  target: "pro" | "agency";
+  target: "starter" | "pro" | "agency";
   label: string;
   confirmMessage: string;
   variant?: "primary" | "quiet";

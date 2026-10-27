@@ -666,13 +666,13 @@ export default function HomePage() {
             <div className="mt-14">
               <ValueQuoteBanner />
             </div>
-            <div className="mx-auto mt-14 grid max-w-3xl gap-6 lg:max-w-none lg:grid-cols-3">
+            <div className="mx-auto mt-14 grid max-w-3xl gap-6 md:max-w-none md:grid-cols-2 xl:grid-cols-4">
               {plans.map((plan) => {
                 const pro = plan.highlighted;
                 return (
                   <div
                     key={plan.id}
-                    className={`flex flex-col rounded-2xl border p-8 text-[#151515] ${
+                    className={`flex flex-col rounded-2xl border p-8 text-[#151515] xl:p-6 ${
                       pro
                         ? "border-[#151515] bg-[#FFD400] shadow-[7px_7px_0_#151515]"
                         : "border-black/10 bg-white"
@@ -702,14 +702,14 @@ export default function HomePage() {
                       ))}
                     </ul>
                     <Link
-                      href={plan.id === "agency" ? "/signup?next=/dashboard/billing" : "/signup"}
+                      href={plan.id === "agency" || plan.id === "starter" ? "/signup?next=/dashboard/billing" : "/signup"}
                       className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                     >
                       {plan.priceMonthlyUsd === 0
                         ? "Start free"
                         : plan.id === "pro"
                           ? `Try ${plan.name} free for ${TRIAL_DAYS} days`
-                          : `Start with ${plan.name}`}
+                          : `Get ${plan.name}`}
                     </Link>
                     {plan.id === "pro" && (
                       <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
@@ -717,7 +717,7 @@ export default function HomePage() {
                         {formatLimit(plan.limits.websites)}). No card. Then Free unless you upgrade.
                       </p>
                     )}
-                    {plan.id === "agency" && (
+                    {(plan.id === "agency" || plan.id === "starter") && (
                       <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
                         New accounts start on the {TRIAL_DAYS}-day Pro trial. Switch to {plan.name} from
                         Billing at any time.

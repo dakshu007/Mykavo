@@ -181,7 +181,7 @@ export async function POST(request: Request) {
           cancelAtPeriodEnd: data.cancel_at_next_billing_date ?? false,
           eventAt,
         });
-        return planId === "agency" ? ("granted-agency" as const) : ("granted-pro" as const);
+        return `granted-${planId}` as const;
       }
       if (revokes) {
         await downgradeWorkspaceToFree(tx, {

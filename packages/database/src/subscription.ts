@@ -18,10 +18,10 @@ type Db = PrismaClient | Prisma.TransactionClient;
 const ACTIVE_STATUSES = new Set(["active"]);
 
 /** A paid plan a subscription can hold. Anything else resolves to Free. */
-export type PaidPlanId = "pro" | "agency";
+export type PaidPlanId = "starter" | "pro" | "agency";
 
 function toPaidPlanId(value: string): PaidPlanId | null {
-  return value === "pro" || value === "agency" ? value : null;
+  return value === "starter" || value === "pro" || value === "agency" ? value : null;
 }
 
 /**
@@ -42,9 +42,9 @@ export function planIdFromSubscription(sub: { planId: string; status: string } |
   return toPaidPlanId(sub.planId) ?? "free";
 }
 
-/** Higher of two plans: Agency over Pro over Free. */
+/** Higher of two plans: Agency over Pro over Starter over Free. */
 export function higherPlan(a: "free" | PaidPlanId, b: "free" | PaidPlanId): "free" | PaidPlanId {
-  const rank = { free: 0, pro: 1, agency: 2 } as const;
+  const rank = { free: 0, starter: 1, pro: 2, agency: 3 } as const;
   return rank[b] > rank[a] ? b : a;
 }
 
@@ -443,7 +443,7 @@ export async function createCheckoutIntent(
     token: string;
     workspaceId: string;
     userId: string;
-    /** The plan being bought: "pro" | "agency". Defaults to "pro". */
+    /** The plan being bought: "starter" | "pro" | "agency". Defaults to "pro". */
     kind?: string;
     ttlMinutes?: number;
   },
@@ -462,7 +462,7 @@ export async function createCheckoutIntent(
 
 export interface ConsumedIntent {
   workspaceId: string;
-  /** What was purchased: "pro" | "agency" (legacy rows: "website_addon"). */
+  /** What was purchased: "starter" | "pro" | "agency" (legacy rows: "website_addon"). */
   kind: string;
 }
 

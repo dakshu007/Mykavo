@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DODO_AGENCY_PRODUCT_ID,
   DODO_PRODUCT_ID,
+  DODO_STARTER_PRODUCT_ID,
   buildCheckoutUrl,
   planForProductId,
   productIdForPlan,
@@ -12,6 +13,15 @@ describe("Dodo product mapping", () => {
     expect(DODO_PRODUCT_ID).toBeTruthy();
     expect(DODO_AGENCY_PRODUCT_ID).toBeTruthy();
     expect(DODO_AGENCY_PRODUCT_ID).not.toBe(DODO_PRODUCT_ID);
+  });
+
+  it("sells Starter through its own product", () => {
+    expect(DODO_STARTER_PRODUCT_ID).toBeTruthy();
+    expect(new Set([DODO_STARTER_PRODUCT_ID, DODO_PRODUCT_ID, DODO_AGENCY_PRODUCT_ID]).size).toBe(3);
+    expect(planForProductId(productIdForPlan("starter"))).toBe("starter");
+    const url = new URL(buildCheckoutUrl({ checkoutToken: "tok", email: "a@b.test", plan: "starter" })!);
+    expect(url.pathname.endsWith(`/${DODO_STARTER_PRODUCT_ID}`)).toBe(true);
+    expect(url.searchParams.get("metadata_kind")).toBe("starter");
   });
 
   it("maps each plan to its product and back", () => {

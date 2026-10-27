@@ -25,14 +25,20 @@ import {
   platformAdminEmails,
   type Entitlement,
 } from "@mykavo/database";
-import { pulledForwardNextScan, scanFrequencyForTier, toPlanTier, type ScanFrequency } from "@mykavo/shared";
+import {
+  pulledForwardNextScan,
+  scanFrequencyForTier,
+  toPlanTier,
+  websiteLimitFor,
+  type ScanFrequency,
+} from "@mykavo/shared";
 import { logger } from "./logger";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Free plan website limit (mirrors apps/web/src/config/plans.ts). */
 export const FREE_WEBSITE_LIMIT = 1;
 /** Plans a Dodo subscription or a Shopify store can pay for. */
-const PAID_PLAN_IDS = ["pro", "agency"];
+const PAID_PLAN_IDS = ["starter", "pro", "agency"];
 /** Workspace ids per website_auto_pause lookup, to keep each IN list small. */
 const RESUME_LOOKUP_BATCH = 500;
 
@@ -128,7 +134,12 @@ async function resumeForPaidWorkspaces(now: Date): Promise<number> {
     for (const { workspaceId } of rows) {
       const ent = await getWorkspaceEntitlement(prisma, workspaceId);
       if (!ent || ent.planId === "free") continue;
-      resumed += (await resumeAutoPaused(prisma, workspaceId, ["OVER_LIMIT", "DORMANT"], { now })).length;
+      // Only as many as the plan has room for: a Starter workspace that
+      // came down from Pro must not get all its websites back.
+      const room = websiteLimitFor(ent) - (await prisma.website.count({ where: { workspaceId, status: { not: "PAUSED" } } }));
+      if (room <= 0) continue;
+      const limit = Number.isFinite(room) ? room : undefined;
+      resumed += (await resumeAutoPaused(prisma, workspaceId, ["OVER_LIMIT", "DORMANT"], { now, limit })).length;
     }
   }
   return resumed;
@@ -141,11 +152,47 @@ async function resumeForPaidWorkspaces(now: Date): Promise<number> {
  * kept. Takes the workspace's websites that are not paused, oldest first.
  */
 function websitesOverFreeLimit<T extends { status: string; baselines: unknown[] }>(websites: T[]): T[] {
+  return websitesOverLimit(websites, FREE_WEBSITE_LIMIT);
+}
+
+/** The same rule for any limit: monitored websites are kept first, oldest first. */
+function websitesOverLimit<T extends { status: string; baselines: unknown[] }>(websites: T[], limit: number): T[] {
   // ERROR is also where a site lands when its FIRST discovery or baseline
   // fails, so only a site with an approved baseline counts as monitored.
   const monitored = (w: T) => (w.status === "ACTIVE" || w.status === "ERROR") && w.baselines.length > 0;
   const keepFirst = [...websites.filter(monitored), ...websites.filter((w) => !monitored(w))];
-  return keepFirst.slice(FREE_WEBSITE_LIMIT);
+  return keepFirst.slice(limit);
+}
+
+/**
+ * Paid workspaces over their plan's website limit - after a move to a
+ * smaller plan (Pro -> Starter, Agency -> Pro), or buying Starter at the end
+ * of a 3-website trial. The websites over the limit are paused (OVER_LIMIT),
+ * never deleted, and come back by themselves on an upgrade.
+ */
+async function enforcePaidWebsiteLimits(now: Date): Promise<number> {
+  let paused = 0;
+  for (const workspaceId of await possiblyPaidWorkspaceIds(now)) {
+    const ent = await getWorkspaceEntitlement(prisma, workspaceId);
+    if (!ent || ent.planId === "free") continue;
+    const limit = websiteLimitFor(ent);
+    if (!Number.isFinite(limit)) continue;
+    const websites = await prisma.website.findMany({
+      where: { workspaceId, status: { not: "PAUSED" } },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        workspaceId: true,
+        status: true,
+        baselines: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 },
+      },
+    });
+    if (websites.length <= limit) continue;
+    const done = await autoPauseWebsites(prisma, websitesOverLimit(websites, limit), "OVER_LIMIT", now);
+    if (done.length) logger.info("websites over the plan limit paused", { workspaceId, plan: ent.planId, websites: done.length });
+    paused += done.length;
+  }
+  return paused;
 }
 
 async function endExpiredTrials(now: Date): Promise<number> {
@@ -229,15 +276,17 @@ export async function runPlanSweep(now: Date = new Date()): Promise<void> {
   let trialPaused = 0;
   let dormantPaused = 0;
   let resumed = 0;
+  let overLimitPaused = 0;
   try {
     resumed = await resumeForPaidWorkspaces(now);
+    overLimitPaused = await enforcePaidWebsiteLimits(now);
     trialPaused = await endExpiredTrials(now);
     dormantPaused = await pauseDormantWorkspaces(now);
   } catch (err) {
     // Before the trial/auto-pause migration runs, only the frequency sync works.
     if (!isMissingTableError(err)) throw err;
   }
-  if (synced || trialPaused || dormantPaused || resumed) {
-    logger.info("plan sweep", { synced, trialPaused, dormantPaused, resumed });
+  if (synced || trialPaused || dormantPaused || resumed || overLimitPaused) {
+    logger.info("plan sweep", { synced, trialPaused, dormantPaused, resumed, overLimitPaused });
   }
 }

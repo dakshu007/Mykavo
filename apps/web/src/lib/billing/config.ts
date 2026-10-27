@@ -14,17 +14,26 @@ export const DODO_PRODUCT_ID =
 export const DODO_AGENCY_PRODUCT_ID =
   process.env.DODO_AGENCY_PRODUCT_ID ?? "pdt_0NoEhSbtZs80pP9y9XT0S";
 
-export type PaidPlan = "pro" | "agency";
+/** The $7 Starter product id in Dodo (LIVE-mode product; override via env). */
+export const DODO_STARTER_PRODUCT_ID =
+  process.env.DODO_STARTER_PRODUCT_ID ?? "pdt_0NqfsjgjOLzIPXdwa8K9a";
+
+export type PaidPlan = "starter" | "pro" | "agency";
+
+/** Paid plans from cheapest to most expensive: moving right is an upgrade. */
+export const PAID_PLAN_ORDER: readonly PaidPlan[] = ["starter", "pro", "agency"];
 
 /** The Dodo product that sells a plan, or null when it isn't configured. */
 export function productIdForPlan(plan: PaidPlan): string | null {
-  const id = plan === "agency" ? DODO_AGENCY_PRODUCT_ID : DODO_PRODUCT_ID;
+  const id =
+    plan === "agency" ? DODO_AGENCY_PRODUCT_ID : plan === "starter" ? DODO_STARTER_PRODUCT_ID : DODO_PRODUCT_ID;
   return id || null;
 }
 
 /** The plan a Dodo product sells, or null for a product we don't recognise. */
 export function planForProductId(productId: string | null | undefined): PaidPlan | null {
   if (!productId) return null;
+  if (DODO_STARTER_PRODUCT_ID && productId === DODO_STARTER_PRODUCT_ID) return "starter";
   if (DODO_AGENCY_PRODUCT_ID && productId === DODO_AGENCY_PRODUCT_ID) return "agency";
   if (DODO_PRODUCT_ID && productId === DODO_PRODUCT_ID) return "pro";
   return null;
@@ -65,6 +74,9 @@ export const billingEnabled = Boolean(DODO_PRODUCT_ID);
 
 /** Whether Agency can be bought or upgraded to. */
 export const agencyBillingEnabled = Boolean(DODO_AGENCY_PRODUCT_ID);
+
+/** Whether Starter can be bought or switched to (its Dodo product is set). */
+export const starterBillingEnabled = Boolean(DODO_STARTER_PRODUCT_ID);
 
 /** REST API base for the active mode (test vs live). */
 export function dodoApiBase(): string {

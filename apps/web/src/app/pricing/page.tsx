@@ -81,11 +81,15 @@ const freePlan = getPlan("free");
 const pricingFaqs = [
   {
     q: "Is AI included?",
-    a: `Yes, on every plan. MyKavo AI Website Insights explains each alert in plain English with fix steps for your platform, and writes a weekly status note for every website. Free includes ${formatLimit(freePlan.limits.aiExplanationsPerMonth)} change explanations a month, Pro ${formatLimit(proPlan.limits.aiExplanationsPerMonth)} and Agency ${formatLimit(getPlan("agency").limits.aiExplanationsPerMonth)}. Weekly notes don't count toward the allowance.`,
+    a: `Yes, on every plan. MyKavo AI Website Insights explains each alert in plain English with fix steps for your platform, and writes a weekly status note for every website. Free includes ${formatLimit(freePlan.limits.aiExplanationsPerMonth)} change explanations a month, Starter ${formatLimit(getPlan("starter").limits.aiExplanationsPerMonth)}, Pro ${formatLimit(proPlan.limits.aiExplanationsPerMonth)} and Agency ${formatLimit(getPlan("agency").limits.aiExplanationsPerMonth)}. Weekly notes don't count toward the allowance.`,
   },
   {
     q: "Is there a free trial?",
     a: `Yes. Every new account starts with a ${TRIAL_DAYS}-day Pro trial, no card needed. You get every Pro feature, including daily scans and ${formatLimit(proPlan.limits.pagesPerWebsite)} monitored pages per website, on up to ${TRIAL_MAX_WEBSITES} websites. Paid Pro covers ${formatLimit(proPlan.limits.websites)} websites. You can upgrade at any time during the trial, and we email you ${TRIAL_REMINDER_DAYS_LEFT} days before it ends. If you don't upgrade, the account moves to the Free plan: your oldest monitored website stays monitored, checked weekly. Any others are paused, not deleted, and their baselines are kept (Free keeps ${freePlan.limits.historyDays} days of history). Upgrading resumes paused websites. Already on Free and never had a trial? Start it from Billing in your dashboard.`,
+  },
+  {
+    q: "What's the difference between Starter and Pro?",
+    a: "Both have every monitoring feature: daily scans, AI explanations, post-deploy checks, WordPress Safe Updates, conversion element monitoring and site audits. Starter is sized for one person with up to 2 websites (10 pages each, 90 days of history). Pro covers 8 websites with 15 pages each, up to 3 team members, bigger site audits and a full year of history. Starting on Starter and moving up later takes one click in Billing.",
   },
   {
     q: "Should I pick Pro or Agency?",
@@ -156,7 +160,7 @@ export default function PricingPage() {
       />
       <TrackOnView event="pricing_viewed" />
       <LandingNav />
-      <main className="mx-auto max-w-6xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
+      <main className="mx-auto max-w-7xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <p className={`${eyebrow} mb-4`}>{"// pricing //"}</p>
           <h1 className={`${fontDisplay} text-4xl leading-[1.05] text-[#151515] sm:text-6xl`}>
@@ -187,13 +191,13 @@ export default function PricingPage() {
         <PricingCampaignBanner />
 
         {/* Plan cards */}
-        <div className="mx-auto grid max-w-3xl gap-6 lg:max-w-6xl lg:grid-cols-3">
+        <div className="mx-auto grid max-w-3xl gap-6 md:max-w-5xl md:grid-cols-2 xl:max-w-7xl xl:grid-cols-4">
           {plans.map((plan) => {
             const pro = plan.highlighted;
             return (
               <div
                 key={plan.id}
-                className={`flex flex-col rounded-2xl border p-8 text-[#151515] ${
+                className={`flex flex-col rounded-2xl border p-8 text-[#151515] xl:p-6 ${
                   pro
                     ? "border-[#151515] bg-[#FFD400] shadow-[7px_7px_0_#151515]"
                     : "border-black/10 bg-white"
@@ -223,14 +227,14 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <Link
-                  href={plan.id === "agency" ? "/signup?next=/dashboard/billing" : "/signup"}
+                  href={plan.id === "agency" || plan.id === "starter" ? "/signup?next=/dashboard/billing" : "/signup"}
                   className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                 >
                   {plan.priceMonthlyUsd === 0
                     ? "Start free"
                     : plan.id === "pro"
                       ? `Try ${plan.name} free for ${TRIAL_DAYS} days`
-                      : `Start with ${plan.name}`}
+                      : `Get ${plan.name}`}
                 </Link>
                 {plan.id === "pro" && (
                   <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
@@ -238,7 +242,7 @@ export default function PricingPage() {
                     {formatLimit(plan.limits.websites)}). No card. Then Free unless you upgrade.
                   </p>
                 )}
-                {plan.id === "agency" && (
+                {(plan.id === "agency" || plan.id === "starter") && (
                   <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
                     New accounts start on the {TRIAL_DAYS}-day Pro trial. Switch to {plan.name} from
                     Billing at any time.

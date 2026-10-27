@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
-import { productIdForPlan } from "@/lib/billing/config";
+import { PAID_PLAN_ORDER, productIdForPlan, type PaidPlan } from "@/lib/billing/config";
 import { changeSubscriptionPlan, dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { logger } from "@/lib/logger";
 
-const bodySchema = z.object({ plan: z.enum(["pro", "agency"]) });
+const bodySchema = z.object({ plan: z.enum(["starter", "pro", "agency"]) });
 
 /**
- * Move a paying workspace between Pro and Agency on its EXISTING Dodo
+ * Move a paying workspace between Starter, Pro and Agency on its EXISTING Dodo
  * subscription. Upgrades apply now with a prorated charge; downgrades wait
  * for the next billing date. Nothing is written here: the entitlement
  * changes only when Dodo's verified subscription.plan_changed webhook
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const denied = requireRole(ctx, "OWNER");
   if (denied) return denied;
 
-  let target: "pro" | "agency";
+  let target: PaidPlan;
   try {
     target = bodySchema.parse(await request.json()).plan;
   } catch {
@@ -58,7 +58,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const direction = target === "agency" ? "upgrade" : "downgrade";
+  const direction =
+    PAID_PLAN_ORDER.indexOf(target) > PAID_PLAN_ORDER.indexOf(sub.planId as PaidPlan) ? "upgrade" : "downgrade";
   try {
     await changeSubscriptionPlan(sub.dodoSubscriptionId, { productId, direction });
   } catch (err) {

@@ -3,9 +3,11 @@
  * Never hardcode plan limits elsewhere - server-side enforcement (limits.ts)
  * and all UI read from this module.
  *
- * MyKavo ships three plans: Free, Pro at $20/month and Agency at $79/month.
- * Pro is 8 websites with 15 monitored pages each; Agency is 30 with 25 each,
- * plus white-label client reports and a larger team. Prices live in
+ * MyKavo ships four plans: Free, Starter at $7/month, Pro at $20/month and
+ * Agency at $79/month. Starter is every monitoring feature on 2 websites with
+ * 10 pages each, for one person; Pro is 8 websites with 15 monitored pages
+ * each and a small team; Agency is 30 with 25 each, plus white-label client
+ * reports and a larger team. Prices live in
  * @mykavo/shared (PLAN_PRICES_USD) because the worker quotes them in emails.
  * "Unlimited" numeric limits use Infinity so `count >= limit` is never true.
  * (The former $6/mo website add-on was removed 2026-07-17 - the WebsiteAddon
@@ -16,7 +18,15 @@
  * included when they bought it.
  */
 
-import { PLAN_HISTORY_DAYS, PLAN_PRICES_USD, TRIAL_DAYS, TRIAL_MAX_WEBSITES, type PlanTier } from "@mykavo/shared";
+import {
+  PLAN_HISTORY_DAYS,
+  PLAN_PAGE_LIMITS,
+  PLAN_PRICES_USD,
+  PLAN_WEBSITE_LIMITS,
+  TRIAL_DAYS,
+  TRIAL_MAX_WEBSITES,
+  type PlanTier,
+} from "@mykavo/shared";
 
 export type PlanId = PlanTier;
 
@@ -89,8 +99,8 @@ export const plans: Plan[] = [
     priceMonthlyUsd: PLAN_PRICES_USD.free,
     headline: "Start monitoring one important website.",
     limits: {
-      websites: 1,
-      pagesPerWebsite: 5,
+      websites: PLAN_WEBSITE_LIMITS.free,
+      pagesPerWebsite: PLAN_PAGE_LIMITS.free,
       scanFrequency: "WEEKLY",
       historyDays: PLAN_HISTORY_DAYS.free,
       manualScans: false,
@@ -117,14 +127,49 @@ export const plans: Plan[] = [
     ],
   },
   {
+    id: "starter",
+    name: "Starter",
+    priceMonthlyUsd: PLAN_PRICES_USD.starter,
+    headline: "Every feature for one person's websites: 2 sites, checked daily.",
+    limits: {
+      websites: PLAN_WEBSITE_LIMITS.starter,
+      pagesPerWebsite: PLAN_PAGE_LIMITS.starter,
+      scanFrequency: "DAILY",
+      historyDays: PLAN_HISTORY_DAYS.starter,
+      manualScans: true,
+      manualScansPerDay: 5,
+      baselineScansPer24h: 10,
+      conversionElementMonitoring: true,
+      maxMembers: 1,
+      whiteLabelReports: false,
+      deployChecks: true,
+      siteAuditPages: 500,
+      siteAuditsPerDay: 3,
+      aiExplanationsPerMonth: 30,
+    },
+    features: [
+      "2 websites",
+      "10 monitored pages per website",
+      "Daily scans",
+      "AI Website Insights - 30 explanations a month",
+      "Manual scans - 5 a day",
+      "Post-deploy checks",
+      "WordPress Safe Updates - a check after every update",
+      "Conversion element monitoring",
+      "90-day history",
+      "Site audits - 500 pages per crawl",
+      "Email alerts",
+    ],
+  },
+  {
     id: "pro",
     name: "Pro",
     priceMonthlyUsd: PLAN_PRICES_USD.pro,
     headline: "For freelancers and small teams: 8 websites, checked daily.",
     highlighted: true,
     limits: {
-      websites: 8,
-      pagesPerWebsite: 15,
+      websites: PLAN_WEBSITE_LIMITS.pro,
+      pagesPerWebsite: PLAN_PAGE_LIMITS.pro,
       scanFrequency: "DAILY",
       historyDays: PLAN_HISTORY_DAYS.pro,
       manualScans: true,
@@ -159,8 +204,8 @@ export const plans: Plan[] = [
     priceMonthlyUsd: PLAN_PRICES_USD.agency,
     headline: "For agencies: 30 client websites, reports under your own brand.",
     limits: {
-      websites: 30,
-      pagesPerWebsite: 25,
+      websites: PLAN_WEBSITE_LIMITS.agency,
+      pagesPerWebsite: PLAN_PAGE_LIMITS.agency,
       scanFrequency: "DAILY",
       historyDays: PLAN_HISTORY_DAYS.agency,
       manualScans: true,

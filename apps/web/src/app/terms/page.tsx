@@ -79,7 +79,7 @@ export default function TermsPage() {
       </p>
 
       <h2>4. Plans, billing and renewals</h2>
-      <p>MyKavo offers three plans:</p>
+      <p>MyKavo offers four plans:</p>
       <table>
         <thead>
           <tr>
@@ -93,6 +93,11 @@ export default function TermsPage() {
             <td>Free</td>
             <td>$0</td>
             <td>1 website, 5 monitored pages, weekly scans, 30-day history</td>
+          </tr>
+          <tr>
+            <td>Starter</td>
+            <td>$7/month</td>
+            <td>2 websites, 10 monitored pages each, daily scans, 90-day history, 1 user</td>
           </tr>
           <tr>
             <td>Pro</td>

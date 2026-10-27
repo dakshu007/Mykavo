@@ -388,7 +388,7 @@ export default function PlatformsPage() {
                 { label: "Live today", value: "Web app, WordPress plugin, Chrome extension, AI assistants, deploy hooks" },
                 { label: "By request", value: "Android app" },
                 { label: "Coming soon", value: "Shopify app" },
-                { label: "Price", value: `${TRIAL_DAYS}-day Pro trial for new accounts, then Free, Pro or Agency per workspace` },
+                { label: "Price", value: `${TRIAL_DAYS}-day Pro trial for new accounts, then Free, Starter, Pro or Agency per workspace` },
               ].map((f) => (
                 <div key={f.label} className="flex flex-col gap-0.5">
                   <dt className="font-mono text-[10.5px] font-bold uppercase tracking-[0.12em] text-[#9C9E93]">{f.label}</dt>

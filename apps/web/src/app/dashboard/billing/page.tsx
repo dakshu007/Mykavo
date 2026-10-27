@@ -17,7 +17,7 @@ import {
   getWorkspaceSubscription,
   getEffectiveWebsiteLimit,
 } from "@/lib/billing/subscription";
-import { agencyBillingEnabled, billingEnabled } from "@/lib/billing/config";
+import { agencyBillingEnabled, billingEnabled, starterBillingEnabled } from "@/lib/billing/config";
 import { dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getPlan, formatLimit, type Plan } from "@/config/plans";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
@@ -128,6 +128,7 @@ export default async function BillingPage({
   const trialAvailable =
     plan.id === "free" && canManageBilling(role) && (await canStartTrial(prisma, workspace.id).catch(() => false));
   const free = getPlan("free");
+  const starter = getPlan("starter");
   const pro = getPlan("pro");
   const agency = getPlan("agency");
   // Paid for through Shopify by a linked store (Shopify App Pricing): the
@@ -286,6 +287,14 @@ export default async function BillingPage({
                   confirmMessage={`Switch to Pro ($${pro.priceMonthlyUsd}/month) at the end of this billing period? You keep Agency until then. Pro monitors up to ${pro.limits.websites} websites and has no white-label reports.`}
                 />
               )}
+              {plan.id === "pro" && canChangePlan && starterBillingEnabled && (
+                <ChangePlanButton
+                  target="starter"
+                  variant="quiet"
+                  label="Switch to Starter"
+                  confirmMessage={`Switch to Starter ($${starter.priceMonthlyUsd}/month) at the end of this billing period? You keep Pro until then. Starter monitors up to ${starter.limits.websites} websites with ${starter.limits.pagesPerWebsite} pages each, for one person; websites over the limit are paused, not deleted.`}
+                />
+              )}
               {!subscription?.cancelAtPeriodEnd && (
                 <CancelSubscriptionButton apiCancel planName={plan.name} />
               )}
@@ -343,6 +352,45 @@ export default async function BillingPage({
               ? `Your ${plan.name} covers ${formatLimit(plan.limits.websites)} websites with ${formatLimit(plan.limits.pagesPerWebsite)} monitored pages each. Paid ${pro.name} covers ${formatLimit(pro.limits.websites)}.`
               : `${plan.name} includes ${formatLimit(plan.limits.websites)} websites with ${formatLimit(plan.limits.pagesPerWebsite)} monitored pages each.`}
           </p>
+        </Card>
+      )}
+
+      {/* Starter -> Pro: changes the existing subscription, never a second one. */}
+      {plan.id === "starter" && !trialEndsAt && (
+        <Card className="ring-2 ring-accent">
+          <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft">
+            <Sparkles className="size-5 text-accent" aria-hidden />
+          </span>
+          <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
+            Upgrade to Pro - ${pro.priceMonthlyUsd}/month
+          </h2>
+          <p className="mt-1 text-sm text-ink-secondary">
+            {formatLimit(pro.limits.websites)} websites with {formatLimit(pro.limits.pagesPerWebsite)}{" "}
+            monitored pages each, up to {pro.limits.maxMembers} team members and a full year of
+            history. You pay only the difference for the rest of this billing period.
+          </p>
+          <FeatureList features={pro.features} columns />
+          <div className="mt-6">
+            {canChangePlan ? (
+              <ChangePlanButton
+                target="pro"
+                label="Upgrade to Pro"
+                confirmMessage={`Upgrade to Pro ($${pro.priceMonthlyUsd}/month) now? You'll be charged the prorated difference for the rest of this billing period.`}
+              />
+            ) : subscription?.cancelAtPeriodEnd ? (
+              <p className="text-sm text-ink-faint">
+                Your subscription is set to cancel. Resume it from Manage billing to upgrade.
+              </p>
+            ) : (
+              <p className="text-sm text-ink-faint">
+                Email{" "}
+                <a href="mailto:support@mykavo.app" className="font-medium text-accent hover:underline">
+                  support@mykavo.app
+                </a>{" "}
+                and we&apos;ll move you to Pro.
+              </p>
+            )}
+          </div>
         </Card>
       )}
 
@@ -411,6 +459,17 @@ export default async function BillingPage({
             note={
               trialEndsAt
                 ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(pro.limits.websites)} websites. Everything else stays the same.`
+                : null
+            }
+          />
+          <PlanOffer
+            plan={starter}
+            checkoutHref="/api/billing/checkout?plan=starter"
+            available={starterBillingEnabled}
+            highlighted={false}
+            note={
+              trialEndsAt
+                ? `Paying now ends your trial. Starter covers ${formatLimit(starter.limits.websites)} websites with ${formatLimit(starter.limits.pagesPerWebsite)} pages each; any others are paused, not deleted.`
                 : null
             }
           />

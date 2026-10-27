@@ -38,8 +38,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const plan: PaidPlan =
-    new URL(request.url).searchParams.get("plan") === "agency" ? "agency" : "pro";
+  const requested = new URL(request.url).searchParams.get("plan");
+  const plan: PaidPlan = requested === "agency" || requested === "starter" ? requested : "pro";
 
   const current = await getWorkspaceSubscription(workspace.id);
   if (current && current.planId !== "free" && current.billedBy !== "trial") {
@@ -66,7 +66,8 @@ export async function GET(request: Request) {
     // A running campaign's code is applied for the buyer. If Dodo refuses it
     // (expired early, mistyped in the dashboard), the second attempt is a
     // plain session: a promotion must never be the reason checkout fails.
-    const campaign = await getLiveCampaign().catch(() => null);
+    // Campaigns discount Pro and Agency; Starter is already the low price.
+    const campaign = plan === "starter" ? null : await getLiveCampaign().catch(() => null);
     const attempts: (string[] | undefined)[] = campaign ? [[campaign.code], undefined] : [undefined];
     for (const discountCodes of attempts) {
       try {

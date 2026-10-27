@@ -3,9 +3,10 @@ import { getPlan, plans, formatLimit, resolvePlan, nextPlanUp } from "./plans";
 import { includesClientReports, PLAN_PRICES_USD } from "@mykavo/shared";
 
 describe("plans config", () => {
-  it("contains exactly three plans: free, pro ($20) and agency ($79)", () => {
+  it("contains exactly four plans: free, starter ($7), pro ($20) and agency ($79)", () => {
     expect(plans.map((p) => [p.id, p.priceMonthlyUsd])).toEqual([
       ["free", 0],
+      ["starter", 7],
       ["pro", 20],
       ["agency", 79],
     ]);
@@ -84,8 +85,9 @@ describe("plans config", () => {
     for (const plan of plans) expect(plan.limits.siteAuditPages).toBeLessThanOrEqual(2000);
   });
 
-  it("nextPlanUp walks free -> pro -> agency -> nothing", () => {
-    expect(nextPlanUp("free")?.id).toBe("pro");
+  it("nextPlanUp walks free -> starter -> pro -> agency -> nothing", () => {
+    expect(nextPlanUp("free")?.id).toBe("starter");
+    expect(nextPlanUp("starter")?.id).toBe("pro");
     expect(nextPlanUp("pro")?.id).toBe("agency");
     expect(nextPlanUp("agency")).toBeNull();
   });

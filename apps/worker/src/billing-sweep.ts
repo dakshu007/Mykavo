@@ -22,7 +22,7 @@ export async function runBillingSweep(): Promise<void> {
 
   const due = await prisma.subscription.findMany({
     where: {
-      planId: { in: ["pro", "agency"] },
+      planId: { in: ["starter", "pro", "agency"] },
       status: "active",
       currentPeriodEnd: { gt: now, lte: windowEnd },
     },

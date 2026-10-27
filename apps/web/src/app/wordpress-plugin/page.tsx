@@ -625,7 +625,7 @@ export default function WordPressPluginPage() {
             <h2 className={`${fontDisplay} text-center text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
               The plugin is free. <span className="text-[#6B6B60]">So is MyKavo, to start.</span>
             </h2>
-            <div className="mx-auto mt-14 grid max-w-5xl gap-6 lg:grid-cols-3">
+            <div className="mx-auto mt-14 grid max-w-5xl gap-6 md:grid-cols-2 xl:max-w-7xl xl:grid-cols-4">
               {plans.map((plan) => {
                 const pro = plan.highlighted;
                 const rows: Array<[string, boolean | string]> = [
@@ -670,14 +670,14 @@ export default function WordPressPluginPage() {
                       ))}
                     </dl>
                     <Link
-                      href={plan.id === "agency" ? "/signup?next=/dashboard/billing" : "/signup"}
+                      href={plan.id === "agency" || plan.id === "starter" ? "/signup?next=/dashboard/billing" : "/signup"}
                       className="mt-7 rounded-full border border-[#151515] bg-[#151515] px-6 py-3 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                     >
                       {plan.priceMonthlyUsd === 0
                         ? "Start free"
                         : plan.id === "pro"
                           ? `Try ${plan.name} free for ${TRIAL_DAYS} days`
-                          : `Start with ${plan.name}`}
+                          : `Get ${plan.name}`}
                     </Link>
                     {plan.id === "pro" && (
                       <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
@@ -685,7 +685,7 @@ export default function WordPressPluginPage() {
                         {formatLimit(plan.limits.websites)}). No card. Then Free unless you upgrade.
                       </p>
                     )}
-                    {plan.id === "agency" && (
+                    {(plan.id === "agency" || plan.id === "starter") && (
                       <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
                         New accounts start on the {TRIAL_DAYS}-day Pro trial. Switch to {plan.name} from
                         Billing at any time.

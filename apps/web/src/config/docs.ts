@@ -398,10 +398,10 @@ export const DOC_SECTIONS: DocSection[] = [
         slug: "plans-and-limits",
         title: "Plans and limits",
         description:
-          "What the Free, Pro and Agency plans include, how the Pro trial works, what the limits are, and how they are enforced.",
+          "What the Free, Starter, Pro and Agency plans include, how the Pro trial works, what the limits are, and how they are enforced.",
         keywords: ["mykavo pricing", "website monitoring pricing", "free website monitoring", "mykavo free trial"],
         capsule:
-          "MyKavo has three plans. Free covers one website with five monitored pages, weekly scans and 30 days of history. Pro is $20 a month for eight websites with fifteen pages each, daily scans and a year of history. Agency is $79 a month for thirty websites with twenty-five pages each and white-label client reports. New accounts start on a 14-day Pro trial that covers up to three websites.",
+          "MyKavo has four plans. Free covers one website with five monitored pages, weekly scans and 30 days of history. Starter is $7 a month for two websites with ten pages each, daily scans, 90 days of history and every monitoring feature, for one person. Pro is $20 a month for eight websites with fifteen pages each, daily scans and a year of history. Agency is $79 a month for thirty websites with twenty-five pages each and white-label client reports. New accounts start on a 14-day Pro trial that covers up to three websites.",
         blocks: [
           {
             type: "table",
