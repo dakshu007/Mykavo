@@ -14,8 +14,12 @@ export const LEAD_AUDIT_LIMITS = {
   perIp: 5,
   /** Audits of one site a day, whoever asks. */
   perHost: 3,
-  /** All leads a day: protects the worker and the sending reputation. */
-  perDay: 300,
+  /**
+   * All leads a day, from everyone combined. Keeps the feature's share of
+   * the email quota (shared with customer alerts) and of Supabase egress
+   * (~20 KB per lead) small however popular the form gets.
+   */
+  perDay: 50,
   /** Waiting in the queue at once before new requests are turned away. */
   maxQueued: 25,
 } as const;
