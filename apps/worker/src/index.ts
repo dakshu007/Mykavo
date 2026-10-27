@@ -64,6 +64,7 @@ import { runSiteAuditJob } from "./site-audit";
 import { runGscSync, runGscSweep } from "./gsc-sync";
 import { runDomainSweep } from "./domain-check";
 import { runDatabaseBackup } from "./db-backup";
+import { pruneSnapshotText } from "./text-store";
 import { startWatchdog } from "./watchdog";
 import { startKeepWarm } from "./keep-warm";
 import { startEgressSampler } from "./egress-sample";
@@ -146,6 +147,8 @@ async function main() {
   await ensureQueue(boss, RETENTION_SWEEP_QUEUE);
   await boss.work(RETENTION_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runRetentionSweep();
+    const textPruned = await pruneSnapshotText();
+    if (textPruned > 0) logger.info("page text pruned", { files: textPruned });
   });
   await boss.schedule(RETENTION_SWEEP_QUEUE, RETENTION_CRON);
 

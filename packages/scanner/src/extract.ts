@@ -38,6 +38,13 @@ export interface InPageExtraction {
   matchedSelectors: string[];
   normalizedDom: string;
   visibleText: string;
+  /**
+   * The same text kept line by line (block elements break lines in
+   * innerText), so a text change can be shown as the lines added and
+   * removed. Each line whitespace-collapsed and capped; never hashed -
+   * textHash still comes from visibleText alone.
+   */
+  visibleLines: string[];
 }
 
 export function extractInPage(
@@ -177,7 +184,15 @@ export function extractInPage(
 
   const normalizedDom = doc.documentElement ? normalizeElement(doc.documentElement) : "";
 
-  const visibleText = (doc.body?.innerText ?? "").replace(/\s+/g, " ").trim();
+  const rawText = doc.body?.innerText ?? "";
+  const visibleText = rawText.replace(/\s+/g, " ").trim();
+  const visibleLines: string[] = [];
+  for (const line of rawText.split("\n")) {
+    const clean = line.replace(/\s+/g, " ").trim();
+    if (!clean) continue;
+    visibleLines.push(clean.length > 500 ? clean.slice(0, 500) : clean);
+    if (visibleLines.length >= 3000) break;
+  }
 
   return {
     title: doc.title || null,
@@ -195,6 +210,7 @@ export function extractInPage(
     matchedSelectors,
     normalizedDom,
     visibleText,
+    visibleLines,
   };
 }
 

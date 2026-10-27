@@ -17,6 +17,8 @@ import {
   compareBrokenLinks,
   compareSnapshots,
   compareScreenshots,
+  describeTextDiff,
+  diffTextLines,
   compareSiteMeta,
   highestSeverity,
   changeConditionKey,
@@ -37,6 +39,7 @@ import {
 import { diffKey, normalizeUrl, parseFingerprint } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { logger } from "./logger";
+import { loadSnapshotText, saveSnapshotText } from "./text-store";
 
 // `satisfies` makes this exhaustive: adding a category to the severity engine
 // without mapping it here is a compile error, not a runtime crash mid-scan.
@@ -112,6 +115,32 @@ function needsConfirmation(change: ScoredChange): boolean {
 /** The same change, as far as confirmation goes: type and what was there before. */
 function confirmationKey(change: ScoredChange): string {
   return `${change.changeType}|${change.previousValue ?? ""}`;
+}
+
+/**
+ * "Page content changed" with the actual words: lines removed and added
+ * since the baseline, from the text the scanner left on the worker's disk
+ * (text-store.ts). Goes on the event's metadata and description only -
+ * previousValue/currentValue stay empty so the condition key, and with it
+ * duplicate suppression, behaves exactly as before.
+ */
+async function addTextDiff(
+  change: ScoredChange & { metadata?: Record<string, unknown> },
+  baselineSnapshotId: string,
+  currentSnapshotId: string,
+): Promise<void> {
+  const before = await loadSnapshotText(baselineSnapshotId);
+  const after = before ? await loadSnapshotText(currentSnapshotId) : null;
+  if (!before || !after) return;
+  const textDiff = diffTextLines(before, after);
+  change.description = describeTextDiff(textDiff);
+  change.metadata = { ...change.metadata, textDiff };
+}
+
+async function adoptBaselineText(baselineSnapshotId: string, currentSnapshotId: string): Promise<void> {
+  if (await loadSnapshotText(baselineSnapshotId)) return;
+  const lines = await loadSnapshotText(currentSnapshotId);
+  if (lines) await saveSnapshotText(baselineSnapshotId, lines);
 }
 
 async function toComparable(
@@ -331,6 +360,14 @@ export async function runComparisonForScan(
       const changes: Array<ScoredChange & { metadata?: Record<string, unknown> }> =
         compareSnapshots(base.comparable, curr.comparable);
 
+      // Baselines approved before page text was kept have none on disk. When
+      // this scan's text matches the baseline's hash, this scan's lines ARE
+      // the baseline's lines - adopt them, so existing sites get exact text
+      // changes without anyone re-approving a baseline.
+      if (baselineSnap.textHash !== null && baselineSnap.textHash === snapshot.textHash) {
+        await adoptBaselineText(baselineSnap.id, snapshot.id);
+      }
+
       // Visual diff (skipped when the page is broken - screenshot is unreliable).
       // Also skipped when the baseline was an error page or either capture
       // is a bot challenge: the screenshots show different things, so the
@@ -443,6 +480,7 @@ export async function runComparisonForScan(
       });
       for (const change of changes) {
         if (known.has(changeConditionKey(change))) continue;
+        if (change.changeType === "text_changed") await addTextDiff(change, baselineSnap.id, snapshot.id);
         await prisma.changeEvent.create({
           data: {
             websiteId: scan.websiteId,

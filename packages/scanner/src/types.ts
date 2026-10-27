@@ -75,6 +75,8 @@ export interface PageScanResult {
   htmlHash: string;
   domHash: string;
   textHash: string;
+  /** Visible text line by line (see extract.ts). Kept out of the database. */
+  visibleLines: string[];
   screenshotStorageKey: string | null;
   screenshotHash: string | null;
   title: string | null;

@@ -54,6 +54,32 @@ function parseBrokenLinks(metadata: unknown): BrokenLinkRow[] {
   );
 }
 
+interface TextDiffView {
+  removed: string[];
+  added: string[];
+  removedCount: number;
+  addedCount: number;
+  reordered: boolean;
+}
+
+/** Defensive parse of metadata.textDiff ("exact text changes", compare-scan.ts). */
+function parseTextDiff(metadata: unknown): TextDiffView | null {
+  if (typeof metadata !== "object" || metadata === null) return null;
+  const raw = (metadata as { textDiff?: unknown }).textDiff;
+  if (typeof raw !== "object" || raw === null) return null;
+  const d = raw as Partial<TextDiffView>;
+  const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === "string");
+  if (!strings(d.removed) || !strings(d.added)) return null;
+  if (typeof d.removedCount !== "number" || typeof d.addedCount !== "number") return null;
+  return {
+    removed: d.removed,
+    added: d.added,
+    removedCount: d.removedCount,
+    addedCount: d.addedCount,
+    reordered: d.reordered === true,
+  };
+}
+
 /** Compact "2h ago"-style date for the notes thread. */
 function relativeDate(d: Date): string {
   const mins = Math.floor((Date.now() - d.getTime()) / 60_000);
@@ -126,6 +152,7 @@ export default async function ChangeDetailPage({
 
   const canUpdateBaseline = !!change.currentSnapshot && !change.currentSnapshot.errorCode;
   const brokenLinks = parseBrokenLinks(change.metadata);
+  const textDiff = parseTextDiff(change.metadata);
   const hasDiff =
     typeof change.metadata === "object" &&
     change.metadata !== null &&
@@ -254,6 +281,70 @@ export default async function ChangeDetailPage({
               </div>
             </div>
           </div>
+        </Card>
+      )}
+
+      {/* Exact text changes: the lines removed and added since the baseline */}
+      {textDiff && (
+        <Card>
+          <CardHeader title="Text changes" className="mb-1" />
+          <p className="mb-4 text-sm text-ink-secondary">
+            {textDiff.removedCount + textDiff.addedCount === 0
+              ? "The same lines are on the page, in a different order."
+              : `${textDiff.removedCount} ${textDiff.removedCount === 1 ? "line" : "lines"} removed, ${textDiff.addedCount} added since the baseline.`}
+          </p>
+          {textDiff.removedCount + textDiff.addedCount > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="label-micro mb-2">Removed</p>
+                {textDiff.removed.length === 0 ? (
+                  <p className="text-sm text-ink-faint">Nothing removed.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {textDiff.removed.map((line, i) => (
+                      <li
+                        key={`r${i}`}
+                        className="rounded-tile bg-critical-soft px-3 py-2 text-[13px] leading-5 break-words text-critical-strong"
+                      >
+                        <span aria-hidden className="mr-1.5 font-mono">-</span>
+                        <span className="sr-only">Removed: </span>
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {textDiff.removedCount > textDiff.removed.length && (
+                  <p className="mt-2 text-xs text-ink-faint">
+                    and {textDiff.removedCount - textDiff.removed.length} more
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="label-micro mb-2">Added</p>
+                {textDiff.added.length === 0 ? (
+                  <p className="text-sm text-ink-faint">Nothing added.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {textDiff.added.map((line, i) => (
+                      <li
+                        key={`a${i}`}
+                        className="rounded-tile bg-success-soft px-3 py-2 text-[13px] leading-5 break-words text-success-strong"
+                      >
+                        <span aria-hidden className="mr-1.5 font-mono">+</span>
+                        <span className="sr-only">Added: </span>
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {textDiff.addedCount > textDiff.added.length && (
+                  <p className="mt-2 text-xs text-ink-faint">
+                    and {textDiff.addedCount - textDiff.added.length} more
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </Card>
       )}
 

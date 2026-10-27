@@ -29,6 +29,7 @@ import {
   withDefaultAdMasks,
 } from "@mykavo/shared";
 import { logger } from "./logger";
+import { saveSnapshotText } from "./text-store";
 import { planScanFrequency } from "./plan-sweep";
 import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";
@@ -146,7 +147,8 @@ export async function runScanWebsiteJob(
           screenshotMasks,
         }),
       );
-      await prisma.pageSnapshot.create({
+      const savedSnapshot = await prisma.pageSnapshot.create({
+        select: { id: true },
         data: {
           scanId,
           monitoredPageId: page.id,
@@ -211,6 +213,10 @@ export async function runScanWebsiteJob(
           },
         },
       });
+      // Line-by-line text on the worker's disk, for "exact text changes".
+      // Never fails the scan: without it a text change is still reported,
+      // just without the lines.
+      await saveSnapshotText(savedSnapshot.id, result.visibleLines);
       scanned++;
       logger.info("page scanned", {
         ...log,

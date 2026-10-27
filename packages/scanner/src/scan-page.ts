@@ -562,6 +562,7 @@ export async function scanPage(
       htmlHash: sha256(rawHtml),
       domHash: sha256(extraction.normalizedDom),
       textHash: sha256(extraction.visibleText),
+      visibleLines: extraction.visibleLines,
       screenshotStorageKey,
       screenshotHash,
       title: extraction.title,

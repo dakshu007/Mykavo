@@ -8,6 +8,7 @@ export {
   type ComparableElement,
 } from "./compare";
 export { compareScreenshots, type VisualDiffResult } from "./visual";
+export { diffTextLines, describeTextDiff, TEXT_DIFF_MAX_LINES, type TextDiff } from "./text-diff";
 export { comparePlatform } from "./platform";
 export { isPageRedesign, siteRedesignSignal, type RedesignEvidence } from "./redesign";
 export {
