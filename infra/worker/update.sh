@@ -24,4 +24,8 @@ echo "[$(date -u +%FT%TZ)] updating ${LOCAL:0:7} -> ${REMOTE:0:7}"
 git reset --hard origin/main --quiet
 docker compose -f infra/worker/compose.yml up -d --build
 docker image prune -f --filter "dangling=true" >/dev/null   # reclaim disk
+# Build cache grows with every deploy and is never cleaned on its own: by
+# October 2026 it had reached 28 GB of a 44 GB disk. Keep the last week's
+# (recent layers still speed up the next build), drop the rest.
+docker builder prune -f --filter "until=168h" >/dev/null || true
 echo "[$(date -u +%FT%TZ)] worker now on ${REMOTE:0:7}"

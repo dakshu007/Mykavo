@@ -196,5 +196,5 @@ path is wrong. Do **not** work around it with `--no-sandbox`: scanned pages
 are untrusted and this container holds database and R2 credentials
 (`packages/scanner/src/lighthouse.ts` refuses it deliberately).
 
-**Disk fills up.** `docker image prune -af` — `update.sh` does this after each
+**Disk fills up.** Check with `docker system df`. Build cache is the usual cause: `docker builder prune -af` clears it (update.sh already trims anything older than a week after each deploy). `docker image prune -af` — `update.sh` does this after each
 deploy, but old build layers accumulate if it hasn't run.
