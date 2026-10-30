@@ -22,6 +22,7 @@ type MenuItem = { href: string; label: string; badge?: string };
 const AI_LINK = { href: "/ai-website-insights", label: "AI Insights" };
 
 const integrations: MenuItem[] = [
+  { href: "/ai-connector", label: "Claude & ChatGPT", badge: "New" },
   { href: "/platforms", label: "All platforms", badge: "New" },
   { href: "/wordpress-plugin", label: "WordPress plugin" },
   { href: "/chrome-extension", label: "Chrome extension", badge: "New" },

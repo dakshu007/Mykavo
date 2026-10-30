@@ -42,6 +42,7 @@ const columns = [
     links: [
       { href: "/whats-new-on-mykavo", label: "What's new", tag: "new" },
       { href: "/ai-website-insights", label: "AI Insights", tag: "new" },
+      { href: "/ai-connector", label: "AI connector", tag: "new" },
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#categories", label: "What it watches" },
       { href: "/preview", label: "Dashboard preview" },
