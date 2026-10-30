@@ -82,7 +82,7 @@ export const MCP_TOOLS: McpTool<McpContext>[] = [
     name: "workspace_summary",
     title: "Workspace summary",
     description:
-      "Start here. How many websites are monitored, open changes by severity, the most serious open issues, and when scans last ran. Answers \"is anything wrong with my sites?\"",
+      "An overview of the workspace: how many websites are monitored, open changes by severity, the most serious open issues, and when scans last ran.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     run: async (_args, ctx) => {
       const [websites, bySeverity, worst] = await Promise.all([

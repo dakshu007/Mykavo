@@ -55,7 +55,7 @@ export const SERVER_INFO = { name: "mykavo", title: "MyKavo", version: "1.0.0" }
 
 export const SERVER_INSTRUCTIONS =
   "MyKavo monitors websites for important changes and regressions (visual, SEO, links, scripts, performance, conversion elements, AI crawler access and visits). " +
-  "Use workspace_summary first for an overview, then list_websites, get_changes and get_change for detail. All tools are read-only.";
+  "workspace_summary gives an overview; list_websites, get_changes and get_change give detail. All tools are read-only.";
 
 const error = (id: JsonRpcResponse["id"], code: number, message: string): JsonRpcResponse => ({
   jsonrpc: "2.0",
