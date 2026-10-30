@@ -108,9 +108,9 @@ export const PLATFORMS: Platform[] = [
     chip: "MCP server",
     tagline: "Ask your assistant what changed.",
     points: [
-      "Connect Claude Code, Claude Desktop, Cursor or any MCP client",
+      "Add MyKavo to ChatGPT, Claude, Cursor or any MCP client",
       "Ask which site needs attention, what changed, what the latest audit says",
-      "Read-only, with a per-workspace API key you can revoke",
+      "Read-only: sign in and click Allow, disconnect any time. Pro and Agency",
     ],
     worksWith: {
       items: [

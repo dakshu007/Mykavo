@@ -83,6 +83,17 @@ export interface Plan {
      * is generated once and kept, so re-opening one never counts again.
      */
     aiExplanationsPerMonth: number;
+    /**
+     * AI assistant connectors: ChatGPT, Claude and other MCP clients reading
+     * this workspace's monitoring data (app/api/mcp). Pro and Agency only.
+     */
+    aiAssistants: boolean;
+    /**
+     * MCP tool calls per workspace per UTC day. Each one is a few small
+     * database reads, so the cap protects database egress from a runaway
+     * assistant loop far more than it limits a person asking questions.
+     */
+    aiAssistantCallsPerDay: number;
   };
   features: string[];
   highlighted?: boolean;
@@ -113,6 +124,8 @@ export const plans: Plan[] = [
       siteAuditPages: 150,
       siteAuditsPerDay: 1,
       aiExplanationsPerMonth: 10,
+      aiAssistants: false,
+      aiAssistantCallsPerDay: 0,
     },
     features: [
       "1 website",
@@ -146,6 +159,8 @@ export const plans: Plan[] = [
       siteAuditPages: 500,
       siteAuditsPerDay: 3,
       aiExplanationsPerMonth: 30,
+      aiAssistants: false,
+      aiAssistantCallsPerDay: 0,
     },
     features: [
       "2 websites",
@@ -182,6 +197,8 @@ export const plans: Plan[] = [
       siteAuditPages: 1500,
       siteAuditsPerDay: 10,
       aiExplanationsPerMonth: 100,
+      aiAssistants: true,
+      aiAssistantCallsPerDay: 300,
     },
     features: [
       "8 websites",
@@ -195,6 +212,7 @@ export const plans: Plan[] = [
       "1-year history",
       "Site audits - 1,500 pages per crawl",
       "Up to 3 team members",
+      "Ask ChatGPT and Claude about your sites",
       "Email alerts",
     ],
   },
@@ -220,6 +238,8 @@ export const plans: Plan[] = [
       siteAuditPages: 2000,
       siteAuditsPerDay: 25,
       aiExplanationsPerMonth: 500,
+      aiAssistants: true,
+      aiAssistantCallsPerDay: 1000,
     },
     features: [
       "30 websites",
@@ -235,6 +255,7 @@ export const plans: Plan[] = [
       "1-year history",
       "Site audits - 2,000 pages per crawl",
       "Up to 15 team members",
+      "Ask ChatGPT and Claude about your sites",
       "Email alerts",
     ],
   },
@@ -329,6 +350,7 @@ export function unlimitedAgencyPlan(): Plan {
       maxMembers: Infinity,
       siteAuditsPerDay: Infinity,
       aiExplanationsPerMonth: Infinity,
+      aiAssistantCallsPerDay: Infinity,
     },
     features: [
       "Unlimited websites",
@@ -344,6 +366,7 @@ export function unlimitedAgencyPlan(): Plan {
       "1-year history",
       `Site audits - ${agency.limits.siteAuditPages.toLocaleString("en-US")} pages per crawl, unlimited a day`,
       "Unlimited team members",
+      "Ask ChatGPT and Claude about your sites",
       "Email alerts",
     ],
   };

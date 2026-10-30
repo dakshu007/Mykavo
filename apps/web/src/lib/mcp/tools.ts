@@ -1,7 +1,7 @@
 import { OPEN_STATUSES, prisma, type ChangeSeverity, type Prisma } from "@mykavo/database";
 import { AUDIT_CHECKS } from "@mykavo/seo-audit";
 import { appBaseUrl } from "@/lib/app-url";
-import type { ApiKeyContext } from "./api-keys";
+import type { McpContext } from "./context";
 import { loadAiCrawlerVisits } from "@/lib/ai-crawler-visits";
 import { ToolInputError, textResult, type McpTool } from "./protocol";
 
@@ -77,7 +77,7 @@ const websiteArg = {
   description: "Website id, name or domain (e.g. \"example.com\"). Omit for every website.",
 };
 
-export const MCP_TOOLS: McpTool<ApiKeyContext>[] = [
+export const MCP_TOOLS: McpTool<McpContext>[] = [
   {
     name: "workspace_summary",
     title: "Workspace summary",
@@ -355,17 +355,23 @@ export const MCP_TOOLS: McpTool<ApiKeyContext>[] = [
         where: { websiteId: site.id, status: "COMPLETED" },
         orderBy: { completedAt: "desc" },
         select: {
+          id: true,
           completedAt: true,
           healthScore: true,
           pagesCrawled: true,
           errorCount: true,
           warningCount: true,
           noticeCount: true,
-          issues: true,
         },
       });
       if (!audit) return textResult(`${site.name} has no completed Site Audit yet. Run one from the MyKavo dashboard.`);
-      const groups = Array.isArray(audit.issues) ? (audit.issues as Array<{ checkId?: string; count?: number }>) : [];
+      // Only each issue's check id and count leave the database. The stored
+      // issues carry every affected URL (often 30 KB, up to ~160 KB), and
+      // reading all of it per question was the MCP's biggest egress cost.
+      const groups = await prisma.$queryRaw<Array<{ checkId: string | null; count: number | null }>>`
+        SELECT g->>'checkId' AS "checkId", (g->>'count')::int AS "count"
+        FROM "site_audit", jsonb_array_elements(CASE WHEN jsonb_typeof("issues") = 'array' THEN "issues" ELSE '[]'::jsonb END) AS g
+        WHERE "id" = ${audit.id}`;
       const order = { ERROR: 0, WARNING: 1, NOTICE: 2 } as const;
       const top = groups
         .filter((g) => g.checkId && AUDIT_CHECKS[g.checkId])

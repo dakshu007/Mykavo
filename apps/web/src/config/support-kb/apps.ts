@@ -466,7 +466,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["ai", "mcp", "claude", "cursor", "assistant", "llm"],
     answer:
-      "Yes. MyKavo has an MCP server, so Claude, Cursor or any MCP-compatible assistant can read your monitoring data and answer in plain words, for example:\n\n- Is anything wrong with my websites right now?\n- What changed on my sites this week?\n- Summarise the latest site audit for example.com.\n- Which AI crawlers read example.com this month?\n\nAccess is **read-only**: assistants can look, but never change settings, approve changes or start scans. Set it up under [AI assistants](/dashboard/ai-assistants) in the dashboard.",
+      "Yes, on the Pro and Agency plans. MyKavo has an MCP server, so ChatGPT, Claude, Cursor or any MCP-compatible assistant can read your monitoring data and answer in plain words, for example:\n\n- Is anything wrong with my websites right now?\n- What changed on my sites this week?\n- Summarise the latest site audit for example.com.\n- Which AI crawlers read example.com this month?\n\nAccess is **read-only**: assistants can look, but never change settings, approve changes or start scans. Set it up under [AI assistants](/dashboard/ai-assistants) in the dashboard.",
     related: ["app-ai-assistants-connect"],
     evalQuestions: [
       "Can Claude tell me which of my client sites needs attention?",
@@ -477,9 +477,13 @@ export const ARTICLES: SupportArticle[] = [
   {
     id: "app-ai-assistants-connect",
     category: "apps",
-    title: "How do I connect Claude or Cursor to MyKavo?",
+    title: "How do I connect ChatGPT, Claude or Cursor to MyKavo?",
     questions: [
+      "How do I connect ChatGPT, Claude or Cursor to MyKavo?",
       "How do I connect Claude or Cursor to MyKavo?",
+      "add mykavo to chatgpt",
+      "claude custom connector mykavo",
+      "disconnect chatgpt from mykavo",
       "create api key",
       "mcp api key",
       "connect claude desktop",
@@ -498,7 +502,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["api key", "claude", "cursor", "mcp", "revoke", "setup"],
     answer:
-      "1. In the dashboard open [AI assistants](/dashboard/ai-assistants).\n2. Name your key and press **Create key**. Copy it right away: it's shown only once.\n3. Pick your client: Claude Code, Claude Desktop, Cursor or Other. Copy the ready-made setup, which already includes your key, and add it to that app.\n4. Ask about your websites.\n\nOnly workspace owners and admins can create keys, up to 10 active per workspace. Lost a key or shared it by mistake? Press **Revoke** and create a new one. Assistants using the old key stop working immediately.",
+      "Open [AI assistants](/dashboard/ai-assistants) in the dashboard and pick your app. It's part of the Pro and Agency plans.\n\n- **ChatGPT and Claude:** add MyKavo as a custom connector using the server URL shown on that page, then sign in to MyKavo and click **Allow**. No key needed. On Claude Team or Enterprise, an owner adds the connector once for everyone.\n- **Claude Code:** run the one-line command shown, then type /mcp to sign in.\n- **Cursor and other tools:** most sign in from the URL alone. If yours can't, create an API key on the same page (shown only once) and add it as a header.\n\nConnected apps are listed on that page, and you can **Disconnect** any of them at any time. Only workspace owners and admins can create API keys, up to 10 active per workspace.",
     related: ["app-ai-assistants"],
     evalQuestions: [
       "What config do I paste into Claude Desktop for MyKavo?",

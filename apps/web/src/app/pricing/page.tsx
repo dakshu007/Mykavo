@@ -58,6 +58,7 @@ const comparisonRows: Array<{
     value: (p) => `${formatLimit(p.limits.aiExplanationsPerMonth)} a month`,
   },
   { label: "AI weekly website notes", value: () => true },
+  { label: "Ask ChatGPT and Claude (MCP)", value: (p) => p.limits.aiAssistants },
   {
     label: "Manual scans",
     value: (p) => (p.limits.manualScans ? `${formatLimit(p.limits.manualScansPerDay)} a day` : false),

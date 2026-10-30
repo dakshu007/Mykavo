@@ -35,6 +35,7 @@ model User {
   approvedBaselines Baseline[]         @relation("BaselineApprover")
   changeNotes       ChangeNote[]       @relation("ChangeNoteAuthor")
   pushDevices       PushDevice[]
+  oauthGrants       OAuthGrant[]
   decidedAppAccess  AppAccessRequest[] @relation("AppAccessDecider")
   siteConnections   SiteConnection[]   @relation("SiteConnectionCreator")
   automationRuns    AutomationFlowRun[]
@@ -138,6 +139,8 @@ model Workspace {
   websites             Website[]
   siteConnections      SiteConnection[]
   apiKeys              ApiKey[]
+  oauthGrants          OAuthGrant[]
+  mcpUsage             McpUsage[]
   scanQuotaUses        ScanQuotaUse[]
   notificationChannels NotificationChannel[]
   notifications        Notification[]
@@ -1525,6 +1528,91 @@ model ApiKey {
 
   @@index([workspaceId])
   @@map("api_key")
+}
+
+// OAuth 2.1 for the MCP server (/api/mcp), so ChatGPT, Claude and other AI
+// assistants connect with "Sign in with MyKavo" instead of a pasted key.
+// Apps register themselves (dynamic client registration); a person approves
+// one app for one workspace (a grant); the app then holds short-lived access
+// tokens and rotating refresh tokens. Only SHA-256 hashes of codes and
+// tokens are stored.
+model OAuthClient {
+  /// The public client_id.
+  id           String       @id
+  name         String
+  redirectUris String[]
+  /// Set only for confidential clients (client_secret_post / _basic).
+  secretHash   String?
+  createdAt    DateTime     @default(now())
+  grants       OAuthGrant[]
+  codes        OAuthCode[]
+
+  @@map("oauth_client")
+}
+
+model OAuthGrant {
+  id          String       @id @default(cuid())
+  clientId    String
+  client      OAuthClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope       String
+  createdAt   DateTime     @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  tokens      OAuthToken[]
+  codes       OAuthCode[]
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([clientId])
+  @@map("oauth_grant")
+}
+
+model OAuthCode {
+  codeHash      String      @id
+  grantId       String
+  grant         OAuthGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  redirectUri   String
+  codeChallenge String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@index([grantId])
+  @@index([clientId])
+  @@map("oauth_code")
+}
+
+model OAuthToken {
+  id               String     @id @default(cuid())
+  grantId          String
+  grant            OAuthGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  accessHash       String     @unique
+  refreshHash      String     @unique
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime
+  /// Set when the refresh token is rotated or the grant is revoked.
+  revokedAt        DateTime?
+  createdAt        DateTime   @default(now())
+
+  @@index([grantId])
+  @@map("oauth_token")
+}
+
+/// MCP tool calls per workspace per UTC day: the daily cap and usage reporting.
+model McpUsage {
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  day         DateTime  @db.Date
+  calls       Int       @default(0)
+
+  @@id([workspaceId, day])
+  @@map("mcp_usage")
 }
 
 /// AI crawler visits to a website, one row per UTC day and crawler, as

@@ -4,6 +4,7 @@ import { isMissingTableError, prisma } from "@mykavo/database";
 import { getCurrentMembership, requireSession } from "@/lib/session";
 import { canManageMembers } from "@/lib/team";
 import { generateApiKey } from "@/lib/mcp/api-key-format";
+import { getWorkspacePlan } from "@/lib/billing/subscription";
 import { logger } from "@/lib/logger";
 
 /** Workspace API keys for the MCP server. Owners and admins only. */
@@ -38,6 +39,10 @@ const CreateBody = z.object({ name: z.string().trim().min(1).max(60) });
 export async function POST(request: Request) {
   const { session, workspace, allowed } = await gate();
   if (!allowed) return NextResponse.json({ error: "Only workspace owners and admins can manage API keys." }, { status: 403 });
+  const plan = await getWorkspacePlan(workspace.id);
+  if (!plan.limits.aiAssistants) {
+    return NextResponse.json({ error: "AI assistants are part of the Pro and Agency plans. Upgrade to create an API key." }, { status: 403 });
+  }
   const parsed = CreateBody.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Give the key a name (up to 60 characters)." }, { status: 400 });
 
