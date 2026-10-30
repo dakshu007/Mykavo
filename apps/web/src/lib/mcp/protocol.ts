@@ -137,7 +137,15 @@ export async function handleMessage<Ctx>(
           jsonrpc: "2.0",
           id,
           result: {
-            content: [{ type: "text", text: err instanceof ToolInputError ? err.message : "The tool failed. Try again." }],
+            content: [
+              {
+                type: "text",
+                text:
+                  err instanceof ToolInputError
+                    ? err.message
+                    : `MyKavo couldn't load this data just now because of a temporary server problem (${name}). Try again in a minute; if it keeps failing, contact support@mykavo.app.`,
+              },
+            ],
             isError: true,
           },
         };

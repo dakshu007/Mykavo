@@ -1,0 +1,37 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "mykavo",
+  "version": "1.0.0",
+  "description": "Ask about your MyKavo website monitoring: what changed, which site needs attention, scans, site audits and AI crawler visits. Read-only.",
+  "author": {
+    "name": "MyKavo",
+    "email": "support@mykavo.app",
+    "url": "https://mykavo.app"
+  },
+  "homepage": "https://mykavo.app/ai-assistants",
+  "license": "Proprietary",
+  "keywords": ["website monitoring", "seo", "change detection", "site audit", "agencies"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "MyKavo",
+        "shortDescription": "Ask what changed or broke on the websites you monitor",
+        "longDescription": "MyKavo monitors websites for important changes and regressions: SEO tags, availability, visual layout, broken links, third-party scripts, performance and key conversion elements. Connect your MyKavo workspace to ask in plain words which site needs attention, what changed this week, what a specific change was, what the latest site audit found and which AI crawlers read your pages. Every answer comes from your real monitoring data with a link to the before-and-after in MyKavo. Read-only: it never changes settings, approves changes or starts scans. Requires a MyKavo Pro or Agency plan.",
+        "developerName": "MyKavo",
+        "category": "Productivity",
+        "capabilities": ["Read"],
+        "websiteURL": "https://mykavo.app",
+        "privacyPolicyURL": "https://mykavo.app/privacy",
+        "termsOfServiceURL": "https://mykavo.app/terms",
+        "defaultPrompt": [
+          "Is anything wrong with my websites right now?",
+          "What changed on my sites this week?",
+          "Summarise the latest site audit for my main website"
+        ],
+        "brandColor": "#FFD400",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      }
+    }
+  }
+}

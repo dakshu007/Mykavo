@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
       eyebrowText="legal"
       title="Privacy Policy"
       intro="This policy explains, in plain English, what data MyKavo collects, why we collect it, where it lives, and the choices you have. MyKavo is operated by Dakshesh Babu, an independent developer. If anything here is unclear, email support@mykavo.app and you will get a straight answer."
-      updated="October 20, 2026"
+      updated="October 30, 2026"
     >
       <h2>1. What data we collect</h2>
       <h3>Account data</h3>
@@ -74,6 +74,26 @@ export default function PrivacyPolicyPage() {
         web address, a website name or anything from the page, and are not linked to you unless
         you connect a website, when they help us see whether the extension helped you get set up.
         The extension does not collect your browsing history.
+      </p>
+      <h3 id="ai-assistants">AI assistant connections (ChatGPT, Claude and other MCP clients)</h3>
+      <p>
+        On the Pro and Agency plans you can connect an AI assistant, such as ChatGPT or Claude, to
+        your MyKavo workspace. When you approve a connection, the assistant can read your
+        workspace&apos;s monitoring data through MyKavo&apos;s read-only MCP server: your websites,
+        detected changes, scans, site audit results and AI crawler visit counts. It cannot change
+        settings, approve changes or start scans. MyKavo sends this data to the assistant only when
+        the assistant asks for it during a conversation you are having, and only for the one
+        workspace you approved.
+      </p>
+      <p>
+        To make this work we store the app&apos;s name and return address, which workspace and
+        person approved it, when it was last used, and secure hashes of its access tokens (never
+        the tokens themselves). We also count how many questions each workspace asks per day, to
+        apply the plan&apos;s daily limit. MyKavo does not receive or store your conversations with
+        the assistant, your prompts, or anything else from the AI provider. What you then share
+        with the assistant is governed by that provider&apos;s own privacy policy. You can
+        disconnect any assistant at any time in AI assistants in your dashboard, which stops its
+        access immediately; connection records are deleted with your workspace.
       </p>
       <h3>Billing data</h3>
       <p>

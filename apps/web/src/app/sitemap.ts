@@ -35,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/brand",
     "/site-audit",
     "/ai-website-insights",
+    "/ai-assistants",
     "/whats-new-on-mykavo",
     "/website-monitoring-for-shopify",
     "/website-monitoring-for-webflow",
