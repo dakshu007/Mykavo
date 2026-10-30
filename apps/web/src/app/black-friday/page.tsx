@@ -38,6 +38,9 @@ export const metadata: Metadata = withSocial({
     "seo monitoring black friday",
   ],
   alternates: { canonical: PATH },
+  // Its own share card: the site-wide default would otherwise win.
+  openGraph: { images: [{ url: "/black-friday/og.png", width: 1200, height: 630, alt: "MyKavo Black Friday: 50% off Pro" }] },
+  twitter: { images: [{ url: "/black-friday/og.png", width: 1200, height: 630, alt: "MyKavo Black Friday: 50% off Pro" }] },
 });
 
 const bfPlan = (id: "starter" | "pro" | "agency"): BfPlan => {
