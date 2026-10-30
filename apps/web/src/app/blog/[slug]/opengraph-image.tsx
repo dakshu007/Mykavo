@@ -3,6 +3,7 @@ import { prisma } from "@mykavo/database";
 import { livePostWhere } from "@/lib/blog-schedule";
 import { authorNameResolver } from "@/lib/blog-authors-server";
 import { loadOgFonts } from "@/lib/og-fonts";
+import { BRAND_GOLD, MARK_IN_TILE_PATH, TILE_PATH, TILE_VIEWBOX } from "@/components/brand/logo-paths";
 
 /**
  * The share card for one post - what LinkedIn, X, WhatsApp and Slack show,
@@ -25,17 +26,12 @@ const DIM = "#6B6B60";
 
 type Params = { params: Promise<{ slug: string }> };
 
+/** The MyKavo app icon: the gold mark on its black tile, as in the original logo. */
 function Mark({ size: s }: { size: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 32 32" fill="none">
-      <path
-        d="M5.4 3.3 L13.9 3.3 Q15.6 3.3 14.6 4.45 L3.8 15.45 Q3.25 16 3.8 16.55 L14.6 27.55 Q15.6 28.7 13.9 28.7 L5.4 28.7 Q3.2 28.7 3.2 26.5 L3.2 5.5 Q3.2 3.3 5.4 3.3 Z"
-        fill={GOLD}
-      />
-      <path
-        d="M10.35 16 L19.45 3.4 L15.85 12 L23.7 8.2 L16.55 14.5 L29.1 16 L16.55 17.5 L23.7 23.8 L15.85 20 L19.45 28.6 Z"
-        fill={GOLD}
-      />
+    <svg width={s} height={s} viewBox={TILE_VIEWBOX}>
+      <path d={TILE_PATH} fill="#000000" />
+      <path d={MARK_IN_TILE_PATH} fill={BRAND_GOLD} />
     </svg>
   );
 }

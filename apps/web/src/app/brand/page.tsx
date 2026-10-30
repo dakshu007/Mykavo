@@ -23,14 +23,17 @@ const assets: Array<{ file: string; label: string; format: string; preview: stri
   { file: "mykavo-logo-light.png", label: "Logo on white", format: "PNG", preview: "mykavo-logo-light.png" },
   { file: "mykavo-logo-dark.png", label: "Logo on dark", format: "PNG", preview: "mykavo-logo-dark.png", dark: true },
   { file: "mykavo-logo-transparent.png", label: "Logo, transparent background", format: "PNG", preview: "mykavo-logo-transparent.png" },
-  { file: "mykavo-icon-1200.png", label: "App icon, 1200 x 1200", format: "PNG", preview: "mykavo-icon-1200.png", dark: true },
+  { file: "mykavo-icon-1200.png", label: "App icon, 1200 x 1200", format: "PNG", preview: "mykavo-icon-1200.png" },
+  { file: "mykavo-logo-dark.svg", label: "App icon, black tile", format: "SVG", preview: "mykavo-logo-dark.svg" },
+  { file: "mykavo-logo-white.svg", label: "App icon, white tile", format: "SVG", preview: "mykavo-logo-white.svg", dark: true },
   { file: "mykavo-mark-gold.svg", label: "Logomark, gold", format: "SVG", preview: "mykavo-mark-gold.svg", dark: true },
   { file: "mykavo-mark-black.svg", label: "Logomark, black", format: "SVG", preview: "mykavo-mark-black.svg" },
   { file: "mykavo-mark-white.svg", label: "Logomark, white", format: "SVG", preview: "mykavo-mark-white.svg", dark: true },
 ];
 
 const colors = [
-  { name: "MyKavo Gold", hex: "#FFD400" },
+  { name: "Logo Gold", hex: "#FFCF00" },
+  { name: "Accent Gold", hex: "#FFD400" },
   { name: "Ink", hex: "#151515" },
   { name: "Paper", hex: "#FBFAF3" },
 ];
@@ -137,6 +140,7 @@ export default function BrandPage() {
       <ul>
         <li>The name is written MyKavo: one word, capital M and K.</li>
         <li>Use the gold logomark on dark or white backgrounds, and the black one on gold.</li>
+        <li>For an app icon or avatar, use the black tile on light backgrounds and the white tile on dark ones.</li>
         <li>Keep clear space around the logo of at least the width of the logomark.</li>
         <li>Do not stretch, recolor, rotate or add effects to the logo.</li>
       </ul>
