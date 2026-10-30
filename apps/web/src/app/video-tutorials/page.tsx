@@ -51,6 +51,11 @@ function excerpt(text: string, max = 320): string {
   return `${clean.slice(0, cut > 0 ? cut : max).trimEnd()}...`;
 }
 
+/** Oldest first: the order the tutorials were published in. */
+function inPublishOrder<T extends { publishedAt: string }>(videos: T[]): T[] {
+  return [...videos].sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
+}
+
 /** CollectionPage + an ItemList of the watch pages. */
 function videosJsonLd(videos: TutorialVideo[]) {
   const url = `${site.url}${PATH}`;
@@ -71,11 +76,11 @@ function videosJsonLd(videos: TutorialVideo[]) {
         mainEntity: {
           "@type": "ItemList",
           numberOfItems: videos.length,
-          itemListOrder: "https://schema.org/ItemListOrderDescending",
+          itemListOrder: "https://schema.org/ItemListOrderAscending",
           // A summary page: each item points at the video's own watch page,
           // where its VideoObject lives. Google indexes a video only on the
           // page where it is the main content, never on a gallery.
-          itemListElement: videos.map((v, index) => ({
+          itemListElement: inPublishOrder(videos).map((v, index) => ({
             "@type": "ListItem",
             position: index + 1,
             url: `${site.url}${watchPath(v.slug)}`,
@@ -97,7 +102,10 @@ function ShortChip() {
 
 export default async function VideoTutorialsPage() {
   const videos = await getTutorialVideos();
-  const [latest, ...rest] = videos;
+  // The newest upload leads; the rest read as a course, in the order they
+  // were published (first upload first).
+  const [latest] = videos;
+  const rest = inPublishOrder(videos.slice(1));
   const subscribeUrl = `${CHANNEL_URL}?sub_confirmation=1`;
 
   return (
