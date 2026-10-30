@@ -47,6 +47,8 @@ describe("MCP protocol", () => {
     const listed = (res?.result as { tools: Array<{ name: string; annotations: { readOnlyHint: boolean } }> }).tools;
     expect(listed.map((t) => t.name)).toEqual(["echo_workspace", "needs_id"]);
     expect(listed.every((t) => t.annotations.readOnlyHint)).toBe(true);
+    // The Claude directory wants the human-readable title inside annotations too.
+    expect(listed.every((t) => typeof (t.annotations as { title?: string }).title === "string")).toBe(true);
   });
 
   it("runs a tool in the caller's workspace", async () => {

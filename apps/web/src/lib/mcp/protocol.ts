@@ -117,7 +117,7 @@ export async function handleMessage<Ctx>(
             title: t.title,
             description: t.description,
             inputSchema: t.inputSchema,
-            annotations: { readOnlyHint: true, openWorldHint: false },
+            annotations: { title: t.title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
           })),
         },
       };
