@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { LiteYouTube } from "@/components/video/lite-youtube";
 import { site } from "@/config/site";
-import { CHANNEL_URL, getChannelVideos, type YouTubeVideo } from "@/lib/youtube";
+import { CHANNEL_URL, getChannelVideos, getTutorialVideos, watchPath, type TutorialVideo } from "@/lib/youtube";
 import {
   ORGANIZATION_ID,
   WEBSITE_ID,
@@ -51,8 +51,8 @@ function excerpt(text: string, max = 320): string {
   return `${clean.slice(0, cut > 0 ? cut : max).trimEnd()}...`;
 }
 
-/** CollectionPage + VideoObject list, so search can show these as video results. */
-function videosJsonLd(videos: YouTubeVideo[]) {
+/** CollectionPage + an ItemList of the watch pages. */
+function videosJsonLd(videos: TutorialVideo[]) {
   const url = `${site.url}${PATH}`;
   return {
     "@context": "https://schema.org",
@@ -72,20 +72,14 @@ function videosJsonLd(videos: YouTubeVideo[]) {
           "@type": "ItemList",
           numberOfItems: videos.length,
           itemListOrder: "https://schema.org/ItemListOrderDescending",
+          // A summary page: each item points at the video's own watch page,
+          // where its VideoObject lives. Google indexes a video only on the
+          // page where it is the main content, never on a gallery.
           itemListElement: videos.map((v, index) => ({
             "@type": "ListItem",
             position: index + 1,
-            item: {
-              "@type": "VideoObject",
-              "@id": `${v.url}#video`,
-              name: v.title,
-              description: v.description || v.title,
-              thumbnailUrl: v.thumbnail,
-              uploadDate: v.publishedAt,
-              contentUrl: v.url,
-              embedUrl: `https://www.youtube-nocookie.com/embed/${v.id}`,
-              publisher: { "@id": ORGANIZATION_ID },
-            },
+            url: `${site.url}${watchPath(v.slug)}`,
+            name: v.title,
           })),
         },
       },
@@ -102,7 +96,7 @@ function ShortChip() {
 }
 
 export default async function VideoTutorialsPage() {
-  const videos = await getChannelVideos();
+  const videos = await getTutorialVideos();
   const [latest, ...rest] = videos;
   const subscribeUrl = `${CHANNEL_URL}?sub_confirmation=1`;
 
@@ -153,15 +147,24 @@ export default async function VideoTutorialsPage() {
                 {latest.description && (
                   <p className="mt-3 whitespace-pre-line text-[15px] leading-7 text-[#6B6B60]">{excerpt(latest.description)}</p>
                 )}
-                <a
-                  href={latest.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-5 inline-flex items-center gap-1 text-[14px] font-medium underline decoration-[#FFD400] decoration-2 underline-offset-4"
-                >
-                  Watch on YouTube
-                  <ArrowUpRight className="size-4" aria-hidden />
-                </a>
+                <div className="mt-5 flex flex-wrap items-center gap-5">
+                  <Link
+                    href={watchPath(latest.slug)}
+                    className="inline-flex items-center gap-1 text-[14px] font-semibold underline decoration-[#FFD400] decoration-2 underline-offset-4"
+                  >
+                    Open the tutorial
+                    <ArrowRight className="size-4" aria-hidden />
+                  </Link>
+                  <a
+                    href={latest.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[14px] font-medium text-[#6B6B60] underline underline-offset-4 hover:text-[#151515]"
+                  >
+                    Watch on YouTube
+                    <ArrowUpRight className="size-4" aria-hidden />
+                  </a>
+                </div>
               </div>
             </section>
 
@@ -181,9 +184,9 @@ export default async function VideoTutorialsPage() {
                         {v.isShort && <ShortChip />}
                       </p>
                       <h3 className="mt-1.5 text-[16.5px] font-semibold leading-snug">
-                        <a href={v.url} target="_blank" rel="noopener noreferrer" className="hover:underline hover:decoration-[#FFD400] hover:decoration-2 hover:underline-offset-4">
+                        <Link href={watchPath(v.slug)} className="hover:underline hover:decoration-[#FFD400] hover:decoration-2 hover:underline-offset-4">
                           {v.title}
-                        </a>
+                        </Link>
                       </h3>
                     </li>
                   ))}

@@ -59,6 +59,57 @@ function attr(xml: string, name: string, attribute: string): string | null {
   return m ? decodeXml(m[1]) : null;
 }
 
+/* ---------- watch pages ---------- */
+
+export const TUTORIALS_PATH = "/video-tutorials";
+
+export type TutorialVideo = YouTubeVideo & { slug: string };
+
+/** URL slug from a video title: lowercase words joined by hyphens, at most ~70 characters. */
+export function slugifyTitle(title: string): string {
+  const words = title
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/https?:\/\/\S+/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  let slug = "";
+  for (const w of words) {
+    if (slug && slug.length + w.length + 1 > 70) break;
+    slug = slug ? `${slug}-${w}` : w;
+  }
+  return slug;
+}
+
+/**
+ * Give every video a unique watch-page slug. Slugs are assigned oldest first,
+ * so a new upload with a repeated title gets the suffix and an older page's
+ * URL never changes.
+ */
+export function withSlugs(videos: YouTubeVideo[]): TutorialVideo[] {
+  const taken = new Set<string>();
+  const slugs = new Map<string, string>();
+  for (const v of [...videos].sort((a, b) => a.publishedAt.localeCompare(b.publishedAt))) {
+    const base = slugifyTitle(v.title) || v.id.toLowerCase();
+    const slug = taken.has(base) ? `${base}-${v.id.toLowerCase()}` : base;
+    taken.add(slug);
+    slugs.set(v.id, slug);
+  }
+  return videos.map((v) => ({ ...v, slug: slugs.get(v.id) ?? v.id.toLowerCase() }));
+}
+
+export const watchPath = (slug: string) => `${TUTORIALS_PATH}/${slug}`;
+export const embedUrl = (id: string) => `https://www.youtube-nocookie.com/embed/${id}`;
+
+/** The channel's videos with their watch-page slugs, newest first. */
+export async function getTutorialVideos(): Promise<TutorialVideo[]> {
+  return withSlugs(await getChannelVideos());
+}
+
 /** The best thumbnail YouTube serves for every video. */
 export const thumbnailFor = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 

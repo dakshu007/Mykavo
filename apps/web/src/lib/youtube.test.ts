@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { channelIdFromHtml, decodeXml, parseChannelFeed, videosFromPlaylistItems } from "./youtube";
+import { channelIdFromHtml, decodeXml, parseChannelFeed, slugifyTitle, videosFromPlaylistItems, withSlugs, type YouTubeVideo } from "./youtube";
 
 const FEED = `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
@@ -79,5 +79,29 @@ describe("youtube data api mapping", () => {
       { snippet: { title: "Deleted video" }, contentDetails: { videoId: "eeeeeeeeeee", videoPublishedAt: "2026-09-02T00:00:00Z" } },
     ]);
     expect(videos.map((v) => v.id)).toEqual(["ccccccccccc"]);
+  });
+});
+
+describe("watch page slugs", () => {
+  const video = (id: string, title: string, publishedAt: string): YouTubeVideo => ({
+    id, title, publishedAt, description: "", thumbnail: "", url: "", isShort: false,
+  });
+
+  it("turns titles into short readable slugs", () => {
+    expect(slugifyTitle("How to Read a Website Change Alert (Severity, Category, Before & After)")).toBe(
+      "how-to-read-a-website-change-alert-severity-category-before-and-after",
+    );
+    expect(slugifyTitle("Monitor Your Website Free : https://mykavo.app/")).toBe("monitor-your-website-free");
+    expect(slugifyTitle("Café déjà vu")).toBe("cafe-deja-vu");
+    expect(slugifyTitle("a ".repeat(60)).length).toBeLessThanOrEqual(70);
+  });
+
+  it("keeps the older video's slug when titles repeat, and falls back to the id", () => {
+    const videos = withSlugs([
+      video("NEWNEWNEW01", "Same title", "2026-10-02T00:00:00Z"),
+      video("OLDOLDOLD01", "Same title", "2026-10-01T00:00:00Z"),
+      video("EMOJIEMOJI1", "🔥🔥", "2026-10-03T00:00:00Z"),
+    ]);
+    expect(videos.map((v) => v.slug)).toEqual(["same-title-newnewnew01", "same-title", "emojiemoji1"]);
   });
 });

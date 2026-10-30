@@ -5,7 +5,8 @@ import { site } from "@/config/site";
 import { TOOLS, TOOLS_HUB_PATH, toolHref } from "@/config/tools";
 import { ALTERNATIVES } from "@/config/alternatives";
 import { DOC_SECTIONS, allDocArticles } from "@/config/docs";
-import { getChannelVideos } from "@/lib/youtube";
+import { embedUrl, getTutorialVideos, watchPath } from "@/lib/youtube";
+import { videoSitemapDescription, xmlEscape } from "@/lib/seo/video-sitemap";
 
 // Dynamic so newly published blog posts appear without a redeploy.
 export const dynamic = "force-dynamic";
@@ -72,8 +73,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Listed only once the channel has a video: until then the page is
   // noindexed, and a noindexed URL in the sitemap is a Search Console error.
-  if ((await getChannelVideos()).length > 0) {
+  const videos = await getTutorialVideos();
+  if (videos.length > 0) {
     entries.push({ url: `${site.url}/video-tutorials`, changeFrequency: "weekly", priority: 0.7 });
+  }
+  // One watch page per video, each carrying its video:video entry. Next
+  // writes these fields into the XML as they are, so they are escaped here.
+  for (const v of videos) {
+    entries.push({
+      url: `${site.url}${watchPath(v.slug)}`,
+      lastModified: v.publishedAt,
+      changeFrequency: "monthly",
+      priority: 0.6,
+      videos: [
+        {
+          title: xmlEscape(v.title),
+          thumbnail_loc: xmlEscape(v.thumbnail),
+          description: xmlEscape(videoSitemapDescription(v.title, v.description)),
+          player_loc: xmlEscape(embedUrl(v.id)),
+          publication_date: v.publishedAt,
+          family_friendly: "yes",
+        },
+      ],
+    });
   }
 
   try {
