@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Menu, Sparkles, Wrench, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { AppAnnouncement } from "./app-announcement";
 import { SitePromoBar } from "./campaign-announcement";
-import { GoogleIcon } from "@/components/brand/integration-icons";
+import { GoogleIcon, McpIcon } from "@/components/brand/integration-icons";
 import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
 
 const links = [
@@ -18,8 +18,8 @@ const links = [
 
 type MenuItem = { href: string; label: string; badge?: string };
 
-/** The AI feature page: first in the nav, with its spark, so it is never missed. */
-const AI_LINK = { href: "/ai-website-insights", label: "AI Insights" };
+/** The Claude and ChatGPT connector page: first in the nav, with the MCP mark, so it is never missed. */
+const MCP_LINK = { href: "/ai-connector", label: "MCP" };
 
 const integrations: MenuItem[] = [
   { href: "/ai-connector", label: "Claude & ChatGPT", badge: "New" },
@@ -228,11 +228,11 @@ export function LandingNav() {
 
         <nav aria-label="Main" className="hidden items-center lg:flex">
           <Link
-            href={AI_LINK.href}
+            href={MCP_LINK.href}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13.5px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
           >
-            <Sparkles className="size-3.5 text-[#151515]" aria-hidden />
-            {AI_LINK.label}
+            <McpIcon className="size-4 text-[#151515]" />
+            {MCP_LINK.label}
           </Link>
           <Link
             href="/pricing"
@@ -303,12 +303,12 @@ export function LandingNav() {
         >
           <nav aria-label="Main mobile" className="flex flex-col">
             <Link
-              href={AI_LINK.href}
+              href={MCP_LINK.href}
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 rounded-xl px-3 py-3 text-[15px] font-semibold text-[#151515] transition-colors hover:bg-[#151515]/[0.04]"
             >
-              <Sparkles className="size-4" aria-hidden />
-              {AI_LINK.label}
+              <McpIcon className="size-[18px]" />
+              {MCP_LINK.label}
               <SoonBadge>New</SoonBadge>
             </Link>
             {links.map((l) => (
