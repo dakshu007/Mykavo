@@ -93,7 +93,20 @@ describe("watch page slugs", () => {
     );
     expect(slugifyTitle("Monitor Your Website Free : https://mykavo.app/")).toBe("monitor-your-website-free");
     expect(slugifyTitle("Café déjà vu")).toBe("cafe-deja-vu");
-    expect(slugifyTitle("a ".repeat(60)).length).toBeLessThanOrEqual(70);
+    expect(slugifyTitle("a ".repeat(60)).length).toBeLessThanOrEqual(80);
+  });
+
+  it("drops a leading episode number so renumbering never moves a page", () => {
+    expect(slugifyTitle("21 How to Invite Your Team to MyKavo (Admin, Member and Viewer Roles)")).toBe(
+      "how-to-invite-your-team-to-mykavo-admin-member-and-viewer-roles",
+    );
+    expect(slugifyTitle("07 Your Website This Week")).toBe(slugifyTitle("Your Website This Week"));
+    expect(slugifyTitle("#3 - Baselines")).toBe("baselines");
+    expect(slugifyTitle("16 WordPress Safe Updates: Know Exactly Which Plugin Update Broke Your Site")).toBe(
+      "wordpress-safe-updates-know-exactly-which-plugin-update-broke-your-site",
+    );
+    expect(slugifyTitle("404 Error Explained")).toBe("404-error-explained");
+    expect(slugifyTitle("2026")).toBe("2026");
   });
 
   it("keeps the older video's slug when titles repeat, and falls back to the id", () => {

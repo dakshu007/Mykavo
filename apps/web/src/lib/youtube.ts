@@ -65,9 +65,14 @@ export const TUTORIALS_PATH = "/video-tutorials";
 
 export type TutorialVideo = YouTubeVideo & { slug: string };
 
-/** URL slug from a video title: lowercase words joined by hyphens, at most ~70 characters. */
+/**
+ * URL slug from a video title: lowercase words joined by hyphens, at most ~80
+ * characters. A leading episode number ("21 How to...", "#3 -") is dropped,
+ * so renumbering or un-numbering titles on YouTube never moves a page.
+ */
 export function slugifyTitle(title: string): string {
   const words = title
+    .replace(/^\s*(?:#|no\.?\s*|ep\.?\s*)?\d{1,2}\s*[.:)\-\u2013\u2014|]?\s+(?=\S)/i, "")
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
@@ -79,7 +84,7 @@ export function slugifyTitle(title: string): string {
     .filter(Boolean);
   let slug = "";
   for (const w of words) {
-    if (slug && slug.length + w.length + 1 > 70) break;
+    if (slug && slug.length + w.length + 1 > 80) break;
     slug = slug ? `${slug}-${w}` : w;
   }
   return slug;
