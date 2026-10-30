@@ -4,6 +4,7 @@
  * overridable by env so test/live and product changes need no code edit.
  */
 
+import type { BillingInterval } from "@mykavo/shared/plan-tier";
 import { site } from "@/config/site";
 
 /** The $20 Pro product id in Dodo (LIVE-mode product; override via env). */
@@ -18,26 +19,51 @@ export const DODO_AGENCY_PRODUCT_ID =
 export const DODO_STARTER_PRODUCT_ID =
   process.env.DODO_STARTER_PRODUCT_ID ?? "pdt_0NqfsjgjOLzIPXdwa8K9a";
 
+/**
+ * Yearly products (12 months for the price of 10). Empty until each one is
+ * created in Dodo; while any is missing the monthly/yearly switch stays
+ * hidden, so nobody is offered a checkout that can't open.
+ */
+export const DODO_STARTER_YEARLY_PRODUCT_ID = process.env.DODO_STARTER_YEARLY_PRODUCT_ID ?? "";
+export const DODO_PRO_YEARLY_PRODUCT_ID = process.env.DODO_PRO_YEARLY_PRODUCT_ID ?? "";
+export const DODO_AGENCY_YEARLY_PRODUCT_ID = process.env.DODO_AGENCY_YEARLY_PRODUCT_ID ?? "";
+
 export type PaidPlan = "starter" | "pro" | "agency";
+export type { BillingInterval };
 
 /** Paid plans from cheapest to most expensive: moving right is an upgrade. */
 export const PAID_PLAN_ORDER: readonly PaidPlan[] = ["starter", "pro", "agency"];
 
-/** The Dodo product that sells a plan, or null when it isn't configured. */
-export function productIdForPlan(plan: PaidPlan): string | null {
-  const id =
-    plan === "agency" ? DODO_AGENCY_PRODUCT_ID : plan === "starter" ? DODO_STARTER_PRODUCT_ID : DODO_PRODUCT_ID;
-  return id || null;
+const PRODUCTS: Record<BillingInterval, Record<PaidPlan, string>> = {
+  month: { starter: DODO_STARTER_PRODUCT_ID, pro: DODO_PRODUCT_ID, agency: DODO_AGENCY_PRODUCT_ID },
+  year: { starter: DODO_STARTER_YEARLY_PRODUCT_ID, pro: DODO_PRO_YEARLY_PRODUCT_ID, agency: DODO_AGENCY_YEARLY_PRODUCT_ID },
+};
+
+/** The Dodo product that sells a plan on an interval, or null when it isn't configured. */
+export function productIdForPlan(plan: PaidPlan, interval: BillingInterval = "month"): string | null {
+  return PRODUCTS[interval][plan] || null;
+}
+
+/** The plan and interval a Dodo product sells, or null for a product we don't recognise. */
+export function productInfo(
+  productId: string | null | undefined,
+): { plan: PaidPlan; interval: BillingInterval } | null {
+  if (!productId) return null;
+  for (const interval of ["month", "year"] as const) {
+    for (const plan of PAID_PLAN_ORDER) {
+      if (PRODUCTS[interval][plan] && PRODUCTS[interval][plan] === productId) return { plan, interval };
+    }
+  }
+  return null;
 }
 
 /** The plan a Dodo product sells, or null for a product we don't recognise. */
 export function planForProductId(productId: string | null | undefined): PaidPlan | null {
-  if (!productId) return null;
-  if (DODO_STARTER_PRODUCT_ID && productId === DODO_STARTER_PRODUCT_ID) return "starter";
-  if (DODO_AGENCY_PRODUCT_ID && productId === DODO_AGENCY_PRODUCT_ID) return "agency";
-  if (DODO_PRODUCT_ID && productId === DODO_PRODUCT_ID) return "pro";
-  return null;
+  return productInfo(productId)?.plan ?? null;
 }
+
+/** Whether every paid plan can be bought yearly: the switch shows only then. */
+export const yearlyBillingEnabled = PAID_PLAN_ORDER.every((plan) => Boolean(PRODUCTS.year[plan]));
 
 export const DODO_WEBHOOK_SECRET = process.env.DODO_WEBHOOK_SECRET ?? "";
 export const DODO_API_KEY = process.env.DODO_API_KEY ?? "";
@@ -105,9 +131,10 @@ export function buildCheckoutUrl(params: {
   checkoutToken: string;
   email: string;
   plan?: PaidPlan;
+  interval?: BillingInterval;
 }): string | null {
   const plan = params.plan ?? "pro";
-  const productId = productIdForPlan(plan);
+  const productId = productIdForPlan(plan, params.interval ?? "month");
   if (!productId) return null;
   const url = new URL(`${CHECKOUT_BASE}/${productId}`);
   url.searchParams.set("quantity", "1");

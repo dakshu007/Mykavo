@@ -30,6 +30,20 @@ export const PLAN_PRICES_USD: Record<PlanTier, number> = {
 };
 
 /**
+ * Yearly price per tier, in USD: twelve months for the price of ten. Sold
+ * only where a yearly Dodo product is configured (apps/web billing config).
+ */
+export const PLAN_YEARLY_PRICES_USD: Record<PlanTier, number> = {
+  free: 0,
+  starter: 70,
+  pro: 200,
+  agency: 790,
+};
+
+/** How a paid plan is billed. */
+export type BillingInterval = "month" | "year";
+
+/**
  * Websites and monitored pages per website each tier allows. Here, not only
  * in the web plan config, because the worker enforces them too: a workspace
  * that moves to a smaller plan has the websites over its new limit paused

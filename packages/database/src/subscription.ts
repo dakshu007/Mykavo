@@ -98,8 +98,14 @@ export interface Entitlement {
   status: string;
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: Date | null;
+  /** How the plan is billed: yearly only for a Dodo yearly product. */
+  billingInterval: "month" | "year";
   dodoCustomerId: string | null;
   dodoSubscriptionId: string | null;
+}
+
+function intervalOf(sub: { billingInterval?: string | null } | null): "month" | "year" {
+  return sub?.billingInterval === "year" ? "year" : "month";
 }
 
 /**
@@ -136,6 +142,7 @@ export async function getWorkspaceEntitlement(
       status: sub?.status ?? "active",
       cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
       currentPeriodEnd: sub?.currentPeriodEnd ?? null,
+      billingInterval: intervalOf(sub),
       dodoCustomerId: sub?.dodoCustomerId ?? null,
       dodoSubscriptionId: sub?.dodoSubscriptionId ?? null,
     };
@@ -156,6 +163,7 @@ export async function getWorkspaceEntitlement(
         status: "trialing",
         cancelAtPeriodEnd: false,
         currentPeriodEnd: trial.endsAt,
+        billingInterval: "month",
         dodoCustomerId: sub?.dodoCustomerId ?? null,
         dodoSubscriptionId: sub?.dodoSubscriptionId ?? null,
       };
@@ -175,6 +183,7 @@ export async function getWorkspaceEntitlement(
       status: "active",
       cancelAtPeriodEnd: shopify!.cancelAtEnd,
       currentPeriodEnd: shopify!.periodEnd,
+      billingInterval: "month",
       dodoCustomerId: sub?.dodoCustomerId ?? null,
       dodoSubscriptionId: sub?.dodoSubscriptionId ?? null,
     };
@@ -190,6 +199,7 @@ export async function getWorkspaceEntitlement(
     status: sub.status,
     cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
     currentPeriodEnd: sub.currentPeriodEnd,
+    billingInterval: intervalOf(sub),
     dodoCustomerId: sub.dodoCustomerId,
     dodoSubscriptionId: sub.dodoSubscriptionId,
   };
@@ -204,6 +214,8 @@ export interface UpgradeInput {
   dodoSubscriptionId?: string | null;
   currentPeriodEnd?: Date | null;
   cancelAtPeriodEnd?: boolean;
+  /** Set when the event names the product: monthly or yearly. Unset keeps it. */
+  billingInterval?: "month" | "year";
   /** Logical event time - used to reject stale, out-of-order events. */
   eventAt?: Date | null;
 }
@@ -239,6 +251,7 @@ export async function grantPaidPlan(db: Db, input: UpgradeInput): Promise<void> 
     dodoSubscriptionId: input.dodoSubscriptionId ?? undefined,
     currentPeriodEnd: input.currentPeriodEnd ?? undefined,
     cancelAtPeriodEnd: input.cancelAtPeriodEnd ?? false,
+    billingInterval: input.billingInterval ?? undefined,
     lastEventAt: input.eventAt ?? undefined,
   };
 
@@ -253,6 +266,7 @@ export async function grantPaidPlan(db: Db, input: UpgradeInput): Promise<void> 
       dodoSubscriptionId: input.dodoSubscriptionId ?? null,
       currentPeriodEnd: input.currentPeriodEnd ?? null,
       cancelAtPeriodEnd: input.cancelAtPeriodEnd ?? false,
+      billingInterval: input.billingInterval ?? "month",
       lastEventAt: input.eventAt ?? null,
     },
     update: data,
@@ -292,6 +306,7 @@ export async function downgradeWorkspaceToFree(
       planId: "free",
       status: input.status,
       cancelAtPeriodEnd: false,
+      billingInterval: "month",
       lastEventAt: input.eventAt ?? undefined,
     },
   });

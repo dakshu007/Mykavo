@@ -1,40 +1,43 @@
 import { describe, expect, it } from "vitest";
 import {
   activeCampaign,
+  campaignCovers,
   campaignEndsLabel,
+  campaignPlansLabel,
   campaignPrice,
   campaignWindows,
   campaignsForYear,
   countdownParts,
   formatUsd,
+  nextCampaign,
 } from "./campaign";
 
 const ist = (iso: string) => new Date(`${iso}+05:30`);
 
 describe("Halloween every year", () => {
-  it("runs a month before Halloween through the end of 31 October", () => {
+  it("runs a month before Halloween until two days after it", () => {
     const h = campaignsForYear(2027).find((c) => c.id === "halloween-2027")!;
     expect(h.startsAt).toEqual(ist("2027-10-01T00:00:00"));
-    expect(h.endsAt).toEqual(ist("2027-11-01T00:00:00"));
-    expect(h).toMatchObject({ code: "SPOOKY30", percent: 30, cycles: 3 });
+    expect(h.endsAt).toEqual(ist("2027-11-03T00:00:00"));
+    expect(h).toMatchObject({ code: "SPOOKY30", percent: 30, cycles: 3, plans: ["pro", "agency"], page: "/pricing" });
   });
 
-  it("keeps 2026 on the Dodo code's own dates", () => {
-    const h = campaignsForYear(2026)[0]!;
+  it("ended early in 2026 to make way for Black Friday", () => {
+    const h = campaignsForYear(2026).find((c) => c.id === "halloween-2026")!;
     expect(h.startsAt).toEqual(ist("2026-10-20T00:00:00"));
-    expect(h.endsAt).toEqual(ist("2026-11-06T00:00:00"));
+    expect(h.endsAt).toEqual(ist("2026-10-31T00:00:00"));
   });
 
   it("is on inside the window and off outside it, every year", () => {
     expect(activeCampaign(ist("2026-10-19T23:59:59"))).toBeNull();
     expect(activeCampaign(ist("2026-10-20T00:00:00"))?.id).toBe("halloween-2026");
-    expect(activeCampaign(ist("2026-11-05T23:59:59"))?.id).toBe("halloween-2026");
-    expect(activeCampaign(ist("2026-11-06T00:00:00"))).toBeNull();
+    expect(activeCampaign(ist("2026-10-30T23:59:59"))?.id).toBe("halloween-2026");
+    expect(activeCampaign(ist("2026-10-31T00:00:00"))).toBeNull();
 
     expect(activeCampaign(ist("2027-09-30T23:59:59"))).toBeNull();
     expect(activeCampaign(ist("2027-10-15T12:00:00"))?.id).toBe("halloween-2027");
-    expect(activeCampaign(ist("2027-10-31T23:59:59"))?.id).toBe("halloween-2027");
-    expect(activeCampaign(ist("2027-11-01T00:00:00"))).toBeNull();
+    expect(activeCampaign(ist("2027-11-02T23:59:59"))?.id).toBe("halloween-2027");
+    expect(activeCampaign(ist("2027-11-03T00:00:00"))).toBeNull();
     expect(activeCampaign(ist("2031-10-05T00:00:00"))?.id).toBe("halloween-2031");
   });
 
@@ -42,8 +45,37 @@ describe("Halloween every year", () => {
     const windows = campaignWindows(2026, 3);
     const t = ist("2028-10-10T00:00:00").getTime();
     expect(windows.some(([s, e]) => t >= s && t < e)).toBe(true);
-    const off = ist("2028-12-10T00:00:00").getTime();
+    const off = ist("2028-12-20T00:00:00").getTime();
     expect(windows.some(([s, e]) => off >= s && off < e)).toBe(false);
+  });
+});
+
+describe("Black Friday every year", () => {
+  it("discounts Pro only, from 20 November until the code expires on 15 December", () => {
+    const bf = campaignsForYear(2026).find((c) => c.id === "black-friday-2026")!;
+    expect(bf).toMatchObject({ code: "BLACKFRIDAY50", percent: 50, cycles: 3, plans: ["pro"], page: "/black-friday" });
+    expect(bf.startsAt).toEqual(ist("2026-11-20T00:00:00"));
+    expect(bf.endsAt).toEqual(ist("2026-12-16T00:00:00"));
+  });
+
+  it("is on inside the window and off outside it", () => {
+    expect(activeCampaign(ist("2026-11-19T23:59:59"))).toBeNull();
+    expect(activeCampaign(ist("2026-11-27T10:00:00"))?.id).toBe("black-friday-2026");
+    expect(activeCampaign(ist("2026-12-15T23:59:59"))?.id).toBe("black-friday-2026");
+    expect(activeCampaign(ist("2026-12-16T00:00:00"))).toBeNull();
+  });
+
+  it("names the next run before it starts, and none once it is over", () => {
+    expect(nextCampaign("black-friday", ist("2026-11-01T00:00:00"))?.id).toBe("black-friday-2026");
+    expect(nextCampaign("black-friday", ist("2026-12-20T00:00:00"))?.id).toBe("black-friday-2027");
+  });
+
+  it("covers only the plans its code is for", () => {
+    const bf = campaignsForYear(2026).find((c) => c.id === "black-friday-2026")!;
+    expect(campaignCovers(bf, "pro")).toBe(true);
+    expect(campaignCovers(bf, "agency")).toBe(false);
+    expect(campaignPlansLabel(bf)).toBe("Pro");
+    expect(campaignPlansLabel(campaignsForYear(2026)[0]!)).toBe("Pro and Agency");
   });
 });
 

@@ -17,7 +17,13 @@ import {
   getWorkspaceSubscription,
   getEffectiveWebsiteLimit,
 } from "@/lib/billing/subscription";
-import { agencyBillingEnabled, billingEnabled, starterBillingEnabled } from "@/lib/billing/config";
+import {
+  agencyBillingEnabled,
+  billingEnabled,
+  starterBillingEnabled,
+  yearlyBillingEnabled,
+  type BillingInterval,
+} from "@/lib/billing/config";
 import { dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getPlan, formatLimit, type Plan } from "@/config/plans";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
@@ -26,7 +32,7 @@ import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscrip
 import { ChangePlanButton } from "@/components/dashboard/change-plan-button";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
-import { campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
+import { campaignCovers, campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
 import { getLiveCampaign } from "@/lib/billing/campaign-server";
 
 function FeatureList({ features, columns = false }: { features: string[]; columns?: boolean }) {
@@ -42,6 +48,41 @@ function FeatureList({ features, columns = false }: { features: string[]; column
   );
 }
 
+/**
+ * Monthly or yearly, for the plans below. Plain links (?interval=year), so
+ * the choice survives the signup redirect from the pricing page and works
+ * without JavaScript. A running offer is monthly-only, and says so.
+ */
+function IntervalTabs({ value, campaign }: { value: BillingInterval; campaign: Campaign | null }) {
+  const tab = (on: boolean) =>
+    `relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
+      on ? "bg-ink text-white" : "text-ink-secondary hover:text-ink"
+    }`;
+  return (
+    <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+      <nav aria-label="Billing interval" className="inline-flex rounded-full border border-line bg-card p-1">
+        <Link href="/dashboard/billing" className={tab(value === "month")} aria-current={value === "month" ? "page" : undefined}>
+          Monthly
+        </Link>
+        <Link
+          href="/dashboard/billing?interval=year"
+          className={tab(value === "year")}
+          aria-current={value === "year" ? "page" : undefined}
+        >
+          Yearly
+        </Link>
+      </nav>
+      <p className="text-[13px] text-ink-secondary">
+        {value === "year"
+          ? "12 months for the price of 10."
+          : campaign
+            ? `${campaign.name} price applies to monthly billing.`
+            : "Pay yearly and get 2 months free."}
+      </p>
+    </div>
+  );
+}
+
 /** One plan offered to a Free or trial workspace, with its own checkout. */
 function PlanOffer({
   plan,
@@ -50,6 +91,7 @@ function PlanOffer({
   highlighted,
   note,
   campaign,
+  interval = "month",
 }: {
   plan: Plan;
   checkoutHref: string;
@@ -57,7 +99,13 @@ function PlanOffer({
   highlighted: boolean;
   note?: string | null;
   campaign?: Campaign | null;
+  interval?: BillingInterval;
 }) {
+  // A campaign's code only discounts the plans it was created for in Dodo,
+  // and only monthly billing (its cycle limit counts months).
+  if (campaign && (interval === "year" || !campaignCovers(campaign, plan.id))) campaign = null;
+  const yearly = interval === "year";
+  const href = yearly ? `${checkoutHref}${checkoutHref.includes("?") ? "&" : "?"}interval=year` : checkoutHref;
   const offerPrice = campaign ? formatUsd(campaignPrice(plan.priceMonthlyUsd, campaign.percent)) : null;
   return (
     <Card className={highlighted ? "ring-2 ring-accent" : undefined}>
@@ -70,12 +118,22 @@ function PlanOffer({
             {plan.name} - {offerPrice}/month{" "}
             <span className="text-base font-normal text-ink-faint line-through">${plan.priceMonthlyUsd}</span>
           </>
+        ) : yearly ? (
+          <>
+            {plan.name} - ${plan.priceYearlyUsd}/year
+          </>
         ) : (
           <>
             {plan.name} - ${plan.priceMonthlyUsd}/month
           </>
         )}
       </h2>
+      {yearly && (
+        <p className="mt-1 text-sm font-medium text-success-strong">
+          ${(Math.round((plan.priceYearlyUsd / 12) * 100) / 100).toFixed(2)}/month, billed once a year. You save $
+          {plan.priceMonthlyUsd * 12 - plan.priceYearlyUsd} against monthly.
+        </p>
+      )}
       {campaign && (
         <p className="mt-1 text-sm font-medium text-[#C2410C]">
           {campaign.name}: {campaign.percent}% off your first {campaign.cycles} months, then $
@@ -87,10 +145,11 @@ function PlanOffer({
       <FeatureList features={plan.features} />
       {available ? (
         <a
-          href={checkoutHref}
+          href={href}
           className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
         >
-          Upgrade to {plan.name} <ArrowRight className="size-4" aria-hidden />
+          Upgrade to {plan.name}
+          {yearly ? " yearly" : ""} <ArrowRight className="size-4" aria-hidden />
         </a>
       ) : (
         <p className="mt-6 text-sm text-ink-faint">
@@ -108,7 +167,7 @@ function PlanOffer({
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string }>;
+  searchParams: Promise<{ checkout?: string; interval?: string }>;
 }) {
   const session = await requireSession();
   const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
@@ -137,6 +196,8 @@ export default async function BillingPage({
   const shopifyPlansUrl = shopifyShop ? shopifyPlanPageUrl(shopifyShop) : null;
   const canChangePlan = !shopifyShop && dodoApiConfigured() && !subscription?.cancelAtPeriodEnd;
   const justCheckedOut = sp.checkout === "success";
+  // Monthly unless yearly is asked for and can be bought.
+  const offerInterval: BillingInterval = yearlyBillingEnabled && sp.interval === "year" ? "year" : "month";
   // Server component: one clock read per request (also keeps the React
   // Compiler purity lint happy - Date.now() inline in render is flagged).
   const requestedAt = new Date();
@@ -174,7 +235,7 @@ export default async function BillingPage({
         <div className="flex flex-wrap items-baseline gap-3">
           <p className="text-3xl font-semibold tracking-tight text-ink">{plan.name}</p>
           <p className="text-sm text-ink-secondary">
-            {plan.unlimited ? "Admin workspace - no charge" : trialEndsAt ? `Trial ends ${trialEndsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, no charge` : `$${plan.priceMonthlyUsd}/month`}
+            {plan.unlimited ? "Admin workspace - no charge" : trialEndsAt ? `Trial ends ${trialEndsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, no charge` : subscription?.billingInterval === "year" ? `$${plan.priceYearlyUsd}/year` : `$${plan.priceMonthlyUsd}/month`}
           </p>
           {isPaid && (
             <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-strong">
@@ -234,8 +295,9 @@ export default async function BillingPage({
                     <>- billed through Shopify for {shopifyShop}.</>
                   ) : (
                     <>
-                      - ${plan.priceMonthlyUsd} billed monthly via Dodo Payments (charged
-                      as ${plan.priceMonthlyUsd} USD).
+                      {subscription?.billingInterval === "year"
+                        ? `- $${plan.priceYearlyUsd} billed yearly via Dodo Payments (charged as $${plan.priceYearlyUsd} USD).`
+                        : `- $${plan.priceMonthlyUsd} billed monthly via Dodo Payments (charged as $${plan.priceMonthlyUsd} USD).`}
                     </>
                   )}
                 </>
@@ -450,11 +512,13 @@ export default async function BillingPage({
       {/* Free or trial: both plans, each with its own checkout. */}
       {!isPaid && (
         <>
+          {yearlyBillingEnabled && <IntervalTabs value={offerInterval} campaign={campaign} />}
           <PlanOffer
             plan={pro}
             checkoutHref="/api/billing/checkout"
             available={billingEnabled}
             campaign={campaign}
+            interval={offerInterval}
             highlighted
             note={
               trialEndsAt
@@ -466,6 +530,7 @@ export default async function BillingPage({
             plan={starter}
             checkoutHref="/api/billing/checkout?plan=starter"
             available={starterBillingEnabled}
+            interval={offerInterval}
             highlighted={false}
             note={
               trialEndsAt
@@ -478,6 +543,7 @@ export default async function BillingPage({
             checkoutHref="/api/billing/checkout?plan=agency"
             available={agencyBillingEnabled}
             campaign={campaign}
+            interval={offerInterval}
             highlighted={false}
             note={
               trialEndsAt

@@ -22,6 +22,7 @@ import {
   PLAN_HISTORY_DAYS,
   PLAN_PAGE_LIMITS,
   PLAN_PRICES_USD,
+  PLAN_YEARLY_PRICES_USD,
   PLAN_WEBSITE_LIMITS,
   TRIAL_DAYS,
   TRIAL_MAX_WEBSITES,
@@ -38,6 +39,8 @@ export interface Plan {
   /** Set while this plan comes from a free trial, not a payment. */
   trial?: { endsAt: Date } | null;
   priceMonthlyUsd: number;
+  /** Billed once a year; 0 for Free. Sold only where yearly checkout is configured. */
+  priceYearlyUsd: number;
   headline: string;
   limits: {
     /** Infinity means unlimited. */
@@ -108,6 +111,7 @@ export const plans: Plan[] = [
     id: "free",
     name: "Free",
     priceMonthlyUsd: PLAN_PRICES_USD.free,
+    priceYearlyUsd: PLAN_YEARLY_PRICES_USD.free,
     headline: "Start monitoring one important website.",
     limits: {
       websites: PLAN_WEBSITE_LIMITS.free,
@@ -143,6 +147,7 @@ export const plans: Plan[] = [
     id: "starter",
     name: "Starter",
     priceMonthlyUsd: PLAN_PRICES_USD.starter,
+    priceYearlyUsd: PLAN_YEARLY_PRICES_USD.starter,
     headline: "Every feature for one person's websites: 2 sites, checked daily.",
     limits: {
       websites: PLAN_WEBSITE_LIMITS.starter,
@@ -180,6 +185,7 @@ export const plans: Plan[] = [
     id: "pro",
     name: "Pro",
     priceMonthlyUsd: PLAN_PRICES_USD.pro,
+    priceYearlyUsd: PLAN_YEARLY_PRICES_USD.pro,
     headline: "For freelancers and small teams: 8 websites, checked daily.",
     highlighted: true,
     limits: {
@@ -220,6 +226,7 @@ export const plans: Plan[] = [
     id: "agency",
     name: "Agency",
     priceMonthlyUsd: PLAN_PRICES_USD.agency,
+    priceYearlyUsd: PLAN_YEARLY_PRICES_USD.agency,
     headline: "For agencies: 30 client websites, reports under your own brand.",
     limits: {
       websites: PLAN_WEBSITE_LIMITS.agency,

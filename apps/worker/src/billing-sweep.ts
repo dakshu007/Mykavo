@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@mykavo/database";
-import { PLAN_NAMES, PLAN_PRICES_USD, toPlanTier } from "@mykavo/shared";
+import { PLAN_NAMES, PLAN_PRICES_USD, PLAN_YEARLY_PRICES_USD, toPlanTier } from "@mykavo/shared";
 import { sendEmail, renewalReminderEmail } from "@mykavo/email";
 import { logger } from "./logger";
 
@@ -54,7 +54,11 @@ export async function runBillingSweep(): Promise<void> {
       }),
       planName: PLAN_NAMES[toPlanTier(sub.planId)],
       // Grandfathered Pro still pays the Pro price - only features differ.
-      priceMonthlyUsd: PLAN_PRICES_USD[toPlanTier(sub.planId)],
+      // A yearly subscription renews at the yearly price.
+      renewalPriceUsd:
+        sub.billingInterval === "year"
+          ? PLAN_YEARLY_PRICES_USD[toPlanTier(sub.planId)]
+          : PLAN_PRICES_USD[toPlanTier(sub.planId)],
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
       billingUrl: `${appUrl()}/dashboard/billing`,
     });

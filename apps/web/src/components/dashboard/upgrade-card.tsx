@@ -3,7 +3,7 @@ import { Sparkles } from "lucide-react";
 import { getPlan, PAID_PLAN_ID, formatLimit } from "@/config/plans";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
-import { campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
+import { campaignCovers, campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
 
 /**
  * Sidebar upsell, shown on the Free plan and during the Pro trial.
@@ -31,6 +31,7 @@ export function UpgradeCard({
   campaign?: Campaign | null;
 }) {
   const pro = getPlan(PAID_PLAN_ID);
+  if (campaign && !campaignCovers(campaign, "pro")) campaign = null;
   const offer = campaign
     ? `${campaign.name}: ${formatUsd(campaignPrice(pro.priceMonthlyUsd, campaign.percent))}/mo for ${campaign.cycles} months, then $${pro.priceMonthlyUsd}.`
     : null;

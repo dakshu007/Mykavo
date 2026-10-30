@@ -50,7 +50,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const productId = productIdForPlan(target);
+  // A plan change keeps the billing interval: yearly stays yearly.
+  const productId = productIdForPlan(target, sub.billingInterval);
   if (!productId || !dodoApiConfigured()) {
     return NextResponse.json(
       { error: "Plan changes aren't available yet. Email us and we'll switch you over." },

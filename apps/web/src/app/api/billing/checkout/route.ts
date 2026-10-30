@@ -7,12 +7,14 @@ import {
   buildCheckoutUrl,
   checkoutRedirectUrl,
   productIdForPlan,
+  type BillingInterval,
   type PaidPlan,
 } from "@/lib/billing/config";
 import { createCheckoutSession, dodoApiConfigured } from "@/lib/billing/dodo-api";
 import { getWorkspaceSubscription } from "@/lib/billing/subscription";
 import { appBaseUrl } from "@/lib/app-url";
 import { getLiveCampaign } from "@/lib/billing/campaign-server";
+import { campaignCovers } from "@/config/campaign";
 import { logger } from "@/lib/logger";
 
 /**
@@ -38,15 +40,19 @@ export async function GET(request: Request) {
     );
   }
 
-  const requested = new URL(request.url).searchParams.get("plan");
+  const params = new URL(request.url).searchParams;
+  const requested = params.get("plan");
   const plan: PaidPlan = requested === "agency" || requested === "starter" ? requested : "pro";
+  // Yearly only where its product exists; anything else is monthly.
+  const interval: BillingInterval =
+    params.get("interval") === "year" && productIdForPlan(plan, "year") ? "year" : "month";
 
   const current = await getWorkspaceSubscription(workspace.id);
   if (current && current.planId !== "free" && current.billedBy !== "trial") {
     return NextResponse.redirect(`${appBaseUrl()}/dashboard/billing`);
   }
 
-  if (!productIdForPlan(plan)) {
+  if (!productIdForPlan(plan, interval)) {
     return NextResponse.json({ error: "Billing is not configured." }, { status: 503 });
   }
 
@@ -61,26 +67,34 @@ export async function GET(request: Request) {
   // Preferred: a checkout session, which lowers the autopay limit Indian
   // cards show (Rs 15,000 by default - see DODO_MANDATE_FLOOR_INR). Any
   // failure falls back to the static link, so checkout never breaks over it.
-  const productId = productIdForPlan(plan)!;
+  const productId = productIdForPlan(plan, interval)!;
   if (dodoApiConfigured()) {
     // A running campaign's code is applied for the buyer. If Dodo refuses it
     // (expired early, mistyped in the dashboard), the second attempt is a
     // plain session: a promotion must never be the reason checkout fails.
-    // Campaigns discount Pro and Agency; Starter is already the low price.
-    const campaign = plan === "starter" ? null : await getLiveCampaign().catch(() => null);
+    // Only for the plans the campaign's code covers in Dodo, and only on
+    // monthly billing: its cycle limit counts months.
+    const live = interval === "month" ? await getLiveCampaign().catch(() => null) : null;
+    const campaign = live && campaignCovers(live, plan) ? live : null;
     const attempts: (string[] | undefined)[] = campaign ? [[campaign.code], undefined] : [undefined];
     for (const discountCodes of attempts) {
       try {
         const sessionUrl = await createCheckoutSession({
           productId,
           email: session.user.email,
-          metadata: { checkoutToken: token, kind: plan, ...(discountCodes ? { campaign: campaign!.id } : {}) },
+          metadata: {
+            checkoutToken: token,
+            kind: plan,
+            interval,
+            ...(discountCodes ? { campaign: campaign!.id } : {}),
+          },
           returnUrl: checkoutRedirectUrl(),
           discountCodes,
         });
         logger.info("checkout started", {
           workspaceId: workspace.id,
           plan,
+          interval,
           via: "session",
           campaign: discountCodes ? campaign!.id : null,
         });
@@ -95,11 +109,11 @@ export async function GET(request: Request) {
     }
   }
 
-  const url = buildCheckoutUrl({ checkoutToken: token, email: session.user.email, plan });
+  const url = buildCheckoutUrl({ checkoutToken: token, email: session.user.email, plan, interval });
   if (!url) {
     return NextResponse.json({ error: "Billing is not configured." }, { status: 503 });
   }
 
-  logger.info("checkout started", { workspaceId: workspace.id, plan, via: "static-link" });
+  logger.info("checkout started", { workspaceId: workspace.id, plan, interval, via: "static-link" });
   return NextResponse.redirect(url);
 }

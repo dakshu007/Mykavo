@@ -15,7 +15,7 @@ import {
   resolveGrantedPlan,
   DodoWebhookError,
 } from "@/lib/billing/webhook";
-import { DODO_WEBHOOK_SECRET, planForProductId } from "@/lib/billing/config";
+import { DODO_WEBHOOK_SECRET, planForProductId, productInfo } from "@/lib/billing/config";
 import { notifyPaymentProblem, paymentProblemKind } from "@/lib/billing/payment-notice";
 import { logger } from "@/lib/logger";
 
@@ -179,6 +179,9 @@ export async function POST(request: Request) {
           dodoSubscriptionId: subscriptionId,
           currentPeriodEnd: parseDate(data.next_billing_date),
           cancelAtPeriodEnd: data.cancel_at_next_billing_date ?? false,
+          // Only when the event names the product; a payment event without
+          // one keeps whatever the subscription already records.
+          billingInterval: productInfo(productId)?.interval,
           eventAt,
         });
         return `granted-${planId}` as const;

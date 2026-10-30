@@ -872,6 +872,8 @@ model Subscription {
   dodoSubscriptionId    String?   @unique
   currentPeriodEnd      DateTime?
   cancelAtPeriodEnd     Boolean   @default(false)
+  // "month" | "year": which Dodo product the subscription is on.
+  billingInterval       String    @default("month")
   // When the "renews soon" reminder for the CURRENT period was sent - reset
   // implicitly each period because the sweep compares it to currentPeriodEnd.
   renewalReminderSentAt DateTime?

@@ -931,7 +931,8 @@ export interface RenewalReminderData {
   daysLeft: number;
   /** Human date the period ends, e.g. "August 16, 2026". */
   renewsOn: string;
-  priceMonthlyUsd: number;
+  /** What the renewal charges: the monthly or the yearly price. */
+  renewalPriceUsd: number;
   /** True when the subscription is set to cancel instead of renew. */
   cancelAtPeriodEnd: boolean;
   billingUrl: string;
@@ -953,7 +954,7 @@ export function renewalReminderEmail(data: RenewalReminderData): {
     : `Your MyKavo ${data.planName} plan renews ${inDays}`;
   const lead = data.cancelAtPeriodEnd
     ? `Your MyKavo subscription is about to expire - ${data.planName} access ends on ${data.renewsOn}. Renew now to keep daily scans, alerts and your full monitoring history.`
-    : `Heads up: your MyKavo ${data.planName} plan renews on ${data.renewsOn} for $${data.priceMonthlyUsd}. No action needed - this is just a reminder so the charge never surprises you.`;
+    : `Heads up: your MyKavo ${data.planName} plan renews on ${data.renewsOn} for $${data.renewalPriceUsd}. No action needed - this is just a reminder so the charge never surprises you.`;
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${data.cancelAtPeriodEnd ? "#e5484d" : "#8a8a7a"}">${data.cancelAtPeriodEnd ? "Subscription expiring" : "Upcoming renewal"}</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${data.cancelAtPeriodEnd ? `${esc(data.planName)} access ends ${esc(inDays)}` : `${esc(data.planName)} renews ${esc(inDays)}`}</h1>

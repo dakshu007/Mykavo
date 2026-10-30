@@ -14,6 +14,8 @@ export interface WorkspaceSubscription {
   status: string;
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: Date | null;
+  /** Monthly or yearly billing (Dodo); monthly for trials and Shopify. */
+  billingInterval: "month" | "year";
   dodoCustomerId: string | null;
   dodoSubscriptionId: string | null;
   /** Who bills the plan in force (null on Free). */

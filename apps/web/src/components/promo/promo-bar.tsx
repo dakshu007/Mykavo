@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Copy, Ghost } from "lucide-react";
+import { ArrowRight, Check, Copy, Ghost, Tag } from "lucide-react";
 import { PLAN_PRICES_USD } from "@mykavo/shared/plan-tier";
 import { track } from "@/lib/analytics";
-import { campaignPrice, countdownParts, formatUsd, type Campaign } from "@/config/campaign";
+import { campaignPlansLabel, campaignPrice, countdownParts, formatUsd, type Campaign } from "@/config/campaign";
 import { PROMO_ATTR } from "@/lib/campaign-client";
 
 /**
  * The seasonal offer bar: one slim strip across the top of the page, with no
- * close button - it goes away on its own when the offer ends. Bats cross it,
- * a ghost bobs, light sweeps over it and the countdown ticks every second;
- * all of that stops for prefers-reduced-motion (globals.css).
+ * close button - it goes away on its own when the offer ends. Each campaign
+ * has its own look: Halloween has bats and a bobbing ghost; Black Friday has
+ * falling gold sparks, a flickering sign and a pulsing price tag. Light
+ * sweeps over both and the countdown ticks every second; all of that stops
+ * for prefers-reduced-motion (globals.css).
  *
  * "fixed" pins it to the top of the marketing pages, in the space the <head>
  * boot script reserved. "inline" sits at the top of the dashboard.
@@ -55,6 +57,8 @@ export function PromoBar({
   if (over) return null;
 
   const pro = formatUsd(campaignPrice(PLAN_PRICES_USD.pro, campaign.percent));
+  const bf = campaign.theme === "black-friday";
+  const accent = bf ? "#FFCF00" : "#FF7A1A";
 
   async function copyCode() {
     try {
@@ -74,19 +78,77 @@ export function PromoBar({
     <div
       role="region"
       aria-label={`${campaign.name} offer`}
-      className={`${position} overflow-hidden border-b border-[#FF7A1A]/40 bg-[#151515] text-[#F5F5F0]`}
+      className={`${position} overflow-hidden border-b ${bf ? "border-[#FFCF00]/40 bg-[#0B0B0B]" : "border-[#FF7A1A]/40 bg-[#151515]"} text-[#F5F5F0]`}
     >
-      {/* Glow from below, like a lantern on the floor. */}
+      {/* Glow from below. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_140%_at_50%_120%,rgb(255_122_26/0.28),transparent_70%)]"
+        className={`pointer-events-none absolute inset-0 ${bf ? "bg-[radial-gradient(60%_140%_at_50%_120%,rgb(255_207_0/0.22),transparent_70%)]" : "bg-[radial-gradient(60%_140%_at_50%_120%,rgb(255_122_26/0.28),transparent_70%)]"}`}
       />
       {/* A band of light sweeping across. */}
       <div
         aria-hidden
-        className="promo-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-[linear-gradient(100deg,transparent,rgb(255_154_77/0.16),transparent)]"
+        className={`promo-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 ${bf ? "bg-[linear-gradient(100deg,transparent,rgb(255_207_0/0.14),transparent)]" : "bg-[linear-gradient(100deg,transparent,rgb(255_154_77/0.16),transparent)]"}`}
       />
-      {/* Bats, each on its own pace and delay. */}
+      {bf ? <Sparks /> : <Bats />}
+
+      <div className="relative mx-auto flex h-full max-w-6xl items-center justify-center gap-3 px-3 text-[13px] sm:gap-4 sm:px-5">
+        {bf ? (
+          <span className="bf-stamp inline-flex h-6 shrink-0 items-center gap-1 rounded-md bg-[#FFCF00] px-1.5 font-mono text-[11px] font-black text-[#0B0B0B]">
+            <Tag className="size-3" aria-hidden />-{campaign.percent}%
+          </span>
+        ) : (
+          <span className="promo-bob inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-[#FF7A1A]">
+            <Ghost className="size-3.5 text-[#151515]" aria-hidden />
+          </span>
+        )}
+
+        <p className="min-w-0 truncate">
+          <span
+            className={`hidden font-mono text-[11px] font-bold uppercase tracking-[0.16em] md:inline ${bf ? "bf-flicker text-[#FFCF00]" : "text-[#FF9A4D]"}`}
+          >
+            {campaign.name} sale ·{" "}
+          </span>
+          <span className="font-semibold">
+            {campaign.percent}% off {campaignPlansLabel(campaign)}
+          </span>
+          <span className="hidden text-[#B8BAAE] lg:inline">
+            {" "}
+            · first {campaign.cycles} months, Pro {pro}/mo
+          </span>
+        </p>
+
+        <Countdown left={left} />
+
+        <button
+          type="button"
+          onClick={copyCode}
+          style={{ borderColor: `${accent}B3`, color: bf ? "#FFE066" : "#FFB27A" }}
+          className="hidden shrink-0 items-center gap-1.5 rounded-md border border-dashed px-2 py-0.5 font-mono text-[12px] font-bold tracking-wider transition-colors hover:bg-white/5 md:inline-flex"
+          aria-label={`Copy code ${campaign.code}`}
+        >
+          {campaign.code}
+          {copied ? <Check className="size-3" aria-hidden /> : <Copy className="size-3 opacity-70" aria-hidden />}
+        </button>
+
+        <Link
+          href={href}
+          onClick={() => track("campaign_banner_clicked", { campaign: campaign.id, placement })}
+          className={`${bf ? "bf-glow bg-[#FFCF00] hover:bg-[#ffdb3d] text-[#0B0B0B]" : "promo-glow bg-[#FF7A1A] hover:bg-[#ff9447] text-[#151515]"} inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[12.5px] font-semibold transition-colors`}
+        >
+          <span className="hidden sm:inline">{bf ? "Get the deal" : "Claim offer"}</span>
+          <span className="sm:hidden">{bf ? "Deal" : "Claim"}</span>
+          <ArrowRight className="size-3.5" aria-hidden />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/** Halloween: bats cross the bar, each on its own pace and delay. */
+function Bats() {
+  return (
+    <>
       {[
         { fly: "13s", delay: "0s", top: "5px", size: 22 },
         { fly: "19s", delay: "-7s", top: "17px", size: 15 },
@@ -103,47 +165,34 @@ export function PromoBar({
           </svg>
         </span>
       ))}
+    </>
+  );
+}
 
-      <div className="relative mx-auto flex h-full max-w-6xl items-center justify-center gap-3 px-3 text-[13px] sm:gap-4 sm:px-5">
-        <span className="promo-bob inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-[#FF7A1A]">
-          <Ghost className="size-3.5 text-[#151515]" aria-hidden />
-        </span>
+/** Black Friday: gold sparks drifting down across the bar. */
+const SPARKS = [
+  { left: "6%", fall: "2.4s", delay: "0s", size: 3 },
+  { left: "14%", fall: "3.1s", delay: "-1.2s", size: 2 },
+  { left: "27%", fall: "2.7s", delay: "-0.6s", size: 2 },
+  { left: "41%", fall: "3.4s", delay: "-2.1s", size: 3 },
+  { left: "58%", fall: "2.5s", delay: "-1.6s", size: 2 },
+  { left: "71%", fall: "3s", delay: "-0.3s", size: 3 },
+  { left: "84%", fall: "2.8s", delay: "-2.4s", size: 2 },
+  { left: "93%", fall: "3.3s", delay: "-1s", size: 3 },
+];
 
-        <p className="min-w-0 truncate">
-          <span className="hidden font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#FF9A4D] md:inline">
-            {campaign.name} sale ·{" "}
-          </span>
-          <span className="font-semibold">{campaign.percent}% off Pro</span>
-          <span className="hidden sm:inline"> &amp; Agency</span>
-          <span className="hidden text-[#B8BAAE] lg:inline">
-            {" "}
-            · first {campaign.cycles} months, Pro {pro}/mo
-          </span>
-        </p>
-
-        <Countdown left={left} />
-
-        <button
-          type="button"
-          onClick={copyCode}
-          className="hidden shrink-0 items-center gap-1.5 rounded-md border border-dashed border-[#FF7A1A]/70 px-2 py-0.5 font-mono text-[12px] font-bold tracking-wider text-[#FFB27A] transition-colors hover:bg-[#FF7A1A]/10 md:inline-flex"
-          aria-label={`Copy code ${campaign.code}`}
-        >
-          {campaign.code}
-          {copied ? <Check className="size-3" aria-hidden /> : <Copy className="size-3 opacity-70" aria-hidden />}
-        </button>
-
-        <Link
-          href={href}
-          onClick={() => track("campaign_banner_clicked", { campaign: campaign.id, placement })}
-          className="promo-glow inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FF7A1A] px-3 py-1 text-[12.5px] font-semibold text-[#151515] transition-colors hover:bg-[#ff9447]"
-        >
-          <span className="hidden sm:inline">Claim offer</span>
-          <span className="sm:hidden">Claim</span>
-          <ArrowRight className="size-3.5" aria-hidden />
-        </Link>
-      </div>
-    </div>
+function Sparks() {
+  return (
+    <>
+      {SPARKS.map((sp, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className="bf-spark pointer-events-none absolute top-0 rounded-full bg-[#FFCF00] shadow-[0_0_6px_1px_rgb(255_207_0/0.6)]"
+          style={{ left: sp.left, width: sp.size, height: sp.size, ["--fall" as string]: sp.fall, ["--delay" as string]: sp.delay }}
+        />
+      ))}
+    </>
   );
 }
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   DODO_AGENCY_PRODUCT_ID,
   DODO_PRODUCT_ID,
@@ -44,5 +44,36 @@ describe("Dodo product mapping", () => {
   it("defaults checkout to Pro", () => {
     const url = new URL(buildCheckoutUrl({ checkoutToken: "tok", email: "a@b.test" })!);
     expect(url.pathname.endsWith(`/${DODO_PRODUCT_ID}`)).toBe(true);
+  });
+});
+
+describe("yearly products", () => {
+  it("stay off until every yearly product is configured", async () => {
+    const { productIdForPlan: pid, yearlyBillingEnabled } = await import("./config");
+    if (!process.env.DODO_PRO_YEARLY_PRODUCT_ID) {
+      expect(yearlyBillingEnabled).toBe(false);
+      expect(pid("pro", "year")).toBeNull();
+    }
+  });
+
+  it("map yearly products to their plan and interval, apart from monthly", async () => {
+    vi.resetModules();
+    vi.stubEnv("DODO_STARTER_YEARLY_PRODUCT_ID", "pdt_starter_y");
+    vi.stubEnv("DODO_PRO_YEARLY_PRODUCT_ID", "pdt_pro_y");
+    vi.stubEnv("DODO_AGENCY_YEARLY_PRODUCT_ID", "pdt_agency_y");
+    try {
+      const c = await import("./config");
+      expect(c.yearlyBillingEnabled).toBe(true);
+      expect(c.productIdForPlan("pro", "year")).toBe("pdt_pro_y");
+      expect(c.productIdForPlan("pro")).toBe(c.DODO_PRODUCT_ID);
+      expect(c.productInfo("pdt_agency_y")).toEqual({ plan: "agency", interval: "year" });
+      expect(c.productInfo(c.DODO_PRODUCT_ID)).toEqual({ plan: "pro", interval: "month" });
+      expect(c.planForProductId("pdt_starter_y")).toBe("starter");
+      const url = new URL(c.buildCheckoutUrl({ checkoutToken: "t", email: "a@b.test", plan: "pro", interval: "year" })!);
+      expect(url.pathname.endsWith("/pdt_pro_y")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
   });
 });

@@ -14,6 +14,12 @@
  * window below (or create it again). Nothing in the code needs to change.
  */
 
+/** The look a campaign's offer bar and banners take. */
+export type CampaignTheme = "halloween" | "black-friday";
+
+/** Paid plans a campaign's code can discount (monthly billing only). */
+export type CampaignPlan = "starter" | "pro" | "agency";
+
 export interface Campaign {
   /** Unique per run, e.g. "halloween-2026". */
   id: string;
@@ -25,6 +31,11 @@ export interface Campaign {
   percent: number;
   /** Billing cycles the discount covers (Dodo "subscription cycle limit"). */
   cycles: number;
+  /** The plans the code applies to, matching its product list in Dodo. */
+  plans: CampaignPlan[];
+  theme: CampaignTheme;
+  /** Where the offer bar sends people. */
+  page: string;
   startsAt: Date;
   /** Exclusive: the campaign is over at this instant. */
   endsAt: Date;
@@ -41,6 +52,9 @@ interface SeasonalCampaign {
   code: string;
   percent: number;
   cycles: number;
+  plans: CampaignPlan[];
+  theme: CampaignTheme;
+  page: string;
   /** The yearly window. */
   window: (year: number) => Window;
   /** A year that runs on different dates (or with a different code). */
@@ -61,12 +75,27 @@ export const SEASONAL_CAMPAIGNS: readonly SeasonalCampaign[] = [
     code: "SPOOKY30",
     percent: 30,
     cycles: 3,
-    // A month before Halloween, through the end of 31 October.
-    window: (year) => ({ startsAt: istMidnight(year, 10, 1), endsAt: istMidnight(year, 11, 1) }),
+    plans: ["pro", "agency"],
+    theme: "halloween",
+    page: "/pricing",
+    // Through 2 November: two days after Halloween, then it is over.
+    window: (year) => ({ startsAt: istMidnight(year, 10, 1), endsAt: istMidnight(year, 11, 3) }),
     overrides: {
-      // The first run started late and runs to the Dodo code's expiry.
-      2026: { startsAt: istMidnight(2026, 10, 20), endsAt: istMidnight(2026, 11, 6) },
+      // Ended early in 2026 to make way for Black Friday.
+      2026: { startsAt: istMidnight(2026, 10, 20), endsAt: istMidnight(2026, 10, 31) },
     },
+  },
+  {
+    key: "black-friday",
+    name: "Black Friday",
+    code: "BLACKFRIDAY50",
+    percent: 50,
+    cycles: 3,
+    plans: ["pro"],
+    theme: "black-friday",
+    page: "/black-friday",
+    // From the week before Black Friday until the code expires on 15 December.
+    window: (year) => ({ startsAt: istMidnight(year, 11, 20), endsAt: istMidnight(year, 12, 16) }),
   },
 ];
 
@@ -81,6 +110,9 @@ export function campaignsForYear(year: number): Campaign[] {
       code: o?.code ?? s.code,
       percent: s.percent,
       cycles: s.cycles,
+      plans: s.plans,
+      theme: s.theme,
+      page: s.page,
       startsAt: o?.startsAt ?? w.startsAt,
       endsAt: o?.endsAt ?? w.endsAt,
     };
@@ -125,6 +157,27 @@ export function formatUsd(amount: number): string {
   return Number.isInteger(amount) ? `$${amount}` : `$${amount.toFixed(2)}`;
 }
 
+/** Whether the campaign's code discounts this plan. */
+export function campaignCovers(campaign: Pick<Campaign, "plans">, plan: string): boolean {
+  return (campaign.plans as string[]).includes(plan);
+}
+
+/** "Pro" or "Pro and Agency", for offer copy. */
+export function campaignPlansLabel(campaign: Pick<Campaign, "plans">): string {
+  const names = campaign.plans.map((p) => (p === "pro" ? "Pro" : p === "agency" ? "Agency" : "Starter"));
+  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/** The next run of a seasonal campaign that hasn't ended yet, running or not. */
+export function nextCampaign(key: string, now: Date = new Date()): Campaign | null {
+  const year = now.getUTCFullYear();
+  for (const y of [year - 1, year, year + 1]) {
+    const hit = campaignsForYear(y).find((c) => c.id === `${key}-${y}` && c.endsAt.getTime() > now.getTime());
+    if (hit) return hit;
+  }
+  return null;
+}
+
 /** Whole days left, counting a part day as one: "ends in 3 days". */
 export function campaignDaysLeft(campaign: Campaign, now: Date = new Date()): number {
   return Math.max(0, Math.ceil((campaign.endsAt.getTime() - now.getTime()) / 86_400_000));
@@ -157,6 +210,9 @@ export interface CampaignJson {
   code: string;
   percent: number;
   cycles: number;
+  plans: CampaignPlan[];
+  theme: CampaignTheme;
+  page: string;
   startsAt: string;
   endsAt: string;
 }

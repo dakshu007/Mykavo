@@ -46,14 +46,14 @@ describe("judgeDiscount", () => {
 describe("getLiveCampaign", () => {
   it("is null outside the calendar window without asking Dodo", async () => {
     const f = dodoReturns(200, good);
-    expect(await getLiveCampaign(new Date("2026-12-01T00:00:00Z"))).toBeNull();
+    expect(await getLiveCampaign(new Date("2026-11-10T00:00:00Z"))).toBeNull();
     expect(f).not.toHaveBeenCalled();
   });
 
   it("ends at the code's expiry when that comes first", async () => {
-    dodoReturns(200, { ...good, expires_at: "2026-11-01T00:00:00Z" });
+    dodoReturns(200, { ...good, expires_at: "2026-10-28T00:00:00Z" });
     const c = await getLiveCampaign(now);
-    expect(c?.endsAt.toISOString()).toBe("2026-11-01T00:00:00.000Z");
+    expect(c?.endsAt.toISOString()).toBe("2026-10-28T00:00:00.000Z");
   });
 
   it("hides the offer when the code doesn't exist in Dodo", async () => {

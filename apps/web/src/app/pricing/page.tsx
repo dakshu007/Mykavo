@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
-import { Check, CheckCircle2, Minus } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { PricingCampaignBanner } from "@/components/landing/campaign-announcement";
 import { LandingFooter } from "@/components/landing/footer";
@@ -9,6 +9,8 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
 import { ValueQuoteBanner } from "@/components/value-quote";
 import { plans, formatLimit, getPlan } from "@/config/plans";
+import { PricingPlans, type PricingPlan } from "@/components/marketing/pricing-plans";
+import { yearlyBillingEnabled } from "@/lib/billing/config";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES, TRIAL_REMINDER_DAYS_LEFT } from "@mykavo/shared";
 import {
   FEATURE_LIST,
@@ -118,7 +120,9 @@ const pricingFaqs = [
   },
   {
     q: "Do you offer annual billing?",
-    a: "Monthly billing at launch; annual plans with a discount are on the roadmap.",
+    a: yearlyBillingEnabled
+      ? `Yes. Pay yearly and get 12 months for the price of 10: Starter $${getPlan("starter").priceYearlyUsd}, Pro $${getPlan("pro").priceYearlyUsd} and Agency $${getPlan("agency").priceYearlyUsd} a year. Switch between monthly and yearly above the plans.`
+      : "Monthly billing for now; yearly plans with two months free are coming soon.",
   },
 ];
 
@@ -141,6 +145,17 @@ const pricingJsonLd = {
     }),
   ],
 };
+
+const pricingPlans: PricingPlan[] = plans.map((plan) => ({
+  id: plan.id,
+  name: plan.name,
+  headline: plan.headline,
+  priceMonthlyUsd: plan.priceMonthlyUsd,
+  priceYearlyUsd: plan.priceYearlyUsd,
+  highlighted: Boolean(plan.highlighted),
+  features: plan.features,
+  websitesLabel: formatLimit(plan.limits.websites),
+}));
 
 export default function PricingPage() {
   return (
@@ -191,68 +206,13 @@ export default function PricingPage() {
         {/* A running campaign's offer; nothing outside one. */}
         <PricingCampaignBanner />
 
-        {/* Plan cards */}
-        <div className="mx-auto grid max-w-3xl gap-6 md:max-w-5xl md:grid-cols-2 xl:max-w-7xl xl:grid-cols-4">
-          {plans.map((plan) => {
-            const pro = plan.highlighted;
-            return (
-              <div
-                key={plan.id}
-                className={`flex flex-col rounded-2xl border p-8 text-[#151515] xl:p-6 ${
-                  pro
-                    ? "border-[#151515] bg-[#FFD400] shadow-[7px_7px_0_#151515]"
-                    : "border-black/10 bg-white"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className={`${fontDisplay} text-3xl`}>{plan.name}</h2>
-                  {pro && (
-                    <span className="rounded-full bg-[#151515] px-3 py-1 text-xs font-semibold text-[#FFD400]">
-                      Most popular
-                    </span>
-                  )}
-                </div>
-                <p className="mt-2 text-sm leading-6 text-[#151515]/65">{plan.headline}</p>
-                <p className="mt-6">
-                  <span className={`${fontDisplay} text-5xl`}>
-                    ${plan.priceMonthlyUsd}
-                  </span>
-                  <span className="text-sm text-[#151515]/70"> / month</span>
-                </p>
-                <ul className="mt-7 flex-1 space-y-3">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-[14px] leading-6">
-                      <CheckCircle2 className="mt-1 size-4 shrink-0 text-[#151515]" aria-hidden />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={plan.id === "agency" || plan.id === "starter" ? "/signup?next=/dashboard/billing" : "/signup"}
-                  className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
-                >
-                  {plan.priceMonthlyUsd === 0
-                    ? "Start free"
-                    : plan.id === "pro"
-                      ? `Try ${plan.name} free for ${TRIAL_DAYS} days`
-                      : `Get ${plan.name}`}
-                </Link>
-                {plan.id === "pro" && (
-                  <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
-                    The trial covers up to {TRIAL_MAX_WEBSITES} websites ({plan.name} has{" "}
-                    {formatLimit(plan.limits.websites)}). No card. Then Free unless you upgrade.
-                  </p>
-                )}
-                {(plan.id === "agency" || plan.id === "starter") && (
-                  <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
-                    New accounts start on the {TRIAL_DAYS}-day Pro trial. Switch to {plan.name} from
-                    Billing at any time.
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* Plan cards, with the monthly/yearly switch and any running offer. */}
+        <PricingPlans
+          plans={pricingPlans}
+          yearlyEnabled={yearlyBillingEnabled}
+          trialDays={TRIAL_DAYS}
+          trialMaxWebsites={TRIAL_MAX_WEBSITES}
+        />
 
         {/* Comparison table */}
         <section className="mt-24">

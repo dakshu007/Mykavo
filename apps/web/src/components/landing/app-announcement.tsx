@@ -70,7 +70,8 @@ export function AppAnnouncement() {
 
   const pathname = usePathname();
   // The extension's page is the announcement, so it would only cover its own hero.
-  if (state === "hidden" || pathname === CHROME_EXTENSION_PAGE_PATH) return null;
+  // Not on its own page, and not over the Black Friday sale page's offer.
+  if (state === "hidden" || pathname === CHROME_EXTENSION_PAGE_PATH || pathname === "/black-friday") return null;
 
   return (
     <div
