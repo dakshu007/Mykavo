@@ -88,7 +88,7 @@ const steps = [
 const faqs = [
   {
     q: "What is the MyKavo Black Friday deal?",
-    a: `${BF.percent}% off MyKavo Pro for your first ${BF.cycles} months: $${OFFER} a month instead of $${PRO.priceMonthlyUsd}, then the regular price. It runs from November 20 until December 15.`,
+    a: `${BF.percent}% off MyKavo Pro for your first ${BF.cycles} months: $${OFFER} a month instead of $${PRO.priceMonthlyUsd}, then the regular price. It runs until December 15.`,
   },
   {
     q: "Do I need to enter the code?",

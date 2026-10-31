@@ -32,7 +32,7 @@ describe("Halloween every year", () => {
     expect(activeCampaign(ist("2026-10-19T23:59:59"))).toBeNull();
     expect(activeCampaign(ist("2026-10-20T00:00:00"))?.id).toBe("halloween-2026");
     expect(activeCampaign(ist("2026-10-30T23:59:59"))?.id).toBe("halloween-2026");
-    expect(activeCampaign(ist("2026-10-31T00:00:00"))).toBeNull();
+    expect(activeCampaign(ist("2026-10-31T00:00:00"))?.id).toBe("black-friday-2026");
 
     expect(activeCampaign(ist("2027-09-30T23:59:59"))).toBeNull();
     expect(activeCampaign(ist("2027-10-15T12:00:00"))?.id).toBe("halloween-2027");
@@ -52,21 +52,28 @@ describe("Halloween every year", () => {
 
 describe("Black Friday every year", () => {
   it("discounts Pro only, from 20 November until the code expires on 15 December", () => {
-    const bf = campaignsForYear(2026).find((c) => c.id === "black-friday-2026")!;
+    const bf = campaignsForYear(2027).find((c) => c.id === "black-friday-2027")!;
     expect(bf).toMatchObject({ code: "BLACKFRIDAY50", percent: 50, cycles: 3, plans: ["pro"], page: "/black-friday" });
-    expect(bf.startsAt).toEqual(ist("2026-11-20T00:00:00"));
+    expect(bf.startsAt).toEqual(ist("2027-11-20T00:00:00"));
+    expect(bf.endsAt).toEqual(ist("2027-12-16T00:00:00"));
+  });
+
+  it("started straight after Halloween in 2026", () => {
+    const bf = campaignsForYear(2026).find((c) => c.id === "black-friday-2026")!;
+    expect(bf.startsAt).toEqual(ist("2026-10-31T00:00:00"));
     expect(bf.endsAt).toEqual(ist("2026-12-16T00:00:00"));
+    expect(activeCampaign(ist("2026-10-31T00:00:00"))?.id).toBe("black-friday-2026");
   });
 
   it("is on inside the window and off outside it", () => {
-    expect(activeCampaign(ist("2026-11-19T23:59:59"))).toBeNull();
+    expect(activeCampaign(ist("2027-11-19T23:59:59"))).toBeNull();
     expect(activeCampaign(ist("2026-11-27T10:00:00"))?.id).toBe("black-friday-2026");
     expect(activeCampaign(ist("2026-12-15T23:59:59"))?.id).toBe("black-friday-2026");
     expect(activeCampaign(ist("2026-12-16T00:00:00"))).toBeNull();
   });
 
   it("names the next run before it starts, and none once it is over", () => {
-    expect(nextCampaign("black-friday", ist("2026-11-01T00:00:00"))?.id).toBe("black-friday-2026");
+    expect(nextCampaign("black-friday", ist("2027-11-01T00:00:00"))?.id).toBe("black-friday-2027");
     expect(nextCampaign("black-friday", ist("2026-12-20T00:00:00"))?.id).toBe("black-friday-2027");
   });
 

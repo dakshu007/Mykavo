@@ -96,6 +96,10 @@ export const SEASONAL_CAMPAIGNS: readonly SeasonalCampaign[] = [
     page: "/black-friday",
     // From the week before Black Friday until the code expires on 15 December.
     window: (year) => ({ startsAt: istMidnight(year, 11, 20), endsAt: istMidnight(year, 12, 16) }),
+    overrides: {
+      // Started straight after Halloween in 2026.
+      2026: { startsAt: istMidnight(2026, 10, 31) },
+    },
   },
 ];
 

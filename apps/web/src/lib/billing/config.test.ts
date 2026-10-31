@@ -48,12 +48,12 @@ describe("Dodo product mapping", () => {
 });
 
 describe("yearly products", () => {
-  it("stay off until every yearly product is configured", async () => {
-    const { productIdForPlan: pid, yearlyBillingEnabled } = await import("./config");
-    if (!process.env.DODO_PRO_YEARLY_PRODUCT_ID) {
-      expect(yearlyBillingEnabled).toBe(false);
-      expect(pid("pro", "year")).toBeNull();
-    }
+  it("are on for every plan, each on its own product", async () => {
+    const c = await import("./config");
+    expect(c.yearlyBillingEnabled).toBe(true);
+    const ids = (["starter", "pro", "agency"] as const).flatMap((p) => [c.productIdForPlan(p), c.productIdForPlan(p, "year")]);
+    expect(new Set(ids).size).toBe(6);
+    expect(c.productInfo(c.productIdForPlan("agency", "year"))).toEqual({ plan: "agency", interval: "year" });
   });
 
   it("map yearly products to their plan and interval, apart from monthly", async () => {

@@ -46,7 +46,7 @@ describe("judgeDiscount", () => {
 describe("getLiveCampaign", () => {
   it("is null outside the calendar window without asking Dodo", async () => {
     const f = dodoReturns(200, good);
-    expect(await getLiveCampaign(new Date("2026-11-10T00:00:00Z"))).toBeNull();
+    expect(await getLiveCampaign(new Date("2027-11-10T00:00:00Z"))).toBeNull();
     expect(f).not.toHaveBeenCalled();
   });
 

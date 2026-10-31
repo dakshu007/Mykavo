@@ -334,7 +334,7 @@ export function BfHeroStatus({ claimHref }: { claimHref: string }) {
           onClick={() => track("campaign_banner_clicked", { campaign: "black-friday", placement: "bf_hero" })}
           className="bf-glow group inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[#FFCF00] px-8 text-[16px] font-bold text-[#0B0B0B] transition-transform hover:-translate-y-0.5 motion-reduce:transition-none"
         >
-          {s?.phase === "upcoming" ? "Start free now, save on Nov 20" : "Claim 50% off Pro"}
+          {s?.phase === "upcoming" ? "Start free now, save when it opens" : "Claim 50% off Pro"}
           <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" aria-hidden />
         </Link>
         <a href="#deal" className="inline-flex h-14 items-center justify-center rounded-full border border-white/20 px-7 text-[15px] font-semibold text-white hover:bg-white/10">
@@ -416,7 +416,7 @@ export function BfPricing({ pro, others, yearlyEnabled }: { pro: BfPlan; others:
             {yearly
               ? `${usd(perMonth(pro.yearly))}/month, billed once a year. You save ${usd(yearlySaving(pro.monthly, pro.yearly))}.`
               : s?.phase === "upcoming"
-                ? `Black Friday price from November 20: ${usd(offerPrice)}/month for ${cycles} months, then ${usd(pro.monthly)}.`
+                ? `Black Friday price once the sale opens: ${usd(offerPrice)}/month for ${cycles} months, then ${usd(pro.monthly)}.`
                 : offerOn
                   ? `For your first ${cycles} months, then ${usd(pro.monthly)}. Your first year: ${usd(firstYearMonthly)} instead of ${usd(pro.monthly * 12)}.`
                   : `${usd(pro.monthly)}/month. Cancel anytime.`}

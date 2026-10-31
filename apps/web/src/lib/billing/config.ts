@@ -20,13 +20,15 @@ export const DODO_STARTER_PRODUCT_ID =
   process.env.DODO_STARTER_PRODUCT_ID ?? "pdt_0NqfsjgjOLzIPXdwa8K9a";
 
 /**
- * Yearly products (12 months for the price of 10). Empty until each one is
- * created in Dodo; while any is missing the monthly/yearly switch stays
- * hidden, so nobody is offered a checkout that can't open.
+ * Yearly products (12 months for the price of 10; LIVE-mode, override via
+ * env). If any is ever unset, the monthly/yearly switch hides, so nobody is
+ * offered a checkout that can't open.
  */
-export const DODO_STARTER_YEARLY_PRODUCT_ID = process.env.DODO_STARTER_YEARLY_PRODUCT_ID ?? "";
-export const DODO_PRO_YEARLY_PRODUCT_ID = process.env.DODO_PRO_YEARLY_PRODUCT_ID ?? "";
-export const DODO_AGENCY_YEARLY_PRODUCT_ID = process.env.DODO_AGENCY_YEARLY_PRODUCT_ID ?? "";
+export const DODO_STARTER_YEARLY_PRODUCT_ID =
+  process.env.DODO_STARTER_YEARLY_PRODUCT_ID ?? "pdt_0NqubNA3xvjEj4tTEMWug";
+export const DODO_PRO_YEARLY_PRODUCT_ID = process.env.DODO_PRO_YEARLY_PRODUCT_ID ?? "pdt_0NqubXVzfBgPOEpvVanim";
+export const DODO_AGENCY_YEARLY_PRODUCT_ID =
+  process.env.DODO_AGENCY_YEARLY_PRODUCT_ID ?? "pdt_0NqubmqsMdzHnkEZ79M2H";
 
 export type PaidPlan = "starter" | "pro" | "agency";
 export type { BillingInterval };
