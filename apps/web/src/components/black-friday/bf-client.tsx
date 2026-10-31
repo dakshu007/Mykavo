@@ -7,6 +7,7 @@ import { ArrowRight, Check, Copy, Sparkles } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { countdownParts, nextCampaign, type Campaign } from "@/config/campaign";
 import { useLiveCampaign } from "@/lib/campaign-client";
+import { PlanBadge } from "@/components/brand/plan-badge";
 import { BillingIntervalSwitch, perMonth, usd, yearlySaving, type BillingInterval } from "@/components/marketing/billing-interval";
 
 /* ------------------------------------------------------------------ phase */
@@ -396,7 +397,8 @@ export function BfPricing({ pro, others, yearlyEnabled }: { pro: BfPlan; others:
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">The deal</span>
           </div>
-          <h3 className="relative mt-5 font-[family-name:var(--font-poppins)] text-4xl font-semibold tracking-[-0.02em] text-white">
+          <h3 className="relative mt-5 flex items-center gap-4 font-[family-name:var(--font-poppins)] text-4xl font-semibold tracking-[-0.02em] text-white">
+            <PlanBadge plan="pro" size={56} />
             MyKavo {pro.name}
           </h3>
           <p className="relative mt-2 max-w-md text-[15px] leading-6 text-white/65">{pro.headline}</p>
@@ -450,7 +452,10 @@ export function BfPricing({ pro, others, yearlyEnabled }: { pro: BfPlan; others:
           {others.map((p) => (
             <div key={p.id} className="flex flex-1 flex-col rounded-[28px] border border-white/10 bg-white/[0.03] p-7">
               <div className="flex items-baseline justify-between gap-3">
-                <h3 className="font-[family-name:var(--font-poppins)] text-2xl font-semibold text-white">{p.name}</h3>
+                <h3 className="flex items-center gap-3 font-[family-name:var(--font-poppins)] text-2xl font-semibold text-white">
+                  <PlanBadge plan={p.id} size={36} />
+                  {p.name}
+                </h3>
                 <p className="text-white">
                   <span key={interval} className="animate-[price-in_.35s_ease-out] inline-block font-[family-name:var(--font-poppins)] text-3xl font-bold motion-reduce:animate-none">
                     {usd(yearly ? p.yearly : p.monthly)}

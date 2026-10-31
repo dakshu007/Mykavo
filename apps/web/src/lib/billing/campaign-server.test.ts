@@ -56,6 +56,16 @@ describe("getLiveCampaign", () => {
     expect(c?.endsAt.toISOString()).toBe("2026-10-28T00:00:00.000Z");
   });
 
+  it("hides the offer when Dodo says the code isn't active yet", async () => {
+    dodoReturns(422, { code: "DISCOUNT_NOT_YET_ACTIVE", message: "Discount code 'X' is not yet active" });
+    expect(await getLiveCampaign(now)).toBeNull();
+  });
+
+  it("trusts the calendar on any other 422", async () => {
+    dodoReturns(422, { code: "SOMETHING_ELSE" });
+    expect(await getLiveCampaign(now)).not.toBeNull();
+  });
+
   it("hides the offer when the code doesn't exist in Dodo", async () => {
     dodoReturns(404);
     expect(await getLiveCampaign(now)).toBeNull();

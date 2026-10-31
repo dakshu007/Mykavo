@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BillingIntervalOffers } from "@/components/dashboard/billing-interval-offers";
+import { PlanBadge, type BadgePlan } from "@/components/brand/plan-badge";
 import {
   ArrowRight,
   CalendarClock,
@@ -6,7 +8,6 @@ import {
   CheckCircle2,
   CreditCard,
   Globe,
-  Sparkles,
 } from "lucide-react";
 import { prisma, canStartTrial } from "@mykavo/database";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
@@ -48,39 +49,9 @@ function FeatureList({ features, columns = false }: { features: string[]; column
   );
 }
 
-/**
- * Monthly or yearly, for the plans below. Plain links (?interval=year), so
- * the choice survives the signup redirect from the pricing page and works
- * without JavaScript. A running offer is monthly-only, and says so.
- */
-function IntervalTabs({ value, campaign }: { value: BillingInterval; campaign: Campaign | null }) {
-  const tab = (on: boolean) =>
-    `relative z-10 rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-      on ? "bg-ink text-white" : "text-ink-secondary hover:text-ink"
-    }`;
-  return (
-    <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
-      <nav aria-label="Billing interval" className="inline-flex rounded-full border border-line bg-card p-1">
-        <Link href="/dashboard/billing" className={tab(value === "month")} aria-current={value === "month" ? "page" : undefined}>
-          Monthly
-        </Link>
-        <Link
-          href="/dashboard/billing?interval=year"
-          className={tab(value === "year")}
-          aria-current={value === "year" ? "page" : undefined}
-        >
-          Yearly
-        </Link>
-      </nav>
-      <p className="text-[13px] text-ink-secondary">
-        {value === "year"
-          ? "12 months for the price of 10."
-          : campaign
-            ? `${campaign.name} price applies to monthly billing.`
-            : "Pay yearly and get 2 months free."}
-      </p>
-    </div>
-  );
+/** The emblem for a plan id (Agency Unlimited shares Agency's gold). */
+function badgePlan(id: string): BadgePlan {
+  return id === "starter" || id === "pro" || id === "agency" ? id : "free";
 }
 
 /** One plan offered to a Free or trial workspace, with its own checkout. */
@@ -109,9 +80,7 @@ function PlanOffer({
   const offerPrice = campaign ? formatUsd(campaignPrice(plan.priceMonthlyUsd, campaign.percent)) : null;
   return (
     <Card className={highlighted ? "ring-2 ring-accent" : undefined}>
-      <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft">
-        <Sparkles className="size-5 text-accent" aria-hidden />
-      </span>
+      <PlanBadge plan={badgePlan(plan.id)} size={48} title={`${plan.name} plan`} />
       <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
         {campaign && offerPrice ? (
           <>
@@ -211,6 +180,50 @@ export default async function BillingPage({
     ? Math.max(0, Math.ceil((periodEnd.getTime() - requestedAt.getTime()) / 86_400_000))
     : null;
 
+  // The three plan offers for one billing interval (Free and trial only).
+  const planOffers = (interval: BillingInterval) => (
+    <>
+          <PlanOffer
+            plan={pro}
+            checkoutHref="/api/billing/checkout"
+            available={billingEnabled}
+            campaign={campaign}
+            interval={interval}
+            highlighted
+            note={
+              trialEndsAt
+                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(pro.limits.websites)} websites. Everything else stays the same.`
+                : null
+            }
+          />
+          <PlanOffer
+            plan={starter}
+            checkoutHref="/api/billing/checkout?plan=starter"
+            available={starterBillingEnabled}
+            interval={interval}
+            highlighted={false}
+            note={
+              trialEndsAt
+                ? `Paying now ends your trial. Starter covers ${formatLimit(starter.limits.websites)} websites with ${formatLimit(starter.limits.pagesPerWebsite)} pages each; any others are paused, not deleted.`
+                : null
+            }
+          />
+          <PlanOffer
+            plan={agency}
+            checkoutHref="/api/billing/checkout?plan=agency"
+            available={agencyBillingEnabled}
+            campaign={campaign}
+            interval={interval}
+            highlighted={false}
+            note={
+              trialEndsAt
+                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(agency.limits.websites)} websites, with ${formatLimit(agency.limits.pagesPerWebsite)} pages each.`
+                : null
+            }
+          />
+    </>
+  );
+
   return (
     <div className="max-w-2xl space-y-6">
       {justCheckedOut && (
@@ -233,7 +246,10 @@ export default async function BillingPage({
           }
         />
         <div className="flex flex-wrap items-baseline gap-3">
-          <p className="text-3xl font-semibold tracking-tight text-ink">{plan.name}</p>
+          <p className="flex items-center gap-3 text-3xl font-semibold tracking-tight text-ink">
+            <PlanBadge plan={badgePlan(plan.id)} size={44} />
+            {plan.name}
+          </p>
           <p className="text-sm text-ink-secondary">
             {plan.unlimited ? "Admin workspace - no charge" : trialEndsAt ? `Trial ends ${trialEndsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, no charge` : subscription?.billingInterval === "year" ? `$${plan.priceYearlyUsd}/year` : `$${plan.priceMonthlyUsd}/month`}
           </p>
@@ -420,9 +436,7 @@ export default async function BillingPage({
       {/* Starter -> Pro: changes the existing subscription, never a second one. */}
       {plan.id === "starter" && !trialEndsAt && (
         <Card className="ring-2 ring-accent">
-          <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft">
-            <Sparkles className="size-5 text-accent" aria-hidden />
-          </span>
+          <PlanBadge plan="pro" size={48} title="Pro plan" />
           <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
             Upgrade to Pro - ${pro.priceMonthlyUsd}/month
           </h2>
@@ -459,9 +473,7 @@ export default async function BillingPage({
       {/* Pro -> Agency: changes the existing subscription, never a second one. */}
       {plan.id === "pro" && !trialEndsAt && (
         <Card className="ring-2 ring-accent">
-          <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary-soft">
-            <Sparkles className="size-5 text-accent" aria-hidden />
-          </span>
+          <PlanBadge plan="agency" size={48} title="Agency plan" />
           <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
             Upgrade to Agency - ${agency.priceMonthlyUsd}/month
           </h2>
@@ -512,45 +524,16 @@ export default async function BillingPage({
       {/* Free or trial: both plans, each with its own checkout. */}
       {!isPaid && (
         <>
-          {yearlyBillingEnabled && <IntervalTabs value={offerInterval} campaign={campaign} />}
-          <PlanOffer
-            plan={pro}
-            checkoutHref="/api/billing/checkout"
-            available={billingEnabled}
-            campaign={campaign}
-            interval={offerInterval}
-            highlighted
-            note={
-              trialEndsAt
-                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(pro.limits.websites)} websites. Everything else stays the same.`
-                : null
-            }
-          />
-          <PlanOffer
-            plan={starter}
-            checkoutHref="/api/billing/checkout?plan=starter"
-            available={starterBillingEnabled}
-            interval={offerInterval}
-            highlighted={false}
-            note={
-              trialEndsAt
-                ? `Paying now ends your trial. Starter covers ${formatLimit(starter.limits.websites)} websites with ${formatLimit(starter.limits.pagesPerWebsite)} pages each; any others are paused, not deleted.`
-                : null
-            }
-          />
-          <PlanOffer
-            plan={agency}
-            checkoutHref="/api/billing/checkout?plan=agency"
-            available={agencyBillingEnabled}
-            campaign={campaign}
-            interval={offerInterval}
-            highlighted={false}
-            note={
-              trialEndsAt
-                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(agency.limits.websites)} websites, with ${formatLimit(agency.limits.pagesPerWebsite)} pages each.`
-                : null
-            }
-          />
+          {yearlyBillingEnabled ? (
+            <BillingIntervalOffers
+              initial={offerInterval}
+              monthly={planOffers("month")}
+              yearly={planOffers("year")}
+              monthlyNote={campaign ? `${campaign.name} price applies to monthly billing.` : "Pay yearly and get 2 months free."}
+            />
+          ) : (
+            planOffers("month")
+          )}
           <p className="-mt-3 text-center text-[13px] text-ink-faint">
             Secure checkout by Dodo Payments. Cancel anytime.
           </p>

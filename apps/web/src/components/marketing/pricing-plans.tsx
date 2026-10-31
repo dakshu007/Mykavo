@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Tag } from "lucide-react";
+import { PlanBadge } from "@/components/brand/plan-badge";
 import { campaignCovers, campaignPrice, formatUsd } from "@/config/campaign";
 import { useLiveCampaign } from "@/lib/campaign-client";
 import { BillingIntervalSwitch, perMonth, usd, yearlySaving, type BillingInterval } from "./billing-interval";
@@ -73,7 +74,8 @@ export function PricingPlans({
                 </span>
               )}
               <div className="flex items-center justify-between">
-                <h2 className="[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] text-3xl font-medium tracking-[-0.02em]">
+                <h2 className="flex items-center gap-3 [font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] text-3xl font-medium tracking-[-0.02em]">
+                  <PlanBadge plan={plan.id} size={40} />
                   {plan.name}
                 </h2>
                 {pro && !offer && (

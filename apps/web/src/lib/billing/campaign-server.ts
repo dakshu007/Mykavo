@@ -10,7 +10,7 @@ import { logger } from "@/lib/logger";
  * created (next year, say) would promise customers a discount checkout then
  * refuses. So a definite "no" from Dodo hides the offer:
  *  - the code doesn't exist (404),
- *  - it hasn't started or has expired,
+ *  - it hasn't started or has expired (in its dates, or a 422 saying so),
  *  - its percent differs from what the banner would say,
  *  - it's restricted to products that don't include Pro.
  * When Dodo can't be asked (no API key, an outage, a key without discount
@@ -48,6 +48,11 @@ export function judgeDiscount(campaign: Campaign, d: DodoDiscount, now: Date): V
   return { live: true, expiresAt };
 }
 
+/** Pure: is this Dodo error body a code that isn't active right now? */
+export function isInactiveCode(body: string): boolean {
+  return /NOT_YET_ACTIVE|EXPIRED|INACTIVE|USAGE_LIMIT/i.test(body);
+}
+
 async function askDodo(campaign: Campaign, now: Date): Promise<Verdict> {
   if (!DODO_API_KEY) return { live: "unknown" };
   const hit = cache.get(campaign.code);
@@ -61,6 +66,10 @@ async function askDodo(campaign: Campaign, now: Date): Promise<Verdict> {
       cache: "no-store",
     });
     if (res.status === 404) {
+      verdict = { live: false };
+    } else if (res.status === 422 && isInactiveCode(await res.text().catch(() => ""))) {
+      // Dodo answers a code that exists but hasn't started (or has ended)
+      // with a 422; checkout would refuse it, so no offer is shown.
       verdict = { live: false };
     } else if (!res.ok) {
       verdict = { live: "unknown" };
