@@ -10,15 +10,16 @@ import { LogoTile } from "@/components/brand/logo";
 import { getPlan } from "@/config/plans";
 import { SEASONAL_CAMPAIGNS } from "@/config/campaign";
 import { yearlyBillingEnabled } from "@/lib/billing/config";
+import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
+import { PricingPlans } from "@/components/marketing/pricing-plans";
+import { pricingPlanData } from "@/components/marketing/pricing-plan-data";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 import {
   BfHeroStatus,
-  BfPricing,
   PriceSlash,
   Reveal,
   ScratchCode,
   TiltTicket,
-  type BfPlan,
 } from "@/components/black-friday/bf-client";
 
 const PATH = "/black-friday";
@@ -42,11 +43,6 @@ export const metadata: Metadata = withSocial({
   openGraph: { images: [{ url: "/black-friday/og.png", width: 1200, height: 630, alt: "MyKavo Black Friday: 50% off Pro" }] },
   twitter: { images: [{ url: "/black-friday/og.png", width: 1200, height: 630, alt: "MyKavo Black Friday: 50% off Pro" }] },
 });
-
-const bfPlan = (id: "starter" | "pro" | "agency"): BfPlan => {
-  const p = getPlan(id);
-  return { id, name: p.name, headline: p.headline, monthly: p.priceMonthlyUsd, yearly: p.priceYearlyUsd, features: p.features };
-};
 
 const showcase = [
   {
@@ -270,17 +266,19 @@ export default function BlackFridayPage() {
         {/* -------------------------------------------------------------- deal */}
         <section id="deal" className="scroll-mt-24 relative px-5 py-24 lg:px-8">
           <div aria-hidden className="absolute inset-x-0 top-0 -z-10 h-[60%] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(255,207,0,0.14),transparent)]" />
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-7xl">
             <div className="mb-12 text-center">
               <p className="font-mono text-[12px] font-bold uppercase tracking-[0.3em] text-[#FFCF00]">Pick your deal</p>
               <h2 className={`${fontDisplay} mx-auto mt-4 max-w-3xl text-4xl leading-[1.05] sm:text-6xl`}>
                 Half price monthly, or two months free yearly.
               </h2>
             </div>
-            <BfPricing
-              pro={bfPlan("pro")}
-              others={[bfPlan("starter"), bfPlan("agency")]}
+            <PricingPlans
+              plans={pricingPlanData()}
               yearlyEnabled={yearlyBillingEnabled}
+              trialDays={TRIAL_DAYS}
+              trialMaxWebsites={TRIAL_MAX_WEBSITES}
+              tone="dark"
             />
             <p className="mt-8 text-center text-[14px] text-white/50">
               Comparing every feature?{" "}

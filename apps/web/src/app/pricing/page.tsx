@@ -9,7 +9,8 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
 import { ValueQuoteBanner } from "@/components/value-quote";
 import { plans, formatLimit, getPlan } from "@/config/plans";
-import { PricingPlans, type PricingPlan } from "@/components/marketing/pricing-plans";
+import { PricingPlans } from "@/components/marketing/pricing-plans";
+import { pricingPlanData } from "@/components/marketing/pricing-plan-data";
 import { yearlyBillingEnabled } from "@/lib/billing/config";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES, TRIAL_REMINDER_DAYS_LEFT } from "@mykavo/shared";
 import {
@@ -146,18 +147,7 @@ const pricingJsonLd = {
   ],
 };
 
-const pricingPlans: PricingPlan[] = plans.map((plan) => ({
-  id: plan.id,
-  name: plan.name,
-  headline: plan.headline,
-  priceMonthlyUsd: plan.priceMonthlyUsd,
-  priceYearlyUsd: plan.priceYearlyUsd,
-  highlighted: Boolean(plan.highlighted),
-  features: plan.features,
-  websitesLabel: formatLimit(plan.limits.websites),
-  pagesLabel: formatLimit(plan.limits.pagesPerWebsite),
-  scansLabel: plan.limits.scanFrequency === "DAILY" ? "Daily" : "Weekly",
-}));
+const pricingPlans = pricingPlanData();
 
 export default function PricingPage() {
   return (

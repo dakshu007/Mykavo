@@ -40,12 +40,16 @@ export function PricingPlans({
   yearlyEnabled,
   trialDays,
   trialMaxWebsites,
+  tone = "light",
 }: {
   plans: PricingPlan[];
   yearlyEnabled: boolean;
   trialDays: number;
   trialMaxWebsites: number;
+  /** "dark" for dark pages (Black Friday): every card turns dark, Pro glows gold. */
+  tone?: "light" | "dark";
 }) {
+  const dark = tone === "dark";
   const [interval, setBillingInterval] = useState<BillingInterval>("month");
   const campaign = useLiveCampaign();
   const yearly = yearlyEnabled && interval === "year";
@@ -54,12 +58,14 @@ export function PricingPlans({
     <>
       {yearlyEnabled && (
         <div className="mb-10 flex justify-center">
-          <BillingIntervalSwitch value={interval} onChange={setBillingInterval} />
+          <BillingIntervalSwitch value={interval} onChange={setBillingInterval} tone={tone} />
         </div>
       )}
       <div className="mx-auto grid max-w-md gap-5 pt-4 md:max-w-3xl md:grid-cols-2 xl:max-w-7xl xl:grid-cols-4">
         {plans.map((plan) => {
           const pro = plan.highlighted;
+          // Cards with light text: Pro always, and every card on a dark page.
+          const inv = pro || dark;
           const paid = plan.priceMonthlyUsd > 0;
           const offer = !yearly && campaign && paid && campaignCovers(campaign, plan.id) ? campaign : null;
           const nextPath = yearly ? "/dashboard/billing?interval=year" : "/dashboard/billing";
@@ -96,9 +102,13 @@ export function PricingPlans({
             <div
               key={plan.id}
               className={`relative flex flex-col rounded-[28px] p-7 transition-transform duration-300 motion-reduce:transition-none ${
-                pro
-                  ? "bg-[#111111] text-white shadow-[0_30px_80px_-20px_rgba(17,17,17,0.55)] ring-1 ring-black xl:-translate-y-3"
-                  : "bg-white text-[#151515] ring-1 ring-black/[0.07] hover:-translate-y-1"
+                pro && dark
+                  ? "bg-[radial-gradient(120%_90%_at_50%_0%,#2a2205,#0B0B0B_60%)] text-white shadow-[0_0_0_1px_#FFCF00,0_30px_90px_-20px_rgba(255,207,0,0.35)] xl:-translate-y-3"
+                  : pro
+                    ? "bg-[#111111] text-white shadow-[0_30px_80px_-20px_rgba(17,17,17,0.55)] ring-1 ring-black xl:-translate-y-3"
+                    : dark
+                      ? "bg-white/[0.035] text-white ring-1 ring-white/10 hover:-translate-y-1"
+                      : "bg-white text-[#151515] ring-1 ring-black/[0.07] hover:-translate-y-1"
               }`}
             >
               {(pro || offer) && (
@@ -116,7 +126,7 @@ export function PricingPlans({
                 <PlanBadge plan={plan.id} size={44} />
                 <div>
                   <h2 className={`${display} text-[22px] font-semibold leading-tight`}>{plan.name}</h2>
-                  <p className={`font-mono text-[10.5px] uppercase tracking-[0.18em] ${pro ? "text-white/45" : "text-[#151515]/40"}`}>
+                  <p className={`font-mono text-[10.5px] uppercase tracking-[0.18em] ${inv ? "text-white/45" : "text-[#151515]/40"}`}>
                     {planMetal(plan.id)}
                   </p>
                 </div>
@@ -131,21 +141,21 @@ export function PricingPlans({
                   {amount}
                 </span>
                 {offer && (
-                  <span className={`pb-1.5 text-lg line-through decoration-2 ${pro ? "text-white/40" : "text-[#151515]/35"}`}>
+                  <span className={`pb-1.5 text-lg line-through decoration-2 ${inv ? "text-white/40" : "text-[#151515]/35"}`}>
                     ${plan.priceMonthlyUsd}
                   </span>
                 )}
-                <span className={`pb-1.5 text-sm ${pro ? "text-white/55" : "text-[#151515]/50"}`}>/ {period}</span>
+                <span className={`pb-1.5 text-sm ${inv ? "text-white/55" : "text-[#151515]/50"}`}>/ {period}</span>
               </div>
-              <p className={`mt-2 min-h-5 text-[13px] ${offer ? "font-semibold text-[#FFCF00]" : pro ? "text-white/60" : "text-[#151515]/55"}`}>
+              <p className={`mt-2 min-h-5 text-[13px] ${offer ? "font-semibold text-[#FFCF00]" : inv ? "text-white/60" : "text-[#151515]/55"}`}>
                 {note}
               </p>
-              <p className={`mt-4 min-h-12 text-[14px] leading-6 ${pro ? "text-white/70" : "text-[#151515]/65"}`}>{plan.headline}</p>
+              <p className={`mt-4 min-h-12 text-[14px] leading-6 ${inv ? "text-white/70" : "text-[#151515]/65"}`}>{plan.headline}</p>
 
               {/* Three facts, the same on every card. */}
               <dl
                 className={`mt-5 grid grid-cols-3 rounded-2xl text-center ${
-                  pro ? "bg-white/[0.06]" : "bg-[#F6F5EE]"
+                  inv ? "bg-white/[0.06]" : "bg-[#F6F5EE]"
                 }`}
               >
                 {[
@@ -156,7 +166,7 @@ export function PricingPlans({
                   <div key={l} className="px-1 py-3">
                     <dt className="sr-only">{l}</dt>
                     <dd className="text-[15px] font-semibold">{v}</dd>
-                    <dd className={`text-[11px] ${pro ? "text-white/45" : "text-[#151515]/45"}`}>{l}</dd>
+                    <dd className={`text-[11px] ${inv ? "text-white/45" : "text-[#151515]/45"}`}>{l}</dd>
                   </div>
                 ))}
               </dl>
@@ -166,13 +176,15 @@ export function PricingPlans({
                 className={`group mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full text-[14px] font-semibold transition-colors ${
                   pro
                     ? "bg-[#FFD400] text-[#111111] hover:bg-[#ffdf33]"
-                    : "bg-[#151515] text-white hover:bg-[#2a2a2a]"
+                    : dark
+                      ? "bg-white text-[#0B0B0B] hover:bg-white/90"
+                      : "bg-[#151515] text-white hover:bg-[#2a2a2a]"
                 }`}
               >
                 {cta}
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </Link>
-              <p className={`mt-2.5 min-h-10 text-center text-[11.5px] leading-5 ${pro ? "text-white/45" : "text-[#151515]/45"}`}>
+              <p className={`mt-2.5 min-h-10 text-center text-[11.5px] leading-5 ${inv ? "text-white/45" : "text-[#151515]/45"}`}>
                 {plan.id === "pro" && !offer && !yearly
                   ? `No card. The trial covers ${trialMaxWebsites} websites.`
                   : paid
@@ -181,12 +193,12 @@ export function PricingPlans({
               </p>
 
               {/* Features. */}
-              <div className={`mt-4 border-t pt-5 ${pro ? "border-white/10" : "border-black/[0.07]"}`}>
+              <div className={`mt-4 border-t pt-5 ${inv ? "border-white/10" : "border-black/[0.07]"}`}>
                 <ul className="space-y-2.5">
                   {top.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-[13.5px] leading-5">
-                      <Check className={`mt-0.5 size-4 shrink-0 ${pro ? "text-[#FFD400]" : "text-[#151515]/70"}`} aria-hidden />
-                      <span className={pro ? "text-white/80" : "text-[#151515]/75"}>{f}</span>
+                      <Check className={`mt-0.5 size-4 shrink-0 ${inv ? "text-[#FFD400]" : "text-[#151515]/70"}`} aria-hidden />
+                      <span className={inv ? "text-white/80" : "text-[#151515]/75"}>{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -194,7 +206,7 @@ export function PricingPlans({
                   <details className="group/more mt-3">
                     <summary
                       className={`cursor-pointer list-none text-[13px] font-semibold underline decoration-[#FFD400] decoration-2 underline-offset-4 ${
-                        pro ? "text-white" : "text-[#151515]"
+                        inv ? "text-white" : "text-[#151515]"
                       }`}
                     >
                       <span className="group-open/more:hidden">All {features.length} features</span>
@@ -203,8 +215,8 @@ export function PricingPlans({
                     <ul className="mt-3 space-y-2.5">
                       {rest.map((f) => (
                         <li key={f} className="flex items-start gap-2.5 text-[13.5px] leading-5">
-                          <Check className={`mt-0.5 size-4 shrink-0 ${pro ? "text-[#FFD400]" : "text-[#151515]/70"}`} aria-hidden />
-                          <span className={pro ? "text-white/80" : "text-[#151515]/75"}>{f}</span>
+                          <Check className={`mt-0.5 size-4 shrink-0 ${inv ? "text-[#FFD400]" : "text-[#151515]/70"}`} aria-hidden />
+                          <span className={inv ? "text-white/80" : "text-[#151515]/75"}>{f}</span>
                         </li>
                       ))}
                     </ul>
