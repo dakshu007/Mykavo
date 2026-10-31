@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Tag } from "lucide-react";
-import { PlanBadge } from "@/components/brand/plan-badge";
+import { ArrowRight, Check } from "lucide-react";
+import { PlanBadge, planMetal } from "@/components/brand/plan-badge";
 import { campaignCovers, campaignPrice, formatUsd } from "@/config/campaign";
 import { useLiveCampaign } from "@/lib/campaign-client";
 import { BillingIntervalSwitch, perMonth, usd, yearlySaving, type BillingInterval } from "./billing-interval";
@@ -17,15 +17,23 @@ export interface PricingPlan {
   priceYearlyUsd: number;
   highlighted: boolean;
   features: string[];
-  /** "8" or "Unlimited": Pro's website count for the trial note. */
+  /** "8" or "Unlimited": the plan's website count. */
   websitesLabel: string;
+  /** "15": monitored pages per website. */
+  pagesLabel: string;
+  /** "Daily" or "Weekly". */
+  scansLabel: string;
 }
 
+const display = "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] tracking-[-0.03em]";
+
 /**
- * The pricing page's plan cards with the Monthly / Yearly switch. A running
- * campaign (Black Friday, say) shows its price on the plans its code covers,
- * on monthly billing, and the cards go back to the regular prices by
- * themselves when it ends: nothing to change or redeploy.
+ * The pricing page's plans, all four in one row: emblem, price, the same
+ * three facts on every card (websites, pages each, scans), the button, then
+ * the features, with the rest one click away. Pro is the dark card in the
+ * middle of the row. A running campaign (Black Friday, say) shows its price
+ * on the plans its code covers, on monthly billing, and the cards go back to
+ * the regular prices by themselves when it ends.
  */
 export function PricingPlans({
   plans,
@@ -49,117 +57,164 @@ export function PricingPlans({
           <BillingIntervalSwitch value={interval} onChange={setBillingInterval} />
         </div>
       )}
-      <div className="mx-auto grid max-w-3xl gap-6 md:max-w-5xl md:grid-cols-2 xl:max-w-7xl xl:grid-cols-4">
+      <div className="mx-auto grid max-w-md gap-5 pt-4 md:max-w-3xl md:grid-cols-2 xl:max-w-7xl xl:grid-cols-4">
         {plans.map((plan) => {
           const pro = plan.highlighted;
           const paid = plan.priceMonthlyUsd > 0;
-          const offer =
-            !yearly && campaign && paid && campaignCovers(campaign, plan.id) ? campaign : null;
+          const offer = !yearly && campaign && paid && campaignCovers(campaign, plan.id) ? campaign : null;
           const nextPath = yearly ? "/dashboard/billing?interval=year" : "/dashboard/billing";
           const href =
             offer || yearly || plan.id === "agency" || plan.id === "starter"
               ? `/signup?next=${encodeURIComponent(nextPath)}`
               : "/signup";
+          const amount = offer
+            ? formatUsd(campaignPrice(plan.priceMonthlyUsd, offer.percent))
+            : `$${yearly && paid ? plan.priceYearlyUsd : plan.priceMonthlyUsd}`;
+          const period = yearly && paid ? "year" : "month";
+          const note = offer
+            ? `First ${offer.cycles} months, then $${plan.priceMonthlyUsd}/month.`
+            : yearly && paid
+              ? `${usd(perMonth(plan.priceYearlyUsd))}/month · save ${usd(yearlySaving(plan.priceMonthlyUsd, plan.priceYearlyUsd))}`
+              : !paid
+                ? "Free forever. No card."
+                : "Billed monthly. Cancel anytime.";
+          const features = plan.features.filter(
+            (f) => !/^[\d,]+ websites?$|monitored pages per website|^(daily|weekly) scans$/i.test(f),
+          );
+          const [top, rest] = [features.slice(0, 5), features.slice(5)];
+          const cta = !paid
+            ? "Start free"
+            : offer
+              ? `Get ${plan.name} for ${amount}/mo`
+              : yearly
+                ? `Get ${plan.name} yearly`
+                : plan.id === "pro"
+                  ? `Try ${plan.name} free for ${trialDays} days`
+                  : `Get ${plan.name}`;
+
           return (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl border p-8 text-[#151515] xl:p-6 ${
-                pro ? "border-[#151515] bg-[#FFD400] shadow-[7px_7px_0_#151515]" : "border-black/10 bg-white"
+              className={`relative flex flex-col rounded-[28px] p-7 transition-transform duration-300 motion-reduce:transition-none ${
+                pro
+                  ? "bg-[#111111] text-white shadow-[0_30px_80px_-20px_rgba(17,17,17,0.55)] ring-1 ring-black xl:-translate-y-3"
+                  : "bg-white text-[#151515] ring-1 ring-black/[0.07] hover:-translate-y-1"
               }`}
             >
-              {offer && (
-                <span className="bf-stamp absolute -right-3 -top-3 inline-flex items-center gap-1 rounded-lg bg-[#0B0B0B] px-2.5 py-1 font-mono text-[11px] font-black text-[#FFCF00] shadow-[3px_3px_0_#FFCF00]">
-                  <Tag className="size-3" aria-hidden />
-                  {offer.name.toUpperCase()} -{offer.percent}%
+              {(pro || offer) && (
+                <span
+                  className={`absolute -top-3 left-7 rounded-full px-3 py-1 font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] ${
+                    offer ? "bf-stamp bg-[#FFCF00] text-[#0B0B0B]" : "bg-[#FFD400] text-[#151515]"
+                  }`}
+                >
+                  {offer ? `${offer.name} -${offer.percent}%` : "Most popular"}
                 </span>
               )}
-              <div className="flex items-center justify-between">
-                <h2 className="flex items-center gap-3 [font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] text-3xl font-medium tracking-[-0.02em]">
-                  <PlanBadge plan={plan.id} size={40} />
-                  {plan.name}
-                </h2>
-                {pro && !offer && (
-                  <span className="rounded-full bg-[#151515] px-3 py-1 text-xs font-semibold text-[#FFD400]">
-                    Most popular
+
+              {/* Emblem, name and metal. */}
+              <div className="flex items-center gap-3">
+                <PlanBadge plan={plan.id} size={44} />
+                <div>
+                  <h2 className={`${display} text-[22px] font-semibold leading-tight`}>{plan.name}</h2>
+                  <p className={`font-mono text-[10.5px] uppercase tracking-[0.18em] ${pro ? "text-white/45" : "text-[#151515]/40"}`}>
+                    {planMetal(plan.id)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Price. */}
+              <div className="mt-7 flex items-end gap-2">
+                <span
+                  key={`${amount}-${period}`}
+                  className={`${display} inline-block animate-[price-in_.35s_ease-out] text-[52px] font-semibold leading-none motion-reduce:animate-none`}
+                >
+                  {amount}
+                </span>
+                {offer && (
+                  <span className={`pb-1.5 text-lg line-through decoration-2 ${pro ? "text-white/40" : "text-[#151515]/35"}`}>
+                    ${plan.priceMonthlyUsd}
                   </span>
                 )}
+                <span className={`pb-1.5 text-sm ${pro ? "text-white/55" : "text-[#151515]/50"}`}>/ {period}</span>
               </div>
-              <p className="mt-2 text-sm leading-6 text-[#151515]/65">{plan.headline}</p>
+              <p className={`mt-2 min-h-5 text-[13px] ${offer ? "font-semibold text-[#FFCF00]" : pro ? "text-white/60" : "text-[#151515]/55"}`}>
+                {note}
+              </p>
+              <p className={`mt-4 min-h-12 text-[14px] leading-6 ${pro ? "text-white/70" : "text-[#151515]/65"}`}>{plan.headline}</p>
 
-              <Price plan={plan} yearly={yearly} offerPercent={offer?.percent ?? null} />
-              {offer ? (
-                <p className="mt-1 text-[12.5px] font-semibold leading-5">
-                  For your first {offer.cycles} months, then ${plan.priceMonthlyUsd}/month. Code {offer.code} applied
-                  at checkout.
-                </p>
-              ) : yearly && paid ? (
-                <p className="mt-1 text-[12.5px] font-semibold leading-5">
-                  {usd(perMonth(plan.priceYearlyUsd))}/month, billed yearly. You save{" "}
-                  {usd(yearlySaving(plan.priceMonthlyUsd, plan.priceYearlyUsd))}.
-                </p>
-              ) : null}
-
-              <ul className="mt-7 flex-1 space-y-3">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-[14px] leading-6">
-                    <CheckCircle2 className="mt-1 size-4 shrink-0 text-[#151515]" aria-hidden />
-                    {f}
-                  </li>
+              {/* Three facts, the same on every card. */}
+              <dl
+                className={`mt-5 grid grid-cols-3 rounded-2xl text-center ${
+                  pro ? "bg-white/[0.06]" : "bg-[#F6F5EE]"
+                }`}
+              >
+                {[
+                  [plan.websitesLabel, plan.websitesLabel === "1" ? "website" : "websites"],
+                  [plan.pagesLabel, "pages each"],
+                  [plan.scansLabel, "scans"],
+                ].map(([v, l]) => (
+                  <div key={l} className="px-1 py-3">
+                    <dt className="sr-only">{l}</dt>
+                    <dd className="text-[15px] font-semibold">{v}</dd>
+                    <dd className={`text-[11px] ${pro ? "text-white/45" : "text-[#151515]/45"}`}>{l}</dd>
+                  </div>
                 ))}
-              </ul>
+              </dl>
+
               <Link
                 href={href}
-                className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
+                className={`group mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full text-[14px] font-semibold transition-colors ${
+                  pro
+                    ? "bg-[#FFD400] text-[#111111] hover:bg-[#ffdf33]"
+                    : "bg-[#151515] text-white hover:bg-[#2a2a2a]"
+                }`}
               >
-                {!paid
-                  ? "Start free"
-                  : offer
-                    ? `Get ${plan.name} for ${formatUsd(campaignPrice(plan.priceMonthlyUsd, offer.percent))}/mo`
-                    : yearly
-                      ? `Get ${plan.name} yearly`
-                      : plan.id === "pro"
-                        ? `Try ${plan.name} free for ${trialDays} days`
-                        : `Get ${plan.name}`}
+                {cta}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </Link>
-              {plan.id === "pro" && !offer && !yearly && (
-                <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
-                  The trial covers up to {trialMaxWebsites} websites ({plan.name} has {plan.websitesLabel}). No card.
-                  Then Free unless you upgrade.
-                </p>
-              )}
-              {paid && (offer || yearly || plan.id !== "pro") && (
-                <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
-                  Create your account, then check out from Billing. Cancel anytime.
-                </p>
-              )}
+              <p className={`mt-2.5 min-h-10 text-center text-[11.5px] leading-5 ${pro ? "text-white/45" : "text-[#151515]/45"}`}>
+                {plan.id === "pro" && !offer && !yearly
+                  ? `No card. The trial covers ${trialMaxWebsites} websites.`
+                  : paid
+                    ? "Create your account, then check out from Billing."
+                    : "One website, checked weekly."}
+              </p>
+
+              {/* Features. */}
+              <div className={`mt-4 border-t pt-5 ${pro ? "border-white/10" : "border-black/[0.07]"}`}>
+                <ul className="space-y-2.5">
+                  {top.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-[13.5px] leading-5">
+                      <Check className={`mt-0.5 size-4 shrink-0 ${pro ? "text-[#FFD400]" : "text-[#151515]/70"}`} aria-hidden />
+                      <span className={pro ? "text-white/80" : "text-[#151515]/75"}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                {rest.length > 0 && (
+                  <details className="group/more mt-3">
+                    <summary
+                      className={`cursor-pointer list-none text-[13px] font-semibold underline decoration-[#FFD400] decoration-2 underline-offset-4 ${
+                        pro ? "text-white" : "text-[#151515]"
+                      }`}
+                    >
+                      <span className="group-open/more:hidden">All {features.length} features</span>
+                      <span className="hidden group-open/more:inline">Fewer features</span>
+                    </summary>
+                    <ul className="mt-3 space-y-2.5">
+                      {rest.map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-[13.5px] leading-5">
+                          <Check className={`mt-0.5 size-4 shrink-0 ${pro ? "text-[#FFD400]" : "text-[#151515]/70"}`} aria-hidden />
+                          <span className={pro ? "text-white/80" : "text-[#151515]/75"}>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
     </>
-  );
-}
-
-/** The big number: monthly, yearly, or the campaign price with the regular one struck through. */
-function Price({ plan, yearly, offerPercent }: { plan: PricingPlan; yearly: boolean; offerPercent: number | null }) {
-  const display = "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-serif] font-medium tracking-[-0.02em]";
-  if (offerPercent !== null) {
-    return (
-      <p className="mt-6 flex items-baseline gap-2">
-        <span className={`${display} text-5xl`}>{formatUsd(campaignPrice(plan.priceMonthlyUsd, offerPercent))}</span>
-        <span className="text-xl text-[#151515]/50 line-through decoration-2">${plan.priceMonthlyUsd}</span>
-        <span className="text-sm text-[#151515]/70">/ month</span>
-      </p>
-    );
-  }
-  const amount = yearly && plan.priceMonthlyUsd > 0 ? plan.priceYearlyUsd : plan.priceMonthlyUsd;
-  return (
-    <p className="mt-6">
-      {/* Keyed by interval: the number re-enters when the switch flips. */}
-      <span key={yearly ? "y" : "m"} className={`${display} inline-block animate-[price-in_.35s_ease-out] text-5xl motion-reduce:animate-none`}>
-        ${amount}
-      </span>
-      <span className="text-sm text-[#151515]/70"> / {yearly && plan.priceMonthlyUsd > 0 ? "year" : "month"}</span>
-    </p>
   );
 }

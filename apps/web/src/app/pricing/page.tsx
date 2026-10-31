@@ -155,6 +155,8 @@ const pricingPlans: PricingPlan[] = plans.map((plan) => ({
   highlighted: Boolean(plan.highlighted),
   features: plan.features,
   websitesLabel: formatLimit(plan.limits.websites),
+  pagesLabel: formatLimit(plan.limits.pagesPerWebsite),
+  scansLabel: plan.limits.scanFrequency === "DAILY" ? "Daily" : "Weekly",
 }));
 
 export default function PricingPage() {
@@ -177,11 +179,11 @@ export default function PricingPage() {
       <TrackOnView event="pricing_viewed" />
       <LandingNav />
       <main className="mx-auto max-w-7xl px-5 pb-24 pt-32 sm:pt-36 lg:px-8">
-        <div className="mx-auto mb-14 max-w-2xl text-center">
-          <p className={`${eyebrow} mb-4`}>{"// pricing //"}</p>
-          <h1 className={`${fontDisplay} text-4xl leading-[1.05] text-[#151515] sm:text-6xl`}>
-            Monitoring that
-            <br />
+        {/* A short heading, so every plan is visible in the first screen. */}
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <p className={`${eyebrow} mb-3`}>{"// pricing //"}</p>
+          <h1 className={`${fontDisplay} text-4xl leading-[1.05] text-[#151515] sm:text-5xl`}>
+            Monitoring that{" "}
             <span className="relative inline-block whitespace-nowrap">
               <span
                 aria-hidden
@@ -190,21 +192,10 @@ export default function PricingPage() {
               <span className="relative">pays for itself.</span>
             </span>
           </h1>
-          <p className="mt-6 text-[15px] leading-7 text-[#6B6B60]">
-            One missed regression costs more than a year of MyKavo. Every new account starts with
-            a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites. After that, stay
-            free with one website, start small on Starter for $7/month, go Pro for $20/month, or run
-            every client site on Agency for $79/month.
+          <p className="mt-4 text-[15px] leading-7 text-[#6B6B60]">
+            Every new account starts with a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites. No card.
           </p>
         </div>
-
-        {/* Region-aware value quote */}
-        <div className="mb-14">
-          <ValueQuoteBanner />
-        </div>
-
-        {/* A running campaign's offer; nothing outside one. */}
-        <PricingCampaignBanner />
 
         {/* Plan cards, with the monthly/yearly switch and any running offer. */}
         <PricingPlans
@@ -213,6 +204,16 @@ export default function PricingPage() {
           trialDays={TRIAL_DAYS}
           trialMaxWebsites={TRIAL_MAX_WEBSITES}
         />
+
+        {/* A running campaign's offer; nothing outside one. */}
+        <div className="mt-16">
+          <PricingCampaignBanner />
+        </div>
+
+        {/* Region-aware value quote */}
+        <div className="mt-6">
+          <ValueQuoteBanner />
+        </div>
 
         {/* Comparison table */}
         <section className="mt-24">
