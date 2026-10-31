@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BillingIntervalOffers } from "@/components/dashboard/billing-interval-offers";
-import { PlanBadge, type BadgePlan } from "@/components/brand/plan-badge";
+import { PlanBadge } from "@/components/brand/plan-badge";
+import { PlanOffer, badgePlan } from "@/components/dashboard/plan-offer";
 import {
   ArrowRight,
   CalendarClock,
@@ -26,14 +27,13 @@ import {
   type BillingInterval,
 } from "@/lib/billing/config";
 import { dodoApiConfigured } from "@/lib/billing/dodo-api";
-import { getPlan, formatLimit, type Plan } from "@/config/plans";
+import { getPlan, formatLimit } from "@/config/plans";
 import { Card, CardHeader, IconChip } from "@/components/ui/card";
 import { ValueQuoteCard } from "@/components/value-quote";
 import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscription-button";
 import { ChangePlanButton } from "@/components/dashboard/change-plan-button";
 import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
-import { campaignCovers, campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
 import { getLiveCampaign } from "@/lib/billing/campaign-server";
 
 function FeatureList({ features, columns = false }: { features: string[]; columns?: boolean }) {
@@ -46,90 +46,6 @@ function FeatureList({ features, columns = false }: { features: string[]; column
         </li>
       ))}
     </ul>
-  );
-}
-
-/** The emblem for a plan id (Agency Unlimited shares Agency's gold). */
-function badgePlan(id: string): BadgePlan {
-  return id === "starter" || id === "pro" || id === "agency" ? id : "free";
-}
-
-/** One plan offered to a Free or trial workspace, with its own checkout. */
-function PlanOffer({
-  plan,
-  checkoutHref,
-  available,
-  highlighted,
-  note,
-  campaign,
-  interval = "month",
-}: {
-  plan: Plan;
-  checkoutHref: string;
-  available: boolean;
-  highlighted: boolean;
-  note?: string | null;
-  campaign?: Campaign | null;
-  interval?: BillingInterval;
-}) {
-  // A campaign's code only discounts the plans it was created for in Dodo,
-  // and only monthly billing (its cycle limit counts months).
-  if (campaign && (interval === "year" || !campaignCovers(campaign, plan.id))) campaign = null;
-  const yearly = interval === "year";
-  const href = yearly ? `${checkoutHref}${checkoutHref.includes("?") ? "&" : "?"}interval=year` : checkoutHref;
-  const offerPrice = campaign ? formatUsd(campaignPrice(plan.priceMonthlyUsd, campaign.percent)) : null;
-  return (
-    <Card className={highlighted ? "ring-2 ring-accent" : undefined}>
-      <PlanBadge plan={badgePlan(plan.id)} size={48} title={`${plan.name} plan`} />
-      <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">
-        {campaign && offerPrice ? (
-          <>
-            {plan.name} - {offerPrice}/month{" "}
-            <span className="text-base font-normal text-ink-faint line-through">${plan.priceMonthlyUsd}</span>
-          </>
-        ) : yearly ? (
-          <>
-            {plan.name} - ${plan.priceYearlyUsd}/year
-          </>
-        ) : (
-          <>
-            {plan.name} - ${plan.priceMonthlyUsd}/month
-          </>
-        )}
-      </h2>
-      {yearly && (
-        <p className="mt-1 text-sm font-medium text-success-strong">
-          ${(Math.round((plan.priceYearlyUsd / 12) * 100) / 100).toFixed(2)}/month, billed once a year. You save $
-          {plan.priceMonthlyUsd * 12 - plan.priceYearlyUsd} against monthly.
-        </p>
-      )}
-      {campaign && (
-        <p className="mt-1 text-sm font-medium text-[#C2410C]">
-          {campaign.name}: {campaign.percent}% off your first {campaign.cycles} months, then $
-          {plan.priceMonthlyUsd}/month. Applied automatically at checkout.
-        </p>
-      )}
-      <p className="mt-1 text-sm text-ink-secondary">{plan.headline}</p>
-      {note && <p className="mt-2 text-sm font-medium text-ink">{note}</p>}
-      <FeatureList features={plan.features} />
-      {available ? (
-        <a
-          href={href}
-          className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-medium text-primary-contrast transition-colors hover:bg-primary-hover"
-        >
-          Upgrade to {plan.name}
-          {yearly ? " yearly" : ""} <ArrowRight className="size-4" aria-hidden />
-        </a>
-      ) : (
-        <p className="mt-6 text-sm text-ink-faint">
-          {plan.name} checkout is being set up. Email{" "}
-          <a href="mailto:support@mykavo.app" className="font-medium text-accent hover:underline">
-            support@mykavo.app
-          </a>{" "}
-          and we&apos;ll get you started.
-        </p>
-      )}
-    </Card>
   );
 }
 
@@ -181,51 +97,48 @@ export default async function BillingPage({
     : null;
 
   // The three plan offers for one billing interval (Free and trial only).
+  // The three plan offers for one billing interval (Free and trial only),
+  // side by side: Starter, Pro (highlighted) and Agency in one view.
+  const trialNote = (to: number) =>
+    trialEndsAt ? `Paying ends your trial; your limit becomes ${formatLimit(to)} websites.` : null;
   const planOffers = (interval: BillingInterval) => (
-    <>
-          <PlanOffer
-            plan={pro}
-            checkoutHref="/api/billing/checkout"
-            available={billingEnabled}
-            campaign={campaign}
-            interval={interval}
-            highlighted
-            note={
-              trialEndsAt
-                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(pro.limits.websites)} websites. Everything else stays the same.`
-                : null
-            }
-          />
-          <PlanOffer
-            plan={starter}
-            checkoutHref="/api/billing/checkout?plan=starter"
-            available={starterBillingEnabled}
-            interval={interval}
-            highlighted={false}
-            note={
-              trialEndsAt
-                ? `Paying now ends your trial. Starter covers ${formatLimit(starter.limits.websites)} websites with ${formatLimit(starter.limits.pagesPerWebsite)} pages each; any others are paused, not deleted.`
-                : null
-            }
-          />
-          <PlanOffer
-            plan={agency}
-            checkoutHref="/api/billing/checkout?plan=agency"
-            available={agencyBillingEnabled}
-            campaign={campaign}
-            interval={interval}
-            highlighted={false}
-            note={
-              trialEndsAt
-                ? `Paying now ends your trial and raises your limit from ${formatLimit(plan.limits.websites)} to ${formatLimit(agency.limits.websites)} websites, with ${formatLimit(agency.limits.pagesPerWebsite)} pages each.`
-                : null
-            }
-          />
-    </>
+    <div className="grid items-stretch gap-4 pt-3 md:grid-cols-3">
+      <PlanOffer
+        plan={starter}
+        checkoutHref="/api/billing/checkout?plan=starter"
+        available={starterBillingEnabled}
+        interval={interval}
+        highlighted={false}
+        note={
+          trialEndsAt
+            ? `Paying ends your trial. Websites over ${formatLimit(starter.limits.websites)} are paused, not deleted.`
+            : null
+        }
+      />
+      <PlanOffer
+        plan={pro}
+        checkoutHref="/api/billing/checkout"
+        available={billingEnabled}
+        campaign={campaign}
+        interval={interval}
+        highlighted
+        note={trialNote(pro.limits.websites)}
+      />
+      <PlanOffer
+        plan={agency}
+        checkoutHref="/api/billing/checkout?plan=agency"
+        available={agencyBillingEnabled}
+        campaign={campaign}
+        interval={interval}
+        highlighted={false}
+        note={trialNote(agency.limits.websites)}
+      />
+    </div>
   );
 
   return (
-    <div className="max-w-2xl space-y-6">
+    // Free and trial workspaces get the room to see every plan side by side.
+    <div className={`${isPaid ? "max-w-2xl" : "max-w-5xl"} space-y-6`}>
       {justCheckedOut && (
         <div className="flex items-start gap-3 rounded-card bg-primary-soft px-5 py-4">
           <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
