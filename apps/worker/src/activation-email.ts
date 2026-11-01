@@ -31,6 +31,7 @@
  */
 
 import { prisma, recordAutomationSend, type Prisma } from "@mykavo/database";
+import { AUDIT_CHECK_COUNT, summarizeAuditReport, type AuditResult } from "@mykavo/seo-audit";
 import {
   FIRST_WEBSITE_NUDGE_SUBJECT,
   LIFECYCLE_KEYS,
@@ -247,6 +248,124 @@ async function sendBaselineReady(budget: number, a: Automations): Promise<number
   return sent;
 }
 
+/**
+ * "Your first audit of example.com": once per website, after the automatic
+ * day-one site audit (first-audit.ts). A crawl that was blocked or too thin
+ * to say anything true sends nothing.
+ */
+async function sendFirstAuditFindings(budget: number, a: Automations): Promise<number> {
+  if (budget <= 0 || !a.settings.first_audit.enabled) return 0;
+  const audits = await prisma.siteAudit.findMany({
+    where: {
+      status: "COMPLETED",
+      completedAt: { gte: new Date(Date.now() - 3 * DAY_MS) },
+      website: {
+        createdAt: { gte: new Date(Date.now() - 10 * DAY_MS) },
+        notifications: { none: { status: "SENT", ...sentBy("first_audit", a) } },
+      },
+    },
+    orderBy: { completedAt: "asc" },
+    take: budget,
+    select: {
+      id: true,
+      pagesCrawled: true,
+      urlsDiscovered: true,
+      healthScore: true,
+      errorCount: true,
+      warningCount: true,
+      noticeCount: true,
+      pagesWithErrors: true,
+      stoppedReason: true,
+      issues: true,
+      website: {
+        select: {
+          id: true,
+          url: true,
+          workspaceId: true,
+          workspace: { select: { owner: { select: { email: true, name: true } } } },
+        },
+      },
+    },
+  });
+
+  let sent = 0;
+  const seen = new Set<string>();
+  for (const audit of audits) {
+    const site = audit.website;
+    if (seen.has(site.id)) continue;
+    seen.add(site.id);
+    // Only the website's very first audit.
+    const first = await prisma.siteAudit.findFirst({ where: { websiteId: site.id }, orderBy: { createdAt: "asc" }, select: { id: true } });
+    if (first?.id !== audit.id || audit.healthScore === null) continue;
+
+    const result: AuditResult = {
+      pagesCrawled: audit.pagesCrawled,
+      urlsDiscovered: audit.urlsDiscovered,
+      healthScore: audit.healthScore,
+      errorCount: audit.errorCount,
+      warningCount: audit.warningCount,
+      noticeCount: audit.noticeCount,
+      pagesWithErrors: audit.pagesWithErrors,
+      issues: Array.isArray(audit.issues) ? (audit.issues as unknown as AuditResult["issues"]) : [],
+      stoppedReason: (audit.stoppedReason ?? "completed") as AuditResult["stoppedReason"],
+    };
+    const summary = summarizeAuditReport(result);
+    if (!summary.trustworthy) continue;
+
+    const owner = site.workspace.owner;
+    const config = await resolveEmailConfig(site.workspaceId);
+    if (!owner.email || !config) continue; // email switched off
+
+    const mail = renderAutomation(
+      {
+        key: "first_audit",
+        data: {
+          name: displayPersonName(owner.name, owner.email),
+          websiteHost: hostOf(site.url).replace(/^www\./, ""),
+          pagesCrawled: result.pagesCrawled,
+          checkCount: AUDIT_CHECK_COUNT,
+          healthScore: result.healthScore,
+          errorCount: result.errorCount,
+          warningCount: result.warningCount,
+          noticeCount: result.noticeCount,
+          issues: summary.shown.map((i) => ({
+            title: i.title,
+            severity: i.severity,
+            explain: i.explain,
+            fix: i.fix,
+            count: i.count,
+            exampleUrl: i.exampleUrl,
+          })),
+          auditUrl: `${appBase}/dashboard/site-audit/${audit.id}?from=email:first_audit`,
+        },
+      },
+      a.settings,
+    );
+    const sendResult = await sendEmail({ to: [owner.email], subject: mail.subject, html: mail.html, text: mail.text });
+    const row = await prisma.notification.create({
+      select: { id: true },
+      data: {
+        workspaceId: site.workspaceId,
+        websiteId: site.id,
+        channelType: "EMAIL",
+        recipient: owner.email,
+        subject: mail.subject,
+        status: sendResult.ok ? "SENT" : "FAILED",
+        sentAt: sendResult.ok ? new Date() : null,
+        errorMessage: sendResult.error ?? null,
+      },
+    });
+    await recordAutomationSend(prisma, { notificationId: row.id, automationKey: "first_audit" }, a.ready);
+    if (!sendResult.ok) {
+      logger.warn("first-audit email failed, stopping this run", { websiteId: site.id, error: sendResult.error });
+      break;
+    }
+    sent++;
+    await pause();
+  }
+  return sent;
+}
+
 async function sendFirstWebsiteNudges(budget: number, a: Automations): Promise<number> {
   if (budget <= 0 || !a.settings.first_website.enabled) return 0;
   const users = await prisma.user.findMany({
@@ -332,6 +451,14 @@ export async function runActivationSweep(): Promise<void> {
   const before = await currentUsage(automations);
   const baselineReady = await sendBaselineReady(emailAllowance("ACTIVATION", limits, before), automations);
 
+  // The day-one audit's findings: about their own site, same share.
+  let firstAudit = 0;
+  try {
+    firstAudit = await sendFirstAuditFindings(emailAllowance("ACTIVATION", limits, await currentUsage(automations)), automations);
+  } catch (err) {
+    logger.error("first-audit emails skipped this run", { error: err instanceof Error ? err.message : String(err) });
+  }
+
   // Same share as "Baseline ready": help finishing something they started.
   let wordpressConnect = 0;
   try {
@@ -375,6 +502,7 @@ export async function runActivationSweep(): Promise<void> {
 
   logger.info("activation sweep finished", {
     baselineReady,
+    firstAudit,
     wordpressConnect,
     reminders,
     lifecycle,

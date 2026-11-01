@@ -15,6 +15,9 @@ import {
 } from "./copy";
 import {
   BASELINE_READY_SUBJECT_PREFIX,
+  FIRST_AUDIT_SUBJECT_PREFIX,
+  firstAuditEmail,
+  type FirstAuditData,
   DAY10_OFFER_SUBJECT,
   DAY3_SETUP_SUBJECT,
   DAY3_STATS_SUBJECT_PREFIX,
@@ -102,6 +105,16 @@ export const AUTOMATIONS: Record<AutomationKey, AutomationMeta> = {
     timing: null,
     offer: false,
     legacySubject: { prefix: BASELINE_READY_SUBJECT_PREFIX },
+  },
+  first_audit: {
+    key: "first_audit",
+    name: "First site audit",
+    group: "Onboarding",
+    trigger: "Once per website, when the automatic site audit after its first baseline finishes. Shows the score and the top issues.",
+    unsubscribable: false,
+    timing: null,
+    offer: false,
+    legacySubject: { prefix: FIRST_AUDIT_SUBJECT_PREFIX },
   },
   wordpress_connect: {
     key: "wordpress_connect",
@@ -347,6 +360,7 @@ export type AutomationData =
   | { key: "welcome"; data: WelcomeEmailData }
   | { key: "first_website"; data: FirstWebsiteNudgeData }
   | { key: "baseline_ready"; data: BaselineReadyData }
+  | { key: "first_audit"; data: FirstAuditData }
   | { key: "wordpress_connect"; data: WordPressConnectData }
   | { key: "day3_stats"; data: Day3StatsData }
   | { key: "day3_setup"; data: Day3SetupData }
@@ -376,6 +390,8 @@ export function renderAutomation(
       return firstWebsiteNudgeEmail(input.data, copy);
     case "baseline_ready":
       return baselineReadyEmail(input.data, copy);
+    case "first_audit":
+      return firstAuditEmail(input.data, copy);
     case "wordpress_connect":
       return wordpressConnectEmail(input.data, copy);
     case "day3_stats":
@@ -445,6 +461,31 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
           alertsUrl: `${appBase}/dashboard/notifications`,
         },
       };
+    case "first_audit":
+      return {
+        key,
+        data: {
+          name,
+          websiteHost: "northstar.example",
+          pagesCrawled: 42,
+          checkCount: 98,
+          healthScore: 81,
+          errorCount: 4,
+          warningCount: 11,
+          noticeCount: 6,
+          issues: [
+            {
+              title: "Pages missing a meta description",
+              severity: "WARNING",
+              explain: "Google writes its own snippet, often from the wrong part of the page.",
+              fix: "Add a unique description of 120 to 160 characters to each page.",
+              count: 7,
+              exampleUrl: "https://northstar.example/about",
+            },
+          ],
+          auditUrl: `${appBase}/dashboard`,
+        },
+      };
     case "wordpress_connect":
       return {
         key,
@@ -504,6 +545,8 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
           changes: 2,
           websites: 1,
           upgradeUrl: `${appBase}/dashboard/billing`,
+          worst: { severity: "CRITICAL", title: "Page changed from index to noindex", page: "northstar.com/pricing" },
+          free: { websites: 1, pages: 5, frequency: "once a week" },
         },
       };
     case "trial_ended":

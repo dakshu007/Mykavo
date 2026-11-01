@@ -50,6 +50,10 @@ export interface ReportRawData {
   sslValidTo: Date | null;
   lighthouse: ReportLighthouseScores | null;
   dashboardUrl: string;
+  /** Pages monitored now (enabled). Optional for older callers. */
+  pagesMonitored?: number;
+  /** Page checks in the window: pages scanned, summed over every scan. */
+  pageChecks?: number;
 }
 
 /** Shaped template input - see `weeklyReportEmail` in @mykavo/email. */
@@ -73,6 +77,8 @@ export interface WeeklyReportModel {
   /** True when there is nothing to worry about - the reassuring variant. */
   allQuiet: boolean;
   dashboardUrl: string;
+  /** What was watched, so a quiet week shows the work: null when unknown. */
+  watched: { pages: number; pageChecks: number } | null;
 }
 
 function formatDay(date: Date): string {
@@ -130,6 +136,8 @@ export function buildReportModel(raw: ReportRawData, now: Date = raw.periodEnd):
     lighthouse: raw.lighthouse,
     allQuiet,
     dashboardUrl: raw.dashboardUrl,
+    watched:
+      raw.pagesMonitored && raw.pageChecks ? { pages: raw.pagesMonitored, pageChecks: raw.pageChecks } : null,
   };
 }
 

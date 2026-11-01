@@ -761,6 +761,8 @@ export interface WeeklyReportData {
   /** True when there is nothing to worry about - reassuring variant. */
   allQuiet: boolean;
   dashboardUrl: string;
+  /** What was watched, shown in a quiet week. Optional for older callers. */
+  watched?: { pages: number; pageChecks: number } | null;
 }
 
 function statCell(value: string, caption: string): string {
@@ -816,8 +818,11 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
       ? `<p style="margin:0 0 8px;font-size:14px;color:#5c6270">Lighthouse: ${esc(lighthouseParts.join(" · "))}</p>`
       : "";
 
+  const watchedLine = data.watched
+    ? ` MyKavo checked ${data.watched.pages} page${data.watched.pages === 1 ? "" : "s"} on every scan, ${data.watched.pageChecks} page check${data.watched.pageChecks === 1 ? "" : "s"} in all: status, title, description, canonical, noindex, scripts, links and layout. All as approved.`
+    : "";
   const quietBox = data.allQuiet
-    ? `<div style="background:#e8f7ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#166534;margin-bottom:20px">No unexpected changes - everything looks healthy.</div>`
+    ? `<div style="background:#e8f7ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#166534;margin-bottom:20px"><b>No unexpected changes - everything looks healthy.</b>${esc(watchedLine)}</div>`
     : "";
 
   const scansCaption = data.scansFailed > 0 ? `scans (${data.scansFailed} failed)` : "scans run";
@@ -842,7 +847,7 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
   const textLines = [
     `Weekly report for ${data.websiteHost} (${data.periodLabel})`,
     "",
-    ...(data.allQuiet ? ["No unexpected changes - everything looks healthy.", ""] : []),
+    ...(data.allQuiet ? [`No unexpected changes - everything looks healthy.${watchedLine}`, ""] : []),
     `Uptime: ${data.uptimePercent !== null ? `${data.uptimePercent}%` : "n/a"}`,
     `Scans: ${data.scansRun} run${data.scansFailed > 0 ? `, ${data.scansFailed} failed` : ""}`,
     `Changes: ${data.totalChanges}`,
@@ -1290,6 +1295,91 @@ export function baselineReadyEmail(
     `\n\n${cta}: ${data.websiteUrl}\n` +
     `Change where alerts go: ${data.alertsUrl}`;
 
+  return { subject, html: shell(inner), text };
+}
+
+// ---------- Activation: first site audit ----------
+
+/** Subject prefix of the default first-audit email, for de-duplication before the send log. */
+export const FIRST_AUDIT_SUBJECT_PREFIX = "Your first audit of ";
+
+export interface FirstAuditData {
+  name: string;
+  websiteHost: string;
+  pagesCrawled: number;
+  checkCount: number;
+  healthScore: number;
+  errorCount: number;
+  warningCount: number;
+  noticeCount: number;
+  /** The issues worth fixing first, most damaging first (at most 3). */
+  issues: { title: string; severity: "ERROR" | "WARNING" | "NOTICE"; explain: string; fix: string; count: number; exampleUrl: string | null }[];
+  /** Dashboard link to the full audit. */
+  auditUrl: string;
+}
+
+/**
+ * Sent once per website, after the automatic site audit that runs when its
+ * first baseline is ready. A quiet site can go two weeks without a single
+ * change, and then MyKavo looks like it did nothing; this puts real findings
+ * about their own site in their inbox on day one.
+ */
+export function firstAuditEmail(data: FirstAuditData, copy: EmailCopy = {}): { subject: string; html: string; text: string } {
+  const d = DEFAULT_COPY.first_audit;
+  const vars = {
+    firstName: firstNameOf(data.name),
+    website: data.websiteHost,
+    score: String(data.healthScore),
+    pages: `${data.pagesCrawled} page${data.pagesCrawled === 1 ? "" : "s"}`,
+    checks: String(data.checkCount),
+  };
+  const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
+  const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
+  const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
+  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
+
+  const counts: [string, number][] = [
+    ["errors", data.errorCount],
+    ["warnings", data.warningCount],
+    ["notices", data.noticeCount],
+  ];
+  const issueBlocks = data.issues
+    .map((i) => {
+      const st = AUDIT_SEVERITY_STYLE[i.severity];
+      return `<div style="border:1px solid #e4e7ee;border-radius:12px;padding:14px 16px;margin:0 0 10px">
+      <p style="margin:0 0 6px;font-size:12px"><span style="background:${st.bg};color:${st.color};border-radius:6px;padding:2px 8px;font-weight:600">${st.label}</span> <span style="color:#5c6270">${i.count} affected</span></p>
+      <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#16181d">${esc(i.title)}</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#5c6270">${esc(i.explain)}</p>
+      <p style="margin:0;font-size:13px;color:#16181d"><b>Fix:</b> ${esc(i.fix)}</p>
+      ${i.exampleUrl ? `<p style="margin:6px 0 0;font-size:12px;color:#5c6270;word-break:break-all">e.g. ${esc(i.exampleUrl)}</p>` : ""}
+    </div>`;
+    })
+    .join("");
+  const noIssues = `<div style="background:#e8f7ee;border-radius:12px;padding:14px 16px;font-size:14px;color:#166534;margin-bottom:20px">No errors found. That's rare: the site is in good shape.</div>`;
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">First audit</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(heading)}</h1>
+    ${paragraphs(intro, "margin:0 0 18px;font-size:14px;color:#5c6270")}
+    <table style="width:100%;border-collapse:separate;border-spacing:6px 0;margin:0 -6px 20px"><tr>
+      ${counts
+        .map(
+          ([label, n]) =>
+            `<td style="background:#f4f5f9;border-radius:12px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:600;color:#16181d">${n}</div><div style="font-size:12px;color:#5c6270">${label}</div></td>`,
+        )
+        .join("")}
+    </tr></table>
+    ${data.issues.length ? issueBlocks : noIssues}
+    <div style="margin-top:20px">${button(data.auditUrl, cta)}</div>
+  `;
+  const text =
+    `${heading}\n\n${intro}\n\n` +
+    counts.map(([l, n]) => `${n} ${l}`).join(" · ") +
+    "\n\n" +
+    (data.issues.length
+      ? data.issues.map((i) => `- ${i.title} (${i.count} affected): ${i.explain} Fix: ${i.fix}`).join("\n")
+      : "No errors found.") +
+    `\n\n${cta}: ${data.auditUrl}`;
   return { subject, html: shell(inner), text };
 }
 
@@ -1946,6 +2036,12 @@ export interface TrialEndingData {
   changes: number;
   websites: number;
   upgradeUrl: string;
+  /** The most serious change caught during the trial, if any. */
+  worst?: { severity: string; title: string; page: string } | null;
+  /** What the Free plan allows, for the "what changes" lines. */
+  free?: { websites: number; pages: number; frequency: string } | null;
+  /** A running campaign that discounts Pro (monthly billing). */
+  offer?: { name: string; code: string; percent: number; price: number; cycles: number; endsOn: string } | null;
 }
 
 /**
@@ -1960,13 +2056,32 @@ export function trialEndingEmail(data: TrialEndingData, copy: EmailCopy = {}): {
   const subject = fillPlaceholders(pick(copy.subject, d.subject), vars);
   const heading = fillPlaceholders(pick(copy.heading, d.heading), vars);
   const intro = fillPlaceholders(pick(copy.intro, d.intro), vars);
-  const cta = fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
+  const offer = data.offer ?? null;
+  const priceText = offer ? `$${offer.price}` : `$${data.price}`;
+  // The saved label names the regular price; during a campaign the button
+  // says the price they will actually pay.
+  const cta = offer
+    ? `Keep Pro for ${priceText} a month`
+    : fillPlaceholders(pick(copy.buttonLabel, d.buttonLabel ?? ""), vars);
 
   const facts = [
     data.websites > 0 ? `${data.websites} website${data.websites === 1 ? "" : "s"} monitored` : null,
     data.scans > 0 ? `${data.scans} scan${data.scans === 1 ? "" : "s"} run` : null,
     data.changes > 0 ? `${data.changes} change${data.changes === 1 ? "" : "s"} caught` : null,
   ].filter((f): f is string => f !== null);
+  const worst = data.worst ?? null;
+  const worstLine = worst ? `${worst.severity.charAt(0)}${worst.severity.slice(1).toLowerCase()}: ${worst.title} (${worst.page})` : null;
+  const free = data.free ?? null;
+  const losses = free
+    ? [
+        `Checked ${free.frequency} instead of every day`,
+        `${free.websites} website${free.websites === 1 ? "" : "s"} with up to ${free.pages} pages`,
+        "No check after WordPress and Shopify updates",
+      ]
+    : [];
+  const offerLine = offer
+    ? `${offer.name}: Pro is ${priceText} a month for your first ${offer.cycles} months with code ${offer.code} (${offer.percent}% off, applied at checkout), until ${offer.endsOn}.`
+    : null;
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Pro trial</p>
@@ -1975,15 +2090,30 @@ export function trialEndingEmail(data: TrialEndingData, copy: EmailCopy = {}): {
     ${
       facts.length
         ? `<p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#16181d">During your trial so far</p>
-    <ul style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#16181d">${facts.map((f) => `<li style="margin:0 0 6px">${esc(f)}</li>`).join("")}</ul>`
+    <ul style="margin:0 0 ${worstLine ? "12px" : "22px"};padding-left:20px;font-size:14px;color:#16181d">${facts.map((f) => `<li style="margin:0 0 6px">${esc(f)}</li>`).join("")}</ul>`
         : ""
     }
+    ${
+      worstLine
+        ? `<div style="margin:0 0 22px;border-left:3px solid #d92d32;background:#fdf2f2;border-radius:8px;padding:12px 14px;font-size:14px;color:#16181d"><span style="display:block;font-size:12px;font-weight:600;color:#9b1c1c;margin-bottom:2px">The one that mattered most</span>${esc(worstLine)}</div>`
+        : ""
+    }
+    ${
+      losses.length
+        ? `<p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#16181d">What changes on the Free plan</p>
+    <ul style="margin:0 0 22px;padding-left:20px;font-size:14px;color:#5c6270">${losses.map((f) => `<li style="margin:0 0 6px">${esc(f)}</li>`).join("")}</ul>`
+        : ""
+    }
+    ${offerLine ? `<div style="margin:0 0 18px;background:#fff8d6;border-radius:12px;padding:12px 14px;font-size:14px;color:#16181d">${esc(offerLine)}</div>` : ""}
     ${button(data.upgradeUrl, cta)}
     <p style="margin:22px 0 0;font-size:13px;color:#5c6270">No need to do anything if Free is enough: your websites and baselines are kept when the trial ends.</p>
   `;
   const text =
     `${intro}\n\n` +
     (facts.length ? `During your trial so far:\n${facts.map((f) => `- ${f}`).join("\n")}\n\n` : "") +
+    (worstLine ? `The one that mattered most: ${worstLine}\n\n` : "") +
+    (losses.length ? `What changes on the Free plan:\n${losses.map((f) => `- ${f}`).join("\n")}\n\n` : "") +
+    (offerLine ? `${offerLine}\n\n` : "") +
     `${cta}: ${data.upgradeUrl}\n\nNo need to do anything if Free is enough: your websites and baselines are kept when the trial ends.`;
   return { subject, html: shell(inner), text };
 }

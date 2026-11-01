@@ -79,6 +79,14 @@ export function pageLimitFor(ent: { planId: string; unlimited?: boolean } | null
   return ent.unlimited ? Infinity : PLAN_PAGE_LIMITS[toPlanTier(ent.planId)];
 }
 
+/** Pages a technical SEO site audit may crawl, per plan. */
+export const PLAN_SITE_AUDIT_PAGES: Record<PlanTier, number> = {
+  free: 150,
+  starter: 500,
+  pro: 1500,
+  agency: 2000,
+};
+
 export const PLAN_NAMES: Record<PlanTier, string> = {
   free: "Free",
   starter: "Starter",

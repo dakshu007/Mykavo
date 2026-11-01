@@ -61,6 +61,7 @@ import { runBillingSweep } from "./billing-sweep";
 import { runShopifyBillingSweep } from "./shopify-billing-sweep";
 import { runPlanSweep } from "./plan-sweep";
 import { runActivationSweep } from "./activation-email";
+import { queueFirstSiteAudits } from "./first-audit";
 import { runClientReportSweep } from "./client-report";
 import { runSiteAuditJob } from "./site-audit";
 import { runLeadAuditJob } from "./lead-audit";
@@ -239,6 +240,12 @@ async function main() {
   // reminder, spending only the email budget alerts leave over.
   await ensureQueue(boss, ACTIVATION_SWEEP_QUEUE, { expireInSeconds: 20 * 60 });
   await boss.work(ACTIVATION_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
+    // Day-one audits first, so their findings can go out in a later run.
+    try {
+      await queueFirstSiteAudits(boss);
+    } catch (err) {
+      logger.error("first site audits skipped this run", {}, err);
+    }
     await runActivationSweep();
   });
   await boss.schedule(ACTIVATION_SWEEP_QUEUE, ACTIVATION_CRON);

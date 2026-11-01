@@ -184,6 +184,9 @@ export async function buildAutomationData(
     case "wordpress_connect":
       // Sent by wordpress-connect-email.ts, which knows the site.
       return null;
+    case "first_audit":
+      // Sent by the activation sweep, which knows the audit.
+      return null;
     case "trial_ending":
     case "trial_ended":
     case "monitoring_paused":

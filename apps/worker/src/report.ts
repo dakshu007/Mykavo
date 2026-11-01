@@ -67,7 +67,7 @@ export async function gatherRawData(
   })();
 
   const scanWindow = { websiteId: website.id, createdAt: { gte: since } };
-  const [scansRun, scansFailed, severityGroups, uptime, sslCheck, audit] = await Promise.all([
+  const [scansRun, scansFailed, severityGroups, uptime, sslCheck, audit, pagesMonitored, scanned] = await Promise.all([
     prisma.scan.count({ where: scanWindow }),
     prisma.scan.count({ where: { ...scanWindow, status: "FAILED" } }),
     prisma.changeEvent.groupBy({
@@ -91,6 +91,8 @@ export async function gatherRawData(
         seoScore: true,
       },
     }),
+    prisma.monitoredPage.count({ where: { websiteId: website.id, enabled: true } }),
+    prisma.scan.aggregate({ where: { ...scanWindow, status: { in: ["COMPLETED", "PARTIAL"] } }, _sum: { pagesScanned: true } }),
   ]);
 
   const changesBySeverity: Partial<Record<ReportSeverity, number>> = {};
@@ -118,6 +120,8 @@ export async function gatherRawData(
         }
       : null,
     dashboardUrl: `${dashboardBase}/dashboard/websites/${website.id}`,
+    pagesMonitored,
+    pageChecks: scanned._sum.pagesScanned ?? 0,
   };
 }
 

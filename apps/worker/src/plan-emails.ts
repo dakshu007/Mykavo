@@ -9,6 +9,8 @@
 import { prisma, getWorkspaceEntitlement, trialDaysLeft, isMissingTableError } from "@mykavo/database";
 import { renderAutomation } from "@mykavo/email";
 import { PLAN_PRICES_USD, TRIAL_MAX_WEBSITES, TRIAL_REMINDER_DAYS_LEFT, displayPersonName } from "@mykavo/shared";
+import { PLAN_PAGE_LIMITS, PLAN_WEBSITE_LIMITS } from "@mykavo/shared/plan-tier";
+import { activeCampaign, campaignCovers, campaignPrice } from "@mykavo/shared/campaign";
 import { appBase } from "./automation-data";
 import { sendAutomatedEmail } from "./automation-send";
 import type { Automations } from "./automation-settings";
@@ -84,6 +86,34 @@ async function sendTrialStarted(budget: number, a: Automations, now: Date): Prom
   return sent;
 }
 
+const SEVERITY_RANK = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"] as const;
+
+/** The most serious change caught since the trial started, for the reminder. */
+export async function worstChange(
+  workspaceId: string,
+  since: Date,
+): Promise<{ severity: string; title: string; page: string } | null> {
+  for (const severity of SEVERITY_RANK.slice(0, 3)) {
+    const event = await prisma.changeEvent.findFirst({
+      where: { website: { workspaceId }, detectedAt: { gte: since }, severity },
+      orderBy: { detectedAt: "desc" },
+      select: { title: true, monitoredPage: { select: { url: true } }, website: { select: { url: true } } },
+    });
+    if (event) return { severity, title: event.title, page: shortUrl(event.monitoredPage?.url ?? event.website.url) };
+  }
+  return null;
+}
+
+/** "example.com/pricing" from a full URL. */
+export function shortUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.hostname.replace(/^www\./, "")}${u.pathname === "/" ? "" : u.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
 async function sendTrialReminders(budget: number, a: Automations, now: Date): Promise<number> {
   if (budget <= 0 || !a.settings.trial_ending.enabled) return 0;
   const due = await prisma.workspaceTrial.findMany({
@@ -108,11 +138,24 @@ async function sendTrialReminders(budget: number, a: Automations, now: Date): Pr
       continue;
     }
     const since = { gte: trial.startedAt };
-    const [websites, scans, changes] = await Promise.all([
+    const [websites, scans, changes, worstEvent] = await Promise.all([
       prisma.website.count({ where: { workspaceId: trial.workspaceId } }),
       prisma.scan.count({ where: { website: { workspaceId: trial.workspaceId }, status: { in: ["COMPLETED", "PARTIAL"] }, createdAt: since } }),
       prisma.changeEvent.count({ where: { website: { workspaceId: trial.workspaceId }, detectedAt: since } }),
+      worstChange(trial.workspaceId, trial.startedAt),
     ]);
+    const campaign = activeCampaign(now);
+    const offer =
+      campaign && campaignCovers(campaign, "pro")
+        ? {
+            name: campaign.name,
+            code: campaign.code,
+            percent: campaign.percent,
+            price: campaignPrice(PLAN_PRICES_USD.pro, campaign.percent),
+            cycles: campaign.cycles,
+            endsOn: dayFormat.format(new Date(campaign.endsAt.getTime() - 1)),
+          }
+        : null;
     const result = await sendAutomatedEmail({
       workspaceId: trial.workspaceId,
       to: to.email,
@@ -132,6 +175,9 @@ async function sendTrialReminders(budget: number, a: Automations, now: Date): Pr
               changes,
               websites,
               upgradeUrl: `${appBase}/dashboard/billing?from=email:trial_ending`,
+              worst: worstEvent,
+              free: { websites: PLAN_WEBSITE_LIMITS.free, pages: PLAN_PAGE_LIMITS.free, frequency: "once a week" },
+              offer,
             },
           },
           a.settings,

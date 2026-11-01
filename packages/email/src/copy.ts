@@ -20,6 +20,7 @@ export const AUTOMATION_KEYS = [
   "welcome",
   "first_website",
   "baseline_ready",
+  "first_audit",
   "wordpress_connect",
   "day3_stats",
   "day3_setup",
@@ -60,6 +61,13 @@ export const DEFAULT_COPY: Record<AutomationKey, { subject: string; heading: str
     intro:
       "MyKavo recorded the known-good state of {pages} on {website}. Every scan from now on is compared against it, and you hear from us when something important changes.",
     buttonLabel: "See the baseline",
+  },
+  first_audit: {
+    subject: "Your first audit of {website}: health score {score}",
+    heading: "{website} scored {score} out of 100",
+    intro:
+      "Hi {firstName}, while MyKavo set up monitoring for {website}, it also crawled {pages} and ran {checks} technical SEO checks. These are the issues worth fixing first. From now on MyKavo watches the pages you picked and tells you the day something important changes.",
+    buttonLabel: "See the full audit",
   },
   wordpress_connect: {
     subject: "Finish connecting {site} to MyKavo",
@@ -149,6 +157,13 @@ export const PLACEHOLDERS: Record<AutomationKey, { token: string; meaning: strin
     { token: "{website}", meaning: "the website's domain" },
     { token: "{websiteName}", meaning: "the website's name" },
     { token: "{pages}", meaning: 'pages captured, e.g. "5 pages"' },
+  ],
+  first_audit: [
+    { token: "{firstName}", meaning: "first name (dropped when unknown)" },
+    { token: "{website}", meaning: "the website's domain" },
+    { token: "{score}", meaning: "health score out of 100" },
+    { token: "{pages}", meaning: 'pages crawled, e.g. "42 pages"' },
+    { token: "{checks}", meaning: "checks run per crawl, e.g. 98" },
   ],
   wordpress_connect: [
     { token: "{firstName}", meaning: "first name (dropped when unknown)" },

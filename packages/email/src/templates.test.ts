@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   trialEndingEmail,
+  firstAuditEmail,
   trialEndedEmail,
   trialStartedEmail,
   monitoringPausedEmail,
@@ -789,5 +790,99 @@ describe("plan emails", () => {
     );
     expect(scanSummaryEmail({ ...base, freePlanGap: { days: 1, upgradeUrl: "x" } }).text).not.toContain("live for up to");
     expect(freePlanGapNote(null)).toBeNull();
+  });
+});
+
+describe("trialEndingEmail: their own numbers", () => {
+  const base = {
+    name: "Asha Rao",
+    daysLeft: 3,
+    endsOn: "Friday, November 6",
+    price: 20,
+    scans: 14,
+    changes: 3,
+    websites: 2,
+    upgradeUrl: "https://mykavo.app/dashboard/billing",
+  };
+
+  it("names the worst change and what Free takes away", () => {
+    const mail = trialEndingEmail({
+      ...base,
+      worst: { severity: "CRITICAL", title: "Page changed from index to noindex", page: "shop.com/pricing" },
+      free: { websites: 1, pages: 5, frequency: "once a week" },
+    });
+    expect(mail.text).toContain("The one that mattered most: Critical: Page changed from index to noindex (shop.com/pricing)");
+    expect(mail.text).toContain("Checked once a week instead of every day");
+    expect(mail.text).toContain("1 website with up to 5 pages");
+    expect(mail.html).toContain("What changes on the Free plan");
+  });
+
+  it("quotes the campaign price on the button when an offer runs", () => {
+    const mail = trialEndingEmail({
+      ...base,
+      offer: { name: "Black Friday", code: "BLACKFRIDAY50", percent: 50, price: 10, cycles: 3, endsOn: "Tuesday, December 15" },
+    });
+    expect(mail.text).toContain("Keep Pro for $10 a month");
+    expect(mail.text).toContain("code BLACKFRIDAY50 (50% off, applied at checkout), until Tuesday, December 15");
+  });
+
+  it("stays as before without the extras", () => {
+    const mail = trialEndingEmail(base);
+    expect(mail.text).not.toContain("mattered most");
+    expect(mail.text).not.toContain("What changes on the Free plan");
+  });
+});
+
+describe("firstAuditEmail", () => {
+  const base = {
+    name: "Asha Rao",
+    websiteHost: "shop.com",
+    pagesCrawled: 42,
+    checkCount: 98,
+    healthScore: 81,
+    errorCount: 4,
+    warningCount: 11,
+    noticeCount: 6,
+    auditUrl: "https://mykavo.app/dashboard/site-audit/a1",
+  };
+
+  it("leads with the score and the issues to fix first", () => {
+    const mail = firstAuditEmail({
+      ...base,
+      issues: [
+        { title: "Broken internal links", severity: "ERROR", explain: "Visitors hit dead ends.", fix: "Update or remove the links.", count: 7, exampleUrl: "https://shop.com/a" },
+      ],
+    });
+    expect(mail.subject).toBe("Your first audit of shop.com: health score 81");
+    expect(mail.text).toContain("crawled 42 pages and ran 98 technical SEO checks");
+    expect(mail.text).toContain("- Broken internal links (7 affected): Visitors hit dead ends. Fix: Update or remove the links.");
+    expect(mail.text).toContain("See the full audit: https://mykavo.app/dashboard/site-audit/a1");
+  });
+
+  it("says so when there is nothing to fix", () => {
+    const mail = firstAuditEmail({ ...base, errorCount: 0, issues: [] });
+    expect(mail.text).toContain("No errors found.");
+  });
+});
+
+describe("weeklyReportEmail: a quiet week shows the work", () => {
+  it("lists what was checked when nothing changed", () => {
+    const mail = weeklyReportEmail({
+      websiteName: "Shop",
+      websiteHost: "shop.com",
+      periodLabel: "Oct 26 - Nov 2, 2026",
+      scansRun: 7,
+      scansFailed: 0,
+      totalChanges: 0,
+      changesBySeverity: [],
+      uptimePercent: 100,
+      avgResponseMs: 320,
+      sslDaysLeft: 80,
+      lighthouse: null,
+      allQuiet: true,
+      dashboardUrl: "https://mykavo.app/dashboard/websites/w1",
+      watched: { pages: 5, pageChecks: 35 },
+    });
+    expect(mail.text).toContain("MyKavo checked 5 pages on every scan, 35 page checks in all");
   });
 });
