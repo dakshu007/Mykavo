@@ -6,6 +6,7 @@ import { GoogleIcon } from "@/components/brand/integration-icons";
 import { track } from "@/lib/analytics";
 import { displayHost, monitorableUrl, signupHref } from "@/lib/attribution/monitor-link";
 import { fontDisplay } from "@/components/landing/style";
+import { ToolAuditOffer } from "./tool-audit-offer";
 
 /**
  * Product CTA block shown under free-tool results, tying the tool to
@@ -131,6 +132,7 @@ export function ToolCta({
           Free plan · No credit card · {page ? "Your page is filled in for you" : "Set up in about a minute"}
         </p>
       </div>
+      {page && <ToolAuditOffer url={page} tool={tool} />}
     </div>
   );
 }

@@ -37,4 +37,9 @@ describe("ToolCta", () => {
     expect(html).toContain("Stripe script removed on example.com");
     expect(html).toContain("Watch example.com free");
   });
+
+  it("offers the emailed site audit when a page was checked, and only then", () => {
+    expect(render("https://www.example.com/pricing")).toContain("Get a free audit of all of example.com by email");
+    expect(render(undefined)).not.toContain("Not ready for an account?");
+  });
 });
