@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AI_INSIGHTS_PATH } from "./ai-insights";
+import { McpIcon } from "@/components/brand/integration-icons";
 import { GoogleCta } from "./google-cta";
 import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
 import { getPlan } from "@/config/plans";
 import { LandingAuditForm } from "./audit-form";
 import { HeroWordPress } from "./hero-wordpress";
+import { LiveProofStrip } from "./live-proof";
 import { HeroStoryAnimation } from "./hero-story-animation";
 import { fontDisplay } from "./style";
 
@@ -25,11 +26,17 @@ export function LandingHero() {
       />
 
       <div className="relative mx-auto max-w-6xl">
-        {/* Launch pill: AI Website Insights. A link, not a badge - the one
-            place on the page that says what's new, and where to see it. */}
+        {/* Real, anonymized proof from the last 30 days (lib/live-proof.ts). */}
+        <div className="-mt-6 mb-5 sm:-mt-10 sm:mb-6">
+          <LiveProofStrip />
+        </div>
+
+        {/* Launch pill: the Claude and ChatGPT connector (MCP). A link, not a
+            badge - the one place on the page that says what's new, and where
+            to see it. */}
         <div className="flex justify-center">
           <Link
-            href={AI_INSIGHTS_PATH}
+            href="/ai-connector?from=home_pill"
             className="hero-launch group relative flex items-center gap-2.5 overflow-hidden rounded-full border border-[#151515] bg-white py-1 pl-1 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
           >
             <span className="flex items-center gap-1.5 rounded-full bg-[#151515] px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFD400]">
@@ -39,7 +46,9 @@ export function LandingHero() {
               </span>
               New
             </span>
-            <span>AI explains every alert</span>
+            <McpIcon className="size-3.5 shrink-0" />
+            <span className="sm:hidden">Claude &amp; ChatGPT connector</span>
+            <span className="hidden sm:inline">Ask Claude &amp; ChatGPT about your sites</span>
             <span className="hidden items-center gap-1 text-[#151515]/60 transition-colors group-hover:text-[#151515] sm:inline-flex">
               See how <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
             </span>
