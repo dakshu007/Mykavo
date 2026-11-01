@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Activity, AlertTriangle, ChevronRight, Filter, Users } from "lucide-react";
+import { Activity, AlertTriangle, ChevronRight, Filter, MailCheck, Users } from "lucide-react";
 import { requireSession } from "@/lib/session";
 import { isPlatformAdmin } from "@/lib/platform-admin";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -60,7 +60,7 @@ export default async function TrackingPage({
   const show: Show = (SHOWS.find((s) => s.id === sp.show)?.id ?? "all") as Show;
   const includeInternal = sp.internal === "1";
 
-  const { rows, kpis, daily, recording, extension } = await loadTrackingOverview(includeInternal);
+  const { rows, kpis, daily, recording, extension, auditLeads } = await loadTrackingOverview(includeInternal);
   const visible = visibleRows(rows, show);
   const maxDaily = Math.max(1, ...daily.map((d) => CHANNELS.reduce((n, ch) => n + d[ch], 0)));
   const pct = (n: number) => (kpis.users ? Math.round((n / kpis.users) * 100) : 0);
@@ -184,6 +184,75 @@ export default async function TrackingPage({
                 );
               })}
             </ol>
+          )}
+        </Card>
+      )}
+
+      {auditLeads && (
+        <Card>
+          <CardHeader
+            icon={MailCheck}
+            title="Free site audit (homepage form)"
+            action={<span className="text-[12px] text-ink-faint">All time · {includeInternal ? "including team" : "customers only"}</span>}
+          />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[
+              ["Requested", auditLeads.total],
+              ["Last 7 days", auditLeads.last7d],
+              ["Emailed", auditLeads.emailed],
+              ["Failed", auditLeads.failed],
+              ["Signed up after", auditLeads.signedUpAfter],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg bg-surface px-3 py-2.5">
+                <p className="text-[11px] font-medium text-ink-secondary">{label}</p>
+                <p className="text-xl font-semibold tabular-nums text-ink">{value}</p>
+              </div>
+            ))}
+          </div>
+          {auditLeads.recent.length === 0 ? (
+            <p className="mt-4 text-[13px] text-ink-secondary">Nobody has asked for an audit yet.</p>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-[13px]">
+                <thead className="text-[11px] uppercase tracking-wide text-ink-faint">
+                  <tr>
+                    <th className="py-2 pr-3 font-medium">When</th>
+                    <th className="py-2 pr-3 font-medium">Website</th>
+                    <th className="py-2 pr-3 font-medium">Email</th>
+                    <th className="py-2 pr-3 font-medium">Result</th>
+                    <th className="py-2 font-medium">Account</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {auditLeads.recent.map((l) => (
+                    <tr key={l.id}>
+                      <td className="py-2 pr-3 whitespace-nowrap text-ink-secondary">{ago(l.createdAt)}</td>
+                      <td className="py-2 pr-3 font-medium text-ink">{l.host}</td>
+                      <td className="py-2 pr-3 text-ink-secondary">
+                        {l.email}
+                        {l.internal && <span className="ml-1.5 text-[11px] text-ink-faint">team</span>}
+                      </td>
+                      <td className="py-2 pr-3 text-ink-secondary">
+                        {l.status === "COMPLETED"
+                          ? `${l.pagesCrawled} pages · score ${l.healthScore ?? "-"}${l.emailed ? " · emailed" : ""}`
+                          : l.status === "FAILED"
+                            ? <span className="text-critical-strong" title={l.errorMessage ?? undefined}>Failed</span>
+                            : l.status.toLowerCase()}
+                      </td>
+                      <td className="py-2">
+                        {l.userId ? (
+                          <Link href={`/dashboard/tracking/${l.userId}`} className="font-medium text-ink hover:underline">
+                            {l.signedUpAfter ? "Signed up" : "Existing user"}
+                          </Link>
+                        ) : (
+                          <span className="text-ink-faint">No account</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </Card>
       )}

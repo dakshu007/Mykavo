@@ -18,6 +18,7 @@ import {
   type TrackingKpis,
   type TrackingRow,
 } from "./tracking-core";
+import { summarizeAuditLeads, type AuditLeadSummary } from "./audit-leads";
 
 /**
  * Admin tracking - loading. Operator-only callers (the Tracking pages check
@@ -167,6 +168,8 @@ export interface TrackingOverview {
   recording: boolean;
   /** Chrome extension installs through to paid; null before its migration. */
   extension: ExtensionFunnel | null;
+  /** The homepage "Email my free audit" form; null before its migration. */
+  auditLeads: AuditLeadSummary | null;
 }
 
 export async function loadTrackingOverview(includeInternal: boolean): Promise<TrackingOverview> {
@@ -184,7 +187,7 @@ export async function loadTrackingOverview(includeInternal: boolean): Promise<Tr
     }
     return entry;
   });
-  const [recording, installs] = await Promise.all([
+  const [recording, installs, leads] = await Promise.all([
     prisma.userActivityDay
       .count({ take: 1 })
       .then(() => true)
@@ -203,6 +206,24 @@ export async function loadTrackingOverview(includeInternal: boolean): Promise<Tr
         },
       })
       .catch(tolerant<RawExtensionInstall[] | null>("extension installs", null)),
+    prisma.auditLead
+      .findMany({
+        select: {
+          id: true,
+          email: true,
+          host: true,
+          status: true,
+          pagesCrawled: true,
+          healthScore: true,
+          errorCount: true,
+          emailedAt: true,
+          errorMessage: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1000,
+      })
+      .catch(tolerant<null>("audit leads", null)),
   ]);
   const internalIds = new Set(all.filter((r) => r.internal).map((r) => r.id));
   const returned = new Set(
@@ -224,7 +245,14 @@ export async function loadTrackingOverview(includeInternal: boolean): Promise<Tr
         new Set(all.filter((r) => r.paid).map((r) => r.id)),
       )
     : null;
-  return { rows, kpis: summarizeRows(rows), daily, recording, extension };
+  const auditLeads = leads
+    ? summarizeAuditLeads(
+        leads.map((l) => ({ ...l, status: String(l.status) })),
+        input.users.map((u) => ({ id: u.id, email: u.email, createdAt: u.createdAt })),
+        { includeInternal, isInternal: (email) => isInternalEmail(email) },
+      )
+    : null;
+  return { rows, kpis: summarizeRows(rows), daily, recording, extension, auditLeads };
 }
 
 export interface UserTracking {
