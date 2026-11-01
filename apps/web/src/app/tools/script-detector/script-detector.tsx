@@ -139,10 +139,23 @@ export function ScriptDetector() {
           </div>
 
           <ToolCta
-            heading="Get alerted when important scripts are added or removed."
-            body="MyKavo tracks the scripts on every monitored page across scheduled scans - a vanished analytics tag, a missing payment script, or an unknown third-party addition triggers an email alert."
+            heading={
+              report.scripts.length > 0
+                ? `You have ${report.scripts.length} script${report.scripts.length === 1 ? "" : "s"} today. Will they all be there tomorrow?`
+                : "Get alerted when important scripts are added or removed."
+            }
+            body="A plugin update, a theme change or a tag manager edit can silently remove analytics or a payment script, or add one you never approved. MyKavo checks this page every day and emails you the moment one changes."
             tool="script-detector"
             url={report.finalUrl}
+            watch={
+              report.scripts.length > 0
+                ? {
+                    items: services.length > 0 ? [...services, ...(thirdPartyCount > services.length ? [`${thirdPartyCount - services.length} other third-party`] : [])] : [`${report.scripts.length} external scripts`],
+                    alert: services.length > 0 ? `${services[0]} script removed` : "Unknown third-party script added",
+                    severity: "HIGH",
+                  }
+                : null
+            }
           />
         </>
       )}

@@ -20,4 +20,21 @@ describe("ToolCta", () => {
     expect(html).toContain("Start monitoring free");
     expect(html).toContain(`href="/signup?provider=google&amp;from=tool%3Ascript-detector"`);
   });
+
+  it("names what it found and shows the alert the visitor would get", () => {
+    const html = renderToStaticMarkup(
+      createElement(ToolCta, {
+        heading: "H",
+        body: "B",
+        tool: "script-detector",
+        url: "https://www.example.com/",
+        watch: { items: ["Google Analytics", "Stripe", "Hotjar", "Intercom", "HubSpot"], alert: "Stripe script removed" },
+      }),
+    );
+    expect(html).toContain("What MyKavo would watch on example.com");
+    expect(html).toContain("Google Analytics");
+    expect(html).toContain("+1 more");
+    expect(html).toContain("Stripe script removed on example.com");
+    expect(html).toContain("Watch example.com free");
+  });
 });

@@ -138,10 +138,22 @@ export function MetaTagChecker() {
           </div>
 
           <ToolCta
-            heading="Monitor these tags automatically - get alerted when they change."
-            body="MyKavo re-checks titles, descriptions, canonicals, and robots meta on every page you monitor, on a schedule - and emails you when something important changes or disappears."
+            heading="These tags are right today. Get told the day one changes."
+            body="A release, a plugin update or a CMS edit can add a noindex, swap the canonical or wipe a title, and Google notices before you do. MyKavo checks this page every day and emails you with the old value next to the new one."
             tool="meta-tag-checker"
             url={report.finalUrl}
+            watch={{
+              items: [
+                report.tags.title ? "Title" : null,
+                report.tags.metaDescription ? "Meta description" : null,
+                report.tags.canonicalUrl ? "Canonical" : null,
+                /noindex/i.test(report.tags.robotsMeta ?? "") ? "Robots meta" : "Indexable (no noindex)",
+                report.tags.h1Count > 0 ? "H1" : null,
+                `HTTP ${report.httpStatus}`,
+              ].filter((x): x is string => x !== null),
+              alert: /noindex/i.test(report.tags.robotsMeta ?? "") ? "Page title changed" : "Page changed from index to noindex",
+              severity: /noindex/i.test(report.tags.robotsMeta ?? "") ? "MEDIUM" : "CRITICAL",
+            }}
           />
         </>
       )}

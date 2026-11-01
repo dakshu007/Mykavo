@@ -139,10 +139,19 @@ export function AnalyticsChecker() {
           </div>
 
           <ToolCta
-            heading="Know the day your analytics tag disappears."
-            body="MyKavo re-scans your key pages on a schedule and sends a high-severity alert when a known analytics or tag manager script stops loading."
+            heading={
+              report.tags.length > 0
+                ? "Your tracking works today. Find out the day it stops."
+                : "Know the day your analytics tag disappears."
+            }
+            body="A theme update or a consent banner change can drop your tags without a single error, and you only notice weeks later when the reports go flat. MyKavo checks this page every day and alerts you when a tag stops loading."
             tool="analytics-tag-checker"
             url={report.finalUrl}
+            watch={
+              report.tags.length > 0
+                ? { items: report.tags.map((t) => t.name), alert: `${report.tags[0].name} stopped loading`, severity: "HIGH" }
+                : null
+            }
           />
         </>
       )}
