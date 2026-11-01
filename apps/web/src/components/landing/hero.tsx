@@ -5,6 +5,7 @@ import { GoogleCta } from "./google-cta";
 import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
 import { getPlan } from "@/config/plans";
 import { LandingAuditForm } from "./audit-form";
+import { HeroWordPress } from "./hero-wordpress";
 import { HeroStoryAnimation } from "./hero-story-animation";
 import { fontDisplay } from "./style";
 
@@ -94,13 +95,22 @@ export function LandingHero() {
           changes - with before-and-after proof and an AI explanation of how to fix it.
         </p>
 
-        {/* Product-led: a free site audit by email - real value, no signup */}
+        {/* WordPress first (see hero-wordpress.tsx for why); the emailed audit
+            stays one click away for every other kind of site. */}
         <div className="mt-9">
-          <LandingAuditForm />
-          <p className="mt-3 text-center text-[13px] text-[#6B6B60]">
-            Free site audit: up to {getPlan("free").limits.siteAuditPages} pages, {AUDIT_CHECK_COUNT} checks,
-            emailed to you in minutes. No signup needed.
-          </p>
+          <HeroWordPress />
+          <details className="group/audit mx-auto mt-5 max-w-2xl">
+            <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1.5 text-[13.5px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
+              Not on WordPress? Get a free site audit by email
+            </summary>
+            <div className="mt-4">
+              <LandingAuditForm />
+              <p className="mt-3 text-center text-[13px] text-[#6B6B60]">
+                Up to {getPlan("free").limits.siteAuditPages} pages, {AUDIT_CHECK_COUNT} checks, emailed to you in
+                minutes. No signup needed.
+              </p>
+            </div>
+          </details>
         </div>
 
         {/* Google first: one tap instead of a form is the single biggest
