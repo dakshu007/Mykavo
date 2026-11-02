@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
-import { requireSession, getCurrentWorkspace } from "@/lib/session";
+import { requireSession, getCurrentMembership } from "@/lib/session";
+import { getWorkspacePlan } from "@/lib/limits";
+import { QuickStartWebsite } from "@/components/dashboard/overview/quick-start";
 import { ONBOARDING_DISMISSED_COOKIE } from "@/lib/onboarding";
 import { loadOverview } from "@/components/dashboard/overview/load-overview";
 import { NeedsAttention } from "@/components/dashboard/overview/needs-attention";
@@ -23,7 +25,7 @@ import { findWeeklySummary } from "@/lib/ai/weekly-summary";
  */
 export default async function DashboardOverviewPage() {
   const session = await requireSession();
-  const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
+  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
 
   // Workspaces that dismissed the earlier checklist card keep it dismissed.
   const cookieStore = await cookies();
@@ -35,6 +37,10 @@ export default async function DashboardOverviewPage() {
     setupDismissed,
   });
   const hasWebsites = data.websites.length > 0;
+  // No website yet and allowed to add one: the add-a-website form IS the
+  // page, straight after signing in (quick-start.tsx).
+  const quickStart = !hasWebsites && role !== "VIEWER";
+  const pageBudget = quickStart ? (await getWorkspacePlan(workspace.id)).limits.pagesPerWebsite : 0;
   const nothingNeedsAttention = data.attention.groups.length === 0;
 
   // The AI note covers websites that have been scanned at least once; it opens
@@ -50,9 +56,11 @@ export default async function DashboardOverviewPage() {
 
       <NeedsAttention attention={data.attention} now={data.now} />
 
-      {data.setupGuide && <SetupGuide guide={data.setupGuide} />}
+      {quickStart && <QuickStartWebsite pageBudget={pageBudget} />}
 
-      {!hasWebsites && !data.setupGuide && <FirstWebsite />}
+      {!quickStart && data.setupGuide && <SetupGuide guide={data.setupGuide} />}
+
+      {!hasWebsites && !quickStart && !data.setupGuide && <FirstWebsite />}
 
       {hasWebsites && nothingNeedsAttention && (
         <AllClear
