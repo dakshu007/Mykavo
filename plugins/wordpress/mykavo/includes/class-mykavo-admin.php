@@ -138,6 +138,8 @@ final class MyKavo_Admin {
 			'pagesUrl'   => admin_url( 'edit.php?post_type=page' ),
 			'notice'     => $notice,
 			'version'    => MYKAVO_VERSION,
+			'pricingUrl' => untrailingslashit( MYKAVO_APP_URL ) . '/pricing',
+			'canUpdate'  => current_user_can( 'update_plugins' ) && wp_is_file_mod_allowed( 'mykavo_rollback' ),
 		);
 	}
 

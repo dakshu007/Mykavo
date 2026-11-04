@@ -40,6 +40,17 @@
 		updatesError: null,
 		bots: null,
 		botsError: null,
+		features: null,
+		robots: null,
+		robotsError: null,
+		aiHistory: null,
+		aiHistoryError: null,
+		health: null,
+		healthError: null,
+		guard: null,
+		win: null,
+		winError: null,
+		winEdit: null,
 		changesScan: null,
 		addUrl: '',
 		banner: bannerFromNotice( cfg.notice ),
@@ -206,6 +217,9 @@
 		brush: '<path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/>',
 		bot: '<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
 		wp: '<circle cx="12" cy="12" r="10"/><path d="M3.5 8.5 8 20l3-8.5"/><path d="M9 8.5h5"/><path d="M11.5 8.5 16 20l4.5-11.5"/>',
+		undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
+		copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+		puzzle: '<path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z"/>',
 	};
 
 	function icon( name, cls ) {
@@ -411,6 +425,173 @@
 		} );
 	}
 
+	/* ------------------------------------------------- plan features -- */
+
+	/** Whether this site's MyKavo plan includes a feature. Unknown is no. */
+	function feat() {
+		return false;
+	}
+
+	function errorReason( err ) {
+		return err && err.data && err.data.reason ? String( err.data.reason ) : '';
+	}
+
+	function loadFeatures( fresh ) {
+		return api( '/features' + ( fresh ? '?fresh=1' : '' ) )
+			.then( function ( data ) {
+				state.features = data && data.features ? data.features : {};
+			} )
+			.catch( function () {
+				// The free version of every screen still works.
+				state.features = {};
+			} )
+			.then( function () {
+				render();
+				loadTab();
+			} );
+	}
+
+	function loadRobots() {
+		return api( '/robots' )
+			.then( function ( data ) {
+				state.robots = data;
+				state.robotsError = null;
+				render();
+			} )
+			.catch( function ( err ) {
+				state.robotsError = errorMessage( err );
+				render();
+			} );
+	}
+
+	function setRobots( enabled ) {
+		state.busy = 'robots';
+		render();
+		api( '/robots', { method: 'POST', data: { enabled: enabled } } )
+			.then( function ( data ) {
+				state.robots = data;
+				toast( enabled
+					? __( 'robots.txt now asks AI training crawlers to stay away.', 'mykavo' )
+					: __( 'The AI crawler rules were removed from robots.txt.', 'mykavo' ) );
+			} )
+			.catch( function ( err ) {
+				state.banner = { tone: 'bad', text: errorMessage( err ) };
+			} )
+			.then( function () {
+				state.busy = '';
+				render();
+			} );
+	}
+
+	function loadAiHistory() {
+		state.aiHistoryError = null;
+		return api( '/ai-history' )
+			.then( function ( data ) {
+				state.aiHistory = data;
+				render();
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					state.aiHistoryError = errorMessage( err );
+					render();
+				}
+			} );
+	}
+
+	function loadHealth( fresh ) {
+		state.healthError = null;
+		if ( fresh ) {
+			state.busy = 'health';
+			render();
+		}
+		return api( '/plugin-health' + ( fresh ? '?fresh=1' : '' ) )
+			.then( function ( data ) {
+				state.health = data;
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					state.healthError = errorMessage( err );
+				}
+			} )
+			.then( function () {
+				state.busy = state.busy === 'health' ? '' : state.busy;
+				render();
+			} );
+	}
+
+	function loadWindow() {
+		state.winError = null;
+		return api( '/update-window' )
+			.then( function ( data ) {
+				state.win = data;
+				render();
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					state.winError = errorMessage( err );
+					render();
+				}
+			} );
+	}
+
+	function saveWindow( win ) {
+		state.busy = 'window';
+		render();
+		api( '/update-window', { method: 'POST', data: { window: win } } )
+			.then( function ( data ) {
+				state.win = data;
+				state.winEdit = null;
+				toast( data.allowed ? __( 'Update window saved.', 'mykavo' ) : __( 'Update windows are not included in this plan.', 'mykavo' ) );
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					state.banner = { tone: 'bad', text: errorMessage( err ) };
+				}
+			} )
+			.then( function () {
+				state.busy = '';
+				render();
+			} );
+	}
+
+	function setAutoRollback( enabled ) {
+		api( '/updates', { method: 'POST', data: { autoRollback: enabled } } ).then( function ( data ) {
+			state.updates = data;
+			toast( enabled ? __( 'Automatic rollback is on.', 'mykavo' ) : __( 'Automatic rollback is off.', 'mykavo' ) );
+			render();
+		} );
+	}
+
+	function rollback() {}
+
+	function guardCheckout() {
+		state.busy = 'guard';
+		render();
+		api( '/checkout-guard', { method: 'POST' } )
+			.then( function ( data ) {
+				state.guard = data;
+				if ( data && data.allowed ) {
+					toast( __( 'Checkout guard is on. MyKavo alerts you when a store button goes missing.', 'mykavo' ) );
+					state.pages = null;
+					loadPages();
+					loadOverview( true );
+				}
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					if ( errorReason( err ) === 'PLAN' ) {
+						state.guard = { allowed: false };
+					} else {
+						state.banner = { tone: 'bad', text: errorMessage( err ) };
+					}
+				}
+			} )
+			.then( function () {
+				state.busy = '';
+				render();
+			} );
+	}
+
 	/** While a scan runs, refresh quietly - only while the tab is visible. */
 	function schedulePoll() {
 		stopPolling();
@@ -464,12 +645,24 @@
 			loadPages();
 		} else if ( state.tab === 'bots' ) {
 			loadBots();
+			if ( ! state.robots ) {
+				loadRobots();
+			}
+			if ( feat( 'aiInsights' ) && ! state.aiHistory && ! state.aiHistoryError ) {
+				loadAiHistory();
+			}
 		} else if ( state.tab === 'updates' ) {
 			if ( ! state.updates ) {
 				loadUpdates();
 			}
 			if ( ! state.scans ) {
 				loadScans();
+			}
+			if ( feat( 'pluginHealth' ) && ! state.health && ! state.healthError ) {
+				loadHealth( false );
+			}
+			if ( feat( 'updateWindows' ) && ! state.win && ! state.winError ) {
+				loadWindow();
 			}
 		}
 	}
@@ -585,6 +778,11 @@
 			state.changes = null;
 			state.scans = null;
 			state.pages = null;
+			state.features = null;
+			state.aiHistory = null;
+			state.health = null;
+			state.win = null;
+			state.guard = null;
 			stopPolling();
 			window.location.reload();
 		} );
@@ -1105,6 +1303,10 @@
 			label = sprintf( /* translators: %s: plugin name. */ __( 'Deactivated %s', 'mykavo' ), name );
 		} else if ( first.action === 'switch' ) {
 			label = sprintf( /* translators: %s: theme name. */ __( 'Switched theme to %s', 'mykavo' ), name );
+		} else if ( first.action === 'rollback' ) {
+			label = first.to
+				? sprintf( /* translators: 1: plugin name, 2: version. */ __( 'Rolled back %1$s to %2$s', 'mykavo' ), name, first.to )
+				: sprintf( /* translators: %s: plugin name. */ __( 'Rolled back %s', 'mykavo' ), name );
 		} else {
 			label = first.from && first.to ? name + ' ' + first.from + ' → ' + first.to : name + ( first.to ? ' ' + first.to : '' );
 		}
@@ -1126,7 +1328,7 @@
 			return { tone: 'quiet', text: __( 'Not checked - theme checks were off', 'mykavo' ) };
 		}
 		if ( reason === 'PLAN' ) {
-			return { tone: 'quiet', text: __( 'Not checked - automatic theme checks come with Pro', 'mykavo' ), upgrade: true };
+			return { tone: 'quiet', text: __( 'Not checked - automatic theme checks come with paid plans', 'mykavo' ), upgrade: true };
 		}
 		if ( reason === 'NO_BASELINE' ) {
 			return { tone: 'quiet', text: __( 'Not checked - the first baseline was not ready yet', 'mykavo' ) };
@@ -1183,6 +1385,16 @@
 		return type === 'theme' ? 'brush' : type === 'core' ? 'wp' : type === 'translation' ? 'file' : 'plug';
 	}
 
+	/** "Roll back to 8.1.0" for one plugin of an update. */
+	function rollbackButton() {
+		return '';
+	}
+
+	/** What happened with rollback for one update, in a line. */
+	function rollbackNote() {
+		return '';
+	}
+
 	function updateEntry( entry, scans, compact ) {
 		var v = verdict( entry, scans );
 		var items = entry.items || [];
@@ -1193,6 +1405,9 @@
 		} else if ( v.upgrade && billing ) {
 			actions = '<a class="mk-btn mk-btn-sm mk-btn-primary" href="' + esc( billing ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Upgrade', 'mykavo' ) ) + icon( 'external' ) + '</a>';
 		}
+		if ( ! compact && items.length === 1 ) {
+			actions += rollbackButton( entry, items[ 0 ], false );
+		}
 		return (
 			'<li class="mk-update">' +
 			'<span class="mk-update-icon">' + icon( itemIcon( items[ 0 ] && items[ 0 ].type ) ) + '</span>' +
@@ -1201,10 +1416,11 @@
 			'<p class="mk-row-meta"><span title="' + esc( when( new Date( entry.at * 1000 ).toISOString() ) ) + '">' + esc( rel( new Date( entry.at * 1000 ).toISOString() ) ) + '</span>' +
 			'</p>' +
 			verdictBadge( v ) +
+			( compact ? '' : rollbackNote( entry ) ) +
 			( ! compact && items.length > 1
 				? '<ul class="mk-update-items">' + items.map( function ( it ) {
 					var name = it.type === 'core' ? 'WordPress' : it.name;
-					return '<li>' + icon( itemIcon( it.type ) ) + '<span>' + esc( name ) + '</span><code>' + esc( it.from && it.to ? it.from + ' → ' + it.to : it.to || '' ) + '</code></li>';
+					return '<li>' + icon( itemIcon( it.type ) ) + '<span>' + esc( name ) + '</span><code>' + esc( it.from && it.to ? it.from + ' → ' + it.to : it.to || '' ) + '</code>' + rollbackButton( entry, it, true ) + '</li>';
 				} ).join( '' ) + '</ul>'
 				: '' ) +
 			'</div>' +
@@ -1239,7 +1455,7 @@
 
 		var plan = planOk
 			? ''
-			: '<div class="mk-banner">' + icon( 'zap' ) + '<span>' + esc( __( 'Theme changes are listed here on every plan. Checking the store automatically after each one comes with Pro and Agency.', 'mykavo' ) ) + '</span>' +
+			: '<div class="mk-banner">' + icon( 'zap' ) + '<span>' + esc( __( 'Theme changes are listed here on every plan. Checking the store automatically after each one comes with paid plans, from Starter.', 'mykavo' ) ) + '</span>' +
 				( billing ? '<a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( billing ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'See plans', 'mykavo' ) ) + '</a>' : '' ) + '</div>';
 
 		var list = log.length
@@ -1250,10 +1466,76 @@
 				esc( __( 'The next time your live theme is published or edited, it appears here with a verdict.', 'mykavo' ) ) + '</span></div>';
 
 		return (
-			'<div class="mk-grid">' + intro + plan +
+			'<div class="mk-grid">' + intro + plan + autoRollbackCard() +
 			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Theme changes', 'mykavo' ) ) + '</h3>' +
-			'<span class="mk-fine">' + esc( __( 'Last 30 changes.', 'mykavo' ) ) + '</span></div>' + list + '</section></div>'
+			'<span class="mk-fine">' + esc( __( 'Last 30 changes.', 'mykavo' ) ) + '</span></div>' + list + '</section>' +
+			'<div class="mk-grid mk-grid-2">' + healthCard() + windowCard() + '</div></div>'
 		);
+	}
+
+	/** A short line about a feature this plan does not include. */
+	function upsell( text ) {
+		var url = safeUrl( cfg.pricingUrl || 'https://mykavo.app/pricing' );
+		return (
+			'<p class="mk-upsell">' + icon( 'zap' ) + '<span>' + esc( text ) + ' ' +
+			'<a class="mk-link" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'See plans', 'mykavo' ) ) + icon( 'external' ) + '</a></span></p>'
+		);
+	}
+
+	function autoRollbackCard() {
+		return '';
+	}
+
+	function shortDate( day ) {
+		var d = new Date( String( day ) + 'T00:00:00Z' );
+		return isNaN( d.getTime() ) ? String( day || '' ) : d.toLocaleDateString( locale, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' } );
+	}
+
+	function healthCard() {
+		return '';
+	}
+
+	var DAY_FMT = window.Intl && Intl.DateTimeFormat ? new Intl.DateTimeFormat( locale, { weekday: 'short', timeZone: 'UTC' } ) : null;
+
+	function dayName( d ) {
+		// 7 January 2024 was a Sunday (day 0).
+		return DAY_FMT ? DAY_FMT.format( new Date( Date.UTC( 2024, 0, 7 + d ) ) ) : [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ][ d ];
+	}
+
+	function hourLabel( h ) {
+		return ( h < 10 ? '0' : '' ) + h + ':00';
+	}
+
+	function windowSummary( w ) {
+		// Monday first.
+		var days = ( w.days || [] ).slice().sort( function ( a, b ) {
+			return ( ( a + 6 ) % 7 ) - ( ( b + 6 ) % 7 );
+		} ).map( dayName ).join( ', ' );
+		if ( ( w.days || [] ).length === 7 ) {
+			return sprintf(
+				/* translators: 1: start time, 2: end time, 3: time zone. */
+				__( 'Automatic updates run only every day from %1$s to %2$s (%3$s).', 'mykavo' ),
+				hourLabel( w.startHour ),
+				hourLabel( w.endHour ),
+				w.timezone
+			);
+		}
+		return sprintf(
+			/* translators: 1: days of the week, 2: start time, 3: end time, 4: time zone. */
+			__( 'Automatic updates run only on %1$s, from %2$s to %3$s (%4$s).', 'mykavo' ),
+			days,
+			hourLabel( w.startHour ),
+			hourLabel( w.endHour ),
+			w.timezone
+		);
+	}
+
+	function windowForm() {
+		return '';
+	}
+
+	function windowCard() {
+		return '';
 	}
 
 	function pathKey( value ) {
@@ -1319,8 +1601,14 @@
 					( busy ? icon( 'loader', 'mk-spin' ) : icon( 'shield' ) ) +
 					esc( sprintf( _n( 'Monitor %d store page', 'Monitor %d store pages', missing.length, 'mykavo' ), missing.length ) ) + '</button></div>'
 				: '<div class="mk-store-foot"><p class="mk-store-ok">' + icon( 'check' ) + esc( __( 'Your key store pages are all monitored.', 'mykavo' ) ) + '</p></div>' ) +
+			guardBlock() +
 			'</section>'
 		);
+	}
+
+	/** WooCommerce checkout guard: watch the buttons that take money. */
+	function guardBlock() {
+		return '';
 	}
 
 	function safeUpdatesCard() {
@@ -1409,9 +1697,12 @@
 			'<span>' + esc( on ? __( 'Counting on', 'mykavo' ) : __( 'Counting off', 'mykavo' ) ) + '</span></button>' +
 			'</section>';
 
+		var robots = robotsCard();
+		var history = historyCard();
+
 		if ( ! b.ready ) {
 			return '<div class="mk-grid">' + intro + '<div class="mk-banner">' + icon( 'alert' ) + '<span>' +
-				esc( __( 'MyKavo could not create its small visit-count table in this site\'s database. Your hosting may not allow new tables. It retries once a day.', 'mykavo' ) ) + '</span></div></div>';
+				esc( __( 'MyKavo could not create its small visit-count table in this site\'s database. Your hosting may not allow new tables. It retries once a day.', 'mykavo' ) ) + '</span></div>' + robots + history + '</div>';
 		}
 
 		var foot =
@@ -1427,7 +1718,7 @@
 				esc( on
 					? __( 'Visits appear here as they happen. ChatGPT, Claude and Perplexity usually show up within a few days. If none ever do, check that robots.txt does not block them.', 'mykavo' )
 					: __( 'Switch counting on to see which AI systems read your site.', 'mykavo' ) ) +
-				'</span></div></section>' + foot + '</div>';
+				'</span></div></section>' + robots + history + foot + '</div>';
 		}
 
 		var answerHits = 0;
@@ -1487,7 +1778,17 @@
 			} ).join( '' ) +
 			'</tbody></table></div></section>';
 
-		return '<div class="mk-grid">' + intro + stats + chart + crawlers + pages + foot + '</div>';
+		return '<div class="mk-grid">' + intro + stats + chart + history + crawlers + pages + robots + foot + '</div>';
+	}
+
+	/** robots.txt: block AI training crawlers, leave AI search alone. */
+	function robotsCard() {
+		return '';
+	}
+
+	/** Twelve months of AI crawler visits, from MyKavo (paid plans). */
+	function historyCard() {
+		return '';
 	}
 
 	function render() {
@@ -1712,6 +2013,55 @@
 		}
 		var act = el.getAttribute( 'data-act' );
 		switch ( act ) {
+			case 'rollback':
+				rollback( el );
+				break;
+			case 'toggle-auto-rollback':
+				setAutoRollback( ! ( state.updates && state.updates.autoRollback ) );
+				break;
+			case 'toggle-robots':
+				setRobots( ! ( state.robots && state.robots.enabled ) );
+				break;
+			case 'robots-retry':
+				state.robotsError = null;
+				loadRobots();
+				break;
+			case 'copy-rules':
+				if ( state.robots && navigator.clipboard ) {
+					navigator.clipboard.writeText( state.robots.rules ).then( function () {
+						toast( __( 'Rules copied.', 'mykavo' ) );
+					} );
+				}
+				break;
+			case 'history-retry':
+				state.aiHistoryError = null;
+				state.aiHistory = null;
+				render();
+				loadAiHistory();
+				break;
+			case 'health-refresh':
+				loadHealth( true );
+				break;
+			case 'guard-checkout':
+				guardCheckout();
+				break;
+			case 'window-edit':
+				var current = state.win && state.win.updateWindow;
+				state.winEdit = current
+					? { enabled: true, days: current.days.slice(), startHour: current.startHour, endHour: current.endHour, timezone: current.timezone }
+					: { enabled: true, days: [ 1, 2, 3, 4, 5 ], startHour: 2, endHour: 5, timezone: ( state.win && state.win.siteTimezone ) || 'UTC' };
+				render();
+				break;
+			case 'window-cancel':
+				state.winEdit = null;
+				render();
+				break;
+			case 'window-retry':
+				state.winError = null;
+				state.win = null;
+				render();
+				loadWindow();
+				break;
 			case 'guard-store':
 				if ( cfg.woo && cfg.woo.pages ) {
 					addPages( cfg.woo.pages.map( function ( p ) {
@@ -1854,6 +2204,33 @@
 		}
 	} );
 	root.addEventListener( 'submit', function ( e ) {
+		var win = e.target.closest && e.target.closest( '[data-form="window"]' );
+		if ( win ) {
+			e.preventDefault();
+			var days = Array.prototype.slice.call( win.querySelectorAll( 'input[name="day"]:checked' ) ).map( function ( box ) {
+				return parseInt( box.value, 10 );
+			} );
+			var draft = {
+				enabled: win.querySelector( 'input[name="enabled"]' ).checked,
+				days: days,
+				startHour: parseInt( win.querySelector( 'select[name="startHour"]' ).value, 10 ),
+				endHour: parseInt( win.querySelector( 'select[name="endHour"]' ).value, 10 ),
+				timezone: win.querySelector( 'input[name="timezone"]' ).value.trim(),
+			};
+			state.winEdit = draft;
+			if ( draft.enabled && ! draft.days.length ) {
+				state.banner = { tone: 'bad', text: __( 'Choose at least one day for the update window.', 'mykavo' ) };
+				render();
+				return;
+			}
+			if ( draft.startHour === draft.endHour ) {
+				state.banner = { tone: 'bad', text: __( 'The window needs to end at a different time than it starts.', 'mykavo' ) };
+				render();
+				return;
+			}
+			saveWindow( draft );
+			return;
+		}
 		var form = e.target.closest && e.target.closest( '[data-form="add-page"]' );
 		if ( ! form ) {
 			return;
@@ -1891,6 +2268,7 @@
 	if ( state.connected ) {
 		loadOverview( false );
 		loadUpdates();
+		loadFeatures( false );
 		if ( cfg.woo && cfg.woo.pages && cfg.woo.pages.length ) {
 			loadPages();
 		}

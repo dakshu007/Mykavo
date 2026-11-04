@@ -107,7 +107,7 @@ const JS_REPLACEMENTS = [
   // requests to the storefront, so no tab, no overview card, no load.
   [`\n\t\t\t[ 'bots', __( 'AI crawlers', 'mykavo' ), '' ],`, ``],
   [`safeUpdatesCard() + aiBotsCard() + recent`, `safeUpdatesCard() + recent`],
-  [`loadUpdates();\n\t\tloadBots();\n\t\tif ( cfg.woo`, `loadUpdates();\n\t\tif ( cfg.woo`],
+  [`loadUpdates();\n\t\tloadBots();\n\t\tloadFeatures( false );`, `loadUpdates();\n\t\tloadFeatures( false );`],
   // Theme checks instead of Safe Updates.
   [`[ 'updates', __( 'Safe Updates', 'mykavo' ), '' ]`, `[ 'updates', __( 'Theme checks', 'mykavo' ), '' ]`],
   [
@@ -115,8 +115,8 @@ const JS_REPLACEMENTS = [
     `return { tone: 'quiet', text: __( 'Not checked - theme checks were off', 'mykavo' ) };`,
   ],
   [
-    `__( 'Not checked - automatic update checks come with Pro', 'mykavo' )`,
-    `__( 'Not checked - automatic theme checks come with Pro', 'mykavo' )`,
+    `__( 'Not checked - automatic update checks come with paid plans', 'mykavo' )`,
+    `__( 'Not checked - automatic theme checks come with paid plans', 'mykavo' )`,
   ],
   [
     `'<span class="mk-status">' + esc( entry.trigger === 'auto' ? __( 'Automatic', 'mykavo' ) : __( 'By an admin', 'mykavo' ) ) + '</span></p>'`,
@@ -129,8 +129,8 @@ const JS_REPLACEMENTS = [
 			'<p>' + esc( __( 'Every time your live theme is published or edited, MyKavo checks your store against the approved baseline and tells you whether anything broke - and which change did it. Edits are checked at most every 15 minutes while you work in the theme editor.', 'mykavo' ) ) + '</p>'`,
   ],
   [
-    `__( 'Updates are listed here on every plan. Checking the site automatically after each one comes with Pro and Agency.', 'mykavo' )`,
-    `__( 'Theme changes are listed here on every plan. Checking the store automatically after each one comes with Pro and Agency.', 'mykavo' )`,
+    `__( 'Updates are listed here on every plan, and any plugin from WordPress.org can be rolled back in one click. Checking the site automatically after each update comes with paid plans, from Starter.', 'mykavo' )`,
+    `__( 'Theme changes are listed here on every plan. Checking the store automatically after each one comes with paid plans, from Starter.', 'mykavo' )`,
   ],
   [
     `esc( __( 'No updates yet', 'mykavo' ) ) + '</strong><span>' +
@@ -253,6 +253,43 @@ body {
 }
 `;
 
+/**
+ * WordPress-only features of plugin 1.3.0 (rollback, plugin health, update
+ * windows, robots.txt rules, AI crawler history, the WooCommerce checkout
+ * guard): each lives in its own top-level function in app.js, so the
+ * Shopify build swaps the whole function for a stub instead of rewriting
+ * its copy. A top-level function is one tab in and ends at the first line
+ * that is exactly one tab and a closing brace.
+ */
+const STUBS = {
+  feat: "function feat() {\n\t\treturn false;\n\t}",
+  rollback: "function rollback() {}",
+  rollbackButton: "function rollbackButton() {\n\t\treturn '';\n\t}",
+  rollbackNote: "function rollbackNote() {\n\t\treturn '';\n\t}",
+  autoRollbackCard: "function autoRollbackCard() {\n\t\treturn '';\n\t}",
+  healthCard: "function healthCard() {\n\t\treturn '';\n\t}",
+  windowForm: "function windowForm() {\n\t\treturn '';\n\t}",
+  windowCard: "function windowCard() {\n\t\treturn '';\n\t}",
+  guardBlock: "function guardBlock() {\n\t\treturn '';\n\t}",
+  robotsCard: "function robotsCard() {\n\t\treturn '';\n\t}",
+  historyCard: "function historyCard() {\n\t\treturn '';\n\t}",
+};
+
+function stubFunctions(source, stubs, label) {
+  let out = source;
+  for (const [name, stub] of Object.entries(stubs)) {
+    const head = `\n\tfunction ${name}(`;
+    const start = out.indexOf(head);
+    if (start === -1 || out.indexOf(head, start + 1) !== -1) {
+      throw new Error(`${label}: expected exactly one top-level function ${name}`);
+    }
+    const end = out.indexOf("\n\t}\n", start);
+    if (end === -1) throw new Error(`${label}: could not find the end of function ${name}`);
+    out = out.slice(0, start) + "\n\t" + stub + out.slice(end + "\n\t}".length);
+  }
+  return out;
+}
+
 function applyAll(source, replacements, label) {
   let out = source;
   for (const [from, to] of replacements) {
@@ -266,7 +303,11 @@ function applyAll(source, replacements, label) {
 }
 
 export function buildShopifyApp() {
-  const js = applyAll(readFileSync(resolve(pluginAssets, "app.js"), "utf8"), JS_REPLACEMENTS, "app.js");
+  const js = applyAll(
+    stubFunctions(readFileSync(resolve(pluginAssets, "app.js"), "utf8"), STUBS, "app.js"),
+    JS_REPLACEMENTS,
+    "app.js",
+  );
   const css = readFileSync(resolve(pluginAssets, "app.css"), "utf8") + CSS_APPEND;
   return { js, css };
 }

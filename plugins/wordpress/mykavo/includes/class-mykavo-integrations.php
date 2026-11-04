@@ -337,4 +337,48 @@ final class MyKavo_Integrations {
 			'pages'  => $pages,
 		);
 	}
+
+	/**
+	 * The store pages the checkout guard watches: cart, checkout and one
+	 * published product, on this site.
+	 *
+	 * @return array{cartUrl?:string,checkoutUrl?:string,productUrl?:string}
+	 */
+	public static function woocommerce_guard_urls() {
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return array();
+		}
+		$urls = array();
+		if ( function_exists( 'wc_get_cart_url' ) ) {
+			$urls['cartUrl'] = (string) wc_get_cart_url();
+		}
+		if ( function_exists( 'wc_get_checkout_url' ) ) {
+			$urls['checkoutUrl'] = (string) wc_get_checkout_url();
+		}
+		$product = get_posts(
+			array(
+				'post_type'        => 'product',
+				'post_status'      => 'publish',
+				'posts_per_page'   => 1,
+				'orderby'          => 'date',
+				'order'            => 'DESC',
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			)
+		);
+		if ( $product ) {
+			$urls['productUrl'] = (string) get_permalink( (int) $product[0] );
+		}
+		$home = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+		foreach ( $urls as $key => $url ) {
+			// Only this site's own pages, as full addresses.
+			if ( '' === $url || wp_parse_url( $url, PHP_URL_HOST ) !== $home ) {
+				unset( $urls[ $key ] );
+			} else {
+				$urls[ $key ] = esc_url_raw( $url );
+			}
+		}
+		return $urls;
+	}
 }

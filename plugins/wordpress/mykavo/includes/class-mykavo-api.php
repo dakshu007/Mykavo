@@ -16,6 +16,13 @@ final class MyKavo_API {
 
 	const TIMEOUT = 12;
 
+	const FEATURES_OPTION = 'mykavo_features';
+
+	/**
+	 * Plan features GET /status reports.
+	 */
+	const FEATURES = array( 'autoRollback', 'aiInsights', 'pluginHealth', 'checkoutGuard', 'updateWindows' );
+
 	/**
 	 * GET with a short transient cache, so moving between screens is instant
 	 * and MyKavo is asked at most once a minute for the same thing.
@@ -155,8 +162,77 @@ final class MyKavo_API {
 			array(
 				'status'  => $status >= 400 && $status < 600 ? $status : 502,
 				'code'    => isset( $data['code'] ) ? sanitize_key( (string) $data['code'] ) : '',
+				'reason'  => isset( $data['reason'] ) && is_string( $data['reason'] ) ? strtoupper( sanitize_key( $data['reason'] ) ) : '',
 				'scan_id' => isset( $data['scanId'] ) ? sanitize_text_field( (string) $data['scanId'] ) : '',
 			)
 		);
+	}
+
+	/**
+	 * Whether a request failed because the workspace's plan does not include
+	 * that feature (403 with reason "PLAN").
+	 *
+	 * @param mixed $result API result.
+	 * @return bool
+	 */
+	public static function is_plan_error( $result ) {
+		if ( ! is_wp_error( $result ) ) {
+			return false;
+		}
+		$data = $result->get_error_data();
+		return is_array( $data ) && isset( $data['status'], $data['reason'] ) && 403 === (int) $data['status'] && 'PLAN' === $data['reason'];
+	}
+
+	/**
+	 * What this site's MyKavo plan includes, from GET /status (cached for
+	 * five minutes). An older MyKavo that does not send `features` reads as
+	 * "nothing extra". The last answer is kept in a non-autoloaded option so
+	 * WP-Cron jobs can decide without calling MyKavo.
+	 *
+	 * @param bool $fresh Skip the cache.
+	 * @return array<string,bool>|null Null when MyKavo could not be asked and nothing is known yet.
+	 */
+	public static function features( $fresh = false ) {
+		if ( $fresh ) {
+			delete_transient( 'mykavo_cache_status' );
+		}
+		$status = self::get( '/status', 'status', 5 * MINUTE_IN_SECONDS );
+		if ( is_wp_error( $status ) ) {
+			return self::known_features();
+		}
+		$raw      = isset( $status['features'] ) && is_array( $status['features'] ) ? $status['features'] : array();
+		$features = array();
+		foreach ( self::FEATURES as $key ) {
+			$features[ $key ] = isset( $raw[ $key ] ) && true === $raw[ $key ];
+		}
+		if ( get_option( self::FEATURES_OPTION, null ) !== $features ) {
+			if ( false === get_option( self::FEATURES_OPTION, false ) ) {
+				add_option( self::FEATURES_OPTION, $features, '', false );
+			} else {
+				update_option( self::FEATURES_OPTION, $features, false );
+			}
+		}
+		return $features;
+	}
+
+	/**
+	 * The plan features last read from MyKavo, without asking again.
+	 *
+	 * @return array<string,bool>|null
+	 */
+	public static function known_features() {
+		$known = get_option( self::FEATURES_OPTION, null );
+		return is_array( $known ) ? $known : null;
+	}
+
+	/**
+	 * Whether one feature is known to be included. Unknown reads as false.
+	 *
+	 * @param string $key Feature key.
+	 * @return bool
+	 */
+	public static function has_feature( $key ) {
+		$known = self::known_features();
+		return is_array( $known ) && ! empty( $known[ $key ] );
 	}
 }

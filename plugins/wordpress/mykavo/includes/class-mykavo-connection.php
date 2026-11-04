@@ -76,8 +76,17 @@ final class MyKavo_Connection {
 		delete_option( self::OPTION );
 		self::flush_cache();
 		delete_transient( self::SUMMARY_KEY );
+		// What MyKavo said about this site's plan and settings no longer applies.
+		foreach ( array( 'status', 'settings', 'ai_history' ) as $key ) {
+			delete_transient( 'mykavo_cache_' . $key );
+		}
+		foreach ( array( 'mykavo_features', 'mykavo_remote_settings', 'mykavo_plugin_health' ) as $option ) {
+			delete_option( $option );
+		}
 		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-rollback.php';
 		MyKavo_Bots::unschedule();
+		MyKavo_Rollback::unschedule();
 	}
 
 	/**

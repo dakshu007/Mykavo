@@ -230,6 +230,46 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     await p.waitForSelector('#health-check-accordion-block-mykavo', { state: 'attached' });
   });
 
+  // 1.3.0. The mock starts on a paid plan (PAID=0 for the free plan).
+  const plus = (q) => p.request.get(WP + '/wp-content/mu-plugins/probe/plus.php?' + q);
+
+  await step('safe updates: one-click rollback', async () => {
+    await plus('do=wporg'); // WordPress's update data says Demo Shop is from WordPress.org.
+    await probe();
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.click('[data-tab="updates"]'); await p.waitForSelector('[data-act="rollback"]', { timeout: 30000 });
+    await p.screenshot({ path: OUT + '/29-rollback-offer.png', fullPage: true });
+    p.once('dialog', (d) => { console.log('     confirm:', d.message().split('\n')[0]); d.accept(); });
+    await p.click('[data-act="rollback"]');
+    await p.waitForSelector('.mk-toast', { timeout: 60000 });
+    console.log('     toast:', (await p.locator('.mk-toast').textContent()).trim());
+    console.log('     newest:', (await p.locator('.mk-update-title').first().textContent()).trim());
+  });
+
+  await step('safe updates: plugin health and update window cards', async () => {
+    await p.waitForSelector('.mk-grid-2 .mk-card');
+    await p.waitForTimeout(2500);
+    console.log('     cards:', (await p.locator('.mk-grid-2 .mk-card-title').allTextContents()).join(' | '));
+    await p.screenshot({ path: OUT + '/30-health-window.png', fullPage: true });
+  });
+
+  await step('AI crawlers: robots.txt rules and 12 months', async () => {
+    await p.click('[data-tab="bots"]'); await p.waitForSelector('[data-act="toggle-robots"]');
+    await p.click('[data-act="toggle-robots"]'); await p.waitForSelector('[data-act="toggle-robots"][aria-checked="true"]');
+    const txt = await (await p.request.get(WP + '/?robots=1')).text();
+    if (!/User-agent: GPTBot/.test(txt) || /OAI-SearchBot/.test(txt)) throw new Error('robots.txt: ' + txt);
+    await p.waitForTimeout(1500);
+    await p.screenshot({ path: OUT + '/31-ai-robots.png', fullPage: true });
+    await p.click('[data-act="toggle-robots"]'); await p.waitForSelector('[data-act="toggle-robots"][aria-checked="false"]');
+  });
+
+  await step('woocommerce: guard checkout', async () => {
+    await p.click('[data-tab="overview"]'); await p.waitForSelector('.mk-store');
+    const btn = p.locator('[data-act="guard-checkout"]');
+    if (await btn.count()) { await btn.click(); await p.waitForSelector('.mk-guard .mk-store-ok', { timeout: 30000 }); }
+    console.log('     guard:', (await p.locator('.mk-guard').textContent()).trim());
+  });
+
   await step('dashboard widget', async () => {
     await p.goto(WP + '/wp-admin/'); await p.waitForSelector('#mykavo_status');
     await p.waitForTimeout(800);

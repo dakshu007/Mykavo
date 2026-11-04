@@ -178,9 +178,134 @@ final class MyKavo_Rest {
 					'callback'            => array( __CLASS__, 'update_settings' ),
 					'permission_callback' => $admin,
 					'args'                => array(
+						'enabled'      => array(
+							'type' => 'boolean',
+						),
+						'autoRollback' => array(
+							'type' => 'boolean',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/rollback',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'rollback' ),
+				'permission_callback' => $admin,
+				'args'                => array(
+					'entry' => array(
+						'type'              => 'string',
+						'required'          => true,
+						'validate_callback' => static function ( $value ) {
+							return is_string( $value ) && (bool) preg_match( '/^[A-Za-z0-9]{6,40}$/', $value );
+						},
+					),
+					'file'  => array(
+						'type'              => 'string',
+						'required'          => true,
+						'validate_callback' => static function ( $value ) {
+							return is_string( $value ) && validate_file( $value ) === 0 && (bool) preg_match( '#^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+\.php$#', $value );
+						},
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/features',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'features' ),
+				'permission_callback' => $admin,
+				'args'                => array(
+					'fresh' => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/robots',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'robots' ),
+					'permission_callback' => $admin,
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'robots_settings' ),
+					'permission_callback' => $admin,
+					'args'                => array(
 						'enabled' => array(
 							'type'     => 'boolean',
 							'required' => true,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/ai-history',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'ai_history' ),
+				'permission_callback' => $admin,
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/plugin-health',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'plugin_health' ),
+				'permission_callback' => $admin,
+				'args'                => array(
+					'fresh' => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/checkout-guard',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'checkout_guard' ),
+				'permission_callback' => $admin,
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/update-window',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'update_window' ),
+					'permission_callback' => $admin,
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'save_update_window' ),
+					'permission_callback' => $admin,
+					'args'                => array(
+						'window' => array(
+							'type' => array( 'object', 'null' ),
 						),
 					),
 				),
@@ -383,21 +508,223 @@ final class MyKavo_Rest {
 		}
 		return rest_ensure_response(
 			array(
-				'enabled' => MyKavo_Updates::enabled(),
-				'log'     => MyKavo_Updates::log(),
+				'enabled'      => MyKavo_Updates::enabled(),
+				'autoRollback' => MyKavo_Updates::auto_rollback_enabled(),
+				'log'          => MyKavo_Rollback::decorate( MyKavo_Updates::log() ),
 			)
 		);
 	}
 
 	/**
-	 * Switch update checks on or off.
+	 * Switch update checks, or automatic rollback, on or off.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response
 	 */
 	public static function update_settings( WP_REST_Request $request ) {
-		MyKavo_Updates::set_enabled( (bool) $request->get_param( 'enabled' ) );
+		if ( null !== $request->get_param( 'enabled' ) ) {
+			MyKavo_Updates::set_enabled( (bool) $request->get_param( 'enabled' ) );
+		}
+		if ( null !== $request->get_param( 'autoRollback' ) ) {
+			MyKavo_Updates::set_auto_rollback( (bool) $request->get_param( 'autoRollback' ) );
+		}
 		return self::updates();
+	}
+
+	/**
+	 * One-click rollback of a plugin from the update history.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function rollback( WP_REST_Request $request ) {
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			return new WP_Error( 'mykavo_rollback', __( 'You do not have permission to update plugins on this site.', 'mykavo' ), array( 'status' => 403 ) );
+		}
+		$result = MyKavo_Rollback::manual( (string) $request->get_param( 'entry' ), (string) $request->get_param( 'file' ) );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$response           = self::updates()->get_data();
+		$response['result'] = $result;
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * What this site's MyKavo plan includes. Never fails: unknown reads as
+	 * "not included", so the screen simply shows the free version.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function features( WP_REST_Request $request ) {
+		$features = MyKavo_API::features( (bool) $request->get_param( 'fresh' ) );
+		return rest_ensure_response(
+			array(
+				'known'    => null !== $features,
+				'features' => null !== $features ? $features : array_fill_keys( MyKavo_API::FEATURES, false ),
+			)
+		);
+	}
+
+	/**
+	 * The robots.txt rules for AI crawlers.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public static function robots() {
+		return rest_ensure_response( MyKavo_Robots::status() );
+	}
+
+	/**
+	 * Switch the AI crawler robots.txt rules on or off.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function robots_settings( WP_REST_Request $request ) {
+		MyKavo_Robots::set_enabled( (bool) $request->get_param( 'enabled' ) );
+		return self::robots();
+	}
+
+	/**
+	 * Twelve months of AI crawler visits as MyKavo keeps them (plans with
+	 * AI insights). Cached for an hour.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function ai_history() {
+		$result = MyKavo_API::get( '/ai-bots?days=365', 'ai_history', HOUR_IN_SECONDS );
+		$data   = is_wp_error( $result ) ? $result->get_error_data() : null;
+		$status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 0;
+		// 404 or 405: a MyKavo that does not keep a history yet.
+		if ( MyKavo_API::is_plan_error( $result ) || 404 === $status || 405 === $status ) {
+			return rest_ensure_response( array( 'allowed' => false ) );
+		}
+		if ( is_wp_error( $result ) ) {
+			return self::respond( $result );
+		}
+		$days = array();
+		foreach ( isset( $result['days'] ) && is_array( $result['days'] ) ? $result['days'] : array() as $row ) {
+			if ( is_array( $row ) && isset( $row['day'], $row['agent'] ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $row['day'] ) ) {
+				$days[] = array(
+					'day'    => (string) $row['day'],
+					'agent'  => sanitize_text_field( (string) $row['agent'] ),
+					'hits'   => isset( $row['hits'] ) ? max( 0, (int) $row['hits'] ) : 0,
+					'errors' => isset( $row['errors'] ) ? max( 0, (int) $row['errors'] ) : 0,
+				);
+			}
+		}
+		$first = array();
+		foreach ( isset( $result['firstSeen'] ) && is_array( $result['firstSeen'] ) ? $result['firstSeen'] : array() as $agent => $day ) {
+			if ( is_string( $day ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $day ) ) {
+				$first[ sanitize_text_field( (string) $agent ) ] = $day;
+			}
+		}
+		return rest_ensure_response(
+			array(
+				'allowed'   => true,
+				'days'      => $days,
+				'firstSeen' => (object) $first,
+			)
+		);
+	}
+
+	/**
+	 * Plugin health: MyKavo's last answer about the installed plugins. Asks
+	 * now when it never has (or when asked to).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function plugin_health( WP_REST_Request $request ) {
+		$last = MyKavo_Health::last();
+		if ( null === $last || $request->get_param( 'fresh' ) ) {
+			$sent = MyKavo_Health::send();
+			if ( is_wp_error( $sent ) ) {
+				return null === $last ? self::respond( $sent ) : rest_ensure_response( $last );
+			}
+			$last = $sent;
+		}
+		return rest_ensure_response( $last );
+	}
+
+	/**
+	 * WooCommerce checkout guard: ask MyKavo to watch the Place order, Proceed
+	 * to checkout and Add to cart buttons on this store's own pages.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function checkout_guard() {
+		$urls = MyKavo_Integrations::woocommerce_guard_urls();
+		if ( ! $urls ) {
+			return new WP_Error( 'mykavo_no_store', __( 'WooCommerce is not active, or its cart and checkout pages are not set up.', 'mykavo' ), array( 'status' => 400 ) );
+		}
+		$result = MyKavo_API::request( 'POST', '/checkout-guard', $urls, 20 );
+		MyKavo_Connection::flush_cache();
+		if ( MyKavo_API::is_plan_error( $result ) ) {
+			return rest_ensure_response( array( 'allowed' => false ) );
+		}
+		if ( is_wp_error( $result ) ) {
+			return self::respond( $result );
+		}
+		return rest_ensure_response(
+			array(
+				'allowed'  => true,
+				'pages'    => isset( $result['pages'] ) ? (int) $result['pages'] : 0,
+				'elements' => isset( $result['elements'] ) ? (int) $result['elements'] : 0,
+				'urls'     => $urls,
+			)
+		);
+	}
+
+	/**
+	 * The update window, as MyKavo has it, and whether automatic updates may
+	 * run right now.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public static function update_window() {
+		return rest_ensure_response( self::window_response( MyKavo_Auto_Updates::settings() ) );
+	}
+
+	/**
+	 * Save the update window in MyKavo (PUT /settings).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function save_update_window( WP_REST_Request $request ) {
+		$window = $request->get_param( 'window' );
+		if ( null !== $window && ! is_array( $window ) ) {
+			return new WP_Error( 'mykavo_invalid', __( 'That update window is not valid.', 'mykavo' ), array( 'status' => 400 ) );
+		}
+		if ( is_array( $window ) && ! MyKavo_Auto_Updates::is_timezone( isset( $window['timezone'] ) ? $window['timezone'] : '' ) ) {
+			return new WP_Error( 'mykavo_invalid', __( 'Choose a time zone such as Europe/London or America/New_York.', 'mykavo' ), array( 'status' => 400 ) );
+		}
+		$settings = MyKavo_Auto_Updates::save( $window );
+		if ( MyKavo_API::is_plan_error( $settings ) ) {
+			return rest_ensure_response( self::window_response( MyKavo_Auto_Updates::normalize( array() ) ) );
+		}
+		if ( is_wp_error( $settings ) ) {
+			return self::respond( $settings );
+		}
+		return rest_ensure_response( self::window_response( $settings ) );
+	}
+
+	/**
+	 * Window settings for the screen.
+	 *
+	 * @param array $settings Normalized settings.
+	 * @return array
+	 */
+	private static function window_response( array $settings ) {
+		return array(
+			'updateWindow' => $settings['updateWindow'],
+			'allowed'      => (bool) $settings['allowed']['updateWindows'],
+			'open'         => MyKavo_Auto_Updates::window_allows( time() ),
+			'siteTimezone' => MyKavo_Auto_Updates::site_timezone(),
+		);
 	}
 
 	/**

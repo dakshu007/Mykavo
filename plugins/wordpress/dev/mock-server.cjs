@@ -27,13 +27,29 @@ let scans = [
   { id: 'scn0000000001', status: 'PARTIAL', triggerType: 'BASELINE', createdAt: ago(60 * 49), startedAt: ago(60 * 49), completedAt: ago(60 * 49 - 4), pagesRequested: 8, pagesScanned: 7, pagesFailed: 1, changesDetected: 0, highestSeverity: null },
 ];
 let running = null;
+// Plan features (GET /status). PAID=0 starts on the free plan; POST /__mock/plan?paid=0|1 switches.
+let paid = process.env.PAID !== '0';
+// POST /__mock/legacy?on=1: behave like a MyKavo from before 1.3.0 (no "rollback" action, no /status features).
+let legacy = false;
+let settings = { updateWindow: null };
+const guard = { pages: new Set(), elements: new Set() };
+const features = () => ({ autoRollback: paid, aiInsights: paid, pluginHealth: paid, checkoutGuard: paid, updateWindows: paid });
+const planError = (res) => json(res, 403, { error: 'This feature is not included in your plan.', reason: 'PLAN' });
 const addedPages = [];
 const pages = ['/', '/shop', '/shop/ethiopia-yirgacheffe', '/subscribe', '/about', '/cart', '/checkout', '/contact'];
 const isOpen = (c) => c.status === 'NEW' || c.status === 'REVIEWED';
 const scanOf = (c) => scans.find((s) => s.id === (c.scanId || 'scn0000000003')) || {};
 const listItem = (c) => ({ id: c.id, title: c.title, severity: c.severity, category: c.category, status: c.status, detectedAt: c.detectedAt, websiteId: 'web1', websiteName: 'Northwind Coffee', pagePath: c.pagePath, scanId: c.scanId || 'scn0000000003', afterUpdate: scanOf(c).triggerType === 'DEPLOY' ? scanOf(c).note : null });
 const rank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 };
-const scanItem = (s) => ({ ...s, websiteId: 'web1', websiteName: 'Northwind Coffee', websiteUrl: 'https://northwind-coffee.test' });
+const scanItem = (s) => {
+  const out = { ...s, websiteId: 'web1', websiteName: 'Northwind Coffee', websiteUrl: 'https://northwind-coffee.test' };
+  delete out.isRollback;
+  if (s.triggerType === 'DEPLOY') {
+    const done = s.status === 'COMPLETED' || s.status === 'PARTIAL';
+    out.rollback = { recommended: paid && done && s.highestSeverity === 'CRITICAL', reason: 'Critical change found after this update' };
+  }
+  return out;
+};
 
 function tick() {
   if (!running) return;
@@ -41,7 +57,7 @@ function tick() {
   running.scan.pagesScanned = Math.min(8, Math.floor(secs / 2.5));
   running.scan.status = 'RUNNING';
   if (running.scan.pagesScanned >= 8) {
-    const deploy = running.scan.triggerType === 'DEPLOY';
+    const deploy = running.scan.triggerType === 'DEPLOY' && !running.scan.isRollback;
     Object.assign(running.scan, { status: 'COMPLETED', completedAt: new Date().toISOString(), changesDetected: deploy ? 1 : 0, highestSeverity: deploy ? 'CRITICAL' : null });
     if (deploy) changes.unshift({ id: 'chg' + Date.now(), scanId: running.scan.id, title: 'Checkout button text changed', severity: 'CRITICAL', category: 'CONVERSION', status: 'NEW', detectedAt: new Date().toISOString(), pagePath: '/checkout', description: 'The monitored element "Place order" changed its text.', previousValue: 'Place order', currentValue: 'Proceed', images: true, diff: true });
     running = null;
@@ -116,10 +132,61 @@ http.createServer(async (req, res) => {
     return res.end(fs.readFileSync(path.join(__dirname, 'media', file)));
   }
 
+  if (url.pathname === '/__mock/plan' && req.method === 'POST') {
+    paid = url.searchParams.get('paid') !== '0';
+    return json(res, 200, { paid });
+  }
+  if (url.pathname === '/__mock/legacy' && req.method === 'POST') {
+    legacy = url.searchParams.get('on') === '1';
+    return json(res, 200, { legacy });
+  }
+  if (url.pathname === '/__mock/log') return json(res, 200, { log: log.slice(-200) });
+
   if (url.pathname.startsWith('/api/wp/v1/')) {
     if (req.headers.authorization !== 'Bearer ' + TOKEN) return json(res, 401, { error: 'not connected', code: 'NOT_CONNECTED' });
     const rest = url.pathname.slice('/api/wp/v1'.length);
     if (rest === '/site') return json(res, 200, site());
+    if (rest === '/status') return json(res, 200, legacy ? { website: site().website } : { website: site().website, features: features() });
+    if (rest === '/ai-bots' && req.method === 'GET') {
+      if (!paid) return planError(res);
+      const days = Math.max(1, Math.min(365, Number(url.searchParams.get('days')) || 90));
+      const rows = [];
+      for (let i = 0; i < days; i += 3) {
+        const day = new Date(now - i * 86400000).toISOString().slice(0, 10);
+        rows.push({ day, agent: 'GPTBot', hits: 20 + (i % 7), errors: i % 11 === 0 ? 1 : 0 });
+        if (i < 200) rows.push({ day, agent: 'ClaudeBot', hits: 10 + (i % 5), errors: 0 });
+        if (i < 60) rows.push({ day, agent: 'OAI-SearchBot', hits: 4, errors: 0 });
+      }
+      return json(res, 200, { days: rows, firstSeen: { GPTBot: new Date(now - 364 * 86400000).toISOString().slice(0, 10), ClaudeBot: new Date(now - 198 * 86400000).toISOString().slice(0, 10), 'OAI-SearchBot': new Date(now - 57 * 86400000).toISOString().slice(0, 10) } });
+    }
+    if (rest === '/plugins' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)) || '{}');
+      const list = Array.isArray(body.plugins) ? body.plugins : [];
+      const bad = list.find((p) => !/^[a-z0-9_-]+$/.test(p.slug) || typeof p.active !== 'boolean');
+      if (bad || list.length > 300) return json(res, 400, { error: 'Invalid request.' });
+      fs.writeFileSync(path.join(__dirname, 'media', 'plugins.json'), JSON.stringify(body, null, 2));
+      const flagged = !paid ? [] : list.filter((p) => p.slug === 'demo-shop' || p.slug === 'akismet').map((p) => (p.slug === 'demo-shop'
+        ? { slug: p.slug, name: p.name, status: 'closed', lastUpdated: '2023-02-11', reason: 'Closed on WordPress.org: security issue' }
+        : { slug: p.slug, name: p.name, status: 'outdated', lastUpdated: '2022-06-01', reason: 'Not updated in over 2 years' }));
+      return json(res, 200, { allowed: paid, flagged });
+    }
+    if (rest === '/settings' && req.method === 'GET') return json(res, 200, { updateWindow: settings.updateWindow, allowed: { updateWindows: paid } });
+    if (rest === '/settings' && req.method === 'PUT') {
+      if (!paid) return planError(res);
+      const body = JSON.parse((await readBody(req)) || '{}');
+      const w = body.updateWindow;
+      if (w !== null && (typeof w !== 'object' || !Array.isArray(w.days) || typeof w.timezone !== 'string')) return json(res, 400, { error: 'Invalid update window.' });
+      settings.updateWindow = w;
+      return json(res, 200, { updateWindow: settings.updateWindow, allowed: { updateWindows: paid } });
+    }
+    if (rest === '/checkout-guard' && req.method === 'POST') {
+      if (!paid) return planError(res);
+      const body = JSON.parse((await readBody(req)) || '{}');
+      fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   checkout guard: ${JSON.stringify(body)}\n`);
+      const map = { cartUrl: 'Proceed to checkout', checkoutUrl: 'Place order', productUrl: 'Add to cart' };
+      for (const k of Object.keys(map)) if (body[k]) { guard.pages.add(body[k]); guard.elements.add(map[k]); }
+      return json(res, 200, { pages: guard.pages.size, elements: guard.elements.size });
+    }
     if (rest === '/changes') {
       const all = url.searchParams.get('status') === 'all';
       const scanFilter = url.searchParams.get('scan');
@@ -152,11 +219,15 @@ http.createServer(async (req, res) => {
     if (rest === '/updates' && req.method === 'POST') {
       const body = JSON.parse(await readBody(req) || '{}');
       const it = (body.items || [])[0] || {};
+      const actions = ['update', 'activate', 'deactivate', 'switch', undefined].concat(legacy ? [] : ['rollback']);
+      if ((body.items || []).some((x) => !actions.includes(x.action))) return json(res, 400, { error: 'Invalid request.' });
       const verb = { activate: 'Activated ', deactivate: 'Deactivated ', switch: 'Switched theme to ' }[it.action];
-      const note = (verb ? verb + it.name : (body.trigger === 'auto' ? 'Auto-updated ' : 'Updated ') + (it.from && it.to ? `${it.name} ${it.from} → ${it.to}` : it.name)) + ((body.items || []).length > 1 ? ` and ${body.items.length - 1} more` : '');
+      const note = it.action === 'rollback'
+        ? `Rolled back ${it.name} ${it.from} to ${it.to}`
+        : (verb ? verb + it.name : (body.trigger === 'auto' ? 'Auto-updated ' : 'Updated ') + (it.from && it.to ? `${it.name} ${it.from} → ${it.to}` : it.name)) + ((body.items || []).length > 1 ? ` and ${body.items.length - 1} more` : '');
       fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   update report: ${JSON.stringify(body)}\n`);
       if (running) return json(res, 200, { note, scan: { id: running.scan.id, status: 'RUNNING' }, reason: 'BUSY' });
-      const scan = { id: 'scn' + Date.now(), status: 'QUEUED', triggerType: 'DEPLOY', note, createdAt: new Date().toISOString(), startedAt: null, completedAt: null, pagesRequested: 8, pagesScanned: 0, pagesFailed: 0, changesDetected: 0, highestSeverity: null };
+      const scan = { id: 'scn' + Date.now(), isRollback: it.action === 'rollback', status: 'QUEUED', triggerType: 'DEPLOY', note, createdAt: new Date().toISOString(), startedAt: null, completedAt: null, pagesRequested: 8, pagesScanned: 0, pagesFailed: 0, changesDetected: 0, highestSeverity: null };
       scans.unshift(scan);
       running = { scan, t0: Date.now() };
       return json(res, 201, { note, scan: { id: scan.id, status: 'QUEUED' } });

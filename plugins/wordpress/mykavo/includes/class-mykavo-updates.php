@@ -33,6 +33,14 @@ final class MyKavo_Updates {
 	private static $before = array();
 
 	/**
+	 * Plugins that were updated from WordPress.org during this request. Read
+	 * before the update, because WordPress clears its update data after it.
+	 *
+	 * @var array<string,bool>
+	 */
+	private static $wporg = array();
+
+	/**
 	 * Items updated during this request, keyed to de-duplicate.
 	 *
 	 * @var array<string,array>
@@ -67,6 +75,36 @@ final class MyKavo_Updates {
 		$settings = is_array( $settings ) ? $settings : array();
 
 		$settings['check_updates'] = (bool) $enabled;
+		if ( false === get_option( self::SETTINGS, false ) ) {
+			add_option( self::SETTINGS, $settings, '', false );
+		} else {
+			update_option( self::SETTINGS, $settings, false );
+		}
+	}
+
+	/**
+	 * Whether a broken update may be rolled back automatically when MyKavo
+	 * recommends it (default: yes). Only acts on plans whose MyKavo service
+	 * includes automatic rollback: MyKavo decides, this site carries it out.
+	 *
+	 * @return bool
+	 */
+	public static function auto_rollback_enabled() {
+		$settings = get_option( self::SETTINGS, array() );
+		return ! is_array( $settings ) || ! isset( $settings['auto_rollback'] ) || (bool) $settings['auto_rollback'];
+	}
+
+	/**
+	 * Switch automatic rollback on or off.
+	 *
+	 * @param bool $enabled New state.
+	 * @return void
+	 */
+	public static function set_auto_rollback( $enabled ) {
+		$settings = get_option( self::SETTINGS, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+
+		$settings['auto_rollback'] = (bool) $enabled;
 		if ( false === get_option( self::SETTINGS, false ) ) {
 			add_option( self::SETTINGS, $settings, '', false );
 		} else {
@@ -117,6 +155,54 @@ final class MyKavo_Updates {
 			$changed             = true;
 		}
 		if ( $changed ) {
+			self::save_log( $log );
+		}
+	}
+
+	/**
+	 * One log entry by id.
+	 *
+	 * @param string $id Entry id.
+	 * @return array|null
+	 */
+	public static function entry( $id ) {
+		foreach ( self::log() as $entry ) {
+			if ( isset( $entry['id'] ) && $id === $entry['id'] ) {
+				return $entry;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Merge fields into one log entry.
+	 *
+	 * @param string $id     Entry id.
+	 * @param array  $fields Fields to set.
+	 * @return void
+	 */
+	public static function update_entry( $id, array $fields ) {
+		$log = self::log();
+		foreach ( $log as $i => $entry ) {
+			if ( isset( $entry['id'] ) && $id === $entry['id'] ) {
+				$log[ $i ] = array_merge( $entry, $fields );
+				self::save_log( $log );
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Write the log (never autoloaded), newest first, capped.
+	 *
+	 * @param array $log Entries.
+	 * @return void
+	 */
+	private static function save_log( array $log ) {
+		$log = array_slice( array_values( $log ), 0, self::MAX_LOG );
+		if ( false === get_option( self::LOG, false ) ) {
+			add_option( self::LOG, $log, '', false );
+		} else {
 			update_option( self::LOG, $log, false );
 		}
 	}
@@ -168,6 +254,7 @@ final class MyKavo_Updates {
 			$data = self::plugin_data( $hook_extra['plugin'] );
 			if ( $data ) {
 				self::$before[ 'plugin:' . $hook_extra['plugin'] ] = $data['Version'];
+				self::$wporg[ 'plugin:' . $hook_extra['plugin'] ]  = self::is_wporg( $hook_extra['plugin'] );
 			}
 		}
 		if ( ! empty( $hook_extra['theme'] ) && is_string( $hook_extra['theme'] ) ) {
@@ -233,7 +320,7 @@ final class MyKavo_Updates {
 				foreach ( $plugins as $file ) {
 					$data = is_string( $file ) ? self::plugin_data( $file ) : null;
 					if ( $data ) {
-						self::add( 'plugin', 'plugin:' . $file, $data['Name'], $data['Version'] );
+						self::add( 'plugin', 'plugin:' . $file, $data['Name'], $data['Version'], 'update', $file );
 					}
 				}
 				break;
@@ -298,42 +385,59 @@ final class MyKavo_Updates {
 			return;
 		}
 
-		$items   = array_values( self::$pending );
-		$trigger = ( wp_doing_cron() || doing_action( 'wp_maybe_auto_update' ) ) ? 'auto' : 'manual';
-		$entry   = array(
-			'id'      => wp_generate_password( 12, false ),
-			'at'      => time(),
-			'trigger' => $trigger,
-			'items'   => $items,
-			'note'    => '',
-			'scan_id' => '',
-			'reason'  => '',
-			'message' => '',
+		$items         = array_values( self::$pending );
+		self::$pending = array();
+		$trigger       = ( wp_doing_cron() || doing_action( 'wp_maybe_auto_update' ) ) ? 'auto' : 'manual';
+		$entry         = self::record( $items, $trigger );
+
+		require_once MYKAVO_DIR . 'includes/class-mykavo-auto-updates.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-rollback.php';
+		foreach ( $items as $item ) {
+			// A plugin updated on purpose (or to another version) no longer
+			// needs to be held back from automatic updates.
+			if ( 'plugin' === $item['type'] && 'update' === $item['action'] && ! empty( $item['file'] ) ) {
+				MyKavo_Auto_Updates::release( $item['file'] );
+			}
+		}
+		MyKavo_Rollback::maybe_watch( $entry );
+	}
+
+	/**
+	 * Report a batch of changes to MyKavo (unless checks are off) and add it
+	 * to the local log. Used for updates and for rollbacks.
+	 *
+	 * @param array  $items   Items as queued by add().
+	 * @param string $trigger 'manual' or 'auto'.
+	 * @param array  $extra   Extra fields for the log entry.
+	 * @return array The log entry.
+	 */
+	public static function record( array $items, $trigger, array $extra = array() ) {
+		$entry = array_merge(
+			array(
+				'id'      => wp_generate_password( 12, false ),
+				'at'      => time(),
+				'trigger' => 'auto' === $trigger ? 'auto' : 'manual',
+				'items'   => array_values( $items ),
+				'note'    => '',
+				'scan_id' => '',
+				'reason'  => '',
+				'message' => '',
+			),
+			$extra
 		);
 
 		if ( ! self::enabled() ) {
 			$entry['reason'] = 'OFF';
 		} else {
-			$result = MyKavo_API::request(
-				'POST',
-				'/updates',
-				array(
-					'trigger' => $trigger,
-					'items'   => array_map(
-						static function ( $item ) {
-							return array(
-								'type'   => $item['type'],
-								'name'   => $item['name'],
-								'from'   => '' !== $item['from'] ? $item['from'] : null,
-								'to'     => '' !== $item['to'] ? $item['to'] : null,
-								'action' => $item['action'],
-							);
-						},
-						$items
-					),
-				),
-				self::TIMEOUT
-			);
+			$result = self::send( $items, $entry['trigger'], false );
+			if ( is_wp_error( $result ) && self::has_rollback( $items ) ) {
+				$data = $result->get_error_data();
+				if ( is_array( $data ) && isset( $data['status'] ) && 400 === (int) $data['status'] ) {
+					// An older MyKavo that does not know "rollback" yet: report
+					// it as the version change it is, so the site is still checked.
+					$result = self::send( $items, $entry['trigger'], true );
+				}
+			}
 			if ( is_wp_error( $result ) ) {
 				$entry['reason']  = 'UNREACHABLE';
 				$entry['message'] = $result->get_error_message();
@@ -348,13 +452,79 @@ final class MyKavo_Updates {
 
 		$log = self::log();
 		array_unshift( $log, $entry );
-		$log = array_slice( $log, 0, self::MAX_LOG );
-		if ( false === get_option( self::LOG, false ) ) {
-			add_option( self::LOG, $log, '', false );
-		} else {
-			update_option( self::LOG, $log, false );
+		self::save_log( $log );
+		return $entry;
+	}
+
+	/**
+	 * POST /updates.
+	 *
+	 * @param array  $items         Items.
+	 * @param string $trigger       'manual' or 'auto'.
+	 * @param bool   $legacy_action Send rollbacks as plain updates.
+	 * @return array|WP_Error
+	 */
+	private static function send( array $items, $trigger, $legacy_action ) {
+		return MyKavo_API::request(
+			'POST',
+			'/updates',
+			array(
+				'trigger' => $trigger,
+				'items'   => array_map(
+					static function ( $item ) use ( $legacy_action ) {
+						return array(
+							'type'   => $item['type'],
+							'name'   => $item['name'],
+							'from'   => '' !== $item['from'] ? $item['from'] : null,
+							'to'     => '' !== $item['to'] ? $item['to'] : null,
+							'action' => ( $legacy_action && 'rollback' === $item['action'] ) ? 'update' : $item['action'],
+						);
+					},
+					array_values( $items )
+				),
+			),
+			self::TIMEOUT
+		);
+	}
+
+	/**
+	 * Whether a batch contains a rollback.
+	 *
+	 * @param array $items Items.
+	 * @return bool
+	 */
+	private static function has_rollback( array $items ) {
+		foreach ( $items as $item ) {
+			if ( isset( $item['action'] ) && 'rollback' === $item['action'] ) {
+				return true;
+			}
 		}
-		self::$pending = array();
+		return false;
+	}
+
+	/**
+	 * A log item, shaped the way add() queues one.
+	 *
+	 * @param string $type   Package type.
+	 * @param string $name   Display name.
+	 * @param string $from   Version before.
+	 * @param string $to     Version after.
+	 * @param string $action update, activate, deactivate, switch or rollback.
+	 * @param string $file   Plugin basename, for plugins.
+	 * @return array
+	 */
+	public static function item( $type, $name, $from, $to, $action, $file = '' ) {
+		$item = array(
+			'type'   => $type,
+			'name'   => substr( wp_strip_all_tags( (string) $name ), 0, 100 ),
+			'from'   => substr( (string) $from, 0, 40 ),
+			'to'     => substr( (string) $to, 0, 40 ),
+			'action' => $action,
+		);
+		if ( '' !== $file ) {
+			$item['file'] = $file;
+		}
+		return $item;
 	}
 
 	/* ------------------------------------------------------------- helpers -- */
@@ -367,21 +537,41 @@ final class MyKavo_Updates {
 	 * @param string $name Display name.
 	 * @param string $to     New version, or ''.
 	 * @param string $action update, activate, deactivate or switch.
+	 * @param string $file   Plugin basename, for plugin updates.
 	 * @return void
 	 */
-	private static function add( $type, $key, $name, $to, $action = 'update' ) {
+	private static function add( $type, $key, $name, $to, $action = 'update', $file = '' ) {
 		$from = isset( self::$before[ $key ] ) ? (string) self::$before[ $key ] : '';
 		// Re-installing the same version is not an update worth a check.
 		if ( 'update' === $action && '' !== $from && $from === $to && 'translation' !== $type ) {
 			return;
 		}
-		self::$pending[ $key ] = array(
-			'type'   => $type,
-			'name'   => substr( wp_strip_all_tags( $name ), 0, 100 ),
-			'from'   => substr( $from, 0, 40 ),
-			'to'     => substr( (string) $to, 0, 40 ),
-			'action' => $action,
-		);
+		self::$pending[ $key ] = self::item( $type, $name, $from, (string) $to, $action, $file );
+		if ( ! empty( self::$wporg[ $key ] ) ) {
+			self::$pending[ $key ]['wporg'] = true;
+		}
+	}
+
+	/**
+	 * Whether WordPress gets a plugin's updates from WordPress.org, read
+	 * from WordPress's own update data (no remote call).
+	 *
+	 * @param string $file Plugin basename.
+	 * @return bool
+	 */
+	public static function is_wporg( $file ) {
+		$updates = get_site_transient( 'update_plugins' );
+		if ( ! is_object( $updates ) ) {
+			return false;
+		}
+		foreach ( array( 'response', 'no_update' ) as $list ) {
+			if ( isset( $updates->{$list} ) && is_array( $updates->{$list} ) && isset( $updates->{$list}[ $file ] ) ) {
+				$offer = (object) $updates->{$list}[ $file ];
+				$id    = isset( $offer->id ) ? (string) $offer->id : '';
+				return 0 === strpos( $id, 'w.org/plugins/' );
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -390,7 +580,7 @@ final class MyKavo_Updates {
 	 * @param string $file Plugin basename.
 	 * @return array|null
 	 */
-	private static function plugin_data( $file ) {
+	public static function plugin_data( $file ) {
 		$path = WP_PLUGIN_DIR . '/' . $file;
 		if ( ! is_readable( $path ) ) {
 			return null;

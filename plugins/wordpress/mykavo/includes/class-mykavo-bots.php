@@ -313,7 +313,9 @@ final class MyKavo_Bots {
 	}
 
 	/**
-	 * The daily job: share recent totals with MyKavo, then prune.
+	 * The daily job: share recent AI crawler totals with MyKavo and prune
+	 * old ones, send the plugin list for plugin health, and refresh the
+	 * update window.
 	 *
 	 * @return void
 	 */
@@ -328,6 +330,14 @@ final class MyKavo_Bots {
 			}
 			self::prune();
 		}
+
+		// Plugin health: the installed plugin list, checked by MyKavo.
+		require_once MYKAVO_DIR . 'includes/class-mykavo-health.php';
+		MyKavo_Health::send();
+
+		// Keep the update window fresh even if no one opens wp-admin.
+		require_once MYKAVO_DIR . 'includes/class-mykavo-auto-updates.php';
+		MyKavo_Auto_Updates::settings( true );
 	}
 
 	/**

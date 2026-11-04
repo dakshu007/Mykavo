@@ -3,7 +3,7 @@
  * Plugin Name:       MyKavo - Website Change Monitoring
  * Plugin URI:        https://mykavo.app/wordpress-plugin
  * Description:       See what changed on your site, and whether it matters, without leaving WordPress. Visual, SEO, content, link and script changes with before-and-after screenshots. Adds nothing to the pages your visitors load.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            MyKavo
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MYKAVO_VERSION', '1.2.0' );
+define( 'MYKAVO_VERSION', '1.3.0' );
 define( 'MYKAVO_FILE', __FILE__ );
 define( 'MYKAVO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MYKAVO_URL', plugin_dir_url( __FILE__ ) );
@@ -37,12 +37,16 @@ if ( ! defined( 'MYKAVO_APP_URL' ) ) {
  * database queries, no remote requests, no autoloaded options. On a
  * front-end request it only registers callbacks: rest_api_init (fires solely
  * for REST requests, and our routes there are admin-only), two update hooks
- * that fire solely while WordPress is updating plugins, themes or core, and
- * three that fire solely when a plugin is switched on or off or the theme
- * changes. Nothing is loaded until one of those actually runs. Everything else
+ * that fire solely while WordPress is updating plugins, themes or core, three
+ * that fire solely when a plugin is switched on or off or the theme changes,
+ * three auto_update_* filters that fire solely while WordPress decides on an
+ * automatic update, robots_txt (fires solely for /robots.txt) and two WP-Cron
+ * hooks. Nothing is loaded until one of those actually runs. Everything else
  * loads inside wp-admin, and remote calls happen only while an administrator
- * is looking at a MyKavo screen - or once, right after an update, and once a
- * day from WP-Cron to share AI crawler totals.
+ * is looking at a MyKavo screen - or right after an update (one report, then
+ * a short check every five minutes for up to 40 minutes on plans with
+ * automatic rollback), and once a day from WP-Cron to share AI crawler
+ * totals and the installed plugin list.
  *
  * The one thing that runs on every public request is a single string match
  * on the User-Agent header, to spot AI crawlers. Human visitors stop there:
@@ -138,6 +142,58 @@ add_action(
 	}
 );
 
+/*
+ * Automatic rollback. After an update, WP-Cron asks MyKavo how its check went
+ * (every five minutes, for up to 40 minutes) and rolls the update back when
+ * MyKavo recommends it. Nothing loads until that event runs.
+ */
+add_action(
+	'mykavo_rollback_watch',
+	static function ( $entry_id = '' ) {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-api.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-updates.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-rollback.php';
+		MyKavo_Rollback::watch( (string) $entry_id );
+	}
+);
+
+/*
+ * Update windows and rollback holds. These filters only run while WordPress
+ * decides whether to install an automatic update; when it would not update
+ * anyway (or a screen only asks whether auto-updates are forced), they return
+ * straight away without loading anything.
+ */
+foreach ( array( 'plugin', 'theme', 'core' ) as $mykavo_type ) {
+	add_filter(
+		'auto_update_' . $mykavo_type,
+		static function ( $update, $item = null ) use ( $mykavo_type ) {
+			if ( null === $update || ! $update || ! get_option( 'mykavo_connection' ) ) {
+				return $update;
+			}
+			require_once MYKAVO_DIR . 'includes/class-mykavo-auto-updates.php';
+			return MyKavo_Auto_Updates::filter( $update, $item, $mykavo_type );
+		},
+		20,
+		2
+	);
+}
+unset( $mykavo_type );
+
+/*
+ * "Block AI training, allow AI search": rules added to the virtual
+ * robots.txt, only when that switch is on. Runs only for /robots.txt.
+ */
+add_filter(
+	'robots_txt',
+	static function ( $output, $is_public = '1' ) {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-robots.php';
+		return MyKavo_Robots::filter( $output, $is_public );
+	},
+	20,
+	2
+);
+
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
 	require_once MYKAVO_DIR . 'includes/class-mykavo-api.php';
@@ -160,7 +216,9 @@ register_deactivation_hook(
 	__FILE__,
 	static function () {
 		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-rollback.php';
 		MyKavo_Bots::unschedule();
+		MyKavo_Rollback::unschedule();
 	}
 );
 
@@ -172,6 +230,10 @@ add_action(
 		require_once MYKAVO_DIR . 'includes/class-mykavo-updates.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-integrations.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-rollback.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-auto-updates.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-robots.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-health.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-rest.php';
 		MyKavo_Rest::register_routes();
 	}

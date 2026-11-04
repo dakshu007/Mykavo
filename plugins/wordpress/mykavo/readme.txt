@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,7 +24,16 @@ MyKavo fixes that. It watches the pages that matter on your site and tells you w
 * **The culprit, named.** Changes found after an update say so: "Appeared after: Updated WooCommerce 8.1.0 → 8.2.0".
 * **A history of every update**, with versions, kept on your site.
 * **Know before you press Update.** On the Plugins screen, a plugin whose last update changed things on your site is flagged: "Last time this plugin updated, 2 things changed on your site."
-* Update checks are included in the Pro and Agency plans. On the free plan, updates are still listed so you know what changed and when.
+* **Roll back in one click.** In the update history, any plugin from WordPress.org has a "Roll back to 8.1.0" button that reinstalls the version you had before, keeps the plugin active, and asks MyKavo to check the site again. This works on every plan, including free. Plugins from other sources cannot be rolled back here.
+* Update checks are included in every paid plan, from Starter. On the free plan, updates are still listed so you know what changed and when, and one-click rollback works.
+
+= Automatic rollback, update windows and plugin health =
+
+These come from MyKavo's service on paid plans. MyKavo makes the decision (whether an update broke something, when updates may run, which plugins are abandoned); the plugin shows the result and carries out what MyKavo says.
+
+* **Automatic rollback (Pro and Agency).** When MyKavo's check after a plugin update finds a critical change, the plugins from that update are put back to their previous version from WordPress.org automatically, and MyKavo checks the site again. You can switch it off on the Safe Updates screen. MyKavo never rolls itself back, never rolls back a rollback, and WordPress will not automatically update a rolled back plugin straight back to the version that broke.
+* **Update windows (Agency).** Choose the days and hours, in your time zone, when WordPress may install automatic updates. Outside the window, automatic plugin, theme and core updates wait for the next one, so they happen when someone is around.
+* **Plugin health (paid plans, from Starter).** Once a day the plugin sends MyKavo the list of installed plugins, and MyKavo flags the ones that were closed on WordPress.org or have not been updated in two years.
 
 = See which AI reads your site =
 
@@ -34,11 +43,16 @@ ChatGPT, Claude, Perplexity and other AI systems send crawlers to read your page
 * **Which pages AI reads most**, and visits per day for the last 30 days.
 * **Errors served to AI.** Pages that answered a crawler with 404 or 5xx - pages AI cannot quote.
 
+* **Block AI training, allow AI search (free).** One switch adds rules to your robots.txt that ask crawlers collecting AI training data (GPTBot, ClaudeBot, CCBot, Google-Extended, Applebot-Extended, Bytespider and Meta-ExternalAgent) to stay away, while the crawlers that read pages for AI search answers or open a page someone asked about (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot and Perplexity-User) are left alone. It works with the robots.txt WordPress generates; if your site has its own robots.txt file, the screen shows the rules to copy into it.
+* **Last 12 months (paid plans, from Starter).** Twelve months of AI crawler visits kept by MyKavo, by month and by crawler, with the day each crawler first visited.
+
 Crawlers are counted by the name they send in the User-Agent header. No IP addresses, no cookies and nothing about human visitors are ever recorded. You can switch counting off on that screen.
 
 = Built for WooCommerce stores =
 
 A broken cart or checkout loses sales every minute it stays broken. If WooCommerce is active, MyKavo shows whether your Shop, Cart, Checkout and My account pages are monitored, and adds the missing ones in one click.
+
+On Pro and Agency, **Guard checkout** goes further: MyKavo also watches the Place order, Proceed to checkout and Add to cart buttons on your cart, checkout and a product page, and sends a critical alert the moment one goes missing.
 
 = What you see in WordPress =
 
@@ -73,7 +87,8 @@ Many plugins get deleted because they make a site slower. MyKavo is built so tha
 * **Nothing on the public site.** No scripts, no styles, no database queries and no remote requests on the pages your visitors load. The only thing that runs is one text match on the User-Agent header to spot AI crawlers; human visitors stop there.
 * **AI crawler counting is one counter update.** A request from an AI crawler adds one row update to a small table, after the page has been built. Rows older than 35 days are deleted.
 * **No autoloaded options.** The connection is stored in a single option that WordPress only reads on MyKavo's own screens.
-* **One small daily job.** Once a day, WP-Cron sends the AI crawler totals to MyKavo. The scanning itself runs on MyKavo's servers, not yours.
+* **One small daily job.** Once a day, WP-Cron sends the AI crawler totals and the list of installed plugins to MyKavo. The scanning itself runs on MyKavo's servers, not yours.
+* **Automatic rollback waits quietly.** On plans with automatic rollback, WP-Cron asks MyKavo every five minutes, for up to 40 minutes after a plugin update, how its check went. Nothing else runs between updates.
 * **Admin screens only.** Scripts load on the MyKavo screen alone (plus a 2 KB script for the Dashboard widget), using only libraries WordPress already includes.
 * **Update checks cost nothing extra.** The plugin notes versions while WordPress is updating, then sends one short report when the update finishes. Nothing runs between updates.
 * **Cached and time-limited.** Answers from MyKavo are cached for a minute, and every request has a short timeout.
@@ -101,6 +116,10 @@ This plugin connects your site to MyKavo (https://mykavo.app), a website monitor
 * **While an administrator views a MyKavo screen or runs a `wp mykavo` command:** your site's server requests this website's monitoring data from mykavo.app, and sends the actions you take (for example "approve this change" or "run a scan").
 * **Screenshots** of your pages are loaded by the administrator's browser directly from mykavo.app, using links that expire after 30 minutes.
 * **Once a day, while connected (WP-Cron):** the AI crawler totals for the last 14 days - for each day and crawler name, the number of visits, how many got an error, and the paths of the 10 most-visited pages. No IP addresses or visitor data. You can switch this off on the AI crawlers screen.
+* **Once a day, while connected (WP-Cron), for plugin health:** the folder name, name, version and active state of each installed plugin. The plugin also reads this website's MyKavo settings (the update window), and refreshes them at most every ten minutes while WordPress is deciding on automatic updates.
+* **After a plugin update, on plans with automatic rollback:** your site's server asks mykavo.app for the result of the check every five minutes, for up to 40 minutes.
+* **When a plugin is rolled back (by you, or automatically):** the plugin's earlier version is downloaded from WordPress.org (https://downloads.wordpress.org, operated by the WordPress.org project; see https://wordpress.org/about/privacy/), the same way WordPress downloads any plugin update. The rollback (plugin name and versions) is then reported to mykavo.app so it can check the site again.
+* **When you press Guard checkout:** the addresses of your cart page, checkout page and one product page.
 * **When you disconnect:** your site tells mykavo.app to revoke its key.
 
 Nothing is sent when visitors view your site, and nothing about your human visitors is ever recorded or sent. MyKavo scans your public pages from its own servers, the same way a visitor would.
@@ -155,6 +174,14 @@ Yes. With WP-CLI: `wp mykavo status` shows the site's status, `wp mykavo changes
 
 Yes. Switching a plugin on or off, or changing the theme, is checked the same way as an update, and named in the result: "Deactivated WP Rocket - 2 changes found".
 
+= What is free and what needs a paid plan? =
+
+Free, on every plan: the whole MyKavo screen, the update history, one-click rollback of WordPress.org plugins, AI crawler counts for the last 30 days, and the "Block AI training, allow AI search" robots.txt rules. Automatic checks after every update, plugin health and 12 months of AI crawler history come with every paid plan, from Starter. Automatic rollback and the WooCommerce checkout guard come with Pro and Agency, and update windows with Agency. Paid features are provided by MyKavo's service: the plugin contains no locked code.
+
+= How does rollback work? =
+
+For a plugin from WordPress.org, the update history offers "Roll back to" the version you had before. WordPress downloads that exact version from WordPress.org and installs it over the current one, keeping the plugin active if it was. MyKavo is told about it and checks your site again. Plugins that are not hosted on WordPress.org (premium plugins, for example) cannot be rolled back here, and MyKavo never rolls itself back.
+
 = Can I connect several WordPress sites? =
 
 Yes. Install the plugin on each site and connect each one to its own website in MyKavo.
@@ -176,6 +203,16 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 9. WooCommerce store guard: see which store pages are monitored and add the rest in one click.
 
 == Changelog ==
+
+= 1.3.0 =
+* New: roll back a plugin from WordPress.org to its previous version in one click, from the update history. Free on every plan.
+* New: automatic rollback (Pro and Agency). When MyKavo's check after a plugin update finds a critical change, the update is rolled back and the site checked again. Can be switched off.
+* New: "Block AI training, allow AI search" robots.txt rules on the AI crawlers screen. Free.
+* New: 12 months of AI crawler history, with the day each crawler first visited (paid plans, from Starter).
+* New: plugin health. MyKavo flags installed plugins that were closed on WordPress.org or have not been updated in two years (paid plans, from Starter).
+* New: Guard checkout for WooCommerce. MyKavo watches the Place order, Proceed to checkout and Add to cart buttons (Pro and Agency).
+* New: update windows. Automatic updates run only on the days and hours you choose (Agency).
+* Safe Updates checks are now included in every paid plan, from Starter.
 
 = 1.2.0 =
 * Redesigned MyKavo screen: a new header with your site and its status, tabs with icons, and one status panel that brings together the verdict, open changes by severity and your site's uptime, response time, SSL and pages.
@@ -200,6 +237,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * Suggested privacy policy text.
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+One-click rollback for plugin updates, AI training crawler rules for robots.txt, and new paid features: automatic rollback, plugin health, checkout guard and update windows.
 
 = 1.2.0 =
 A redesigned, easier-to-read MyKavo screen.

@@ -19,3 +19,23 @@ function wc_get_page_id( $key ) {
 	}
 	return isset( $ids[ $key ] ) ? (int) $ids[ $key ] : -1;
 }
+
+function wc_get_cart_url() {
+	return get_permalink( wc_get_page_id( 'cart' ) );
+}
+
+function wc_get_checkout_url() {
+	return get_permalink( wc_get_page_id( 'checkout' ) );
+}
+
+// One published product, for the checkout guard's "Add to cart" check.
+add_action(
+	'init',
+	static function () {
+		register_post_type( 'product', array( 'public' => true, 'label' => 'Products', 'rewrite' => array( 'slug' => 'product' ) ) );
+		if ( ! get_option( 'mykavo_dev_woo_product' ) ) {
+			$id = wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Ethiopia Yirgacheffe' ) );
+			update_option( 'mykavo_dev_woo_product', $id, false );
+		}
+	}
+);
