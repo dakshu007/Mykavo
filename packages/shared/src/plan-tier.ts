@@ -116,3 +116,16 @@ export function includesClientReports(tier: PlanTier, grandfathered: boolean): b
 export function includesConversionMonitoring(tier: PlanTier): boolean {
   return isPaidTier(tier);
 }
+
+/**
+ * WordPress paid features the worker sends email for. Mirrors the
+ * wpPluginHealth / wpAiInsights flags in apps/web/src/config/plans.ts
+ * (Starter, Pro and Agency); keep the two in step.
+ */
+export function includesWpPluginHealth(tier: PlanTier): boolean {
+  return isPaidTier(tier);
+}
+
+export function includesWpAiInsights(tier: PlanTier): boolean {
+  return isPaidTier(tier);
+}

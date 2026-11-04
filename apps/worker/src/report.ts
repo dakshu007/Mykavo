@@ -10,7 +10,7 @@
 
 import { prisma, getUptimeStats } from "@mykavo/database";
 import { sendEmail, weeklyReportEmail } from "@mykavo/email";
-import { buildReportModel, type ReportRawData, type ReportSeverity } from "@mykavo/shared";
+import { buildReportModel, REPORT_WP_UPDATE_NOTES, type ReportRawData, type ReportSeverity } from "@mykavo/shared";
 import { resolveEmailConfig } from "./notify";
 import { logger } from "./logger";
 
@@ -51,6 +51,34 @@ async function resolveReportConfig(workspaceId: string): Promise<WorkspaceReport
   };
 }
 
+/**
+ * WordPress updates the MyKavo plugin reported in the window, newest first:
+ * the count and the first few notes. Null when there were none (every
+ * non-WordPress site), so the report has no WordPress section. A failed
+ * read leaves the section out rather than failing the report.
+ */
+async function gatherWordPressUpdates(websiteId: string, since: Date): Promise<ReportRawData["wordpressUpdates"]> {
+  try {
+    const where = { websiteId, createdAt: { gte: since } };
+    const [count, latest] = await Promise.all([
+      prisma.siteUpdateEvent.count({ where }),
+      prisma.siteUpdateEvent.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: REPORT_WP_UPDATE_NOTES,
+        select: { note: true },
+      }),
+    ]);
+    return count > 0 ? { count, notes: latest.map((e) => e.note) } : null;
+  } catch (err) {
+    logger.warn("wordpress updates left out of the report", {
+      websiteId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
 /** Gather the raw report numbers for one website over a window. Shared with
  *  the client-report delivery sweep (./client-report.ts). */
 export async function gatherRawData(
@@ -67,7 +95,7 @@ export async function gatherRawData(
   })();
 
   const scanWindow = { websiteId: website.id, createdAt: { gte: since } };
-  const [scansRun, scansFailed, severityGroups, uptime, sslCheck, audit, pagesMonitored, scanned] = await Promise.all([
+  const [scansRun, scansFailed, severityGroups, uptime, sslCheck, audit, pagesMonitored, scanned, wordpressUpdates] = await Promise.all([
     prisma.scan.count({ where: scanWindow }),
     prisma.scan.count({ where: { ...scanWindow, status: "FAILED" } }),
     prisma.changeEvent.groupBy({
@@ -93,6 +121,7 @@ export async function gatherRawData(
     }),
     prisma.monitoredPage.count({ where: { websiteId: website.id, enabled: true } }),
     prisma.scan.aggregate({ where: { ...scanWindow, status: { in: ["COMPLETED", "PARTIAL"] } }, _sum: { pagesScanned: true } }),
+    gatherWordPressUpdates(website.id, since),
   ]);
 
   const changesBySeverity: Partial<Record<ReportSeverity, number>> = {};
@@ -122,6 +151,7 @@ export async function gatherRawData(
     dashboardUrl: `${dashboardBase}/dashboard/websites/${website.id}`,
     pagesMonitored,
     pageChecks: scanned._sum.pagesScanned ?? 0,
+    wordpressUpdates,
   };
 }
 

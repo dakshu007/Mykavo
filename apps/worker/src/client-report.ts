@@ -124,6 +124,7 @@ export async function runClientReportSweep(now: Date = new Date()): Promise<void
         uptimePercent: model.uptimePercent,
         avgResponseMs: model.avgResponseMs,
         reportUrl: `${appBase}/r/${website.reportToken}`,
+        wordpressUpdates: model.wordpressUpdates,
       });
 
       const result = await sendEmail({

@@ -32,6 +32,14 @@ export const DOMAIN_SWEEP_QUEUE = "domain-sweep";
 /** Nightly pg_dump onto the worker's disk, proven by a restore (db-backup.ts). */
 export const DB_BACKUP_QUEUE = "db-backup";
 /**
+ * WordPress Plugin Health: installed plugins checked against WordPress.org
+ * (closed, or not updated in two years), one lookup a second, each plugin at
+ * most weekly; then one email per workspace about newly flagged plugins.
+ */
+export const WP_PLUGIN_HEALTH_QUEUE = "wp-plugin-health";
+/** WordPress AI crawler alerts: a new AI bot, or AI bots served errors. */
+export const AI_CRAWLER_ALERT_QUEUE = "ai-crawler-alert";
+/**
  * Delete object-storage keys whose owning rows are already gone. Enqueued the
  * moment a website is deleted so the bucket shrinks in seconds rather than
  * waiting for the nightly retention sweep, which drains the same table.

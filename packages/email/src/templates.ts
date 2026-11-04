@@ -181,6 +181,31 @@ export interface ClientReportDeliveryData {
   avgResponseMs: number | null;
   /** Public /r/[token] report URL - the CTA target. */
   reportUrl: string;
+  /** WordPress updates in the period (count, up to 5 notes); absent for other sites. */
+  wordpressUpdates?: WordPressUpdatesSummary | null;
+}
+
+/** WordPress updates the MyKavo plugin reported in a report period. */
+export interface WordPressUpdatesSummary {
+  count: number;
+  notes: string[];
+}
+
+/** The optional "WordPress updates" block of the weekly and client reports. */
+function wordpressUpdatesSection(updates: WordPressUpdatesSummary | null | undefined): { html: string; text: string[] } {
+  if (!updates || updates.count <= 0) return { html: "", text: [] };
+  const heading = `WordPress updates: ${updates.count}`;
+  const items = updates.notes
+    .map((n) => `<li style="margin:0 0 4px">${esc(n)}</li>`)
+    .join("");
+  const more = updates.count > updates.notes.length ? updates.count - updates.notes.length : 0;
+  const html = `<div style="margin:0 0 20px">
+      <p style="margin:0 0 6px;font-size:14px;font-weight:600;color:#16181d">${esc(heading)}</p>
+      ${items ? `<ul style="margin:0;padding:0 0 0 18px;font-size:14px;color:#5c6270">${items}</ul>` : ""}
+      ${more > 0 ? `<p style="margin:4px 0 0;font-size:13px;color:#9aa1b1">And ${more} more.</p>` : ""}
+    </div>`;
+  const text = [heading, ...updates.notes.map((n) => `- ${n}`), ...(more > 0 ? [`And ${more} more.`] : [])];
+  return { html, text };
 }
 
 /**
@@ -206,6 +231,7 @@ export function clientReportDeliveryEmail(
     data.totalChanges === 0
       ? "None - all clear"
       : `${data.totalChanges} caught and reviewed`;
+  const wpUpdates = wordpressUpdatesSection(data.wordpressUpdates);
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#5c6270">Prepared by ${esc(from)}</p>
@@ -217,6 +243,7 @@ export function clientReportDeliveryEmail(
       ${statRow("Unexpected changes", changes)}
       ${statRow("Monitoring scans run", String(data.scansRun))}
     </table>
+    ${wpUpdates.html}
     ${button(data.reportUrl, "View the full report")}
   `;
 
@@ -227,6 +254,7 @@ export function clientReportDeliveryEmail(
     `Average response time: ${response}\n` +
     `Unexpected changes: ${changes}\n` +
     `Monitoring scans run: ${data.scansRun}\n\n` +
+    (wpUpdates.text.length > 0 ? `${wpUpdates.text.join("\n")}\n\n` : "") +
     `Full report: ${data.reportUrl}`;
 
   return { subject, html: shellBranded(inner, data.brandName), text };
@@ -763,6 +791,8 @@ export interface WeeklyReportData {
   dashboardUrl: string;
   /** What was watched, shown in a quiet week. Optional for older callers. */
   watched?: { pages: number; pageChecks: number } | null;
+  /** WordPress updates in the week; absent or null for other sites. */
+  wordpressUpdates?: WordPressUpdatesSummary | null;
 }
 
 function statCell(value: string, caption: string): string {
@@ -826,6 +856,7 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
     : "";
 
   const scansCaption = data.scansFailed > 0 ? `scans (${data.scansFailed} failed)` : "scans run";
+  const wpUpdates = wordpressUpdatesSection(data.wordpressUpdates);
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Weekly report</p>
@@ -838,6 +869,7 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
       ${statCell(String(data.totalChanges), data.totalChanges === 1 ? "change detected" : "changes detected")}
     </tr></table>
     ${severityRows ? `<table style="width:100%;border-collapse:collapse;margin-bottom:20px">${severityRows}</table>` : ""}
+    ${wpUpdates.html}
     ${data.avgResponseMs !== null ? `<p style="margin:0 0 8px;font-size:14px;color:#5c6270">Average response time: ${data.avgResponseMs} ms.</p>` : ""}
     ${sslLine}
     ${lighthouseLine}
@@ -852,6 +884,7 @@ export function weeklyReportEmail(data: WeeklyReportData): { subject: string; ht
     `Scans: ${data.scansRun} run${data.scansFailed > 0 ? `, ${data.scansFailed} failed` : ""}`,
     `Changes: ${data.totalChanges}`,
     ...data.changesBySeverity.map((line) => `- [${label(line.severity)}] ${line.count} change${line.count === 1 ? "" : "s"}`),
+    ...wpUpdates.text,
     ...(data.avgResponseMs !== null ? [`Average response time: ${data.avgResponseMs} ms`] : []),
     ...(data.sslDaysLeft !== null
       ? [
@@ -2254,5 +2287,136 @@ export function trialStartedEmail(data: TrialStartedData, copy: EmailCopy = {}):
   const text =
     `${intro}\n\nWhat changes for the next 14 days:\n${perks.map((p) => `- ${p}`).join("\n")}\n\n${after}\n\n` +
     `${cta}: ${data.dashboardUrl}\n\n${signoff}`;
+  return { subject, html: shell(inner), text };
+}
+
+// ---------- WordPress Plugin Health (Starter, Pro, Agency) ----------
+
+export interface PluginHealthItem {
+  /** Plugin name as WordPress shows it. */
+  name: string;
+  /** Where it is installed, e.g. "example.com". */
+  websiteHost: string;
+  status: "closed" | "outdated";
+  /** Plain words: why it is flagged. */
+  reason: string;
+}
+
+export interface PluginHealthAlertData {
+  /** Newly flagged plugins, across the workspace's WordPress sites. */
+  plugins: PluginHealthItem[];
+  dashboardUrl: string;
+}
+
+export const PLUGIN_HEALTH_SUBJECT_PREFIX = "Plugin Health:";
+
+/**
+ * One email per sweep about plugins that newly became risky: closed on
+ * WordPress.org (often a security problem) or no release in over two years.
+ */
+export function pluginHealthAlertEmail(data: PluginHealthAlertData): { subject: string; html: string; text: string } {
+  const n = data.plugins.length;
+  const closed = data.plugins.filter((p) => p.status === "closed").length;
+  const hosts = [...new Set(data.plugins.map((p) => p.websiteHost))];
+  const where = hosts.length === 1 ? ` on ${hosts[0]}` : ` on ${hosts.length} sites`;
+  const subject =
+    n === 1
+      ? `${PLUGIN_HEALTH_SUBJECT_PREFIX} ${data.plugins[0]!.name} ${data.plugins[0]!.status === "closed" ? "was closed" : "looks abandoned"}${where}`
+      : `${PLUGIN_HEALTH_SUBJECT_PREFIX} ${n} plugins need a look${where}`;
+
+  const rows = data.plugins
+    .map(
+      (p) => `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #eef0f3;vertical-align:top;width:90px">
+          <span style="display:inline-block;font-size:11px;font-weight:700;color:${p.status === "closed" ? "#e5484d" : "#f59e0b"}">${p.status === "closed" ? "Closed" : "Outdated"}</span>
+        </td>
+        <td style="padding:10px 0;border-bottom:1px solid #eef0f3;font-size:14px;color:#16181d">
+          <div style="font-weight:600">${esc(p.name)}</div>
+          <div style="font-size:13px;color:#5c6270;margin-top:2px">${esc(p.websiteHost)}. ${esc(p.reason)}</div>
+        </td>
+      </tr>`,
+    )
+    .join("");
+
+  const advice =
+    closed > 0
+      ? "A plugin closed on WordPress.org gets no more fixes, and closures are often for security problems. Replace it, or remove it if you no longer need it."
+      : "A plugin with no release in over two years may not keep up with WordPress and PHP updates. Check for a maintained alternative.";
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${closed > 0 ? "#e5484d" : "#f59e0b"}">Plugin Health</p>
+    <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${n === 1 ? "A plugin needs a look" : `${n} plugins need a look`}</h1>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">${rows}</table>
+    <p style="margin:0 0 24px;font-size:14px;color:#5c6270">${esc(advice)}</p>
+    ${button(data.dashboardUrl, "Open dashboard")}
+  `;
+  const text = [
+    n === 1 ? "A plugin needs a look" : `${n} plugins need a look`,
+    "",
+    ...data.plugins.map((p) => `- [${p.status === "closed" ? "Closed" : "Outdated"}] ${p.name} (${p.websiteHost}): ${p.reason}`),
+    "",
+    advice,
+    "",
+    `Dashboard: ${data.dashboardUrl}`,
+  ].join("\n");
+  return { subject, html: shell(inner), text };
+}
+
+// ---------- WordPress AI crawler alerts (AI Insights) ----------
+
+export interface AiCrawlerAlertData {
+  websiteName: string;
+  websiteHost: string;
+  /** Crawlers seen on the site for the first time. */
+  newAgents: Array<{ agent: string; owner: string | null; day: string }>;
+  /** Recent days on which AI crawlers were answered with errors. */
+  errorDays: Array<{ day: string; errors: number }>;
+  dashboardUrl: string;
+}
+
+export const AI_CRAWLER_ALERT_SUBJECT_PREFIX = "AI crawlers on";
+
+export function aiCrawlerAlertEmail(data: AiCrawlerAlertData): { subject: string; html: string; text: string } {
+  const errors = data.errorDays.reduce((sum, d) => sum + d.errors, 0);
+  const parts: string[] = [];
+  if (data.newAgents.length === 1) parts.push(`${data.newAgents[0]!.agent} visited for the first time`);
+  else if (data.newAgents.length > 1) parts.push(`${data.newAgents.length} new AI crawlers`);
+  if (errors > 0) parts.push(`${errors} error${errors === 1 ? "" : "s"} served to AI crawlers`);
+  const subject = `${AI_CRAWLER_ALERT_SUBJECT_PREFIX} ${data.websiteHost}: ${parts.join(", ")}`;
+
+  const agentLabel = (a: { agent: string; owner: string | null }) => (a.owner ? `${a.agent} (${a.owner})` : a.agent);
+  const newBlock =
+    data.newAgents.length > 0
+      ? `<p style="margin:0 0 6px;font-size:14px;font-weight:600;color:#16181d">New AI crawlers</p>
+         <ul style="margin:0 0 20px;padding:0 0 0 18px;font-size:14px;color:#5c6270">${data.newAgents
+           .map((a) => `<li style="margin:0 0 4px">${esc(agentLabel(a))}, first seen ${esc(a.day)}</li>`)
+           .join("")}</ul>`
+      : "";
+  const errorBlock =
+    data.errorDays.length > 0
+      ? `<div style="background:#fdf3e0;border-radius:12px;padding:14px 16px;font-size:14px;color:#92600a;margin-bottom:20px">AI crawlers were answered with errors: ${esc(
+          data.errorDays.map((d) => `${d.errors} on ${d.day}`).join(", "),
+        )}. Pages that fail for AI crawlers can drop out of AI answers. The MyKavo plugin in WordPress shows which pages failed.</div>`
+      : "";
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">AI crawlers</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(data.websiteName)}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(data.websiteHost)}</p>
+    ${newBlock}
+    ${errorBlock}
+    ${button(data.dashboardUrl, "Open dashboard")}
+  `;
+  const text = [
+    `AI crawlers on ${data.websiteHost}`,
+    "",
+    ...(data.newAgents.length > 0
+      ? ["New AI crawlers:", ...data.newAgents.map((a) => `- ${agentLabel(a)}, first seen ${a.day}`), ""]
+      : []),
+    ...(data.errorDays.length > 0
+      ? [`AI crawlers were answered with errors: ${data.errorDays.map((d) => `${d.errors} on ${d.day}`).join(", ")}.`, ""]
+      : []),
+    `Dashboard: ${data.dashboardUrl}`,
+  ].join("\n");
   return { subject, html: shell(inner), text };
 }

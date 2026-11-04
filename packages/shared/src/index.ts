@@ -31,6 +31,8 @@ export * from "./flows";
 export * from "./page-fingerprint";
 export * from "./ai-crawlers";
 export * from "./product-updates";
+export * from "./wp-plugin-health";
+export * from "./ai-crawler-alerts";
 export * from "./wordpress-connect";
 export * from "./shopify-billing";
 export * from "./egress";

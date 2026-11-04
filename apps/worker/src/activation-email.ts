@@ -431,6 +431,17 @@ async function sendFirstWebsiteNudges(budget: number, a: Automations): Promise<n
   return sent;
 }
 
+/**
+ * How many emails of the ACTIVATION share may go out right now. For other
+ * sweeps that send useful, non-critical mail about the customer's own sites
+ * (WordPress Plugin Health, AI crawler alerts): they spend the same share as
+ * "Baseline ready", so they can never use up what CRITICAL alerts need.
+ */
+export async function activationEmailAllowance(): Promise<number> {
+  const limits = emailLimitsFromEnv(process.env);
+  return emailAllowance("ACTIVATION", limits, await currentUsage(await loadAutomations()));
+}
+
 export async function runActivationSweep(): Promise<void> {
   const limits = emailLimitsFromEnv(process.env);
 

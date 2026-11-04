@@ -15,7 +15,8 @@ export const updateItemSchema = z.object({
   from: z.string().trim().max(40).nullable().optional(),
   to: z.string().trim().max(40).nullable().optional(),
   // Optional: pre-release builds of the plugin only reported updates.
-  action: z.enum(["update", "activate", "deactivate", "switch"]).optional(),
+  // "rollback": the plugin put an earlier version back (1.3.0+).
+  action: z.enum(["update", "activate", "deactivate", "switch", "rollback"]).optional(),
 });
 
 export const updateEventSchema = z.object({
@@ -36,6 +37,11 @@ function describeAction(item: UpdateItem): string | null {
       return `Deactivated ${item.name}`;
     case "switch":
       return `Switched theme to ${item.name}`;
+    case "rollback": {
+      const name = item.type === "core" ? "WordPress" : item.name;
+      if (item.from && item.to && item.from !== item.to) return `Rolled back ${name} ${item.from} to ${item.to}`;
+      return `Rolled back ${name}`;
+    }
     default:
       return null;
   }

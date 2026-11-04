@@ -5,6 +5,7 @@ import { getWorkspacePlan } from "@/lib/limits";
 import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/site-auth";
 import { buildWebsiteHealth, manualScanCapability } from "@/lib/mobile/health";
 import { highestSeverity } from "@/lib/mobile/mapping";
+import { siteFeatures } from "@/lib/integrations/wp-features";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -83,6 +84,8 @@ export async function GET(request: Request) {
         hasFinishedScan: Boolean(finishedScan),
         planAllowsManualScans: plan.limits.manualScans,
       }),
+      /** Paid WordPress features the plan includes; MyKavo decides, the plugin follows. */
+      features: siteFeatures(plan.limits),
       links: {
         website: `${base}/dashboard/websites/${website.id}`,
         changes: `${base}/dashboard/changes?website=${website.id}`,

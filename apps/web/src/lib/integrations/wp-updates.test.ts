@@ -48,6 +48,16 @@ describe("buildUpdateNote", () => {
     ).toBe("Updated Forms 1.0 → 1.1");
   });
 
+  it("names rollbacks the plugin reports", () => {
+    expect(
+      buildUpdateNote([{ type: "plugin", name: "WooCommerce", from: "9.4.0", to: "9.3.1", action: "rollback" }], "auto"),
+    ).toBe("Rolled back WooCommerce 9.4.0 to 9.3.1");
+    expect(buildUpdateNote([{ type: "plugin", name: "Forms", action: "rollback" }], "manual")).toBe("Rolled back Forms");
+    expect(
+      updateEventSchema.safeParse({ trigger: "auto", items: [{ type: "plugin", name: "Forms", action: "rollback" }] }).success,
+    ).toBe(true);
+  });
+
   it("handles unknown versions and stays within the column", () => {
     expect(buildUpdateNote([{ type: "plugin", name: "Forms", to: null }], "manual")).toBe("Updated Forms");
     const long = buildUpdateNote([{ type: "plugin", name: "x".repeat(100), from: "1".repeat(40), to: "2".repeat(40) }], "auto");

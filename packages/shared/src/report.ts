@@ -54,7 +54,15 @@ export interface ReportRawData {
   pagesMonitored?: number;
   /** Page checks in the window: pages scanned, summed over every scan. */
   pageChecks?: number;
+  /**
+   * WordPress updates the MyKavo plugin reported in the window (newest
+   * first). Absent or empty for other sites: the report is then unchanged.
+   */
+  wordpressUpdates?: { count: number; notes: string[] } | null;
 }
+
+/** WordPress update notes listed in a report; the rest are counted only. */
+export const REPORT_WP_UPDATE_NOTES = 5;
 
 /** Shaped template input - see `weeklyReportEmail` in @mykavo/email. */
 export interface WeeklyReportModel {
@@ -79,6 +87,8 @@ export interface WeeklyReportModel {
   dashboardUrl: string;
   /** What was watched, so a quiet week shows the work: null when unknown. */
   watched: { pages: number; pageChecks: number } | null;
+  /** WordPress updates in the period, up to 5 notes; null when none. */
+  wordpressUpdates: { count: number; notes: string[] } | null;
 }
 
 function formatDay(date: Date): string {
@@ -138,6 +148,16 @@ export function buildReportModel(raw: ReportRawData, now: Date = raw.periodEnd):
     dashboardUrl: raw.dashboardUrl,
     watched:
       raw.pagesMonitored && raw.pageChecks ? { pages: raw.pagesMonitored, pageChecks: raw.pageChecks } : null,
+    wordpressUpdates:
+      raw.wordpressUpdates && raw.wordpressUpdates.count > 0
+        ? {
+            count: raw.wordpressUpdates.count,
+            notes: raw.wordpressUpdates.notes
+              .map((n) => n.trim())
+              .filter(Boolean)
+              .slice(0, REPORT_WP_UPDATE_NOTES),
+          }
+        : null,
   };
 }
 

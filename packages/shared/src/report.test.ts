@@ -98,6 +98,19 @@ describe("buildReportModel", () => {
     const lighthouse = { performance: 92, accessibility: 98, bestPractices: 100, seo: 100 };
     expect(buildReportModel(raw({ lighthouse })).lighthouse).toEqual(lighthouse);
   });
+
+  it("has no WordPress section unless updates were reported", () => {
+    expect(buildReportModel(raw()).wordpressUpdates).toBeNull();
+    expect(buildReportModel(raw({ wordpressUpdates: { count: 0, notes: [] } })).wordpressUpdates).toBeNull();
+  });
+
+  it("lists up to 5 WordPress update notes and counts them all", () => {
+    const notes = ["a", "b", "c", "d", "e", "f", "g"].map((n) => `Updated ${n}`);
+    expect(buildReportModel(raw({ wordpressUpdates: { count: 7, notes } })).wordpressUpdates).toEqual({
+      count: 7,
+      notes: notes.slice(0, 5),
+    });
+  });
 });
 
 describe("isClientReportDue", () => {

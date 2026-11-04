@@ -5,6 +5,62 @@ import { mapScanListItem } from "@/lib/mobile/mapping";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { triggerWebsiteScan } from "@/lib/scans/trigger";
 import { logActivityEvent } from "@/lib/activity/record";
+import { getWorkspacePlan } from "@/lib/limits";
+import { isRollbackReport, rollbackAdvice, type RollbackAdvice } from "@/lib/integrations/wp-features";
+import { logger } from "@/lib/logger";
+
+/**
+ * Rollback advice for the deploy checks WordPress update reports started:
+ * scan id to { recommended, reason }. Scans not started by an update report
+ * get none. Never fails the scan list: on error, no advice.
+ */
+async function rollbackByScan(
+  ctx: { workspaceId: string; website: { id: string } },
+  scans: Array<{ id: string; status: "QUEUED" | "RUNNING" | "COMPLETED" | "PARTIAL" | "FAILED"; triggerType: string }>,
+): Promise<Map<string, RollbackAdvice>> {
+  const advice = new Map<string, RollbackAdvice>();
+  const deployIds = scans.filter((s) => s.triggerType === "DEPLOY").map((s) => s.id);
+  if (deployIds.length === 0) return advice;
+  try {
+    const [events, critical, plan] = await Promise.all([
+      prisma.siteUpdateEvent.findMany({
+        where: { websiteId: ctx.website.id, scanId: { in: deployIds } },
+        select: { scanId: true, items: true },
+      }),
+      prisma.changeEvent.groupBy({
+        by: ["scanId"],
+        where: { websiteId: ctx.website.id, scanId: { in: deployIds }, severity: "CRITICAL" },
+        _count: { _all: true },
+      }),
+      getWorkspacePlan(ctx.workspaceId),
+    ]);
+    const reports = new Map<string, unknown[]>();
+    for (const e of events) {
+      if (!e.scanId) continue;
+      reports.set(e.scanId, [...(reports.get(e.scanId) ?? []), e.items]);
+    }
+    const criticalByScan = new Map(critical.map((c) => [c.scanId, c._count._all]));
+    for (const scan of scans) {
+      const linked = reports.get(scan.id);
+      if (!linked) continue;
+      advice.set(
+        scan.id,
+        rollbackAdvice({
+          planAllows: plan.limits.wpAutoRollback,
+          status: scan.status,
+          criticalChanges: criticalByScan.get(scan.id) ?? 0,
+          followsRollback: linked.every(isRollbackReport),
+        }),
+      );
+    }
+  } catch (err) {
+    logger.warn("rollback advice unavailable", {
+      websiteId: ctx.website.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+  return advice;
+}
 
 /** The connected website's recent scans, newest first. */
 export async function GET(request: Request) {
@@ -16,8 +72,14 @@ export async function GET(request: Request) {
     orderBy: { createdAt: "desc" },
     take: 30,
   });
+  const rollback = ctx.platform === "wordpress" ? await rollbackByScan(ctx, scans) : new Map<string, RollbackAdvice>();
   return NextResponse.json(
-    { scans: scans.map((scan) => ({ ...mapScanListItem(scan, ctx.website), note: scan.note })) },
+    {
+      scans: scans.map((scan) => {
+        const advice = rollback.get(scan.id);
+        return { ...mapScanListItem(scan, ctx.website), note: scan.note, ...(advice ? { rollback: advice } : {}) };
+      }),
+    },
     { headers: { "cache-control": "no-store" } },
   );
 }

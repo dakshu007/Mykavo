@@ -32,6 +32,8 @@ import {
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
   WELCOME_EMAIL_QUEUE,
+  WP_PLUGIN_HEALTH_QUEUE,
+  AI_CRAWLER_ALERT_QUEUE,
   type PushTestJob,
   type AdminSignupJob,
   type WelcomeEmailJob,
@@ -67,6 +69,8 @@ import { runSiteAuditJob } from "./site-audit";
 import { runLeadAuditJob } from "./lead-audit";
 import { runGscSync, runGscSweep } from "./gsc-sync";
 import { runDomainSweep } from "./domain-check";
+import { runPluginHealthSweep } from "./wp-plugin-health";
+import { runAiCrawlerAlertSweep } from "./ai-crawler-alerts";
 import { runDatabaseBackup } from "./db-backup";
 import { pruneSnapshotText } from "./text-store";
 import { startWatchdog } from "./watchdog";
@@ -92,6 +96,11 @@ const GSC_CRON = process.env.GSC_CRON ?? "0 7 * * *"; // daily 07:00 UTC
 // A registration changes once a year; weekly is already far more often than
 // it can move, and keeps us a polite visitor to the registries.
 const DOMAIN_CRON = process.env.DOMAIN_CRON ?? "0 5 * * 3"; // Wednesdays 05:00 UTC
+// WordPress Plugin Health: each plugin is looked up weekly; the sweep runs
+// daily so its 200-lookup cap spreads that work over the week.
+const WP_PLUGIN_HEALTH_CRON = process.env.WP_PLUGIN_HEALTH_CRON ?? "10 4 * * *"; // daily 04:10 UTC
+// WordPress AI crawler alerts: at most one email per website a day.
+const AI_CRAWLER_ALERT_CRON = process.env.AI_CRAWLER_ALERT_CRON ?? "50 10 * * *"; // daily 10:50 UTC
 // Before the 03:00 retention sweep, so each dump holds the day's data intact.
 const BACKUP_CRON = process.env.BACKUP_CRON ?? "30 2 * * *"; // daily 02:30 UTC
 
@@ -267,6 +276,21 @@ async function main() {
     await runDomainSweep();
   });
   await boss.schedule(DOMAIN_SWEEP_QUEUE, DOMAIN_CRON);
+
+  // WordPress Plugin Health: WordPress.org lookups (one a second, at most
+  // 200 a run, ~4 minutes) and one email per workspace about new risks.
+  await ensureQueue(boss, WP_PLUGIN_HEALTH_QUEUE, { expireInSeconds: 20 * 60 });
+  await boss.work(WP_PLUGIN_HEALTH_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
+    await runPluginHealthSweep();
+  });
+  await boss.schedule(WP_PLUGIN_HEALTH_QUEUE, WP_PLUGIN_HEALTH_CRON);
+
+  // WordPress AI crawler alerts: a new AI bot, or AI bots served errors.
+  await ensureQueue(boss, AI_CRAWLER_ALERT_QUEUE, { expireInSeconds: 15 * 60 });
+  await boss.work(AI_CRAWLER_ALERT_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
+    await runAiCrawlerAlertSweep();
+  });
+  await boss.schedule(AI_CRAWLER_ALERT_QUEUE, AI_CRAWLER_ALERT_CRON);
 
   // Nightly database backup + restore check (db-backup.ts). Never retried:
   // a failure emails the operators, and tomorrow night is the next attempt.

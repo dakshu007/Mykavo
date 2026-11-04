@@ -292,6 +292,8 @@ model Website {
   siteAudits        SiteAudit[]
   aiCrawlerVisits   AiCrawlerVisit[]
   updateEvents      SiteUpdateEvent[]
+  wpPlugins         WpPluginInventory[]
+  aiCrawlerAlerts   AiCrawlerAlert[]
 
   @@unique([workspaceId, normalizedUrl])
   @@index([workspaceId])
@@ -1297,6 +1299,9 @@ model SiteConnection {
   pluginVersion   String?
   platformVersion String?
   revokedAt       DateTime?
+  /// Site settings MyKavo keeps for the plugin, e.g. { updateWindow: {...} }.
+  /// Read defensively (parseSiteSettings in apps/web/src/lib/integrations).
+  settings        Json      @default("{}")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   shopifyShop     ShopifyShop?
@@ -1329,6 +1334,53 @@ model SiteUpdateEvent {
 
   @@index([websiteId, createdAt(sort: Desc)])
   @@map("site_update_event")
+}
+
+/// The plugins installed on a connected WordPress site, uploaded daily by the
+/// MyKavo plugin, and what WordPress.org says about each one (Plugin Health).
+/// A plugin missing from the latest upload is deleted.
+model WpPluginInventory {
+  id          String    @id @default(cuid())
+  websiteId   String
+  website     Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  /// The plugin's folder name, e.g. "woocommerce".
+  slug        String
+  name        String
+  version     String
+  active      Boolean   @default(true)
+  /// "ok" | "closed" | "outdated" | "unknown" (not on WordPress.org: premium
+  /// or custom plugins, never alerted on).
+  wporgStatus String    @default("unknown")
+  /// WordPress.org "last_updated", as a date.
+  lastUpdated DateTime? @db.Date
+  /// Why it is flagged, in plain words. Null when not flagged.
+  reason      String?
+  checkedAt   DateTime?
+  /// When the owner was emailed about this plugin being flagged.
+  alertedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([websiteId, slug])
+  @@index([checkedAt])
+  @@map("wp_plugin_inventory")
+}
+
+/// De-duplication for AI crawler alerts: one row per thing alerted on.
+/// kind "new_agent" (agent = the crawler, day = its first day seen),
+/// "errors" (agent = "*", day = the day with errors) and "email" (agent =
+/// "*", day = the UTC day an email went out: at most one per website a day).
+model AiCrawlerAlert {
+  id        String   @id @default(cuid())
+  websiteId String
+  website   Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  kind      String
+  agent     String
+  day       DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@unique([websiteId, kind, agent, day])
+  @@map("ai_crawler_alert")
 }
 
 /// A Shopify store that installed the MyKavo Shopify app. Exists from install
