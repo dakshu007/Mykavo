@@ -78,6 +78,25 @@ export interface Plan {
      * scanning, so it follows manual scans: Pro only, shared daily quota.
      */
     deployChecks: boolean;
+    /**
+     * WordPress: when the check after a plugin update finds a CRITICAL change,
+     * the plugin puts the previous version back on its own (MyKavo decides,
+     * the plugin acts). Manual one-click rollback stays free.
+     */
+    wpAutoRollback: boolean;
+    /**
+     * WordPress: AI crawler history beyond the plugin's own 30 days (up to a
+     * year, read from MyKavo) and alerts when a new AI bot appears or AI bots
+     * are served errors.
+     */
+    wpAiInsights: boolean;
+    /**
+     * WordPress: weekly check of installed plugins against WordPress.org
+     * (closed, or not updated in two years) with an email when one is risky.
+     */
+    wpPluginHealth: boolean;
+    /** WordPress: limit automatic updates to a maintenance window. */
+    wpUpdateWindows: boolean;
     /** Max pages crawled per technical SEO site audit. */
     siteAuditPages: number;
     /** Site audits per workspace per UTC day. */
@@ -126,6 +145,10 @@ export const plans: Plan[] = [
       maxMembers: 1,
       whiteLabelReports: false,
       deployChecks: false,
+      wpAutoRollback: false,
+      wpAiInsights: false,
+      wpPluginHealth: false,
+      wpUpdateWindows: false,
       siteAuditPages: PLAN_SITE_AUDIT_PAGES.free,
       siteAuditsPerDay: 1,
       aiExplanationsPerMonth: 10,
@@ -162,6 +185,10 @@ export const plans: Plan[] = [
       maxMembers: 1,
       whiteLabelReports: false,
       deployChecks: true,
+      wpAutoRollback: false,
+      wpAiInsights: true,
+      wpPluginHealth: true,
+      wpUpdateWindows: false,
       siteAuditPages: PLAN_SITE_AUDIT_PAGES.starter,
       siteAuditsPerDay: 3,
       aiExplanationsPerMonth: 30,
@@ -201,6 +228,10 @@ export const plans: Plan[] = [
       maxMembers: 3,
       whiteLabelReports: false,
       deployChecks: true,
+      wpAutoRollback: true,
+      wpAiInsights: true,
+      wpPluginHealth: true,
+      wpUpdateWindows: false,
       siteAuditPages: PLAN_SITE_AUDIT_PAGES.pro,
       siteAuditsPerDay: 10,
       aiExplanationsPerMonth: 100,
@@ -241,6 +272,10 @@ export const plans: Plan[] = [
       maxMembers: 15,
       whiteLabelReports: true,
       deployChecks: true,
+      wpAutoRollback: true,
+      wpAiInsights: true,
+      wpPluginHealth: true,
+      wpUpdateWindows: true,
       // The crawler stops at 10 minutes, which lands near 2,000 pages - the
       // worker caps audits there too. Never advertise more than it can crawl.
       siteAuditPages: PLAN_SITE_AUDIT_PAGES.agency,
