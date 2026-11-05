@@ -2199,6 +2199,8 @@
 					( a.completedAt ? ' · ' + esc( rel( a.completedAt ) ) : '' ) + '</p>'
 				: '<p class="mk-fine">' + esc( a.status === 'FAILED' ? __( 'The last audit could not finish.', 'mykavo' ) : __( 'An audit is running.', 'mykavo' ) ) + '</p>' )
 			: '<p class="mk-fine">' + esc( __( 'A technical SEO crawl of your whole site: titles, links, speed, security and 70+ more checks.', 'mykavo' ) ) + '</p>';
+		// Why it is worth opening: most owners never connect site issues with lost visitors and sales.
+		body += '<p class="mk-audit-why">' + esc( __( 'Broken pages, slow loading and missing titles quietly cost you visitors and sales. The audit shows what each issue costs you and how to fix it.', 'mykavo' ) ) + '</p>';
 		return (
 			'<section class="mk-card mk-card-pad mk-audit">' +
 			'<div class="mk-card-head mk-card-head-flush"><div><h3 class="mk-card-title">' + esc( __( 'Site audit', 'mykavo' ) ) + '</h3>' +

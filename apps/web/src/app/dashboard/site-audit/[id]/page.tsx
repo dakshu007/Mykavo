@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Download, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
-import { AUDIT_CHECKS, type AuditCategory, type AuditIssueGroup } from "@mykavo/seo-audit";
+import { AUDIT_CHECKS, auditImpactOf, type AuditCategory, type AuditIssueGroup } from "@mykavo/seo-audit";
 import { Card } from "@/components/ui/card";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
@@ -12,6 +12,7 @@ import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
 import { RunAuditButton } from "../run-audit-button";
 import { FixTip } from "../fix-tip";
 import { HealthGauge, SEVERITY_CHIP, healthTone, isAuditRunning } from "../report-ui";
+import { ImpactSummary, ImpactTags } from "../impact-ui";
 
 export const metadata: Metadata = { title: "Audit report - MyKavo" };
 
@@ -199,6 +200,9 @@ export default async function SiteAuditReportPage({ params }: Params) {
             </p>
           )}
 
+          {/* The business case: what these issues can cost the owner. */}
+          {issues.length > 0 && <ImpactSummary issues={issues} />}
+
           {/* Issue browser */}
           {issues.length === 0 ? (
             <Card>
@@ -219,6 +223,7 @@ export default async function SiteAuditReportPage({ params }: Params) {
                   {groups.map((group) => {
                     const def = AUDIT_CHECKS[group.checkId];
                     const chip = SEVERITY_CHIP[def.severity];
+                    const impact = auditImpactOf(group.checkId);
                     return (
                       <li key={group.checkId} className="py-3">
                         <div className="flex items-center gap-3">
@@ -240,8 +245,14 @@ export default async function SiteAuditReportPage({ params }: Params) {
                           >
                             {group.count.toLocaleString("en-US")}
                           </Link>
-                          <FixTip title={def.title} explain={def.explain} fix={def.fix} />
+                          <FixTip title={def.title} explain={def.explain} costs={impact.costs} fix={def.fix} />
                         </div>
+                        {impact.costs && (
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 pl-1 text-[12.5px] leading-5 text-ink-secondary">
+                            <span className="min-w-0 flex-1 basis-80">{impact.costs}</span>
+                            <ImpactTags hurts={impact.hurts} />
+                          </div>
+                        )}
                         {group.urls.length > 0 && (
                           <details className="group mt-1.5 pl-1">
                             <summary className="cursor-pointer list-none text-[12px] font-medium text-ink-faint transition-colors hover:text-ink">

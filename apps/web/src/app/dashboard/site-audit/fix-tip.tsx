@@ -5,9 +5,21 @@ import { CircleHelp, X } from "lucide-react";
 
 /**
  * The "how do I fix this?" tooltip on every issue row: a small help button
- * that opens an inline popover with the check's explanation and fix steps.
+ * that opens an inline popover with what the issue means, what it can cost
+ * the owner, and how to fix it.
  */
-export function FixTip({ title, explain, fix }: { title: string; explain: string; fix: string }) {
+export function FixTip({
+  title,
+  explain,
+  costs,
+  fix,
+}: {
+  title: string;
+  explain: string;
+  /** What the issue can cost the owner (visitors, sales, trust), in plain words. */
+  costs?: string;
+  fix: string;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <span className="relative inline-flex">
@@ -32,6 +44,12 @@ export function FixTip({ title, explain, fix }: { title: string; explain: string
             </button>
           </span>
           <span className="mt-1.5 block text-[12.5px] leading-5 text-ink-secondary">{explain}</span>
+          {costs ? (
+            <span className="mt-2.5 block text-[12.5px] leading-5 text-ink">
+              <span className="label-micro mb-1 block">What it costs you</span>
+              {costs}
+            </span>
+          ) : null}
           <span className="mt-2.5 block rounded-tile bg-surface px-3 py-2.5 text-[12.5px] leading-5 text-ink">
             <span className="label-micro mb-1 block">How to fix</span>
             {fix}

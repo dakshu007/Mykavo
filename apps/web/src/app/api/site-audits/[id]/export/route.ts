@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@mykavo/database";
-import { AUDIT_CHECKS, type AuditIssueGroup } from "@mykavo/seo-audit";
+import { AUDIT_CHECKS, auditImpactOf, type AuditIssueGroup } from "@mykavo/seo-audit";
 import { getApiContext } from "@/lib/api-auth";
 import { toCsv } from "@/lib/csv";
 
@@ -23,7 +23,7 @@ export async function GET(_request: Request, { params }: Params) {
 
   const issues = (Array.isArray(audit.issues) ? audit.issues : []) as unknown as AuditIssueGroup[];
   const rows: string[][] = [
-    ["Severity", "Category", "Issue", "URL", "Detail", "Found on", "How to fix"],
+    ["Severity", "Category", "Issue", "URL", "Detail", "Found on", "What it costs you", "How to fix"],
   ];
   for (const group of issues) {
     const def = AUDIT_CHECKS[group.checkId];
@@ -36,6 +36,7 @@ export async function GET(_request: Request, { params }: Params) {
         entry.url,
         entry.detail ?? "",
         entry.foundOn?.join(" | ") ?? "",
+        auditImpactOf(group.checkId).costs,
         def.fix,
       ]);
     }

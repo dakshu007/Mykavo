@@ -3,10 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Wrench } from "lucide-react";
 import { prisma } from "@mykavo/database";
-import { AUDIT_CHECKS, type AuditIssueGroup } from "@mykavo/seo-audit";
+import { AUDIT_CHECKS, auditImpactOf, type AuditIssueGroup } from "@mykavo/seo-audit";
 import { Card, CardHeader } from "@/components/ui/card";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { SEVERITY_CHIP } from "../../../report-ui";
+import { ImpactTags } from "../../../impact-ui";
 
 export const metadata: Metadata = { title: "Audit issue - MyKavo" };
 
@@ -77,10 +78,17 @@ export default async function AuditIssuePage({ params }: Params) {
       </div>
 
       <Card>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-3">
           <div>
-            <p className="label-micro mb-1.5">Why it matters</p>
+            <p className="label-micro mb-1.5">What it means</p>
             <p className="text-sm leading-6 text-ink-secondary">{def.explain}</p>
+          </div>
+          <div>
+            <p className="label-micro mb-1.5">What it costs you</p>
+            <p className="text-sm leading-6 text-ink">{auditImpactOf(checkId).costs}</p>
+            <div className="mt-2">
+              <ImpactTags hurts={auditImpactOf(checkId).hurts} />
+            </div>
           </div>
           <div className="rounded-tile bg-surface px-4 py-3.5">
             <p className="label-micro mb-1.5 flex items-center gap-1.5">

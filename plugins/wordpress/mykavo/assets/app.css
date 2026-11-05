@@ -4609,3 +4609,13 @@
 		transition: none;
 	}
 }
+
+.mk-audit-why {
+	margin: 2px 0 4px;
+	padding: 10px 12px;
+	border-radius: 14px;
+	background: var(--mk-gold-soft);
+	color: var(--mk-ink);
+	font-size: 13px;
+	line-height: 1.5;
+}

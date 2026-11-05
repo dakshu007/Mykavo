@@ -2525,6 +2525,8 @@
 					( a.completedAt ? ' · ' + esc( rel( a.completedAt ) ) : '' ) + '</p>'
 				: '<p class="mk-fine">' + esc( a.status === 'FAILED' ? __( 'The last audit could not finish.', 'mykavo' ) : __( 'An audit is running.', 'mykavo' ) ) + '</p>' )
 			: '<p class="mk-fine">' + esc( __( 'A technical SEO crawl of your whole site: titles, links, speed, security and 70+ more checks.', 'mykavo' ) ) + '</p>';
+		// Why it is worth opening: most owners never connect site issues with lost visitors and sales.
+		body += '<p class="mk-audit-why">' + esc( __( 'Broken pages, slow loading and missing titles quietly cost you visitors and sales. The audit shows what each issue costs you and how to fix it.', 'mykavo' ) ) + '</p>';
 		return (
 			'<section class="mk-card mk-card-pad mk-audit">' +
 			'<div class="mk-card-head mk-card-head-flush"><div><h3 class="mk-card-title">' + esc( __( 'Site audit', 'mykavo' ) ) + '</h3>' +
@@ -3502,7 +3504,7 @@
 			[ __( 'Open changes', 'mykavo' ), __( 'Changes nobody has reviewed yet, grouped by how serious they are. Critical and High need you soon.', 'mykavo' ) ],
 			[ __( 'Site vitals', 'mykavo' ), __( 'Uptime, response time and SSL certificate expiry, checked by MyKavo from outside your site every few minutes. The chart marks your updates, so you can see if one slowed the site.', 'mykavo' ) ],
 			[ __( 'Needs your attention', 'mykavo' ), __( 'The most important open changes, most serious first. Click one to see the before and after.', 'mykavo' ) ],
-			[ __( 'Site audit', 'mykavo' ), __( 'A full technical SEO crawl of your site in MyKavo: broken links, missing titles, slow pages, security headers and 70+ more checks.', 'mykavo' ) ],
+			[ __( 'Site audit', 'mykavo' ), __( 'A full crawl of your site in MyKavo that finds what quietly loses you visitors and sales: broken pages, slow loading, missing titles, security gaps and 100+ more checks, each with what it costs you and how to fix it.', 'mykavo' ) ],
 			[ __( 'Recent scans', 'mykavo' ), __( 'MyKavo\'s latest checks of your pages, and how many changes each one found.', 'mykavo' ) ],
 			[ __( 'Protect your store', 'mykavo' ), __( 'Whether your shop, cart, checkout and account pages are monitored, with one click to add the missing ones.', 'mykavo' ) ],
 			[ __( 'Update without fear', 'mykavo' ), __( 'Switch the check after updates on or off. When on, every update is reported to MyKavo, which scans your pages and gives a verdict.', 'mykavo' ) ],

@@ -1,5 +1,5 @@
 import { OPEN_STATUSES, prisma, type ChangeSeverity, type Prisma } from "@mykavo/database";
-import { AUDIT_CHECKS } from "@mykavo/seo-audit";
+import { AUDIT_CHECKS, auditImpactOf } from "@mykavo/seo-audit";
 import { appBaseUrl } from "@/lib/app-url";
 import type { McpContext } from "./context";
 import { loadAiCrawlerVisits } from "@/lib/ai-crawler-visits";
@@ -383,6 +383,8 @@ export const MCP_TOOLS: McpTool<McpContext>[] = [
           category: g.def.category,
           issue: g.def.title,
           pages: g.count,
+          // What it can cost the owner (visitors, sales, trust), in plain words.
+          costs: auditImpactOf(g.id).costs,
           fix: g.def.fix,
         }));
       return textResult(

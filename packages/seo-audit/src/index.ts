@@ -7,6 +7,14 @@ export {
   type AuditCategory,
   type AuditSeverity,
 } from "./registry";
+export {
+  AUDIT_IMPACT,
+  IMPACT_AREA_LABEL,
+  auditImpactOf,
+  summarizeImpact,
+  type AuditImpact,
+  type AuditImpactArea,
+} from "./impact";
 export { extractFacts, pageIssues, type PageFacts, type PageIssue } from "./page";
 export {
   runSiteAudit,
