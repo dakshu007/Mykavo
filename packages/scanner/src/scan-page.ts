@@ -571,6 +571,7 @@ export async function scanPage(
       robotsMeta: extraction.robotsMeta,
       h1Values: extraction.h1Values,
       structuredDataHash: extraction.structuredData ? sha256(extraction.structuredData) : null,
+      signInScreen: extraction.signInScreen,
       pageWeightBytes,
       requestCount,
       resourceLimit,

@@ -23,6 +23,7 @@ import {
   type HealthIncidentKind,
 } from "@mykavo/database";
 import { daysUntil, parseSelectorList } from "@mykavo/shared";
+import { isLoginUrl } from "@mykavo/comparison-engine";
 import { requireSession, getCurrentMembership, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
 import { formatLimit, getPlan } from "@/config/plans";
@@ -124,7 +125,7 @@ export default async function WebsiteDetailPage({
           include: {
             baselines: {
               where: { status: "ACTIVE" },
-              select: { version: true },
+              select: { version: true, pageSnapshot: { select: { signInScreen: true, finalUrl: true } } },
             },
           },
         },
@@ -475,14 +476,27 @@ export default async function WebsiteDetailPage({
             {website.monitoredPages.map((page) => {
               const path = new URL(page.url).pathname + new URL(page.url).search;
               const baselineVersion = page.baselines[0]?.version;
+              const baselineSnap = page.baselines[0]?.pageSnapshot;
+              // The scanner never signs in: on this page it only ever saw a
+              // login screen, so layout, text and weight are not compared.
+              const signInOnly =
+                !!baselineSnap && (baselineSnap.signInScreen === true || isLoginUrl(baselineSnap.finalUrl));
               return (
                 <li key={page.id}>
                   <Link
                     href={`/dashboard/websites/${website.id}/pages/${page.id}`}
                     className="group flex items-center gap-4 py-3"
                   >
-                    <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink group-hover:text-accent">
-                      {path === "/" ? "/ (homepage)" : path}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-mono text-[13px] text-ink group-hover:text-accent">
+                        {path === "/" ? "/ (homepage)" : path}
+                      </span>
+                      {signInOnly && (
+                        <span className="mt-0.5 block text-[12px] leading-5 text-warning-strong">
+                          MyKavo sees a sign-in page here, not your content. Only status, SEO tags, scripts and
+                          watched elements are checked. Watch a public page instead.
+                        </span>
+                      )}
                     </span>
                     {baselineVersion ? (
                       <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-[11px] font-semibold text-success-strong">

@@ -56,6 +56,11 @@ export interface ComparableSnapshot {
   /** Plugins/theme/core read off this page's assets; null when never captured. */
   platformFingerprint: PlatformFingerprint | null;
   elements: ComparableElement[];
+  /**
+   * The capture showed a sign-in form and little else. null/absent when it
+   * was taken before the scanner recorded this.
+   */
+  signInScreen?: boolean | null;
 }
 
 /**
@@ -99,6 +104,32 @@ export function isLoginUrl(url: string | null): boolean {
   }
 }
 
+/** True when this capture is a sign-in screen: a login URL or a login form. */
+function showsSignIn(s: Pick<ComparableSnapshot, "finalUrl" | "signInScreen">): boolean {
+  return s.signInScreen === true || isLoginUrl(s.finalUrl);
+}
+
+/**
+ * Both captures are sign-in screens, so neither shows the page's content.
+ * The scanner never signs in: on facebook.com it only ever saw the logged-out
+ * login page, which Facebook rebuilds between visits, and every scan raised a
+ * CRITICAL "page redesigned" and a HIGH "page weight +98%" (production, Oct
+ * 24-27). Layout, text, links and weight of a login screen say nothing about
+ * the page behind it, so those comparisons are skipped; status, SEO tags,
+ * scripts and monitored elements still are compared.
+ *
+ * A baseline taken before sign-in screens were recorded (signInScreen null)
+ * counts as one when its title matches the current sign-in screen's.
+ */
+export function bothSignInScreens(
+  baseline: Pick<ComparableSnapshot, "finalUrl" | "signInScreen" | "title">,
+  current: Pick<ComparableSnapshot, "finalUrl" | "signInScreen" | "title">,
+): boolean {
+  if (!showsSignIn(current)) return false;
+  if (showsSignIn(baseline)) return true;
+  return baseline.signInScreen == null && (baseline.title ?? "") === (current.title ?? "");
+}
+
 /** Known-service detection so script identity survives cache-busting query strings. */
 function scriptKey(s: SnapshotScript): string {
   return s.service ? `service:${s.service}` : `domain:${s.domain}`;
@@ -137,6 +168,8 @@ export function compareSnapshots(
     const wall = scoreChange({ kind: "login_wall", previous: baseline.finalUrl, current: current.finalUrl! });
     return wall ? [wall] : [];
   }
+
+  const signInOnly = bothSignInScreens(baseline, current);
 
   // --- Availability (spec §19) ---
   const statusChanged =
@@ -210,7 +243,10 @@ export function compareSnapshots(
       baseline.domHash !== null &&
       current.domHash !== null &&
       baseline.domHash !== current.domHash;
-    if (textChanged) {
+    // A login screen's text and markup are not the page's (bothSignInScreens).
+    if (signInOnly) {
+      // nothing to compare
+    } else if (textChanged) {
       signals.push({ kind: "content_text" });
     } else if (domChanged) {
       signals.push({ kind: "content_dom" });
@@ -225,14 +261,14 @@ export function compareSnapshots(
     );
     const removed = [...baselineInternal].filter((u) => !currentInternal.has(u));
     const added = [...currentInternal].filter((u) => !baselineInternal.has(u));
-    if (removed.length > 0) {
+    if (removed.length > 0 && !signInOnly) {
       signals.push({
         kind: "internal_links_removed",
         count: removed.length,
         total: baselineInternal.size,
       });
     }
-    if (added.length > 0) {
+    if (added.length > 0 && !signInOnly) {
       signals.push({ kind: "internal_links_added", count: added.length });
     }
 
@@ -258,22 +294,22 @@ export function compareSnapshots(
     // --- Platform: which plugin or theme update explains the rest ---------
     signals.push(...comparePlatform(baseline.platformFingerprint, current.platformFingerprint));
 
-    // --- Performance (spec §22) ---
-    if (baseline.pageWeightBytes && current.pageWeightBytes) {
+    // --- Performance (spec §22). A login screen's weight is not the page's.
+    if (!signInOnly && baseline.pageWeightBytes && current.pageWeightBytes) {
       signals.push({
         kind: "page_weight",
         previousBytes: baseline.pageWeightBytes,
         currentBytes: current.pageWeightBytes,
       });
     }
-    if (baseline.requestCount && current.requestCount) {
+    if (!signInOnly && baseline.requestCount && current.requestCount) {
       signals.push({
         kind: "request_count",
         previous: baseline.requestCount,
         current: current.requestCount,
       });
     }
-    if (baseline.responseTimeMs && current.responseTimeMs) {
+    if (!signInOnly && baseline.responseTimeMs && current.responseTimeMs) {
       signals.push({
         kind: "response_time",
         previousMs: baseline.responseTimeMs,

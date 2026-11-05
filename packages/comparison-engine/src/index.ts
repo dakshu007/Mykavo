@@ -2,6 +2,7 @@ export {
   compareSnapshots,
   isBotChallengeTitle,
   isLoginUrl,
+  bothSignInScreens,
   type ComparableSnapshot,
   type SnapshotLink,
   type SnapshotScript,

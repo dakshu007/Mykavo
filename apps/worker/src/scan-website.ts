@@ -173,6 +173,7 @@ export async function runScanWebsiteJob(
           robotsMeta: result.robotsMeta,
           h1Values: result.h1Values,
           structuredDataHash: result.structuredDataHash,
+          signInScreen: result.signInScreen,
           pageWeightBytes: result.pageWeightBytes,
           requestCount: result.requestCount,
           // Stored only when the page is on a platform we can read, so a

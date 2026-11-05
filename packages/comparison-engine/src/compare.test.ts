@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  bothSignInScreens,
   compareSnapshots,
   type ComparableSnapshot,
   type ComparableElement,
@@ -335,5 +336,53 @@ describe("noise seen in production alerts", () => {
         ?.severity,
     ).toBe("CRITICAL");
     expect(compareSnapshots(BASE, withChanges({ httpStatus: 500 }))[0].severity).toBe("CRITICAL");
+  });
+});
+
+describe("sign-in screens", () => {
+  // facebook.com seen logged out: the same login form, rebuilt between visits.
+  const login = withChanges({
+    finalUrl: "https://www.facebook.com/",
+    title: "Facebook",
+    signInScreen: true,
+    pageWeightBytes: 7_500_000,
+    requestCount: 28,
+  });
+  const rebuilt = withChanges({
+    ...login,
+    domHash: "dom-b",
+    textHash: "text-b",
+    pageWeightBytes: 14_800_000,
+    requestCount: 60,
+    links: [{ normalizedUrl: "https://www.facebook.com/x", linkType: "INTERNAL" }],
+  });
+
+  it("skips text, link and weight diffs when both captures are a sign-in screen", () => {
+    expect(compareSnapshots(login, rebuilt)).toEqual([]);
+  });
+
+  it("treats a page that redirected to a login URL both times as a sign-in screen", () => {
+    const base = withChanges({ finalUrl: "https://www.facebook.com/login/?next=careers", pageWeightBytes: 100_000 });
+    const curr = withChanges({ ...base, textHash: "text-b", pageWeightBytes: 400_000 });
+    expect(bothSignInScreens(base, curr)).toBe(true);
+    expect(compareSnapshots(base, curr)).toEqual([]);
+  });
+
+  it("counts an older baseline (not recorded) as a sign-in screen when the title matches", () => {
+    expect(bothSignInScreens({ ...login, signInScreen: null }, rebuilt)).toBe(true);
+    expect(bothSignInScreens({ ...login, signInScreen: null, title: "Home" }, rebuilt)).toBe(false);
+  });
+
+  it("still reports status and SEO changes on a sign-in screen", () => {
+    const changes = compareSnapshots(login, { ...rebuilt, httpStatus: 500 });
+    expect(changes.some((c) => c.changeType.startsWith("http_status") || c.category === "AVAILABILITY")).toBe(true);
+    const noindex = compareSnapshots(login, { ...rebuilt, robotsMeta: "noindex" });
+    expect(noindex.some((c) => c.category === "SEO")).toBe(true);
+  });
+
+  it("compares a normal page normally", () => {
+    const base = withChanges({ signInScreen: false });
+    const changes = compareSnapshots(base, { ...base, textHash: "text-b", pageWeightBytes: 900_000 });
+    expect(changes.map((c) => c.changeType)).toEqual(expect.arrayContaining(["text_changed", "page_weight_increased"]));
   });
 });

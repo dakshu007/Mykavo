@@ -45,6 +45,14 @@ export interface InPageExtraction {
    * textHash still comes from visibleText alone.
    */
   visibleLines: string[];
+  /**
+   * A visible password field on a page with little else on it: the scanner
+   * (never signed in) is looking at a sign-in screen, not the page's content.
+   * Facebook's logged-out page (form, language list, footer) is about 1,000
+   * characters; a store or blog with a login box in its header has several
+   * thousand and stays a normal page, so the cut-off is 2,500.
+   */
+  signInScreen: boolean;
 }
 
 export function extractInPage(
@@ -194,6 +202,14 @@ export function extractInPage(
     if (visibleLines.length >= 3000) break;
   }
 
+  const signInScreen =
+    visibleText.length <= 2500 &&
+    Array.from(doc.querySelectorAll('input[type="password" i]')).some((el) => {
+      const r = (el as HTMLElement).getBoundingClientRect();
+      const style = getComputedStyle(el as HTMLElement);
+      return r.width > 0 && r.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+    });
+
   return {
     title: doc.title || null,
     metaDescription: meta("description"),
@@ -211,6 +227,7 @@ export function extractInPage(
     normalizedDom,
     visibleText,
     visibleLines,
+    signInScreen,
   };
 }
 

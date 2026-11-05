@@ -24,6 +24,7 @@ import {
   changeConditionKey,
   isBotChallengeTitle,
   isLoginUrl,
+  bothSignInScreens,
   isPageRedesign,
   KNOWN_CHANGE_STATUSES,
   KNOWN_PAGE_CHANGE_STATUSES,
@@ -70,6 +71,7 @@ interface SnapshotRow {
   h1Values: unknown;
   pageWeightBytes: number | null;
   requestCount: number | null;
+  signInScreen: boolean | null;
   responseTimeMs: number | null;
   screenshotStorageKey: string | null;
   platformFingerprint: unknown;
@@ -92,6 +94,7 @@ const SNAPSHOT_SELECT = {
   h1Values: true,
   pageWeightBytes: true,
   requestCount: true,
+  signInScreen: true,
   platformFingerprint: true,
   responseTimeMs: true,
   screenshotStorageKey: true,
@@ -189,6 +192,7 @@ async function toComparable(
     pageWeightBytes: snapshot.pageWeightBytes,
     requestCount: snapshot.requestCount,
     responseTimeMs: snapshot.responseTimeMs,
+    signInScreen: snapshot.signInScreen,
     // null when the page is not on a readable platform, or predates the
     // feature. comparePlatform treats that as "we do not know" and stays quiet.
     platformFingerprint: parseFingerprint(snapshot.platformFingerprint),
@@ -281,6 +285,7 @@ export async function runComparisonForScan(
       h1Values: true,
       pageWeightBytes: true,
       requestCount: true,
+      signInScreen: true,
       platformFingerprint: true,
       responseTimeMs: true,
       screenshotStorageKey: true,
@@ -336,6 +341,7 @@ export async function runComparisonForScan(
               h1Values: true,
               pageWeightBytes: true,
               requestCount: true,
+              signInScreen: true,
               platformFingerprint: true,
               responseTimeMs: true,
               screenshotStorageKey: true,
@@ -378,7 +384,10 @@ export async function runComparisonForScan(
         isBotChallengeTitle(snapshot.title) ||
         isBotChallengeTitle(baselineSnap.title) ||
         // A login wall replaces the page's other diffs (compareSnapshots).
-        (isLoginUrl(snapshot.finalUrl) && !isLoginUrl(baselineSnap.finalUrl));
+        (isLoginUrl(snapshot.finalUrl) && !isLoginUrl(baselineSnap.finalUrl)) ||
+        // Both captures are a sign-in screen: the screenshots show a login
+        // page, never the page itself (bothSignInScreens).
+        bothSignInScreens(base.comparable, curr.comparable);
       if (!currentBroken && !baselineBroken && !challenged && baselineSnap.screenshotStorageKey && snapshot.screenshotStorageKey) {
         try {
           const [baseImg, currImg] = await Promise.all([

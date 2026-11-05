@@ -447,6 +447,10 @@ model PageSnapshot {
   structuredDataHash         String?
   pageWeightBytes            Int?
   requestCount               Int?
+  // The scanner saw a sign-in form and little else (it never signs in), so
+  // this capture shows a login screen, not the page's content. Null on
+  // snapshots taken before this was recorded.
+  signInScreen               Boolean?
   // Plugins, theme and core version read off this page's asset URLs, shaped as
   // PlatformFingerprint from @mykavo/shared. JSONB rather than rows: it is read
   // whole, compared whole, and never queried by component.

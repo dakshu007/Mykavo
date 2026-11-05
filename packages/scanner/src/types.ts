@@ -85,6 +85,8 @@ export interface PageScanResult {
   robotsMeta: string | null;
   h1Values: string[];
   structuredDataHash: string | null;
+  /** The page showed a sign-in form and little else (extract.ts). */
+  signInScreen: boolean;
   pageWeightBytes: number;
   requestCount: number;
   /**
