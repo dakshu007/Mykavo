@@ -55,6 +55,14 @@ final class MyKavo_Updates {
 	private static $scheduled = false;
 
 	/**
+	 * Safe Update All reports its whole batch itself: while it runs, updates
+	 * are not reported one by one.
+	 *
+	 * @var bool
+	 */
+	public static $suppress = false;
+
+	/**
 	 * Whether update checks are switched on (default: yes).
 	 *
 	 * @return bool
@@ -330,7 +338,7 @@ final class MyKavo_Updates {
 				foreach ( $themes as $slug ) {
 					$theme = is_string( $slug ) ? wp_get_theme( $slug ) : null;
 					if ( $theme && $theme->exists() ) {
-						self::add( 'theme', 'theme:' . $slug, (string) $theme->get( 'Name' ), (string) $theme->get( 'Version' ) );
+						self::add( 'theme', 'theme:' . $slug, (string) $theme->get( 'Name' ), (string) $theme->get( 'Version' ), 'update', $slug );
 					}
 				}
 				break;
@@ -376,7 +384,7 @@ final class MyKavo_Updates {
 	 * @return void
 	 */
 	public static function report() {
-		if ( ! self::$pending ) {
+		if ( ! self::$pending || self::$suppress ) {
 			return;
 		}
 		require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
@@ -400,6 +408,10 @@ final class MyKavo_Updates {
 			}
 		}
 		MyKavo_Rollback::maybe_watch( $entry );
+
+		// "Did it crash?": a quick local look at the site in about ten seconds.
+		require_once MYKAVO_DIR . 'includes/class-mykavo-crash-check.php';
+		MyKavo_Crash_Check::schedule( $entry );
 	}
 
 	/**
@@ -426,7 +438,10 @@ final class MyKavo_Updates {
 			$extra
 		);
 
-		if ( ! self::enabled() ) {
+		if ( ! empty( $entry['local_only'] ) ) {
+			// Kept on this site only (a Safe Update All run whose updates were all undone).
+			$entry['reason'] = 'LOCAL';
+		} elseif ( ! self::enabled() ) {
 			$entry['reason'] = 'OFF';
 		} else {
 			$result = self::send( $items, $entry['trigger'], false );

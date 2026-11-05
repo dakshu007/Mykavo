@@ -24,6 +24,7 @@
 		var urgent = ( by.CRITICAL || 0 ) + ( by.HIGH || 0 );
 		var open = ( o && o.stats && o.stats.openChanges ) || 0;
 		var tone = urgent > 0 ? 'bad' : open > 0 ? 'warn' : 'good';
+		var audit = o && o.links && typeof o.links.siteAudit === 'string' && /^https:\/\//.test( o.links.siteAudit ) ? o.links.siteAudit : '';
 		var text = urgent > 0
 			? sprintf( _n( '%d important change needs attention', '%d important changes need attention', urgent, 'mykavo' ), urgent )
 			: open > 0
@@ -31,7 +32,11 @@
 				: __( 'All clear - nothing needs attention', 'mykavo' );
 		box.innerHTML =
 			'<div class="mkw-status mkw-' + tone + '"><span class="mkw-dot" aria-hidden="true"></span><strong>' + esc( text ) + '</strong></div>' +
-			'<p><a class="button button-primary" href="' + esc( box.getAttribute( 'data-page' ) || '' ) + '">' + esc( __( 'Open MyKavo', 'mykavo' ) ) + '</a></p>';
+			( o && o.siteAudit && typeof o.siteAudit.healthScore === 'number'
+				? '<p class="mkw-muted">' + esc( sprintf( __( 'Site audit score: %d/100', 'mykavo' ), o.siteAudit.healthScore ) ) + '</p>'
+				: '' ) +
+			'<p><a class="button button-primary" href="' + esc( box.getAttribute( 'data-page' ) || '' ) + '">' + esc( __( 'Open MyKavo', 'mykavo' ) ) + '</a> ' +
+			( audit ? '<a class="button" href="' + esc( audit ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Site audit', 'mykavo' ) ) + '</a>' : '' ) + '</p>';
 	} ).catch( function () {
 		// Leave the cached state in place; the MyKavo screen explains errors.
 	} );

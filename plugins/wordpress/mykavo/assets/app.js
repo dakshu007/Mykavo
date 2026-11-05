@@ -57,6 +57,22 @@
 		menuOpen: false,
 		busy: '',
 		drawer: null,
+		// 1.4.0.
+		alerts: null,
+		safe: null,
+		safeRun: null,
+		safeBaseline: true,
+		snaps: null,
+		suggestions: null,
+		sugPick: {},
+		llms: null,
+		redirects: null,
+		redirectDraft: {},
+		redirectSuggest: null,
+		forms: null,
+		reports: null,
+		reportsError: null,
+		brandDraft: null,
 	};
 	var pollTimer = null;
 	var pollCount = 0;
@@ -704,6 +720,7 @@
 				loadWindow();
 			}
 		}
+		loadExtras();
 	}
 
 	/* ------------------------------------------------------------- actions -- */
@@ -874,7 +891,9 @@
 			benefit( 'check', __( 'Approve in one click', 'mykavo' ), __( 'Accept intentional changes as the new baseline, ignore the rest.', 'mykavo' ) ) +
 			'</ul>' +
 			'<div class="mk-welcome-cta">' +
-			'<a class="mk-btn mk-btn-primary" href="' + esc( cfg.connectUrl ) + '">' + icon( 'link' ) + esc( __( 'Connect to MyKavo', 'mykavo' ) ) + '</a>' +
+			( READONLY
+				? '<p class="mk-fine">' + esc( __( 'This site is not connected yet. Ask an administrator to connect it.', 'mykavo' ) ) + '</p>'
+				: '<a class="mk-btn mk-btn-primary" href="' + esc( cfg.connectUrl ) + '">' + icon( 'link' ) + esc( __( 'Connect to MyKavo', 'mykavo' ) ) + '</a>' ) +
 			'<span class="mk-fine">' + esc( __( 'Free plan available. No card needed.', 'mykavo' ) ) + '</span>' +
 			'</div>' +
 			'<p class="mk-speed">' + icon( 'zap' ) + esc( __( 'Adds nothing to the pages your visitors load. Zero impact on site speed.', 'mykavo' ) ) + '</p>' +
@@ -908,6 +927,7 @@
 		return (
 			'<div class="mk-top">' +
 			brand() +
+			planChip() +
 			tabs() +
 			'<div class="mk-top-actions">' +
 			( dashboard ? '<a class="mk-iconbtn" href="' + esc( dashboard ) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + '" title="' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + '">' + icon( 'arrow' ) + '</a>' : '' ) +
@@ -922,6 +942,9 @@
 
 	/** Run scan, in the top bar on every tab. */
 	function scanButton() {
+		if ( READONLY ) {
+			return '<span class="mk-chip mk-chip-calm" title="' + esc( __( 'Your account can view MyKavo but not change anything.', 'mykavo' ) ) + '">' + icon( 'eye' ) + esc( __( 'View only', 'mykavo' ) ) + '</span>';
+		}
 		var o = state.overview;
 		var cap = ( o && o.capabilities ) || {};
 		var running = Boolean( o && o.scanInProgress );
@@ -942,6 +965,8 @@
 		bots: __( 'AI crawlers', 'mykavo' ),
 		scans: __( 'Scans', 'mykavo' ),
 		pages: __( 'Pages', 'mykavo' ),
+		plan: __( 'Your plan', 'mykavo' ),
+		reports: __( 'Client reports', 'mykavo' ),
 	};
 
 	/** The page title and one status line: which site, how it is, when it was checked. */
@@ -998,6 +1023,10 @@
 			[ 'scans', __( 'Scans', 'mykavo' ), '' ],
 			[ 'pages', __( 'Pages', 'mykavo' ), '' ],
 		];
+		if ( state.overview && planAtLeast( 'agency' ) ) {
+			list.push( [ 'reports', __( 'Reports', 'mykavo' ), '' ] );
+		}
+		list.push( [ 'plan', __( 'Plan', 'mykavo' ), '' ] );
 		return (
 			'<div class="mk-tabs" role="tablist" aria-label="' + esc( __( 'MyKavo sections', 'mykavo' ) ) + '">' +
 			list.map( function ( t ) {
@@ -1146,21 +1175,15 @@
 				: '<div class="mk-empty"><span>' + esc( __( 'No scans yet.', 'mykavo' ) ) + '</span></div>' ) +
 			'</section>';
 
-		var plan =
-			'<section class="mk-card mk-card-pad"><p class="mk-eyebrow">' + esc( __( 'Workspace', 'mykavo' ) ) + '</p>' +
-			'<p style="font-weight:600;font-size:16px">' + esc( o.workspace.name ) + '</p>' +
-			'<p class="mk-stat-foot">' + esc( sprintf( /* translators: %s: plan name. */ __( '%s plan', 'mykavo' ), o.workspace.plan.name ) ) + '</p>' +
-			( o.workspace.plan.id === 'free'
-				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + icon( 'external' ) + '</a></p>'
-				: '' ) +
-			'</section>';
 
 		return (
 			'<div class="mk-grid">' +
+			alertsBanner() +
 			( special ? hero( o ) : '' ) +
+			( cfg.notice === 'connected' || o.stats.monitoredPages < 3 ? suggestionsCard( true ) : '' ) +
 			'<div class="mk-ov-row">' + openCard( o ) + vitalsCard( o ) + highlightCard( o ) + '</div>' +
 			'<div class="mk-tiles' + ( state.bots ? '' : ' mk-tiles-3' ) + '">' + pagesTile( o ) + uptimeTile( o ) + updatesTile() + botsTile() + '</div>' +
-			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + '</div><div class="mk-grid">' + storeCard() + recent + plan + '</div></div>' +
+			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + '</div><div class="mk-grid">' + auditCard( o ) + storeCard() + recent + workspaceCard( o ) + '</div></div>' +
 			'</div>'
 		);
 	}
@@ -1540,14 +1563,16 @@
 			( safeUrl( links.pages ) ? '<a class="mk-link" href="' + esc( safeUrl( links.pages ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Change pages', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
 			'</div>';
 		if ( ! state.pages.pages.length ) {
-			return '<section class="mk-card">' + head + adder + '<div class="mk-empty"><span>' + esc( __( 'No pages are monitored yet.', 'mykavo' ) ) + '</span></div></section>';
+			return '<div class="mk-grid">' + suggestionsCard( false ) + '<section class="mk-card">' + head + adder + '<div class="mk-empty"><span>' + esc( __( 'No pages are monitored yet.', 'mykavo' ) ) + '</span></div></section></div>';
 		}
 		return (
+			'<div class="mk-grid">' + suggestionsCard( false ) +
 			'<section class="mk-card">' + head + adder + '<ul class="mk-list">' +
 			state.pages.pages.map( function ( p ) {
 				var url = safeUrl( p.url );
+				var watched = p.elements && p.elements.length ? '<span class="mk-chip mk-chip-good">' + icon( 'eye' ) + esc( sprintf( /* translators: %d: number of watched elements. */ _n( '%d watched element', '%d watched elements', p.elements.length, 'mykavo' ), p.elements.length ) ) + '</span>' : '';
 				return (
-					'<li><a class="mk-row" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">' +
+					'<li class="mk-page-li"><a class="mk-row" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">' +
 					icon( 'file', 'mk-row-chevron' ) +
 					'<span class="mk-row-main"><span class="mk-row-title">' + ( p.name ? esc( p.name ) : '<code class="mk-row-path">' + esc( pathOf( p.url ) ) + '</code>' ) + '</span>' +
 					'<span class="mk-row-meta">' + ( p.name ? '<code>' + esc( pathOf( p.url ) ) + '</code>' : '' ) +
@@ -1556,10 +1581,12 @@
 					'</span></span>' +
 					( p.openChanges ? '<span class="mk-sev mk-sev-MEDIUM">' + esc( sprintf( _n( '%d open', '%d open', p.openChanges, 'mykavo' ), p.openChanges ) ) + '</span>' : '' ) +
 					icon( 'external', 'mk-row-chevron' ) +
-					'</a></li>'
+					'</a>' + watched +
+					( READONLY || ! url ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft mk-pick-btn" data-act="pick-element" data-url="' + esc( url ) + '">' + icon( 'eye' ) + esc( __( 'Watch an element', 'mykavo' ) ) + '</button>' ) +
+					'</li>'
 				);
 			} ).join( '' ) +
-			'</ul></section>'
+			'</ul></section></div>'
 		);
 	}
 
@@ -1617,6 +1644,9 @@
 	/** What happened after an update, in words and a tone. */
 	function verdict( entry, scans ) {
 		var reason = String( entry.reason || '' ).toUpperCase();
+		if ( reason === 'LOCAL' && entry.batch ) {
+			return { tone: 'warn', text: safeVerdict( entry.batch ) };
+		}
 		if ( reason === 'OFF' ) {
 			return { tone: 'quiet', text: __( 'Not checked - update checks were off', 'mykavo' ) };
 		}
@@ -1737,7 +1767,7 @@
 			'<p class="mk-row-meta"><span title="' + esc( when( new Date( entry.at * 1000 ).toISOString() ) ) + '">' + esc( rel( new Date( entry.at * 1000 ).toISOString() ) ) + '</span>' +
 			'<span class="mk-status">' + esc( entry.trigger === 'auto' ? __( 'Automatic', 'mykavo' ) : __( 'By an admin', 'mykavo' ) ) + '</span></p>' +
 			verdictBadge( v ) +
-			( compact ? '' : rollbackNote( entry ) ) +
+			( compact ? '' : crashLine( entry ) + batchLine( entry ) + rollbackNote( entry ) ) +
 			( ! compact && items.length > 1
 				? '<ul class="mk-update-items">' + items.map( function ( it ) {
 					var name = it.type === 'core' ? 'WordPress' : it.name;
@@ -1787,10 +1817,11 @@
 				esc( __( 'The next time a plugin, theme or WordPress updates, it appears here with a verdict.', 'mykavo' ) ) + '</span></div>';
 
 		return (
-			'<div class="mk-grid">' + intro + plan + autoRollbackCard() +
+			'<div class="mk-grid">' + intro + plan + safeUpdateCard() + autoRollbackCard() +
 			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Update history', 'mykavo' ) ) + '</h3>' +
 			'<span class="mk-fine">' + esc( __( 'Kept on this site. Last 30 updates.', 'mykavo' ) ) + '</span></div>' + list + '</section>' +
-			'<div class="mk-grid mk-grid-2">' + healthCard() + windowCard() + '</div></div>'
+			'<div class="mk-grid mk-grid-2">' + healthCard() + windowCard() + '</div>' +
+			'<div class="mk-grid mk-grid-2">' + snapshotsCard() + mailCard() + '</div></div>'
 		);
 	}
 
@@ -1814,7 +1845,7 @@
 		return (
 			'<section class="mk-card mk-card-pad mk-setting">' +
 			'<div><h3 class="mk-card-title">' + icon( 'undo', 'mk-title-icon' ) + esc( __( 'Roll back automatically when an update breaks something', 'mykavo' ) ) + '</h3>' +
-			'<p class="mk-setting-text">' + esc( __( 'When MyKavo\'s check after a plugin update finds a critical change, this site puts the plugins from that update back to their previous version from WordPress.org, and MyKavo checks again. MyKavo itself is never rolled back.', 'mykavo' ) ) + '</p></div>' +
+			'<p class="mk-setting-text">' + esc( __( 'When MyKavo\'s check after an update finds a critical change, or the site crashes right after it, this site puts the plugins and themes from that update back to their previous version (from WordPress.org or the saved copy), and MyKavo checks again. MyKavo itself is never rolled back.', 'mykavo' ) ) + '</p></div>' +
 			'<button type="button" class="mk-switch" role="switch" aria-checked="' + on + '" data-act="toggle-auto-rollback" data-key="toggle-auto-rollback">' +
 			'<span class="mk-switch-track"><span class="mk-switch-thumb"></span></span>' +
 			'<span>' + esc( on ? __( 'On', 'mykavo' ) : __( 'Off', 'mykavo' ) ) + '</span></button>' +
@@ -1863,7 +1894,7 @@
 		var foot = h && h.at && feat( 'pluginHealth' ) && h.allowed
 			? '<p class="mk-fine mk-card-foot">' + esc( sprintf( /* translators: %s: relative time. */ __( 'Checked %s. MyKavo checks again once a day.', 'mykavo' ), rel( new Date( h.at * 1000 ).toISOString() ) ) ) + '</p>'
 			: '';
-		return '<section class="mk-card">' + head + body + foot + '</section>';
+		return '<section class="mk-card">' + head + vulnBlock() + body + foot + '</section>';
 	}
 
 	var DAY_FMT = window.Intl && Intl.DateTimeFormat ? new Intl.DateTimeFormat( locale, { weekday: 'short', timeZone: 'UTC' } ) : null;
@@ -2116,7 +2147,7 @@
 
 		if ( ! b.ready ) {
 			return '<div class="mk-grid">' + intro + '<div class="mk-banner">' + icon( 'alert' ) + '<span>' +
-				esc( __( 'MyKavo could not create its small visit-count table in this site\'s database. Your hosting may not allow new tables. It retries once a day.', 'mykavo' ) ) + '</span></div>' + robots + history + '</div>';
+				esc( __( 'MyKavo could not create its small visit-count table in this site\'s database. Your hosting may not allow new tables. It retries once a day.', 'mykavo' ) ) + '</span></div>' + robots + llmsCard() + history + '</div>';
 		}
 
 		var foot =
@@ -2132,7 +2163,7 @@
 				esc( on
 					? __( 'Visits appear here as they happen. ChatGPT, Claude and Perplexity usually show up within a few days. If none ever do, check that robots.txt does not block them.', 'mykavo' )
 					: __( 'Switch counting on to see which AI systems read your site.', 'mykavo' ) ) +
-				'</span></div></section>' + robots + history + foot + '</div>';
+				'</span></div></section>' + robots + llmsCard() + history + foot + '</div>';
 		}
 
 		var answerHits = 0;
@@ -2167,13 +2198,14 @@
 			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Crawlers', 'mykavo' ) ) + '</h3></div>' +
 			'<div class="mk-table-wrap"><table class="mk-table"><thead><tr>' +
 			'<th>' + esc( __( 'Crawler', 'mykavo' ) ) + '</th><th>' + esc( __( 'Why it visits', 'mykavo' ) ) + '</th>' +
-			'<th class="mk-num">' + esc( __( 'Visits', 'mykavo' ) ) + '</th><th class="mk-num">' + esc( __( 'Errors', 'mykavo' ) ) + '</th><th>' + esc( __( 'Last seen', 'mykavo' ) ) + '</th>' +
+			'<th class="mk-num">' + esc( __( 'Visits', 'mykavo' ) ) + '</th><th class="mk-num">' + esc( __( 'Errors', 'mykavo' ) ) + '</th><th>' + esc( __( 'Real or fake?', 'mykavo' ) ) + '</th><th>' + esc( __( 'Last seen', 'mykavo' ) ) + '</th>' +
 			'</tr></thead><tbody>' +
 			b.agents.map( function ( a ) {
 				return '<tr><td><b>' + esc( a.owner ) + '</b><span class="mk-cell-note"><code>' + esc( a.agent ) + '</code></span></td>' +
 					'<td>' + esc( purposeLabel( a.purpose ) ) + '</td>' +
 					'<td class="mk-num">' + esc( num( a.hits ) ) + '</td>' +
 					'<td class="mk-num' + ( a.errors ? ' mk-bad' : '' ) + '">' + esc( num( a.errors ) ) + '</td>' +
+					'<td>' + verifyCell( a ) + '</td>' +
 					'<td>' + esc( dayLabel( a.lastSeen ) ) + '</td></tr>';
 			} ).join( '' ) +
 			'</tbody></table></div></section>';
@@ -2192,50 +2224,7 @@
 			} ).join( '' ) +
 			'</tbody></table></div></section>';
 
-		return '<div class="mk-grid">' + intro + stats + chart + history + crawlers + pages + robots + foot + '</div>';
-	}
-
-	/** robots.txt: block AI training crawlers, leave AI search alone. */
-	function robotsCard() {
-		var r = state.robots;
-		var head = '<div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'lock', 'mk-title-icon' ) + esc( __( 'Block AI training, allow AI search', 'mykavo' ) ) + '</h3>' +
-			( r && safeUrl( r.url ) ? '<a class="mk-link" href="' + esc( safeUrl( r.url ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'View robots.txt', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
-			'</div>';
-		if ( state.robotsError && ! r ) {
-			return '<section class="mk-card">' + head + '<div class="mk-empty"><span>' + esc( state.robotsError ) + '</span><button type="button" class="mk-btn mk-btn-sm" data-act="robots-retry">' + esc( __( 'Try again', 'mykavo' ) ) + '</button></div></section>';
-		}
-		if ( ! r ) {
-			return '<section class="mk-card">' + head + '<div class="mk-card-pad">' + loadingBlock( 90 ) + '</div></section>';
-		}
-		var on = !! r.enabled;
-		var lists =
-			'<div class="mk-robots-lists">' +
-			'<div><p class="mk-section-title">' + esc( __( 'Asked to stay away (AI training)', 'mykavo' ) ) + '</p><p class="mk-agents">' + r.blocked.map( function ( a ) {
-				return '<code>' + esc( a ) + '</code>';
-			} ).join( ' ' ) + '</p></div>' +
-			'<div><p class="mk-section-title">' + esc( __( 'Not touched (AI search and answers)', 'mykavo' ) ) + '</p><p class="mk-agents">' + r.allowed.map( function ( a ) {
-				return '<code>' + esc( a ) + '</code>';
-			} ).join( ' ' ) + '</p></div>' +
-			'</div>';
-		var text = '<p class="mk-setting-text">' + esc( __( 'Adds rules to your robots.txt asking crawlers that collect AI training data to stay away. Crawlers that read pages for AI search answers, or open a page someone asked about, are left alone, so your site can still be found and quoted. robots.txt is a request that well-behaved crawlers follow.', 'mykavo' ) ) + '</p>';
-		var control;
-		if ( r.physical ) {
-			var all = r.inFile && r.inFile.length === r.blocked.length;
-			control =
-				'<div class="mk-banner">' + icon( 'file' ) + '<span>' +
-				esc( all
-					? __( 'This site has its own robots.txt file, and it already names all of these crawlers.', 'mykavo' )
-					: __( 'This site has its own robots.txt file on the server, so WordPress cannot add to it. To use these rules, copy them into that file by hand:', 'mykavo' ) ) +
-				'</span></div>' +
-				( all ? '' : '<div class="mk-code"><pre>' + esc( r.rules ) + '</pre><button type="button" class="mk-btn mk-btn-sm" data-act="copy-rules">' + icon( 'copy' ) + esc( __( 'Copy rules', 'mykavo' ) ) + '</button></div>' );
-		} else {
-			control =
-				'<button type="button" class="mk-switch" role="switch" aria-checked="' + on + '" data-act="toggle-robots" data-key="toggle-robots"' + ( state.busy === 'robots' ? ' disabled' : '' ) + '>' +
-				'<span class="mk-switch-track"><span class="mk-switch-thumb"></span></span>' +
-				'<span>' + esc( on ? __( 'Rules on', 'mykavo' ) : __( 'Rules off', 'mykavo' ) ) + '</span></button>' +
-				( r.public ? '' : '<p class="mk-fine" style="margin-top:10px">' + esc( __( 'This site asks search engines not to index it (Settings > Reading), so its robots.txt already asks every crawler to stay away.', 'mykavo' ) ) + '</p>' );
-		}
-		return '<section class="mk-card">' + head + '<div class="mk-card-pad mk-robots">' + text + control + lists + '</div></section>';
+		return '<div class="mk-grid">' + intro + stats + chart + history + crawlers + pages + missingCard() + robots + llmsCard() + foot + '</div>';
 	}
 
 	/** Twelve months of AI crawler visits, from MyKavo (paid plans). */
@@ -2335,6 +2324,1139 @@
 		return '<section class="mk-card">' + head + chart + table + '</section>';
 	}
 
+	/* ---------------------------------------------------------------- 1.4.0 -- */
+
+	/** Viewers (the MyKavo viewer role) see everything and change nothing. */
+	var READONLY = cfg.canManage === false;
+	var MANAGE_ACTS = {
+		scan: 1, rollback: 1, 'toggle-auto-rollback': 1, 'toggle-robots': 1, 'toggle-updates': 1, 'toggle-bots': 1,
+		'change-action': 1, disconnect: 1, 'guard-checkout': 1, 'store-add': 1, 'health-refresh': 1, 'window-edit': 1,
+		'window-off': 1, 'dismiss-alert': 1, 'safe-start': 1, 'safe-backup': 1, 'safe-baseline': 1, 'robots-block': 1,
+		'robots-preset': 1, 'robots-allow-all': 1, 'toggle-llms': 1, 'redirect-create': 1, 'redirect-remove': 1,
+		'redirect-suggest': 1, 'redirect-use': 1, 'toggle-vuln-auto': 1, 'toggle-mail': 1, 'mail-test': 1, 'forms-sync': 1,
+		'suggest-add': 1, 'suggest-toggle': 1, 'pick-element': 1, 'branding-save': 1,
+	};
+
+	var PLAN_RANK = { free: 0, starter: 1, pro: 2, agency: 3 };
+	var METALS = {
+		free: { rim: [ '#D9DCE1', '#9AA1AB', '#5F6670' ], glow: 'rgba(154,161,171,0.25)', rays: [] },
+		starter: { rim: [ '#FAD3AE', '#C9844A', '#7C4318' ], glow: 'rgba(201,132,74,0.45)', rays: [ 0 ] },
+		pro: { rim: [ '#FFFFFF', '#C6CCD6', '#7A8391' ], glow: 'rgba(198,204,214,0.5)', rays: [ -34, 0, 34 ] },
+		agency: { rim: [ '#FFF3B0', '#FFCF00', '#B07F00' ], glow: 'rgba(255,207,0,0.55)', rays: [ -62, -31, 0, 31, 62 ] },
+	};
+	var badgeSeq = 0;
+
+	function planId() {
+		var id = state.overview && state.overview.workspace && state.overview.workspace.plan ? String( state.overview.workspace.plan.id ) : '';
+		return PLAN_RANK.hasOwnProperty( id ) ? id : 'free';
+	}
+
+	function planAtLeast( id ) {
+		return PLAN_RANK[ planId() ] >= PLAN_RANK[ id ];
+	}
+
+	function metalName( plan ) {
+		return { free: __( 'Steel', 'mykavo' ), starter: __( 'Bronze', 'mykavo' ), pro: __( 'Silver', 'mykavo' ), agency: __( 'Gold', 'mykavo' ) }[ plan ];
+	}
+
+	function planLabel( plan ) {
+		return { free: __( 'Free', 'mykavo' ), starter: __( 'Starter', 'mykavo' ), pro: __( 'Pro', 'mykavo' ), agency: __( 'Agency', 'mykavo' ) }[ plan ];
+	}
+
+	/** The plan medal: a hexagon in the plan's metal with the MyKavo spark. Same art as mykavo.app. */
+	function planBadge( plan, size ) {
+		var m = METALS[ plan ] || METALS.free;
+		var id = 'mkb' + ( ++badgeSeq );
+		var hex = 'M32 4.5c1.2 0 2.3.3 3.3.9l19.4 11.2a6.6 6.6 0 0 1 3.3 5.7v22.4a6.6 6.6 0 0 1-3.3 5.7L35.3 61.6a6.6 6.6 0 0 1-6.6 0L9.3 50.4A6.6 6.6 0 0 1 6 44.7V22.3a6.6 6.6 0 0 1 3.3-5.7L28.7 5.4c1-.6 2.1-.9 3.3-.9Z';
+		var page = 'M18.5 19.5h8.2l-7.4 12.5 7.4 12.5h-8.2a1.6 1.6 0 0 1-1.6-1.6v-21.8a1.6 1.6 0 0 1 1.6-1.6Z';
+		var inner = 'translate(32 32) scale(0.84) translate(-32 -32)';
+		var rays = m.rays.map( function ( a ) {
+			var len = 21 - Math.abs( a ) / 9;
+			var rad = ( a * Math.PI ) / 180;
+			var nx = -Math.sin( rad ) * 3;
+			var ny = Math.cos( rad ) * 3;
+			var f = function ( n ) {
+				return n.toFixed( 2 );
+			};
+			return '<path fill="url(#m' + id + ')" d="M' + f( 27.5 + nx ) + ' ' + f( 32 + ny ) + 'L' + f( 27.5 + Math.cos( rad ) * len ) + ' ' + f( 32 + Math.sin( rad ) * len ) + 'L' + f( 27.5 - nx ) + ' ' + f( 32 - ny ) + 'Z"/>';
+		} ).join( '' );
+		return (
+			'<svg class="mk-medal" width="' + size + '" height="' + size + '" viewBox="0 0 64 64" aria-hidden="true" style="filter:drop-shadow(0 2px 6px ' + m.glow + ')">' +
+			'<defs><linearGradient id="r' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + m.rim[ 0 ] + '"/><stop offset=".5" stop-color="' + m.rim[ 1 ] + '"/><stop offset="1" stop-color="' + m.rim[ 2 ] + '"/></linearGradient>' +
+			'<linearGradient id="m' + id + '" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="' + m.rim[ 0 ] + '"/><stop offset=".55" stop-color="' + m.rim[ 1 ] + '"/><stop offset="1" stop-color="' + m.rim[ 2 ] + '"/></linearGradient>' +
+			'<radialGradient id="c' + id + '" cx=".35" cy=".25" r=".85"><stop offset="0" stop-color="#2A2A2A"/><stop offset="1" stop-color="#0B0B0B"/></radialGradient></defs>' +
+			'<path d="' + hex + '" fill="url(#r' + id + ')"/>' +
+			'<path d="' + hex + '" transform="' + inner + '" fill="url(#c' + id + ')"/>' +
+			'<path d="' + hex + '" transform="' + inner + '" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width=".8"/>' +
+			'<path d="' + page + '" fill="url(#m' + id + ')"/>' + rays +
+			'<path d="M12 18.5 32 7l20 11.5" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1" stroke-linecap="round"/>' +
+			'</svg>'
+		);
+	}
+
+	/** The plan, as a medal and its name, in the top bar. Opens the Plan tab. */
+	function planChip() {
+		if ( ! state.overview ) {
+			return '';
+		}
+		var p = planId();
+		return (
+			'<button type="button" class="mk-plan-chip mk-plan-' + p + '" data-act="tab" data-tab="plan" title="' + esc( __( 'Your plan', 'mykavo' ) ) + '">' +
+			planBadge( p, 30 ) + '<span class="mk-plan-chip-text"><b>' + esc( planLabel( p ) ) + '</b><span>' + esc( metalName( p ) ) + '</span></span></button>'
+		);
+	}
+
+	function billingUrl() {
+		var links = ( state.overview && state.overview.links ) || {};
+		return safeUrl( links.billing ) || '';
+	}
+
+	function upgradeButton( label, cls ) {
+		var url = billingUrl();
+		return url ? '<a class="mk-btn mk-btn-primary ' + ( cls || '' ) + '" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">' + icon( 'zap' ) + esc( label || __( 'Upgrade to Pro', 'mykavo' ) ) + '</a>' : '';
+	}
+
+	/** Words for a paid feature this plan lacks: "comes with Pro", or "rolling out" when it already should. */
+	function lockedText( need, what ) {
+		if ( planAtLeast( need ) ) {
+			/* translators: %s: feature description. */
+			return sprintf( __( '%s is rolling out to your plan. It appears here as soon as MyKavo switches it on.', 'mykavo' ), what );
+		}
+		var names = { starter: __( 'paid plans, from Starter', 'mykavo' ), pro: __( 'Pro and Agency', 'mykavo' ), agency: __( 'Agency', 'mykavo' ) };
+		/* translators: 1: feature description, 2: plans. */
+		return sprintf( __( '%1$s comes with %2$s.', 'mykavo' ), what, names[ need ] );
+	}
+
+	function copyButton( text, label ) {
+		return '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="copy" data-copy="' + esc( text ) + '">' + icon( 'copy' ) + esc( label || __( 'Copy', 'mykavo' ) ) + '</button>';
+	}
+
+	function switchButton( act, on, onLabel, offLabel, busy ) {
+		return (
+			'<button type="button" class="mk-switch" role="switch" aria-checked="' + ( on ? 'true' : 'false' ) + '" data-act="' + act + '" data-key="' + act + '"' + ( busy || READONLY ? ' disabled' : '' ) + '>' +
+			'<span class="mk-switch-track"><span class="mk-switch-thumb"></span></span>' +
+			'<span>' + esc( on ? onLabel : offLabel ) + '</span></button>'
+		);
+	}
+
+	/** GET a local route into state[ key ]; errors into state[ key + 'Error' ]. */
+	function loadInto( key, path ) {
+		return api( path )
+			.then( function ( data ) {
+				state[ key ] = data;
+				state[ key + 'Error' ] = null;
+				render();
+				return data;
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					state[ key + 'Error' ] = errorMessage( err );
+					render();
+				}
+			} );
+	}
+
+	/** POST (or DELETE) to a local route, then put the answer in state[ key ]. */
+	function send( path, data, key, busy, done, method ) {
+		state.busy = busy;
+		render();
+		return api( path, { method: method || 'POST', data: data || {} } )
+			.then( function ( result ) {
+				if ( key ) {
+					state[ key ] = result;
+				}
+				if ( done ) {
+					done( result );
+				}
+				return result;
+			} )
+			.catch( function ( err ) {
+				if ( ! handleDisconnect( err ) ) {
+					state.banner = { tone: 'bad', text: errorMessage( err ) };
+				}
+			} )
+			.then( function ( result ) {
+				state.busy = '';
+				render();
+				return result;
+			} );
+	}
+
+	/* ------------------------------------------------- silent disasters -- */
+
+	function alertsBanner() {
+		var list = ( state.alerts && state.alerts.alerts ) || [];
+		var open = list.filter( function ( a ) {
+			return ! a.dismissed;
+		} );
+		if ( ! open.length ) {
+			return '';
+		}
+		return (
+			'<section class="mk-card mk-alerts" role="alert"><div class="mk-alerts-head">' + icon( 'alert' ) +
+			'<h3>' + esc( __( 'An important setting changed on this site', 'mykavo' ) ) + '</h3>' +
+			( READONLY ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="dismiss-alert" data-id="all">' + esc( __( 'It was me - dismiss', 'mykavo' ) ) + '</button>' ) +
+			'</div><ul>' +
+			open.slice( 0, 5 ).map( function ( a ) {
+				return '<li><span class="mk-sev mk-sev-' + ( a.severity === 'critical' ? 'CRITICAL' : 'HIGH' ) + '">' + esc( a.severity === 'critical' ? __( 'Critical', 'mykavo' ) : __( 'High', 'mykavo' ) ) + '</span>' +
+					'<span>' + esc( a.message ) + ( a.by ? ' <span class="mk-fine">' + esc( sprintf( /* translators: %s: user name. */ __( 'by %s', 'mykavo' ), a.by ) ) + '</span>' : '' ) +
+					' <span class="mk-fine">' + esc( rel( new Date( a.at * 1000 ).toISOString() ) ) + '</span></span></li>';
+			} ).join( '' ) +
+			'</ul><p class="mk-fine">' + esc( feat( 'instantAlerts' )
+				? __( 'MyKavo also sent this to your alert email.', 'mykavo' )
+				: __( 'Shown on every WordPress screen until dismissed. Paid plans also get an instant email or Slack alert.', 'mykavo' ) ) + '</p></section>'
+		);
+	}
+
+	/* -------------------------------------------------------- site audit -- */
+
+	function auditCard( o ) {
+		var links = o.links || {};
+		var url = safeUrl( links.siteAudit ) || safeUrl( ( cfg.appUrl || 'https://mykavo.app' ) + '/dashboard/site-audit' );
+		var a = o.siteAudit;
+		var score = a && typeof a.healthScore === 'number' ? a.healthScore : null;
+		var tone = score === null ? '' : score >= 90 ? 'good' : score >= 70 ? 'warn' : 'bad';
+		var body = a
+			? ( score !== null
+				? '<div class="mk-audit-score mk-audit-' + tone + '">' + bigNum( score ) + '<span class="mk-unit">/100</span></div>' +
+					'<p class="mk-fine">' + esc( sprintf( /* translators: 1: errors, 2: warnings. */ __( '%1$d errors, %2$d warnings', 'mykavo' ), a.errors || 0, a.warnings || 0 ) ) +
+					( a.completedAt ? ' · ' + esc( rel( a.completedAt ) ) : '' ) + '</p>'
+				: '<p class="mk-fine">' + esc( a.status === 'FAILED' ? __( 'The last audit could not finish.', 'mykavo' ) : __( 'An audit is running.', 'mykavo' ) ) + '</p>' )
+			: '<p class="mk-fine">' + esc( __( 'A technical SEO crawl of your whole site: titles, links, speed, security and 70+ more checks.', 'mykavo' ) ) + '</p>';
+		return (
+			'<section class="mk-card mk-card-pad mk-audit">' +
+			'<div class="mk-card-head mk-card-head-flush"><div><h3 class="mk-card-title">' + esc( __( 'Site audit', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Your site with MyKavo', 'mykavo' ) ) + '</p></div>' +
+			'<a class="mk-iconbtn" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc( __( 'Open site audit', 'mykavo' ) ) + '">' + icon( 'arrow' ) + '</a></div>' +
+			body +
+			'<a class="mk-btn mk-btn-dark mk-btn-sm" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">' + esc( a ? __( 'Open site audit', 'mykavo' ) : __( 'Run a site audit', 'mykavo' ) ) + icon( 'external' ) + '</a>' +
+			'</section>'
+		);
+	}
+
+	/* ------------------------------------------------------------- plan -- */
+
+	/** The workspace card on the Overview: medal, plan, and the way up. */
+	function workspaceCard( o ) {
+		var p = planId();
+		return (
+			'<section class="mk-card mk-card-pad mk-workspace">' +
+			'<div class="mk-workspace-row">' + planBadge( p, 52 ) +
+			'<div><p class="mk-eyebrow">' + esc( o.workspace.name ) + '</p>' +
+			'<p class="mk-workspace-plan">' + esc( sprintf( /* translators: 1: plan name, 2: metal name. */ __( '%1$s plan · %2$s', 'mykavo' ), planLabel( p ), metalName( p ) ) ) + '</p></div></div>' +
+			( planAtLeast( 'pro' ) ? '' : '<p class="mk-fine">' + esc( __( 'Pro checks 8 sites daily, rolls back broken updates by itself and answers in ChatGPT and Claude.', 'mykavo' ) ) + '</p>' + upgradeButton( __( 'Upgrade to Pro', 'mykavo' ), 'mk-btn-sm' ) ) +
+			'<button type="button" class="mk-link" data-act="tab" data-tab="plan">' + esc( planAtLeast( 'pro' ) ? __( 'Everything in your plan', 'mykavo' ) : __( 'See what Pro adds', 'mykavo' ) ) + '</button>' +
+			'</section>'
+		);
+	}
+
+	var PRO_BENEFITS = [
+		[ 'activity', 'pro', __( 'Daily checks on 8 websites', 'mykavo' ), __( '15 pages each, checked every day instead of every week, plus 20 manual scans a day.', 'mykavo' ) ],
+		[ 'shield', 'starter', __( 'A check after every update', 'mykavo' ), __( 'Safe Updates compares your pages after each plugin, theme and WordPress update, and names the one that broke something.', 'mykavo' ) ],
+		[ 'undo', 'pro', __( 'Automatic rollback', 'mykavo' ), __( 'When an update breaks something critical, it is put back by itself - day or night - and the site checked again.', 'mykavo' ) ],
+		[ 'clock', 'pro', __( 'Risky updates held back', 'mykavo' ), __( 'An automatic update that caused changes on other MyKavo sites waits 48 hours before it reaches yours.', 'mykavo' ) ],
+		[ 'lock', 'pro', __( 'Security fixes, automatically', 'mykavo' ), __( 'A plugin with a known security issue is updated as soon as the fixed version is out.', 'mykavo' ) ],
+		[ 'eye', 'pro', __( 'Watch buttons and forms', 'mykavo' ), __( 'Pick a buy button or contact form on the page; get a critical alert the moment it disappears or changes.', 'mykavo' ) ],
+		[ 'bell', 'pro', __( 'Contact forms tested', 'mykavo' ), __( 'MyKavo sends a test entry through your contact forms so you know messages still arrive.', 'mykavo' ) ],
+		[ 'bot', 'pro', __( 'Ask ChatGPT and Claude', 'mykavo' ), __( 'Connect MyKavo to your AI assistant and ask what changed on your sites, in plain words.', 'mykavo' ) ],
+		[ 'zap', 'pro', __( '100 AI explanations a month', 'mykavo' ), __( 'Every change explained: what it means for visitors and SEO, and what to do.', 'mykavo' ) ],
+		[ 'layers', 'pro', __( 'Site audits of 1,500 pages', 'mykavo' ), __( 'A full technical SEO crawl, up to ten times a day.', 'mykavo' ) ],
+		[ 'file', 'pro', __( 'A year of history', 'mykavo' ), __( 'Every change, scan and screenshot kept for 12 months, and up to 3 team members.', 'mykavo' ) ],
+	];
+
+	function planView() {
+		var o = state.overview;
+		if ( ! o ) {
+			return loadingBlock( 300 );
+		}
+		var p = planId();
+		var hero =
+			'<section class="mk-card mk-plan-hero mk-plan-' + p + '">' +
+			'<div class="mk-plan-hero-main">' + planBadge( p, 96 ) +
+			'<div><p class="mk-eyebrow">' + esc( __( 'Your plan', 'mykavo' ) ) + '</p>' +
+			'<h3 class="mk-plan-name">' + esc( planLabel( p ) ) + ' <span>' + esc( metalName( p ) ) + '</span></h3>' +
+			'<p class="mk-fine">' + esc( o.workspace.name ) + '</p></div></div>' +
+			'<div class="mk-plan-hero-side">' +
+			( planAtLeast( 'pro' )
+				? '<p class="mk-fine">' + esc( p === 'agency' ? __( 'Every MyKavo feature is included.', 'mykavo' ) : __( 'Need white-label client reports or update windows? Agency has both.', 'mykavo' ) ) + '</p>' +
+					( p === 'agency' ? '' : '<a class="mk-btn mk-btn-soft" href="' + esc( safeUrl( cfg.pricingUrl ) || '' ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Compare plans', 'mykavo' ) ) + icon( 'external' ) + '</a>' )
+				: upgradeButton( __( 'Upgrade to Pro', 'mykavo' ) ) + '<a class="mk-link" href="' + esc( safeUrl( cfg.pricingUrl ) || '' ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Compare all plans', 'mykavo' ) ) + icon( 'external' ) + '</a>' ) +
+			'</div></section>';
+
+		var benefits =
+			'<section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( planAtLeast( 'pro' ) ? __( 'What your plan includes', 'mykavo' ) : __( 'What Pro adds', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Everything below runs on MyKavo\'s servers or comes from them. Nothing extra loads on your site.', 'mykavo' ) ) + '</p></div></div>' +
+			'<ul class="mk-benefits">' +
+			PRO_BENEFITS.map( function ( b ) {
+				var has = planAtLeast( b[ 1 ] );
+				return '<li class="' + ( has ? 'is-on' : '' ) + '"><span class="mk-benefit-icon">' + icon( b[ 0 ] ) + '</span><div><p class="mk-benefit-title">' + esc( b[ 2 ] ) +
+					( has ? '<span class="mk-chip mk-chip-good">' + icon( 'check' ) + esc( __( 'Included', 'mykavo' ) ) + '</span>' : '' ) + '</p><p class="mk-fine">' + esc( b[ 3 ] ) + '</p></div></li>';
+			} ).join( '' ) +
+			'</ul>' +
+			( planAtLeast( 'pro' ) ? '' : '<div class="mk-card-foot mk-benefits-foot">' + upgradeButton( __( 'Upgrade to Pro', 'mykavo' ) ) + '<span class="mk-fine">' + esc( __( 'Cancel any time. Your free plan keeps working either way.', 'mykavo' ) ) + '</span></div>' ) +
+			'</section>';
+
+		return '<div class="mk-grid">' + hero + '<div class="mk-grid mk-grid-2">' + mcpCard() + auditCard( o ) + '</div>' + benefits + '</div>';
+	}
+
+	/** ChatGPT, Claude and other AI assistants, through MyKavo's MCP server (Pro and Agency). */
+	function mcpCard() {
+		var o = state.overview;
+		var links = ( o && o.links ) || {};
+		var allowed = o && o.workspace.plan.includes ? !! o.workspace.plan.includes.aiAssistants : planAtLeast( 'pro' );
+		var endpoint = safeUrl( links.mcpEndpoint ) || safeUrl( ( cfg.appUrl || 'https://mykavo.app' ) + '/api/mcp' );
+		var setup = safeUrl( links.aiAssistants ) || safeUrl( ( cfg.appUrl || 'https://mykavo.app' ) + '/dashboard/ai-assistants' );
+		var asks = [ __( 'What changed on my site this week?', 'mykavo' ), __( 'Did the last plugin update break anything?', 'mykavo' ), __( 'Which pages do AI crawlers read most?', 'mykavo' ) ];
+		var body = allowed
+			? '<p class="mk-fine">' + esc( __( 'Add MyKavo as a connector in ChatGPT, Claude or any MCP app, sign in, and ask in plain words.', 'mykavo' ) ) + '</p>' +
+				'<div class="mk-code mk-code-inline"><code>' + esc( endpoint ) + '</code>' + copyButton( endpoint, __( 'Copy address', 'mykavo' ) ) + '</div>' +
+				'<a class="mk-btn mk-btn-dark mk-btn-sm" href="' + esc( setup ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Set up step by step', 'mykavo' ) ) + icon( 'external' ) + '</a>'
+			: '<p class="mk-fine">' + esc( __( 'Ask ChatGPT or Claude about your sites and get answers from MyKavo\'s real monitoring data. Comes with Pro and Agency.', 'mykavo' ) ) + '</p>' + upgradeButton( __( 'Upgrade to Pro', 'mykavo' ), 'mk-btn-sm' );
+		return (
+			'<section class="mk-card mk-card-pad mk-mcp' + ( allowed ? '' : ' is-locked' ) + '">' +
+			'<div class="mk-card-head mk-card-head-flush"><div><h3 class="mk-card-title">' + esc( __( 'Ask ChatGPT and Claude', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'AI assistants (MCP) · Pro and Agency', 'mykavo' ) ) + '</p></div>' +
+			'<span class="mk-chip ' + ( allowed ? 'mk-chip-good' : 'mk-chip-calm' ) + '">' + icon( allowed ? 'check' : 'lock' ) + esc( allowed ? __( 'Included', 'mykavo' ) : __( 'Pro', 'mykavo' ) ) + '</span></div>' +
+			'<ul class="mk-asks">' + asks.map( function ( q ) {
+				return '<li>' + icon( 'bot' ) + esc( q ) + '</li>';
+			} ).join( '' ) + '</ul>' + body + '</section>'
+		);
+	}
+
+	/* ---------------------------------------------------- safe update all -- */
+
+	function safeUpdateCard() {
+		var s = state.safe;
+		if ( ! s || READONLY ) {
+			return '';
+		}
+		var run = state.safeRun;
+		var head = '<div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Safe Update All', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Back up, update one plugin at a time, check the site after each, roll back any that break it.', 'mykavo' ) ) + '</p></div></div>';
+		if ( run ) {
+			var rows = s.plugins.map( function ( p ) {
+				var r = run.rows[ p.file ];
+				var st = r ? r.outcome : ( run.current === p.file ? 'running' : 'waiting' );
+				var label = {
+					waiting: __( 'Waiting', 'mykavo' ),
+					running: __( 'Updating and checking...', 'mykavo' ),
+					updated: __( 'Updated, site works', 'mykavo' ),
+					'rolled-back': __( 'Broke the site - rolled back', 'mykavo' ),
+					broken: __( 'Broke the site - roll back by hand', 'mykavo' ),
+					failed: __( 'Could not update', 'mykavo' ),
+				}[ st ];
+				var tone = { updated: 'good', 'rolled-back': 'warn', broken: 'bad', failed: 'bad', running: 'busy' }[ st ] || 'quiet';
+				return '<li class="mk-safe-row"><span>' + esc( p.name ) + ' <code>' + esc( p.from + ' → ' + p.to ) + '</code></span>' +
+					'<span class="mk-verdict mk-verdict-' + tone + '">' + ( st === 'running' ? icon( 'loader', 'mk-spin' ) : '' ) + esc( label ) + '</span>' +
+					( r && r.problem ? '<span class="mk-fine">' + esc( r.problem ) + '</span>' : '' ) + '</li>';
+			} ).join( '' );
+			var phase = run.phase === 'backup'
+				? '<p class="mk-banner">' + icon( 'loader', 'mk-spin' ) + '<span>' + esc( __( 'Waiting for the UpdraftPlus backup to finish...', 'mykavo' ) ) + '</span><button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="safe-skip-backup">' + esc( __( 'Skip waiting', 'mykavo' ) ) + '</button></p>'
+				: run.phase === 'baseline'
+					? '<p class="mk-banner">' + icon( 'loader', 'mk-spin' ) + '<span>' + esc( __( 'MyKavo is taking a fresh baseline before the updates...', 'mykavo' ) ) + '</span></p>'
+					: run.phase === 'done' && run.summary
+						? '<p class="mk-banner mk-banner-good">' + icon( 'check' ) + '<span>' + esc( safeVerdict( run.summary ) ) + '</span><button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="safe-close">' + esc( __( 'Done', 'mykavo' ) ) + '</button></p>'
+						: '';
+			return '<section class="mk-card">' + head + phase + '<ul class="mk-safe-rows">' + rows + '</ul></section>';
+		}
+		if ( ! s.plugins.length ) {
+			return '<section class="mk-card">' + head + '<div class="mk-empty"><span class="mk-empty-icon">' + icon( 'check' ) + '</span><strong>' + esc( __( 'Every plugin is up to date', 'mykavo' ) ) + '</strong></div></section>';
+		}
+		if ( ! s.canUpdate ) {
+			return '<section class="mk-card">' + head + '<p class="mk-card-pad mk-fine">' + esc( __( 'You cannot update plugins on this site (permissions or DISALLOW_FILE_MODS).', 'mykavo' ) ) + '</p></section>';
+		}
+		var backup = s.backup
+			? ( s.backup.canStart
+				? '<label class="mk-check"><input type="checkbox" data-act="safe-backup"' + ( s.backupFirst ? ' checked' : '' ) + '> ' + esc( sprintf( /* translators: %s: backup plugin name. */ __( 'Back up first with %s', 'mykavo' ), s.backup.name ) ) + '</label>'
+				: '<p class="mk-fine">' + icon( 'check' ) + esc( sprintf( /* translators: %s: backup plugin name. */ __( '%s backs this site up continuously, so there is nothing to start.', 'mykavo' ), s.backup.name ) ) + '</p>' )
+			: '<p class="mk-fine">' + esc( __( 'Tip: with UpdraftPlus active, MyKavo can start a backup first.', 'mykavo' ) ) + '</p>';
+		var baselineOk = feat( 'baselineBeforeUpdate' );
+		var baseline = '<label class="mk-check' + ( baselineOk ? '' : ' is-locked' ) + '"><input type="checkbox" data-act="safe-baseline"' + ( baselineOk && state.safeBaseline !== false ? ' checked' : '' ) + ( baselineOk ? '' : ' disabled' ) + '> ' +
+			esc( __( 'Take a fresh baseline first', 'mykavo' ) ) + ( baselineOk ? '' : ' <span class="mk-fine">(' + esc( __( 'paid plans', 'mykavo' ) ) + ')</span>' ) + '</label>';
+		return (
+			'<section class="mk-card">' + head +
+			'<ul class="mk-safe-rows">' + s.plugins.map( function ( p ) {
+				return '<li class="mk-safe-row"><span>' + esc( p.name ) + ' <code>' + esc( p.from + ' → ' + p.to ) + '</code></span></li>';
+			} ).join( '' ) + '</ul>' +
+			'<div class="mk-card-foot mk-safe-foot">' + backup + baseline +
+			'<button type="button" class="mk-btn mk-btn-dark" data-act="safe-start">' + icon( 'shield' ) +
+			esc( sprintf( /* translators: %d: number of plugins. */ _n( 'Safely update %d plugin', 'Safely update %d plugins', s.plugins.length, 'mykavo' ), s.plugins.length ) ) + '</button></div>' +
+			'</section>'
+		);
+	}
+
+	/** "7 updated, 6 verified, 1 rolled back" (verified by MyKavo's check, or by the local one on free plans). */
+	function safeVerdict( sum ) {
+		var parts = [ sprintf( /* translators: %d: number of plugins. */ _n( '%d updated', '%d updated', sum.updated, 'mykavo' ), sum.updated ) ];
+		var kept = sum.kept ? sum.kept.length : 0;
+		if ( kept ) {
+			parts.push( sprintf( /* translators: %d: number of plugins. */ _n( '%d verified', '%d verified', kept, 'mykavo' ), kept ) );
+		}
+		var rolled = ( sum.rolledBack || [] ).filter( function ( r ) {
+			return r.outcome === 'rolled-back';
+		} ).length;
+		if ( rolled ) {
+			parts.push( sprintf( /* translators: %d: number of plugins. */ _n( '%d rolled back', '%d rolled back', rolled, 'mykavo' ), rolled ) );
+		}
+		if ( sum.failed && sum.failed.length ) {
+			parts.push( sprintf( /* translators: %d: number of plugins. */ _n( '%d failed', '%d failed', sum.failed.length, 'mykavo' ), sum.failed.length ) );
+		}
+		return parts.join( ', ' );
+	}
+
+	function startSafeUpdate() {
+		var s = state.safe;
+		if ( ! s || ! s.plugins.length ) {
+			return;
+		}
+		var backup = !! ( s.backup && s.backup.canStart && s.backupFirst );
+		var baseline = feat( 'baselineBeforeUpdate' ) && state.safeBaseline !== false;
+		state.safeRun = { rows: {}, current: '', phase: 'start', summary: null };
+		render();
+		api( '/safe-update/start', { method: 'POST', data: { backup: backup, baseline: baseline } } )
+			.then( function ( data ) {
+				var b = data.batch || {};
+				if ( b.backup && b.backup.state === 'running' ) {
+					state.safeRun.phase = 'backup';
+					render();
+					return waitFor( function () {
+						return state.safeRun.skipBackup ? Promise.resolve( true ) : api( '/safe-update' ).then( function ( o ) {
+							return ! o.batch || ! o.batch.backup || o.batch.backup.state !== 'running';
+						} );
+					}, 10000, 120 );
+				}
+			} )
+			.then( function () {
+				if ( ! baseline ) {
+					return;
+				}
+				state.safeRun.phase = 'baseline';
+				render();
+				return waitFor( function () {
+					return loadOverview( true ).then( function () {
+						return ! ( state.overview && state.overview.scanInProgress );
+					} );
+				}, 8000, 75 );
+			} )
+			.then( function () {
+				state.safeRun.phase = 'updating';
+				return s.plugins.reduce( function ( chain, p ) {
+					return chain.then( function () {
+						state.safeRun.current = p.file;
+						render();
+						return api( '/safe-update/plugin', { method: 'POST', data: { file: p.file } } )
+							.then( function ( row ) {
+								state.safeRun.rows[ p.file ] = row;
+							} )
+							.catch( function ( err ) {
+								state.safeRun.rows[ p.file ] = { outcome: 'failed', problem: errorMessage( err ) };
+							} );
+					} );
+				}, Promise.resolve() );
+			} )
+			.then( function () {
+				state.safeRun.current = '';
+				return api( '/safe-update/finish', { method: 'POST' } );
+			} )
+			.then( function ( result ) {
+				state.safeRun.phase = 'done';
+				state.safeRun.summary = result.summary;
+				state.updates = null;
+				state.scans = null;
+				loadUpdates();
+				loadScans( true );
+				loadInto( 'safe', '/safe-update' );
+				loadInto( 'snaps', '/snapshots' );
+			} )
+			.catch( function ( err ) {
+				state.safeRun = null;
+				state.banner = { tone: 'bad', text: errorMessage( err ) };
+				render();
+			} );
+	}
+
+	/** Ask check() every `ms` until it says true, at most `tries` times. */
+	function waitFor( check, ms, tries ) {
+		return new Promise( function ( resolve ) {
+			var n = 0;
+			var tick = function () {
+				Promise.resolve( check() ).then( function ( ok ) {
+					if ( ok || ++n >= tries ) {
+						resolve();
+					} else {
+						window.setTimeout( tick, ms );
+					}
+				}, function () {
+					resolve();
+				} );
+			};
+			window.setTimeout( tick, ms );
+		} );
+	}
+
+	/** One line on the local "did it crash?" check under an update. */
+	function crashLine( entry ) {
+		var c = entry.crash;
+		if ( ! c ) {
+			return '';
+		}
+		if ( c.state === 'pending' ) {
+			return '<p class="mk-fine mk-crash">' + icon( 'clock' ) + esc( __( 'Loading the site to check it still works...', 'mykavo' ) ) + '</p>';
+		}
+		if ( c.state === 'ok' && ! entry.batch ) {
+			return '<p class="mk-fine mk-crash mk-good">' + icon( 'check' ) + esc( __( 'The site loaded fine right after this update.', 'mykavo' ) ) + '</p>';
+		}
+		if ( c.state === 'broken' ) {
+			var bad = ( c.pages || [] ).filter( function ( p ) {
+				return p.problem && p.problem !== 'unreachable';
+			} )[ 0 ];
+			var what = bad ? { 'server-error': __( 'answered with a server error', 'mykavo' ), 'fatal-error': __( 'showed a PHP error', 'mykavo' ), empty: __( 'came back empty', 'mykavo' ) }[ bad.problem ] || bad.problem : '';
+			return '<p class="mk-crash mk-crash-bad">' + icon( 'alert' ) + esc( bad
+				? sprintf( /* translators: 1: page path, 2: what went wrong. */ __( 'The site broke: %1$s %2$s right after this update. Roll back now.', 'mykavo' ), pathOf( bad.url ), what )
+				: __( 'The site broke right after this update. Roll back now.', 'mykavo' ) ) + '</p>';
+		}
+		return '';
+	}
+
+	function batchLine( entry ) {
+		return entry.batch && entry.reason !== 'LOCAL' ? '<p class="mk-crash mk-good">' + icon( 'shield' ) + esc( sprintf( /* translators: %s: summary such as "7 updated, 6 verified, 1 rolled back". */ __( 'Safe Update All: %s', 'mykavo' ), safeVerdict( entry.batch ) ) ) + '</p>' : '';
+	}
+
+	/* --------------------------------------------------------- snapshots -- */
+
+	function snapshotsCard() {
+		var s = state.snaps;
+		if ( ! s ) {
+			return '';
+		}
+		var mb = ( s.bytes / 1048576 ).toFixed( 1 );
+		return (
+			'<section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Saved copies for rollback', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( sprintf( /* translators: 1: copies per plugin, 2: days. */ __( 'Before every update, the plugin or theme is zipped on this site, so any of them - premium ones too - can be rolled back. The last %1$d per plugin are kept, for %2$d days.', 'mykavo' ), s.keep, s.days ) ) + '</p></div></div>' +
+			( s.items.length
+				? '<ul class="mk-list mk-snaps">' + s.items.slice( 0, 8 ).map( function ( it ) {
+					return '<li><div class="mk-row" style="cursor:default">' + icon( it.type === 'theme' ? 'brush' : 'plug', 'mk-row-chevron' ) +
+						'<span class="mk-row-main"><span class="mk-row-title">' + esc( it.slug ) + ' <code>' + esc( it.version ) + '</code></span>' +
+						'<span class="mk-row-meta"><span>' + esc( rel( new Date( it.at * 1000 ).toISOString() ) ) + '</span><span>' + esc( ( it.size / 1048576 ).toFixed( 1 ) + ' MB' ) + '</span></span></span></div></li>';
+				} ).join( '' ) + '</ul><p class="mk-fine mk-card-foot">' + esc( sprintf( /* translators: %s: megabytes. */ __( '%s MB on disk in wp-content/mykavo-snapshots, closed to the web.', 'mykavo' ), mb ) ) + '</p>'
+				: '<div class="mk-empty"><span>' + esc( __( 'The next update leaves a saved copy here.', 'mykavo' ) ) + '</span></div>' ) +
+			'</section>'
+		);
+	}
+
+	/* ------------------------------------------------- email and forms -- */
+
+	function mailCard() {
+		var f = state.forms;
+		if ( ! f ) {
+			return '';
+		}
+		var m = f.mail;
+		var last = m.last
+			? ( m.last.ok
+				? '<p class="mk-crash mk-good">' + icon( 'check' ) + esc( sprintf( /* translators: 1: email address, 2: relative time. */ __( 'Sent to %1$s %2$s.', 'mykavo' ), m.last.to, rel( new Date( m.last.at * 1000 ).toISOString() ) ) ) + '</p>'
+				: '<p class="mk-crash mk-crash-bad">' + icon( 'alert' ) + esc( sprintf( /* translators: 1: relative time, 2: error message. */ __( 'Failed %1$s: %2$s', 'mykavo' ), rel( new Date( m.last.at * 1000 ).toISOString() ), m.last.error ) ) + '</p>' )
+			: '';
+		var forms = f.forms;
+		var formsBody;
+		if ( ! forms.pages.length ) {
+			formsBody = '<p class="mk-fine">' + esc( __( 'No Contact Form 7, Gravity Forms or WPForms form found on a published page.', 'mykavo' ) ) + '</p>';
+		} else if ( forms.allowed === false || ! feat( 'formChecks' ) ) {
+			formsBody = '<ul class="mk-plain">' + forms.pages.map( function ( p ) {
+				return '<li>' + esc( p.title || pathOf( p.url ) ) + ' <span class="mk-fine">' + esc( p.plugin ) + '</span></li>';
+			} ).join( '' ) + '</ul>' + upsell( lockedText( 'starter', __( 'Having MyKavo check these forms still work', 'mykavo' ) ) );
+		} else {
+			var byUrl = {};
+			( forms.forms || [] ).forEach( function ( r ) {
+				byUrl[ r.url ] = r;
+			} );
+			formsBody = '<ul class="mk-plain">' + forms.pages.map( function ( p ) {
+				var r = byUrl[ p.url ];
+				var st = r ? r.status : 'pending';
+				var sub = r && r.submission && r.submission.status ? ' · ' + ( r.submission.status === 'ok' ? __( 'test entry delivered', 'mykavo' ) : __( 'test entry failed', 'mykavo' ) ) : '';
+				return '<li>' + esc( p.title || pathOf( p.url ) ) + ' <span class="mk-verdict mk-verdict-' + ( st === 'ok' ? 'good' : st === 'broken' ? 'bad' : 'quiet' ) + '">' +
+					esc( ( st === 'ok' ? __( 'Form renders', 'mykavo' ) : st === 'broken' ? __( 'Form missing', 'mykavo' ) : __( 'Checking soon', 'mykavo' ) ) + sub ) + '</span></li>';
+			} ).join( '' ) + '</ul>' +
+				( feat( 'formSubmissions' ) ? '' : '<p class="mk-fine">' + esc( lockedText( 'pro', __( 'A real test entry through each form', 'mykavo' ) ) ) + '</p>' ) +
+				( READONLY ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="forms-sync"' + ( state.busy === 'forms' ? ' disabled' : '' ) + '>' + icon( 'refresh' ) + esc( __( 'Send form pages to MyKavo', 'mykavo' ) ) + '</button>' );
+		}
+		return (
+			'<section class="mk-card mk-card-pad"><div class="mk-card-head mk-card-head-flush"><div><h3 class="mk-card-title">' + esc( __( 'Email and contact forms', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'A form that silently stops sending costs leads for weeks.', 'mykavo' ) ) + '</p></div></div>' +
+			'<div class="mk-setting"><div><p class="mk-benefit-title">' + esc( __( 'Daily email test (free)', 'mykavo' ) ) + '</p>' +
+			'<p class="mk-fine">' + esc( sprintf( /* translators: %s: email address. */ __( 'WordPress sends one short email a day to %s and MyKavo records whether it went out.', 'mykavo' ), m.to ) ) + '</p></div>' +
+			switchButton( 'toggle-mail', m.enabled, __( 'On', 'mykavo' ), __( 'Off', 'mykavo' ), state.busy === 'mail' ) + '</div>' +
+			last + ( READONLY ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="mail-test"' + ( state.busy === 'mail-test' ? ' disabled' : '' ) + '>' + esc( __( 'Send a test now', 'mykavo' ) ) + '</button>' ) +
+			'<p class="mk-benefit-title" style="margin-top:18px">' + esc( __( 'Contact forms', 'mykavo' ) ) + '</p>' + formsBody +
+			'</section>'
+		);
+	}
+
+	/* ------------------------------------------------- vulnerabilities -- */
+
+	function vulnBlock() {
+		var h = state.health;
+		var v = h && h.vulnerabilities;
+		if ( ! v || ! v.count ) {
+			return '';
+		}
+		var head = '<p class="mk-crash mk-crash-bad">' + icon( 'alert' ) + esc( sprintf( /* translators: %d: number of plugins. */ _n( '%d plugin has a known security issue.', '%d plugins have a known security issue.', v.count, 'mykavo' ), v.count ) ) + '</p>';
+		var items = v.items
+			? '<ul class="mk-plain">' + v.items.map( function ( x ) {
+				return '<li><span class="mk-sev mk-sev-' + ( { critical: 'CRITICAL', high: 'HIGH', medium: 'MEDIUM', low: 'LOW' }[ x.severity ] || 'MEDIUM' ) + '">' + esc( x.severity ) + '</span> <b>' + esc( x.name || x.slug ) + '</b>: ' + esc( x.title ) +
+					( x.fixedIn ? ' <span class="mk-fine">' + esc( sprintf( /* translators: %s: version. */ __( 'fixed in %s', 'mykavo' ), x.fixedIn ) ) + '</span>' : ' <span class="mk-fine">' + esc( __( 'no fix yet', 'mykavo' ) ) + '</span>' ) +
+					( x.cve ? ' <code>' + esc( x.cve ) + '</code>' : '' ) + '</li>';
+			} ).join( '' ) + '</ul>'
+			: upsell( lockedText( 'starter', __( 'Which plugin, what the issue is and the version that fixes it', 'mykavo' ) ) );
+		var auto = feat( 'vulnAutoUpdate' )
+			? '<div class="mk-setting"><p class="mk-fine">' + esc( __( 'Update vulnerable plugins automatically as soon as the fixed version is out.', 'mykavo' ) ) + '</p>' +
+				switchButton( 'toggle-vuln-auto', !! ( state.vulnAuto !== undefined ? state.vulnAuto : h.vulnAutoUpdate ), __( 'On', 'mykavo' ), __( 'Off', 'mykavo' ), state.busy === 'vuln' ) + '</div>'
+			: '<p class="mk-fine">' + esc( lockedText( 'pro', __( 'Updating vulnerable plugins automatically', 'mykavo' ) ) ) + '</p>';
+		return '<div class="mk-card-pad mk-vulns">' + head + items + auto + '</div>';
+	}
+
+	/* ----------------------------------------------------- AI crawlers -- */
+
+	/** Every AI crawler, allowed or blocked in robots.txt. */
+	function robotsCard() {
+		var r = state.robots;
+		var head = '<div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Allow or block each AI crawler', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Rules in robots.txt, a request well-behaved crawlers follow.', 'mykavo' ) ) + '</p></div>' +
+			( r && safeUrl( r.url ) ? '<a class="mk-link" href="' + esc( safeUrl( r.url ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'View robots.txt', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
+			'</div>';
+		if ( state.robotsError && ! r ) {
+			return '<section class="mk-card">' + head + '<div class="mk-empty"><span>' + esc( state.robotsError ) + '</span><button type="button" class="mk-btn mk-btn-sm" data-act="robots-retry">' + esc( __( 'Try again', 'mykavo' ) ) + '</button></div></section>';
+		}
+		if ( ! r ) {
+			return '<section class="mk-card">' + head + '<div class="mk-card-pad">' + loadingBlock( 90 ) + '</div></section>';
+		}
+		var busy = state.busy === 'robots';
+		var presets = READONLY ? '' : '<div class="mk-robots-presets">' +
+			'<button type="button" class="mk-btn mk-btn-sm mk-btn-dark" data-act="robots-preset"' + ( busy ? ' disabled' : '' ) + '>' + icon( 'lock' ) + esc( __( 'Block training, allow search', 'mykavo' ) ) + '</button>' +
+			'<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="robots-allow-all"' + ( busy ? ' disabled' : '' ) + '>' + esc( __( 'Allow all', 'mykavo' ) ) + '</button></div>';
+		var table =
+			'<div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>' + esc( __( 'Crawler', 'mykavo' ) ) + '</th><th>' + esc( __( 'Why it visits', 'mykavo' ) ) + '</th><th>' + esc( __( 'robots.txt', 'mykavo' ) ) + '</th></tr></thead><tbody>' +
+			( r.agents || [] ).map( function ( a ) {
+				return '<tr><td><b>' + esc( a.owner ) + '</b><span class="mk-cell-note"><code>' + esc( a.agent ) + '</code></span></td><td>' + esc( purposeLabel( a.purpose ) ) + '</td>' +
+					'<td><span class="mk-seg" role="group" aria-label="' + esc( a.agent ) + '">' +
+					'<button type="button" class="' + ( a.blocked ? '' : 'is-on' ) + '" data-act="robots-block" data-agent="' + esc( a.agent ) + '" data-block="0"' + ( busy || r.physical || READONLY ? ' disabled' : '' ) + '>' + esc( __( 'Allow', 'mykavo' ) ) + '</button>' +
+					'<button type="button" class="' + ( a.blocked ? 'is-on is-block' : '' ) + '" data-act="robots-block" data-agent="' + esc( a.agent ) + '" data-block="1"' + ( busy || r.physical || READONLY ? ' disabled' : '' ) + '>' + esc( __( 'Block', 'mykavo' ) ) + '</button></span></td></tr>';
+			} ).join( '' ) + '</tbody></table></div>';
+		var file = '';
+		if ( r.physical ) {
+			var all = r.blocked.length && r.inFile && r.inFile.length === r.blocked.length;
+			file =
+				'<div class="mk-banner">' + icon( 'file' ) + '<span>' +
+				esc( all
+					? __( 'This site has its own robots.txt file, and it already names every blocked crawler.', 'mykavo' )
+					: __( 'This site has its own robots.txt file on the server, so WordPress cannot add to it. Copy these rules into that file by hand:', 'mykavo' ) ) +
+				'</span></div>' +
+				( all || ! r.blocked.length ? '' : '<div class="mk-code"><pre>' + esc( r.rules ) + '</pre><button type="button" class="mk-btn mk-btn-sm" data-act="copy-rules">' + icon( 'copy' ) + esc( __( 'Copy rules', 'mykavo' ) ) + '</button></div>' );
+		}
+		var hidden = r.public ? '' : '<p class="mk-fine mk-card-pad">' + esc( __( 'This site asks search engines not to index it (Settings > Reading), so its robots.txt already asks every crawler to stay away.', 'mykavo' ) ) + '</p>';
+		return '<section class="mk-card">' + head + '<div class="mk-card-pad mk-robots">' + presets + file + '</div>' + table + hidden + '</section>';
+	}
+
+	function setBlocked( agent, block ) {
+		var r = state.robots;
+		var list = ( r.agents || [] ).filter( function ( a ) {
+			return a.agent === agent ? block : a.blocked;
+		} ).map( function ( a ) {
+			return a.agent;
+		} );
+		saveBlocked( list, '' );
+	}
+
+	function saveBlocked( list, message ) {
+		send( '/robots/rules', { blocked: list }, 'robots', 'robots', function () {
+			toast( message || __( 'robots.txt updated.', 'mykavo' ) );
+		} );
+	}
+
+	/** /llms.txt: a short guide to the site for AI assistants. */
+	function llmsCard() {
+		var l = state.llms;
+		if ( ! l ) {
+			return '';
+		}
+		var url = safeUrl( l.url );
+		return (
+			'<section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'llms.txt for AI assistants', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'A short Markdown guide at /llms.txt: your site\'s name, what it is about and its important pages. Some AI tools read it first.', 'mykavo' ) ) + '</p></div>' +
+			( l.enabled && ! l.physical && url ? '<a class="mk-link" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'View llms.txt', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) + '</div>' +
+			'<div class="mk-card-pad">' +
+			( l.physical
+				? '<div class="mk-banner">' + icon( 'file' ) + '<span>' + esc( __( 'This site already has an llms.txt file on the server, which is served instead. To use MyKavo\'s version, copy it into that file:', 'mykavo' ) ) + '</span></div>'
+				: '<div class="mk-setting"><p class="mk-fine">' + esc( l.enabled ? __( 'Served now. It refreshes daily and whenever monitored pages change.', 'mykavo' ) : __( 'Off. Nothing is served at /llms.txt.', 'mykavo' ) ) + '</p>' +
+					switchButton( 'toggle-llms', l.enabled, __( 'On', 'mykavo' ), __( 'Off', 'mykavo' ), state.busy === 'llms' ) + '</div>' ) +
+			'<div class="mk-code"><pre>' + esc( l.text ) + '</pre>' + copyButton( l.text, __( 'Copy', 'mykavo' ) ) + '</div>' +
+			( feat( 'llmsSummaries' ) ? ( l.summarized ? '<p class="mk-fine">' + esc( __( 'Page summaries written by MyKavo.', 'mykavo' ) ) + '</p>' : '' ) : '<p class="mk-fine">' + esc( lockedText( 'starter', __( 'A one-line summary of each page, written by MyKavo', 'mykavo' ) ) ) + '</p>' ) +
+			'</div></section>'
+		);
+	}
+
+	/** Pages that answered an AI crawler with 404, and redirects to fix them. */
+	function missingCard() {
+		var b = state.bots;
+		var missing = ( b && b.missing ) || [];
+		var redirects = ( state.redirects && state.redirects.redirects ) || [];
+		if ( ! missing.length && ! redirects.length ) {
+			return '';
+		}
+		var taken = {};
+		redirects.forEach( function ( r ) {
+			taken[ r.from ] = r;
+		} );
+		var sugg = {};
+		( ( state.redirectSuggest && state.redirectSuggest.suggestions ) || [] ).forEach( function ( s ) {
+			sugg[ s.path ] = s;
+		} );
+		var rows = missing.filter( function ( m ) {
+			return ! taken[ m.path.split( '?' )[ 0 ] ];
+		} ).map( function ( m ) {
+			var path = m.path.split( '?' )[ 0 ];
+			var s = sugg[ path ];
+			var draft = state.redirectDraft[ path ] !== undefined ? state.redirectDraft[ path ] : ( s ? s.url : '' );
+			return '<li class="mk-redirect-row"><div><code class="mk-path">' + esc( m.path ) + '</code><span class="mk-fine">' +
+				esc( sprintf( /* translators: %d: number of visits. */ _n( '%d crawler visit got a 404', '%d crawler visits got a 404', m.hits, 'mykavo' ), m.hits ) ) + '</span></div>' +
+				( READONLY ? '' : '<form class="mk-redirect-form" data-form="redirect" data-from="' + esc( path ) + '">' +
+					'<label class="mk-visually-hidden" for="mk-r-' + esc( path ) + '">' + esc( __( 'Redirect to', 'mykavo' ) ) + '</label>' +
+					'<input id="mk-r-' + esc( path ) + '" data-key="r-' + esc( path ) + '" data-redirect="' + esc( path ) + '" type="text" placeholder="' + esc( __( '/new-page/ or full address', 'mykavo' ) ) + '" value="' + esc( draft ) + '">' +
+					'<button type="submit" class="mk-btn mk-btn-sm mk-btn-dark"' + ( state.busy === 'redirect' ? ' disabled' : '' ) + '>' + esc( __( 'Create redirect', 'mykavo' ) ) + '</button></form>' ) +
+				( s && s.title ? '<span class="mk-fine">' + esc( sprintf( /* translators: %s: page title. */ __( 'MyKavo suggests: %s', 'mykavo' ), s.title ) ) + '</span>' : '' ) +
+				'</li>';
+		} ).join( '' );
+		var suggest = READONLY || ! missing.length ? '' : feat( 'redirectSuggestions' )
+			? '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="redirect-suggest"' + ( state.busy === 'suggest' ? ' disabled' : '' ) + '>' + icon( 'zap' ) + esc( __( 'Suggest targets', 'mykavo' ) ) + '</button>'
+			: '<span class="mk-fine">' + esc( lockedText( 'starter', __( 'Suggested target pages', 'mykavo' ) ) ) + '</span>';
+		return (
+			'<section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Errors served to AI: fix them', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Addresses AI crawlers asked for that do not exist (often an old link AI keeps quoting). A redirect sends them, and people, to the right page.', 'mykavo' ) ) + '</p></div>' + suggest + '</div>' +
+			( rows ? '<ul class="mk-list">' + rows + '</ul>' : '' ) +
+			( redirects.length
+				? '<div class="mk-card-pad"><p class="mk-benefit-title">' + esc( __( 'Redirects', 'mykavo' ) ) + '</p><ul class="mk-plain">' + redirects.map( function ( r ) {
+					return '<li><code>' + esc( r.from ) + '</code> → <code>' + esc( pathOf( r.to ) ) + '</code> <span class="mk-fine">' + esc( sprintf( _n( '%d use', '%d uses', r.hits, 'mykavo' ), r.hits ) ) + '</span>' +
+						( READONLY ? '' : ' <button type="button" class="mk-link" data-act="redirect-remove" data-from="' + esc( r.from ) + '">' + esc( __( 'Remove', 'mykavo' ) ) + '</button>' ) + '</li>';
+				} ).join( '' ) + '</ul></div>'
+				: '' ) +
+			'</section>'
+		);
+	}
+
+	/** "Verified 120 / unverified 8" for one crawler row. */
+	function verifyCell( a ) {
+		if ( ! a.checkable ) {
+			return '<span class="mk-fine" title="' + esc( __( 'Its owner publishes no way to check its visits.', 'mykavo' ) ) + '">' + esc( __( 'Cannot be checked', 'mykavo' ) ) + '</span>';
+		}
+		if ( ! a.verified && ! a.unverified ) {
+			return '<span class="mk-fine">' + esc( __( 'Not checked yet', 'mykavo' ) ) + '</span>';
+		}
+		return '<span class="mk-good">' + esc( sprintf( /* translators: %s: number. */ __( '%s real', 'mykavo' ), num( a.verified ) ) ) + '</span>' +
+			( a.unverified ? ' · <span class="mk-bad" title="' + esc( __( 'Claimed this name but did not come from its owner\'s network: likely a fake.', 'mykavo' ) ) + '">' + esc( sprintf( /* translators: %s: number. */ __( '%s fake', 'mykavo' ), num( a.unverified ) ) ) + '</span>' : '' );
+	}
+
+	/* ---------------------------------------------- suggested pages -- */
+
+	function suggestionsCard( compact ) {
+		var s = state.suggestions;
+		if ( READONLY || ! s || ! s.pages.length ) {
+			return '';
+		}
+		var o = state.overview;
+		var limit = o && o.workspace.plan.limits ? o.workspace.plan.limits.pagesPerWebsite : null;
+		var used = o ? o.stats.monitoredPages : 0;
+		var room = limit === null || limit === undefined ? s.pages.length : Math.max( 0, limit - used );
+		var picked = s.pages.filter( function ( p ) {
+			return state.sugPick[ p.url ] !== false;
+		} ).slice( 0, room );
+		var reasons = { home: __( 'Home page', 'mykavo' ), store: __( 'Store', 'mykavo' ), contact: __( 'Contact page', 'mykavo' ), main: __( 'Main page', 'mykavo' ) };
+		return (
+			'<section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( compact ? __( 'Watch your most important pages', 'mykavo' ) : __( 'Suggested pages', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( limit
+				? sprintf( /* translators: 1: pages used, 2: page limit. */ __( 'Picked from this site. Your plan monitors %2$d pages per site; %1$d are in use.', 'mykavo' ), used, limit )
+				: __( 'Picked from this site: the pages that would hurt most if they broke.', 'mykavo' ) ) + '</p></div></div>' +
+			'<ul class="mk-plain mk-suggest">' + s.pages.map( function ( p, i ) {
+				var on = state.sugPick[ p.url ] !== false && i < room;
+				return '<li><label class="mk-check"><input type="checkbox" data-act="suggest-toggle" data-url="' + esc( p.url ) + '"' + ( on ? ' checked' : '' ) + ( i >= room ? ' disabled' : '' ) + '> <b>' + esc( p.title || pathOf( p.url ) ) + '</b> <code>' + esc( pathOf( p.url ) ) + '</code> <span class="mk-fine">' + esc( reasons[ p.reason ] || '' ) + '</span></label></li>';
+			} ).join( '' ) + '</ul>' +
+			'<div class="mk-card-foot">' +
+			( room > 0
+				? '<button type="button" class="mk-btn mk-btn-dark mk-btn-sm" data-act="suggest-add"' + ( ! picked.length || state.busy === 'add-pages' ? ' disabled' : '' ) + '>' + esc( sprintf( /* translators: %d: number of pages. */ _n( 'Monitor %d page', 'Monitor %d pages', picked.length, 'mykavo' ), picked.length ) ) + '</button>'
+				: '<span class="mk-fine">' + esc( __( 'Your plan\'s page limit is reached.', 'mykavo' ) ) + '</span> ' + upgradeButton( __( 'Upgrade to Pro', 'mykavo' ), 'mk-btn-sm' ) ) +
+			'</div></section>'
+		);
+	}
+
+	/* ---------------------------------------------------- element picker -- */
+
+	var pickerHost = null;
+
+	/** Open a page in a frame; the next element clicked becomes a watched element. */
+	function openPicker( url ) {
+		closePicker();
+		pickerHost = document.createElement( 'div' );
+		pickerHost.className = 'mk mk-picker';
+		pickerHost.innerHTML =
+			'<div class="mk-picker-bar"><b>' + esc( __( 'Click the button, link or form MyKavo should watch', 'mykavo' ) ) + '</b>' +
+			'<span class="mk-fine">' + esc( pathOf( url ) ) + '</span>' +
+			'<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-pick="close">' + esc( __( 'Cancel', 'mykavo' ) ) + '</button></div>' +
+			'<div class="mk-picker-form" hidden></div>' +
+			'<iframe class="mk-picker-frame" title="' + esc( __( 'Page preview', 'mykavo' ) ) + '"></iframe>';
+		document.body.appendChild( pickerHost );
+		var frame = pickerHost.querySelector( 'iframe' );
+		pickerHost.addEventListener( 'click', function ( e ) {
+			var act = e.target.closest( '[data-pick]' );
+			if ( ! act ) {
+				return;
+			}
+			if ( act.getAttribute( 'data-pick' ) === 'close' ) {
+				closePicker();
+			} else if ( act.getAttribute( 'data-pick' ) === 'save' ) {
+				var form = pickerHost.querySelector( '.mk-picker-form' );
+				savePicked( url, form.querySelector( 'input[name="name"]' ).value.trim(), form.getAttribute( 'data-selector' ), form.getAttribute( 'data-text' ), form.getAttribute( 'data-href' ) );
+			} else if ( act.getAttribute( 'data-pick' ) === 'again' ) {
+				pickerHost.querySelector( '.mk-picker-form' ).hidden = true;
+			}
+		} );
+		frame.addEventListener( 'load', function () {
+			var doc;
+			try {
+				doc = frame.contentDocument;
+			} catch ( err ) {
+				doc = null;
+			}
+			if ( ! doc || ! doc.body ) {
+				pickerHost.querySelector( '.mk-picker-bar b' ).textContent = __( 'This page cannot be opened here (it may be on another address). Add elements in the MyKavo dashboard instead.', 'mykavo' );
+				return;
+			}
+			var style = doc.createElement( 'style' );
+			style.textContent = '.mykavo-pick-hover{outline:3px solid #FFD400!important;outline-offset:2px!important;cursor:crosshair!important}#wpadminbar{display:none!important}html{margin-top:0!important}';
+			doc.head.appendChild( style );
+			var last = null;
+			doc.addEventListener( 'mouseover', function ( ev ) {
+				if ( last ) {
+					last.classList.remove( 'mykavo-pick-hover' );
+				}
+				last = pickTarget( ev.target );
+				if ( last ) {
+					last.classList.add( 'mykavo-pick-hover' );
+				}
+			}, true );
+			doc.addEventListener( 'click', function ( ev ) {
+				ev.preventDefault();
+				ev.stopPropagation();
+				var el = pickTarget( ev.target );
+				if ( ! el ) {
+					return;
+				}
+				el.classList.remove( 'mykavo-pick-hover' );
+				showPickForm( el, doc );
+			}, true );
+			doc.addEventListener( 'submit', function ( ev ) {
+				ev.preventDefault();
+			}, true );
+		} );
+		frame.src = url;
+	}
+
+	/** The meaningful element under the pointer: a button, link, form or input, else the element itself. */
+	function pickTarget( el ) {
+		if ( ! el || ! el.closest ) {
+			return null;
+		}
+		return el.closest( 'a,button,form,input,select,textarea,[role="button"]' ) || el;
+	}
+
+	function showPickForm( el, doc ) {
+		var form = pickerHost.querySelector( '.mk-picker-form' );
+		var selector = selectorFor( el, doc );
+		var text = ( el.innerText || el.value || '' ).replace( /\s+/g, ' ' ).trim().slice( 0, 120 );
+		var href = el.tagName === 'A' ? el.href : '';
+		form.setAttribute( 'data-selector', selector );
+		form.setAttribute( 'data-text', text );
+		form.setAttribute( 'data-href', href );
+		form.innerHTML =
+			'<label><span>' + esc( __( 'Name', 'mykavo' ) ) + '</span><input name="name" type="text" maxlength="100" value="' + esc( text || el.tagName.toLowerCase() ) + '"></label>' +
+			'<p class="mk-fine"><code>' + esc( selector ) + '</code>' + ( text ? ' · "' + esc( text ) + '"' : '' ) + '</p>' +
+			'<div><button type="button" class="mk-btn mk-btn-sm mk-btn-dark" data-pick="save">' + esc( __( 'Watch this element', 'mykavo' ) ) + '</button> ' +
+			'<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-pick="again">' + esc( __( 'Pick another', 'mykavo' ) ) + '</button></div>';
+		form.hidden = false;
+		form.querySelector( 'input' ).focus();
+	}
+
+	/** A short CSS selector that finds exactly this element on the page. */
+	function selectorFor( el, doc ) {
+		var cssEscape = window.CSS && window.CSS.escape ? window.CSS.escape : function ( s ) {
+			return String( s ).replace( /[^a-zA-Z0-9_-]/g, '\\$&' );
+		};
+		var unique = function ( sel ) {
+			try {
+				return doc.querySelectorAll( sel ).length === 1;
+			} catch ( err ) {
+				return false;
+			}
+		};
+		if ( el.id && ! /\d{3,}/.test( el.id ) && unique( '#' + cssEscape( el.id ) ) ) {
+			return '#' + cssEscape( el.id );
+		}
+		var attrs = [ 'data-testid', 'data-test', 'name', 'aria-label' ];
+		for ( var i = 0; i < attrs.length; i++ ) {
+			var v = el.getAttribute( attrs[ i ] );
+			if ( v ) {
+				var sel = el.tagName.toLowerCase() + '[' + attrs[ i ] + '="' + v.replace( /"/g, '\\"' ) + '"]';
+				if ( unique( sel ) ) {
+					return sel;
+				}
+			}
+		}
+		var parts = [];
+		var node = el;
+		while ( node && node.nodeType === 1 && node !== doc.body && parts.length < 6 ) {
+			var part = node.tagName.toLowerCase();
+			if ( node.id && ! /\d{3,}/.test( node.id ) ) {
+				parts.unshift( '#' + cssEscape( node.id ) );
+				break;
+			}
+			var cls = Array.prototype.slice.call( node.classList ).filter( function ( c ) {
+				return c !== 'mykavo-pick-hover' && ! /\d{3,}|^is-|^has-|active|hover|focus/.test( c );
+			} ).slice( 0, 2 );
+			if ( cls.length ) {
+				part += '.' + cls.map( cssEscape ).join( '.' );
+			}
+			var parent = node.parentElement;
+			if ( parent ) {
+				var same = Array.prototype.slice.call( parent.children ).filter( function ( c ) {
+					return c.tagName === node.tagName;
+				} );
+				if ( same.length > 1 ) {
+					part += ':nth-of-type(' + ( same.indexOf( node ) + 1 ) + ')';
+				}
+			}
+			parts.unshift( part );
+			if ( unique( parts.join( ' > ' ) ) ) {
+				break;
+			}
+			node = parent;
+		}
+		return parts.join( ' > ' );
+	}
+
+	function savePicked( url, name, selector, text, href ) {
+		if ( ! name ) {
+			toast( __( 'Give the element a name first.', 'mykavo' ) );
+			return;
+		}
+		api( '/elements', { method: 'POST', data: { url: url, selector: selector, name: name, text: text || '', href: href || '' } } )
+			.then( function ( res ) {
+				if ( res && res.allowed === false ) {
+					toast( res.message || lockedText( 'pro', __( 'Watching more elements', 'mykavo' ) ) );
+					return;
+				}
+				closePicker();
+				toast( sprintf( /* translators: %s: element name. */ __( 'MyKavo now watches "%s". It alerts you if it disappears or changes.', 'mykavo' ), name ) );
+				state.pages = null;
+				loadPages();
+			} )
+			.catch( function ( err ) {
+				toast( errorMessage( err ) );
+			} );
+	}
+
+	function closePicker() {
+		if ( pickerHost ) {
+			pickerHost.remove();
+			pickerHost = null;
+		}
+	}
+
+	/* ---------------------------------------------------- client reports -- */
+
+	function reportsView() {
+		var r = state.reports;
+		if ( state.reportsError && ! r ) {
+			return errorBlock( state.reportsError, 'retry-reports' );
+		}
+		if ( ! r ) {
+			return loadingBlock( 260 );
+		}
+		if ( ! r.allowed ) {
+			return '<section class="mk-card mk-card-pad">' + upsell( lockedText( 'agency', __( 'Monthly client reports under your own brand', 'mykavo' ) ) ) + '</section>';
+		}
+		var b = r.branding || {};
+		var draft = state.brandDraft || { logoUrl: b.logoUrl || '', color: b.color || '#FFD400' };
+		var list = r.reports.length
+			? '<ul class="mk-list">' + r.reports.map( function ( rep ) {
+				var s = rep.summary || {};
+				var bits = [];
+				if ( s.updates !== undefined ) {
+					bits.push( sprintf( _n( '%d update', '%d updates', s.updates, 'mykavo' ), s.updates ) );
+				}
+				if ( s.rollbacks ) {
+					bits.push( sprintf( _n( '%d rollback', '%d rollbacks', s.rollbacks, 'mykavo' ), s.rollbacks ) );
+				}
+				if ( s.uptimePermille !== undefined ) {
+					bits.push( sprintf( /* translators: %s: uptime percentage. */ __( '%s%% uptime', 'mykavo' ), ( s.uptimePermille / 10 ).toFixed( 1 ) ) );
+				}
+				if ( s.changesCaught !== undefined ) {
+					bits.push( sprintf( _n( '%d change caught', '%d changes caught', s.changesCaught, 'mykavo' ), s.changesCaught ) );
+				}
+				if ( s.aiVisits !== undefined ) {
+					bits.push( sprintf( _n( '%d AI crawler visit', '%d AI crawler visits', s.aiVisits, 'mykavo' ), s.aiVisits ) );
+				}
+				if ( s.sslDaysLeft !== undefined ) {
+					bits.push( sprintf( _n( 'SSL: %d day left', 'SSL: %d days left', s.sslDaysLeft, 'mykavo' ), s.sslDaysLeft ) );
+				}
+				return '<li><div class="mk-row mk-report-row" style="cursor:default">' + icon( 'file', 'mk-row-chevron' ) + '<span class="mk-row-main"><span class="mk-row-title">' + esc( rep.month ) + '</span><span class="mk-row-meta">' + bits.map( function ( x ) {
+					return '<span>' + esc( x ) + '</span>';
+				} ).join( '' ) + '</span></span>' +
+					( safeUrl( rep.url ) ? '<a class="mk-btn mk-btn-sm mk-btn-soft" href="' + esc( safeUrl( rep.url ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Open', 'mykavo' ) ) + '</a>' : '' ) +
+					( safeUrl( rep.pdfUrl ) ? '<a class="mk-btn mk-btn-sm mk-btn-dark" href="' + esc( safeUrl( rep.pdfUrl ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Download PDF', 'mykavo' ) ) + '</a>' : '' ) +
+					'</div></li>';
+			} ).join( '' ) + '</ul>'
+			: '<div class="mk-empty"><span>' + esc( __( 'The first report appears at the start of next month.', 'mykavo' ) ) + '</span></div>';
+		var brand = READONLY ? '' :
+			'<section class="mk-card mk-card-pad"><h3 class="mk-card-title">' + esc( __( 'Your brand on the reports', 'mykavo' ) ) + '</h3>' +
+			'<form class="mk-brand-form" data-form="branding">' +
+			'<label><span>' + esc( __( 'Logo address (PNG or SVG)', 'mykavo' ) ) + '</span><input name="logoUrl" type="url" data-key="brand-logo" value="' + esc( draft.logoUrl ) + '" placeholder="https://"></label>' +
+			'<label><span>' + esc( __( 'Brand colour', 'mykavo' ) ) + '</span><input name="color" type="color" data-key="brand-color" value="' + esc( draft.color || '#FFD400' ) + '"></label>' +
+			'<button type="submit" class="mk-btn mk-btn-dark mk-btn-sm"' + ( state.busy === 'branding' ? ' disabled' : '' ) + '>' + esc( __( 'Save', 'mykavo' ) ) + '</button></form></section>';
+		return '<div class="mk-grid"><section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Monthly client reports', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Updates, rollbacks, uptime, SSL, changes caught and AI crawler visits, ready to send to your client.', 'mykavo' ) ) + '</p></div></div>' + list + '</section>' + brand + '</div>';
+	}
+
+	/** Load what the 1.4.0 cards need for the current tab. */
+	function loadExtras() {
+		if ( state.tab === 'overview' || state.tab === 'pages' ) {
+			if ( ! READONLY && ! state.suggestions ) {
+				loadInto( 'suggestions', '/suggestions' );
+			}
+		}
+		if ( state.tab === 'updates' ) {
+			if ( ! READONLY && ! state.safe ) {
+				loadInto( 'safe', '/safe-update' );
+			}
+			if ( ! state.snaps ) {
+				loadInto( 'snaps', '/snapshots' );
+			}
+			if ( ! state.forms ) {
+				loadInto( 'forms', '/forms' );
+			}
+		}
+		if ( state.tab === 'bots' ) {
+			if ( ! state.llms ) {
+				loadInto( 'llms', '/llms' );
+			}
+			if ( ! state.redirects ) {
+				loadInto( 'redirects', '/redirects' );
+			}
+		}
+		if ( state.tab === 'reports' && ! state.reports && ! state.reportsError ) {
+			loadInto( 'reports', '/reports' );
+		}
+	}
+
+	/** Clicks on the 1.4.0 controls. Returns true when handled. */
+	function onClickExtra( act, el ) {
+		switch ( act ) {
+			case 'copy':
+				if ( navigator.clipboard ) {
+					navigator.clipboard.writeText( el.getAttribute( 'data-copy' ) || '' ).then( function () {
+						toast( __( 'Copied.', 'mykavo' ) );
+					} );
+				}
+				return true;
+			case 'dismiss-alert':
+				send( '/alerts/dismiss', { id: el.getAttribute( 'data-id' ) || 'all' }, 'alerts', 'alerts' );
+				return true;
+			case 'safe-start':
+				startSafeUpdate();
+				return true;
+			case 'safe-backup':
+				state.safe.backupFirst = el.checked;
+				return true;
+			case 'safe-baseline':
+				state.safeBaseline = el.checked;
+				return true;
+			case 'safe-skip-backup':
+				state.safeRun.skipBackup = true;
+				return true;
+			case 'safe-close':
+				state.safeRun = null;
+				render();
+				return true;
+			case 'robots-block':
+				setBlocked( el.getAttribute( 'data-agent' ), el.getAttribute( 'data-block' ) === '1' );
+				return true;
+			case 'robots-preset':
+				saveBlocked( state.robots.preset || [], __( 'robots.txt now asks AI training crawlers to stay away. AI search is still allowed.', 'mykavo' ) );
+				return true;
+			case 'robots-allow-all':
+				saveBlocked( [], __( 'Every AI crawler is allowed.', 'mykavo' ) );
+				return true;
+			case 'toggle-llms':
+				send( '/llms', { enabled: ! state.llms.enabled }, 'llms', 'llms' );
+				return true;
+			case 'redirect-suggest':
+				send( '/redirects/suggest', {
+					paths: ( ( state.bots && state.bots.missing ) || [] ).map( function ( m ) {
+						return m.path.split( '?' )[ 0 ];
+					} ),
+				}, 'redirectSuggest', 'suggest', function ( res ) {
+					if ( ! res.allowed ) {
+						toast( lockedText( 'starter', __( 'Suggested target pages', 'mykavo' ) ) );
+					}
+				} );
+				return true;
+			case 'redirect-remove':
+				send( '/redirects', { from: el.getAttribute( 'data-from' ) }, 'redirects', 'redirect', null, 'DELETE' );
+				return true;
+			case 'toggle-vuln-auto':
+				send( '/plugin-health/vuln-autoupdate', { enabled: ! ( state.vulnAuto !== undefined ? state.vulnAuto : state.health && state.health.vulnAutoUpdate ) }, null, 'vuln', function ( res ) {
+					state.vulnAuto = !! res.enabled;
+				} );
+				return true;
+			case 'toggle-mail':
+				send( '/forms/mail', { enabled: ! state.forms.mail.enabled }, 'forms', 'mail' );
+				return true;
+			case 'mail-test':
+				send( '/forms/mail/test', {}, 'forms', 'mail-test', function ( res ) {
+					toast( res.mail.last && res.mail.last.ok ? __( 'Test email sent.', 'mykavo' ) : __( 'WordPress could not send the test email.', 'mykavo' ) );
+				} );
+				return true;
+			case 'forms-sync':
+				send( '/forms/sync', {}, 'forms', 'forms' );
+				return true;
+			case 'suggest-toggle':
+				state.sugPick[ el.getAttribute( 'data-url' ) ] = el.checked;
+				render();
+				return true;
+			case 'suggest-add':
+				var urls = state.suggestions.pages.filter( function ( p ) {
+					return state.sugPick[ p.url ] !== false;
+				} ).map( function ( p ) {
+					return p.url;
+				} );
+				var o = state.overview;
+				var limit = o && o.workspace.plan.limits ? o.workspace.plan.limits.pagesPerWebsite : null;
+				if ( limit ) {
+					urls = urls.slice( 0, Math.max( 0, limit - o.stats.monitoredPages ) );
+				}
+				if ( urls.length ) {
+					addPages( urls );
+					state.suggestions = null;
+				}
+				return true;
+			case 'pick-element':
+				openPicker( el.getAttribute( 'data-url' ) );
+				return true;
+			case 'retry-reports':
+				state.reportsError = null;
+				loadInto( 'reports', '/reports' );
+				return true;
+		}
+		return false;
+	}
+
 	function render() {
 		var focusKey = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute( 'data-key' ) : null;
 
@@ -2353,7 +3475,11 @@
 					? scansView()
 					: state.tab === 'pages'
 						? pagesView()
-						: overviewView();
+						: state.tab === 'plan'
+							? planView()
+							: state.tab === 'reports'
+								? reportsView()
+								: overviewView();
 		root.innerHTML = '<div class="mk-shell">' + header() + '</div>' + pageHead() + banner() + '<div role="tabpanel" class="mk-panel">' + view + '</div>' + footer();
 
 		if ( focusKey ) {
@@ -2450,6 +3576,11 @@
 	}
 
 	function drawerActions( c ) {
+		if ( READONLY ) {
+			var link = safeUrl( c.dashboardUrl );
+			return '<span class="mk-fine">' + esc( __( 'View only: ask an administrator to approve or fix changes.', 'mykavo' ) ) + '</span>' +
+				( link ? '<a class="mk-link" style="margin-left:auto" href="' + esc( link ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' );
+		}
 		var busy = state.drawer.busy;
 		var btn = function ( action, label, cls ) {
 			var loading = busy === action;
@@ -2556,6 +3687,14 @@
 			return;
 		}
 		var act = el.getAttribute( 'data-act' );
+		if ( READONLY && MANAGE_ACTS[ act ] ) {
+			e.preventDefault();
+			toast( __( 'Your account can view MyKavo but not change anything. Ask an administrator.', 'mykavo' ) );
+			return;
+		}
+		if ( onClickExtra( act, el ) ) {
+			return;
+		}
 		switch ( act ) {
 			case 'rollback':
 				rollback( el );
@@ -2746,8 +3885,36 @@
 		if ( e.target && e.target.id === 'mk-add-url' ) {
 			state.addUrl = e.target.value;
 		}
+		if ( e.target && e.target.getAttribute && e.target.getAttribute( 'data-redirect' ) ) {
+			state.redirectDraft[ e.target.getAttribute( 'data-redirect' ) ] = e.target.value;
+		}
 	} );
 	root.addEventListener( 'submit', function ( e ) {
+		var redirect = e.target.closest && e.target.closest( '[data-form="redirect"]' );
+		if ( redirect ) {
+			e.preventDefault();
+			var from = redirect.getAttribute( 'data-from' );
+			var to = redirect.querySelector( 'input' ).value.trim();
+			if ( ! to ) {
+				toast( __( 'Enter the page to redirect to.', 'mykavo' ) );
+				return;
+			}
+			send( '/redirects', { from: from, to: to }, 'redirects', 'redirect', function () {
+				delete state.redirectDraft[ from ];
+				toast( __( 'Redirect created. Crawlers and visitors asking for the old address now land on the right page.', 'mykavo' ) );
+			} );
+			return;
+		}
+		var brandForm = e.target.closest && e.target.closest( '[data-form="branding"]' );
+		if ( brandForm ) {
+			e.preventDefault();
+			state.brandDraft = { logoUrl: brandForm.querySelector( 'input[name="logoUrl"]' ).value.trim(), color: brandForm.querySelector( 'input[name="color"]' ).value };
+			send( '/reports/branding', { logoUrl: state.brandDraft.logoUrl || null, color: state.brandDraft.color || null }, 'reports', 'branding', function () {
+				state.brandDraft = null;
+				toast( __( 'Report branding saved.', 'mykavo' ) );
+			} );
+			return;
+		}
 		var win = e.target.closest && e.target.closest( '[data-form="window"]' );
 		if ( win ) {
 			e.preventDefault();
@@ -2814,6 +3981,8 @@
 		loadUpdates();
 		loadBots();
 		loadFeatures( false );
+		loadInto( 'alerts', '/alerts' );
+		loadExtras();
 		if ( cfg.woo && cfg.woo.pages && cfg.woo.pages.length ) {
 			loadPages();
 		}

@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   const now = new Date();
 
   const vitalsSince = new Date(now.getTime() - VITALS_DAYS * DAY_MS);
-  const [website, openChanges, latestHealth, uptime24h, uptime7d, plan, responseSeries, updateEvents] = await Promise.all([
+  const [website, openChanges, latestHealth, uptime24h, uptime7d, plan, responseSeries, updateEvents, latestAudit] = await Promise.all([
     prisma.website.findUnique({
       where: { id: websiteId },
       include: {
@@ -92,6 +92,12 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       take: 12,
     }),
+    // Plugin 1.4.0: the Site audit card links to this website's latest audit.
+    prisma.siteAudit.findFirst({
+      where: { websiteId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, status: true, healthScore: true, errorCount: true, warningCount: true, completedAt: true },
+    }),
   ]);
   if (!website) return unauthorizedSite();
 
@@ -115,7 +121,29 @@ export async function GET(request: Request) {
         lastScanAt: website.lastScanAt,
         nextScanAt: website.nextScanAt,
       },
-      workspace: { name: ctx.workspaceName, plan: { id: plan.id, name: plan.name } },
+      workspace: {
+        name: ctx.workspaceName,
+        plan: {
+          id: plan.id,
+          name: plan.name,
+          // Plugin 1.4.0: page limit for suggested pages, and whether AI
+          // assistants (MCP) are included. Infinity is sent as null.
+          limits: {
+            pagesPerWebsite: Number.isFinite(plan.limits.pagesPerWebsite) ? plan.limits.pagesPerWebsite : null,
+          },
+          includes: { aiAssistants: plan.limits.aiAssistants },
+        },
+      },
+      siteAudit: latestAudit
+        ? {
+            id: latestAudit.id,
+            status: latestAudit.status,
+            healthScore: latestAudit.healthScore,
+            errors: latestAudit.errorCount,
+            warnings: latestAudit.warningCount,
+            completedAt: latestAudit.completedAt,
+          }
+        : null,
       stats: {
         monitoredPages: website.monitoredPages.length,
         baselinedPages: website.monitoredPages.filter((p) => p.baselines.length > 0).length,
@@ -156,6 +184,9 @@ export async function GET(request: Request) {
         changes: `${base}/dashboard/changes?website=${website.id}`,
         pages: `${base}/dashboard/websites/${website.id}/pages`,
         notifications: `${base}/dashboard/notifications`,
+        siteAudit: latestAudit ? `${base}/dashboard/site-audit/${latestAudit.id}` : `${base}/dashboard/site-audit`,
+        aiAssistants: `${base}/dashboard/ai-assistants`,
+        mcpEndpoint: `${base}/api/mcp`,
         // In the Shopify app, plans are sold through Shopify's own plan page
         // (an App Store requirement); null hides every plan link there until
         // Shopify billing is configured.

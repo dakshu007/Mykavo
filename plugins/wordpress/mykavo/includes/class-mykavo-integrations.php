@@ -53,6 +53,14 @@ final class MyKavo_Integrations {
 			return $meta;
 		}
 
+		// How this exact update went on other MyKavo sites (cached, see MyKavo_Risk).
+		if ( class_exists( 'MyKavo_Risk' ) ) {
+			$risk = MyKavo_Risk::line( (string) $file );
+			if ( '' !== $risk ) {
+				$meta[] = '<span class="mykavo-risk-score">' . esc_html( $risk ) . '</span>';
+			}
+		}
+
 		$name = isset( $data['Name'] ) ? (string) $data['Name'] : '';
 		$last = '' !== $name ? MyKavo_Updates::last_update_of( 'plugin', $name ) : null;
 

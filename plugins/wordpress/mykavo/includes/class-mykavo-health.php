@@ -110,10 +110,11 @@ final class MyKavo_Health {
 			);
 		}
 		$stored = array(
-			'allowed' => isset( $result['allowed'] ) && true === $result['allowed'],
-			'flagged' => array_slice( $flagged, 0, self::MAX ),
-			'checked' => (int) $count,
-			'at'      => time(),
+			'allowed'         => isset( $result['allowed'] ) && true === $result['allowed'],
+			'flagged'         => array_slice( $flagged, 0, self::MAX ),
+			'checked'         => (int) $count,
+			'at'              => time(),
+			'vulnerabilities' => self::vulnerabilities( isset( $result['vulnerabilities'] ) ? $result['vulnerabilities'] : null ),
 		);
 		if ( false === get_option( self::OPTION, false ) ) {
 			add_option( self::OPTION, $stored, '', false );
@@ -121,6 +122,66 @@ final class MyKavo_Health {
 			update_option( self::OPTION, $stored, false );
 		}
 		return $stored;
+	}
+
+	/**
+	 * Known security issues in installed plugins, as MyKavo reports them:
+	 * on every plan a count; from Starter the details and the fixed version.
+	 *
+	 * @param mixed $raw The vulnerabilities part of the answer.
+	 * @return array{count:int,items:array|null}
+	 */
+	private static function vulnerabilities( $raw ) {
+		$raw   = is_array( $raw ) ? $raw : array();
+		$items = null;
+		if ( isset( $raw['items'] ) && is_array( $raw['items'] ) ) {
+			$items = array();
+			foreach ( $raw['items'] as $row ) {
+				if ( ! is_array( $row ) || empty( $row['slug'] ) ) {
+					continue;
+				}
+				$items[] = array(
+					'slug'     => sanitize_key( (string) $row['slug'] ),
+					'name'     => isset( $row['name'] ) ? sanitize_text_field( (string) $row['name'] ) : '',
+					'title'    => isset( $row['title'] ) ? sanitize_text_field( (string) $row['title'] ) : '',
+					'severity' => isset( $row['severity'] ) && in_array( $row['severity'], array( 'critical', 'high', 'medium', 'low' ), true ) ? $row['severity'] : 'medium',
+					'fixedIn'  => isset( $row['fixedIn'] ) && preg_match( '/^[0-9][0-9A-Za-z._-]{0,39}$/', (string) $row['fixedIn'] ) ? (string) $row['fixedIn'] : null,
+					'cve'      => isset( $row['cve'] ) && preg_match( '/^CVE-\d{4}-\d{4,7}$/', (string) $row['cve'] ) ? (string) $row['cve'] : null,
+					'url'      => isset( $row['url'] ) ? esc_url_raw( (string) $row['url'] ) : '',
+				);
+			}
+		}
+		return array(
+			'count' => isset( $raw['count'] ) ? max( 0, (int) $raw['count'] ) : ( is_array( $items ) ? count( $items ) : 0 ),
+			'items' => $items,
+		);
+	}
+
+	/**
+	 * Whether vulnerable plugins are updated automatically (Pro and Agency).
+	 *
+	 * @return bool
+	 */
+	public static function vuln_autoupdate() {
+		$settings = get_option( 'mykavo_settings', array() );
+		return is_array( $settings ) && ! empty( $settings['vuln_autoupdate'] );
+	}
+
+	/**
+	 * Switch automatic updates for vulnerable plugins on or off.
+	 *
+	 * @param bool $on New state.
+	 * @return void
+	 */
+	public static function set_vuln_autoupdate( $on ) {
+		$settings                    = get_option( 'mykavo_settings', array() );
+		$settings                    = is_array( $settings ) ? $settings : array();
+		$settings['vuln_autoupdate'] = (bool) $on;
+		if ( false === get_option( 'mykavo_settings', false ) ) {
+			add_option( 'mykavo_settings', $settings, '', false );
+		} else {
+			update_option( 'mykavo_settings', $settings, false );
+		}
 	}
 
 	/**

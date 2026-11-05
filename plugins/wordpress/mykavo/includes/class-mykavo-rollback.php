@@ -18,9 +18,11 @@ defined( 'ABSPATH' ) || exit;
  *   critical change), the plugins that batch updated are rolled back.
  *   MyKavo makes the decision; this site carries it out.
  *
- * Only plugins hosted on WordPress.org can be rolled back, because that is
- * the one place every earlier version can be downloaded from. MyKavo never
- * rolls itself back, and a rollback is never rolled back automatically.
+ * Plugins hosted on WordPress.org are reinstalled from there. Since 1.4.0
+ * every plugin and theme update also leaves a snapshot (a zip of the folder
+ * as it was, see MyKavo_Snapshots), so premium plugins and themes can be
+ * rolled back too, for seven days. MyKavo never rolls itself back, and a
+ * rollback is never rolled back automatically.
  * Every rollback is reported to MyKavo, so it checks the site again, and
  * written to the local update log.
  */
@@ -41,6 +43,9 @@ final class MyKavo_Rollback {
 	 * @return string
 	 */
 	public static function blocker( array $item, $for_user = true ) {
+		if ( isset( $item['type'] ) && 'theme' === $item['type'] ) {
+			return self::theme_blocker( $item, $for_user );
+		}
 		if ( ! isset( $item['type'] ) || 'plugin' !== $item['type'] ) {
 			return 'type';
 		}
@@ -67,7 +72,7 @@ final class MyKavo_Rollback {
 			// Already rolled back, or updated again since: this entry is history.
 			return 'version';
 		}
-		if ( ! self::is_wporg( $item, $file ) ) {
+		if ( ! self::is_wporg( $item, $file ) && ! self::snapshot_for( $item ) ) {
 			return 'not-wporg';
 		}
 		if ( ! wp_is_file_mod_allowed( 'mykavo_rollback' ) ) {
@@ -77,6 +82,67 @@ final class MyKavo_Rollback {
 			return 'capability';
 		}
 		return '';
+	}
+
+	/**
+	 * Why a theme update cannot be rolled back, or ''. Themes roll back from
+	 * their snapshot only.
+	 *
+	 * @param array $item     Log item.
+	 * @param bool  $for_user Also require the current user to be allowed to update themes.
+	 * @return string
+	 */
+	private static function theme_blocker( array $item, $for_user ) {
+		if ( ! empty( $item['action'] ) && 'update' !== $item['action'] ) {
+			return 'action';
+		}
+		$from = isset( $item['from'] ) ? (string) $item['from'] : '';
+		$slug = isset( $item['file'] ) ? (string) $item['file'] : '';
+		if ( '' === $from || ! self::is_version( $from ) ) {
+			return 'from';
+		}
+		if ( '' === $slug ) {
+			return 'missing';
+		}
+		$theme = wp_get_theme( $slug );
+		if ( ! $theme->exists() ) {
+			return 'missing';
+		}
+		$installed = (string) $theme->get( 'Version' );
+		if ( $installed === $from || ( isset( $item['to'] ) && '' !== $item['to'] && $installed !== $item['to'] ) ) {
+			return 'version';
+		}
+		if ( ! self::snapshot_for( $item ) ) {
+			return 'no-snapshot';
+		}
+		if ( ! wp_is_file_mod_allowed( 'mykavo_rollback' ) ) {
+			return 'file-mods';
+		}
+		if ( $for_user && ! current_user_can( 'update_themes' ) ) {
+			return 'capability';
+		}
+		return '';
+	}
+
+	/**
+	 * The snapshot taken just before this item's update, if it is still kept.
+	 *
+	 * @param array $item Log item.
+	 * @return array|null
+	 */
+	public static function snapshot_for( array $item ) {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-snapshots.php';
+		$type = isset( $item['type'] ) ? (string) $item['type'] : '';
+		$from = isset( $item['from'] ) ? (string) $item['from'] : '';
+		if ( 'theme' === $type ) {
+			$slug = isset( $item['file'] ) ? (string) $item['file'] : '';
+		} else {
+			$slug = self::slug_of( self::file_for( $item ) );
+		}
+		if ( '' === $slug || '' === $from ) {
+			return null;
+		}
+		return MyKavo_Snapshots::find( $type, $slug, $from );
 	}
 
 	/**
@@ -90,12 +156,23 @@ final class MyKavo_Rollback {
 		$seen = array();
 		foreach ( $log as $i => $entry ) {
 			foreach ( isset( $entry['items'] ) ? (array) $entry['items'] : array() as $j => $item ) {
+				if ( is_array( $item ) && isset( $item['type'] ) && 'theme' === $item['type'] && ( empty( $item['action'] ) || 'update' === $item['action'] ) ) {
+					$slug = isset( $item['file'] ) ? (string) $item['file'] : '';
+
+					$log[ $i ]['items'][ $j ]['canRollback'] = '' !== $slug && ! isset( $seen[ 'theme:' . $slug ] ) && '' === self::blocker( $item );
+					$log[ $i ]['items'][ $j ]['fromSnapshot'] = true;
+					if ( '' !== $slug ) {
+						$seen[ 'theme:' . $slug ] = true;
+					}
+					continue;
+				}
 				if ( is_array( $item ) && isset( $item['type'] ) && 'plugin' === $item['type'] && ( empty( $item['action'] ) || 'update' === $item['action'] ) ) {
 					$file = self::file_for( $item );
 
 					$log[ $i ]['items'][ $j ]['file'] = $file;
 					// Only a plugin's latest update can be undone; older ones are history.
 					$log[ $i ]['items'][ $j ]['canRollback'] = '' !== $file && ! isset( $seen[ $file ] ) && '' === self::blocker( $item );
+					$log[ $i ]['items'][ $j ]['fromSnapshot'] = '' !== $file && ! self::is_wporg( $item, $file );
 					if ( '' !== $file ) {
 						$seen[ $file ] = true;
 					}
@@ -151,6 +228,9 @@ final class MyKavo_Rollback {
 	 * @return bool
 	 */
 	public static function is_wporg( array $item, $file ) {
+		if ( '' === (string) $file ) {
+			return false;
+		}
 		return ! empty( $item['wporg'] ) || MyKavo_Updates::is_wporg( $file );
 	}
 
@@ -180,13 +260,17 @@ final class MyKavo_Rollback {
 		}
 		$target = null;
 		foreach ( isset( $entry['items'] ) ? (array) $entry['items'] : array() as $item ) {
-			if ( is_array( $item ) && self::file_for( $item ) === $file ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+			$is_theme = isset( $item['type'] ) && 'theme' === $item['type'];
+			if ( ( $is_theme && isset( $item['file'] ) && $item['file'] === $file ) || ( ! $is_theme && self::file_for( $item ) === $file ) ) {
 				$target = $item;
 				break;
 			}
 		}
 		if ( null === $target ) {
-			return new WP_Error( 'mykavo_rollback', __( 'That plugin is not part of this update.', 'mykavo' ), array( 'status' => 404 ) );
+			return new WP_Error( 'mykavo_rollback', __( 'That plugin or theme is not part of this update.', 'mykavo' ), array( 'status' => 404 ) );
 		}
 		$blocker = self::blocker( $target );
 		if ( '' !== $blocker ) {
@@ -206,12 +290,14 @@ final class MyKavo_Rollback {
 			case 'version':
 				return __( 'This plugin has changed version since that update, so this rollback no longer applies.', 'mykavo' );
 			case 'not-wporg':
+			case 'no-snapshot':
+				return __( 'There is no saved copy of the previous version: MyKavo keeps one for seven days after each update.', 'mykavo' );
 			case 'single-file':
-				return __( 'Only plugins from WordPress.org can be rolled back here.', 'mykavo' );
+				return __( 'Plugins made of a single file cannot be rolled back here.', 'mykavo' );
 			case 'file-mods':
 				return __( 'This site does not allow plugins to be installed or updated from wp-admin (DISALLOW_FILE_MODS).', 'mykavo' );
 			case 'capability':
-				return __( 'You do not have permission to update plugins on this site.', 'mykavo' );
+				return __( 'You do not have permission to update plugins and themes on this site.', 'mykavo' );
 			case 'self':
 				return __( 'MyKavo does not roll itself back.', 'mykavo' );
 			default:
@@ -361,7 +447,7 @@ final class MyKavo_Rollback {
 	 * @param string $trigger 'manual' or 'auto'.
 	 * @return array|WP_Error { rolledBack: string[], failed: array<string,string> }
 	 */
-	private static function run( array $entry, array $items, $trigger ) {
+	public static function run( array $entry, array $items, $trigger ) {
 		if ( ! self::lock() ) {
 			return new WP_Error( 'mykavo_rollback_busy', __( 'A rollback is already running on this site. Try again in a minute.', 'mykavo' ), array( 'status' => 409 ) );
 		}
@@ -371,21 +457,27 @@ final class MyKavo_Rollback {
 		$failed = array();
 		$logged = array();
 		foreach ( $items as $item ) {
-			$file = self::file_for( $item );
 			// Checked again: WordPress's update data may say otherwise by now.
 			if ( '' !== self::blocker( $item, false ) ) {
 				$failed[ (string) $item['name'] ] = __( 'This update cannot be rolled back.', 'mykavo' );
 				continue;
 			}
-			$bad    = isset( $item['to'] ) ? (string) $item['to'] : '';
-			$result = self::install( $file, self::slug_of( $file ), (string) $item['from'] );
+			$bad = isset( $item['to'] ) ? (string) $item['to'] : '';
+			if ( 'theme' === $item['type'] ) {
+				$file   = (string) $item['file'];
+				$snap   = self::snapshot_for( $item );
+				$result = $snap ? MyKavo_Snapshots::restore( $snap ) : new WP_Error( 'mykavo_rollback', self::blocker_message( 'no-snapshot' ) );
+			} else {
+				$file   = self::file_for( $item );
+				$result = self::install( $file, self::slug_of( $file ), (string) $item['from'], $item );
+			}
 			if ( is_wp_error( $result ) ) {
 				$failed[ (string) $item['name'] ] = $result->get_error_message();
 				continue;
 			}
 			$done[]   = (string) $item['name'];
-			$logged[] = MyKavo_Updates::item( 'plugin', (string) $item['name'], $bad, (string) $item['from'], 'rollback', $file );
-			if ( '' !== $bad ) {
+			$logged[] = MyKavo_Updates::item( $item['type'], (string) $item['name'], $bad, (string) $item['from'], 'rollback', $file );
+			if ( '' !== $bad && 'plugin' === $item['type'] ) {
 				MyKavo_Auto_Updates::hold( $file, $bad );
 			}
 		}
@@ -416,18 +508,81 @@ final class MyKavo_Rollback {
 	}
 
 	/**
+	 * Put one plugin or theme back to the version before its update, without
+	 * logging (Safe Update All logs its whole batch itself).
+	 *
+	 * @param array $item Log item.
+	 * @return true|WP_Error
+	 */
+	public static function restore_item( array $item ) {
+		$blocker = self::blocker( $item, false );
+		if ( '' !== $blocker ) {
+			return new WP_Error( 'mykavo_rollback', self::blocker_message( $blocker ) );
+		}
+		if ( 'theme' === $item['type'] ) {
+			$snap = self::snapshot_for( $item );
+			return $snap ? MyKavo_Snapshots::restore( $snap ) : new WP_Error( 'mykavo_rollback', self::blocker_message( 'no-snapshot' ) );
+		}
+		$file = self::file_for( $item );
+		return self::install( $file, self::slug_of( $file ), (string) $item['from'], $item );
+	}
+
+	/**
 	 * Reinstall one version of a WordPress.org plugin over the installed one,
 	 * keeping it active if it was.
 	 *
 	 * @param string $file    Plugin basename.
 	 * @param string $slug    WordPress.org slug.
 	 * @param string $version Version to install.
+	 * @param array  $item    The log item (to find its snapshot).
 	 * @return true|WP_Error
 	 */
-	private static function install( $file, $slug, $version ) {
+	private static function install( $file, $slug, $version, array $item = array() ) {
 		if ( '' === $file || '' === $slug || ! self::is_version( $version ) ) {
 			return new WP_Error( 'mykavo_rollback', __( 'This update cannot be rolled back.', 'mykavo' ) );
 		}
+		$snap = $item ? self::snapshot_for( $item ) : null;
+		if ( ! self::is_wporg( $item, $file ) ) {
+			// Premium and other non-WordPress.org plugins: the snapshot is the only copy.
+			return $snap ? self::from_snapshot( $snap, $file, $version ) : new WP_Error( 'mykavo_rollback', self::blocker_message( 'no-snapshot' ) );
+		}
+		$result = self::from_wporg( $file, $slug, $version );
+		if ( is_wp_error( $result ) && $snap ) {
+			// WordPress.org no longer offers that version (or cannot be reached).
+			return self::from_snapshot( $snap, $file, $version );
+		}
+		return $result;
+	}
+
+	/**
+	 * Restore a plugin from its snapshot and check the version is back.
+	 *
+	 * @param array  $snap    Snapshot record.
+	 * @param string $file    Plugin basename.
+	 * @param string $version Version expected after the restore.
+	 * @return true|WP_Error
+	 */
+	private static function from_snapshot( array $snap, $file, $version ) {
+		$result = MyKavo_Snapshots::restore( $snap, $file );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$data = MyKavo_Updates::plugin_data( $file );
+		if ( ! $data || (string) $data['Version'] !== $version ) {
+			return new WP_Error( 'mykavo_rollback', __( 'The saved copy was put back, but WordPress does not see it where the plugin was. Check the Plugins screen.', 'mykavo' ) );
+		}
+		return true;
+	}
+
+	/**
+	 * Reinstall one version of a WordPress.org plugin.
+	 *
+	 * @param string $file    Plugin basename.
+	 * @param string $slug    WordPress.org slug.
+	 * @param string $version Version to install.
+	 * @return true|WP_Error
+	 */
+	private static function from_wporg( $file, $slug, $version ) {
 		$url = 'https://downloads.wordpress.org/plugin/' . rawurlencode( $slug ) . '.' . rawurlencode( $version ) . '.zip';
 
 		// Make sure WordPress.org still has that version before touching anything.

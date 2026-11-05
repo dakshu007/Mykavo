@@ -167,12 +167,33 @@ const JS_REPLACEMENTS = [
   // page as links.billing - bootstrap.js drops any other billing link - and
   // it opens in the whole admin window, not a new tab.
   [
-    `( o.workspace.plan.id === 'free'
-				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + icon( 'external' ) + '</a></p>'
-				: '' ) +`,
-    `( o.workspace.plan.id === 'free' && safeUrl( o.links.billing )
-				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_top">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + '</a></p>'
-				: '' ) +`,
+    `return url ? '<a class="mk-btn mk-btn-primary ' + ( cls || '' ) + '" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">'`,
+    `return url ? '<a class="mk-btn mk-btn-primary ' + ( cls || '' ) + '" href="' + esc( url ) + '" target="_top">'`,
+  ],
+  [`\n\t\tloadInto( 'alerts', '/alerts' );`, ``],
+  [
+    `__( 'Safe Updates compares your pages after each plugin, theme and WordPress update, and names the one that broke something.', 'mykavo' )`,
+    `__( 'MyKavo compares your pages after each theme change, and names the one that broke something.', 'mykavo' )`,
+  ],
+  [
+    `__( 'A plugin with a known security issue is updated as soon as the fixed version is out.', 'mykavo' )`,
+    `__( 'Known security issues are fixed as soon as a fix is out.', 'mykavo' )`,
+  ],
+  [`__( 'WordPress could not send the test email.', 'mykavo' )`, `__( 'The test email could not be sent.', 'mykavo' )`],
+  // 1.4.0: the Plan tab (WordPress feature list, external pricing link) and
+  // client reports are WordPress-only; so is picking an element in a frame
+  // (the storefront is another origin inside the Shopify admin).
+  [
+    `\n\t\tif ( state.overview && planAtLeast( 'agency' ) ) {\n\t\t\tlist.push( [ 'reports', __( 'Reports', 'mykavo' ), '' ] );\n\t\t}\n\t\tlist.push( [ 'plan', __( 'Plan', 'mykavo' ), '' ] );`,
+    ``,
+  ],
+  [
+    `( READONLY || ! url ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft mk-pick-btn"`,
+    `( true ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft mk-pick-btn"`,
+  ],
+  [
+    `'<button type="button" class="mk-link" data-act="tab" data-tab="plan">' + esc( planAtLeast( 'pro' ) ? __( 'Everything in your plan', 'mykavo' ) : __( 'See what Pro adds', 'mykavo' ) ) + '</button>' +`,
+    ``,
   ],
   // No pricing claims on the connect screen (it is a listing screenshot, and
   // App Store listing images may not show pricing).
@@ -279,6 +300,20 @@ const STUBS = {
   robotsCard: "function robotsCard() {\n\t\treturn '';\n\t}",
   historyCard: "function historyCard() {\n\t\treturn '';\n\t}",
   botsTile: "function botsTile() {\n\t\treturn '';\n\t}",
+  // 1.4.0: WordPress-only screens and cards.
+  planChip: "function planChip() {\n\t\treturn '';\n\t}",
+  planView: "function planView() {\n\t\treturn '';\n\t}",
+  alertsBanner: "function alertsBanner() {\n\t\treturn '';\n\t}",
+  safeUpdateCard: "function safeUpdateCard() {\n\t\treturn '';\n\t}",
+  snapshotsCard: "function snapshotsCard() {\n\t\treturn '';\n\t}",
+  mailCard: "function mailCard() {\n\t\treturn '';\n\t}",
+  vulnBlock: "function vulnBlock() {\n\t\treturn '';\n\t}",
+  llmsCard: "function llmsCard() {\n\t\treturn '';\n\t}",
+  missingCard: "function missingCard() {\n\t\treturn '';\n\t}",
+  suggestionsCard: "function suggestionsCard() {\n\t\treturn '';\n\t}",
+  reportsView: "function reportsView() {\n\t\treturn '';\n\t}",
+  loadExtras: "function loadExtras() {}",
+  mcpCard: "function mcpCard() {\n\t\treturn '';\n\t}",
 };
 
 function stubFunctions(source, stubs, label) {

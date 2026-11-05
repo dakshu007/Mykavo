@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class MyKavo_Bots {
 
-	const DB_VERSION   = '1';
+	const DB_VERSION   = '2';
 	const DB_OPTION    = 'mykavo_bots_db';
 	const CRON_HOOK    = 'mykavo_bots_daily';
 	const KEEP_DAYS    = 35;
@@ -185,16 +185,31 @@ final class MyKavo_Bots {
 		$path   = self::request_path();
 		$status = (int) http_response_code();
 		$errors = $status >= 400 ? 1 : 0;
-		$table  = self::table();
-		$sql    = $wpdb->prepare(
+
+		// The page is built: hand it to the crawler before any checking, so
+		// nothing below can slow the response down.
+		$finished = function_exists( 'fastcgi_finish_request' ) && fastcgi_finish_request();
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bot-verify.php';
+		$verdict    = MyKavo_Bot_Verify::state( $agent, $finished );
+		$verified   = 'verified' === $verdict ? 1 : 0;
+		$unverified = 'unverified' === $verdict ? 1 : 0;
+
+		$table = self::table();
+		$sql   = $wpdb->prepare(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-			"INSERT INTO {$table} (day, agent, path_hash, path, hits, errors) VALUES (%s, %s, %s, %s, 1, %d) ON DUPLICATE KEY UPDATE hits = hits + 1, errors = errors + %d",
+			"INSERT INTO {$table} (day, agent, path_hash, path, hits, errors, last_status, verified, unverified) VALUES (%s, %s, %s, %s, 1, %d, %d, %d, %d) ON DUPLICATE KEY UPDATE hits = hits + 1, errors = errors + %d, last_status = %d, verified = verified + %d, unverified = unverified + %d",
 			gmdate( 'Y-m-d' ),
 			$agent,
 			md5( $path ),
 			$path,
 			$errors,
-			$errors
+			$status,
+			$verified,
+			$unverified,
+			$errors,
+			$status,
+			$verified,
+			$unverified
 		);
 
 		$suppress = $wpdb->suppress_errors( true );
@@ -279,6 +294,9 @@ final class MyKavo_Bots {
   path varchar(255) NOT NULL,
   hits int(10) unsigned NOT NULL DEFAULT 0,
   errors int(10) unsigned NOT NULL DEFAULT 0,
+  last_status smallint(5) unsigned NOT NULL DEFAULT 0,
+  verified int(10) unsigned NOT NULL DEFAULT 0,
+  unverified int(10) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY  (day,agent,path_hash)
 ) {$charset};"
 		);
@@ -338,6 +356,20 @@ final class MyKavo_Bots {
 		// Keep the update window fresh even if no one opens wp-admin.
 		require_once MYKAVO_DIR . 'includes/class-mykavo-auto-updates.php';
 		MyKavo_Auto_Updates::settings( true );
+
+		// The IP ranges AI companies publish, to tell real crawlers from fakes.
+		if ( self::enabled() ) {
+			require_once MYKAVO_DIR . 'includes/class-mykavo-bot-verify.php';
+			MyKavo_Bot_Verify::refresh_ranges();
+		}
+
+		// llms.txt: page summaries from MyKavo (paid), then rebuild.
+		require_once MYKAVO_DIR . 'includes/class-mykavo-llms.php';
+		MyKavo_Llms::refresh_summaries();
+
+		// Contact form pages, for MyKavo's form checks (paid).
+		require_once MYKAVO_DIR . 'includes/class-mykavo-forms.php';
+		MyKavo_Forms::daily();
 	}
 
 	/**
@@ -448,7 +480,8 @@ final class MyKavo_Bots {
 		$known = self::agents();
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- our own table, admin screen only.
-		$agents = $wpdb->get_results( $wpdb->prepare( "SELECT agent, SUM(hits) AS hits, SUM(errors) AS errors, MAX(day) AS last_day FROM {$table} WHERE day >= %s GROUP BY agent ORDER BY hits DESC", $since ), ARRAY_A );
+		$agents = $wpdb->get_results( $wpdb->prepare( "SELECT agent, SUM(hits) AS hits, SUM(errors) AS errors, SUM(verified) AS verified, SUM(unverified) AS unverified, MAX(day) AS last_day FROM {$table} WHERE day >= %s GROUP BY agent ORDER BY hits DESC", $since ), ARRAY_A );
+		$missing = $wpdb->get_results( $wpdb->prepare( "SELECT path, SUM(hits) AS hits, MAX(day) AS last_day FROM {$table} WHERE day >= %s AND last_status = 404 GROUP BY path_hash, path ORDER BY hits DESC LIMIT 20", $since ), ARRAY_A );
 		$daily  = $wpdb->get_results( $wpdb->prepare( "SELECT day, SUM(hits) AS hits FROM {$table} WHERE day >= %s GROUP BY day", $since ), ARRAY_A );
 		$pages  = $wpdb->get_results( $wpdb->prepare( "SELECT path_hash, path, SUM(hits) AS hits, SUM(errors) AS errors FROM {$table} WHERE day >= %s GROUP BY path_hash, path ORDER BY hits DESC LIMIT 15", $since ), ARRAY_A );
 		$by     = array();
@@ -463,17 +496,29 @@ final class MyKavo_Bots {
 		}
 		// phpcs:enable
 
+		require_once MYKAVO_DIR . 'includes/class-mykavo-bot-verify.php';
+		$base['missing'] = array();
+		foreach ( is_array( $missing ) ? $missing : array() as $m ) {
+			$base['missing'][] = array(
+				'path'     => (string) $m['path'],
+				'hits'     => (int) $m['hits'],
+				'lastSeen' => (string) $m['last_day'],
+			);
+		}
 		foreach ( is_array( $agents ) ? $agents : array() as $a ) {
 			$name              = (string) $a['agent'];
 			$base['total']    += (int) $a['hits'];
 			$base['errors']   += (int) $a['errors'];
 			$base['agents'][]  = array(
-				'agent'    => $name,
-				'owner'    => isset( $known[ $name ] ) ? $known[ $name ]['owner'] : $name,
-				'purpose'  => isset( $known[ $name ] ) ? $known[ $name ]['purpose'] : 'training',
-				'hits'     => (int) $a['hits'],
-				'errors'   => (int) $a['errors'],
-				'lastSeen' => (string) $a['last_day'],
+				'agent'      => $name,
+				'owner'      => isset( $known[ $name ] ) ? $known[ $name ]['owner'] : $name,
+				'purpose'    => isset( $known[ $name ] ) ? $known[ $name ]['purpose'] : 'training',
+				'hits'       => (int) $a['hits'],
+				'errors'     => (int) $a['errors'],
+				'verified'   => (int) $a['verified'],
+				'unverified' => (int) $a['unverified'],
+				'checkable'  => MyKavo_Bot_Verify::checkable( $name ),
+				'lastSeen'   => (string) $a['last_day'],
 			);
 		}
 
@@ -523,6 +568,7 @@ final class MyKavo_Bots {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- removing our own table on uninstall.
 		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
 		delete_option( self::DB_OPTION );
+		delete_option( 'mykavo_bot_ranges' );
 		delete_transient( self::INSTALL_FAIL );
 		self::unschedule();
 	}

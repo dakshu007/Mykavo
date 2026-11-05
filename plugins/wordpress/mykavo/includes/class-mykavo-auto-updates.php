@@ -238,13 +238,23 @@ final class MyKavo_Auto_Updates {
 	 * After rolling a plugin back from a version, do not let WordPress
 	 * automatically update it straight back to that version.
 	 *
+	 * Also used (with an end time) to hold back for 48 hours a version
+	 * MyKavo marks risky, on Pro and Agency.
+	 *
 	 * @param string $file    Plugin basename.
-	 * @param string $version The version rolled back from.
+	 * @param string $version The version not to update to automatically.
+	 * @param int    $until   Unix time the hold ends, or 0 for "until updated by hand".
 	 * @return void
 	 */
-	public static function hold( $file, $version ) {
-		$holds          = self::holds();
-		$holds[ $file ] = (string) $version;
+	public static function hold( $file, $version, $until = 0 ) {
+		$holds = self::holds();
+		if ( isset( $holds[ $file ] ) && ! is_array( $holds[ $file ] ) && (string) $holds[ $file ] === (string) $version ) {
+			return; // An open-ended hold (after a rollback) outranks a timed one.
+		}
+		$holds[ $file ] = $until > 0 ? array(
+			'version' => (string) $version,
+			'until'   => (int) $until,
+		) : (string) $version;
 		if ( false === get_option( self::HOLDS, false ) ) {
 			add_option( self::HOLDS, $holds, '', false );
 		} else {
@@ -287,6 +297,46 @@ final class MyKavo_Auto_Updates {
 			return false;
 		}
 		$holds = self::holds();
-		return isset( $holds[ $item->plugin ] ) && (string) $item->new_version === $holds[ $item->plugin ];
+		if ( ! isset( $holds[ $item->plugin ] ) ) {
+			return false;
+		}
+		$hold = $holds[ $item->plugin ];
+		if ( is_array( $hold ) ) {
+			return isset( $hold['version'], $hold['until'] ) && (string) $item->new_version === (string) $hold['version'] && (int) $hold['until'] > time();
+		}
+		return (string) $item->new_version === (string) $hold;
+	}
+
+	/* ------------------------------------------------ vulnerable plugins -- */
+
+	/**
+	 * Pro and Agency, when switched on: a plugin with a known security issue
+	 * is updated automatically as soon as the fixed version is offered, even
+	 * if automatic updates are off for it.
+	 *
+	 * @param object $item Update offer (plugin, slug, new_version).
+	 * @return bool
+	 */
+	public static function should_force( $item ) {
+		if ( ! is_object( $item ) || empty( $item->plugin ) || empty( $item->new_version ) ) {
+			return false;
+		}
+		$settings = get_option( 'mykavo_settings', array() );
+		if ( ! is_array( $settings ) || empty( $settings['vuln_autoupdate'] ) ) {
+			return false;
+		}
+		require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-api.php';
+		if ( ! MyKavo_API::has_feature( 'vulnAutoUpdate' ) ) {
+			return false;
+		}
+		$health = get_option( 'mykavo_plugin_health', array() );
+		$slug   = dirname( (string) $item->plugin );
+		foreach ( isset( $health['vulnerabilities']['items'] ) && is_array( $health['vulnerabilities']['items'] ) ? $health['vulnerabilities']['items'] : array() as $vuln ) {
+			if ( isset( $vuln['slug'] ) && $slug === $vuln['slug'] && ! empty( $vuln['fixedIn'] ) && version_compare( (string) $item->new_version, (string) $vuln['fixedIn'], '>=' ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

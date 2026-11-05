@@ -33,6 +33,8 @@ final class MyKavo_Admin {
 		add_action( 'admin_post_mykavo_connect', array( __CLASS__, 'start_connect' ) );
 		add_action( 'wp_dashboard_setup', array( __CLASS__, 'register_widget' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'activation_notice' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'critical_notice' ) );
+		add_action( 'admin_post_mykavo_dismiss_critical', array( __CLASS__, 'dismiss_critical' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( MYKAVO_FILE ), array( __CLASS__, 'action_links' ) );
 	}
 
@@ -59,7 +61,7 @@ final class MyKavo_Admin {
 		self::$hook = (string) add_menu_page(
 			__( 'MyKavo', 'mykavo' ),
 			$label,
-			'manage_options',
+			MyKavo_Roles::menu_cap(),
 			self::SLUG,
 			array( __CLASS__, 'render_page' ),
 			self::menu_icon()
@@ -95,7 +97,7 @@ final class MyKavo_Admin {
 			return;
 		}
 
-		if ( 'index.php' === $hook && MyKavo_Connection::is_connected() && current_user_can( 'manage_options' ) ) {
+		if ( 'index.php' === $hook && MyKavo_Connection::is_connected() && MyKavo_Roles::can_view() ) {
 			wp_enqueue_style( 'mykavo-widget', MYKAVO_URL . 'assets/widget.css', array(), MYKAVO_VERSION );
 			wp_enqueue_script( 'mykavo-widget', MYKAVO_URL . 'assets/widget.js', array( 'wp-api-fetch', 'wp-i18n' ), MYKAVO_VERSION, true );
 			wp_set_script_translations( 'mykavo-widget', 'mykavo' );
@@ -140,6 +142,11 @@ final class MyKavo_Admin {
 			'version'    => MYKAVO_VERSION,
 			'pricingUrl' => untrailingslashit( MYKAVO_APP_URL ) . '/pricing',
 			'canUpdate'  => current_user_can( 'update_plugins' ) && wp_is_file_mod_allowed( 'mykavo_rollback' ),
+			// 1.4.0: viewers see everything but cannot act.
+			'canManage'  => MyKavo_Roles::can_manage(),
+			'homeUrl'    => home_url( '/' ),
+			'multisite'  => is_multisite(),
+			'usersUrl'   => admin_url( 'user-new.php' ),
 		);
 	}
 
@@ -150,7 +157,7 @@ final class MyKavo_Admin {
 	 * @return void
 	 */
 	public static function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! MyKavo_Roles::can_view() ) {
 			return;
 		}
 		?>
@@ -251,7 +258,7 @@ final class MyKavo_Admin {
 	 * @return void
 	 */
 	public static function register_widget() {
-		if ( ! MyKavo_Connection::is_connected() || ! current_user_can( 'manage_options' ) ) {
+		if ( ! MyKavo_Connection::is_connected() || ! MyKavo_Roles::can_view() ) {
 			return;
 		}
 		wp_add_dashboard_widget( 'mykavo_status', esc_html__( 'MyKavo monitoring', 'mykavo' ), array( __CLASS__, 'render_widget' ) );
@@ -306,7 +313,17 @@ final class MyKavo_Admin {
 				?>
 			</strong>
 		</div>
-		<p><a class="button button-primary" href="<?php echo esc_url( $page ); ?>"><?php esc_html_e( 'Open MyKavo', 'mykavo' ); ?></a></p>
+		<?php
+		$audit_url = ! empty( $summary['audit_url'] ) ? (string) $summary['audit_url'] : untrailingslashit( MYKAVO_APP_URL ) . '/dashboard/site-audit';
+		if ( isset( $summary['audit'] ) && null !== $summary['audit'] ) {
+			/* translators: %d: site audit health score out of 100. */
+			echo '<p class="mkw-muted">' . esc_html( sprintf( __( 'Site audit score: %d/100', 'mykavo' ), (int) $summary['audit'] ) ) . '</p>';
+		}
+		?>
+		<p>
+			<a class="button button-primary" href="<?php echo esc_url( $page ); ?>"><?php esc_html_e( 'Open MyKavo', 'mykavo' ); ?></a>
+			<a class="button" href="<?php echo esc_url( $audit_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Site audit', 'mykavo' ); ?></a>
+		</p>
 		<?php
 	}
 
@@ -334,6 +351,59 @@ final class MyKavo_Admin {
 			esc_url( admin_url( 'admin.php?page=' . self::SLUG ) ),
 			esc_html__( 'Connect now', 'mykavo' )
 		);
+	}
+
+	/**
+	 * Critical changes, on every wp-admin screen (except MyKavo's own): read
+	 * from the cached summary only, never a remote call. Dismissed per user
+	 * until the number of critical changes grows.
+	 *
+	 * @return void
+	 */
+	public static function critical_notice() {
+		if ( ! MyKavo_Roles::can_view() || ! MyKavo_Connection::is_connected() ) {
+			return;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( $screen && false !== strpos( (string) $screen->id, self::SLUG ) ) {
+			return;
+		}
+		$summary  = get_transient( MyKavo_Connection::SUMMARY_KEY );
+		$critical = is_array( $summary ) ? (int) $summary['critical'] : 0;
+		if ( $critical < 1 ) {
+			return;
+		}
+		$dismissed = (int) get_user_meta( get_current_user_id(), 'mykavo_dismissed_critical', true );
+		if ( $dismissed >= $critical ) {
+			return;
+		}
+		$dismiss = wp_nonce_url( admin_url( 'admin-post.php?action=mykavo_dismiss_critical&count=' . $critical ), 'mykavo_dismiss_critical' );
+		printf(
+			'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s <a class="button button-small button-primary" href="%3$s">%4$s</a> <a class="button button-small" href="%5$s">%6$s</a></p></div>',
+			esc_html__( 'MyKavo:', 'mykavo' ),
+			/* translators: %d: number of critical changes. */
+			esc_html( sprintf( _n( '%d critical change on this site needs attention.', '%d critical changes on this site need attention.', $critical, 'mykavo' ), $critical ) ),
+			esc_url( admin_url( 'admin.php?page=' . self::SLUG ) ),
+			esc_html__( 'Review now', 'mykavo' ),
+			esc_url( $dismiss ),
+			esc_html__( 'Dismiss', 'mykavo' )
+		);
+	}
+
+	/**
+	 * admin-post: hide the critical notice until there are more critical changes.
+	 *
+	 * @return void
+	 */
+	public static function dismiss_critical() {
+		if ( ! MyKavo_Roles::can_view() ) {
+			wp_die( esc_html__( 'You do not have permission to do that.', 'mykavo' ), 403 );
+		}
+		check_admin_referer( 'mykavo_dismiss_critical' );
+		$count = isset( $_GET['count'] ) ? absint( $_GET['count'] ) : 0;
+		update_user_meta( get_current_user_id(), 'mykavo_dismissed_critical', $count );
+		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
+		exit;
 	}
 
 	/**

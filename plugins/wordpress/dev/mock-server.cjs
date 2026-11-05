@@ -33,7 +33,18 @@ let paid = process.env.PAID !== '0';
 let legacy = false;
 let settings = { updateWindow: null };
 const guard = { pages: new Set(), elements: new Set() };
-const features = () => ({ autoRollback: paid, aiInsights: paid, pluginHealth: paid, checkoutGuard: paid, updateWindows: paid });
+// PLAN=free|starter|pro|agency picks the plan the site API reports (1.4.0 Plan tab).
+let planId = process.env.PLAN || (paid ? 'pro' : 'free');
+const features = () => ({
+  autoRollback: paid, aiInsights: paid, pluginHealth: paid, checkoutGuard: paid, updateWindows: paid,
+  instantAlerts: paid, baselineBeforeUpdate: paid, llmsSummaries: paid, redirectSuggestions: paid, watchElements: paid,
+  riskHold: paid, vulnDetails: paid, vulnAutoUpdate: paid, formChecks: paid, formSubmissions: paid,
+  clientReports: planId === 'agency', aiAssistants: paid,
+});
+const PLAN_NAMES = { free: 'Free', starter: 'Starter', pro: 'Pro', agency: 'Agency' };
+const PLAN_PAGES = { free: 5, starter: 10, pro: 15, agency: 25 };
+const elements = [];
+const reportBranding = { logoUrl: '', color: '#FFD400' };
 const planError = (res) => json(res, 403, { error: 'This feature is not included in your plan.', reason: 'PLAN' });
 const addedPages = [];
 const pages = ['/', '/shop', '/shop/ethiopia-yirgacheffe', '/subscribe', '/about', '/cart', '/checkout', '/contact'];
@@ -73,7 +84,8 @@ function site() {
   const highest = open.length ? open.reduce((a, c) => (rank[c.severity] > rank[a] ? c.severity : a), 'INFO') : null;
   return {
     website: { id: 'web1', name: 'Northwind Coffee', url: 'https://northwind-coffee.test', status: 'ACTIVE', scanFrequency: 'DAILY', lastScanAt: ago(42), nextScanAt: ahead(60 * 23) },
-    workspace: { name: 'Northwind Studio', plan: { id: 'pro', name: 'Pro' } },
+    workspace: { name: 'Northwind Studio', plan: { id: planId, name: PLAN_NAMES[planId], limits: { pagesPerWebsite: PLAN_PAGES[planId] }, includes: { aiAssistants: planId === 'pro' || planId === 'agency' } } },
+    siteAudit: { id: 'aud1', status: 'COMPLETED', healthScore: 87, errors: 3, warnings: 14, completedAt: ago(60 * 26) },
     stats: { monitoredPages: 8, baselinedPages: 8, openChanges: open.length, bySeverity: by, highestOpenSeverity: highest },
     health: { status: 'up', httpStatus: 200, checkedAt: ago(3), uptime24h: 100, avgResponseMs24h: 412, uptime7d: 99.9, checks7d: 2016, sslDaysLeft: 71, sslValidTo: ahead(60 * 24 * 71) },
     // Response time in 6-hour buckets over 7 days, slower after the theme
@@ -92,7 +104,7 @@ function site() {
     recentScans: scans.slice(0, 5).map(scanItem),
     scanInProgress: running ? { scanId: running.scan.id, status: running.scan.status, pagesRequested: 8, pagesScanned: running.scan.pagesScanned } : null,
     capabilities: running ? { canRunManualScan: false, manualScanBlockedReason: 'A scan is already running.', updateChecks: true } : { canRunManualScan: true, manualScanBlockedReason: null, updateChecks: true },
-    links: { website: BASE + '/dashboard/websites/web1', changes: BASE + '/dashboard/changes', pages: BASE + '/dashboard/websites/web1/pages', notifications: BASE + '/dashboard/notifications', billing: BASE + '/dashboard/billing' },
+    links: { website: BASE + '/dashboard/websites/web1', changes: BASE + '/dashboard/changes', pages: BASE + '/dashboard/websites/web1/pages', notifications: BASE + '/dashboard/notifications', billing: BASE + '/dashboard/billing', siteAudit: BASE + '/dashboard/site-audit/aud1', aiAssistants: BASE + '/dashboard/ai-assistants', mcpEndpoint: BASE + '/api/mcp' },
   };
 }
 
@@ -145,8 +157,9 @@ http.createServer(async (req, res) => {
   }
 
   if (url.pathname === '/__mock/plan' && req.method === 'POST') {
-    paid = url.searchParams.get('paid') !== '0';
-    return json(res, 200, { paid });
+    if (url.searchParams.get('id')) { planId = url.searchParams.get('id'); paid = planId !== 'free'; }
+    else { paid = url.searchParams.get('paid') !== '0'; }
+    return json(res, 200, { paid, planId });
   }
   if (url.pathname === '/__mock/legacy' && req.method === 'POST') {
     legacy = url.searchParams.get('on') === '1';
@@ -180,7 +193,8 @@ http.createServer(async (req, res) => {
       const flagged = !paid ? [] : list.filter((p) => p.slug === 'demo-shop' || p.slug === 'akismet').map((p) => (p.slug === 'demo-shop'
         ? { slug: p.slug, name: p.name, status: 'closed', lastUpdated: '2023-02-11', reason: 'Closed on WordPress.org: security issue' }
         : { slug: p.slug, name: p.name, status: 'outdated', lastUpdated: '2022-06-01', reason: 'Not updated in over 2 years' }));
-      return json(res, 200, { allowed: paid, flagged });
+      const vulnerabilities = { count: 1, items: paid ? [{ slug: 'akismet', name: 'Akismet Anti-spam', title: 'Stored XSS in the comment form', severity: 'high', fixedIn: '5.3.1', cve: 'CVE-2026-1234', url: 'https://example.test/vuln' }] : undefined };
+      return json(res, 200, { allowed: paid, flagged, vulnerabilities });
     }
     if (rest === '/settings' && req.method === 'GET') return json(res, 200, { updateWindow: settings.updateWindow, allowed: { updateWindows: paid } });
     if (rest === '/settings' && req.method === 'PUT') {
@@ -262,11 +276,21 @@ http.createServer(async (req, res) => {
       return json(res, fresh.length ? 201 : 200, { added: fresh.length, alreadyMonitored: urls.length - fresh.length });
     }
     if (rest === '/pages') {
-      const list = pages.map((p, i) => ({ id: 'pg' + i, url: 'https://northwind-coffee.test' + p, name: null, enabled: true, baselineVersion: i === 2 ? 3 : 1, baselineApprovedAt: ago(60 * 49), openChanges: changes.filter((c) => c.pagePath === p && isOpen(c)).length }));
+      const list = pages.map((p, i) => ({ id: 'pg' + i, url: 'https://northwind-coffee.test' + p, name: null, enabled: true, baselineVersion: i === 2 ? 3 : 1, baselineApprovedAt: ago(60 * 49), openChanges: changes.filter((c) => c.pagePath === p && isOpen(c)).length, elements: p === '/shop/ethiopia-yirgacheffe' ? [{ name: 'Add to cart', selector: '#cta', expectedText: 'Add to cart' }] : [] }));
       addedPages.forEach((u, i) => list.push({ id: 'pga' + i, url: u, name: null, enabled: true, baselineVersion: null, baselineApprovedAt: null, openChanges: 0 }));
       return json(res, 200, { pages: list });
     }
     if (rest === '/disconnect') return json(res, 200, { ok: true });
+    // 1.4.0 service endpoints (see docs/service-api-1.4.md).
+    if (rest === '/alerts' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   alerts: ${JSON.stringify(body)}\n`); return json(res, 200, { received: (body.alerts || []).length, notified: paid }); }
+    if (rest === '/crash-check' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   crash-check: ${body.state}\n`); return json(res, 200, { action: body.state === 'broken' && paid ? 'rollback' : 'none' }); }
+    if (rest === '/elements' && req.method === 'POST') { if (!paid && elements.length >= 1) return json(res, 403, { error: 'The free plan watches one element. Upgrade to watch more.', reason: 'PLAN', code: 'element_limit' }); const body = JSON.parse((await readBody(req)) || '{}'); elements.push(body); return json(res, 201, { element: { id: 'el' + elements.length, name: body.name, selector: body.selector } }); }
+    if (rest === '/llms-summaries' && req.method === 'POST') { if (!paid) return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); return json(res, 200, { summaries: (body.urls || []).map((u) => ({ url: u, summary: 'Specialty coffee, roasted weekly in small batches.' })) }); }
+    if (rest === '/redirect-suggestions' && req.method === 'POST') { if (!paid) return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); return json(res, 200, { suggestions: (body.paths || []).map((p) => ({ path: p, url: 'https://northwind-coffee.test/shop/', title: 'Shop' })) }); }
+    if (rest === '/update-risk' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); return json(res, 200, { plugins: (body.plugins || []).map((p, i) => ({ slug: p.slug, to: p.to, sites: 214 + i, changedPercent: i === 0 ? 31 : 3, risky: i === 0 })) }); }
+    if (rest === '/forms' && req.method === 'POST') { if (!paid) return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); return json(res, 200, { submissions: true, forms: (body.pages || []).map((p) => ({ url: p.url, status: 'ok', checkedAt: ago(30), submission: { status: 'ok', at: ago(30) } })) }); }
+    if (rest === '/reports' && req.method === 'GET') { if (planId !== 'agency') return planError(res); return json(res, 200, { branding: reportBranding, reports: [{ month: 'October 2026', url: BASE + '/r/oct', pdfUrl: BASE + '/r/oct.pdf', summary: { updates: 14, rollbacks: 1, uptimePermille: 999, sslDaysLeft: 71, changesCaught: 6, aiVisits: 1840 } }] }); }
+    if (rest === '/report-branding' && req.method === 'PUT') { if (planId !== 'agency') return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); Object.assign(reportBranding, body); return json(res, 200, { branding: reportBranding }); }
   }
   json(res, 404, { error: 'mock: no route ' + url.pathname });
 }).listen(PORT, '127.0.0.1', () => console.log('mock mykavo on', BASE));

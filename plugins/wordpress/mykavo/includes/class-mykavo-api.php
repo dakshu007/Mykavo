@@ -21,7 +21,26 @@ final class MyKavo_API {
 	/**
 	 * Plan features GET /status reports.
 	 */
-	const FEATURES = array( 'autoRollback', 'aiInsights', 'pluginHealth', 'checkoutGuard', 'updateWindows' );
+	const FEATURES = array(
+		'autoRollback',
+		'aiInsights',
+		'pluginHealth',
+		'checkoutGuard',
+		'updateWindows',
+		// 1.4.0.
+		'instantAlerts',
+		'baselineBeforeUpdate',
+		'llmsSummaries',
+		'redirectSuggestions',
+		'watchElements',
+		'riskHold',
+		'vulnDetails',
+		'vulnAutoUpdate',
+		'formChecks',
+		'formSubmissions',
+		'clientReports',
+		'aiAssistants',
+	);
 
 	/**
 	 * GET with a short transient cache, so moving between screens is instant
