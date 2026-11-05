@@ -4355,7 +4355,50 @@
 	flex: none;
 }
 
-@media (max-width: 1500px) {
+
+.mk-alerts-head {
+	flex-wrap: wrap;
+}
+
+/* Top bar sized by its own width, not the window's: wide screens still cap
+   the shell at 1240px, and Agency has 8 tabs plus the plan medal. */
+.mk-shell {
+	container: mkshell / inline-size;
+}
+
+@container mkshell (min-width: 1000px) {
+	.mk-shell .mk-top {
+		flex-wrap: nowrap;
+	}
+
+	.mk-shell .mk-tabs {
+		order: 0;
+		flex: 0 1 auto;
+		flex-basis: auto;
+		min-width: 0;
+		margin: 0 auto;
+		overflow-x: auto;
+	}
+
+	.mk-shell .mk-brand,
+	.mk-shell .mk-plan-chip,
+	.mk-shell .mk-top-actions {
+		flex: none;
+	}
+
+	.mk-shell .mk-top-actions {
+		margin-left: 0;
+	}
+}
+
+@container mkshell (max-width: 1300px) {
+	.mk-shell .mk-tab {
+		padding-right: 11px;
+		padding-left: 11px;
+	}
+}
+
+@container mkshell (max-width: 1140px) {
 	.mk-plan-chip-text {
 		display: none;
 	}
@@ -4365,11 +4408,25 @@
 	}
 
 	.mk-shell .mk-tab {
-		padding-right: 14px;
-		padding-left: 14px;
+		padding-right: 9px;
+		padding-left: 9px;
+		font-size: 14px;
 	}
 }
 
-.mk-alerts-head {
-	flex-wrap: wrap;
+@container mkshell (max-width: 999px) {
+	.mk-shell .mk-top {
+		flex-wrap: wrap;
+		border-radius: var(--mk-radius);
+	}
+
+	.mk-shell .mk-tabs {
+		order: 3;
+		flex-basis: 100%;
+		overflow-x: auto;
+	}
+
+	.mk-shell .mk-top-actions {
+		margin-left: auto;
+	}
 }
