@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Play } from "lucide-react";
 import { track } from "@/lib/analytics";
 
@@ -21,7 +21,11 @@ export function LiteYouTube({
   id: string;
   title: string;
   thumbnail: string;
-  /** Used when `thumbnail` fails to load (maxresdefault is missing for some uploads). */
+  /**
+   * Used when `thumbnail` is missing. YouTube answers a missing
+   * maxresdefault (common for new uploads) with a 120x90 grey placeholder
+   * image rather than a broken one, so the size is checked too.
+   */
   fallbackThumbnail?: string;
   size?: "hero" | "card";
   /** Show the uploaded English captions from the start (muted autoplay viewers still read along). */
@@ -31,7 +35,19 @@ export function LiteYouTube({
 }) {
   const [playing, setPlaying] = useState(false);
   const [poster, setPoster] = useState(thumbnail);
+  const img = useRef<HTMLImageElement>(null);
   const hero = size === "hero";
+
+  const checkPoster = useCallback(() => {
+    const el = img.current;
+    if (!el || !fallbackThumbnail || poster === fallbackThumbnail || !el.complete) return;
+    if (el.naturalWidth === 0 || el.naturalWidth <= 120) setPoster(fallbackThumbnail);
+  }, [fallbackThumbnail, poster]);
+
+  // The image can finish loading before hydration attaches onLoad/onError.
+  useEffect(() => {
+    checkPoster();
+  }, [checkPoster]);
 
   if (playing) {
     // vq is a hint: YouTube still adapts to the viewer's connection, but
@@ -64,8 +80,10 @@ export function LiteYouTube({
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- remote YouTube thumbnail, no next/image domain configured */}
       <img
+        ref={img}
         src={poster}
         alt=""
+        onLoad={checkPoster}
         onError={() => {
           if (fallbackThumbnail && poster !== fallbackThumbnail) setPoster(fallbackThumbnail);
         }}
