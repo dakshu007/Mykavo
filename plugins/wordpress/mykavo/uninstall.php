@@ -66,3 +66,4 @@ $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LI
 
 // Per-user notice dismissals.
 delete_metadata( 'user', 0, 'mykavo_dismissed_critical', '', true );
+delete_metadata( 'user', 0, 'mykavo_review_prompt', '', true );

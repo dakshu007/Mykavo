@@ -147,7 +147,28 @@ final class MyKavo_Admin {
 			'homeUrl'    => home_url( '/' ),
 			'multisite'  => is_multisite(),
 			'usersUrl'   => admin_url( 'user-new.php' ),
+			// Asking for a WordPress.org review: when the site was connected, and
+			// whether this person already answered (per user, never autoloaded).
+			'connectedAt'  => $connection && ! empty( $connection['connected_at'] ) ? (int) $connection['connected_at'] : 0,
+			'reviewPrompt' => self::review_prompt_state(),
 		);
+	}
+
+	/**
+	 * Whether this person may be asked for a review: 'ask', or 'no' once they
+	 * reviewed, said no, or asked to be reminded later and that time has not come.
+	 *
+	 * @return string
+	 */
+	private static function review_prompt_state() {
+		$answer = (string) get_user_meta( get_current_user_id(), 'mykavo_review_prompt', true );
+		if ( 'done' === $answer || 'never' === $answer ) {
+			return 'no';
+		}
+		if ( 0 === strpos( $answer, 'later:' ) && (int) substr( $answer, 6 ) > time() ) {
+			return 'no';
+		}
+		return 'ask';
 	}
 
 	/**

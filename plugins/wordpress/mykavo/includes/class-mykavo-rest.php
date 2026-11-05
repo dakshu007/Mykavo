@@ -507,6 +507,21 @@ final class MyKavo_Rest {
 		$simple( '/forms/mail', WP_REST_Server::CREATABLE, 'mail_settings', $admin, array( 'enabled' => $bool() ) );
 		$simple( '/forms/mail/test', WP_REST_Server::CREATABLE, 'mail_test', $admin );
 
+		// The "Enjoying MyKavo?" review prompt: remember this person's answer.
+		$simple(
+			'/review-prompt',
+			WP_REST_Server::CREATABLE,
+			'review_prompt',
+			$admin,
+			array(
+				'answer' => array(
+					'type'     => 'string',
+					'required' => true,
+					'enum'     => array( 'done', 'later', 'never' ),
+				),
+			)
+		);
+
 		// Your site report (Agency).
 		$simple( '/reports', WP_REST_Server::READABLE, 'reports', $viewer );
 		$simple(
@@ -1010,6 +1025,19 @@ final class MyKavo_Rest {
 	}
 
 	/* ---------------------------------------------------------------- 1.3.1 -- */
+
+	/**
+	 * Remember the answer to "Enjoying MyKavo?": reviewed, later (30 days) or never.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function review_prompt( WP_REST_Request $request ) {
+		$answer = (string) $request->get_param( 'answer' );
+		$value  = 'later' === $answer ? 'later:' . ( time() + 30 * DAY_IN_SECONDS ) : $answer;
+		update_user_meta( get_current_user_id(), 'mykavo_review_prompt', $value );
+		return rest_ensure_response( array( 'ok' => true ) );
+	}
 
 	/**
 	 * Silent-disaster alerts kept on this site.

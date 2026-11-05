@@ -1139,6 +1139,7 @@
 		return (
 			'<div class="mk-grid">' +
 			alertsBanner() +
+			reviewPrompt() +
 			( special ? hero( o ) : '' ) +
 			( cfg.notice === 'connected' || o.stats.monitoredPages < 3 ? suggestionsCard( true ) : '' ) +
 			'<div class="mk-ov-row">' + openCard( o ) + vitalsCard( o ) + highlightCard( o ) + '</div>' +
@@ -2212,6 +2213,19 @@
 		);
 	}
 
+	/* ------------------------------------------------------ review prompt -- */
+
+	var REVIEW_URL = 'https://wordpress.org/support/plugin/mykavo/reviews/#new-post';
+
+	/**
+	 * "Enjoying MyKavo?": asked once, at a good moment (an update MyKavo
+	 * verified, a rollback that saved the site, or two weeks of quiet
+	 * monitoring), never as a condition for anything and with no reward.
+	 */
+	function reviewPrompt() {
+		return '';
+	}
+
 	/* ------------------------------------------------------------- plan -- */
 
 	/** The workspace card on the Overview: medal, plan, and the way up. */
@@ -2657,6 +2671,16 @@
 	/** Clicks on the 1.3.1 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
+			case 'review':
+				state.reviewAnswered = true;
+				api( '/review-prompt', { method: 'POST', data: { answer: el.getAttribute( 'data-answer' ) } } ).catch( function () {} );
+				if ( el.tagName !== 'A' ) {
+					render();
+				} else {
+					window.setTimeout( render, 0 );
+				}
+				// Let the link open WordPress.org.
+				return el.tagName !== 'A';
 			case 'tip':
 				// Touch screens have no hover: a tap shows or hides the explanation.
 				if ( tipFor === el ) {

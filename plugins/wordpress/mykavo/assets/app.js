@@ -1179,6 +1179,7 @@
 		return (
 			'<div class="mk-grid">' +
 			alertsBanner() +
+			reviewPrompt() +
 			( special ? hero( o ) : '' ) +
 			( cfg.notice === 'connected' || o.stats.monitoredPages < 3 ? suggestionsCard( true ) : '' ) +
 			'<div class="mk-ov-row">' + openCard( o ) + vitalsCard( o ) + highlightCard( o ) + '</div>' +
@@ -2538,6 +2539,40 @@
 		);
 	}
 
+	/* ------------------------------------------------------ review prompt -- */
+
+	var REVIEW_URL = 'https://wordpress.org/support/plugin/mykavo/reviews/#new-post';
+
+	/**
+	 * "Enjoying MyKavo?": asked once, at a good moment (an update MyKavo
+	 * verified, a rollback that saved the site, or two weeks of quiet
+	 * monitoring), never as a condition for anything and with no reward.
+	 */
+	function reviewPrompt() {
+		if ( READONLY || cfg.reviewPrompt !== 'ask' || state.reviewAnswered ) {
+			return '';
+		}
+		var log = ( state.updates && state.updates.log ) || [];
+		var scans = scansById();
+		var happy = log.some( function ( e ) {
+			return ( e.rollback && e.rollback.done && e.rollback.done.length ) || verdict( e, scans ).tone === 'good';
+		} );
+		var settled = cfg.connectedAt && Date.now() / 1000 - cfg.connectedAt > 14 * 86400;
+		if ( ! happy && ! settled ) {
+			return '';
+		}
+		return (
+			'<section class="mk-card mk-review" aria-label="' + esc( __( 'Review MyKavo', 'mykavo' ) ) + '">' +
+			'<div class="mk-review-copy"><p class="mk-review-title">' + esc( __( 'Enjoying MyKavo?', 'mykavo' ) ) + '</p>' +
+			'<p class="mk-fine">' + esc( __( 'A short review on WordPress.org helps other site owners find it. Reviews are public, and some may be shown on mykavo.app.', 'mykavo' ) ) + '</p></div>' +
+			'<div class="mk-review-actions">' +
+			'<a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( REVIEW_URL ) + '" target="_blank" rel="noopener noreferrer" data-act="review" data-answer="done">' + esc( __( 'Leave a review', 'mykavo' ) ) + icon( 'external' ) + '</a>' +
+			'<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="review" data-answer="later">' + esc( __( 'Maybe later', 'mykavo' ) ) + '</button>' +
+			'<button type="button" class="mk-link" data-act="review" data-answer="never">' + esc( __( 'No thanks', 'mykavo' ) ) + '</button>' +
+			'</div></section>'
+		);
+	}
+
 	/* ------------------------------------------------------------- plan -- */
 
 	/** The workspace card on the Overview: medal, plan, and the way up. */
@@ -3377,6 +3412,16 @@
 	/** Clicks on the 1.3.1 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
+			case 'review':
+				state.reviewAnswered = true;
+				api( '/review-prompt', { method: 'POST', data: { answer: el.getAttribute( 'data-answer' ) } } ).catch( function () {} );
+				if ( el.tagName !== 'A' ) {
+					render();
+				} else {
+					window.setTimeout( render, 0 );
+				}
+				// Let the link open WordPress.org.
+				return el.tagName !== 'A';
 			case 'tip':
 				// Touch screens have no hover: a tap shows or hides the explanation.
 				if ( tipFor === el ) {
