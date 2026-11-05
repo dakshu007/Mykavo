@@ -4526,3 +4526,19 @@
 	border: 1px solid var(--mk-line);
 	border-radius: 999px;
 }
+
+/* Safe Updates: two stacked columns; each card keeps its own height. */
+.mk-grid-2.mk-cols {
+	align-items: start;
+}
+
+.mk-col {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	min-width: 0;
+}
+
+.mk-col:empty {
+	display: none;
+}

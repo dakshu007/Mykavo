@@ -1741,8 +1741,10 @@
 			'<div class="mk-grid">' + intro + plan + safeUpdateCard() + autoRollbackCard() +
 			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Theme changes', 'mykavo' ) ) + '</h3>' +
 			'<span class="mk-fine">' + esc( __( 'Last 30 changes.', 'mykavo' ) ) + '</span></div>' + list + '</section>' +
-			'<div class="mk-grid mk-grid-2">' + healthCard() + windowCard() + '</div>' +
-			'<div class="mk-grid mk-grid-2">' + snapshotsCard() + mailCard() + '</div></div>'
+			// Two stacked columns, not a 2x2 grid: cards of different heights
+			// would leave gaps under the shorter one in each row.
+			'<div class="mk-grid mk-grid-2 mk-cols"><div class="mk-col">' + healthCard() + snapshotsCard() + '</div>' +
+			'<div class="mk-col">' + windowCard() + mailCard() + '</div></div></div>'
 		);
 	}
 
