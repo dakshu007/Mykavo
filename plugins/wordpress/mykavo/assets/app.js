@@ -1661,10 +1661,11 @@
 					'<span class="mk-row-meta">' + ( p.name ? '<code>' + esc( pathOf( p.url ) ) + '</code>' : '' ) +
 					( p.baselineVersion ? '<span>' + esc( sprintf( /* translators: %d: baseline version. */ __( 'Baseline v%d', 'mykavo' ), p.baselineVersion ) ) + '</span>' : '<span>' + esc( __( 'No baseline yet', 'mykavo' ) ) + '</span>' ) +
 					( p.enabled ? '' : '<span class="mk-status">' + esc( __( 'Paused', 'mykavo' ) ) + '</span>' ) +
+					watched +
 					'</span></span>' +
 					( p.openChanges ? '<span class="mk-sev mk-sev-MEDIUM">' + esc( sprintf( _n( '%d open', '%d open', p.openChanges, 'mykavo' ), p.openChanges ) ) + '</span>' : '' ) +
 					icon( 'external', 'mk-row-chevron' ) +
-					'</a>' + watched +
+					'</a>' +
 					( READONLY || ! url ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft mk-pick-btn" data-act="pick-element" data-url="' + esc( url ) + '">' + icon( 'eye' ) + esc( __( 'Watch an element', 'mykavo' ) ) + '</button>' ) +
 					'</li>'
 				);

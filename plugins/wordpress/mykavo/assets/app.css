@@ -4742,7 +4742,8 @@
 
 /* Bulk select, polished: our own checkbox and pill select (wp-admin styles
    both), and selected rows tinted edge to edge with no seams. */
-.mk .mk-select input[type="checkbox"] {
+.mk .mk-select input[type="checkbox"],
+.mk .mk-check input[type="checkbox"] {
 	-webkit-appearance: none;
 	appearance: none;
 	position: relative;
@@ -4761,17 +4762,21 @@
 	transition: background-color 0.12s ease, border-color 0.12s ease;
 }
 
-.mk .mk-select input[type="checkbox"]:hover {
+.mk .mk-select input[type="checkbox"]:hover,
+.mk .mk-check input[type="checkbox"]:hover {
 	border-color: var(--mk-ink);
 }
 
 .mk .mk-select input[type="checkbox"]:checked,
-.mk .mk-select input[type="checkbox"]:indeterminate {
+.mk .mk-check input[type="checkbox"]:checked,
+.mk .mk-select input[type="checkbox"]:indeterminate,
+.mk .mk-check input[type="checkbox"]:indeterminate {
 	border-color: var(--mk-ink);
 	background: var(--mk-ink);
 }
 
-.mk .mk-select input[type="checkbox"]:checked::before {
+.mk .mk-select input[type="checkbox"]:checked::before,
+.mk .mk-check input[type="checkbox"]:checked::before {
 	content: "";
 	position: absolute;
 	top: 2px;
@@ -4784,7 +4789,8 @@
 	transform: rotate(45deg);
 }
 
-.mk .mk-select input[type="checkbox"]:indeterminate::before {
+.mk .mk-select input[type="checkbox"]:indeterminate::before,
+.mk .mk-check input[type="checkbox"]:indeterminate::before {
 	content: "";
 	position: absolute;
 	top: 6.5px;
@@ -4796,7 +4802,8 @@
 	background: var(--mk-gold);
 }
 
-.mk .mk-select input[type="checkbox"]:focus-visible {
+.mk .mk-select input[type="checkbox"]:focus-visible,
+.mk .mk-check input[type="checkbox"]:focus-visible {
 	outline: 2px solid var(--mk-ink);
 	outline-offset: 2px;
 	box-shadow: none;
@@ -4928,4 +4935,48 @@
 
 .mk .mk-list > li {
 	margin: 0;
+}
+
+/* Pages tab: one seamless row per page, button included. */
+.mk-page-li {
+	flex-wrap: nowrap;
+	border-top: 1px solid var(--mk-line-2);
+}
+
+.mk-list > li.mk-page-li:first-child {
+	border-top: 0;
+}
+
+.mk-page-li > .mk-row {
+	border-top: 0;
+}
+
+.mk-page-li .mk-row-meta .mk-chip {
+	height: 20px;
+	padding: 0 8px;
+	font-size: 11px;
+	white-space: nowrap;
+}
+
+.mk-page-li .mk-pick-btn {
+	flex: none;
+}
+
+@container mkshell (max-width: 640px) {
+	.mk-page-li {
+		flex-wrap: wrap;
+		padding: 0 16px 12px 0;
+	}
+
+	.mk-page-li .mk-pick-btn {
+		margin-left: 58px;
+	}
+}
+
+/* Plan benefits: the "Included" chip always sits under the title, so short
+   and long titles line up the same way. */
+.mk-benefit-title {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
 }

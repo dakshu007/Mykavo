@@ -232,15 +232,15 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Screenshots ==
 
-1. Overview: one clear status, uptime and SSL, what needs attention first, and the latest update check.
-2. Safe Updates: every update, plugin switch and theme change, with a verdict and the change named.
-3. A change that appeared after an update, with the update named.
-4. A change, with a before-and-after slider over the page screenshots.
-5. Exactly what changed: old and new values side by side.
-6. All changes, filtered by status and severity.
-7. Scan history.
-8. Connect in two clicks. Nothing is added to your public pages.
-9. WooCommerce store guard: see which store pages are monitored and add the rest in one click.
+1. Overview: uptime, response time and SSL at a glance, what needs you first, and every change waiting for review.
+2. Safe Updates: update plugins one at a time with a check after each, automatic rollback, and a verdict for every update.
+3. A change up close: drag the slider to compare the page before and after.
+4. Changes: tick several and approve, mark reviewed or ignore them in one go.
+5. AI crawlers: which AI systems read your site and which pages, with allow or block for each crawler.
+6. Pages: monitored pages, suggested pages, and Watch an element for buy buttons and forms.
+7. The MyKavo panel in the block editor warns before you save an edit that removes a watched button or changes the title.
+8. Your site report: updates, uptime, changes and AI crawler visits for the last 30 days, ready to share.
+9. Your plan: what is included, Ask ChatGPT and Claude (MCP), and your site audit score.
 
 == Changelog ==
 
@@ -256,6 +256,7 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * New: "MyKavo viewer" role for read-only access.
 * New: suggested pages to monitor after connecting and on the Pages tab.
 * New: pick a button, link or form on a page to watch, and a MyKavo panel in the block editor that warns before an edit removes it.
+* New: select several changes on the Changes tab and approve, accept as baseline, mark reviewed, fixed or ignored in one go.
 * New: AI crawlers: allow or block each crawler, real-or-fake checks, redirects for 404s served to AI, and llms.txt. Free; paid plans add redirect suggestions and llms.txt page summaries.
 * New: known security issues in Plugin health (count for everyone, details from Starter, automatic updates on Pro and Agency).
 * New: update risk next to "Update now" on the Plugins screen; risky automatic updates wait 48 hours on Pro and Agency.
