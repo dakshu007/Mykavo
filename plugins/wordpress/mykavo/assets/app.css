@@ -4643,3 +4643,289 @@
 	align-items: center;
 	gap: 10px;
 }
+
+/* MCP card: the address and its Copy button on one line. */
+.mk-code-inline code {
+	min-width: 0;
+	padding: 0;
+	overflow: hidden;
+	background: none;
+	color: var(--mk-ink);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow-wrap: normal;
+}
+
+.mk-code-inline .mk-btn {
+	position: static;
+	flex: none;
+	background: var(--mk-card);
+	box-shadow: 0 1px 2px rgb(21 21 21 / 8%);
+}
+
+/* Tab counts: one compact size whatever the number. */
+.mk-shell .mk-tab .mk-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+	height: 20px;
+	margin-left: 6px;
+	padding: 0 6px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: -0.01em;
+}
+
+/* Changes: select several and act on them at once. */
+.mk-bulk {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 14px;
+	margin: 0 16px 6px;
+	padding: 10px 14px;
+	border-radius: 16px;
+	background: var(--mk-ground);
+}
+
+.mk-bulk.is-active {
+	background: var(--mk-gold-soft);
+}
+
+.mk-select {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13.5px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.mk-select input {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	accent-color: var(--mk-ink);
+	cursor: pointer;
+}
+
+.mk-bulk-select {
+	height: 36px;
+	padding: 0 34px 0 14px;
+	border: 1px solid var(--mk-line);
+	border-radius: 999px;
+	background-color: var(--mk-card);
+	font-size: 13.5px;
+}
+
+.mk-row-selectable {
+	display: flex;
+	align-items: center;
+}
+
+.mk-row-selectable > .mk-select {
+	flex: none;
+	padding: 0 0 0 22px;
+}
+
+.mk-row-selectable > .mk-row {
+	flex: 1;
+	min-width: 0;
+}
+
+.mk-row-selectable.is-selected {
+	background: var(--mk-gold-soft);
+}
+
+/* Bulk select, polished: our own checkbox and pill select (wp-admin styles
+   both), and selected rows tinted edge to edge with no seams. */
+.mk .mk-select input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	position: relative;
+	display: inline-block;
+	flex: none;
+	width: 18px;
+	height: 18px;
+	min-width: 18px;
+	margin: 0;
+	padding: 0;
+	border: 1.5px solid #b9b7ae;
+	border-radius: 6px;
+	background: var(--mk-card);
+	box-shadow: none;
+	vertical-align: middle;
+	transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.mk .mk-select input[type="checkbox"]:hover {
+	border-color: var(--mk-ink);
+}
+
+.mk .mk-select input[type="checkbox"]:checked,
+.mk .mk-select input[type="checkbox"]:indeterminate {
+	border-color: var(--mk-ink);
+	background: var(--mk-ink);
+}
+
+.mk .mk-select input[type="checkbox"]:checked::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 5px;
+	width: 4px;
+	height: 8px;
+	margin: 0;
+	border: solid var(--mk-gold);
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+
+.mk .mk-select input[type="checkbox"]:indeterminate::before {
+	content: "";
+	position: absolute;
+	top: 6.5px;
+	left: 3px;
+	width: 9px;
+	height: 2px;
+	margin: 0;
+	border-radius: 2px;
+	background: var(--mk-gold);
+}
+
+.mk .mk-select input[type="checkbox"]:focus-visible {
+	outline: 2px solid var(--mk-ink);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+.mk select.mk-bulk-select {
+	min-height: 36px;
+	height: 36px;
+	padding: 0 34px 0 14px;
+	border: 1px solid var(--mk-line);
+	border-radius: 999px;
+	background-color: var(--mk-card);
+	background-position: right 12px top 55%;
+	box-shadow: none;
+	color: var(--mk-ink);
+	font-size: 13.5px;
+	font-weight: 500;
+	line-height: 34px;
+}
+
+.mk select.mk-bulk-select:focus {
+	border-color: var(--mk-ink);
+	outline: 0;
+	box-shadow: 0 0 0 1px var(--mk-ink);
+}
+
+.mk-bulk.is-active {
+	background: #fffbe3;
+	box-shadow: inset 0 0 0 1px #f3e6a6;
+}
+
+.mk-bulk-count {
+	font-variant-numeric: tabular-nums;
+}
+
+.mk-row-selectable {
+	border-top: 1px solid var(--mk-line-2);
+	transition: background-color 0.12s ease;
+}
+
+.mk-list > li.mk-row-selectable:first-child {
+	border-top: 0;
+}
+
+.mk-row-selectable > .mk-row {
+	border-top: 0;
+}
+
+.mk-row-selectable > .mk-row:hover {
+	background: transparent;
+}
+
+.mk-row-selectable:hover {
+	background: #fbfaf5;
+}
+
+.mk-row-selectable.is-selected,
+.mk-row-selectable.is-selected:hover {
+	background: #fffbe3;
+}
+
+.mk-list > li.mk-row-selectable:last-child {
+	border-bottom-left-radius: var(--mk-radius);
+	border-bottom-right-radius: var(--mk-radius);
+}
+
+@container mkshell (max-width: 640px) {
+	.mk-bulk {
+		margin: 0 12px 6px;
+	}
+
+	.mk select.mk-bulk-select {
+		flex: 1 1 100%;
+		max-width: none;
+	}
+
+	.mk-row-selectable > .mk-select {
+		padding-left: 16px;
+	}
+}
+
+/* Top bar on a 1240px shell: 8 tabs, a count and the plan medal must fit
+   without clipping the last tab. */
+@container mkshell (max-width: 1300px) {
+	.mk-shell .mk-tab {
+		padding-right: 9px;
+		padding-left: 9px;
+		font-size: 14.5px;
+	}
+
+	.mk-shell .mk-top {
+		gap: 10px;
+	}
+}
+
+@container mkshell (max-width: 1180px) {
+	.mk-plan-chip-text {
+		display: none;
+	}
+
+	.mk-plan-chip {
+		padding: 0 6px;
+	}
+}
+
+@container mkshell (max-width: 1100px) {
+	.mk-shell .mk-top {
+		flex-wrap: wrap;
+		border-radius: var(--mk-radius);
+	}
+
+	.mk-shell .mk-tabs {
+		order: 3;
+		flex-basis: 100%;
+		margin: 0;
+		overflow-x: auto;
+	}
+
+	.mk-shell .mk-top-actions {
+		margin-left: auto;
+	}
+
+	.mk-shell .mk-tab {
+		padding-right: 12px;
+		padding-left: 12px;
+		font-size: 14.5px;
+	}
+}
+
+.mk .mk-list > li {
+	margin: 0;
+}

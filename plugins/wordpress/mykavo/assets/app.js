@@ -73,6 +73,8 @@
 		reports: null,
 		reportsError: null,
 		brandDraft: null,
+		selected: {},
+		bulkAction: 'approve',
 	};
 	var pollTimer = null;
 	var pollCount = 0;
@@ -1121,9 +1123,12 @@
 
 
 
-	function changeRow( c ) {
+	function changeRow( c, selectable ) {
+		var box = selectable === true && ! READONLY
+			? '<label class="mk-select" title="' + esc( __( 'Select', 'mykavo' ) ) + '"><input type="checkbox" data-act="select-change" data-id="' + esc( c.id ) + '" data-key="sel-' + esc( c.id ) + '"' + ( state.selected[ c.id ] ? ' checked' : '' ) + ' aria-label="' + esc( sprintf( /* translators: %s: change title. */ __( 'Select: %s', 'mykavo' ), c.title ) ) + '"></label>'
+			: '';
 		return (
-			'<li><button type="button" class="mk-row" data-act="open-change" data-id="' + esc( c.id ) + '" data-key="change-' + esc( c.id ) + '">' +
+			'<li' + ( box ? ' class="mk-row-selectable' + ( state.selected[ c.id ] ? ' is-selected' : '' ) + '"' : '' ) + '>' + box + '<button type="button" class="mk-row" data-act="open-change" data-id="' + esc( c.id ) + '" data-key="change-' + esc( c.id ) + '">' +
 			sevPill( c.severity ) +
 			'<span class="mk-row-main"><span class="mk-row-title">' + esc( c.title ) + '</span>' +
 			'<span class="mk-row-meta">' +
@@ -1470,6 +1475,81 @@
 		);
 	}
 
+	/** Select several changes and approve (or review, fix, ignore) them in one go. */
+	function bulkBar( list ) {
+		if ( READONLY ) {
+			return '';
+		}
+		var ids = list.map( function ( c ) {
+			return c.id;
+		} );
+		var picked = ids.filter( function ( id ) {
+			return state.selected[ id ];
+		} );
+		var all = picked.length === ids.length;
+		var busy = state.busy === 'bulk';
+		var actions = [
+			[ 'approve', __( 'Approve (expected change)', 'mykavo' ) ],
+			[ 'baseline', __( 'Accept as new baseline', 'mykavo' ) ],
+			[ 'review', __( 'Mark reviewed', 'mykavo' ) ],
+			[ 'resolve', __( 'Mark fixed', 'mykavo' ) ],
+			[ 'ignore', __( 'Ignore', 'mykavo' ) ],
+			[ 'reopen', __( 'Reopen', 'mykavo' ) ],
+		];
+		return (
+			'<div class="mk-bulk' + ( picked.length ? ' is-active' : '' ) + '">' +
+			'<label class="mk-select mk-select-all"><input type="checkbox" data-act="select-all" data-key="sel-all"' + ( all ? ' checked' : '' ) + ( picked.length && ! all ? ' data-mixed="1"' : '' ) + '> ' +
+			esc( picked.length ? sprintf( /* translators: %d: number of selected changes. */ _n( '%d selected', '%d selected', picked.length, 'mykavo' ), picked.length ) : __( 'Select all', 'mykavo' ) ) + '</label>' +
+			( picked.length
+				? '<label class="mk-visually-hidden" for="mk-bulk-action">' + esc( __( 'Action', 'mykavo' ) ) + '</label>' +
+					'<select id="mk-bulk-action" class="mk-bulk-select" data-key="bulk-action">' + actions.map( function ( a ) {
+						return '<option value="' + a[ 0 ] + '"' + ( state.bulkAction === a[ 0 ] ? ' selected' : '' ) + '>' + esc( a[ 1 ] ) + '</option>';
+					} ).join( '' ) + '</select>' +
+					'<button type="button" class="mk-btn mk-btn-dark mk-btn-sm" data-act="bulk-apply"' + ( busy ? ' disabled' : '' ) + '>' + ( busy ? icon( 'loader', 'mk-spin' ) : '' ) + esc( __( 'Apply', 'mykavo' ) ) + '</button>' +
+					'<button type="button" class="mk-link" data-act="select-none">' + esc( __( 'Clear', 'mykavo' ) ) + '</button>'
+				: '<span class="mk-fine">' + esc( __( 'Tick changes to approve, review or ignore several at once.', 'mykavo' ) ) + '</span>' ) +
+			'</div>'
+		);
+	}
+
+	/** Apply one action to every selected change, one request at a time. */
+	function applyBulk() {
+		var ids = Object.keys( state.selected ).filter( function ( id ) {
+			return state.selected[ id ];
+		} );
+		var action = state.bulkAction || 'approve';
+		if ( ! ids.length ) {
+			return;
+		}
+		state.busy = 'bulk';
+		render();
+		var done = 0;
+		var failed = 0;
+		ids.reduce( function ( chain, id ) {
+			return chain.then( function () {
+				var request = action === 'baseline'
+					? api( '/changes/' + encodeURIComponent( id ) + '/baseline', { method: 'POST' } )
+					: api( '/changes/' + encodeURIComponent( id ) + '/action', { method: 'POST', data: { action: action } } );
+				return request
+					.then( function () {
+						done++;
+					} )
+					.catch( function () {
+						failed++;
+					} );
+			} );
+		}, Promise.resolve() ).then( function () {
+			state.busy = '';
+			state.selected = {};
+			toast( failed
+				? sprintf( /* translators: 1: number done, 2: number failed. */ __( '%1$d changes updated, %2$d could not be.', 'mykavo' ), done, failed )
+				: sprintf( /* translators: %d: number of changes. */ _n( '%d change updated.', '%d changes updated.', done, 'mykavo' ), done ) );
+			state.changes = null;
+			loadChanges();
+			loadOverview( true );
+		} );
+	}
+
 	function changesView() {
 		var scanChip = state.changesScan
 			? '<div class="mk-filter-note">' + icon( 'shield' ) + '<span>' +
@@ -1499,7 +1579,9 @@
 				return ! state.severity || c.severity === state.severity;
 			} );
 			body = list.length
-				? '<ul class="mk-list">' + list.map( changeRow ).join( '' ) + '</ul>'
+				? bulkBar( list ) + '<ul class="mk-list">' + list.map( function ( c ) {
+					return changeRow( c, true );
+				} ).join( '' ) + '</ul>'
 				: '<div class="mk-empty"><span class="mk-empty-icon">' + icon( 'check' ) + '</span><strong>' +
 					esc( state.changesStatus === 'open' ? __( 'No open changes', 'mykavo' ) : __( 'No changes yet', 'mykavo' ) ) + '</strong><span>' +
 					esc( __( 'Changes appear here after a scan compares your pages with their baseline.', 'mykavo' ) ) + '</span></div>';
@@ -2337,7 +2419,7 @@
 		'window-off': 1, 'dismiss-alert': 1, 'safe-start': 1, 'safe-backup': 1, 'safe-baseline': 1, 'robots-block': 1,
 		'robots-preset': 1, 'robots-allow-all': 1, 'toggle-llms': 1, 'redirect-create': 1, 'redirect-remove': 1,
 		'redirect-suggest': 1, 'redirect-use': 1, 'toggle-vuln-auto': 1, 'toggle-mail': 1, 'mail-test': 1, 'forms-sync': 1,
-		'suggest-add': 1, 'suggest-toggle': 1, 'pick-element': 1, 'branding-save': 1,
+		'suggest-add': 1, 'suggest-toggle': 1, 'pick-element': 1, 'branding-save': 1, 'bulk-apply': 1, 'select-change': 1, 'select-all': 1,
 	};
 
 	var PLAN_RANK = { free: 0, starter: 1, pro: 2, agency: 3 };
@@ -2648,7 +2730,7 @@
 		var asks = [ __( 'What changed on my site this week?', 'mykavo' ), __( 'Did the last plugin update break anything?', 'mykavo' ), __( 'Which pages do AI crawlers read most?', 'mykavo' ) ];
 		var body = allowed
 			? '<p class="mk-fine">' + esc( __( 'Add MyKavo as a connector in ChatGPT, Claude or any MCP app, sign in, and ask in plain words.', 'mykavo' ) ) + '</p>' +
-				'<div class="mk-code mk-code-inline"><code>' + esc( endpoint ) + '</code>' + copyButton( endpoint, __( 'Copy address', 'mykavo' ) ) + '</div>' +
+				'<div class="mk-code-inline"><code>' + esc( endpoint ) + '</code>' + copyButton( endpoint, __( 'Copy address', 'mykavo' ) ) + '</div>' +
 				'<a class="mk-btn mk-btn-dark mk-btn-sm" href="' + esc( setup ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Set up step by step', 'mykavo' ) ) + icon( 'external' ) + '</a>'
 			: '<p class="mk-fine">' + esc( __( 'Ask ChatGPT or Claude about your sites and get answers from MyKavo\'s real monitoring data. Comes with Pro and Agency.', 'mykavo' ) ) + '</p>' + upgradeButton( __( 'Upgrade to Pro', 'mykavo' ), 'mk-btn-sm' );
 		return (
@@ -3422,6 +3504,25 @@
 				}
 				// Let the link open WordPress.org.
 				return el.tagName !== 'A';
+			case 'select-change':
+				state.selected[ el.getAttribute( 'data-id' ) ] = el.checked;
+				render();
+				return true;
+			case 'select-all':
+				( ( state.changes && state.changes.changes ) || [] ).filter( function ( c ) {
+					return ! state.severity || c.severity === state.severity;
+				} ).forEach( function ( c ) {
+					state.selected[ c.id ] = el.checked;
+				} );
+				render();
+				return true;
+			case 'select-none':
+				state.selected = {};
+				render();
+				return true;
+			case 'bulk-apply':
+				applyBulk();
+				return true;
 			case 'tip':
 				// Touch screens have no hover: a tap shows or hides the explanation.
 				if ( tipFor === el ) {
@@ -3585,6 +3686,10 @@
 
 	/** Add an "i" with the explanation next to every known title in a container. */
 	function decorateTips( container ) {
+		// A partly ticked "select all" box shows a dash (a property, not markup).
+		Array.prototype.forEach.call( container.querySelectorAll( 'input[data-mixed]' ), function ( box ) {
+			box.indeterminate = true;
+		} );
 		var list = tipText();
 		if ( ! list.length ) {
 			return;
@@ -4105,6 +4210,9 @@
 	root.addEventListener( 'input', function ( e ) {
 		if ( e.target && e.target.id === 'mk-add-url' ) {
 			state.addUrl = e.target.value;
+		}
+		if ( e.target && e.target.id === 'mk-bulk-action' ) {
+			state.bulkAction = e.target.value;
 		}
 		if ( e.target && e.target.getAttribute && e.target.getAttribute( 'data-redirect' ) ) {
 			state.redirectDraft[ e.target.getAttribute( 'data-redirect' ) ] = e.target.value;
