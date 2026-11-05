@@ -84,7 +84,7 @@ export async function GET(request: Request) {
     getUptimeStats(prisma, { websiteId, since: new Date(now.getTime() - DAY_MS) }),
     getUptimeStats(prisma, { websiteId, since: new Date(now.getTime() - 7 * DAY_MS) }),
     getWorkspacePlan(ctx.workspaceId),
-    // Overview chart (plugin 1.3.1): response time with the updates marked.
+    // Overview chart (plugin 1.3.0): response time with the updates marked.
     getResponseTimeSeries(prisma, { websiteId, since: vitalsSince, bucketMinutes: VITALS_BUCKET_MINUTES }),
     prisma.siteUpdateEvent.findMany({
       where: { websiteId, createdAt: { gte: vitalsSince } },
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       take: 12,
     }),
-    // Plugin 1.4.0: the Site audit card links to this website's latest audit.
+    // Plugin 1.3.0: the Site audit card links to this website's latest audit.
     prisma.siteAudit.findFirst({
       where: { websiteId },
       orderBy: { createdAt: "desc" },
@@ -126,7 +126,7 @@ export async function GET(request: Request) {
         plan: {
           id: plan.id,
           name: plan.name,
-          // Plugin 1.4.0: page limit for suggested pages, and whether AI
+          // Plugin 1.3.0: page limit for suggested pages, and whether AI
           // assistants (MCP) are included. Infinity is sent as null.
           limits: {
             pagesPerWebsite: Number.isFinite(plan.limits.pagesPerWebsite) ? plan.limits.pagesPerWebsite : null,

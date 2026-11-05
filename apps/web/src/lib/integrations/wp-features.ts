@@ -14,6 +14,10 @@ export interface SiteFeatures {
   pluginHealth: boolean;
   checkoutGuard: boolean;
   updateWindows: boolean;
+  /** Plugin 1.3.0 Reports tab (white-label client reports). */
+  clientReports: boolean;
+  /** Plugin 1.3.0 MCP card (ChatGPT, Claude). */
+  aiAssistants: boolean;
 }
 
 export function siteFeatures(limits: Plan["limits"]): SiteFeatures {
@@ -23,6 +27,8 @@ export function siteFeatures(limits: Plan["limits"]): SiteFeatures {
     pluginHealth: limits.wpPluginHealth,
     checkoutGuard: limits.conversionElementMonitoring,
     updateWindows: limits.wpUpdateWindows,
+    clientReports: limits.whiteLabelReports,
+    aiAssistants: limits.aiAssistants,
   };
 }
 

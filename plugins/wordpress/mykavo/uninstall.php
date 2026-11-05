@@ -39,7 +39,7 @@ foreach ( array(
 	'mykavo_plugin_health',
 	'mykavo_rollback_holds',
 	'mykavo_rollback_lock',
-	// 1.4.0.
+	// 1.3.0.
 	'mykavo_alerts',
 	'mykavo_batch',
 	'mykavo_known_pages',

@@ -57,7 +57,7 @@
 		menuOpen: false,
 		busy: '',
 		drawer: null,
-		// 1.4.0.
+		// 1.3.0.
 		alerts: null,
 		safe: null,
 		safeRun: null,
@@ -2025,7 +2025,7 @@
 		return '';
 	}
 
-	/* ---------------------------------------------------------------- 1.4.0 -- */
+	/* ---------------------------------------------------------------- 1.3.0 -- */
 
 	/** Viewers (the MyKavo viewer role) see everything and change nothing. */
 	var READONLY = cfg.canManage === false;
@@ -2647,10 +2647,10 @@
 		return '';
 	}
 
-	/** Load what the 1.4.0 cards need for the current tab. */
+	/** Load what the 1.3.0 cards need for the current tab. */
 	function loadExtras() {}
 
-	/** Clicks on the 1.4.0 controls. Returns true when handled. */
+	/** Clicks on the 1.3.0 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
 			case 'copy':
@@ -3203,8 +3203,8 @@
 		var brandForm = e.target.closest && e.target.closest( '[data-form="branding"]' );
 		if ( brandForm ) {
 			e.preventDefault();
-			state.brandDraft = { logoUrl: brandForm.querySelector( 'input[name="logoUrl"]' ).value.trim(), color: brandForm.querySelector( 'input[name="color"]' ).value };
-			send( '/reports/branding', { logoUrl: state.brandDraft.logoUrl || null, color: state.brandDraft.color || null }, 'reports', 'branding', function () {
+			state.brandDraft = { name: brandForm.querySelector( 'input[name="brandName"]' ).value.trim(), color: brandForm.querySelector( 'input[name="color"]' ).value };
+			send( '/reports/branding', { brandName: state.brandDraft.name || null, color: state.brandDraft.color || null }, 'reports', 'branding', function () {
 				state.brandDraft = null;
 				toast( __( 'Report branding saved.', 'mykavo' ) );
 			} );

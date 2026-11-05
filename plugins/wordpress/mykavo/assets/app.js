@@ -57,7 +57,7 @@
 		menuOpen: false,
 		busy: '',
 		drawer: null,
-		// 1.4.0.
+		// 1.3.0.
 		alerts: null,
 		safe: null,
 		safeRun: null,
@@ -1023,7 +1023,7 @@
 			[ 'scans', __( 'Scans', 'mykavo' ), '' ],
 			[ 'pages', __( 'Pages', 'mykavo' ), '' ],
 		];
-		if ( state.overview && planAtLeast( 'agency' ) ) {
+		if ( state.overview && ( planAtLeast( 'agency' ) || feat( 'clientReports' ) ) ) {
 			list.push( [ 'reports', __( 'Reports', 'mykavo' ), '' ] );
 		}
 		list.push( [ 'plan', __( 'Plan', 'mykavo' ), '' ] );
@@ -2324,7 +2324,7 @@
 		return '<section class="mk-card">' + head + chart + table + '</section>';
 	}
 
-	/* ---------------------------------------------------------------- 1.4.0 -- */
+	/* ---------------------------------------------------------------- 1.3.0 -- */
 
 	/** Viewers (the MyKavo viewer role) see everything and change nothing. */
 	var READONLY = cfg.canManage === false;
@@ -3289,7 +3289,13 @@
 			return '<section class="mk-card mk-card-pad">' + upsell( lockedText( 'agency', __( 'Monthly client reports under your own brand', 'mykavo' ) ) ) + '</section>';
 		}
 		var b = r.branding || {};
-		var draft = state.brandDraft || { logoUrl: b.logoUrl || '', color: b.color || '#FFD400' };
+		var draft = state.brandDraft || { name: b.name || '', color: b.color || '#FFD400' };
+		if ( r.enabled === false ) {
+			return '<section class="mk-card mk-card-pad"><div class="mk-empty"><span class="mk-empty-icon">' + icon( 'file' ) + '</span><strong>' + esc( __( 'The client report is off for this website', 'mykavo' ) ) + '</strong><span>' +
+				esc( __( 'Switch it on in MyKavo, on this website\'s page under Client report. It appears here straight away.', 'mykavo' ) ) + '</span>' +
+				( safeUrl( r.settingsUrl ) ? '<a class="mk-btn mk-btn-dark mk-btn-sm" href="' + esc( safeUrl( r.settingsUrl ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
+				'</div></section>';
+		}
 		var list = r.reports.length
 			? '<ul class="mk-list">' + r.reports.map( function ( rep ) {
 				var s = rep.summary || {};
@@ -3315,7 +3321,7 @@
 				return '<li><div class="mk-row mk-report-row" style="cursor:default">' + icon( 'file', 'mk-row-chevron' ) + '<span class="mk-row-main"><span class="mk-row-title">' + esc( rep.month ) + '</span><span class="mk-row-meta">' + bits.map( function ( x ) {
 					return '<span>' + esc( x ) + '</span>';
 				} ).join( '' ) + '</span></span>' +
-					( safeUrl( rep.url ) ? '<a class="mk-btn mk-btn-sm mk-btn-soft" href="' + esc( safeUrl( rep.url ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Open', 'mykavo' ) ) + '</a>' : '' ) +
+					( safeUrl( rep.url ) ? '<a class="mk-btn mk-btn-sm mk-btn-dark" href="' + esc( safeUrl( rep.url ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Open report', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
 					( safeUrl( rep.pdfUrl ) ? '<a class="mk-btn mk-btn-sm mk-btn-dark" href="' + esc( safeUrl( rep.pdfUrl ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Download PDF', 'mykavo' ) ) + '</a>' : '' ) +
 					'</div></li>';
 			} ).join( '' ) + '</ul>'
@@ -3323,14 +3329,17 @@
 		var brand = READONLY ? '' :
 			'<section class="mk-card mk-card-pad"><h3 class="mk-card-title">' + esc( __( 'Your brand on the reports', 'mykavo' ) ) + '</h3>' +
 			'<form class="mk-brand-form" data-form="branding">' +
-			'<label><span>' + esc( __( 'Logo address (PNG or SVG)', 'mykavo' ) ) + '</span><input name="logoUrl" type="url" data-key="brand-logo" value="' + esc( draft.logoUrl ) + '" placeholder="https://"></label>' +
+			( safeUrl( b.logoUrl ) ? '<img class="mk-brand-logo" src="' + esc( safeUrl( b.logoUrl ) ) + '" alt="' + esc( __( 'Report logo', 'mykavo' ) ) + '">' : '' ) +
+			'<label><span>' + esc( __( 'Brand name', 'mykavo' ) ) + '</span><input name="brandName" type="text" maxlength="60" data-key="brand-name" value="' + esc( draft.name ) + '"></label>' +
 			'<label><span>' + esc( __( 'Brand colour', 'mykavo' ) ) + '</span><input name="color" type="color" data-key="brand-color" value="' + esc( draft.color || '#FFD400' ) + '"></label>' +
-			'<button type="submit" class="mk-btn mk-btn-dark mk-btn-sm"' + ( state.busy === 'branding' ? ' disabled' : '' ) + '>' + esc( __( 'Save', 'mykavo' ) ) + '</button></form></section>';
-		return '<div class="mk-grid"><section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Monthly client reports', 'mykavo' ) ) + '</h3>' +
-			'<p class="mk-card-sub">' + esc( __( 'Updates, rollbacks, uptime, SSL, changes caught and AI crawler visits, ready to send to your client.', 'mykavo' ) ) + '</p></div></div>' + list + '</section>' + brand + '</div>';
+			'<button type="submit" class="mk-btn mk-btn-dark mk-btn-sm"' + ( state.busy === 'branding' ? ' disabled' : '' ) + '>' + esc( __( 'Save', 'mykavo' ) ) + '</button></form>' +
+			( safeUrl( r.brandingUrl ) ? '<p class="mk-fine">' + esc( b.logoUrl ? __( 'To change the logo, upload a new one in MyKavo.', 'mykavo' ) : __( 'Add your logo in MyKavo.', 'mykavo' ) ) + ' <a class="mk-link" href="' + esc( safeUrl( r.brandingUrl ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Agency branding', 'mykavo' ) ) + icon( 'external' ) + '</a></p>' : '' ) +
+			'</section>';
+		return '<div class="mk-grid"><section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Client report, last 30 days', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Updates, rollbacks, uptime, SSL, changes caught and AI crawler visits, ready to send to your client. Use Print on the report to save it as a PDF.', 'mykavo' ) ) + '</p></div></div>' + list + '</section>' + brand + '</div>';
 	}
 
-	/** Load what the 1.4.0 cards need for the current tab. */
+	/** Load what the 1.3.0 cards need for the current tab. */
 	function loadExtras() {
 		if ( state.tab === 'overview' || state.tab === 'pages' ) {
 			if ( ! READONLY && ! state.suggestions ) {
@@ -3361,7 +3370,7 @@
 		}
 	}
 
-	/** Clicks on the 1.4.0 controls. Returns true when handled. */
+	/** Clicks on the 1.3.0 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
 			case 'copy':
@@ -3914,8 +3923,8 @@
 		var brandForm = e.target.closest && e.target.closest( '[data-form="branding"]' );
 		if ( brandForm ) {
 			e.preventDefault();
-			state.brandDraft = { logoUrl: brandForm.querySelector( 'input[name="logoUrl"]' ).value.trim(), color: brandForm.querySelector( 'input[name="color"]' ).value };
-			send( '/reports/branding', { logoUrl: state.brandDraft.logoUrl || null, color: state.brandDraft.color || null }, 'reports', 'branding', function () {
+			state.brandDraft = { name: brandForm.querySelector( 'input[name="brandName"]' ).value.trim(), color: brandForm.querySelector( 'input[name="color"]' ).value };
+			send( '/reports/branding', { brandName: state.brandDraft.name || null, color: state.brandDraft.color || null }, 'reports', 'branding', function () {
 				state.brandDraft = null;
 				toast( __( 'Report branding saved.', 'mykavo' ) );
 			} );

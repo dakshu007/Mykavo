@@ -33,7 +33,7 @@ let paid = process.env.PAID !== '0';
 let legacy = false;
 let settings = { updateWindow: null };
 const guard = { pages: new Set(), elements: new Set() };
-// PLAN=free|starter|pro|agency picks the plan the site API reports (1.4.0 Plan tab).
+// PLAN=free|starter|pro|agency picks the plan the site API reports (1.3.0 Plan tab).
 let planId = process.env.PLAN || (paid ? 'pro' : 'free');
 const features = () => ({
   autoRollback: paid, aiInsights: paid, pluginHealth: paid, checkoutGuard: paid, updateWindows: paid,
@@ -44,7 +44,7 @@ const features = () => ({
 const PLAN_NAMES = { free: 'Free', starter: 'Starter', pro: 'Pro', agency: 'Agency' };
 const PLAN_PAGES = { free: 5, starter: 10, pro: 15, agency: 25 };
 const elements = [];
-const reportBranding = { logoUrl: '', color: '#FFD400' };
+const reportBranding = { name: 'Northwind Studio', logoUrl: null, color: '#FFD400' };
 const planError = (res) => json(res, 403, { error: 'This feature is not included in your plan.', reason: 'PLAN' });
 const addedPages = [];
 const pages = ['/', '/shop', '/shop/ethiopia-yirgacheffe', '/subscribe', '/about', '/cart', '/checkout', '/contact'];
@@ -281,7 +281,7 @@ http.createServer(async (req, res) => {
       return json(res, 200, { pages: list });
     }
     if (rest === '/disconnect') return json(res, 200, { ok: true });
-    // 1.4.0 service endpoints (see docs/service-api-1.4.md).
+    // 1.3.0 service endpoints (see docs/service-api-1.3.md).
     if (rest === '/alerts' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   alerts: ${JSON.stringify(body)}\n`); return json(res, 200, { received: (body.alerts || []).length, notified: paid }); }
     if (rest === '/crash-check' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   crash-check: ${body.state}\n`); return json(res, 200, { action: body.state === 'broken' && paid ? 'rollback' : 'none' }); }
     if (rest === '/elements' && req.method === 'POST') { if (!paid && elements.length >= 1) return json(res, 403, { error: 'The free plan watches one element. Upgrade to watch more.', reason: 'PLAN', code: 'element_limit' }); const body = JSON.parse((await readBody(req)) || '{}'); elements.push(body); return json(res, 201, { element: { id: 'el' + elements.length, name: body.name, selector: body.selector } }); }
@@ -289,8 +289,8 @@ http.createServer(async (req, res) => {
     if (rest === '/redirect-suggestions' && req.method === 'POST') { if (!paid) return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); return json(res, 200, { suggestions: (body.paths || []).map((p) => ({ path: p, url: 'https://northwind-coffee.test/shop/', title: 'Shop' })) }); }
     if (rest === '/update-risk' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); return json(res, 200, { plugins: (body.plugins || []).map((p, i) => ({ slug: p.slug, to: p.to, sites: 214 + i, changedPercent: i === 0 ? 31 : 3, risky: i === 0 })) }); }
     if (rest === '/forms' && req.method === 'POST') { if (!paid) return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); return json(res, 200, { submissions: true, forms: (body.pages || []).map((p) => ({ url: p.url, status: 'ok', checkedAt: ago(30), submission: { status: 'ok', at: ago(30) } })) }); }
-    if (rest === '/reports' && req.method === 'GET') { if (planId !== 'agency') return planError(res); return json(res, 200, { branding: reportBranding, reports: [{ month: 'October 2026', url: BASE + '/r/oct', pdfUrl: BASE + '/r/oct.pdf', summary: { updates: 14, rollbacks: 1, uptimePermille: 999, sslDaysLeft: 71, changesCaught: 6, aiVisits: 1840 } }] }); }
-    if (rest === '/report-branding' && req.method === 'PUT') { if (planId !== 'agency') return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); Object.assign(reportBranding, body); return json(res, 200, { branding: reportBranding }); }
+    if (rest === '/reports' && req.method === 'GET') { if (planId !== 'agency') return planError(res); return json(res, 200, { enabled: true, settingsUrl: BASE + '/dashboard/websites/web1', brandingUrl: BASE + '/dashboard/settings', branding: reportBranding, reports: [{ month: 'Oct 6 - Nov 5, 2026', url: BASE + '/r/demo', pdfUrl: null, summary: { updates: 14, rollbacks: 1, uptimePermille: 999, sslDaysLeft: 71, changesCaught: 6, aiVisits: 1840 } }] }); }
+    if (rest === '/report-branding' && req.method === 'PUT') { if (planId !== 'agency') return planError(res); const body = JSON.parse((await readBody(req)) || '{}'); reportBranding.name = body.brandName ?? null; reportBranding.color = body.color ?? null; return json(res, 200, { branding: { name: reportBranding.name, color: reportBranding.color } }); }
   }
   json(res, 404, { error: 'mock: no route ' + url.pathname });
 }).listen(PORT, '127.0.0.1', () => console.log('mock mykavo on', BASE));

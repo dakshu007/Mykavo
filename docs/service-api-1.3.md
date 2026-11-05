@@ -1,6 +1,6 @@
-# MyKavo service API for WordPress plugin 1.4.0
+# MyKavo service API for WordPress plugin 1.3.0
 
-What the plugin (`plugins/wordpress/mykavo`, version 1.4.0) expects from
+What the plugin (`plugins/wordpress/mykavo`, version 1.3.0) expects from
 `https://mykavo.app/api/wp/v1`. Every request carries the site token
 (`Authorization: Bearer <token>`), JSON in and out, as in 1.3.
 
@@ -270,32 +270,42 @@ test message from MyKavo; report `ok` when the form shows its success state.
 Respect honeypots/CAPTCHAs: report `failed` with a `message` rather than
 bypassing them. 403 PLAN without `formChecks`.
 
-## 12. Client reports (Agency): `GET /reports`, `PUT /report-branding`
+## 12. Client reports (Agency): `GET /reports`, `PUT /report-branding` (built)
 
-`GET /reports` response `200`:
+Shipped with this release (`apps/web/src/app/api/wp/v1/reports`,
+`report-branding`). Plans with `whiteLabelReports` only; otherwise 403 PLAN.
+
+`GET /reports` answers with this website's live white-label report (the
+`/r/[token]` page, last 30 days) once it is switched on for the website in
+the dashboard:
 
 ```json
 {
-  "branding": { "logoUrl": "https://...", "color": "#FFD400" },
+  "enabled": true,
+  "settingsUrl": "https://mykavo.app/dashboard/websites/<id>",
+  "brandingUrl": "https://mykavo.app/dashboard/settings",
+  "branding": { "name": "Northwind Studio", "logoUrl": "https://mykavo.app/api/brand-logos/...", "color": "#FFD400" },
   "reports": [
     {
-      "month": "October 2026",
-      "url": "https://mykavo.app/r/<signed id>",
-      "pdfUrl": "https://mykavo.app/r/<signed id>.pdf",
+      "month": "Oct 6 - Nov 5, 2026",
+      "url": "https://mykavo.app/r/<token>",
+      "pdfUrl": null,
       "summary": { "updates": 14, "rollbacks": 1, "uptimePermille": 999, "sslDaysLeft": 71, "changesCaught": 6, "aiVisits": 1840 }
     }
   ]
 }
 ```
 
-Newest first, last 12 months. Report links should be signed and not need a
-MyKavo login (they go to clients). `PUT /report-branding` with
-`{ "logoUrl": string | null, "color": "#RRGGBB" | null }` answers with the
-saved `{ "branding": {...} }`. Both 403 PLAN outside Agency.
+`enabled: false` (and no reports) when the report is off for the website.
+The report page has its own Print button for a PDF, so `pdfUrl` is null.
+`PUT /report-branding` takes `{ "brandName": string | null, "color": "#RRGGBB" | null }`
+and answers `{ "branding": { "name", "color" } }`. The logo is uploaded in
+the dashboard (Settings > Agency branding), never fetched from an address
+the site sends.
 
 ## Not service-side (free, inside WordPress)
 
-For completeness, these 1.4.0 features need nothing from MyKavo: snapshots
+For completeness, these 1.3.0 features need nothing from MyKavo: snapshots
 and snapshot rollback, the local crash check, silent-disaster notices, the
 critical-change notice and menu badge, "Back up first" with UpdraftPlus, the
 MyKavo viewer role, suggested pages, llms.txt (without summaries), per-crawler

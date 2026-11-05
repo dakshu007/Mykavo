@@ -10,6 +10,8 @@ describe("siteFeatures", () => {
       pluginHealth: false,
       checkoutGuard: false,
       updateWindows: false,
+      clientReports: false,
+      aiAssistants: false,
     });
     expect(siteFeatures(getPlan("agency").limits)).toEqual({
       autoRollback: true,
@@ -17,6 +19,8 @@ describe("siteFeatures", () => {
       pluginHealth: true,
       checkoutGuard: true,
       updateWindows: true,
+      clientReports: true,
+      aiAssistants: true,
     });
     const starter = siteFeatures(getPlan("starter").limits);
     expect(starter.aiInsights).toBe(true);

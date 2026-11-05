@@ -337,7 +337,7 @@ final class MyKavo_Rest {
 			)
 		);
 
-		/* ------------------------------------------------------------ 1.4.0 -- */
+		/* ------------------------------------------------------------ 1.3.0 -- */
 
 		$bool = static function ( $required = true ) {
 			return array(
@@ -515,11 +515,11 @@ final class MyKavo_Rest {
 			'report_branding',
 			$admin,
 			array(
-				'logoUrl' => array(
+				'brandName' => array(
 					'type'      => array( 'string', 'null' ),
-					'maxLength' => 2000,
+					'maxLength' => 60,
 				),
-				'color'   => array(
+				'color'     => array(
 					'type'    => array( 'string', 'null' ),
 					'pattern' => '^#[0-9a-fA-F]{6}$',
 				),
@@ -1009,7 +1009,7 @@ final class MyKavo_Rest {
 		return rest_ensure_response( array( 'ok' => true ) );
 	}
 
-	/* ---------------------------------------------------------------- 1.4.0 -- */
+	/* ---------------------------------------------------------------- 1.3.0 -- */
 
 	/**
 	 * Silent-disaster alerts kept on this site.
@@ -1263,7 +1263,7 @@ final class MyKavo_Rest {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function reports() {
-		$result = MyKavo_API::get( '/reports', 'reports', 10 * MINUTE_IN_SECONDS );
+		$result = MyKavo_API::get( '/reports', 'reports', MINUTE_IN_SECONDS );
 		$data   = is_wp_error( $result ) ? $result->get_error_data() : null;
 		$status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 0;
 		if ( MyKavo_API::is_plan_error( $result ) || 404 === $status ) {
@@ -1287,9 +1287,14 @@ final class MyKavo_Rest {
 		$branding = isset( $result['branding'] ) && is_array( $result['branding'] ) ? $result['branding'] : array();
 		return rest_ensure_response(
 			array(
-				'allowed'  => true,
-				'reports'  => $reports,
-				'branding' => array(
+				'allowed'     => true,
+				// The report is switched on per website in MyKavo.
+				'enabled'     => ! isset( $result['enabled'] ) || true === $result['enabled'],
+				'settingsUrl' => isset( $result['settingsUrl'] ) ? esc_url_raw( (string) $result['settingsUrl'] ) : '',
+				'brandingUrl' => isset( $result['brandingUrl'] ) ? esc_url_raw( (string) $result['brandingUrl'] ) : '',
+				'reports'     => $reports,
+				'branding'    => array(
+					'name'    => isset( $branding['name'] ) ? sanitize_text_field( (string) $branding['name'] ) : '',
 					'logoUrl' => isset( $branding['logoUrl'] ) ? esc_url_raw( (string) $branding['logoUrl'] ) : '',
 					'color'   => isset( $branding['color'] ) && preg_match( '/^#[0-9a-fA-F]{6}$/', (string) $branding['color'] ) ? (string) $branding['color'] : '',
 				),
@@ -1298,20 +1303,20 @@ final class MyKavo_Rest {
 	}
 
 	/**
-	 * Save the report logo and brand colour in MyKavo.
+	 * Save the report brand name and colour in MyKavo (the logo is uploaded in MyKavo).
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function report_branding( WP_REST_Request $request ) {
-		$logo   = $request->get_param( 'logoUrl' );
+		$name   = $request->get_param( 'brandName' );
 		$color  = $request->get_param( 'color' );
 		$result = MyKavo_API::request(
 			'PUT',
 			'/report-branding',
 			array(
-				'logoUrl' => is_string( $logo ) && '' !== $logo ? esc_url_raw( $logo ) : null,
-				'color'   => is_string( $color ) && '' !== $color ? $color : null,
+				'brandName' => is_string( $name ) && '' !== trim( $name ) ? sanitize_text_field( $name ) : null,
+				'color'     => is_string( $color ) && '' !== $color ? $color : null,
 			)
 		);
 		delete_transient( 'mykavo_cache_reports' );

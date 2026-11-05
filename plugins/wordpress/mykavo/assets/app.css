@@ -2744,7 +2744,7 @@
 	}
 }
 
-/* ===================================================== 1.3.1 refresh -- */
+/* ===================================================== 1.3.0 refresh -- */
 /* Soft, airy and easy to read: a warm grey ground, white cards with large
    radii and no hard borders, pill tabs and buttons, big light numbers.
    System fonts only (nothing downloaded), 15px base text. */
@@ -3708,9 +3708,9 @@
 	}
 }
 
-/* ======================================================= 1.4.0 -- */
+/* ======================================================= 1.3.0 -- */
 /* Plan medal, Plan tab, alerts, Safe Update All, AI crawler controls,
-   suggested pages and the element picker. Same tokens as 1.3.1. */
+   suggested pages and the element picker. Same tokens as the refresh above. */
 
 .mk-chip-good {
 	background: var(--mk-good-soft);
@@ -4511,4 +4511,18 @@
 
 .mk-mail .mk-upsell {
 	margin: 8px 0 0;
+}
+
+.mk-brand-logo {
+	max-width: 160px;
+	max-height: 48px;
+	object-fit: contain;
+}
+
+.mk-brand-form input[type="text"] {
+	height: 40px;
+	min-width: 240px;
+	padding: 0 14px;
+	border: 1px solid var(--mk-line);
+	border-radius: 999px;
 }
