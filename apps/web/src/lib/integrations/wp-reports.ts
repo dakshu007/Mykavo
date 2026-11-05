@@ -1,5 +1,5 @@
 /**
- * Client reports in the WordPress plugin (1.3.0 Reports tab): the live
+ * Site reports in the WordPress plugin (1.3.1 Site report tab): the live
  * white-label report at /r/[token] - the same 30-day window the report page
  * shows - summed up in a few numbers. Pure; unit-tested.
  */

@@ -142,7 +142,7 @@ final class MyKavo_Admin {
 			'version'    => MYKAVO_VERSION,
 			'pricingUrl' => untrailingslashit( MYKAVO_APP_URL ) . '/pricing',
 			'canUpdate'  => current_user_can( 'update_plugins' ) && wp_is_file_mod_allowed( 'mykavo_rollback' ),
-			// 1.3.0: viewers see everything but cannot act.
+			// 1.3.1: viewers see everything but cannot act.
 			'canManage'  => MyKavo_Roles::can_manage(),
 			'homeUrl'    => home_url( '/' ),
 			'multisite'  => is_multisite(),

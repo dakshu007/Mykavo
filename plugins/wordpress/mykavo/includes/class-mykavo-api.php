@@ -27,7 +27,7 @@ final class MyKavo_API {
 		'pluginHealth',
 		'checkoutGuard',
 		'updateWindows',
-		// 1.3.0.
+		// 1.3.1.
 		'instantAlerts',
 		'baselineBeforeUpdate',
 		'llmsSummaries',

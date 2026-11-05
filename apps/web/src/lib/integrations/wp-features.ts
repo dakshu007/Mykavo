@@ -14,9 +14,9 @@ export interface SiteFeatures {
   pluginHealth: boolean;
   checkoutGuard: boolean;
   updateWindows: boolean;
-  /** Plugin 1.3.0 Reports tab (white-label client reports). */
+  /** Plugin 1.3.1 Site report tab (white-label reports). */
   clientReports: boolean;
-  /** Plugin 1.3.0 MCP card (ChatGPT, Claude). */
+  /** Plugin 1.3.1 MCP card (ChatGPT, Claude). */
   aiAssistants: boolean;
 }
 

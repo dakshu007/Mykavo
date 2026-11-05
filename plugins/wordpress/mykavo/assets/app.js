@@ -57,7 +57,7 @@
 		menuOpen: false,
 		busy: '',
 		drawer: null,
-		// 1.3.0.
+		// 1.3.1.
 		alerts: null,
 		safe: null,
 		safeRun: null,
@@ -966,7 +966,7 @@
 		scans: __( 'Scans', 'mykavo' ),
 		pages: __( 'Pages', 'mykavo' ),
 		plan: __( 'Your plan', 'mykavo' ),
-		reports: __( 'Client reports', 'mykavo' ),
+		reports: __( 'Your site report', 'mykavo' ),
 	};
 
 	/** The page title and one status line: which site, how it is, when it was checked. */
@@ -1024,7 +1024,7 @@
 			[ 'pages', __( 'Pages', 'mykavo' ), '' ],
 		];
 		if ( state.overview && ( planAtLeast( 'agency' ) || feat( 'clientReports' ) ) ) {
-			list.push( [ 'reports', __( 'Reports', 'mykavo' ), '' ] );
+			list.push( [ 'reports', __( 'Site report', 'mykavo' ), '' ] );
 		}
 		list.push( [ 'plan', __( 'Plan', 'mykavo' ), '' ] );
 		return (
@@ -2324,7 +2324,7 @@
 		return '<section class="mk-card">' + head + chart + table + '</section>';
 	}
 
-	/* ---------------------------------------------------------------- 1.3.0 -- */
+	/* ---------------------------------------------------------------- 1.3.1 -- */
 
 	/** Viewers (the MyKavo viewer role) see everything and change nothing. */
 	var READONLY = cfg.canManage === false;
@@ -2578,7 +2578,7 @@
 			'<p class="mk-fine">' + esc( o.workspace.name ) + '</p></div></div>' +
 			'<div class="mk-plan-hero-side">' +
 			( planAtLeast( 'pro' )
-				? '<p class="mk-fine">' + esc( p === 'agency' ? __( 'Every MyKavo feature is included.', 'mykavo' ) : __( 'Need white-label client reports or update windows? Agency has both.', 'mykavo' ) ) + '</p>' +
+				? '<p class="mk-fine">' + esc( p === 'agency' ? __( 'Every MyKavo feature is included.', 'mykavo' ) : __( 'Need a branded site report or update windows? Agency has both.', 'mykavo' ) ) + '</p>' +
 					( p === 'agency' ? '' : '<a class="mk-btn mk-btn-soft" href="' + esc( safeUrl( cfg.pricingUrl ) || '' ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Compare plans', 'mykavo' ) ) + icon( 'external' ) + '</a>' )
 				: upgradeButton( __( 'Upgrade to Pro', 'mykavo' ) ) + '<a class="mk-link" href="' + esc( safeUrl( cfg.pricingUrl ) || '' ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Compare all plans', 'mykavo' ) ) + icon( 'external' ) + '</a>' ) +
 			'</div></section>';
@@ -3275,7 +3275,7 @@
 		}
 	}
 
-	/* ---------------------------------------------------- client reports -- */
+	/* ---------------------------------------------------- your site report -- */
 
 	function reportsView() {
 		var r = state.reports;
@@ -3286,13 +3286,13 @@
 			return loadingBlock( 260 );
 		}
 		if ( ! r.allowed ) {
-			return '<section class="mk-card mk-card-pad">' + upsell( lockedText( 'agency', __( 'Monthly client reports under your own brand', 'mykavo' ) ) ) + '</section>';
+			return '<section class="mk-card mk-card-pad">' + upsell( lockedText( 'agency', __( 'Your site report under your own brand', 'mykavo' ) ) ) + '</section>';
 		}
 		var b = r.branding || {};
 		var draft = state.brandDraft || { name: b.name || '', color: b.color || '#FFD400' };
 		if ( r.enabled === false ) {
-			return '<section class="mk-card mk-card-pad"><div class="mk-empty"><span class="mk-empty-icon">' + icon( 'file' ) + '</span><strong>' + esc( __( 'The client report is off for this website', 'mykavo' ) ) + '</strong><span>' +
-				esc( __( 'Switch it on in MyKavo, on this website\'s page under Client report. It appears here straight away.', 'mykavo' ) ) + '</span>' +
+			return '<section class="mk-card mk-card-pad"><div class="mk-empty"><span class="mk-empty-icon">' + icon( 'file' ) + '</span><strong>' + esc( __( 'Your site report is switched off', 'mykavo' ) ) + '</strong><span>' +
+				esc( __( 'Switch the report on for this website in MyKavo. It appears here straight away.', 'mykavo' ) ) + '</span>' +
 				( safeUrl( r.settingsUrl ) ? '<a class="mk-btn mk-btn-dark mk-btn-sm" href="' + esc( safeUrl( r.settingsUrl ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
 				'</div></section>';
 		}
@@ -3327,7 +3327,7 @@
 			} ).join( '' ) + '</ul>'
 			: '<div class="mk-empty"><span>' + esc( __( 'The first report appears at the start of next month.', 'mykavo' ) ) + '</span></div>';
 		var brand = READONLY ? '' :
-			'<section class="mk-card mk-card-pad"><h3 class="mk-card-title">' + esc( __( 'Your brand on the reports', 'mykavo' ) ) + '</h3>' +
+			'<section class="mk-card mk-card-pad"><h3 class="mk-card-title">' + esc( __( 'Your brand on the report', 'mykavo' ) ) + '</h3>' +
 			'<form class="mk-brand-form" data-form="branding">' +
 			( safeUrl( b.logoUrl ) ? '<img class="mk-brand-logo" src="' + esc( safeUrl( b.logoUrl ) ) + '" alt="' + esc( __( 'Report logo', 'mykavo' ) ) + '">' : '' ) +
 			'<label><span>' + esc( __( 'Brand name', 'mykavo' ) ) + '</span><input name="brandName" type="text" maxlength="60" data-key="brand-name" value="' + esc( draft.name ) + '"></label>' +
@@ -3335,11 +3335,11 @@
 			'<button type="submit" class="mk-btn mk-btn-dark mk-btn-sm"' + ( state.busy === 'branding' ? ' disabled' : '' ) + '>' + esc( __( 'Save', 'mykavo' ) ) + '</button></form>' +
 			( safeUrl( r.brandingUrl ) ? '<p class="mk-fine">' + esc( b.logoUrl ? __( 'To change the logo, upload a new one in MyKavo.', 'mykavo' ) : __( 'Add your logo in MyKavo.', 'mykavo' ) ) + ' <a class="mk-link" href="' + esc( safeUrl( r.brandingUrl ) ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Agency branding', 'mykavo' ) ) + icon( 'external' ) + '</a></p>' : '' ) +
 			'</section>';
-		return '<div class="mk-grid"><section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Client report, last 30 days', 'mykavo' ) ) + '</h3>' +
-			'<p class="mk-card-sub">' + esc( __( 'Updates, rollbacks, uptime, SSL, changes caught and AI crawler visits, ready to send to your client. Use Print on the report to save it as a PDF.', 'mykavo' ) ) + '</p></div></div>' + list + '</section>' + brand + '</div>';
+		return '<div class="mk-grid"><section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Last 30 days', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Updates, rollbacks, uptime, SSL, changes caught and AI crawler visits on one page, ready to share. Use Print on the report to save it as a PDF.', 'mykavo' ) ) + '</p></div></div>' + list + '</section>' + brand + '</div>';
 	}
 
-	/** Load what the 1.3.0 cards need for the current tab. */
+	/** Load what the 1.3.1 cards need for the current tab. */
 	function loadExtras() {
 		if ( state.tab === 'overview' || state.tab === 'pages' ) {
 			if ( ! READONLY && ! state.suggestions ) {
@@ -3370,7 +3370,7 @@
 		}
 	}
 
-	/** Clicks on the 1.3.0 controls. Returns true when handled. */
+	/** Clicks on the 1.3.1 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
 			case 'copy':

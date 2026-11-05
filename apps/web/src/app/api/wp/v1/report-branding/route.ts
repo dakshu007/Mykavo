@@ -12,7 +12,7 @@ const bodySchema = z.object({
 });
 
 /**
- * WordPress plugin 1.3.0: the brand name and colour on client reports, from
+ * WordPress plugin 1.3.1: the brand name and colour on the site report, from
  * the Reports tab. The logo is uploaded in MyKavo (Settings > Agency
  * branding), never fetched from an address the site sends.
  */
@@ -22,7 +22,7 @@ export async function PUT(request: Request) {
   const plan = await getWorkspacePlan(ctx.workspaceId);
   if (!plan.limits.whiteLabelReports) {
     return NextResponse.json(
-      { error: "White-label client reports come with the Agency plan.", reason: "PLAN" },
+      { error: "Your branded site report comes with the Agency plan.", reason: "PLAN" },
       { status: 403 },
     );
   }

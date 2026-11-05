@@ -143,7 +143,7 @@ const JS_REPLACEMENTS = [
     `esc( __( 'Theme changes', 'mykavo' ) ) + '</h3>' +
 			'<span class="mk-fine">' + esc( __( 'Last 30 changes.', 'mykavo' ) ) + '</span>`,
   ],
-  // Overview 1.3.0: page title, highlight card, chart key and tile.
+  // Overview 1.3.1: page title, highlight card, chart key and tile.
   [`updates: __( 'Safe Updates', 'mykavo' ),`, `updates: __( 'Theme checks', 'mykavo' ),`],
   [
     `esc( __( 'Update history', 'mykavo' ) ) + '</button>'`,
@@ -180,11 +180,11 @@ const JS_REPLACEMENTS = [
     `__( 'Known security issues are fixed as soon as a fix is out.', 'mykavo' )`,
   ],
   [`__( 'WordPress could not send the test email.', 'mykavo' )`, `__( 'The test email could not be sent.', 'mykavo' )`],
-  // 1.3.0: the Plan tab (WordPress feature list, external pricing link) and
+  // 1.3.1: the Plan tab (WordPress feature list, external pricing link) and
   // client reports are WordPress-only; so is picking an element in a frame
   // (the storefront is another origin inside the Shopify admin).
   [
-    `\n\t\tif ( state.overview && ( planAtLeast( 'agency' ) || feat( 'clientReports' ) ) ) {\n\t\t\tlist.push( [ 'reports', __( 'Reports', 'mykavo' ), '' ] );\n\t\t}\n\t\tlist.push( [ 'plan', __( 'Plan', 'mykavo' ), '' ] );`,
+    `\n\t\tif ( state.overview && ( planAtLeast( 'agency' ) || feat( 'clientReports' ) ) ) {\n\t\t\tlist.push( [ 'reports', __( 'Site report', 'mykavo' ), '' ] );\n\t\t}\n\t\tlist.push( [ 'plan', __( 'Plan', 'mykavo' ), '' ] );`,
     ``,
   ],
   [
@@ -300,7 +300,7 @@ const STUBS = {
   robotsCard: "function robotsCard() {\n\t\treturn '';\n\t}",
   historyCard: "function historyCard() {\n\t\treturn '';\n\t}",
   botsTile: "function botsTile() {\n\t\treturn '';\n\t}",
-  // 1.3.0: WordPress-only screens and cards.
+  // 1.3.1: WordPress-only screens and cards.
   planChip: "function planChip() {\n\t\treturn '';\n\t}",
   planView: "function planView() {\n\t\treturn '';\n\t}",
   alertsBanner: "function alertsBanner() {\n\t\treturn '';\n\t}",

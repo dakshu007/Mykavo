@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  *   critical change), the plugins that batch updated are rolled back.
  *   MyKavo makes the decision; this site carries it out.
  *
- * Plugins hosted on WordPress.org are reinstalled from there. Since 1.3.0
+ * Plugins hosted on WordPress.org are reinstalled from there. Since 1.3.1
  * every plugin and theme update also leaves a snapshot (a zip of the folder
  * as it was, see MyKavo_Snapshots), so premium plugins and themes can be
  * rolled back too, for seven days. MyKavo never rolls itself back, and a

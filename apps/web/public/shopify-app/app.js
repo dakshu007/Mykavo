@@ -57,7 +57,7 @@
 		menuOpen: false,
 		busy: '',
 		drawer: null,
-		// 1.3.0.
+		// 1.3.1.
 		alerts: null,
 		safe: null,
 		safeRun: null,
@@ -931,7 +931,7 @@
 		scans: __( 'Scans', 'mykavo' ),
 		pages: __( 'Pages', 'mykavo' ),
 		plan: __( 'Your plan', 'mykavo' ),
-		reports: __( 'Client reports', 'mykavo' ),
+		reports: __( 'Your site report', 'mykavo' ),
 	};
 
 	/** The page title and one status line: which site, how it is, when it was checked. */
@@ -2025,7 +2025,7 @@
 		return '';
 	}
 
-	/* ---------------------------------------------------------------- 1.3.0 -- */
+	/* ---------------------------------------------------------------- 1.3.1 -- */
 
 	/** Viewers (the MyKavo viewer role) see everything and change nothing. */
 	var READONLY = cfg.canManage === false;
@@ -2641,16 +2641,16 @@
 		}
 	}
 
-	/* ---------------------------------------------------- client reports -- */
+	/* ---------------------------------------------------- your site report -- */
 
 	function reportsView() {
 		return '';
 	}
 
-	/** Load what the 1.3.0 cards need for the current tab. */
+	/** Load what the 1.3.1 cards need for the current tab. */
 	function loadExtras() {}
 
-	/** Clicks on the 1.3.0 controls. Returns true when handled. */
+	/** Clicks on the 1.3.1 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
 			case 'copy':

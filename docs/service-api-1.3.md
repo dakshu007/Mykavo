@@ -1,6 +1,6 @@
-# MyKavo service API for WordPress plugin 1.3.0
+# MyKavo service API for WordPress plugin 1.3.1
 
-What the plugin (`plugins/wordpress/mykavo`, version 1.3.0) expects from
+What the plugin (`plugins/wordpress/mykavo`, version 1.3.1) expects from
 `https://mykavo.app/api/wp/v1`. Every request carries the site token
 (`Authorization: Bearer <token>`), JSON in and out, as in 1.3.
 
@@ -305,7 +305,7 @@ the site sends.
 
 ## Not service-side (free, inside WordPress)
 
-For completeness, these 1.3.0 features need nothing from MyKavo: snapshots
+For completeness, these 1.3.1 features need nothing from MyKavo: snapshots
 and snapshot rollback, the local crash check, silent-disaster notices, the
 critical-change notice and menu badge, "Back up first" with UpdraftPlus, the
 MyKavo viewer role, suggested pages, llms.txt (without summaries), per-crawler

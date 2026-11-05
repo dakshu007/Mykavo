@@ -337,7 +337,7 @@ final class MyKavo_Rest {
 			)
 		);
 
-		/* ------------------------------------------------------------ 1.3.0 -- */
+		/* ------------------------------------------------------------ 1.3.1 -- */
 
 		$bool = static function ( $required = true ) {
 			return array(
@@ -507,7 +507,7 @@ final class MyKavo_Rest {
 		$simple( '/forms/mail', WP_REST_Server::CREATABLE, 'mail_settings', $admin, array( 'enabled' => $bool() ) );
 		$simple( '/forms/mail/test', WP_REST_Server::CREATABLE, 'mail_test', $admin );
 
-		// Client reports (Agency).
+		// Your site report (Agency).
 		$simple( '/reports', WP_REST_Server::READABLE, 'reports', $viewer );
 		$simple(
 			'/reports/branding',
@@ -1009,7 +1009,7 @@ final class MyKavo_Rest {
 		return rest_ensure_response( array( 'ok' => true ) );
 	}
 
-	/* ---------------------------------------------------------------- 1.3.0 -- */
+	/* ---------------------------------------------------------------- 1.3.1 -- */
 
 	/**
 	 * Silent-disaster alerts kept on this site.
@@ -1258,7 +1258,7 @@ final class MyKavo_Rest {
 	}
 
 	/**
-	 * Monthly client reports from MyKavo (Agency).
+	 * Your site report from MyKavo (Agency): the last 30 days, with its numbers.
 	 *
 	 * @return WP_REST_Response|WP_Error
 	 */

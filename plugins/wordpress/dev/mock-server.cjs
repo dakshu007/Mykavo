@@ -33,7 +33,7 @@ let paid = process.env.PAID !== '0';
 let legacy = false;
 let settings = { updateWindow: null };
 const guard = { pages: new Set(), elements: new Set() };
-// PLAN=free|starter|pro|agency picks the plan the site API reports (1.3.0 Plan tab).
+// PLAN=free|starter|pro|agency picks the plan the site API reports (1.3.1 Plan tab).
 let planId = process.env.PLAN || (paid ? 'pro' : 'free');
 const features = () => ({
   autoRollback: paid, aiInsights: paid, pluginHealth: paid, checkoutGuard: paid, updateWindows: paid,
@@ -281,7 +281,7 @@ http.createServer(async (req, res) => {
       return json(res, 200, { pages: list });
     }
     if (rest === '/disconnect') return json(res, 200, { ok: true });
-    // 1.3.0 service endpoints (see docs/service-api-1.3.md).
+    // 1.3.1 service endpoints (see docs/service-api-1.3.md).
     if (rest === '/alerts' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   alerts: ${JSON.stringify(body)}\n`); return json(res, 200, { received: (body.alerts || []).length, notified: paid }); }
     if (rest === '/crash-check' && req.method === 'POST') { const body = JSON.parse((await readBody(req)) || '{}'); fs.appendFileSync(path.join(__dirname, 'media', 'requests.log'), `   crash-check: ${body.state}\n`); return json(res, 200, { action: body.state === 'broken' && paid ? 'rollback' : 'none' }); }
     if (rest === '/elements' && req.method === 'POST') { if (!paid && elements.length >= 1) return json(res, 403, { error: 'The free plan watches one element. Upgrade to watch more.', reason: 'PLAN', code: 'element_limit' }); const body = JSON.parse((await readBody(req)) || '{}'); elements.push(body); return json(res, 201, { element: { id: 'el' + elements.length, name: body.name, selector: body.selector } }); }

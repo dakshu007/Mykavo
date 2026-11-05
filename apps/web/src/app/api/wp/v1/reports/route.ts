@@ -7,7 +7,7 @@ import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/si
 import { buildReportSummary } from "@/lib/integrations/wp-reports";
 
 /**
- * WordPress plugin 1.3.0, Reports tab: this website's white-label client
+ * WordPress plugin 1.3.1, Site report tab: this website's white-label
  * report (the live /r/[token] page, last 30 days) with its headline numbers,
  * and the workspace branding it uses. Plans with white-label reports only.
  */
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const plan = await getWorkspacePlan(ctx.workspaceId);
   if (!plan.limits.whiteLabelReports) {
     return NextResponse.json(
-      { error: "White-label client reports come with the Agency plan.", reason: "PLAN" },
+      { error: "Your branded site report comes with the Agency plan.", reason: "PLAN" },
       { status: 403 },
     );
   }
