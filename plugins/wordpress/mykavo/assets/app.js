@@ -2990,7 +2990,7 @@
 		var url = safeUrl( l.url );
 		return (
 			'<section class="mk-card"><div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'llms.txt for AI assistants', 'mykavo' ) ) + '</h3>' +
-			'<p class="mk-card-sub">' + esc( __( 'A short Markdown guide at /llms.txt: your site\'s name, what it is about and its important pages. Some AI tools read it first.', 'mykavo' ) ) + '</p></div>' +
+			'<p class="mk-card-sub">' + esc( __( 'A short Markdown guide at /llms.txt: your site\'s name, what it is about and its important pages. Some AI tools read it; it does not change Google search or AI Overviews.', 'mykavo' ) ) + '</p></div>' +
 			( l.enabled && ! l.physical && url ? '<a class="mk-link" href="' + esc( url ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'View llms.txt', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) + '</div>' +
 			'<div class="mk-card-pad">' +
 			( l.physical
@@ -3375,6 +3375,14 @@
 	/** Clicks on the 1.3.1 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
+			case 'tip':
+				// Touch screens have no hover: a tap shows or hides the explanation.
+				if ( tipFor === el ) {
+					hideTip();
+				} else {
+					showTip( el );
+				}
+				return true;
 			case 'copy':
 				if ( navigator.clipboard ) {
 					navigator.clipboard.writeText( el.getAttribute( 'data-copy' ) || '' ).then( function () {
@@ -3474,6 +3482,153 @@
 		return false;
 	}
 
+	/* ----------------------------------------------------------- tooltips -- */
+
+	/**
+	 * What each feature is, in a sentence: shown from a small "i" next to the
+	 * title of every card, page and AI crawler figure. Matched on the title
+	 * as drawn, so every card gets its tip without its own code changing.
+	 */
+	function tipText() {
+		return [
+			[ __( 'Site overview', 'mykavo' ), __( 'Everything about this site at a glance: what changed, how fast and reliable it is, and what needs you first.', 'mykavo' ) ],
+			[ __( 'Changes', 'mykavo' ), __( 'Everything MyKavo found that differs from your approved baseline: visual, SEO, content, links, scripts and speed. Approve what you meant to change, fix the rest.', 'mykavo' ) ],
+			[ __( 'Safe Updates', 'mykavo' ), __( 'After every plugin, theme or WordPress update, MyKavo checks your pages and tells you whether the update broke something, and which one.', 'mykavo' ) ],
+			[ __( 'AI crawlers', 'mykavo' ), __( 'Which AI systems (ChatGPT, Claude, Perplexity and others) read your site, which pages they read, and what you allow them to read.', 'mykavo' ) ],
+			[ __( 'Scans', 'mykavo' ), __( 'Every time MyKavo checked your pages: when, why (scheduled, by hand or after an update) and what it found.', 'mykavo' ) ],
+			[ __( 'Pages', 'mykavo' ), __( 'The pages MyKavo watches. Each has an approved baseline, and every scan is compared against it.', 'mykavo' ) ],
+			[ __( 'Your plan', 'mykavo' ), __( 'What your MyKavo plan includes, and what the next plan adds.', 'mykavo' ) ],
+			[ __( 'Your site report', 'mykavo' ), __( 'A one-page summary of the last 30 days to share or print: updates, uptime, SSL, changes caught and AI crawler visits.', 'mykavo' ) ],
+			[ __( 'Open changes', 'mykavo' ), __( 'Changes nobody has reviewed yet, grouped by how serious they are. Critical and High need you soon.', 'mykavo' ) ],
+			[ __( 'Site vitals', 'mykavo' ), __( 'Uptime, response time and SSL certificate expiry, checked by MyKavo from outside your site every few minutes. The chart marks your updates, so you can see if one slowed the site.', 'mykavo' ) ],
+			[ __( 'Needs your attention', 'mykavo' ), __( 'The most important open changes, most serious first. Click one to see the before and after.', 'mykavo' ) ],
+			[ __( 'Site audit', 'mykavo' ), __( 'A full technical SEO crawl of your site in MyKavo: broken links, missing titles, slow pages, security headers and 70+ more checks.', 'mykavo' ) ],
+			[ __( 'Recent scans', 'mykavo' ), __( 'MyKavo\'s latest checks of your pages, and how many changes each one found.', 'mykavo' ) ],
+			[ __( 'Protect your store', 'mykavo' ), __( 'Whether your shop, cart, checkout and account pages are monitored, with one click to add the missing ones.', 'mykavo' ) ],
+			[ __( 'Update without fear', 'mykavo' ), __( 'Switch the check after updates on or off. When on, every update is reported to MyKavo, which scans your pages and gives a verdict.', 'mykavo' ) ],
+			[ __( 'Safe Update All', 'mykavo' ), __( 'Updates your plugins one at a time, checks the site still loads after each, and rolls back any update that breaks it. Can start an UpdraftPlus backup first.', 'mykavo' ) ],
+			[ __( 'Roll back automatically when an update breaks something', 'mykavo' ), __( 'When MyKavo\'s check after an update finds a critical change, or the site crashes, the update is undone without anyone having to be there.', 'mykavo' ) ],
+			[ __( 'Update history', 'mykavo' ), __( 'Every update, plugin switch and theme change on this site, with MyKavo\'s verdict and a rollback button.', 'mykavo' ) ],
+			[ __( 'Plugin health', 'mykavo' ), __( 'Flags installed plugins that were closed on WordPress.org, have not been updated in two years, or have a known security issue.', 'mykavo' ) ],
+			[ __( 'Update window', 'mykavo' ), __( 'The days and hours WordPress may run automatic updates, so they happen when someone is around to check.', 'mykavo' ) ],
+			[ __( 'Saved copies for rollback', 'mykavo' ), __( 'Before each update the plugin or theme folder is zipped on this site, so it can be put back exactly as it was, premium ones too. Kept for 7 days.', 'mykavo' ) ],
+			[ __( 'Email and contact forms', 'mykavo' ), __( 'Checks that this site can still send email and that its contact forms still work, so messages and leads are not silently lost.', 'mykavo' ) ],
+			[ __( 'Which AI reads your site', 'mykavo' ), __( 'Counts visits from AI crawlers by the name they send. No IP addresses or visitor data are recorded, and you can switch it off.', 'mykavo' ) ],
+			[ __( 'Visits per day', 'mykavo' ), __( 'AI crawler visits to this site each day over the last 30 days.', 'mykavo' ) ],
+			[ __( 'Last 12 months', 'mykavo' ), __( 'A year of AI crawler visits kept by MyKavo, with the day each crawler first visited.', 'mykavo' ) ],
+			[ __( 'Crawlers', 'mykavo' ), __( 'Each AI crawler that visited, why it visits, and whether its visits really came from its owner or from a fake using its name.', 'mykavo' ) ],
+			[ __( 'Pages AI reads most', 'mykavo' ), __( 'The pages AI crawlers read most in the last 30 days: the pages AI is most likely to quote.', 'mykavo' ) ],
+			[ __( 'Errors served to AI: fix them', 'mykavo' ), __( 'Addresses AI crawlers asked for that do not exist. Create a redirect so crawlers, and people, land on the right page.', 'mykavo' ) ],
+			[ __( 'Allow or block each AI crawler', 'mykavo' ), __( 'Ask each AI crawler to stay away, or allow it, through robots.txt. Block training crawlers to keep your content out of AI training while staying visible in AI search.', 'mykavo' ) ],
+			[ __( 'llms.txt for AI assistants', 'mykavo' ), __( 'A short guide to your site at /llms.txt that some AI tools read. It does not change Google search or AI Overviews.', 'mykavo' ) ],
+			[ __( 'AI crawler visits', 'mykavo' ), __( 'All AI crawler visits to this site in the last 30 days.', 'mykavo' ) ],
+			[ __( 'For AI answers', 'mykavo' ), __( 'Visits from crawlers that read pages to answer people in AI search, or open a page someone asked about.', 'mykavo' ) ],
+			[ __( 'Crawlers seen', 'mykavo' ), __( 'How many different AI crawlers visited in the last 30 days.', 'mykavo' ) ],
+			[ __( 'Errors served', 'mykavo' ), __( 'Crawler visits that got an error (4xx or 5xx). AI cannot quote a page it could not load.', 'mykavo' ) ],
+			[ __( 'Ask ChatGPT and Claude', 'mykavo' ), __( 'Connect MyKavo to ChatGPT, Claude or another AI assistant and ask about your sites in plain words.', 'mykavo' ) ],
+			[ __( 'What your plan includes', 'mykavo' ), __( 'Features that come from MyKavo\'s service. Nothing extra loads on your site.', 'mykavo' ) ],
+			[ __( 'What Pro adds', 'mykavo' ), __( 'What upgrading to Pro unlocks. These run on MyKavo\'s servers; nothing extra loads on your site.', 'mykavo' ) ],
+			[ __( 'Last 30 days', 'mykavo' ), __( 'The live report for the last 30 days. Open it to share the link, or print it as a PDF.', 'mykavo' ) ],
+			[ __( 'Your brand on the report', 'mykavo' ), __( 'The name, colour and logo shown on your site report.', 'mykavo' ) ],
+			[ __( 'Watch your most important pages', 'mykavo' ), __( 'Pages picked from your site that would hurt most if they broke. Add them to monitoring in one click.', 'mykavo' ) ],
+			[ __( 'Suggested pages', 'mykavo' ), __( 'Pages picked from your site that would hurt most if they broke. Add them to monitoring in one click.', 'mykavo' ) ],
+			[ /monitored page/i, __( 'The pages MyKavo checks on every scan. Use Watch an element to get an alert if a button or form on a page disappears.', 'mykavo' ) ],
+		];
+	}
+
+	/** Add an "i" with the explanation next to every known title in a container. */
+	function decorateTips( container ) {
+		var list = tipText();
+		if ( ! list.length ) {
+			return;
+		}
+		var nodes = container.querySelectorAll( '.mk-card-title, .mk-safe h2, .mk-page-title, .mk-stat-label' );
+		Array.prototype.forEach.call( nodes, function ( node ) {
+			if ( node.querySelector( '.mk-tip' ) || node.closest( 'button, a' ) ) {
+				return;
+			}
+			var label = node.textContent.replace( /\s+/g, ' ' ).trim();
+			var tip = '';
+			for ( var i = 0; i < list.length && ! tip; i++ ) {
+				var key = list[ i ][ 0 ];
+				if ( key instanceof RegExp ? key.test( label ) : key === label ) {
+					tip = list[ i ][ 1 ];
+				}
+			}
+			if ( ! tip ) {
+				return;
+			}
+			var btn = document.createElement( 'button' );
+			btn.type = 'button';
+			btn.className = 'mk-tip';
+			btn.setAttribute( 'data-act', 'tip' );
+			btn.setAttribute( 'data-tip', tip );
+			btn.setAttribute( 'aria-label', sprintf( /* translators: %s: feature name. */ __( 'What is %s?', 'mykavo' ), label ) );
+			btn.setAttribute( 'aria-describedby', 'mk-tooltip' );
+			btn.textContent = 'i';
+			node.appendChild( btn );
+		} );
+	}
+
+	var tipHost = document.createElement( 'div' );
+	tipHost.className = 'mk mk-tooltip-host';
+	tipHost.innerHTML = '<div class="mk-tooltip" id="mk-tooltip" role="tooltip" hidden></div>';
+	document.body.appendChild( tipHost );
+	var tipBox = tipHost.firstChild;
+	var tipFor = null;
+
+	function showTip( btn ) {
+		tipFor = btn;
+		tipBox.textContent = btn.getAttribute( 'data-tip' ) || '';
+		tipBox.hidden = false;
+		var r = btn.getBoundingClientRect();
+		var w = tipBox.offsetWidth;
+		var h = tipBox.offsetHeight;
+		var left = Math.min( Math.max( 12, r.left + r.width / 2 - w / 2 ), window.innerWidth - w - 12 );
+		var top = r.bottom + 10;
+		if ( top + h > window.innerHeight - 12 ) {
+			top = Math.max( 12, r.top - h - 10 );
+		}
+		tipBox.style.left = left + 'px';
+		tipBox.style.top = top + 'px';
+	}
+
+	function hideTip() {
+		tipFor = null;
+		tipBox.hidden = true;
+	}
+
+	[ root ].forEach( function ( el ) {
+		el.addEventListener( 'mouseover', function ( e ) {
+			var btn = e.target.closest && e.target.closest( '.mk-tip' );
+			if ( btn && btn !== tipFor ) {
+				showTip( btn );
+			}
+		} );
+		el.addEventListener( 'mouseout', function ( e ) {
+			var btn = e.target.closest && e.target.closest( '.mk-tip' );
+			if ( btn && ( ! e.relatedTarget || ! btn.contains( e.relatedTarget ) ) ) {
+				hideTip();
+			}
+		} );
+		el.addEventListener( 'focusin', function ( e ) {
+			if ( e.target.classList && e.target.classList.contains( 'mk-tip' ) ) {
+				showTip( e.target );
+			}
+		} );
+		el.addEventListener( 'focusout', function ( e ) {
+			if ( e.target.classList && e.target.classList.contains( 'mk-tip' ) ) {
+				hideTip();
+			}
+		} );
+	} );
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( e.key === 'Escape' && tipFor ) {
+			hideTip();
+		}
+	} );
+	window.addEventListener( 'scroll', hideTip, { passive: true } );
+
 	function render() {
 		var focusKey = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute( 'data-key' ) : null;
 
@@ -3498,6 +3653,8 @@
 								? reportsView()
 								: overviewView();
 		root.innerHTML = '<div class="mk-shell">' + header() + '</div>' + pageHead() + banner() + '<div role="tabpanel" class="mk-panel">' + view + '</div>' + footer();
+		hideTip();
+		decorateTips( root );
 
 		if ( focusKey ) {
 			var again = root.querySelector( '[data-key="' + focusKey + '"]' );

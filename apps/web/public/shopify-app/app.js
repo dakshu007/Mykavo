@@ -2655,6 +2655,14 @@
 	/** Clicks on the 1.3.1 controls. Returns true when handled. */
 	function onClickExtra( act, el ) {
 		switch ( act ) {
+			case 'tip':
+				// Touch screens have no hover: a tap shows or hides the explanation.
+				if ( tipFor === el ) {
+					hideTip();
+				} else {
+					showTip( el );
+				}
+				return true;
 			case 'copy':
 				if ( navigator.clipboard ) {
 					navigator.clipboard.writeText( el.getAttribute( 'data-copy' ) || '' ).then( function () {
@@ -2754,6 +2762,110 @@
 		return false;
 	}
 
+	/* ----------------------------------------------------------- tooltips -- */
+
+	/**
+	 * What each feature is, in a sentence: shown from a small "i" next to the
+	 * title of every card, page and AI crawler figure. Matched on the title
+	 * as drawn, so every card gets its tip without its own code changing.
+	 */
+	function tipText() {
+		return [];
+	}
+
+	/** Add an "i" with the explanation next to every known title in a container. */
+	function decorateTips( container ) {
+		var list = tipText();
+		if ( ! list.length ) {
+			return;
+		}
+		var nodes = container.querySelectorAll( '.mk-card-title, .mk-safe h2, .mk-page-title, .mk-stat-label' );
+		Array.prototype.forEach.call( nodes, function ( node ) {
+			if ( node.querySelector( '.mk-tip' ) || node.closest( 'button, a' ) ) {
+				return;
+			}
+			var label = node.textContent.replace( /\s+/g, ' ' ).trim();
+			var tip = '';
+			for ( var i = 0; i < list.length && ! tip; i++ ) {
+				var key = list[ i ][ 0 ];
+				if ( key instanceof RegExp ? key.test( label ) : key === label ) {
+					tip = list[ i ][ 1 ];
+				}
+			}
+			if ( ! tip ) {
+				return;
+			}
+			var btn = document.createElement( 'button' );
+			btn.type = 'button';
+			btn.className = 'mk-tip';
+			btn.setAttribute( 'data-act', 'tip' );
+			btn.setAttribute( 'data-tip', tip );
+			btn.setAttribute( 'aria-label', sprintf( /* translators: %s: feature name. */ __( 'What is %s?', 'mykavo' ), label ) );
+			btn.setAttribute( 'aria-describedby', 'mk-tooltip' );
+			btn.textContent = 'i';
+			node.appendChild( btn );
+		} );
+	}
+
+	var tipHost = document.createElement( 'div' );
+	tipHost.className = 'mk mk-tooltip-host';
+	tipHost.innerHTML = '<div class="mk-tooltip" id="mk-tooltip" role="tooltip" hidden></div>';
+	document.body.appendChild( tipHost );
+	var tipBox = tipHost.firstChild;
+	var tipFor = null;
+
+	function showTip( btn ) {
+		tipFor = btn;
+		tipBox.textContent = btn.getAttribute( 'data-tip' ) || '';
+		tipBox.hidden = false;
+		var r = btn.getBoundingClientRect();
+		var w = tipBox.offsetWidth;
+		var h = tipBox.offsetHeight;
+		var left = Math.min( Math.max( 12, r.left + r.width / 2 - w / 2 ), window.innerWidth - w - 12 );
+		var top = r.bottom + 10;
+		if ( top + h > window.innerHeight - 12 ) {
+			top = Math.max( 12, r.top - h - 10 );
+		}
+		tipBox.style.left = left + 'px';
+		tipBox.style.top = top + 'px';
+	}
+
+	function hideTip() {
+		tipFor = null;
+		tipBox.hidden = true;
+	}
+
+	[ root ].forEach( function ( el ) {
+		el.addEventListener( 'mouseover', function ( e ) {
+			var btn = e.target.closest && e.target.closest( '.mk-tip' );
+			if ( btn && btn !== tipFor ) {
+				showTip( btn );
+			}
+		} );
+		el.addEventListener( 'mouseout', function ( e ) {
+			var btn = e.target.closest && e.target.closest( '.mk-tip' );
+			if ( btn && ( ! e.relatedTarget || ! btn.contains( e.relatedTarget ) ) ) {
+				hideTip();
+			}
+		} );
+		el.addEventListener( 'focusin', function ( e ) {
+			if ( e.target.classList && e.target.classList.contains( 'mk-tip' ) ) {
+				showTip( e.target );
+			}
+		} );
+		el.addEventListener( 'focusout', function ( e ) {
+			if ( e.target.classList && e.target.classList.contains( 'mk-tip' ) ) {
+				hideTip();
+			}
+		} );
+	} );
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( e.key === 'Escape' && tipFor ) {
+			hideTip();
+		}
+	} );
+	window.addEventListener( 'scroll', hideTip, { passive: true } );
+
 	function render() {
 		var focusKey = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute( 'data-key' ) : null;
 
@@ -2778,6 +2890,8 @@
 								? reportsView()
 								: overviewView();
 		root.innerHTML = '<div class="mk-shell">' + header() + '</div>' + pageHead() + banner() + '<div role="tabpanel" class="mk-panel">' + view + '</div>' + footer();
+		hideTip();
+		decorateTips( root );
 
 		if ( focusKey ) {
 			var again = root.querySelector( '[data-key="' + focusKey + '"]' );

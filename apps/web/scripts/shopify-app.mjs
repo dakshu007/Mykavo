@@ -313,6 +313,8 @@ const STUBS = {
   suggestionsCard: "function suggestionsCard() {\n\t\treturn '';\n\t}",
   reportsView: "function reportsView() {\n\t\treturn '';\n\t}",
   loadExtras: "function loadExtras() {}",
+  // Tooltips explain WordPress features.
+  tipText: "function tipText() {\n\t\treturn [];\n\t}",
   mcpCard: "function mcpCard() {\n\t\treturn '';\n\t}",
 };
 
