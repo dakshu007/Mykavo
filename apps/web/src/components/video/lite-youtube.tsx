@@ -13,21 +13,38 @@ export function LiteYouTube({
   id,
   title,
   thumbnail,
+  fallbackThumbnail,
   size = "card",
+  captions = false,
+  placement,
 }: {
   id: string;
   title: string;
   thumbnail: string;
+  /** Used when `thumbnail` fails to load (maxresdefault is missing for some uploads). */
+  fallbackThumbnail?: string;
   size?: "hero" | "card";
+  /** Show the uploaded English captions from the start (muted autoplay viewers still read along). */
+  captions?: boolean;
+  /** Where the player sits, for analytics. */
+  placement?: string;
 }) {
   const [playing, setPlaying] = useState(false);
+  const [poster, setPoster] = useState(thumbnail);
   const hero = size === "hero";
 
   if (playing) {
+    // vq is a hint: YouTube still adapts to the viewer's connection, but
+    // starts in HD where it can instead of the small-player default.
+    const params = new URLSearchParams({ autoplay: "1", rel: "0", modestbranding: "1", playsinline: "1", vq: "hd1080" });
+    if (captions) {
+      params.set("cc_load_policy", "1");
+      params.set("cc_lang_pref", "en");
+    }
     return (
       <iframe
         className="absolute inset-0 size-full"
-        src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`}
+        src={`https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`}
         title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -40,15 +57,18 @@ export function LiteYouTube({
       type="button"
       onClick={() => {
         setPlaying(true);
-        track("tutorial_played", { video: id });
+        track("tutorial_played", placement ? { video: id, placement } : { video: id });
       }}
       className="group absolute inset-0 size-full cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FFD400] focus-visible:ring-inset"
       aria-label={`Play video: ${title}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- remote YouTube thumbnail, no next/image domain configured */}
       <img
-        src={thumbnail}
+        src={poster}
         alt=""
+        onError={() => {
+          if (fallbackThumbnail && poster !== fallbackThumbnail) setPoster(fallbackThumbnail);
+        }}
         loading={hero ? "eager" : "lazy"}
         decoding="async"
         className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"

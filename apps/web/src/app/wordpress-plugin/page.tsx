@@ -24,6 +24,7 @@ import { WpUpdateAnimation } from "@/components/landing/wp-update-animation";
 import { WpNightShiftAnimation } from "@/components/landing/wp-night-shift-animation";
 import { PartnerLockup } from "@/components/landing/partner-lockup";
 import { TrackOnView } from "@/components/track-on-view";
+import { LiteYouTube } from "@/components/video/lite-youtube";
 import { formatLimit, plans } from "@/config/plans";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { site } from "@/config/site";
@@ -108,7 +109,7 @@ const features: Array<{
   {
     icon: RefreshCw,
     title: "Scan on demand",
-    desc: "Run a scan from wp-admin and watch the progress live. Manual scans come with Pro and Agency.",
+    desc: "Run a scan from wp-admin and watch the progress live. Manual scans come with every paid plan, from Starter.",
   },
   {
     icon: Gauge,
@@ -234,6 +235,32 @@ const pluginJsonLd = {
   ],
 };
 
+/** The 53-second walkthrough on the MyKavo YouTube channel, presented by Clara. */
+const EXPLAINER = {
+  id: "clkVeS1SHEc",
+  title: "Your Add to Cart Button Just Disappeared. Here's How to Know",
+  description:
+    "Websites rarely break with a bang. A plugin updates overnight, your Add to cart button quietly disappears, and nobody notices until sales drop. MyKavo watches your key pages, checks them right after every plugin, theme or WordPress update, and tells you which update caused a change. On WordPress you can roll a bad update back in one click.",
+  uploadDate: "2026-11-05T06:18:04-08:00",
+  duration: "PT53S",
+} as const;
+const explainerThumb = `https://i.ytimg.com/vi/${EXPLAINER.id}/maxresdefault.jpg`;
+const explainerThumbFallback = `https://i.ytimg.com/vi/${EXPLAINER.id}/hqdefault.jpg`;
+
+const explainerJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  name: EXPLAINER.title,
+  description: EXPLAINER.description,
+  thumbnailUrl: [explainerThumb, explainerThumbFallback],
+  uploadDate: EXPLAINER.uploadDate,
+  duration: EXPLAINER.duration,
+  embedUrl: `https://www.youtube.com/embed/${EXPLAINER.id}`,
+  contentUrl: `https://www.youtube.com/watch?v=${EXPLAINER.id}`,
+  inLanguage: "en",
+  publisher: { "@id": ORGANIZATION_ID },
+};
+
 function Shot({
   src,
   alt,
@@ -292,6 +319,7 @@ export default function WordPressPluginPage() {
           __html: jsonLdScript(breadcrumbList([{ name: "WordPress plugin", path: WP_PLUGIN_PAGE_PATH }])),
         }}
       />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(explainerJsonLd) }} />
       <TrackOnView event="wp_plugin_viewed" />
       <LandingNav />
 
@@ -346,10 +374,37 @@ export default function WordPressPluginPage() {
           </div>
         </section>
 
+        {/* The 53-second walkthrough */}
+        <section aria-labelledby="wp-explainer-heading" className="mx-auto max-w-5xl px-5 pb-20 lg:px-8">
+          <div className="text-center">
+            <p className={`${eyebrow} mb-4`}>{"// see it in 53 seconds //"}</p>
+            <h2
+              id="wp-explainer-heading"
+              className={`${fontDisplay} text-3xl leading-tight text-[#151515] sm:text-4xl`}
+            >
+              What happens when an update breaks your site
+            </h2>
+          </div>
+          <div className="relative mt-8 aspect-video overflow-hidden rounded-2xl border border-[#151515] bg-[#151515] shadow-[6px_6px_0_#151515]">
+            <LiteYouTube
+              id={EXPLAINER.id}
+              title={EXPLAINER.title}
+              thumbnail={explainerThumb}
+              fallbackThumbnail={explainerThumbFallback}
+              size="hero"
+              captions
+              placement="wp_plugin_page"
+            />
+          </div>
+          <p className="mt-4 text-center text-[12.5px] text-[#6B6B60]">
+            Presented by Clara, MyKavo&apos;s AI presenter. The product, alerts and features shown are real.
+          </p>
+        </section>
+
         <AnswerCapsule
           className="mx-auto max-w-4xl px-5 pb-16 lg:px-8"
           question="What is the MyKavo WordPress plugin?"
-          answer="MyKavo for WordPress is a free plugin, listed on WordPress.org, that connects your site to MyKavo website monitoring. It records every plugin, theme and core update, and with Safe Updates (Pro and Agency) checks your key pages against their approved baseline right after each one - so wp-admin shows what changed and which update caused it."
+          answer="MyKavo for WordPress is a free plugin, listed on WordPress.org, that connects your site to MyKavo website monitoring. It records every plugin, theme and core update, and with Safe Updates (paid plans, from Starter) checks your key pages against their approved baseline right after each one - so wp-admin shows what changed and which update caused it."
           facts={[
             { label: "Price", value: "Free plugin, and a free MyKavo plan" },
             { label: "Front-end cost", value: "None - no scripts, styles or queries on your pages" },
@@ -399,7 +454,7 @@ export default function WordPressPluginPage() {
                 ))}
               </ul>
               <p className="mt-7 text-sm text-[#6B6B60]">
-                Automatic checks come with Pro and Agency. On Free, every update is still listed.
+                Automatic checks come with every paid plan, from Starter. On Free, every update is still listed.
               </p>
             </div>
             <div className="min-w-0 overflow-hidden rounded-[18px] border-2 border-[#151515] bg-[#FBFAF6] shadow-[10px_10px_0_#FFD400]">
