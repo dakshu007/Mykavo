@@ -2852,11 +2852,12 @@
 			return '';
 		}
 		var m = f.mail;
-		var last = m.last
-			? ( m.last.ok
-				? '<p class="mk-crash mk-good">' + icon( 'check' ) + esc( sprintf( /* translators: 1: email address, 2: relative time. */ __( 'Sent to %1$s %2$s.', 'mykavo' ), m.last.to, rel( new Date( m.last.at * 1000 ).toISOString() ) ) ) + '</p>'
-				: '<p class="mk-crash mk-crash-bad">' + icon( 'alert' ) + esc( sprintf( /* translators: 1: relative time, 2: error message. */ __( 'Failed %1$s: %2$s', 'mykavo' ), rel( new Date( m.last.at * 1000 ).toISOString() ), m.last.error ) ) + '</p>' )
-			: '';
+		var at = m.last ? rel( new Date( m.last.at * 1000 ).toISOString() ) : '';
+		var status = ! m.last
+			? '<span class="mk-fine">' + esc( __( 'No test sent yet.', 'mykavo' ) ) + '</span>'
+			: m.last.ok
+				? '<span class="mk-crash mk-good">' + icon( 'check' ) + esc( sprintf( /* translators: %s: relative time. */ __( 'Last test sent %s', 'mykavo' ), at ) ) + '</span>'
+				: '<span class="mk-crash mk-crash-bad">' + icon( 'alert' ) + esc( sprintf( /* translators: 1: relative time, 2: error message. */ __( 'Last test failed %1$s: %2$s', 'mykavo' ), at, m.last.error ) ) + '</span>';
 		var forms = f.forms;
 		var formsBody;
 		if ( ! forms.pages.length ) {
@@ -2878,16 +2879,21 @@
 					esc( ( st === 'ok' ? __( 'Form renders', 'mykavo' ) : st === 'broken' ? __( 'Form missing', 'mykavo' ) : __( 'Checking soon', 'mykavo' ) ) + sub ) + '</span></li>';
 			} ).join( '' ) + '</ul>' +
 				( feat( 'formSubmissions' ) ? '' : '<p class="mk-fine">' + esc( lockedText( 'pro', __( 'A real test entry through each form', 'mykavo' ) ) ) + '</p>' ) +
-				( READONLY ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="forms-sync"' + ( state.busy === 'forms' ? ' disabled' : '' ) + '>' + icon( 'refresh' ) + esc( __( 'Send form pages to MyKavo', 'mykavo' ) ) + '</button>' );
+				( READONLY ? '' : '<p class="mk-mail-actions"><button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="forms-sync"' + ( state.busy === 'forms' ? ' disabled' : '' ) + '>' + icon( 'refresh' ) + esc( __( 'Send form pages to MyKavo', 'mykavo' ) ) + '</button></p>' );
 		}
 		return (
-			'<section class="mk-card mk-card-pad"><div class="mk-card-head mk-card-head-flush"><div><h3 class="mk-card-title">' + esc( __( 'Email and contact forms', 'mykavo' ) ) + '</h3>' +
+			'<section class="mk-card mk-mail">' +
+			'<div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Email and contact forms', 'mykavo' ) ) + '</h3>' +
 			'<p class="mk-card-sub">' + esc( __( 'A form that silently stops sending costs leads for weeks.', 'mykavo' ) ) + '</p></div></div>' +
-			'<div class="mk-setting"><div><p class="mk-benefit-title">' + esc( __( 'Daily email test (free)', 'mykavo' ) ) + '</p>' +
-			'<p class="mk-fine">' + esc( sprintf( /* translators: %s: email address. */ __( 'WordPress sends one short email a day to %s and MyKavo records whether it went out.', 'mykavo' ), m.to ) ) + '</p></div>' +
+			'<div class="mk-mail-block">' +
+			'<div class="mk-mail-row"><div>' +
+			'<p class="mk-mail-label">' + esc( __( 'Daily email test', 'mykavo' ) ) + ' <span class="mk-chip mk-chip-calm">' + esc( __( 'Free', 'mykavo' ) ) + '</span></p>' +
+			'<p class="mk-fine">' + sprintf( esc( /* translators: %s: email address. */ __( 'One short email a day to %s, to prove this site can still send mail.', 'mykavo' ) ), '<b class="mk-mail-to">' + esc( m.to ) + '</b>' ) + '</p></div>' +
 			switchButton( 'toggle-mail', m.enabled, __( 'On', 'mykavo' ), __( 'Off', 'mykavo' ), state.busy === 'mail' ) + '</div>' +
-			last + ( READONLY ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="mail-test"' + ( state.busy === 'mail-test' ? ' disabled' : '' ) + '>' + esc( __( 'Send a test now', 'mykavo' ) ) + '</button>' ) +
-			'<p class="mk-benefit-title" style="margin-top:18px">' + esc( __( 'Contact forms', 'mykavo' ) ) + '</p>' + formsBody +
+			'<div class="mk-mail-status">' + status +
+			( READONLY ? '' : '<button type="button" class="mk-btn mk-btn-sm mk-btn-soft" data-act="mail-test"' + ( state.busy === 'mail-test' ? ' disabled' : '' ) + '>' + icon( 'zap' ) + esc( __( 'Send a test now', 'mykavo' ) ) + '</button>' ) +
+			'</div></div>' +
+			'<div class="mk-mail-block"><p class="mk-mail-label">' + esc( __( 'Contact forms', 'mykavo' ) ) + '</p>' + formsBody + '</div>' +
 			'</section>'
 		);
 	}
