@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -204,6 +204,13 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Changelog ==
 
+= 1.3.1 =
+* New: a redesigned MyKavo screen. Bigger, clearer numbers, larger text and buttons, and pill tabs that are easier to tap.
+* New: Site vitals on the Overview. Response time for the last 7 days, with your plugin and theme updates marked on the chart, so you can see if an update slowed the site.
+* New: the Overview leads with what matters most right now, in one highlight card: a failed update check, changes that need you, or all clear.
+* Open changes are now grouped by how soon they need you: Needs you, Review, When you can.
+* Performance: nothing new loads on your visitors' pages. The MyKavo screen uses your system fonts, loads its files only on its own admin page, and caches site data for 60 seconds.
+
 = 1.3.0 =
 * New: roll back a plugin from WordPress.org to its previous version in one click, from the update history. Free on every plan.
 * New: automatic rollback (Pro and Agency). When MyKavo's check after a plugin update finds a critical change, the update is rolled back and the site checked again. Can be switched off.
@@ -237,6 +244,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * Suggested privacy policy text.
 
 == Upgrade Notice ==
+
+= 1.3.1 =
+A redesigned, easier-to-read MyKavo screen with a 7-day response time chart that marks your updates. No change to your site's front end.
 
 = 1.3.0 =
 One-click rollback for plugin updates, AI training crawler rules for robots.txt, and new paid features: automatic rollback, plugin health, checkout guard and update windows.

@@ -2744,6 +2744,970 @@
 	}
 }
 
+/* ===================================================== 1.3.1 refresh -- */
+/* Soft, airy and easy to read: a warm grey ground, white cards with large
+   radii and no hard borders, pill tabs and buttons, big light numbers.
+   System fonts only (nothing downloaded), 15px base text. */
+
+.mk {
+	--mk-ink: #151515;
+	--mk-ink-2: #4a4a44;
+	--mk-ink-3: #5c5c55;
+	--mk-line: #e6e5df;
+	--mk-line-2: #f2f2ee;
+	--mk-paper: #f7f7f3;
+	--mk-ground: #f2f2ee;
+	--mk-gold-soft: #fff6c7;
+	--mk-gold-mid: #ffe873;
+	--mk-coral: #ff8a6b;
+	--mk-coral-soft: #ffe1d6;
+	--mk-coral-ink: #a8320f;
+	--mk-good: #146c3e;
+	--mk-good-soft: #e6f4ec;
+	--mk-radius: 28px;
+	--mk-radius-sm: 18px;
+	--mk-shadow: 0 1px 2px rgb(21 21 21 / 4%);
+	--mk-shadow-lift: 0 2px 6px rgb(21 21 21 / 6%), 0 18px 40px -20px rgb(21 21 21 / 20%);
+	--mk-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+	max-width: 1240px;
+	font-family: var(--mk-sans);
+	font-size: 15px;
+	line-height: 1.55;
+}
+
+/* Top bar: brand, pill tabs, actions in one white pill. */
+.mk-shell {
+	margin-bottom: 22px;
+	border: 0;
+	border-radius: 999px;
+	box-shadow: var(--mk-shadow);
+}
+
+.mk-shell .mk-top {
+	margin: 0;
+	padding: 8px 8px 8px 18px;
+	gap: 12px;
+	border-radius: 999px;
+	background: var(--mk-card);
+	color: var(--mk-ink);
+}
+
+.mk-shell .mk-brand {
+	color: var(--mk-ink);
+	font-size: 19px;
+	font-weight: 600;
+}
+
+.mk-shell .mk-brand svg {
+	width: 26px;
+	height: 26px;
+	filter: none;
+}
+
+.mk-shell .mk-tabs {
+	order: 0;
+	margin: 0 auto;
+	padding: 4px;
+	gap: 2px;
+	border-radius: 999px;
+	background: var(--mk-ground);
+}
+
+.mk-tab {
+	height: 40px;
+	padding: 0 18px;
+	border-radius: 999px;
+	color: var(--mk-ink-2);
+	font-size: 14.5px;
+	font-weight: 500;
+}
+
+.mk-tab::after {
+	display: none;
+}
+
+.mk-tab:hover {
+	background: rgb(255 255 255 / 60%);
+}
+
+.mk-tab[aria-selected="true"] {
+	background: var(--mk-card);
+	color: var(--mk-ink);
+	font-weight: 600;
+	box-shadow: 0 1px 3px rgb(21 21 21 / 12%);
+}
+
+.mk-tab .mk-count {
+	min-width: 22px;
+	height: 22px;
+	background: var(--mk-gold);
+	color: var(--mk-ink);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 22px;
+}
+
+.mk-top-actions {
+	margin-left: 0;
+}
+
+.mk-shell .mk-top-actions .mk-btn-dark,
+.mk-shell .mk-top-actions .mk-btn-dark:hover {
+	border-color: var(--mk-ink);
+	background: var(--mk-ink);
+	color: #fff;
+}
+
+.mk-iconbtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 42px;
+	height: 42px;
+	padding: 0;
+	border: 1px solid var(--mk-line);
+	border-radius: 999px;
+	background: var(--mk-card);
+	color: var(--mk-ink);
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.mk-iconbtn:hover {
+	border-color: #cfcdc2;
+	background: var(--mk-paper);
+	color: var(--mk-ink);
+}
+
+.mk-iconbtn svg {
+	width: 18px;
+	height: 18px;
+}
+
+/* Page title row. */
+.mk-head {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 4px 4px 22px;
+}
+
+.mk .mk-page-title {
+	font-size: 36px;
+	line-height: 1.1;
+	font-weight: 400;
+	letter-spacing: -0.025em;
+}
+
+.mk-page-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 10px;
+	color: var(--mk-ink-3);
+	font-size: 14px;
+}
+
+.mk-page-meta b {
+	color: var(--mk-ink);
+	font-weight: 600;
+}
+
+/* Buttons: taller, clearer. */
+.mk-btn {
+	height: 44px;
+	padding: 0 20px;
+	border-color: var(--mk-line);
+	font-size: 15px;
+}
+
+.mk-btn-sm {
+	height: 36px;
+	padding: 0 15px;
+	font-size: 14px;
+}
+
+.mk-btn-xs {
+	height: 30px;
+	font-size: 13px;
+}
+
+.mk-btn-primary {
+	border-color: var(--mk-gold);
+	box-shadow: none;
+}
+
+.mk-btn-primary:hover {
+	border-color: #ffdf3d;
+}
+
+.mk-btn-soft {
+	border-color: var(--mk-ground);
+	background: var(--mk-ground);
+}
+
+.mk-btn-soft:hover {
+	border-color: #e8e8e2;
+	background: #e8e8e2;
+}
+
+.mk-btn-scan {
+	height: 42px;
+}
+
+.mk-link {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--mk-ink);
+	border: 0;
+	background: none;
+	cursor: pointer;
+	padding: 0;
+}
+
+/* Cards: white, round, borderless. */
+.mk-card {
+	border: 0;
+	border-radius: var(--mk-radius);
+	box-shadow: var(--mk-shadow);
+}
+
+.mk-card-pad {
+	padding: 24px;
+}
+
+.mk-card-head {
+	min-height: 64px;
+	padding: 18px 24px 10px;
+	border-bottom: 0;
+}
+
+.mk-card-title {
+	font-size: 16.5px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.mk-title-icon {
+	display: none;
+}
+
+.mk-card-sub {
+	margin-top: 2px;
+	color: var(--mk-ink-3);
+	font-size: 13.5px;
+}
+
+.mk-grid {
+	gap: 20px;
+}
+
+.mk-eyebrow {
+	font-size: 12.5px;
+}
+
+/* Rows and severity pills: bigger and calmer. */
+.mk-row {
+	padding: 16px 24px;
+	border-top-color: var(--mk-line-2);
+}
+
+.mk-row::before {
+	display: none;
+}
+
+.mk-row:hover {
+	background: var(--mk-gold-soft);
+}
+
+.mk-list > li:last-child > .mk-row {
+	border-bottom-left-radius: var(--mk-radius);
+	border-bottom-right-radius: var(--mk-radius);
+}
+
+.mk-row-title {
+	font-size: 15px;
+	font-weight: 500;
+}
+
+.mk-row-meta {
+	font-size: 13.5px;
+}
+
+.mk-sev {
+	height: 28px;
+	padding: 0 12px;
+	font-size: 12px;
+	letter-spacing: 0.02em;
+}
+
+.mk-sev::before {
+	display: none;
+}
+
+.mk-sev-CRITICAL {
+	background: var(--mk-coral);
+	color: var(--mk-ink);
+}
+
+.mk-sev-HIGH {
+	background: var(--mk-coral-soft);
+	color: var(--mk-coral-ink);
+}
+
+.mk-sev-MEDIUM {
+	background: var(--mk-gold-mid);
+	color: var(--mk-ink);
+}
+
+.mk-sev-LOW,
+.mk-sev-INFO {
+	background: var(--mk-ground);
+	color: var(--mk-ink-2);
+}
+
+/* Status chips. */
+.mk-chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	min-width: 96px;
+	height: 30px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 999px;
+	font-size: 13px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.mk-chip-hot {
+	background: var(--mk-coral);
+	color: var(--mk-ink);
+}
+
+.mk-chip-warm {
+	background: var(--mk-gold-mid);
+	color: var(--mk-ink);
+}
+
+.mk-chip-calm {
+	background: var(--mk-ground);
+	color: var(--mk-ink-2);
+}
+
+.mk-chip-clear {
+	background: transparent;
+	color: var(--mk-ink-3);
+}
+
+.mk-chip-good {
+	background: var(--mk-good-soft);
+	color: var(--mk-good);
+}
+
+/* Overview: three cards in a row. */
+.mk-ov-row {
+	display: grid;
+	grid-template-columns: minmax(0, 330px) minmax(0, 1fr) minmax(0, 310px);
+	gap: 20px;
+	align-items: stretch;
+}
+
+.mk-open,
+.mk-vitals {
+	display: flex;
+	flex-direction: column;
+}
+
+.mk-open .mk-card-head,
+.mk-vitals .mk-card-head {
+	align-items: flex-start;
+}
+
+.mk-open-count {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 6px 24px 14px;
+}
+
+.mk-big {
+	font-size: 64px;
+	line-height: 1;
+	font-weight: 300;
+	letter-spacing: -0.04em;
+	font-variant-numeric: tabular-nums;
+}
+
+.mk-badge {
+	height: 26px;
+	padding: 0 10px;
+	border-radius: 999px;
+	background: var(--mk-gold-mid);
+	font-size: 12.5px;
+	font-weight: 600;
+	line-height: 26px;
+	white-space: nowrap;
+}
+
+.mk-mix {
+	display: flex;
+	gap: 3px;
+	height: 8px;
+	margin: 0 24px 6px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--mk-ground);
+}
+
+.mk-mix span {
+	min-width: 6px;
+}
+
+.mk-mix-CRITICAL {
+	background: #e5484d;
+}
+
+.mk-mix-HIGH {
+	background: var(--mk-coral);
+}
+
+.mk-mix-MEDIUM {
+	background: var(--mk-gold);
+}
+
+.mk-mix-LOW {
+	background: #c9c8c1;
+}
+
+.mk-mix-INFO {
+	background: #e1e0da;
+}
+
+.mk-sevrows {
+	margin: 8px 0 0;
+	padding: 0 12px 12px;
+	list-style: none;
+}
+
+.mk-sevrow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	min-height: 50px;
+	padding: 0 12px;
+	border: 0;
+	border-top: 1px solid var(--mk-line-2);
+	background: transparent;
+	color: var(--mk-ink);
+	font-size: 15px;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 0.12s ease;
+}
+
+.mk-sevrows > li:first-child .mk-sevrow {
+	border-top: 0;
+}
+
+.mk-sevrow:hover:not([disabled]) {
+	border-radius: 14px;
+	background: var(--mk-gold-soft);
+}
+
+.mk-sevrow[disabled] {
+	cursor: default;
+	color: var(--mk-ink-3);
+}
+
+.mk-sevdot {
+	flex: none;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+}
+
+.mk-sevdot-CRITICAL {
+	background: #e5484d;
+}
+
+.mk-sevdot-HIGH {
+	background: var(--mk-coral);
+}
+
+.mk-sevdot-MEDIUM {
+	background: var(--mk-gold);
+}
+
+.mk-sevdot-LOW,
+.mk-sevdot-INFO {
+	background: #c9c8c1;
+}
+
+.mk-sevrow-label {
+	flex: 1;
+}
+
+.mk-sevrow-num {
+	min-width: 28px;
+	font-size: 20px;
+	font-weight: 300;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Vitals and the chart. */
+.mk-vital-row {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+	padding: 4px 28px 8px;
+}
+
+.mk-vital-num {
+	font-size: 50px;
+	line-height: 1.05;
+	font-weight: 300;
+	letter-spacing: -0.04em;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.mk-dec,
+.mk-unit {
+	color: #8a8a82;
+}
+
+.mk-unit {
+	font-size: 0.42em;
+	letter-spacing: 0;
+}
+
+.mk-vital-label {
+	margin-top: 4px;
+	color: var(--mk-ink-2);
+	font-size: 14px;
+}
+
+.mk-speed-slow {
+	color: var(--mk-coral-ink);
+}
+
+.mk-speed-ok {
+	color: #7a5600;
+}
+
+.mk-speed-fast {
+	color: var(--mk-good);
+}
+
+.mk-chart {
+	margin: 8px 0 0;
+	padding: 0 24px 20px;
+}
+
+.mk-chart figcaption {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 6px;
+	color: var(--mk-ink-3);
+	font-size: 13px;
+}
+
+.mk-chart-key {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.mk-chart-key-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--mk-gold);
+	box-shadow: 0 0 0 1.5px var(--mk-ink);
+}
+
+.mk-vitals .mk-chart {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+}
+
+.mk-chart-plot {
+	position: relative;
+	flex: 1;
+	min-height: 190px;
+	padding-left: 44px;
+}
+
+.mk-chart-inner {
+	position: relative;
+	height: 100%;
+	min-height: 190px;
+}
+
+.mk-chart-inner svg {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+.mk-chart-grid {
+	stroke: #e4e3dd;
+	stroke-width: 1;
+	stroke-dasharray: 4 6;
+	vector-effect: non-scaling-stroke;
+}
+
+.mk-chart-line {
+	fill: none;
+	stroke: #f59e0b;
+	stroke-width: 3;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+}
+
+.mk-chart-area {
+	fill: rgb(255 212 0 / 16%);
+}
+
+.mk-chart-y {
+	position: absolute;
+	left: 0;
+	transform: translateY(-50%);
+	color: var(--mk-ink-3);
+	font-size: 12.5px;
+	line-height: 1;
+}
+
+.mk-chart-mark {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 0;
+	border-left: 1.5px dashed var(--mk-gold);
+}
+
+.mk-chart-mark::before {
+	content: "";
+	position: absolute;
+	top: -5px;
+	left: -6.5px;
+	width: 11px;
+	height: 11px;
+	border-radius: 50%;
+	background: var(--mk-gold);
+	box-shadow: 0 0 0 1.5px var(--mk-ink);
+}
+
+.mk-chart-tag {
+	position: absolute;
+	top: 10px;
+	max-width: 62%;
+	margin-left: 12px;
+	padding: 4px 11px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--mk-card);
+	box-shadow: 0 0 0 1px var(--mk-line), 0 2px 8px rgb(21 21 21 / 8%);
+	color: var(--mk-ink);
+	font-size: 13px;
+	font-weight: 600;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.mk-chart-tag-end {
+	margin-left: 0;
+	transform: translateX(calc(-100% - 12px));
+}
+
+.mk-chart-days {
+	display: flex;
+	padding: 8px 0 0 44px;
+	color: var(--mk-ink-3);
+	font-size: 12.5px;
+}
+
+.mk-chart-days span {
+	flex: 1;
+	text-align: center;
+}
+
+.mk-chart-empty {
+	margin: auto 24px 24px;
+	padding: 22px;
+	border-radius: var(--mk-radius-sm);
+	background: var(--mk-paper);
+	color: var(--mk-ink-3);
+	font-size: 14px;
+	text-align: center;
+}
+
+/* The yellow highlight card. */
+.mk-highlight {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 26px;
+	background: linear-gradient(160deg, #fff6c7 0%, #ffe16a 55%, #ffc93c 100%);
+	color: var(--mk-ink);
+}
+
+.mk-highlight-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.mk-highlight-eyebrow {
+	font-size: 13.5px;
+	font-weight: 600;
+}
+
+.mk-highlight-when {
+	height: 28px;
+	padding: 0 11px;
+	border-radius: 999px;
+	background: rgb(255 255 255 / 72%);
+	font-size: 12.5px;
+	font-weight: 600;
+	line-height: 28px;
+	white-space: nowrap;
+}
+
+.mk .mk-highlight-title {
+	font-size: 32px;
+	line-height: 1.12;
+	font-weight: 400;
+	letter-spacing: -0.025em;
+}
+
+.mk-highlight-sub {
+	color: #3d3a2a;
+	font-size: 14.5px;
+}
+
+.mk-highlight-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-top: auto;
+	padding-top: 8px;
+}
+
+.mk-gobtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 54px;
+	height: 54px;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: var(--mk-ink);
+	color: var(--mk-gold);
+	cursor: pointer;
+	transition: transform 0.15s ease;
+}
+
+.mk-gobtn:hover {
+	transform: translateX(2px);
+}
+
+.mk-gobtn svg {
+	width: 20px;
+	height: 20px;
+}
+
+/* Small tiles. */
+.mk-tiles {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 20px;
+}
+
+.mk-tiles-3 {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mk-tile {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 20px 22px;
+	border: 0;
+	border-radius: 24px;
+	background: var(--mk-card);
+	box-shadow: var(--mk-shadow);
+	color: var(--mk-ink);
+	text-align: left;
+	cursor: pointer;
+	transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.mk-tile:hover {
+	box-shadow: var(--mk-shadow-lift);
+	transform: translateY(-1px);
+}
+
+.mk-tile-head {
+	display: flex;
+	flex-direction: column;
+}
+
+.mk-tile-head b {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.mk-tile-head span {
+	color: var(--mk-ink-3);
+	font-size: 13.5px;
+}
+
+.mk-tile-foot {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.mk-tile-num {
+	font-size: 40px;
+	line-height: 1;
+	font-weight: 300;
+	letter-spacing: -0.03em;
+	font-variant-numeric: tabular-nums;
+}
+
+.mk-tile .mk-chip {
+	min-width: 0;
+}
+
+/* Hero, now only for a scan running, a site down or the first baseline. */
+.mk-hero {
+	border: 0;
+}
+
+.mk-hero h2 {
+	font-size: 26px;
+	font-weight: 500;
+	letter-spacing: -0.02em;
+}
+
+.mk-hero-sub {
+	font-size: 15px;
+}
+
+/* Changes, scans and the rest: the same soft language. */
+.mk-filter-note,
+.mk-banner {
+	border-radius: var(--mk-radius-sm);
+}
+
+.mk-toast {
+	border-radius: 999px;
+}
+
+.mk-verdict {
+	min-height: 30px;
+	padding: 4px 12px;
+	border-radius: 999px;
+	font-size: 13.5px;
+}
+
+.mk-update {
+	padding: 18px 24px;
+}
+
+.mk-update-title {
+	font-size: 15px;
+}
+
+.mk-drawer {
+	border-radius: var(--mk-radius) 0 0 var(--mk-radius);
+}
+
+@media (max-width: 1100px) {
+	.mk-ov-row {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	.mk-ov-row .mk-vitals {
+		grid-column: 1 / -1;
+		order: 3;
+	}
+
+	.mk-shell {
+		border-radius: var(--mk-radius);
+	}
+
+	.mk-shell .mk-top {
+		border-radius: var(--mk-radius);
+	}
+
+	.mk-shell .mk-tabs {
+		order: 3;
+		flex-basis: 100%;
+		overflow-x: auto;
+	}
+
+	.mk-shell .mk-top-actions {
+		margin-left: auto;
+	}
+
+	.mk-tiles {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.mk-tiles-3 {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 560px) {
+	.mk-tiles,
+	.mk-tiles-3 {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 782px) {
+	.mk-ov-row {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.mk .mk-page-title {
+		font-size: 28px;
+	}
+
+	.mk-vital-row {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.mk-big {
+		font-size: 52px;
+	}
+
+	.mk-vital-num {
+		font-size: 42px;
+	}
+}
+
 
 /* ------------------------------------------------------------ shopify -- */
 /* GENERATED: the plugin's app.css plus these overrides for the Shopify

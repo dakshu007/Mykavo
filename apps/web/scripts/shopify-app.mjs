@@ -106,7 +106,6 @@ const JS_REPLACEMENTS = [
   // AI crawler counting is WordPress-only: the Shopify app has no way to see
   // requests to the storefront, so no tab, no overview card, no load.
   [`\n\t\t\t[ 'bots', __( 'AI crawlers', 'mykavo' ), '' ],`, ``],
-  [`safeUpdatesCard() + aiBotsCard() + recent`, `safeUpdatesCard() + recent`],
   [`loadUpdates();\n\t\tloadBots();\n\t\tloadFeatures( false );`, `loadUpdates();\n\t\tloadFeatures( false );`],
   // Theme checks instead of Safe Updates.
   [`[ 'updates', __( 'Safe Updates', 'mykavo' ), '' ]`, `[ 'updates', __( 'Theme checks', 'mykavo' ), '' ]`],
@@ -144,15 +143,21 @@ const JS_REPLACEMENTS = [
     `esc( __( 'Theme changes', 'mykavo' ) ) + '</h3>' +
 			'<span class="mk-fine">' + esc( __( 'Last 30 changes.', 'mykavo' ) ) + '</span>`,
   ],
+  // Overview 1.3.1: page title, highlight card, chart key and tile.
+  [`updates: __( 'Safe Updates', 'mykavo' ),`, `updates: __( 'Theme checks', 'mykavo' ),`],
   [
-    `? __( 'Update checks are off.', 'mykavo' )
-					: __( 'The next time WordPress updates a plugin, theme or itself, MyKavo checks nothing broke.', 'mykavo' ) )`,
-    `? __( 'Theme checks are off.', 'mykavo' )
-					: __( 'The next time your live theme is published or edited, MyKavo checks nothing broke.', 'mykavo' ) )`,
+    `esc( __( 'Update history', 'mykavo' ) ) + '</button>'`,
+    `esc( __( 'Theme changes', 'mykavo' ) ) + '</button>'`,
   ],
   [
-    `icon( 'shield', 'mk-title-icon' ) + esc( __( 'Safe Updates', 'mykavo' ) ) + '</h3>'`,
-    `icon( 'shield', 'mk-title-icon' ) + esc( __( 'Theme checks', 'mykavo' ) ) + '</h3>'`,
+    `esc( __( 'Updates', 'mykavo' ) )`,
+    `esc( __( 'Theme changes', 'mykavo' ) )`,
+  ],
+  [
+    `__( 'Updates checked', 'mykavo' ),
+			__( 'Plugins, themes and WordPress', 'mykavo' ),`,
+    `__( 'Theme changes checked', 'mykavo' ),
+			__( 'Published and edited themes', 'mykavo' ),`,
   ],
   [`return __( 'WordPress update', 'mykavo' );`, `return __( 'Theme change', 'mykavo' );`],
   [`esc( __( 'After an update', 'mykavo' ) ) + '</span>'`, `esc( __( 'After a theme change', 'mykavo' ) ) + '</span>'`],
@@ -273,6 +278,7 @@ const STUBS = {
   guardBlock: "function guardBlock() {\n\t\treturn '';\n\t}",
   robotsCard: "function robotsCard() {\n\t\treturn '';\n\t}",
   historyCard: "function historyCard() {\n\t\treturn '';\n\t}",
+  botsTile: "function botsTile() {\n\t\treturn '';\n\t}",
 };
 
 function stubFunctions(source, stubs, label) {

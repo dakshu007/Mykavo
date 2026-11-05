@@ -23,7 +23,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
 
   await step('reset to disconnected', async () => {
     await p.goto(WP + '/wp-admin/admin.php?page=mykavo');
-    await p.waitForSelector('.mk-welcome, .mk-hero, .mk-top');
+    await p.waitForSelector('.mk-welcome, .mk-ov-row, .mk-top');
     if (await p.locator('.mk-welcome').count()) return;
     await p.evaluate(() => wp.apiFetch({ path: '/mykavo/v1/disconnect', method: 'POST' }));
   });
@@ -45,14 +45,14 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
 
   await step('connect round trip', async () => {
     await p.click('text=Connect to MyKavo');
-    await p.waitForSelector('.mk-hero', { timeout: 60000 });
+    await p.waitForSelector('.mk-ov-row', { timeout: 60000 });
     await p.waitForTimeout(500);
     await p.screenshot({ path: OUT + '/03-overview.png', fullPage: true });
   });
 
   await step('menu badge shows urgent count', async () => {
     await p.goto(WP + '/wp-admin/admin.php?page=mykavo');
-    await p.waitForSelector('.mk-hero');
+    await p.waitForSelector('.mk-ov-row');
     const badge = await p.locator('#adminmenu .awaiting-mod .pending-count').first().textContent();
     console.log('     badge:', badge);
   });
@@ -103,7 +103,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   await step('pages tab', async () => { await p.click('[data-tab="pages"]'); await p.waitForSelector('.mk-list'); await p.screenshot({ path: OUT + '/13-pages.png', fullPage: true }); });
 
   await step('run scan with live progress', async () => {
-    await p.click('[data-tab="overview"]'); await p.waitForSelector('.mk-hero');
+    await p.click('[data-tab="overview"]'); await p.waitForSelector('.mk-ov-row');
     await p.click('[data-act="scan"]');
     await p.waitForSelector('.mk-tone-busy', { timeout: 20000 });
     await p.waitForTimeout(9000);
@@ -116,7 +116,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
 
   await step('safe updates: an update is checked and attributed', async () => {
     const r = await probe(); if (!(await r.text()).includes('simulated')) throw new Error('probe not mounted');
-    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-ov-row');
     await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
     console.log('     entry:', (await p.locator('.mk-update-title').first().textContent()).trim(), '|', (await p.locator('.mk-verdict').first().textContent()).trim());
     await p.screenshot({ path: OUT + '/20-updates-checking.png', fullPage: true });
@@ -134,7 +134,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
 
   await step('safe updates: automatic updates are labelled', async () => {
     await probe('?auto=1');
-    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-ov-row');
     await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
     const meta = await p.locator('.mk-update').first().textContent();
     if (!/Automatic/.test(meta)) throw new Error('not labelled automatic: ' + meta);
@@ -144,7 +144,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   await step('safe updates: switching checks off', async () => {
     await p.click('[data-act="toggle-updates"]'); await p.waitForSelector('.mk-switch[aria-checked="false"]');
     await probe();
-    await p.reload(); await p.waitForSelector('.mk-hero'); await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
+    await p.reload(); await p.waitForSelector('.mk-ov-row'); await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
     console.log('     with checks off:', (await p.locator('.mk-verdict').first().textContent()).trim());
     await p.click('[data-act="toggle-updates"]'); await p.waitForSelector('.mk-switch[aria-checked="true"]');
   });
@@ -154,7 +154,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
     for (const d of ['activate', 'deactivate', 'switch']) {
       const r = await toggle(d); console.log('     ' + (await r.text()).trim());
     }
-    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-ov-row');
     await p.click('[data-tab="updates"]'); await p.waitForSelector('.mk-update');
     const titles = (await p.locator('.mk-update-title').allTextContents()).slice(0, 3).map((t) => t.trim());
     console.log('     newest:', titles.join(' | '));
@@ -169,7 +169,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   });
 
   await step('overview shows the latest update', async () => {
-    await p.click('[data-tab="overview"]'); await p.waitForSelector('.mk-hero');
+    await p.click('[data-tab="overview"]'); await p.waitForSelector('.mk-ov-row');
     await p.waitForTimeout(600);
     await p.screenshot({ path: OUT + '/24-overview-safe-updates.png', fullPage: true });
   });
@@ -236,7 +236,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   await step('safe updates: one-click rollback', async () => {
     await plus('do=wporg'); // WordPress's update data says Demo Shop is from WordPress.org.
     await probe();
-    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-ov-row');
     await p.click('[data-tab="updates"]'); await p.waitForSelector('[data-act="rollback"]', { timeout: 30000 });
     await p.screenshot({ path: OUT + '/29-rollback-offer.png', fullPage: true });
     p.once('dialog', (d) => { console.log('     confirm:', d.message().split('\n')[0]); d.accept(); });
@@ -279,7 +279,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   await step('phone layout', async () => {
     const m = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
     for (const c of await ctx.cookies()) await m.context().addCookies([c]);
-    await m.goto(WP + '/wp-admin/admin.php?page=mykavo'); await m.waitForSelector('.mk-hero');
+    await m.goto(WP + '/wp-admin/admin.php?page=mykavo'); await m.waitForSelector('.mk-ov-row');
     await m.screenshot({ path: OUT + '/16-phone.png', fullPage: true });
     await m.click('.mk-row'); await m.waitForSelector('.mk-drawer-body h2, .mk-drawer h2'); await m.waitForTimeout(900);
     await m.screenshot({ path: OUT + '/17-phone-drawer.png' });
@@ -289,7 +289,7 @@ const WP = process.env.WP_URL || 'http://127.0.0.1:9400';
   });
 
   await step('disconnect', async () => {
-    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-hero');
+    await p.goto(WP + '/wp-admin/admin.php?page=mykavo'); await p.waitForSelector('.mk-ov-row');
     p.once('dialog', (d) => d.accept());
     await p.click('[data-act="menu"]');
     await p.screenshot({ path: OUT + '/18-menu.png', clip: { x: 900, y: 0, width: 540, height: 360 } });

@@ -198,6 +198,8 @@
 		refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
 		external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
 		chevron: '<path d="m9 18 6-6-6-6"/>',
+		arrow: '<path d="M7 17 17 7"/><path d="M7 7h10v10"/>',
+		right: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
 		x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
 		more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
 		activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
@@ -865,24 +867,73 @@
 		);
 	}
 
-	function header() {
+		function header() {
+		var o = state.overview;
+		var dashboard = o && o.links ? safeUrl( o.links.website ) : '';
+		return (
+			'<div class="mk-top">' +
+			brand() +
+			tabs() +
+			'<div class="mk-top-actions">' +
+			( dashboard ? '<a class="mk-iconbtn" href="' + esc( dashboard ) + '" target="_blank" rel="noopener noreferrer" aria-label="' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + '" title="' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + '">' + icon( 'arrow' ) + '</a>' : '' ) +
+			'<div class="mk-menu">' +
+			'<button type="button" class="mk-iconbtn" data-act="menu" aria-haspopup="true" aria-expanded="' + ( state.menuOpen ? 'true' : 'false' ) + '" aria-label="' + esc( __( 'More', 'mykavo' ) ) + '">' + icon( 'more' ) + '</button>' +
+			( state.menuOpen ? menu() : '' ) +
+			'</div>' +
+			scanButton() +
+			'</div></div>'
+		);
+	}
+
+	/** Run scan, in the top bar on every tab. */
+	function scanButton() {
+		var o = state.overview;
+		var cap = ( o && o.capabilities ) || {};
+		var running = Boolean( o && o.scanInProgress );
+		var busy = state.busy === 'scan' || running;
+		var disabled = ! o || busy || ! cap.canRunManualScan;
+		return (
+			'<button type="button" class="mk-btn mk-btn-dark mk-btn-scan" data-act="scan"' + ( disabled ? ' disabled' : '' ) +
+			( ! running && cap.manualScanBlockedReason ? ' title="' + esc( cap.manualScanBlockedReason ) + '"' : '' ) + '>' +
+			icon( busy ? 'loader' : 'refresh', busy ? 'mk-spin' : '' ) +
+			esc( running ? __( 'Scanning', 'mykavo' ) : __( 'Run scan', 'mykavo' ) ) + '</button>'
+		);
+	}
+
+	var PAGE_TITLES = {
+		overview: __( 'Site overview', 'mykavo' ),
+		changes: __( 'Changes', 'mykavo' ),
+		updates: __( 'Theme checks', 'mykavo' ),
+		bots: __( 'AI crawlers', 'mykavo' ),
+		scans: __( 'Scans', 'mykavo' ),
+		pages: __( 'Pages', 'mykavo' ),
+	};
+
+	/** The page title and one status line: which site, how it is, when it was checked. */
+	function pageHead() {
 		var o = state.overview;
 		var site = o ? o.website : cfg.website || {};
 		var dot = 'mk-dot';
 		if ( o ) {
 			dot += o.health && o.health.status === 'down' ? ' mk-dot-bad' : o.stats.bySeverity.CRITICAL + o.stats.bySeverity.HIGH > 0 ? ' mk-dot-warn' : ' mk-dot-good';
 		}
-		var dashboard = o && o.links ? safeUrl( o.links.website ) : '';
+		var meta = [];
+		if ( o && o.website.lastScanAt ) {
+			meta.push( sprintf( /* translators: %s: relative time. */ __( 'checked %s', 'mykavo' ), rel( o.website.lastScanAt ) ) );
+		}
+		if ( o && o.website.nextScanAt && o.website.status !== 'PAUSED' ) {
+			meta.push( sprintf( /* translators: %s: relative time. */ __( 'next check %s', 'mykavo' ), rel( o.website.nextScanAt ) ) );
+		}
+		if ( o && o.website.status === 'PAUSED' ) {
+			meta.push( __( 'monitoring paused', 'mykavo' ) );
+		}
 		return (
-			'<div class="mk-top">' +
-			brand() +
-			'<span class="mk-site"><span class="' + dot + '"></span><b>' + esc( site.name || '' ) + '</b><span>' + esc( hostOf( site.url ) ) + '</span></span>' +
-			'<div class="mk-top-actions">' +
-			( dashboard ? '<a class="mk-btn mk-btn-quiet mk-btn-sm" href="' + esc( dashboard ) + '" target="_blank" rel="noopener noreferrer">' + esc( __( 'Open in MyKavo', 'mykavo' ) ) + icon( 'external' ) + '</a>' : '' ) +
-			'<div class="mk-menu">' +
-			'<button type="button" class="mk-btn mk-btn-sm" data-act="menu" aria-haspopup="true" aria-expanded="' + ( state.menuOpen ? 'true' : 'false' ) + '" aria-label="' + esc( __( 'More', 'mykavo' ) ) + '">' + icon( 'more' ) + '</button>' +
-			( state.menuOpen ? menu() : '' ) +
-			'</div></div></div>'
+			'<div class="mk-head">' +
+			'<h2 class="mk-page-title">' + esc( PAGE_TITLES[ state.tab ] || PAGE_TITLES.overview ) + '</h2>' +
+			'<p class="mk-page-meta"><span class="' + dot + '"></span><b>' + esc( site.name || hostOf( site.url ) ) + '</b>' +
+			( site.url ? '<span>' + esc( hostOf( site.url ) ) + '</span>' : '' ) +
+			( meta.length ? '<span>' + esc( meta.join( ' · ' ) ) + '</span>' : '' ) +
+			'</p></div>'
 		);
 	}
 
@@ -902,15 +953,6 @@
 		);
 	}
 
-	var TAB_ICONS = {
-		overview: 'gauge',
-		changes: 'eye',
-		updates: 'shield',
-		bots: 'bot',
-		scans: 'clock',
-		pages: 'file',
-	};
-
 	function tabs() {
 		var open = state.overview ? state.overview.stats.openChanges : 0;
 		var list = [
@@ -924,7 +966,7 @@
 			'<div class="mk-tabs" role="tablist" aria-label="' + esc( __( 'MyKavo sections', 'mykavo' ) ) + '">' +
 			list.map( function ( t ) {
 				var selected = state.tab === t[ 0 ];
-				return '<button type="button" role="tab" class="mk-tab" data-act="tab" data-tab="' + t[ 0 ] + '" data-key="tab-' + t[ 0 ] + '" aria-selected="' + selected + '" tabindex="' + ( selected ? '0' : '-1' ) + '">' + icon( TAB_ICONS[ t[ 0 ] ] ) + '<span>' + esc( t[ 1 ] ) + '</span>' + t[ 2 ] + '</button>';
+				return '<button type="button" role="tab" class="mk-tab" data-act="tab" data-tab="' + t[ 0 ] + '" data-key="tab-' + t[ 0 ] + '" aria-selected="' + selected + '" tabindex="' + ( selected ? '0' : '-1' ) + '"><span>' + esc( t[ 1 ] ) + '</span>' + t[ 2 ] + '</button>';
 			} ).join( '' ) +
 			'</div>'
 		);
@@ -995,28 +1037,10 @@
 			sub = __( 'Nothing important changed since your last approved baseline.', 'mykavo' );
 		}
 
-		var cap = o.capabilities || {};
-		var busy = state.busy === 'scan';
-		var disabled = busy || ! cap.canRunManualScan;
 		var first = ! scan && urgent > 0 && o.topChanges && o.topChanges[ 0 ];
 		var reviewBtn = first
 			? '<button type="button" class="mk-btn mk-btn-primary" data-act="open-change" data-id="' + esc( first.id ) + '">' + esc( __( 'Review now', 'mykavo' ) ) + icon( 'chevron' ) + '</button>'
 			: '';
-		var scanBtn =
-			'<button type="button" class="mk-btn' + ( reviewBtn ? '' : ' mk-btn-dark' ) + '" data-act="scan"' + ( disabled ? ' disabled' : '' ) +
-			( cap.manualScanBlockedReason ? ' title="' + esc( cap.manualScanBlockedReason ) + '"' : '' ) + '>' +
-			icon( busy ? 'loader' : 'refresh', busy ? 'mk-spin' : '' ) + esc( __( 'Run scan', 'mykavo' ) ) + '</button>';
-
-		var meta = [];
-		if ( o.website.lastScanAt ) {
-			meta.push( sprintf( /* translators: %s: relative time. */ __( 'Last scan %s', 'mykavo' ), rel( o.website.lastScanAt ) ) );
-		}
-		if ( o.website.nextScanAt && o.website.status !== 'PAUSED' ) {
-			meta.push( sprintf( /* translators: %s: relative time. */ __( 'Next scan %s', 'mykavo' ), rel( o.website.nextScanAt ) ) );
-		}
-		if ( o.website.status === 'PAUSED' ) {
-			meta.push( __( 'Monitoring paused', 'mykavo' ) );
-		}
 
 		return (
 			'<section class="mk-card mk-hero mk-tone-' + tone + '" aria-live="polite">' +
@@ -1024,64 +1048,13 @@
 			'<div class="mk-hero-main"><span class="mk-hero-icon">' + icon( ic, ic === 'loader' ? 'mk-spin' : '' ) + '</span>' +
 			'<div style="min-width:0;flex:1"><p class="mk-eyebrow"><span class="mk-pulse" aria-hidden="true"></span>' + esc( eyebrow ) + '</p><h2>' + esc( title ) + '</h2>' +
 			( sub ? '<p class="mk-hero-sub">' + esc( sub ) + '</p>' : '' ) + extra + '</div></div>' +
-			'<div class="mk-hero-side"><div class="mk-hero-actions">' + reviewBtn + scanBtn + '</div>' +
-			( ! disabled || ! cap.manualScanBlockedReason ? '' : '<span class="mk-hero-meta">' + esc( cap.manualScanBlockedReason ) + '</span>' ) +
-			( meta.length ? '<span class="mk-hero-meta">' + esc( meta.join( ' · ' ) ) + '</span>' : '' ) +
-			'</div></div>' +
-			severityBar( o ) +
-			stats( o ) +
+			( reviewBtn ? '<div class="mk-hero-side"><div class="mk-hero-actions">' + reviewBtn + '</div></div>' : '' ) +
+			'</div>' +
 			'</section>'
 		);
 	}
 
-	/** Open changes as one stacked bar, with a jump into Changes per severity. */
-	function severityBar( o ) {
-		var by = o.stats.bySeverity;
-		if ( ! o.stats.openChanges ) {
-			return '';
-		}
-		var present = SEVERITIES.filter( function ( s ) {
-			return by[ s ] > 0;
-		} );
-		return (
-			'<div class="mk-sevbar-wrap">' +
-			'<div class="mk-sevbar" role="img" aria-label="' + esc( present.map( function ( s ) {
-				return by[ s ] + ' ' + severityLabel( s );
-			} ).join( ', ' ) ) + '">' +
-			present.map( function ( s ) {
-				return '<span class="mk-sevbar-' + s + '" style="flex-grow:' + by[ s ] + '"></span>';
-			} ).join( '' ) +
-			'</div>' +
-			'<div class="mk-sevbar-legend">' +
-			present.map( function ( s ) {
-				return '<button type="button" class="mk-sevbar-item mk-sevbar-item-' + s + '" data-act="severity-jump" data-sev="' + s + '"><b>' + esc( by[ s ] ) + '</b>' + esc( severityLabel( s ) ) + '</button>';
-			} ).join( '' ) +
-			'</div></div>'
-		);
-	}
 
-	function stat( ic, label, value, unit, foot ) {
-		return (
-			'<div class="mk-stat"><p class="mk-stat-label">' + icon( ic ) + esc( label ) + '</p>' +
-			'<p class="mk-stat-value">' + esc( value ) + ( unit ? '<small>' + esc( unit ) + '</small>' : '' ) + '</p>' +
-			( foot ? '<p class="mk-stat-foot">' + esc( foot ) + '</p>' : '' ) + '</div>'
-		);
-	}
-
-	function stats( o ) {
-		var h = o.health || {};
-		var pct = function ( v ) {
-			return typeof v === 'number' ? ( Math.round( v * 10 ) / 10 ).toString() : '-';
-		};
-		return (
-			'<div class="mk-stats mk-hero-metrics">' +
-			stat( 'activity', __( 'Uptime, 24 hours', 'mykavo' ), pct( h.uptime24h ), typeof h.uptime24h === 'number' ? '%' : '', typeof h.uptime7d === 'number' ? sprintf( /* translators: %s: percentage. */ __( '%s%% over 7 days', 'mykavo' ), pct( h.uptime7d ) ) : __( 'First check within minutes', 'mykavo' ) ) +
-			stat( 'gauge', __( 'Response time', 'mykavo' ), typeof h.avgResponseMs24h === 'number' ? Math.round( h.avgResponseMs24h ) : '-', typeof h.avgResponseMs24h === 'number' ? 'ms' : '', __( 'Average, 24 hours', 'mykavo' ) ) +
-			stat( 'lock', __( 'SSL certificate', 'mykavo' ), typeof h.sslDaysLeft === 'number' ? h.sslDaysLeft : '-', typeof h.sslDaysLeft === 'number' ? __( 'days left', 'mykavo' ) : '', h.sslValidTo ? sprintf( /* translators: %s: date. */ __( 'Valid to %s', 'mykavo' ), new Date( h.sslValidTo ).toLocaleDateString( locale ) ) : '' ) +
-			stat( 'layers', __( 'Pages monitored', 'mykavo' ), o.stats.monitoredPages, '', sprintf( /* translators: %d: number of pages with a baseline. */ _n( '%d with a baseline', '%d with a baseline', o.stats.baselinedPages, 'mykavo' ), o.stats.baselinedPages ) ) +
-			'</div>'
-		);
-	}
 
 	function changeRow( c ) {
 		return (
@@ -1100,19 +1073,20 @@
 		);
 	}
 
-	function overviewView() {
+		function overviewView() {
 		if ( state.overviewError && ! state.overview ) {
 			return errorBlock( state.overviewError, 'retry-overview' );
 		}
 		var o = state.overview;
 		if ( ! o ) {
-			return '<div class="mk-grid">' + loadingBlock( 150 ) + loadingBlock( 96 ) + loadingBlock( 260 ) + '</div>';
+			return '<div class="mk-grid">' + '<div class="mk-ov-row">' + loadingBlock( 380 ) + loadingBlock( 380 ) + loadingBlock( 380 ) + '</div>' + loadingBlock( 120 ) + '</div>';
 		}
 		var top = o.topChanges || [];
+		var special = o.scanInProgress || ( o.health && o.health.status === 'down' ) || o.stats.baselinedPages === 0;
 
 		var attention =
-			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'alert', 'mk-title-icon' ) + esc( __( 'Needs attention', 'mykavo' ) ) + '</h3>' +
-			( o.stats.openChanges > 0 ? '<button type="button" class="mk-link" style="border:0;background:none;cursor:pointer" data-act="tab" data-tab="changes">' + esc( sprintf( /* translators: %d: number of open changes. */ __( 'All %d open changes', 'mykavo' ), o.stats.openChanges ) ) + icon( 'chevron' ) + '</button>' : '' ) +
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Needs your attention', 'mykavo' ) ) + '</h3>' +
+			( o.stats.openChanges > 0 ? '<button type="button" class="mk-btn mk-btn-soft mk-btn-sm" data-act="tab" data-tab="changes">' + esc( sprintf( /* translators: %d: number of open changes. */ __( 'See all %d', 'mykavo' ), o.stats.openChanges ) ) + '</button>' : '' ) +
 			'</div>' +
 			( top.length
 				? '<ul class="mk-list">' + top.map( changeRow ).join( '' ) + '</ul>'
@@ -1121,8 +1095,8 @@
 
 		var scans = o.recentScans || [];
 		var recent =
-			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'clock', 'mk-title-icon' ) + esc( __( 'Recent scans', 'mykavo' ) ) + '</h3>' +
-			'<button type="button" class="mk-link" style="border:0;background:none;cursor:pointer" data-act="tab" data-tab="scans">' + esc( __( 'History', 'mykavo' ) ) + icon( 'chevron' ) + '</button></div>' +
+			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + esc( __( 'Recent scans', 'mykavo' ) ) + '</h3>' +
+			'<button type="button" class="mk-iconbtn" data-act="tab" data-tab="scans" aria-label="' + esc( __( 'Scan history', 'mykavo' ) ) + '">' + icon( 'arrow' ) + '</button></div>' +
 			( scans.length
 				? '<ul class="mk-list">' + scans.map( function ( s ) {
 					return (
@@ -1138,7 +1112,7 @@
 
 		var plan =
 			'<section class="mk-card mk-card-pad"><p class="mk-eyebrow">' + esc( __( 'Workspace', 'mykavo' ) ) + '</p>' +
-			'<p style="font-weight:650;font-size:15px">' + esc( o.workspace.name ) + '</p>' +
+			'<p style="font-weight:600;font-size:16px">' + esc( o.workspace.name ) + '</p>' +
 			'<p class="mk-stat-foot">' + esc( sprintf( /* translators: %s: plan name. */ __( '%s plan', 'mykavo' ), o.workspace.plan.name ) ) + '</p>' +
 			( o.workspace.plan.id === 'free' && safeUrl( o.links.billing )
 				? '<p style="margin-top:12px"><a class="mk-btn mk-btn-primary mk-btn-sm" href="' + esc( safeUrl( o.links.billing ) ) + '" target="_top">' + esc( __( 'Daily scans with Pro', 'mykavo' ) ) + '</a></p>'
@@ -1147,10 +1121,282 @@
 
 		return (
 			'<div class="mk-grid">' +
-			hero( o ) +
-			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + '</div><div class="mk-grid">' + storeCard() + safeUpdatesCard() + recent + plan + '</div></div>' +
+			( special ? hero( o ) : '' ) +
+			'<div class="mk-ov-row">' + openCard( o ) + vitalsCard( o ) + highlightCard( o ) + '</div>' +
+			'<div class="mk-tiles' + ( state.bots ? '' : ' mk-tiles-3' ) + '">' + pagesTile( o ) + uptimeTile( o ) + updatesTile() + botsTile() + '</div>' +
+			'<div class="mk-grid mk-grid-main"><div class="mk-grid">' + attention + '</div><div class="mk-grid">' + storeCard() + recent + plan + '</div></div>' +
 			'</div>'
 		);
+	}
+
+	function stat( ic, label, value, unit, foot ) {
+		return (
+			'<div class="mk-stat"><p class="mk-stat-label">' + icon( ic ) + esc( label ) + '</p>' +
+			'<p class="mk-stat-value">' + esc( value ) + ( unit ? '<small>' + esc( unit ) + '</small>' : '' ) + '</p>' +
+			( foot ? '<p class="mk-stat-foot">' + esc( foot ) + '</p>' : '' ) + '</div>'
+		);
+	}
+
+	/** "99.1" with the decimals greyed, and a small unit. */
+	function bigNum( value, unit ) {
+		var s = String( value );
+		var dot = s.indexOf( '.' );
+		var html = dot === -1 ? esc( s ) : esc( s.slice( 0, dot ) ) + '<span class="mk-dec">' + esc( s.slice( dot ) ) + '</span>';
+		return html + ( unit ? '<span class="mk-unit">' + esc( unit ) + '</span>' : '' );
+	}
+
+	/** Open changes by severity: the count, the mix, and a row per level. */
+	function openCard( o ) {
+		var by = o.stats.bySeverity;
+		var total = o.stats.openChanges;
+		var urgent = by.CRITICAL + by.HIGH;
+		var badge = urgent
+			? sprintf( /* translators: %d: number of critical and high changes. */ _n( '%d important', '%d important', urgent, 'mykavo' ), urgent )
+			: total ? __( 'Nothing urgent', 'mykavo' ) : __( 'All clear', 'mykavo' );
+		var present = SEVERITIES.filter( function ( s ) {
+			return by[ s ] > 0;
+		} );
+		var mix = total
+			? '<div class="mk-mix" role="img" aria-label="' + esc( present.map( function ( s ) {
+				return by[ s ] + ' ' + severityLabel( s );
+			} ).join( ', ' ) ) + '">' + present.map( function ( s ) {
+				return '<span class="mk-mix-' + s + '" style="flex-grow:' + by[ s ] + '"></span>';
+			} ).join( '' ) + '</div>'
+			: '<div class="mk-mix mk-mix-empty" aria-hidden="true"></div>';
+		var rows = SEVERITIES.map( function ( s ) {
+			var n = by[ s ] || 0;
+			var tone = ! n ? 'clear' : s === 'CRITICAL' || s === 'HIGH' ? 'hot' : s === 'MEDIUM' ? 'warm' : 'calm';
+			var text = { clear: __( 'Clear', 'mykavo' ), hot: __( 'Needs you', 'mykavo' ), warm: __( 'Review', 'mykavo' ), calm: __( 'When you can', 'mykavo' ) }[ tone ];
+			return (
+				'<li><button type="button" class="mk-sevrow" data-act="severity-jump" data-sev="' + s + '"' + ( n ? '' : ' disabled' ) + '>' +
+				'<span class="mk-sevdot mk-sevdot-' + s + '"></span>' +
+				'<span class="mk-sevrow-label">' + esc( severityLabel( s ) ) + '</span>' +
+				'<span class="mk-sevrow-num">' + esc( n ) + '</span>' +
+				'<span class="mk-chip mk-chip-' + tone + '">' + esc( text ) + '</span>' +
+				'</button></li>'
+			);
+		} ).join( '' );
+		return (
+			'<section class="mk-card mk-open">' +
+			'<div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Open changes', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Waiting for your review', 'mykavo' ) ) + '</p></div>' +
+			'<button type="button" class="mk-iconbtn" data-act="tab" data-tab="changes" aria-label="' + esc( __( 'All changes', 'mykavo' ) ) + '">' + icon( 'arrow' ) + '</button></div>' +
+			'<div class="mk-open-count"><span class="mk-big">' + esc( total ) + '</span><span class="mk-badge">' + esc( badge ) + '</span></div>' +
+			mix +
+			'<ul class="mk-sevrows">' + rows + '</ul>' +
+			'</section>'
+		);
+	}
+
+	/** Uptime, response time and SSL, plus response time over 7 days with updates marked. */
+	function vitalsCard( o ) {
+		var h = o.health || {};
+		var ms = typeof h.avgResponseMs24h === 'number' ? h.avgResponseMs24h : null;
+		var speed = ms === null ? '' : ms >= 1800 ? 'slow' : ms >= 900 ? 'ok' : 'fast';
+		var speedText = { slow: __( 'slow', 'mykavo' ), ok: __( 'okay', 'mykavo' ), fast: __( 'fast', 'mykavo' ) }[ speed ] || '';
+		var cell = function ( value, label ) {
+			return '<div class="mk-vital"><p class="mk-vital-num">' + value + '</p><p class="mk-vital-label">' + label + '</p></div>';
+		};
+		return (
+			'<section class="mk-card mk-vitals">' +
+			'<div class="mk-card-head"><div><h3 class="mk-card-title">' + esc( __( 'Site vitals', 'mykavo' ) ) + '</h3>' +
+			'<p class="mk-card-sub">' + esc( __( 'Checked by MyKavo every 5 minutes', 'mykavo' ) ) + '</p></div></div>' +
+			'<div class="mk-vital-row">' +
+			cell( typeof h.uptime24h === 'number' ? bigNum( ( Math.round( h.uptime24h * 10 ) / 10 ).toString(), '%' ) : '-', esc( __( 'Uptime, 24 hours', 'mykavo' ) ) ) +
+			cell( ms === null ? '-' : bigNum( ( ms / 1000 ).toFixed( 2 ), 's' ), esc( __( 'Response time', 'mykavo' ) ) + ( speed ? ' · <b class="mk-speed-' + speed + '">' + esc( speedText ) + '</b>' : '' ) ) +
+			cell( typeof h.sslDaysLeft === 'number' ? bigNum( h.sslDaysLeft, ' ' + __( 'days', 'mykavo' ) ) : '-', esc( __( 'SSL certificate left', 'mykavo' ) ) ) +
+			'</div>' +
+			vitalsChart( o.vitals ) +
+			'</section>'
+		);
+	}
+
+		/**
+	 * Response time over 7 days. Only the line and its fill are SVG (stretched
+	 * to the card); axis labels, update markers and the latest update's name
+	 * are HTML, so text stays the same readable size at every width.
+	 */
+	function vitalsChart( v ) {
+		var pts = ( ( v && v.responseSeries ) || [] ).filter( function ( p ) {
+			return typeof p.ms === 'number';
+		} );
+		if ( pts.length < 3 ) {
+			return '<p class="mk-chart-empty">' + esc( __( 'The response time chart fills in as MyKavo checks your site.', 'mykavo' ) ) + '</p>';
+		}
+		var t1 = Date.now();
+		var t0 = t1 - 7 * 86400000;
+		var peak = Math.max.apply( null, pts.map( function ( p ) {
+			return p.ms;
+		} ) );
+		var top = Math.max( 1000, Math.ceil( peak / 500 ) * 500 );
+		var px = function ( t ) {
+			return Math.min( 100, Math.max( 0, ( ( t - t0 ) / ( t1 - t0 ) ) * 100 ) );
+		};
+		var py = function ( m ) {
+			return 6 + ( 1 - m / top ) * 90;
+		};
+		var xy = pts.map( function ( p ) {
+			return [ px( Date.parse( p.t ) ) * 10, py( p.ms ) * 3 ];
+		} );
+		var d = 'M' + xy[ 0 ][ 0 ].toFixed( 1 ) + ' ' + xy[ 0 ][ 1 ].toFixed( 1 );
+		for ( var i = 1; i < xy.length; i++ ) {
+			var mx = ( xy[ i - 1 ][ 0 ] + xy[ i ][ 0 ] ) / 2;
+			var my = ( xy[ i - 1 ][ 1 ] + xy[ i ][ 1 ] ) / 2;
+			d += ' Q' + xy[ i - 1 ][ 0 ].toFixed( 1 ) + ' ' + xy[ i - 1 ][ 1 ].toFixed( 1 ) + ' ' + mx.toFixed( 1 ) + ' ' + my.toFixed( 1 );
+		}
+		var last = xy[ xy.length - 1 ];
+		d += ' L' + last[ 0 ].toFixed( 1 ) + ' ' + last[ 1 ].toFixed( 1 );
+		var area = d + ' L' + last[ 0 ].toFixed( 1 ) + ' 300 L' + xy[ 0 ][ 0 ].toFixed( 1 ) + ' 300 Z';
+		var secs = function ( m ) {
+			return ( m / 1000 ).toFixed( m % 1000 ? 1 : 0 ) + ' s';
+		};
+		var grid = [ top, top / 2 ].map( function ( g ) {
+			return '<line x1="0" x2="1000" y1="' + ( py( g ) * 3 ).toFixed( 1 ) + '" y2="' + ( py( g ) * 3 ).toFixed( 1 ) + '" class="mk-chart-grid"/>';
+		} ).join( '' );
+		var axis = [ top, top / 2 ].map( function ( g ) {
+			return '<span class="mk-chart-y" style="top:' + py( g ).toFixed( 1 ) + '%">' + esc( secs( g ) ) + '</span>';
+		} ).join( '' );
+		var days = '';
+		for ( var k = 0; k < 7; k++ ) {
+			days += '<span>' + esc( new Date( t0 + ( k + 0.5 ) * 86400000 ).toLocaleDateString( locale, { weekday: 'short' } ) ) + '</span>';
+		}
+		var updates = ( ( v && v.updates ) || [] ).filter( function ( u ) {
+			var t = Date.parse( u.at );
+			return t >= t0 && t <= t1;
+		} );
+		var marks = updates.map( function ( u ) {
+			return '<span class="mk-chart-mark" style="left:' + px( Date.parse( u.at ) ).toFixed( 2 ) + '%" title="' + esc( u.note ) + '"></span>';
+		} ).join( '' );
+		var newest = updates[ updates.length - 1 ];
+		var tag = '';
+		if ( newest ) {
+			var at = px( Date.parse( newest.at ) );
+			tag = '<span class="mk-chart-tag' + ( at > 60 ? ' mk-chart-tag-end' : '' ) + '" style="left:' + at.toFixed( 2 ) + '%">' + esc( newest.note ) + '</span>';
+		}
+		return (
+			'<figure class="mk-chart">' +
+			'<figcaption><span>' + esc( __( 'Response time, last 7 days', 'mykavo' ) ) + '</span>' +
+			( updates.length ? '<span class="mk-chart-key"><span class="mk-chart-key-dot"></span>' + esc( __( 'Theme changes', 'mykavo' ) ) + '</span>' : '' ) + '</figcaption>' +
+			'<div class="mk-chart-plot" role="img" aria-label="' + esc( sprintf( /* translators: 1: first response time, 2: latest response time. */ __( 'Response time over 7 days, from %1$s to %2$s', 'mykavo' ), secs( pts[ 0 ].ms ), secs( pts[ pts.length - 1 ].ms ) ) ) + '">' +
+			axis +
+			'<div class="mk-chart-inner">' +
+			'<svg viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">' + grid +
+			'<path d="' + area + '" class="mk-chart-area"/><path d="' + d + '" class="mk-chart-line"/></svg>' +
+			marks + tag +
+			'</div></div>' +
+			'<div class="mk-chart-days">' + days + '</div>' +
+			'</figure>'
+		);
+	}
+
+	/** The one thing that matters most right now, in the yellow card. */
+	function highlightCard( o ) {
+		var log = ( state.updates && state.updates.log ) || [];
+		var latest = log[ 0 ];
+		var v = latest ? verdict( latest, scansById() ) : null;
+		var by = o.stats.bySeverity;
+		var urgent = by.CRITICAL + by.HIGH;
+		var top = ( o.topChanges || [] )[ 0 ];
+		var eyebrow;
+		var ago = '';
+		var title;
+		var sub;
+		var go = '';
+		var goLabel = __( 'Review', 'mykavo' );
+		if ( latest && v && ( v.tone === 'bad' || v.tone === 'warn' || v.tone === 'busy' ) ) {
+			eyebrow = PAGE_TITLES.updates;
+			ago = rel( new Date( latest.at * 1000 ).toISOString() );
+			title = v.text;
+			sub = updateTitle( latest );
+			go = v.scanId ? 'data-act="update-changes" data-scan="' + esc( v.scanId ) + '" data-note="' + esc( updateTitle( latest ) ) + '"' : '';
+		} else if ( urgent > 0 && top ) {
+			eyebrow = __( 'Needs attention', 'mykavo' );
+			ago = rel( top.detectedAt );
+			title = sprintf( /* translators: %d: number of changes. */ _n( '%d important change to review', '%d important changes to review', urgent, 'mykavo' ), urgent );
+			sub = top.title;
+			go = 'data-act="open-change" data-id="' + esc( top.id ) + '"';
+		} else if ( latest && v ) {
+			eyebrow = PAGE_TITLES.updates;
+			ago = rel( new Date( latest.at * 1000 ).toISOString() );
+			title = v.text;
+			sub = updateTitle( latest );
+		} else {
+			eyebrow = __( 'Right now', 'mykavo' );
+			title = __( 'All clear', 'mykavo' );
+			sub = __( 'Nothing important changed since your last approved baseline.', 'mykavo' );
+		}
+		return (
+			'<section class="mk-card mk-highlight">' +
+			'<div class="mk-highlight-top"><span class="mk-highlight-eyebrow">' + esc( eyebrow ) + '</span>' +
+			( ago ? '<span class="mk-highlight-when">' + esc( ago ) + '</span>' : '' ) + '</div>' +
+			'<h3 class="mk-highlight-title">' + esc( title ) + '</h3>' +
+			'<p class="mk-highlight-sub">' + esc( sub ) + '</p>' +
+			'<div class="mk-highlight-foot">' +
+			'<button type="button" class="mk-link" data-act="tab" data-tab="updates">' + esc( __( 'Theme changes', 'mykavo' ) ) + '</button>' +
+			( go ? '<button type="button" class="mk-gobtn" ' + go + ' aria-label="' + esc( goLabel ) + '">' + icon( 'right' ) + '</button>' : '' ) +
+			'</div></section>'
+		);
+	}
+
+	function tile( label, sub, value, chip, tone, tab ) {
+		return (
+			'<button type="button" class="mk-tile" data-act="tab" data-tab="' + esc( tab ) + '">' +
+			'<span class="mk-tile-head"><b>' + esc( label ) + '</b><span>' + esc( sub ) + '</span></span>' +
+			'<span class="mk-tile-foot"><span class="mk-tile-num">' + value + '</span>' +
+			( chip ? '<span class="mk-chip mk-chip-' + tone + '">' + esc( chip ) + '</span>' : '' ) +
+			'</span></button>'
+		);
+	}
+
+	function pagesTile( o ) {
+		return tile(
+			__( 'Pages watched', 'mykavo' ),
+			sprintf( /* translators: %d: number of pages with a baseline. */ _n( '%d with a baseline', '%d with a baseline', o.stats.baselinedPages, 'mykavo' ), o.stats.baselinedPages ),
+			bigNum( o.stats.monitoredPages ),
+			__( 'Manage', 'mykavo' ),
+			'calm',
+			'pages'
+		);
+	}
+
+	function uptimeTile( o ) {
+		var h = o.health || {};
+		return tile(
+			__( 'Uptime, 7 days', 'mykavo' ),
+			typeof h.checks7d === 'number' ? sprintf( /* translators: %s: number of checks. */ __( '%s checks', 'mykavo' ), num( h.checks7d ) ) : __( 'First check within minutes', 'mykavo' ),
+			typeof h.uptime7d === 'number' ? bigNum( ( Math.round( h.uptime7d * 10 ) / 10 ).toString(), '%' ) : '-',
+			'',
+			'calm',
+			'scans'
+		);
+	}
+
+	function updatesTile() {
+		var log = ( state.updates && state.updates.log ) || [];
+		var scans = scansById();
+		var checked = 0;
+		var flagged = 0;
+		log.forEach( function ( entry ) {
+			var v = verdict( entry, scans );
+			if ( entry.scan_id ) {
+				checked += 1;
+			}
+			if ( v.tone === 'bad' || v.tone === 'warn' ) {
+				flagged += 1;
+			}
+		} );
+		return tile(
+			__( 'Theme changes checked', 'mykavo' ),
+			__( 'Published and edited themes', 'mykavo' ),
+			bigNum( checked ),
+			flagged ? sprintf( /* translators: %d: number of updates. */ _n( '%d found changes', '%d found changes', flagged, 'mykavo' ), flagged ) : checked ? __( 'All verified', 'mykavo' ) : '',
+			flagged ? 'warm' : 'good',
+			'updates'
+		);
+	}
+
+	function botsTile() {
+		return '';
 	}
 
 	function changesView() {
@@ -1611,21 +1857,6 @@
 		return '';
 	}
 
-	function safeUpdatesCard() {
-		var latest = state.updates && state.updates.log && state.updates.log[ 0 ];
-		var body = latest
-			? '<ul class="mk-list mk-updates">' + updateEntry( latest, scansById(), true ) + '</ul>'
-			: '<div class="mk-card-pad" style="padding-top:14px"><p class="mk-stat-foot" style="font-size:13px">' +
-				esc( state.updates && ! state.updates.enabled
-					? __( 'Theme checks are off.', 'mykavo' )
-					: __( 'The next time your live theme is published or edited, MyKavo checks nothing broke.', 'mykavo' ) ) +
-				'</p></div>';
-		return (
-			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'shield', 'mk-title-icon' ) + esc( __( 'Theme checks', 'mykavo' ) ) + '</h3>' +
-			'<button type="button" class="mk-link" style="border:0;background:none;cursor:pointer" data-act="tab" data-tab="updates">' + esc( latest ? __( 'History', 'mykavo' ) : __( 'How it works', 'mykavo' ) ) + icon( 'chevron' ) + '</button></div>' +
-			body + '</section>'
-		);
-	}
 
 	/* ------------------------------------------------------- AI crawlers -- */
 
@@ -1656,26 +1887,6 @@
 		return ( Number( n ) || 0 ).toLocaleString( locale );
 	}
 
-	function aiBotsCard() {
-		var b = state.bots;
-		if ( ! b ) {
-			return '';
-		}
-		var top = ( b.agents || [] ).slice( 0, 3 );
-		var body = ! b.enabled
-			? '<p class="mk-stat-foot" style="font-size:13px">' + esc( __( 'Counting is off.', 'mykavo' ) ) + '</p>'
-			: ! b.total
-				? '<p class="mk-stat-foot" style="font-size:13px">' + esc( __( 'No AI crawler visits counted yet. ChatGPT, Claude and Perplexity usually show up within a few days.', 'mykavo' ) ) + '</p>'
-				: '<p class="mk-bots-total"><b>' + esc( num( b.total ) ) + '</b> ' + esc( __( 'visits in 30 days', 'mykavo' ) ) + '</p>' +
-					'<ul class="mk-bots-mini">' + top.map( function ( a ) {
-						return '<li><span>' + esc( a.owner ) + ' <em>' + esc( a.agent ) + '</em></span><b>' + esc( num( a.hits ) ) + '</b></li>';
-					} ).join( '' ) + '</ul>';
-		return (
-			'<section class="mk-card"><div class="mk-card-head"><h3 class="mk-card-title">' + icon( 'bot', 'mk-title-icon' ) + esc( __( 'AI crawlers', 'mykavo' ) ) + '</h3>' +
-			'<button type="button" class="mk-link" style="border:0;background:none;cursor:pointer" data-act="tab" data-tab="bots">' + esc( __( 'Details', 'mykavo' ) ) + icon( 'chevron' ) + '</button></div>' +
-			'<div class="mk-card-pad" style="padding-top:12px">' + body + '</div></section>'
-		);
-	}
 
 	function botsView() {
 		if ( state.botsError && ! state.bots ) {
@@ -1810,7 +2021,7 @@
 					: state.tab === 'pages'
 						? pagesView()
 						: overviewView();
-		root.innerHTML = '<div class="mk-shell">' + header() + tabs() + '</div>' + banner() + '<div role="tabpanel" class="mk-panel">' + view + '</div>' + footer();
+		root.innerHTML = '<div class="mk-shell">' + header() + '</div>' + pageHead() + banner() + '<div role="tabpanel" class="mk-panel">' + view + '</div>' + footer();
 
 		if ( focusKey ) {
 			var again = root.querySelector( '[data-key="' + focusKey + '"]' );

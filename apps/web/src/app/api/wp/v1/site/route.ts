@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   prisma,
   getLatestHealthCheck,
+  getResponseTimeSeries,
   getUptimeStats,
   OPEN_STATUSES,
 } from "@mykavo/database";
@@ -10,6 +11,7 @@ import { getWorkspacePlan } from "@/lib/limits";
 import { authenticateSiteRequest, unauthorizedSite } from "@/lib/integrations/site-auth";
 import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
 import { buildWebsiteHealth, manualScanCapability } from "@/lib/mobile/health";
+import { VITALS_BUCKET_MINUTES, VITALS_DAYS, buildSiteVitals } from "@/lib/integrations/wp-vitals";
 import {
   SEVERITY_RANK,
   highestSeverity,
@@ -31,7 +33,8 @@ export async function GET(request: Request) {
   const websiteId = ctx.website.id;
   const now = new Date();
 
-  const [website, openChanges, latestHealth, uptime24h, uptime7d, plan] = await Promise.all([
+  const vitalsSince = new Date(now.getTime() - VITALS_DAYS * DAY_MS);
+  const [website, openChanges, latestHealth, uptime24h, uptime7d, plan, responseSeries, updateEvents] = await Promise.all([
     prisma.website.findUnique({
       where: { id: websiteId },
       include: {
@@ -81,6 +84,14 @@ export async function GET(request: Request) {
     getUptimeStats(prisma, { websiteId, since: new Date(now.getTime() - DAY_MS) }),
     getUptimeStats(prisma, { websiteId, since: new Date(now.getTime() - 7 * DAY_MS) }),
     getWorkspacePlan(ctx.workspaceId),
+    // Overview chart (plugin 1.3.1): response time with the updates marked.
+    getResponseTimeSeries(prisma, { websiteId, since: vitalsSince, bucketMinutes: VITALS_BUCKET_MINUTES }),
+    prisma.siteUpdateEvent.findMany({
+      where: { websiteId, createdAt: { gte: vitalsSince } },
+      select: { note: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+    }),
   ]);
   if (!website) return unauthorizedSite();
 
@@ -113,6 +124,7 @@ export async function GET(request: Request) {
         highestOpenSeverity: highestSeverity(openChanges.map((c) => c.severity)),
       },
       health: buildWebsiteHealth(latestHealth, uptime24h, uptime7d, now),
+      vitals: buildSiteVitals(responseSeries, updateEvents),
       topChanges: sortChangesBySeverity(openChanges)
         .filter((c) => SEVERITY_RANK[c.severity] >= SEVERITY_RANK.LOW)
         .slice(0, 5)

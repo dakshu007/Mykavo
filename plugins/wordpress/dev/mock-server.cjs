@@ -76,6 +76,18 @@ function site() {
     workspace: { name: 'Northwind Studio', plan: { id: 'pro', name: 'Pro' } },
     stats: { monitoredPages: 8, baselinedPages: 8, openChanges: open.length, bySeverity: by, highestOpenSeverity: highest },
     health: { status: 'up', httpStatus: 200, checkedAt: ago(3), uptime24h: 100, avgResponseMs24h: 412, uptime7d: 99.9, checks7d: 2016, sslDaysLeft: 71, sslValidTo: ahead(60 * 24 * 71) },
+    // Response time in 6-hour buckets over 7 days, slower after the theme
+    // switch, with the updates the plugin reported marked on the chart.
+    vitals: {
+      responseSeries: Array.from({ length: 28 }, (_, i) => ({
+        t: new Date(Date.now() - (27 - i) * 6 * 3600 * 1000).toISOString(),
+        ms: i < 20 ? 380 + Math.round(60 * Math.sin(i / 2)) : 380 + (i - 19) * 240,
+      })),
+      updates: [
+        { at: ago(60 * 30), note: 'WooCommerce 9.3.1 → 9.4.0' },
+        { at: ago(60 * 10), note: 'Switched theme to Hello Elementor' },
+      ],
+    },
     topChanges: top,
     recentScans: scans.slice(0, 5).map(scanItem),
     scanInProgress: running ? { scanId: running.scan.id, status: running.scan.status, pagesRequested: 8, pagesScanned: running.scan.pagesScanned } : null,
