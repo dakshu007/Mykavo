@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma, applyChangeAction } from "@mykavo/database";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
+import { trackChangeDecision } from "@/lib/change-tracking";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -37,5 +38,6 @@ export async function PATCH(request: Request, { params }: Params) {
     changeId: id,
     action: body.action,
   });
+  trackChangeDecision({ workspaceId: ctx.workspace.id, changeIds: [id], decision: body.action, surface: "single" });
   return NextResponse.json({ change: updated });
 }

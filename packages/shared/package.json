@@ -15,7 +15,8 @@
     "./ai-crawlers": "./src/ai-crawlers.ts",
     "./app-access": "./src/app-access.ts",
     "./plan-tier": "./src/plan-tier.ts",
-    "./campaign": "./src/campaign.ts"
+    "./campaign": "./src/campaign.ts",
+    "./product-events": "./src/product-events.ts"
   },
   "scripts": {
     "test": "vitest run"

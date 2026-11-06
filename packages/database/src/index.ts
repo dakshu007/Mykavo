@@ -98,6 +98,14 @@ export {
   type ConsumedIntent,
 } from "./subscription";
 export { isInternalEmail, isPlatformAdminEmail, platformAdminEmails } from "./platform-admin";
+export {
+  acquisitionBucket,
+  platformSetupOf,
+  productEventContext,
+  trialStatusOf,
+  type ProductEventContext,
+  type TrialStatus,
+} from "./event-context";
 export { TRIAL_DAYS, canStartTrial, getActiveTrial, startTrial, trialDaysLeft, type ActiveTrial, type TrialSource } from "./trial";
 export {
   DORMANT_AFTER_DAYS,

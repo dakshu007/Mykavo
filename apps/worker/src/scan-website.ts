@@ -5,6 +5,7 @@
  * are skipped, so a retried job resumes where it stopped.
  */
 
+import { baselineFinished, baselineStarted, changesDetected } from "./funnel-events";
 import {
   prisma,
   createInitialBaselinesForScan,
@@ -111,6 +112,12 @@ export async function runScanWebsiteJob(
     await prisma.website.updateMany({
       where: { id: website.id, status: { not: "PAUSED" } },
       data: { status: "BASELINING" },
+    });
+    await baselineStarted({
+      workspaceId: website.workspaceId,
+      websiteId: website.id,
+      pages: pages.length,
+      scanCreatedAt: scan.createdAt,
     });
   }
   logger.info("scan started", { ...log, pages: pages.length });
@@ -314,6 +321,9 @@ export async function runScanWebsiteJob(
     try {
       const result = await runComparisonForScan(scanId);
       logger.info("changes detected", { ...log, ...result });
+      if (result.changes > 0) {
+        await changesDetected({ workspaceId: website.workspaceId, scanId });
+      }
       if (result.pagesFailed > 0) {
         stageFailures.push({
           stage: "COMPARISON",
@@ -375,6 +385,18 @@ export async function runScanWebsiteJob(
         : computeRetryAfterFailure(frequency, finishedAt),
     },
   });
+
+  if (scan.triggerType === "BASELINE" && nowActive && scanned > 0) {
+    await baselineFinished({
+      workspaceId: website.workspaceId,
+      websiteId: website.id,
+      websiteCreatedAt: website.createdAt,
+      pagesScanned: scanned,
+      finishedAt,
+      monitoringOn: !stillPaused,
+      scanFrequency: frequency,
+    });
+  }
 
   // Notify - grouped summary for change-bearing scans, alert for failures
   // (spec §27). Baseline scans never notify (they create no change events),

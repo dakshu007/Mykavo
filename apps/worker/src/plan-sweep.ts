@@ -15,6 +15,7 @@
  * on the email budget; the state changes here never wait for email.
  */
 
+import { trialEnded } from "./funnel-events";
 import {
   prisma,
   getWorkspaceEntitlement,
@@ -224,6 +225,7 @@ async function endExpiredTrials(now: Date): Promise<number> {
     }
     await prisma.workspaceTrial.update({ where: { workspaceId }, data: { endedAt: now } });
     logger.info("trial ended", { workspaceId, plan: ent?.planId ?? "free" });
+    await trialEnded({ workspaceId, planAfter: ent?.planId ?? "free", endedAt: now });
   }
   return pausedTotal;
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma, updateBaselineFromSnapshot } from "@mykavo/database";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
+import { trackChangeDecision } from "@/lib/change-tracking";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -54,5 +55,6 @@ export async function POST(_request: Request, { params }: Params) {
     baselineVersion: result.baselineVersion,
     approvedChanges: result.approvedChanges,
   });
+  trackChangeDecision({ workspaceId: ctx.workspace.id, changeIds: [id], decision: "update_baseline", surface: "baseline" });
   return NextResponse.json(result);
 }

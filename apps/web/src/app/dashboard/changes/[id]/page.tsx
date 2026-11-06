@@ -21,6 +21,8 @@ import { defaultCompareMode } from "@/lib/screenshot-compare";
 import { ChangeExplanationCard } from "@/components/dashboard/change-explanation";
 import { aiConfigured } from "@/lib/ai/client";
 import { findChangeExplanation } from "@/lib/ai/explain-change";
+import { trackAfterResponse } from "@/lib/product-events";
+import { minutesBetween } from "@mykavo/shared/product-events";
 
 function pathOf(url: string): string {
   try {
@@ -117,6 +119,24 @@ export default async function ChangeDetailPage({
     },
   });
   if (!change) notFound();
+
+  // Mixpanel: every view counts (after the page is sent); the key only guards retries.
+  const viewedAt = new Date();
+  trackAfterResponse(workspace.id, () => [
+    {
+      event: "change_viewed",
+      dedupeKey: `${change.id}:${session.user.id}:${viewedAt.getTime()}`,
+      time: viewedAt,
+      build: () => ({
+        alert_severity: change.severity.toLowerCase(),
+        change_category: change.category.toLowerCase(),
+        change_status: change.status.toLowerCase(),
+        ai_explanation_available: aiConfigured(),
+        time_since_detected_minutes: minutesBetween(change.detectedAt, viewedAt),
+        viewer_role: role.toLowerCase(),
+      }),
+    },
+  ]);
 
   // Free plan: how long before this scan MyKavo last checked the site. The
   // change happened somewhere in that gap - the honest case for daily checks.

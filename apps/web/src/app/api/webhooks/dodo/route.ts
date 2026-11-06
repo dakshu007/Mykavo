@@ -18,6 +18,7 @@ import {
 import { DODO_WEBHOOK_SECRET, planForProductId, productInfo } from "@/lib/billing/config";
 import { notifyPaymentProblem, paymentProblemKind } from "@/lib/billing/payment-notice";
 import { logger } from "@/lib/logger";
+import { trackAfterResponse } from "@/lib/product-events";
 
 // The raw body is required for signature verification - never parse it first.
 export const dynamic = "force-dynamic";
@@ -126,6 +127,8 @@ export async function POST(request: Request) {
     typeof data.metadata?.checkoutToken === "string" ? data.metadata.checkoutToken : null;
 
   const log = { webhookId, type, status };
+  // Set when this event turns a workspace that never paid into a paying one.
+  let firstPaid: { workspaceId: string; planId: string; interval: string } | null = null;
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -162,15 +165,19 @@ export async function POST(request: Request) {
       if (!workspaceId) return "unattributed" as const;
 
       if (grants) {
+        const recordedPlan = await getRecordedPaidPlan(tx, workspaceId);
         const planId = resolveGrantedPlan({
           eventType: type,
           productId,
           productPlan,
           intentKind,
           boundBySubscription,
-          recordedPlan: await getRecordedPaidPlan(tx, workspaceId),
+          recordedPlan,
         });
         if (!planId) return "refused" as const;
+        if (!recordedPlan) {
+          firstPaid = { workspaceId, planId, interval: productInfo(productId)?.interval ?? "month" };
+        }
         await grantPaidPlan(tx, {
           workspaceId,
           planId,
@@ -199,10 +206,34 @@ export async function POST(request: Request) {
     });
 
     logger.info("dodo webhook processed", { ...log, result });
+    if (firstPaid && result.startsWith("granted-")) trackFirstPayment(firstPaid, eventAt);
     return NextResponse.json({ ok: true, result });
   } catch (err) {
     logger.error("dodo webhook processing failed", log, err);
     // 500 → Dodo retries; nothing was committed (transaction rolled back).
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
+}
+
+/** Mixpanel: a workspace's first payment, whether or not it came from a trial. */
+function trackFirstPayment(paid: { workspaceId: string; planId: string; interval: string }, at: Date | null): void {
+  const paidAt = at ?? new Date();
+  trackAfterResponse(paid.workspaceId, () => [
+    {
+      event: "trial_to_paid_conversion",
+      dedupeKey: paid.workspaceId,
+      time: paidAt,
+      build: (ctx) => ({
+        converted_plan: paid.planId,
+        billing_interval: paid.interval,
+        had_trial: ctx.trialStartedAt !== null,
+        trial_status_at_upgrade: !ctx.trialEndsAt ? "never_trialed" : ctx.trialEndsAt > paidAt ? "in_trial" : "after_trial",
+        trial_days_used:
+          ctx.trialStartedAt && ctx.trialEndsAt
+            ? Math.round((Math.min(paidAt.getTime(), ctx.trialEndsAt.getTime()) - ctx.trialStartedAt.getTime()) / 86_400_000)
+            : null,
+        days_since_signup: Math.round((paidAt.getTime() - ctx.ownerCreatedAt.getTime()) / 86_400_000),
+      }),
+    },
+  ]);
 }

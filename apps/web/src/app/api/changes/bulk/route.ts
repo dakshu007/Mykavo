@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma, changeActionData, type ChangeAction } from "@mykavo/database";
 import { getApiContext, requireRole } from "@/lib/api-auth";
 import { logger } from "@/lib/logger";
+import { trackChangeDecision } from "@/lib/change-tracking";
 
 const bodySchema = z.object({
   ids: z.array(z.string().min(1)).min(1).max(100),
@@ -51,6 +52,12 @@ export async function POST(request: Request) {
     action: body.action,
     requested: body.ids.length,
     updated: result.count,
+  });
+  trackChangeDecision({
+    workspaceId: ctx.workspace.id,
+    changeIds: body.ids,
+    decision: ACTION_FOR_STATUS[body.action],
+    surface: "bulk",
   });
   return NextResponse.json({ updated: result.count });
 }

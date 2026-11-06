@@ -3,6 +3,8 @@ import { prisma } from "@mykavo/database";
 import { getApiContext } from "@/lib/api-auth";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { logger } from "@/lib/logger";
+import { trackAfterResponse } from "@/lib/product-events";
+import { minutesBetween } from "@mykavo/shared/product-events";
 import { AiError, aiConfigured, type AiErrorCode } from "@/lib/ai/client";
 import { getOrCreateChangeExplanation } from "@/lib/ai/explain-change";
 
@@ -47,6 +49,23 @@ export async function POST(_request: Request, { params }: Params) {
     const explanation = await getOrCreateChangeExplanation({
       workspaceId: ctx.workspace.id,
       changeEventId: change.id,
+    });
+    trackAfterResponse(ctx.workspace.id, async () => {
+      const row = await prisma.changeEvent.findUnique({
+        where: { id: change.id },
+        select: { severity: true, category: true, detectedAt: true },
+      });
+      return [
+        {
+          event: "ai_explanation_viewed",
+          dedupeKey: change.id,
+          build: () => ({
+            alert_severity: row?.severity.toLowerCase() ?? null,
+            change_category: row?.category.toLowerCase() ?? null,
+            time_from_detected_minutes: minutesBetween(row?.detectedAt, new Date()),
+          }),
+        },
+      ];
     });
     return NextResponse.json({ explanation });
   } catch (err) {
