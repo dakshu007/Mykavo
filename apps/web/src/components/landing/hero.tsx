@@ -6,7 +6,6 @@ import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
 import { getPlan } from "@/config/plans";
 import { LandingAuditForm } from "./audit-form";
 import { HeroWordPress } from "./hero-wordpress";
-import { LiveProofStrip } from "./live-proof";
 import { HeroStoryAnimation } from "./hero-story-animation";
 import { fontDisplay } from "./style";
 
@@ -18,7 +17,7 @@ import { fontDisplay } from "./style";
  */
 export function LandingHero() {
   return (
-    <section className="relative overflow-hidden px-5 pb-16 pt-32 sm:pt-40 lg:px-8">
+    <section className="relative overflow-hidden px-5 pb-16 pt-32 sm:pt-40 lg:px-8 lg:pt-28 [@media(min-width:1024px)_and_(max-height:780px)]:pt-[6.5rem] [@media(min-width:1024px)_and_(max-height:690px)]:pt-[5.75rem]">
       {/* Faint dot grid backdrop */}
       <div
         aria-hidden
@@ -26,11 +25,6 @@ export function LandingHero() {
       />
 
       <div className="relative mx-auto max-w-6xl">
-        {/* Real, anonymized proof from the last 30 days (lib/live-proof.ts). */}
-        <div className="-mt-6 mb-5 sm:-mt-10 sm:mb-6">
-          <LiveProofStrip />
-        </div>
-
         {/* Launch pill: the Claude and ChatGPT connector (MCP). A link, not a
             badge - the one place on the page that says what's new, and where
             to see it. */}
@@ -73,7 +67,7 @@ export function LandingHero() {
           the tagline keeps its home in the nav, the footer and every email.
         */}
         <h1
-          className={`${fontDisplay} mx-auto mt-8 max-w-4xl text-center text-[44px] leading-[1.04] text-[#151515] sm:text-6xl lg:text-[76px]`}
+          className={`${fontDisplay} mx-auto mt-8 max-w-4xl text-center text-[44px] leading-[1.04] text-[#151515] sm:text-6xl lg:mt-5 lg:text-[68px] [@media(min-width:1024px)_and_(max-height:780px)]:text-[54px] [@media(min-width:1024px)_and_(max-height:690px)]:mt-4 [@media(min-width:1024px)_and_(max-height:690px)]:text-[48px]`}
         >
           Website monitoring,
           <br />
@@ -98,7 +92,7 @@ export function LandingHero() {
           carries the loop, which is the thing a first-time visitor has to
           understand before any of the breadth means anything.
         */}
-        <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg">
+        <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg lg:mt-4 lg:max-w-3xl [@media(min-width:1024px)_and_(max-height:780px)]:mt-3 [@media(min-width:1024px)_and_(max-height:780px)]:text-base">
           Pick the pages that matter on every website you manage. MyKavo approves a known-good
           baseline of each, re-checks them around the clock, and tells you the moment one
           changes - with before-and-after proof and an AI explanation of how to fix it.
@@ -106,7 +100,7 @@ export function LandingHero() {
 
         {/* WordPress first (see hero-wordpress.tsx for why); the emailed audit
             stays one click away for every other kind of site. */}
-        <div className="mt-9">
+        <div className="mt-9 lg:mt-6 [@media(min-width:1024px)_and_(max-height:780px)]:mt-5">
           <HeroWordPress />
           <details className="group/audit mx-auto mt-5 max-w-2xl">
             <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1.5 text-[13.5px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
