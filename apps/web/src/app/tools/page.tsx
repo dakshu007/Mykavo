@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { ToolConversionCta } from "@/components/tools/tool-conversion-cta";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
 import { site } from "@/config/site";
@@ -80,6 +81,8 @@ export default function ToolsHubPage() {
             </a>
           ))}
         </nav>
+
+        <PageOverviewBlock path="/tools" className="mt-12" />
 
         {CATEGORY_ORDER.map((cat) => (
           <section key={cat} id={cat} className="mt-16 scroll-mt-28">

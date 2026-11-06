@@ -59,7 +59,7 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, up to 3 team members. For freelancers and small teams.
 - Agency: $79/month - 30 websites, 25 monitored pages per website, daily scans, 1-year history, white-label client reports with automatic client emails, up to 15 team members. For agencies running client websites.
 - Pro trial: every new account starts with a free ${TRIAL_DAYS}-day Pro trial, no card. It includes every Pro feature on up to ${TRIAL_MAX_WEBSITES} websites (paid Pro covers 8). Without an upgrade the account moves to Free when the trial ends: the oldest monitored website stays monitored weekly, any others are paused (not deleted), and baselines are kept while other history follows Free's 30-day window. One trial per workspace.
-- The WordPress plugin is included on every plan; its automatic update checks (Safe Updates) come with Pro and Agency
+- The WordPress plugin is included on every plan; its automatic update checks (Safe Updates) come with every paid plan: Starter, Pro and Agency
 - Monthly billing via Dodo Payments; cancel anytime
 
 ## Honest comparison with other tools

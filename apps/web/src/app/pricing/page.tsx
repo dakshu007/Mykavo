@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, Minus } from "lucide-react";
 import { LandingNav } from "@/components/landing/nav";
 import { PricingCampaignBanner } from "@/components/landing/campaign-announcement";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { TrackOnView } from "@/components/track-on-view";
@@ -109,7 +110,7 @@ const pricingFaqs = [
   },
   {
     q: "Is the WordPress plugin included?",
-    a: "Yes, on every plan including Free. It brings your monitoring into wp-admin. Safe Updates - an automatic check after every plugin, theme and WordPress update, and after plugins are switched on or off - is included in Pro and Agency.",
+    a: "Yes, on every plan including Free. It brings your monitoring into wp-admin. Safe Updates - an automatic check after every plugin, theme and WordPress update, and after plugins are switched on or off - is included in every paid plan: Starter, Pro and Agency.",
   },
   {
     q: "What counts as a monitored page?",
@@ -204,6 +205,10 @@ export default function PricingPage() {
         <div className="mt-6">
           <ValueQuoteBanner />
         </div>
+
+        {/* Below the plan cards rather than the heading, so every plan stays
+            in the first screen. */}
+        <PageOverviewBlock path="/pricing" className="mt-16" />
 
         {/* Comparison table */}
         <section className="mt-24">

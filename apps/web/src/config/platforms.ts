@@ -63,7 +63,7 @@ export const PLATFORMS: Platform[] = [
     chip: "WordPress.org",
     tagline: "Monitoring inside wp-admin, built around updates.",
     points: [
-      "Safe Updates (Pro and Agency): a check after every plugin, theme and core update, naming the update that broke something",
+      "Safe Updates (paid plans, from Starter): a check after every plugin, theme and core update, naming the update that broke something",
       "A WooCommerce store-page guard",
       "WP-CLI commands for scripted sites",
       "AI crawler visit counts from your own site",

@@ -8,6 +8,7 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { site } from "@/config/site";
 import { HeadingChecker } from "./heading-checker";
 import { HEADING_STRUCTURE_FAQS } from "./faqs";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 const description =
   "Free heading structure checker: see every H1 to H6 on a page as an outline. Flags a missing H1, multiple H1s, empty headings, skipped levels and long headings.";
@@ -53,6 +54,7 @@ export default function HeadingStructureCheckerPage() {
         </div>
 
         <HeadingChecker />
+        <PageOverviewBlock path="/tools/heading-structure-checker" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>

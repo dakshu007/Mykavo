@@ -106,7 +106,7 @@ export const DOC_SECTIONS: DocSection[] = [
               },
               {
                 title: "Turn on alerts and let it run",
-                text: "Email alerts are on by default and go to your account's address - one summary per scan, for high and critical changes. Change the recipients, the severity, or switch email off in Notifications. Scans then run daily during the trial and on Pro and Agency, and weekly on Free. Manual scans come with the trial, Pro and Agency, not with Free.",
+                text: "Email alerts are on by default and go to your account's address - one summary per scan, for high and critical changes. Change the recipients, the severity, or switch email off in Notifications. Scans then run daily during the trial and on every paid plan, and weekly on Free. Manual scans come with the trial and every paid plan, not with Free.",
               },
             ],
           },

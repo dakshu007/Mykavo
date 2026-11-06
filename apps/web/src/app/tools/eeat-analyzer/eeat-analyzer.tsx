@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { ToolCta } from "@/components/tools/tool-cta";
 import { Loader2, ShieldCheck } from "lucide-react";
 import type { EeatReport, EeatPillar } from "@/lib/tools/eeat";
 
@@ -154,20 +154,14 @@ export function EeatAnalyzer() {
             ))}
           </div>
 
-          {/* Product CTA */}
-          <div className="mt-8 rounded-2xl border-2 border-[#151515] bg-[#FFF7CC] p-6 text-center">
-            <p className="text-[15px] font-semibold text-[#151515]">
-              E-E-A-T signals drift: bylines vanish in redesigns, policies get unlinked, schema breaks.
-            </p>
-            <p className="mt-1 text-[13.5px] text-[#6B6B60]">
-              MyKavo monitors your pages, audits your whole site, and alerts you when trust signals change.
-            </p>
-            <Link
-              href="/signup"
-              className="mt-4 inline-flex items-center rounded-full border border-black/25 bg-[#FFD400] px-7 py-3 text-[14px] font-bold text-[#151515] transition-colors hover:bg-[#ffe14d]"
-            >
-              Monitor E-E-A-T signals free
-            </Link>
+          {/* Product CTA (shared: personalized button + sticky bar while it is below the fold). */}
+          <div className="mt-8">
+            <ToolCta
+              heading="E-E-A-T signals drift. Catch it when they do."
+              body="Bylines vanish in redesigns, policies get unlinked and schema breaks. MyKavo re-checks your pages and alerts you when trust signals change."
+              tool="eeat-analyzer"
+              url={report.url}
+            />
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import { META_TAG_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { MetaTagChecker } from "./meta-tag-checker";
 import { site } from "@/config/site";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 export const metadata: Metadata = withSocial({
   title: "Free Meta Tag Checker",
@@ -58,6 +59,7 @@ export default function MetaTagCheckerPage() {
         </div>
 
         <MetaTagChecker />
+        <PageOverviewBlock path="/tools/meta-tag-checker" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <div>

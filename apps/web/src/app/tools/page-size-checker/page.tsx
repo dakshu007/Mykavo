@@ -9,6 +9,7 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { site } from "@/config/site";
 import { PageSizeChecker } from "./page-size-checker";
 import { PAGE_SIZE_CHECKER_FAQS } from "./faqs";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 const description =
   "Free page size checker: measure a web page's HTML size, total weight and request count. See scripts, stylesheets, images and fonts by size and third-party share.";
@@ -58,6 +59,7 @@ export default function PageSizeCheckerPage() {
         </div>
 
         <PageSizeChecker />
+        <PageOverviewBlock path="/tools/page-size-checker" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>Why pages get heavier over time</h2>

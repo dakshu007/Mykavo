@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -115,6 +116,10 @@ export default function HowToMonitorChangesPage() {
         }
         intro="To monitor a website for changes, capture a baseline of each important page, re-check it on a schedule, and compare the two states - alerting on meaningful differences. Here are five ways to do that, from free and manual to fully automated, with the trade-offs of each."
       >
+        <PageOverviewBlock
+          path="/guides/how-to-monitor-website-changes"
+          className="mb-12"
+        />
         <h2>Method 1: Manual spot checks</h2>
         <p>
           Open the pages, look around, compare against memory. Free, but it does not scale past a

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -69,6 +70,10 @@ export default function DeploymentChecklistPage() {
         }
         intro="A website deployment checklist in three phases: what to verify before you ship, the launch steps themselves, and the post-deploy checks that catch what staging never shows. The third phase is where most silent damage happens - and the easiest one to automate."
       >
+        <PageOverviewBlock
+          path="/guides/website-deployment-checklist"
+          className="mb-12"
+        />
         <h2>Phase 1: Pre-deploy</h2>
         <ul>
           <li>All tests green; build reproducible from the release branch.</li>

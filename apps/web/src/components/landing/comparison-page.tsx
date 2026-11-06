@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check, Minus } from "lucide-react";
 import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 import { COMPARISONS, type Comparison } from "@/config/comparisons";
@@ -46,6 +47,8 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
           ),
         }}
       />
+
+      <PageOverviewBlock path={`/compare/${comparison.slug}`} className="mb-12" />
 
       <h2>How do {comparison.themLabel.toLowerCase()} compare with MyKavo?</h2>
       <p>

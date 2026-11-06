@@ -3,6 +3,7 @@ import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 import { ALTERNATIVES, VERIFIED_ON } from "@/config/alternatives";
@@ -28,6 +29,10 @@ export default function AlternativesPage() {
       intro="Named comparisons, sourced from each vendor's own published material and dated so you can tell how current they are. Every page also names the cases where the other tool is the better buy, because a comparison that only flatters its author is not worth reading."
       updated={VERIFIED_ON}
     >
+      <PageOverviewBlock
+        path="/alternatives"
+        className="mb-12"
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

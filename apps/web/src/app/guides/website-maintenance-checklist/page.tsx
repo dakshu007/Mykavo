@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -69,6 +70,10 @@ export default function MaintenanceChecklistPage() {
         }
         intro="A practical website maintenance checklist organized by cadence: what to do weekly, monthly, and quarterly across updates, backups, security, SEO health, performance, and content - and which parts to automate so they actually happen."
       >
+        <PageOverviewBlock
+          path="/guides/website-maintenance-checklist"
+          className="mb-12"
+        />
         <h2>Continuous (automate these - they should never be calendar tasks)</h2>
         <ul>
           <li>Uptime monitoring with immediate alerts.</li>

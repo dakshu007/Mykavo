@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { withSocial } from "@/lib/social-metadata";
 import { GoogleButton } from "@/components/landing/google-cta";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { LandingFooter } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { AiInsightsAnimation } from "@/components/landing/ai-insights-animation";
@@ -273,6 +274,8 @@ export default function AiWebsiteInsightsPage() {
             </div>
           </div>
         </section>
+
+        <PageOverviewBlock path="/ai-website-insights" className="px-5 pb-16" />
 
         {/* Numbers band */}
         <section className="border-y border-[#151515] bg-[#151515]">

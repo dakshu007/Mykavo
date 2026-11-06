@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
@@ -100,7 +101,7 @@ const watches: Array<{ icon: typeof Zap; name: string; desc: string }> = [
 const companion = [
   "A status the moment you open the extension on a protected site: Protected, Needs attention, Critical changes or Site down.",
   "Critical changes, 7-day uptime and this page's SEO score at a glance.",
-  "Scan now after a deploy, and Open MyKavo for the before-and-after evidence. On-demand scans come with Pro and Agency.",
+  "Scan now after a deploy, and Open MyKavo for the before-and-after evidence. On-demand scans come with every paid plan, from Starter.",
   "The toolbar badge lights up only when the site is down or has a critical change. No counts, no noise.",
   "Right-click any page and choose Monitor this page with MyKavo - handy when you look after many sites.",
 ];
@@ -134,7 +135,7 @@ const privacy = [
 const faqs = [
   {
     q: "Is the MyKavo Chrome extension free?",
-    a: `Yes. The extension is free, and so is the on-page SEO check - no account needed. Connecting a website uses your MyKavo plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. On-demand scans from the extension come with Pro and Agency, and every new account can try them free with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card.`,
+    a: `Yes. The extension is free, and so is the on-page SEO check - no account needed. Connecting a website uses your MyKavo plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. On-demand scans from the extension come with every paid plan, from Starter, and every new account can try them free with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card.`,
   },
   {
     q: "Does the extension send the pages I check anywhere?",
@@ -276,6 +277,8 @@ export default function ChromeExtensionPage() {
             </p>
           </div>
         </section>
+
+        <PageOverviewBlock path="/chrome-extension" className="px-5 pb-16" />
 
         <AnswerCapsule
           className="mx-auto max-w-4xl px-5 pb-16 lg:px-8"
@@ -488,7 +491,7 @@ export default function ChromeExtensionPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             {[
               { icon: MousePointerClick, title: "Right-click to monitor", desc: "“Monitor this page with MyKavo” on any page, for agencies adding client sites." },
-              { icon: RefreshCw, title: "Scan after a deploy", desc: "Press Scan now and open the running scan in MyKavo (Pro and Agency)." },
+              { icon: RefreshCw, title: "Scan after a deploy", desc: "Press Scan now and open the running scan in MyKavo (paid plans)." },
               { icon: Bell, title: "A badge that means it", desc: "The toolbar icon only flags a site that's down or has a critical change." },
             ].map((c) => (
               <div key={c.title} className="rounded-2xl border border-black/10 bg-white p-6">

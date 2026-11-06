@@ -25,7 +25,7 @@ const STEPS = [
   },
   {
     title: "Update without fear",
-    body: "Every plugin, theme and core update is recorded. With Safe Updates (Pro and Agency) your key pages are checked right after each one.",
+    body: "Every plugin, theme and core update is recorded. With Safe Updates (paid plans) your key pages are checked right after each one.",
   },
 ];
 

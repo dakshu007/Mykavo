@@ -9,6 +9,7 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { CanonicalChecker } from "./canonical-checker";
 import { CANONICAL_FAQS } from "./faqs";
 import { site } from "@/config/site";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 const description =
   "Free canonical tag checker: find every canonical a page declares in its HTML and HTTP headers, spot conflicts, and check the canonical URL returns 200, does not redirect and is not noindex.";
@@ -61,6 +62,7 @@ export default function CanonicalTagCheckerPage() {
         </div>
 
         <CanonicalChecker />
+        <PageOverviewBlock path="/tools/canonical-tag-checker" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>

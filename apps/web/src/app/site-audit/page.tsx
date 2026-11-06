@@ -10,6 +10,7 @@ import {
   type AuditSeverity,
 } from "@mykavo/seo-audit";
 import { GoogleButton } from "@/components/landing/google-cta";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { LandingFooter } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { SiteAuditReportMock } from "@/components/landing/site-audit";
@@ -217,6 +218,8 @@ export default function SiteAuditPage() {
             </div>
           </div>
         </section>
+
+        <PageOverviewBlock path="/site-audit" className="px-5 pb-16" />
 
         {/* Numbers band */}
         <section className="border-y border-[#151515] bg-[#151515]">

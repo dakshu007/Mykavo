@@ -3,6 +3,7 @@ import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { SeoPageCta } from "@/components/landing/seo-page";
 import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 import { COMPARISONS } from "@/config/comparisons";
@@ -28,6 +29,10 @@ export default function ComparePage() {
       intro="MyKavo overlaps with three different categories of tool, and it is not the right answer in all of them. Each comparison below is capability by capability, and each states plainly where the other category wins. Pick the tool that matches the job rather than the one with the longest feature list."
       updated="September 9, 2026"
     >
+      <PageOverviewBlock
+        path="/compare"
+        className="mb-12"
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

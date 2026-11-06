@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -73,6 +74,10 @@ export default function VisualRegressionTestingPage() {
         }
         intro="Visual regression testing compares screenshots of your pages against an approved baseline and flags what changed. MyKavo runs it automatically on any live website: no test code, no CI pipeline, just severity-ranked alerts with before-and-after evidence."
       >
+        <PageOverviewBlock
+          path="/visual-regression-testing"
+          className="mb-12"
+        />
         <h2>Why visual bugs slip through everything else</h2>
         <p>
           Uptime monitors say the server responded. Unit tests say the functions return the right

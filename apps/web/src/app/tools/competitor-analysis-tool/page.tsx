@@ -13,6 +13,7 @@ import { breadcrumbList } from "@/lib/seo/structured-data";
 import { site } from "@/config/site";
 import { TRIAL_DAYS } from "@mykavo/shared";
 import { CompetitorAnalysis } from "./competitor-analysis";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 /**
  * Competitor monitoring - the same scanner, pointed outward.
@@ -134,6 +135,11 @@ export default function CompetitorAnalysisToolPage() {
         <div className="not-prose my-8">
           <CompetitorAnalysis />
         </div>
+        <PageOverviewBlock
+          path="/tools/competitor-analysis-tool"
+          cta={false}
+          className="mt-14"
+        />
 
         <h2>Most competitor research is a snapshot. This is a tripwire.</h2>
         <p>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -73,6 +74,10 @@ export default function ContentMonitoringPage() {
         }
         intro="Website content monitoring tracks what your pages actually say and alerts you when it changes. MyKavo compares every monitored page against an approved baseline - normalized markup plus visible text - and shows you exactly what was added, removed, or rewritten."
       >
+        <PageOverviewBlock
+          path="/website-content-monitoring"
+          className="mb-12"
+        />
         <h2>Content changes nobody signed off on</h2>
         <ul>
           <li>A CMS migration drops the second half of your best-ranking article.</li>

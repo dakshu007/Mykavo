@@ -280,7 +280,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["safe updates", "update", "verdict", "theme", "core", "auto update"],
     answer:
-      "Safe Updates checks your site right after WordPress changes something, so you know whether an update broke anything and which one did it.\n\nIt covers plugin, theme, WordPress and translation updates (automatic overnight ones too), plus activating or deactivating a plugin and switching theme. When the update finishes, MyKavo compares your monitored pages with their approved baseline. The **Safe Updates** tab then shows **Verified - nothing changed**, or the changes found, each labelled with the update it appeared after.\n\nThe check after each update is part of Pro and Agency. To stop it, flip the **Checks on** switch on the Safe Updates tab, or run **wp mykavo safe-updates off**.",
+      "Safe Updates checks your site right after WordPress changes something, so you know whether an update broke anything and which one did it.\n\nIt covers plugin, theme, WordPress and translation updates (automatic overnight ones too), plus activating or deactivating a plugin and switching theme. When the update finishes, MyKavo compares your monitored pages with their approved baseline. The **Safe Updates** tab then shows **Verified - nothing changed**, or the changes found, each labelled with the update it appeared after.\n\nThe check after each update is part of every paid plan: Starter, Pro and Agency. To stop it, flip the **Checks on** switch on the Safe Updates tab, or run **wp mykavo safe-updates off**.",
     related: ["wp-safe-updates-free-plan", "wp-update-not-checked", "wp-update-history"],
     evalQuestions: [
       "WooCommerce updated last night and my checkout looks off, can MyKavo tell me if that was the cause?",
@@ -378,7 +378,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["history", "log", "updates", "versions", "dashboard"],
     answer:
-      "In two places:\n\n- **In WordPress**: the **Safe Updates** tab lists each update with its versions, whether it was automatic or by an admin, and the verdict. The plugin keeps the last 30 updates on your site.\n- **On mykavo.app**: open the website's page and find **WordPress updates**. Since October 2026 every plugin, theme and WordPress update is listed there on every plan, Free included, with versions and whether it was automatic. On Pro and Agency each one links to the check that ran after it.\n\nThe plugin only records updates while the site is connected. In a terminal, **wp mykavo updates** lists them too.",
+      "In two places:\n\n- **In WordPress**: the **Safe Updates** tab lists each update with its versions, whether it was automatic or by an admin, and the verdict. The plugin keeps the last 30 updates on your site.\n- **On mykavo.app**: open the website's page and find **WordPress updates**. Since October 2026 every plugin, theme and WordPress update is listed there on every plan, Free included, with versions and whether it was automatic. On paid plans each one links to the check that ran after it.\n\nThe plugin only records updates while the site is connected. In a terminal, **wp mykavo updates** lists them too.",
     related: ["wp-update-missing", "wp-safe-updates"],
     evalQuestions: [
       "Can I check from mykavo.app which plugin versions changed on my WP site?",

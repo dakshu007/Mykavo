@@ -326,7 +326,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["deploy", "hook", "release", "ci", "verify", "post-deploy"],
     answer:
-      "A deploy check scans a website the moment a release goes out and compares every monitored page with its approved baseline. Deploy checks are part of Pro and Agency.\n\n1. Open the website and expand **Settings & integrations**.\n2. In **Deploy checks**, press **Enable deploy checks**.\n3. Copy the deploy hook URL and store it as a secret in your CI or host.\n4. Send a POST to it after each production deploy. Optionally send JSON like {\"note\":\"v1.2.3\"} (up to 140 characters) to label the check.\n\nYou always get a verdict: \"Deploy verified\" or the list of changes. Each check counts toward your daily manual scan quota. If the URL leaks, press **Regenerate**.",
+      "A deploy check scans a website the moment a release goes out and compares every monitored page with its approved baseline. Deploy checks are part of every paid plan: Starter, Pro and Agency.\n\n1. Open the website and expand **Settings & integrations**.\n2. In **Deploy checks**, press **Enable deploy checks**.\n3. Copy the deploy hook URL and store it as a secret in your CI or host.\n4. Send a POST to it after each production deploy. Optionally send JSON like {\"note\":\"v1.2.3\"} (up to 140 characters) to label the check.\n\nYou always get a verdict: \"Deploy verified\" or the list of changes. Each check counts toward your daily manual scan quota. If the URL leaks, press **Regenerate**.",
     related: ["integ-deploy-ci-examples", "integ-supabase", "change-update-baseline"],
     evalQuestions: [
       "can MyKavo check the site automatically right after we deploy",

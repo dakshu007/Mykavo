@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -117,6 +118,10 @@ export default function BestWebsiteMonitoringToolsPage() {
         title="Best website monitoring tools in 2026"
         intro="An honest comparison, including where each one stops - and where MyKavo is the wrong choice."
       >
+        <PageOverviewBlock
+          path="/best-website-monitoring-tools"
+          className="mb-12"
+        />
         {/* The direct answer, first, in one extractable paragraph. Answer
             engines quote the first passage that resolves the query; burying
             it under a preamble is how a page gets read and not cited. */}

@@ -8,6 +8,7 @@ import { BULK_STATUS_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { BulkStatusChecker } from "./bulk-status-checker";
 import { site } from "@/config/site";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 export const metadata: Metadata = withSocial({
   title: "Free Bulk URL Status Checker",
@@ -57,6 +58,7 @@ export default function BulkUrlStatusCheckerPage() {
         </div>
 
         <BulkStatusChecker />
+        <PageOverviewBlock path="/tools/bulk-url-status-checker" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>

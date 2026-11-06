@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -73,6 +74,10 @@ export default function WebflowMonitoringPage() {
         }
         intro="Webflow website monitoring baselines your published site and compares every page after each publish or Editor session - layout, copy, SEO settings, embeds, scripts - then alerts you with before-and-after proof when something important changed."
       >
+        <PageOverviewBlock
+          path="/website-monitoring-for-webflow"
+          className="mb-12"
+        />
         <h2>The publish button is powerful. That is the problem.</h2>
         <p>
           One click pushes every staged change live across the whole site. That includes things

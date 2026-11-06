@@ -3,6 +3,7 @@ import { withSocial } from "@/lib/social-metadata";
 import Image from "next/image";
 import Link from "next/link";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   ArrowRight,
   Bell,
@@ -297,6 +298,8 @@ export default function ShopifyAppPage() {
             </p>
           </div>
         </section>
+
+        <PageOverviewBlock path="/shopify-app" className="px-5 pb-16" />
 
         <AnswerCapsule
           className="mx-auto max-w-4xl px-5 pb-16 lg:px-8"

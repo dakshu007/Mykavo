@@ -3,6 +3,7 @@ import { withSocial } from "@/lib/social-metadata";
 import Image from "next/image";
 import Link from "next/link";
 import { AnswerCapsule } from "@/components/landing/answer-capsule";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   ArrowRight,
   Bell,
@@ -176,7 +177,7 @@ const faqs = [
   },
   {
     q: "Is the plugin free?",
-    a: `Yes. The plugin is free on every plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. Safe Updates - the automatic check after every update - and on-demand scans are part of the Pro ($20/month) and Agency ($79/month) plans. New accounts start with a ${TRIAL_DAYS}-day Pro trial, no card, so you can try Safe Updates on up to ${TRIAL_MAX_WEBSITES} websites before paying. On Free, every update is still listed so you know what changed and when.`,
+    a: `Yes. The plugin is free on every plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. Safe Updates - the automatic check after every update - and on-demand scans are part of every paid plan: Starter ($7/month), Pro ($20/month) and Agency ($79/month). New accounts start with a ${TRIAL_DAYS}-day Pro trial, no card, so you can try Safe Updates on up to ${TRIAL_MAX_WEBSITES} websites before paying. On Free, every update is still listed so you know what changed and when.`,
   },
   {
     q: "How does it know which update broke something?",
@@ -373,6 +374,8 @@ export default function WordPressPluginPage() {
             </p>
           </div>
         </section>
+
+        <PageOverviewBlock path="/wordpress-plugin" className="px-5 pb-16" />
 
         {/* The 53-second walkthrough */}
         <section aria-labelledby="wp-explainer-heading" className="mx-auto max-w-5xl px-5 pb-20 lg:px-8">

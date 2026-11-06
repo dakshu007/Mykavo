@@ -1,10 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  ArrowRight,
   Bookmark,
   CheckCircle2,
   GitCompareArrows,
@@ -12,8 +10,8 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { fontDisplay } from "@/components/landing/style";
 import { ToolError } from "@/components/tools/tool-error";
+import { ToolCta } from "@/components/tools/tool-cta";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import type { DiffSeverity, PageToolSnapshot, SnapshotDiff } from "@/lib/tools/snapshot";
@@ -458,25 +456,14 @@ export function ChangeDetector() {
         </>
       )}
 
-      {/* Product CTA */}
+      {/* Product CTA (shared: personalized button + sticky bar while it is below the fold). */}
       {(snapshot || compareResult) && (
-        <div className="rounded-2xl border border-[#151515] bg-[#151515] px-6 py-10 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
-          <h2 className={`${fontDisplay} text-2xl leading-tight text-[#F5F5F0] sm:text-3xl`}>
-            Monitor changes automatically with MyKavo
-          </h2>
-          <p className="mx-auto mt-2.5 max-w-md text-sm leading-6 text-[#9C9E93]">
-            MyKavo re-checks pages like this on a schedule - plus screenshots, visual diffs,
-            broken links, and conversion elements - and alerts you when something important
-            changes.
-          </p>
-          <Link
-            href="/signup"
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[#FFD400] px-6 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
-            onClick={() => track("cta_clicked", { cta: "tool_to_waitlist" })}
-          >
-            Start Monitoring Free <ArrowRight className="size-4" aria-hidden />
-          </Link>
-        </div>
+        <ToolCta
+          heading="Let MyKavo run this check for you"
+          body="MyKavo re-checks pages like this on a schedule, with screenshots, visual diffs, broken links and conversion elements, and emails you when something important changes."
+          tool="website-change-detector"
+          url={mode === "track" ? url : urlA}
+        />
       )}
     </div>
   );

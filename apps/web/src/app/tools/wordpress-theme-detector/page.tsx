@@ -9,6 +9,7 @@ import { WORDPRESS_DETECTOR_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { WordPressDetector } from "./wordpress-detector";
 import { site } from "@/config/site";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 export const metadata: Metadata = withSocial({
   title: "WordPress Theme Detector - What Theme & Plugins Is That Site Using?",
@@ -57,6 +58,7 @@ export default function WordPressThemeDetectorPage() {
         </div>
 
         <WordPressDetector />
+        <PageOverviewBlock path="/tools/wordpress-theme-detector" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>

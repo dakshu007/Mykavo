@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BellRing, Check } from "lucide-react";
+import { ArrowRight, BellRing, Check, X } from "lucide-react";
 import { GoogleIcon } from "@/components/brand/integration-icons";
 import { track } from "@/lib/analytics";
 import { displayHost, monitorableUrl, signupHref } from "@/lib/attribution/monitor-link";
@@ -51,9 +52,16 @@ export function ToolCta({
   const from = `tool:${tool}`.slice(0, 60);
   const onClick = (method: string) => () =>
     track("cta_clicked", { cta: "tool_results", tool, method, prefilled: Boolean(page), personalized: Boolean(watch?.items.length) });
+  const boxRef = useRef<HTMLDivElement>(null);
+  const belowFold = useBelowFold(boxRef);
 
   return (
-    <div className="rounded-2xl border border-[#151515] bg-[#151515] px-6 py-10 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
+    <>
+    <ToolStickyBar show={belowFold} page={page} tool={tool} from={from} />
+    <div
+      ref={boxRef}
+      className="rounded-2xl border border-[#151515] bg-[#151515] px-6 py-10 text-center shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]"
+    >
       <h2 className={`${fontDisplay} text-2xl leading-tight text-[#F5F5F0] sm:text-3xl`}>{heading}</h2>
       <p className="mx-auto mt-2.5 max-w-md text-sm leading-6 text-[#9C9E93]">{body}</p>
       {watch && watch.items.length > 0 && (
@@ -133,6 +141,97 @@ export function ToolCta({
         </p>
       </div>
       {page && <ToolAuditOffer url={page} tool={tool} />}
+    </div>
+    </>
+  );
+}
+
+/**
+ * True while the element is still below the visible screen. The results of
+ * most tools are long (tables of tags, links, scripts), so the CTA above sits
+ * far down the page right when interest peaks: the first screen of results.
+ * Once the visitor reaches the CTA, or scrolls past it, this turns false.
+ */
+function useBelowFold(ref: React.RefObject<HTMLElement | null>): boolean {
+  const [below, setBelow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setBelow(!entry.isIntersecting && entry.boundingClientRect.top > 0),
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+  return below;
+}
+
+/**
+ * The compact version of the CTA, pinned to the bottom of the screen while the
+ * full one is still below: "Monitor example.com free" next to the results the
+ * visitor is reading. Closable for the rest of the visit.
+ */
+function ToolStickyBar({ show, page, tool, from }: { show: boolean; page: string | null; tool: string; from: string }) {
+  // Results (and so this bar) only ever render in the browser, after a check
+  // runs, so reading storage on the first render cannot mismatch hydration.
+  const [closed, setClosed] = useState(() => {
+    try {
+      return Boolean(window.sessionStorage.getItem("mk-tool-bar-closed"));
+    } catch {
+      return false; // Storage blocked: the bar can still be closed for this page.
+    }
+  });
+  if (closed) return null;
+  const host = page ? displayHost(page) : null;
+  return (
+    <div
+      // Phones: full width at the bottom (the Chrome announcement sits higher
+      // there). From sm up that announcement is pinned bottom-left, so the bar
+      // anchors bottom-right and never covers it.
+      className={`fixed inset-x-3 bottom-3 z-40 transition-all duration-300 motion-reduce:transition-none sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[min(40rem,calc(100vw-26.5rem))] ${
+        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
+      }`}
+      aria-hidden={!show}
+    >
+      <div className="mx-auto flex max-w-2xl items-center gap-3 rounded-2xl border border-[#151515] bg-[#151515] py-2.5 pl-4 pr-2 text-left text-[#E9EBDF] shadow-[4px_4px_0_#FFD400]">
+        <span className="hidden size-9 shrink-0 place-items-center rounded-lg bg-[#FFD400] text-[#151515] sm:grid">
+          <BellRing className="size-4" aria-hidden />
+        </span>
+        <p className="min-w-0 flex-1 text-[13px] leading-5">
+          <span className="font-semibold text-white">
+            {host ? `Get an email when ${host} changes.` : "Get an email when your site changes."}
+          </span>{" "}
+          <span className="hidden text-[#9C9E93] xl:inline">Checked daily, free.</span>
+        </p>
+        <Link
+          href={signupHref({ url: page, from: `${from}:bar`.slice(0, 60), google: true })}
+          tabIndex={show ? 0 : -1}
+          onClick={() => track("cta_clicked", { cta: "tool_sticky", tool, prefilled: Boolean(page) })}
+          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#FFD400] px-4 text-[13px] font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
+        >
+          <GoogleIcon className="size-4 shrink-0" />
+          {/* The site is already named in the message; phones get the short label. */}
+          <span className="sm:hidden">{host ? "Monitor free" : "Start free"}</span>
+          <span className="hidden max-w-[14rem] truncate sm:inline">{host ? `Monitor ${host}` : "Start free"}</span>
+        </Link>
+        <button
+          type="button"
+          tabIndex={show ? 0 : -1}
+          onClick={() => {
+            setClosed(true);
+            try {
+              window.sessionStorage.setItem("mk-tool-bar-closed", "1");
+            } catch {
+              // ignore
+            }
+          }}
+          className="grid size-8 shrink-0 place-items-center rounded-full text-[#9C9E93] hover:bg-white/10 hover:text-white"
+          aria-label="Close"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -68,6 +69,10 @@ export default function MonitoringChecklistPage() {
         }
         intro="A complete website monitoring checklist: which signals to watch, how often to check each one, and the best practices that keep your alerts worth reading. Work through it once and you will know exactly where your current setup is blind."
       >
+        <PageOverviewBlock
+          path="/guides/website-monitoring-checklist"
+          className="mb-12"
+        />
         <h2>Continuous (every few minutes)</h2>
         <ul>
           <li>Uptime probe on your primary domain and any critical subdomains.</li>

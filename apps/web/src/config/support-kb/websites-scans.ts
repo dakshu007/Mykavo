@@ -185,7 +185,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["history", "scans", "retention", "log", "results"],
     answer:
-      "[Scan History](/dashboard/scans) lists your recent scans with the website, trigger (Baseline, Scheduled, Manual or Deploy check), status, pages and duration. Click one to see per-page results, errors and the changes it found.\n\n- **Completed** - every page was scanned.\n- **Partial** - some pages failed or a step did not finish, but the rest are shown.\n- **Failed** - no page could be captured, or the scan never finished.\n\nHistory is kept for 30 days on Free and 1 year on Pro and Agency. Older scans are removed nightly, but approved baselines are never deleted.",
+      "[Scan History](/dashboard/scans) lists your recent scans with the website, trigger (Baseline, Scheduled, Manual or Deploy check), status, pages and duration. Click one to see per-page results, errors and the changes it found.\n\n- **Completed** - every page was scanned.\n- **Partial** - some pages failed or a step did not finish, but the rest are shown.\n- **Failed** - no page could be captured, or the scan never finished.\n\nHistory is kept for 30 days on Free, 90 days on Starter and 1 year on Pro and Agency. Older scans are removed nightly, but approved baselines are never deleted.",
     related: ["scan-manual", "trouble-scan-failed"],
     evalQuestions: [
       "where can I look back at checks from last month",

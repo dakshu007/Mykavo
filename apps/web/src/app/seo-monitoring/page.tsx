@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -74,6 +75,10 @@ export default function SeoMonitoringPage() {
         }
         intro="An SEO monitoring tool watches the on-page elements rankings depend on and alerts you when they change. MyKavo baselines every monitored page and flags title rewrites, canonical losses, noindex flips, redirect changes, and status errors with exact before-and-after values."
       >
+        <PageOverviewBlock
+          path="/seo-monitoring"
+          className="mb-12"
+        />
         <h2>Traffic drops are lagging indicators</h2>
         <p>
           Most SEO disasters are not penalties. They are ordinary changes nobody noticed: a

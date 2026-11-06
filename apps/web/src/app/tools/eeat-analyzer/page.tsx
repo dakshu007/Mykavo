@@ -8,6 +8,7 @@ import { EEAT_FAQS } from "@/config/tool-faqs";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { EeatAnalyzer } from "./eeat-analyzer";
 import { site } from "@/config/site";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 export const metadata: Metadata = withSocial({
   title: "Free E-E-A-T Analyzer & Checker",
@@ -55,6 +56,7 @@ export default function EeatAnalyzerPage() {
           </p>
         </div>
         <EeatAnalyzer />
+        <PageOverviewBlock path="/tools/eeat-analyzer" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-16 max-w-2xl space-y-4 text-[14px] leading-6 text-[#6B6B60]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515]`}>What this tool measures - honestly</h2>

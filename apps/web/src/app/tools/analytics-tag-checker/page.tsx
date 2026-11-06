@@ -9,6 +9,7 @@ import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
 import { site } from "@/config/site";
 import { AnalyticsChecker } from "./analytics-checker";
 import { ANALYTICS_TAG_FAQS } from "./faqs";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 
 const DESCRIPTION =
   "Free analytics tag checker: enter a URL to see if GA4, Google Tag Manager, Google Ads, Meta Pixel or other analytics tags are installed, with their IDs.";
@@ -59,6 +60,7 @@ export default function AnalyticsTagCheckerPage() {
         </div>
 
         <AnalyticsChecker />
+        <PageOverviewBlock path="/tools/analytics-tag-checker" cta={false} className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>How the analytics checker works</h2>

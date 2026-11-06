@@ -21,6 +21,7 @@ import { fontSans, fontDisplay, gold } from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
 import { PostContent, PostTocMobile, PostTocRail } from "@/components/blog/post-content";
 import { AiOverview } from "@/components/blog/ai-overview";
+import { MonitorUrlCta } from "@/components/cta/monitor-url-cta";
 import { site } from "@/config/site";
 import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
@@ -318,7 +319,10 @@ export default async function BlogPostPage({ params }: Params) {
               {/* The post's answer, stated up front - the excerpt, written as
                   a self-contained answer, is what AI answers and readers in
                   a hurry both want first. */}
-              <AiOverview answer={post.excerpt} takeaways={post.keyTakeaways} className="mb-8" />
+              <AiOverview answer={post.excerpt} takeaways={post.keyTakeaways} className="mb-6" />
+              {/* Many readers get their answer from the overview and leave:
+                  the next step sits right under it, about their own site. */}
+              <MonitorUrlCta from="blog:overview" className="mb-8" />
               <SummarizeWithAi url={`${site.url}/blog/${post.slug}`} />
               {showTocRail && <PostTocMobile headings={headings} className="mb-6" />}
               <div
@@ -327,7 +331,21 @@ export default async function BlogPostPage({ params }: Params) {
               >
                 {/* The matched free tool sits mid-article, between sections:
                     readers who never reach the end still meet it. */}
-                <PostContent content={post.content} midpoint={tool ? <PostTool tool={tool} /> : undefined} />
+                <PostContent
+                  content={post.content}
+                  midpoint={
+                    tool ? (
+                      <PostTool tool={tool} />
+                    ) : (
+                      <MonitorUrlCta
+                        from="blog:midpoint"
+                        heading="Want this checked on your site, automatically?"
+                        body="MyKavo watches the pages that matter on your website and emails you when something important changes or breaks, with before and after proof."
+                        className="my-10"
+                      />
+                    )
+                  }
+                />
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-3">

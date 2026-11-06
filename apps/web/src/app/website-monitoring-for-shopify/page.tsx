@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -74,6 +75,10 @@ export default function ShopifyMonitoringPage() {
         }
         intro="Shopify website monitoring watches your storefront the way a shopper sees it: product pages, collections, landing pages, and the buttons that sell. MyKavo baselines them, re-scans on schedule, and alerts you when a theme update, app, or edit changes something that matters."
       >
+        <PageOverviewBlock
+          path="/website-monitoring-for-shopify"
+          className="mb-12"
+        />
         <h2>Shopify is reliable. Storefronts are fragile.</h2>
         <p>
           The platform holding 99.9%+ uptime does not protect you from your own stack. Stores

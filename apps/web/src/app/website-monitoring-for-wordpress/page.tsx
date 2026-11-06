@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { PageOverviewBlock } from "@/components/landing/page-overview";
 import {
   FaqSection,
   RelatedLinks,
@@ -74,6 +75,10 @@ export default function WordPressMonitoringPage() {
         }
         intro="WordPress website monitoring watches your rendered pages for the damage plugin updates, theme changes, and client edits leave behind - broken layouts, lost SEO tags, missing forms, vanished tracking scripts - and alerts you with before-and-after proof. It works from the outside with nothing installed, and a free plugin adds a check after every update."
       >
+        <PageOverviewBlock
+          path="/website-monitoring-for-wordpress"
+          className="mb-12"
+        />
         <h2>The WordPress problem: your site changes without you</h2>
         <p>
           A WordPress site is never static. Plugins auto-update overnight. The theme vendor ships
