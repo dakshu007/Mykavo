@@ -61,8 +61,10 @@ const SUPPORTERS: Supporter[] = [
 
 export function SupportedBy() {
   return (
-    <section aria-labelledby="supported-by-title" className="bg-[#151515] py-14 sm:py-16">
-      <div className="mx-auto max-w-6xl px-5 lg:px-8">
+    <section aria-labelledby="supported-by-title" className="bg-[#151515] pb-16 sm:pb-20">
+      {/* Sits right under the dark "Works with" band: a hairline keeps them
+          one calm logo zone with two clear parts. */}
+      <div className="mx-auto max-w-6xl border-t border-white/10 px-5 pt-14 sm:pt-16 lg:px-8">
         <p id="supported-by-title" className={`${eyebrowOnDark} text-center`}>
           {"// supported by //"}
         </p>
