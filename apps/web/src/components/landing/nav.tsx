@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
-import { AppAnnouncement } from "./app-announcement";
 import { SitePromoBar } from "./campaign-announcement";
 import { GoogleIcon, McpIcon } from "@/components/brand/integration-icons";
 import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
@@ -211,9 +210,8 @@ export function LandingNav() {
 
   return (
     <>
-      {/* Travels with the nav so it reaches all thirteen marketing pages -
-          most arrivals land on a blog post or a tool, never on `/`. */}
-      <AppAnnouncement />
+      {/* The "MyKavo for Chrome is live" popup (app-announcement.tsx) used to
+          render here. Removed: it covered the content readers came for. */}
       {/* A seasonal offer bar across the very top. Its height (--promo-h,
           set before first paint only while an offer runs) is held open by
           the spacer and added to the nav's offset, so nothing overlaps. */}
