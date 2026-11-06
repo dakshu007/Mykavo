@@ -146,6 +146,7 @@ export function WordPressDetector() {
             body="MyKavo's free WordPress plugin checks your key pages after every plugin, theme and core update, and names the update behind any change it finds."
             tool="wordpress-theme-detector"
             url={report.finalUrl}
+            wordpress={report.isWordPress}
           />
         </>
       )}

@@ -22,6 +22,8 @@ import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blo
 import { PostContent, PostTocMobile, PostTocRail } from "@/components/blog/post-content";
 import { AiOverview } from "@/components/blog/ai-overview";
 import { MonitorUrlCta } from "@/components/cta/monitor-url-cta";
+import { WordpressPluginCta } from "@/components/cta/wordpress-plugin-cta";
+import { isWordpressTopic } from "@/lib/wordpress-topic";
 import { site } from "@/config/site";
 import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
@@ -126,6 +128,8 @@ export default async function BlogPostPage({ params }: Params) {
   const tags = displayTags(post.tags);
   const updated = showUpdated(post.publishedAt, post.updatedAt);
   const tool = toolForPost(post);
+  // WordPress readers get the plugin pitch instead of the generic sign-up box.
+  const wordpressPost = isWordpressTopic(post.slug, post.title, post.primaryKeyword, post.tags);
   const postUrl = `${site.url}/blog/${post.slug}`;
   const shareImage = `${postUrl}/opengraph-image`;
 
@@ -322,7 +326,11 @@ export default async function BlogPostPage({ params }: Params) {
               <AiOverview answer={post.excerpt} takeaways={post.keyTakeaways} className="mb-6" />
               {/* Many readers get their answer from the overview and leave:
                   the next step sits right under it, about their own site. */}
-              <MonitorUrlCta from="blog:overview" className="mb-8" />
+              {wordpressPost ? (
+                <WordpressPluginCta placement="blog:overview" className="mb-8" />
+              ) : (
+                <MonitorUrlCta from="blog:overview" className="mb-8" />
+              )}
               <SummarizeWithAi url={`${site.url}/blog/${post.slug}`} />
               {showTocRail && <PostTocMobile headings={headings} className="mb-6" />}
               <div
@@ -336,6 +344,12 @@ export default async function BlogPostPage({ params }: Params) {
                   midpoint={
                     tool ? (
                       <PostTool tool={tool} />
+                    ) : wordpressPost ? (
+                      <WordpressPluginCta
+                        placement="blog:midpoint"
+                        heading="Update WordPress without the guesswork."
+                        className="my-10"
+                      />
                     ) : (
                       <MonitorUrlCta
                         from="blog:midpoint"

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { GoogleButton } from "@/components/landing/google-cta";
+import { WpPluginRepoLink } from "@/components/landing/wp-plugin-download";
 import { fontDisplay } from "@/components/landing/style";
 
 /**
@@ -87,6 +88,13 @@ export function BlogCta({ showMorePosts = true }: { showMorePosts?: boolean }) {
               or sign up with email
             </Link>
           </div>
+
+          {/* WordPress owners have a shorter path: the free plugin. */}
+          <p className="mt-6 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-xl border border-white/10 px-4 py-3 text-[13px] text-[#E9EBDF] lg:justify-start">
+            <span className="font-semibold">On WordPress?</span>
+            <span className="text-[#9C9E93]">Install the free plugin:</span>
+            <WpPluginRepoLink placement="blog:end" />
+          </p>
 
           <p className="mt-5 text-[13px] text-[#9C9E93]">
             <Link

@@ -77,6 +77,7 @@ export default function WordPressMonitoringPage() {
       >
         <PageOverviewBlock
           path="/website-monitoring-for-wordpress"
+          cta="wordpress"
           className="mb-12"
         />
         <h2>The WordPress problem: your site changes without you</h2>

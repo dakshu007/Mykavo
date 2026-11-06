@@ -58,7 +58,7 @@ export default function WordPressThemeDetectorPage() {
         </div>
 
         <WordPressDetector />
-        <PageOverviewBlock path="/tools/wordpress-theme-detector" cta={false} className="mt-14" />
+        <PageOverviewBlock path="/tools/wordpress-theme-detector" cta="wordpress" className="mt-14" />
 
         <section className="mx-auto mt-20 max-w-2xl space-y-6 text-[15px] leading-7 text-[#3d3d38]">
           <h2 className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>

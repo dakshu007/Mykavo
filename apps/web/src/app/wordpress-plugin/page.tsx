@@ -375,7 +375,7 @@ export default function WordPressPluginPage() {
           </div>
         </section>
 
-        <PageOverviewBlock path="/wordpress-plugin" className="px-5 pb-16" />
+        <PageOverviewBlock path="/wordpress-plugin" cta="wordpress" className="px-5 pb-16" />
 
         {/* The 53-second walkthrough */}
         <section aria-labelledby="wp-explainer-heading" className="mx-auto max-w-5xl px-5 pb-20 lg:px-8">

@@ -6,6 +6,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { monitorableUrl, signupHref } from "@/lib/attribution/monitor-link";
 import { fontDisplay } from "@/components/landing/style";
+import { WP_PLUGIN_DIRECTORY_URL, WP_PLUGIN_VERSION } from "@/config/wordpress-plugin";
 
 /**
  * "Type your site, start monitoring it": the in-content CTA for blog posts,
@@ -96,6 +97,20 @@ export function MonitorUrlCta({
             </li>
           ))}
         </ul>
+        {/* About 4 in 10 websites run WordPress: give them the shorter path. */}
+        <p className="mt-4 border-t border-[#F5F5F0]/10 pt-4 text-[13px] text-[#B9BBB0]">
+          Using WordPress?{" "}
+          <a
+            href={WP_PLUGIN_DIRECTORY_URL}
+            target="_blank"
+            rel="noopener"
+            onClick={() => track("wp_plugin_directory_clicked", { placement: `${from}:line`, version: WP_PLUGIN_VERSION })}
+            className="font-semibold text-[#FFD400]! underline decoration-[#FFD400]/50 underline-offset-4 hover:decoration-[#FFD400]"
+          >
+            Get the free plugin on WordPress.org
+          </a>{" "}
+          and see which update broke what.
+        </p>
       </div>
     </section>
   );

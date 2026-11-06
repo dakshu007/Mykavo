@@ -8,6 +8,8 @@ import { track } from "@/lib/analytics";
 import { displayHost, monitorableUrl, signupHref } from "@/lib/attribution/monitor-link";
 import { fontDisplay } from "@/components/landing/style";
 import { ToolAuditOffer } from "./tool-audit-offer";
+import { BRAND_MARKS } from "@/components/brand/brand-marks";
+import { WpPluginInstall } from "@/components/landing/wp-plugin-download";
 
 /**
  * Product CTA block shown under free-tool results, tying the tool to
@@ -40,6 +42,7 @@ export function ToolCta({
   tool,
   url,
   watch,
+  wordpress = false,
 }: {
   heading: string;
   body: string;
@@ -47,6 +50,8 @@ export function ToolCta({
   /** The page the tool just checked, if any. */
   url?: string | null;
   watch?: ToolCtaWatch | null;
+  /** The checked site runs WordPress: also offer the free plugin. */
+  wordpress?: boolean;
 }) {
   const page = monitorableUrl(url);
   const from = `tool:${tool}`.slice(0, 60);
@@ -140,6 +145,23 @@ export function ToolCta({
           Free plan · No credit card · {page ? "Your page is filled in for you" : "Set up in about a minute"}
         </p>
       </div>
+      {wordpress && (
+        <div className="mx-auto mt-7 max-w-md rounded-xl border-2 border-[#151515] bg-[#FFF7CC] p-4 text-left text-[#151515] shadow-[3px_3px_0_#FFD400]">
+          <p className="flex items-center gap-2 text-[14px] font-semibold">
+            <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden focusable="false">
+              <path d={BRAND_MARKS.wordpress.path} fill="#21759B" />
+            </svg>
+            {page ? `${displayHost(page)} runs WordPress` : "This site runs WordPress"}
+          </p>
+          <p className="mt-1.5 text-[13px] leading-5 text-[#3D3D38]">
+            Add the free MyKavo plugin: every plugin, theme and core update is recorded and checked, with one-click
+            rollback when an update breaks something.
+          </p>
+          <div className="mt-3.5">
+            <WpPluginInstall placement={`tool:${tool}`} />
+          </div>
+        </div>
+      )}
       {page && <ToolAuditOffer url={page} tool={tool} />}
     </div>
     </>

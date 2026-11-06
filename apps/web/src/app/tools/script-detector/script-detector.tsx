@@ -5,6 +5,7 @@ import { Braces, Info } from "lucide-react";
 import { ToolUrlForm } from "@/components/tools/url-form";
 import { ToolError } from "@/components/tools/tool-error";
 import { ToolCta } from "@/components/tools/tool-cta";
+import { looksLikeWordpress } from "@/lib/wordpress-topic";
 import { track } from "@/lib/analytics";
 import type { ScriptDetectionReport } from "@/lib/tools/snapshot";
 
@@ -147,6 +148,7 @@ export function ScriptDetector() {
             body="A plugin update, a theme change or a tag manager edit can silently remove analytics or a payment script, or add one you never approved. MyKavo checks this page every day and emails you the moment one changes."
             tool="script-detector"
             url={report.finalUrl}
+            wordpress={looksLikeWordpress(report.scripts.map((s) => s.src))}
             watch={
               report.scripts.length > 0
                 ? {
