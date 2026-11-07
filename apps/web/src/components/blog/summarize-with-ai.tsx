@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, Cpu, ExternalLink, Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { ChatGptLogo, ClaudeLogo, GeminiLogo, PerplexityLogo } from "@/components/brand/ai-assistant-logos";
 
 /**
  * "Summarize this post" - two ways, neither of which costs MyKavo anything:
@@ -100,9 +101,9 @@ export function SummarizeWithAi({ url }: { url: string }) {
   const prompt = `Summarize this article in 5 key points, then say who it is most useful for: ${url}`;
   const q = encodeURIComponent(prompt);
   const assistants = [
-    { id: "chatgpt", name: "ChatGPT", href: `https://chatgpt.com/?q=${q}` },
-    { id: "claude", name: "Claude", href: `https://claude.ai/new?q=${q}` },
-    { id: "perplexity", name: "Perplexity", href: `https://www.perplexity.ai/search?q=${q}` },
+    { id: "chatgpt", name: "ChatGPT", href: `https://chatgpt.com/?q=${q}`, Logo: ChatGptLogo },
+    { id: "claude", name: "Claude", href: `https://claude.ai/new?q=${q}`, Logo: ClaudeLogo },
+    { id: "perplexity", name: "Perplexity", href: `https://www.perplexity.ai/search?q=${q}`, Logo: PerplexityLogo },
   ];
 
   async function summarizeHere() {
@@ -139,7 +140,7 @@ export function SummarizeWithAi({ url }: { url: string }) {
   }
 
   const pill =
-    "inline-flex h-9 items-center gap-1.5 rounded-full border border-[#151515]/15 bg-white px-3.5 text-[13px] font-semibold text-[#151515] transition-all hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[2px_2px_0_#151515] motion-reduce:hover:translate-y-0";
+    "inline-flex h-9 items-center gap-2 rounded-full border border-[#151515]/15 bg-white pl-3 pr-3.5 text-[13px] font-semibold text-[#151515] transition-all hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[2px_2px_0_#151515] motion-reduce:hover:translate-y-0";
   const showLocal = local === "available";
 
   return (
@@ -167,10 +168,12 @@ export function SummarizeWithAi({ url }: { url: string }) {
               onClick={() => track("blog_ai_summary", { provider: a.id })}
               className={pill}
             >
+              <a.Logo className="size-4" />
               {a.name} <ExternalLink className="size-3 opacity-50" aria-hidden />
             </a>
           ))}
           <button type="button" onClick={openGemini} className={pill}>
+            <GeminiLogo className="size-4" />
             Gemini {copied ? <Check className="size-3 text-[#16A34A]" aria-hidden /> : <Copy className="size-3 opacity-50" aria-hidden />}
           </button>
         </div>
