@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@/components/blog/content-editor", () => ({ ContentEditor: () => null }));
@@ -26,10 +26,24 @@ const basePost = {
   publishedAt: null,
 };
 
+// Every root is unmounted after its test. Left mounted, React can still run
+// scheduled work after vitest tears down jsdom, which crashes with "window is
+// not defined" on slower CI runners and fails the run although every test passed.
+const mounted: Array<{ root: Root; el: HTMLElement }> = [];
+
+afterEach(() => {
+  for (const { root, el } of mounted.splice(0)) {
+    act(() => root.unmount());
+    el.remove();
+  }
+});
+
 function mount(authorName: string, authors: string[]) {
   const el = document.createElement("div");
   document.body.appendChild(el);
-  act(() => createRoot(el).render(createElement(BlogPostEditor, { post: { ...basePost, authorName }, authors })));
+  const root = createRoot(el);
+  mounted.push({ root, el });
+  act(() => root.render(createElement(BlogPostEditor, { post: { ...basePost, authorName }, authors })));
   return el;
 }
 
