@@ -46,22 +46,24 @@ export function SmoothScroll() {
     if (reduced.matches || coarse.matches) return;
 
     const lenis = new Lenis({
-      // Slightly slower than default: the point is a considered feel, not a
-      // slide. Anything longer starts fighting the reader.
-      duration: 0.9,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      /**
+       * Follow the wheel with lerp, not a fixed duration.
+       *
+       * THE STUTTER THIS FIXES. With `duration`, every wheel tick restarts a
+       * fresh 0.9s ease from wherever the page happens to be. A mouse wheel
+       * sends a burst of ticks, so the scroll kept accelerating, braking and
+       * accelerating again, which reads as judder. Lerp closes a fixed share
+       * of the remaining distance each frame, so a burst of ticks just moves
+       * the target further and the motion stays continuous.
+       */
+      lerp: 0.12,
       smoothWheel: true,
+      // Lenis runs its own frame loop and cancels it in destroy().
+      autoRaf: true,
       // Native behaviour for touch even if this somehow runs on a hybrid
       // device that reports a fine pointer.
       syncTouch: false,
     });
-
-    let frame = 0;
-    function raf(time: number) {
-      lenis.raf(time);
-      frame = requestAnimationFrame(raf);
-    }
-    frame = requestAnimationFrame(raf);
 
     /**
      * Re-measure whenever the page gets taller or shorter.
@@ -90,10 +92,18 @@ export function SmoothScroll() {
      * shell is exactly that shape.
      */
     let pending = 0;
-    const domObserver = new MutationObserver(() => {
+    let lastHeight = document.documentElement.scrollHeight;
+    const domObserver = new MutationObserver((records) => {
       if (pending) return;
+      // Ticking widgets (the offer bar countdown) mutate every second but
+      // sit in fixed elements that never change the page's height. Skip
+      // them, or Lenis re-measures the whole layout once a second mid-scroll.
+      if (records.every((r) => (r.target as Element).closest?.("[data-scroll-static]"))) return;
       pending = requestAnimationFrame(() => {
         pending = 0;
+        const height = document.documentElement.scrollHeight;
+        if (height === lastHeight) return;
+        lastHeight = height;
         lenis.resize();
       });
     });
@@ -157,7 +167,6 @@ export function SmoothScroll() {
       resizeObserver.disconnect();
       observer.disconnect();
       document.removeEventListener("click", onClick);
-      cancelAnimationFrame(frame);
       lenis.destroy();
     };
   }, []);

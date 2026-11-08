@@ -8,6 +8,7 @@ import { NavigationProgress } from "@/components/navigation-progress";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
 import { site } from "@/config/site";
 import { campaignWindows } from "@/config/campaign";
+import "lenis/dist/lenis.css";
 import "./globals.css";
 
 // Google Analytics 4 property for mykavo.app - loaded in production only so

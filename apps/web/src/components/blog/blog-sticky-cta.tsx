@@ -23,14 +23,23 @@ export function BlogStickyCta() {
       // Storage blocked: the bar can still be closed for this page.
     }
     if (closedEarlier) return;
-    const onScroll = () => {
+    // At most one layout read per frame, not one per scroll event.
+    let frame = 0;
+    const update = () => {
+      frame = 0;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const progress = max > 0 ? window.scrollY / max : 0;
       setVisible(progress > 0.25 && progress < 0.9);
     };
-    onScroll();
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, []);
 
   if (closed) return null;

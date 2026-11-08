@@ -72,12 +72,18 @@ export function PromoBar({
   }
 
   const position =
-    variant === "fixed" ? "fixed inset-x-0 top-0 z-[60] h-[var(--promo-h,40px)]" : "relative mb-4 h-10 rounded-xl";
+    variant === "fixed"
+      ? // Its own compositor layer, with layout and paint contained, so the
+        // ticking countdown and looping glows never repaint the page under it.
+        "fixed inset-x-0 top-0 z-[60] h-[var(--promo-h,40px)] transform-gpu [contain:layout_paint]"
+      : "relative mb-4 h-10 rounded-xl";
 
   return (
     <div
       role="region"
       aria-label={`${campaign.name} offer`}
+      // Tells SmoothScroll its every-second updates never change page height.
+      data-scroll-static={variant === "fixed" ? "" : undefined}
       className={`${position} overflow-hidden border-b ${bf ? "border-[#FFCF00]/40 bg-[#0B0B0B]" : "border-[#FF7A1A]/40 bg-[#151515]"} text-[#F5F5F0]`}
     >
       {/* Glow from below. */}

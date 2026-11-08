@@ -665,12 +665,32 @@ html[data-promo] {
 }
 
 /* A slow glow on the call to action, like a lantern. */
-@keyframes promo-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(255 122 26 / 0); }
-  50% { box-shadow: 0 0 14px 2px rgb(255 122 26 / 0.55); }
+/* The glow is a fixed shadow on a pseudo-element whose opacity pulses:
+   opacity runs on the compositor, an animated box-shadow repaints every
+   frame (and made scrolling past it stutter). */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
-.promo-glow {
-  animation: promo-glow 2.8s ease-in-out infinite;
+.promo-glow,
+.bf-glow {
+  position: relative;
+  isolation: isolate;
+}
+.promo-glow::after,
+.bf-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+}
+.promo-glow::after {
+  box-shadow: 0 0 14px 2px rgb(255 122 26 / 0.55);
+  animation: glow-pulse 2.8s ease-in-out infinite;
 }
 
 /* A price that changes (monthly/yearly switch) drops into place. */
@@ -703,12 +723,9 @@ html[data-promo] {
 .bf-stamp {
   animation: bf-stamp 1.6s ease-in-out infinite;
 }
-@keyframes bf-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(255 207 0 / 0); }
-  50% { box-shadow: 0 0 16px 2px rgb(255 207 0 / 0.55); }
-}
-.bf-glow {
-  animation: bf-glow 2.4s ease-in-out infinite;
+.bf-glow::after {
+  box-shadow: 0 0 16px 2px rgb(255 207 0 / 0.55);
+  animation: glow-pulse 2.4s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -781,11 +798,11 @@ html[data-promo] {
   .promo-flap,
   .promo-bob,
   .promo-tick,
-  .promo-glow,
+  .promo-glow::after,
   .bf-spark,
   .bf-flicker,
   .bf-stamp,
-  .bf-glow,
+  .bf-glow::after,
   .bfp-rise,
   .bfp-float,
   .bfp-marquee,
