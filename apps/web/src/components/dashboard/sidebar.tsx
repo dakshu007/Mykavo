@@ -133,7 +133,7 @@ export function DashboardSidebar({
 
       <nav
         data-lenis-prevent
-        className="scroll-quiet mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2 pr-1"
+        className="scroll-quiet -mx-1 mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-4 pt-3"
         aria-label="Dashboard"
       >
         {groups.map((group, i) => (
@@ -151,7 +151,7 @@ export function DashboardSidebar({
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13.5px] transition-colors",
+                      "flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13.5px] transition-colors focus-visible:outline-offset-[-2px]",
                       active
                         ? "bg-ink/[0.07] font-medium text-ink"
                         : "text-ink-secondary hover:bg-ink/[0.04] hover:text-ink",

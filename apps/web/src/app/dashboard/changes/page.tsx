@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteFavicon } from "@/components/dashboard/site-favicon";
 import { ArrowRight, Download, GitCompareArrows } from "lucide-react";
 import { prisma, OPEN_STATUSES, type ChangeSeverity } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
@@ -263,9 +264,12 @@ async function SitePicker({
               className="group flex h-full flex-col gap-3 rounded-field border border-line p-4 transition-colors hover:border-ink/25 hover:bg-ink/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-ink">{c.name}</p>
-                  <p className="truncate font-mono text-xs text-ink-faint">{hostOf(c.url)}</p>
+                <div className="flex min-w-0 items-center gap-3">
+                  <SiteFavicon url={c.url} name={c.name} />
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-semibold text-ink">{c.name}</p>
+                    <p className="truncate font-mono text-xs text-ink-faint">{hostOf(c.url)}</p>
+                  </div>
                 </div>
                 <ArrowRight
                   className="mt-1 size-4 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-ink"

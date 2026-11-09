@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Copy, KeyRound, Loader2, Plug, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Plug, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ApiKeyView {
@@ -148,10 +148,8 @@ export function McpPanel({
 }) {
   const [keys, setKeys] = useState(initialKeys);
   const [connections, setConnections] = useState(initialConnections);
-  const [name, setName] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(notReady);
-  const [secret, setSecret] = useState<string | null>(null);
   const [client, setClient] = useState<Client>("chatgpt");
 
   if (!allowed) {
@@ -178,28 +176,6 @@ export function McpPanel({
         </section>
       </div>
     );
-  }
-
-  const shownKey = secret ?? "mk_live_YOUR_API_KEY";
-
-  async function create(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy("create");
-    setError(null);
-    const res = await fetch("/api/api-keys", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: name.trim() || "My AI assistant" }),
-    });
-    const data = (await res.json().catch(() => ({}))) as { key?: ApiKeyView; secret?: string; error?: string };
-    setBusy(null);
-    if (!res.ok || !data.key || !data.secret) {
-      setError(data.error ?? "Could not create the key. Try again.");
-      return;
-    }
-    setKeys((k) => [{ ...data.key!, createdAt: String(data.key!.createdAt) }, ...k]);
-    setSecret(data.secret);
-    setName("");
   }
 
   async function revoke(k: ApiKeyView) {
@@ -326,12 +302,10 @@ export function McpPanel({
         {client === "other" && (
           <>
             <p className="mt-4 text-[13px] text-ink-secondary">
-              Cursor, VS Code and most other MCP clients can sign in with OAuth from the URL alone. If yours can&apos;t, create
-              an API key below and add it as a header, for example in ~/.cursor/mcp.json:
+              Cursor, VS Code and most other MCP clients sign in with OAuth from the URL alone. For example, in
+              ~/.cursor/mcp.json:
             </p>
-            <CodeBlock
-              code={JSON.stringify({ mcpServers: { mykavo: { url: endpoint, headers: { Authorization: `Bearer ${shownKey}` } } } }, null, 2)}
-            />
+            <CodeBlock code={JSON.stringify({ mcpServers: { mykavo: { url: endpoint } } }, null, 2)} />
           </>
         )}
       </section>
@@ -388,55 +362,18 @@ export function McpPanel({
         <AskExamples endpoint={endpoint} />
       </section>
 
-      {/* API keys */}
-      <section className="rounded-card bg-card p-5 shadow-card sm:p-6">
-        <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-          <KeyRound className="size-4" aria-hidden /> API keys
-        </h2>
-        <p className="mt-1 text-[13px] text-ink-secondary">
-          Only for tools that can&apos;t sign in with OAuth, and for scripts. A key gives read-only access to this
-          workspace. Keep it private, like a password.
-        </p>
-
-        {canManage ? (
-          <form onSubmit={create} className="mt-4 flex flex-wrap gap-2">
-            <label className="sr-only" htmlFor="key-name">
-              Key name
-            </label>
-            <input
-              id="key-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={60}
-              placeholder="Name it, e.g. Cursor on my laptop"
-              className="h-10 min-w-0 flex-1 basis-60 rounded-full border border-line bg-surface px-4 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-accent"
-            />
-            <button
-              type="submit"
-              disabled={busy !== null}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-semibold text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
-            >
-              {busy === "create" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Plus className="size-4" aria-hidden />}
-              Create key
-            </button>
-          </form>
-        ) : (
-          <p className="mt-4 text-[13px] text-ink-secondary">Ask a workspace owner or admin to create a key.</p>
-        )}
-
-        {secret && (
-          <div className="mt-4 rounded-field border border-success/40 bg-success-soft p-4">
-            <p className="text-[13px] font-semibold text-success-strong">Copy your key now - it will not be shown again.</p>
-            <div className="mt-2 flex items-center gap-2">
-              <code className="min-w-0 flex-1 truncate rounded-md bg-card px-3 py-2 font-mono text-[12px] text-ink">{secret}</code>
-              <CopyButton text={secret} />
-            </div>
-            <p className="mt-2 text-[12px] text-ink-secondary">It is already filled into the Cursor &amp; others setup above.</p>
-          </div>
-        )}
-
-        {keys.length > 0 && (
-          <ul className="mt-5 divide-y divide-line rounded-field border border-line">
+      {/* API keys: no longer created here (assistants sign in with OAuth). A
+          workspace that made keys earlier can still see and revoke them. */}
+      {keys.length > 0 && (
+        <section className="rounded-card bg-card p-5 shadow-card sm:p-6">
+          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+            <KeyRound className="size-4" aria-hidden /> Your API keys
+          </h2>
+          <p className="mt-1 text-[13px] text-ink-secondary">
+            New keys are no longer needed: assistants connect by signing in. Keys made earlier keep working until you
+            revoke them.
+          </p>
+          <ul className="mt-4 divide-y divide-line rounded-field border border-line">
             {keys.map((k) => (
               <li key={k.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                 <KeyRound className="size-4 shrink-0 text-ink-faint" aria-hidden />
@@ -461,8 +398,8 @@ export function McpPanel({
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 }
