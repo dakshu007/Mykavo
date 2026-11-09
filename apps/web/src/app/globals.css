@@ -880,14 +880,15 @@ html[data-promo] {
   transform-origin: 50% 50%;
   animation: flap-in 0.55s cubic-bezier(.2,.8,.2,1) both;
 }
-/* A yellow highlighter stroke behind key words in the Overview headline. */
+/* Key words in the Overview headline: a thick yellow underline that sits
+   below the letters (it skips descenders), so the text itself stays clean
+   and readable in both themes. */
 .mk-highlight {
-  background-image: linear-gradient(transparent 58%, var(--color-primary) 58%, var(--color-primary) 92%, transparent 92%);
-  color: #16181d;
-  padding: 0 0.08em;
-  margin: 0 -0.04em;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-primary);
+  text-decoration-thickness: 0.14em;
+  text-underline-offset: 0.18em;
+  text-decoration-skip-ink: auto;
 }
 @media (prefers-reduced-motion: reduce) {
   .flap-digit { animation: none; }

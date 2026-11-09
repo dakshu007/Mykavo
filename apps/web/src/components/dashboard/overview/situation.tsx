@@ -83,7 +83,7 @@ export function Situation({
       <p className="mt-5 text-[17px] text-ink-secondary">
         <Greeting name={firstName} initialGreeting={initialGreeting} className="" />.
       </p>
-      <h1 className="mt-1 max-w-3xl text-[34px] font-semibold leading-[1.1] tracking-[-0.025em] text-ink sm:text-[44px]">
+      <h1 className="mt-1 max-w-3xl pb-2 text-[34px] font-semibold leading-[1.1] tracking-[-0.025em] text-ink sm:text-[44px]">
         {websites === 0 ? (
           <>Let&apos;s watch your first website.</>
         ) : needing > 0 ? (
