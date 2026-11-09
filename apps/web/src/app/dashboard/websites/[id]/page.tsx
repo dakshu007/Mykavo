@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteFavicon } from "@/components/dashboard/site-favicon";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -283,7 +284,9 @@ export default async function WebsiteDetailPage({
           <ArrowLeft className="size-3.5" aria-hidden /> Websites
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <div className="flex items-center gap-3.5">
+            <SiteFavicon url={website.url} name={website.name} className="size-12 rounded-xl [&_img]:size-7" />
+            <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">
               {website.name}
             </h1>
@@ -296,6 +299,7 @@ export default async function WebsiteDetailPage({
               {hostname}
               <ExternalLink className="size-3" aria-hidden />
             </a>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <WebsiteStatusBadge status={website.status} />

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteFavicon } from "@/components/dashboard/site-favicon";
 import { Globe, Plus } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
@@ -169,16 +170,19 @@ export default async function WebsitesPage({
                 {filtered.map((w) => (
                   <tr key={w.id}>
                     <td className="py-4 pr-4">
-                      <Link href={`/dashboard/websites/${w.id}`} className="group block">
-                        <p className="text-sm font-medium text-ink group-hover:text-accent">
-                          {w.name}
-                        </p>
-                        <p className="font-mono text-xs text-ink-faint">
-                          {new URL(w.url).hostname}
-                        </p>
+                      <Link href={`/dashboard/websites/${w.id}`} className="group flex items-center gap-3">
+                        <SiteFavicon url={w.url} name={w.name} />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-ink group-hover:text-accent">
+                            {w.name}
+                          </span>
+                          <span className="block font-mono text-xs text-ink-faint">
+                            {new URL(w.url).hostname}
+                          </span>
+                        </span>
                       </Link>
                       {w.tags.length > 0 && (
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pl-12">
                           {w.tags.slice(0, ROW_TAG_LIMIT).map((t) => (
                             <span
                               key={t}

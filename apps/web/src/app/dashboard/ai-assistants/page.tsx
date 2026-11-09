@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sparkles } from "lucide-react";
+import { BotMessageSquare } from "lucide-react";
 import { isMissingTableError, prisma } from "@mykavo/database";
 import { getCurrentMembership, requireSession } from "@/lib/session";
 import { canManageMembers } from "@/lib/team";
@@ -103,7 +103,7 @@ export default async function AiAssistantsPage() {
         />
         <div className="relative">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-contrast">
-            <Sparkles className="size-3" aria-hidden /> ChatGPT · Claude · MCP
+            <BotMessageSquare className="size-3" aria-hidden /> ChatGPT · Claude · MCP
           </span>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">Ask ChatGPT and Claude about your websites</h1>
           <p className="mt-2 max-w-xl text-[14px] leading-6 text-white/70">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, Copy, KeyRound, Loader2, Plug, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ChatGptLogo, ClaudeLogo } from "@/components/brand/ai-assistant-logos";
 
 export interface ApiKeyView {
   id: string;
@@ -36,6 +37,21 @@ const CLIENTS: Array<{ id: Client; label: string }> = [
   { id: "claude-code", label: "Claude Code" },
   { id: "other", label: "Cursor & others" },
 ];
+
+/** Each assistant's own mark, on a white disc so it reads in both themes. */
+function ClientMark({ id }: { id: Client }) {
+  return (
+    <span aria-hidden className="inline-flex size-6 items-center justify-center rounded-full bg-white ring-1 ring-black/5">
+      {id === "chatgpt" ? (
+        <ChatGptLogo className="size-3.5" />
+      ) : id === "other" ? (
+        <Plug className="size-3.5 text-[#16181d]" />
+      ) : (
+        <ClaudeLogo className="size-3.5" />
+      )}
+    </span>
+  );
+}
 
 const QUESTIONS = [
   "Is anything wrong with my websites right now?",
@@ -229,10 +245,11 @@ export function McpPanel({
               aria-selected={client === c.id}
               onClick={() => setClient(c.id)}
               className={cn(
-                "h-8 rounded-full px-3.5 text-[13px] font-medium transition-colors",
+                "inline-flex h-9 items-center gap-2 rounded-full pl-1.5 pr-3.5 text-[13px] font-medium transition-colors",
                 client === c.id ? "bg-ink text-ink-inverse" : "border border-line text-ink-secondary hover:text-ink",
               )}
             >
+              <ClientMark id={c.id} />
               {c.label}
             </button>
           ))}

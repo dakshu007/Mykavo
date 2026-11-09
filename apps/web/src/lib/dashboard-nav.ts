@@ -117,7 +117,7 @@ const ANALYSIS: NavItem[] = [
 const INTEGRATIONS: NavItem[] = [
   { id: "wordpress", href: "/dashboard/wordpress", label: "WordPress" },
   { id: "shopify", href: "/dashboard/shopify", label: "Shopify", badge: "Soon" },
-  { id: "ai-assistants", href: "/dashboard/ai-assistants", label: "AI assistants", short: "AI", badge: "New" },
+  { id: "ai-assistants", href: "/dashboard/ai-assistants", label: "AI assistants", short: "AI" },
 ];
 
 const ACCOUNT: NavItem[] = [

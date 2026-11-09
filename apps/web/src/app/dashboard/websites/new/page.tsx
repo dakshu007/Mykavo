@@ -55,7 +55,7 @@ export default async function NewWebsitePage({
         >
           <ArrowLeft className="size-3.5" aria-hidden /> Websites
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-ink">
           {resume ? "Choose pages to monitor" : "Add a website"}
         </h1>
         <p className="mt-1 text-sm text-ink-secondary">
