@@ -1,5 +1,5 @@
 import { cookies, headers } from "next/headers";
-import { Greeting } from "@/components/dashboard/greeting";
+import { Situation } from "@/components/dashboard/overview/situation";
 import { greetingForHour, hourInTimeZone, timezoneFromNetlifyGeo } from "@/lib/greeting";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
@@ -60,16 +60,15 @@ export default async function DashboardOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-[26px] font-semibold tracking-tight text-ink">
-          <Greeting
-            name={session.user.name.split(" ")[0]}
-            initialGreeting={greetingForHour(visitorHour)}
-            className=""
-          />
-        </h1>
-        <p className="mt-1 text-[14px] text-ink-secondary">Here&apos;s what changed across your websites</p>
-      </header>
+      <Situation
+        firstName={session.user.name.split(" ")[0]}
+        initialGreeting={greetingForHour(visitorHour)}
+        websites={data.websites.length}
+        attention={data.attention}
+        lastScan={data.lastScan}
+        nextScan={data.nextScan}
+        now={data.now}
+      />
 
       {hasWebsites && (
         <SummaryRow
@@ -111,7 +110,7 @@ export default async function DashboardOverviewPage() {
         />
       )}
 
-      <WebsitesList websites={data.websites} />
+      <WebsitesList websites={data.websites} now={data.now} />
     </div>
   );
 }

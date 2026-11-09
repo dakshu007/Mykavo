@@ -48,6 +48,9 @@ export interface AttentionChange {
   title: string;
   severity: ChangeSeverity;
   detectedAt: Date;
+  /** The approved value and the new one, when the change has them. */
+  previousValue?: string | null;
+  currentValue?: string | null;
   /** Null for site-wide changes (robots.txt, sitemap). */
   pageUrl: string | null;
 }
@@ -93,6 +96,28 @@ export interface AttentionRow {
   href: string;
   /** Visible label of the single primary action. */
   actionLabel: string;
+  /** Before and after, short enough to show inline. Absent when not useful. */
+  diff?: { before: string; after: string };
+}
+
+const DIFF_MAX = 56;
+
+/**
+ * A one-line before/after for a change row, or undefined when there is
+ * nothing short and human to show: both sides empty, or structured data.
+ */
+export function changeDiff(
+  previous: string | null | undefined,
+  current: string | null | undefined,
+): { before: string; after: string } | undefined {
+  const clean = (v: string | null | undefined) => (v ?? "").replace(/\s+/g, " ").trim();
+  const before = clean(previous);
+  const after = clean(current);
+  if (!before && !after) return undefined;
+  if (before === after) return undefined;
+  if (/^[[{]/.test(before) || /^[[{]/.test(after)) return undefined;
+  const cut = (v: string) => (v.length > DIFF_MAX ? `${v.slice(0, DIFF_MAX - 1)}…` : v);
+  return { before: cut(before), after: cut(after) };
 }
 
 export interface AttentionGroup {
@@ -192,6 +217,7 @@ function changeRow(change: AttentionChange, severity: AttentionSeverity): Attent
     at: change.detectedAt,
     href: `/dashboard/changes/${change.id}`,
     actionLabel: "Review",
+    diff: changeDiff(change.previousValue, change.currentValue),
   };
 }
 

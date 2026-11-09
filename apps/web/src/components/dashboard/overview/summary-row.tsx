@@ -1,11 +1,14 @@
-import { GitCompareArrows, Globe, History, ShieldCheck } from "lucide-react";
 import type { WebsiteHealthSummary } from "./attention";
 import { plural } from "./format";
 
 /**
- * Compact numbers under the attention list. Plain figures with one line of
- * context each; no charts, because a trend line here would answer a question
- * nobody opening the Overview is asking.
+ * The Overview's figures, shown as a split-flap board: each digit on its own
+ * dark tile with a hairline across the middle, like a departures board. One
+ * bordered strip with MyKavo's hard yellow shadow, four readouts inside.
+ *
+ * The tiles are a fixed dark colour in both themes (it is a physical-looking
+ * display, not a surface), and the plain number is repeated for screen
+ * readers, which would otherwise read the digits one by one.
  */
 export function SummaryRow({
   websites,
@@ -30,29 +33,10 @@ export function SummaryRow({
           : "None need attention";
 
   const tiles = [
-    {
-      label: "Websites monitored",
-      value: websites,
-      note: `${plural(monitoredPages, "page")} watched`,
-      icon: Globe,
-      accent: "bg-primary",
-    },
-    {
-      label: "Healthy",
-      value: health.healthy,
-      note: healthNote,
-      warn: health.needsAttention > 0,
-      icon: ShieldCheck,
-      accent: health.needsAttention > 0 ? "bg-critical" : "bg-success",
-    },
-    { label: "Scans completed", value: scansLast7Days, note: "Last 7 days", icon: History, accent: "bg-ink" },
-    {
-      label: "Changes caught",
-      value: changesLast30Days,
-      note: "Last 30 days",
-      icon: GitCompareArrows,
-      accent: "bg-info",
-    },
+    { label: "Websites monitored", value: websites, note: `${plural(monitoredPages, "page")} watched` },
+    { label: "Healthy", value: health.healthy, note: healthNote, warn: health.needsAttention > 0 },
+    { label: "Scans completed", value: scansLast7Days, note: "Last 7 days" },
+    { label: "Changes caught", value: changesLast30Days, note: "Last 30 days" },
   ];
 
   return (
@@ -60,36 +44,59 @@ export function SummaryRow({
       <h2 id="summary-heading" className="sr-only">
         Summary
       </h2>
-      <dl className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {tiles.map((t) => {
-          const Icon = t.icon;
-          return (
-            <div
-              key={t.label}
-              className="relative flex flex-col overflow-hidden rounded-xl border border-line bg-card px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5 sm:pt-4"
+      <dl className="grid grid-cols-2 overflow-hidden rounded-2xl border-[1.5px] border-ink bg-card shadow-[5px_5px_0_var(--color-primary)] xl:grid-cols-4">
+        {tiles.map((t, i) => (
+          <div
+            key={t.label}
+            className={[
+              "flex flex-col gap-3 p-4 sm:p-5",
+              i % 2 === 1 ? "border-l border-line" : "",
+              i >= 2 ? "border-t border-line xl:border-t-0" : "",
+              i === 2 ? "xl:border-l" : "",
+            ].join(" ")}
+          >
+            <dt className="font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-ink-faint">
+              {t.label}
+            </dt>
+            <dd className="order-first">
+              <FlapNumber value={t.value} index={i} />
+            </dd>
+            <dd
+              className={
+                t.warn
+                  ? "-mt-1 flex items-center gap-1.5 text-xs font-medium text-critical-strong"
+                  : "-mt-1 text-xs text-ink-secondary"
+              }
             >
-              <div className="flex items-start justify-between gap-2">
-                <dt className="text-[12px] font-medium text-ink-secondary sm:text-[13px]">{t.label}</dt>
-                <Icon className="size-4 shrink-0 text-ink-faint" aria-hidden />
-              </div>
-              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink sm:text-[28px]">
-                {t.value}
-              </dd>
-              <dd
-                className={
-                  t.warn
-                    ? "mt-0.5 text-xs font-medium text-warning-strong"
-                    : "mt-0.5 text-xs text-ink-faint"
-                }
-              >
-                {t.note}
-              </dd>
-              {/* A thin colour key along the bottom edge, one per figure. */}
-              <span aria-hidden className={`absolute inset-x-0 bottom-0 h-[3px] ${t.accent} opacity-80`} />
-            </div>
-          );
-        })}
+              {t.warn && <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-critical" />}
+              {t.note}
+            </dd>
+          </div>
+        ))}
       </dl>
     </section>
+  );
+}
+
+/** At least two digits, so single figures still read as a board: 04, 22. */
+function FlapNumber({ value, index }: { value: number; index: number }) {
+  const digits = String(Math.max(0, Math.floor(value))).padStart(2, "0").split("");
+  return (
+    <span className="flex">
+      <span className="sr-only">{value}</span>
+      <span aria-hidden className="flex gap-[3px]">
+        {digits.map((d, j) => (
+          <span
+            key={j}
+            className="flap-digit relative inline-flex h-11 w-8 items-center justify-center overflow-hidden rounded-[5px] bg-[#16181d] font-mono text-[26px] font-semibold leading-none text-[#f3f1e8] shadow-[inset_0_-2px_0_rgb(0_0_0/35%)] ring-1 ring-white/10 sm:h-12 sm:w-9 sm:text-[28px]"
+            style={{ animationDelay: `${index * 90 + j * 60}ms` }}
+          >
+            {d}
+            {/* The split across the middle of a flap tile. */}
+            <span className="absolute inset-x-0 top-1/2 h-px bg-black/60" />
+          </span>
+        ))}
+      </span>
+    </span>
   );
 }

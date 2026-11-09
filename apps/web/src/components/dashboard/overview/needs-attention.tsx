@@ -29,6 +29,38 @@ function RowBadge({ badge }: { badge: AttentionBadge }) {
   );
 }
 
+/**
+ * What changed, in place: the approved value struck through, then the value
+ * the page has now. Mono, so "200 → 500" reads like the diff it is.
+ */
+function Diff({ before, after }: { before: string; after: string }) {
+  return (
+    <p className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[11.5px] leading-5">
+      <span className="sr-only">Was </span>
+      <span
+        className={cn(
+          "max-w-full truncate rounded-[4px] px-1.5",
+          before ? "bg-critical-soft text-critical-strong line-through decoration-critical/60" : "italic text-ink-faint",
+        )}
+      >
+        {before || "none"}
+      </span>
+      <span aria-hidden className="text-ink-faint">
+        →
+      </span>
+      <span className="sr-only">, now </span>
+      <span
+        className={cn(
+          "max-w-full truncate rounded-[4px] px-1.5",
+          after ? "bg-ink/[0.06] font-medium text-ink" : "italic text-ink-faint",
+        )}
+      >
+        {after || "none"}
+      </span>
+    </p>
+  );
+}
+
 function Row({ row, websiteName, now }: { row: AttentionRow; websiteName: string; now: Date }) {
   return (
     <li className="flex flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:gap-4">
@@ -38,6 +70,7 @@ function Row({ row, websiteName, now }: { row: AttentionRow; websiteName: string
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium leading-5 text-ink">{row.title}</p>
+          {row.diff && <Diff before={row.diff.before} after={row.diff.after} />}
           <p className="mt-0.5 text-xs leading-5 text-ink-secondary">
             {row.detail && <span className="break-words">{row.detail}</span>}
             {row.detail && row.at && <span aria-hidden> · </span>}

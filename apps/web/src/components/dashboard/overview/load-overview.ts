@@ -46,6 +46,65 @@ export interface OverviewWebsite {
   monitoredPages: number;
   /** Latest uptime check: true up, false down, null never checked. */
   up: boolean | null;
+  /** The last scans, oldest first, for the Overview's pulse strip. */
+  history?: ScanPulse[];
+}
+
+/** One finished scan, as a cell in a website's pulse strip. */
+export interface ScanPulse {
+  at: Date;
+  status: "COMPLETED" | "PARTIAL" | "FAILED";
+  /** Worst change the scan found; null when it found none. */
+  severity: "INFO" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | null;
+}
+
+/** How many scans each website's pulse strip shows. */
+export const PULSE_SCANS = 30;
+
+interface PulseRow {
+  websiteId: string;
+  status: string;
+  highestSeverity: string | null;
+  at: Date;
+}
+
+const PULSE_SEVERITIES = new Set(["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]);
+
+/** The last PULSE_SCANS finished scans per website, oldest first. */
+async function loadScanPulse(workspaceId: string): Promise<Map<string, ScanPulse[]>> {
+  try {
+    const rows = await prisma.$queryRaw<PulseRow[]>`
+      SELECT "websiteId", "status", "highestSeverity", "at" FROM (
+        SELECT s."websiteId", s."status"::text AS "status", s."highestSeverity"::text AS "highestSeverity",
+          COALESCE(s."completedAt", s."createdAt") AS "at",
+          ROW_NUMBER() OVER (PARTITION BY s."websiteId" ORDER BY s."createdAt" DESC) AS rn
+        FROM "scan" s
+        JOIN "website" w ON w."id" = s."websiteId"
+        WHERE w."workspaceId" = ${workspaceId}
+          AND s."status" IN ('COMPLETED', 'PARTIAL', 'FAILED')
+      ) t
+      WHERE rn <= ${PULSE_SCANS}
+      ORDER BY "websiteId", "at" ASC
+    `;
+    const map = new Map<string, ScanPulse[]>();
+    for (const r of rows) {
+      if (!isFinishedStatus(r.status)) continue;
+      const list = map.get(r.websiteId) ?? [];
+      list.push({
+        at: r.at,
+        status: r.status,
+        severity:
+          r.highestSeverity && PULSE_SEVERITIES.has(r.highestSeverity)
+            ? (r.highestSeverity as ScanPulse["severity"])
+            : null,
+      });
+      map.set(r.websiteId, list);
+    }
+    return map;
+  } catch (err) {
+    logger.error("overview: scan pulse query failed", { workspaceId }, err);
+    return new Map();
+  }
 }
 
 export interface OverviewData {
@@ -212,6 +271,7 @@ export async function loadOverview({
     openChanges,
     openTotals,
     latestScans,
+    scanPulse,
     healthChecks,
     scansLast7Days,
     changesLast30Days,
@@ -245,6 +305,8 @@ export async function loadOverview({
         title: true,
         severity: true,
         detectedAt: true,
+        previousValue: true,
+        currentValue: true,
         monitoredPage: { select: { url: true } },
       },
     }),
@@ -254,6 +316,7 @@ export async function loadOverview({
       _count: { _all: true },
     }),
     loadLatestScans(workspaceId),
+    loadScanPulse(workspaceId),
     getLatestHealthChecksForWorkspace(prisma, workspaceId),
     prisma.scan.count({
       where: {
@@ -312,6 +375,8 @@ export async function loadOverview({
       title: c.title,
       severity: c.severity,
       detectedAt: c.detectedAt,
+      previousValue: c.previousValue,
+      currentValue: c.currentValue,
       pageUrl: c.monitoredPage?.url ?? null,
     })),
     openAttentionTotals: attentionTotals,
@@ -329,6 +394,7 @@ export async function loadOverview({
     nextScanAt: w.nextScanAt,
     monitoredPages: w._count.monitoredPages,
     up: upByWebsite.get(w.id)?.up ?? null,
+    history: scanPulse.get(w.id) ?? [],
   }));
 
   let lastScan: OverviewData["lastScan"] = null;

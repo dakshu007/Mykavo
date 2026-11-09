@@ -869,3 +869,26 @@ html[data-promo] {
   --radius-card: 16px;
   --radius-tile: 12px;
 }
+
+/* Overview split-flap digits drop into place once, on load. */
+@keyframes flap-in {
+  0% { transform: perspective(160px) rotateX(-92deg); opacity: 0; }
+  60% { transform: perspective(160px) rotateX(12deg); opacity: 1; }
+  100% { transform: perspective(160px) rotateX(0); opacity: 1; }
+}
+.flap-digit {
+  transform-origin: 50% 50%;
+  animation: flap-in 0.55s cubic-bezier(.2,.8,.2,1) both;
+}
+/* A yellow highlighter stroke behind key words in the Overview headline. */
+.mk-highlight {
+  background-image: linear-gradient(transparent 58%, var(--color-primary) 58%, var(--color-primary) 92%, transparent 92%);
+  color: #16181d;
+  padding: 0 0.08em;
+  margin: 0 -0.04em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flap-digit { animation: none; }
+}
