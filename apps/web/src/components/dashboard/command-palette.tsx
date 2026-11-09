@@ -32,7 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /** Fired by the sidebar hint pill - the palette listens globally. */
-const OPEN_EVENT = "mykavo:command-palette-open";
+export const OPEN_EVENT = "mykavo:command-palette-open";
 
 const sectionIcons: Record<PaletteSection, LucideIcon> = {
   Actions: Zap,

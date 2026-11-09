@@ -15,9 +15,11 @@ const subscribe = () => () => {};
 export function Greeting({
   name,
   initialGreeting,
+  className = "text-[17px] font-semibold tracking-tight text-ink",
 }: {
   name: string;
   initialGreeting: GreetingText;
+  className?: string;
 }) {
   const greeting = useSyncExternalStore(
     subscribe,
@@ -26,8 +28,8 @@ export function Greeting({
   );
 
   return (
-    <p className="text-[17px] font-semibold tracking-tight text-ink">
+    <span className={className}>
       {greeting}, {name}
-    </p>
+    </span>
   );
 }

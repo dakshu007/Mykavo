@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
@@ -24,11 +25,11 @@ import {
   Sparkles,
   Activity,
   LifeBuoy,
+  ChevronsUpDown,
 } from "lucide-react";
 import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
 import { LogoMark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { CommandPaletteTrigger } from "@/components/dashboard/command-palette";
 import {
   WorkspaceSwitcher,
   type WorkspaceOption,
@@ -69,6 +70,8 @@ const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
 
 export function DashboardSidebar({
   workspaceName,
+  planLabel,
+  user,
   upgradeCard,
   monitoringLive = false,
   appApproved = false,
@@ -78,6 +81,10 @@ export function DashboardSidebar({
   currentWorkspaceId,
 }: {
   workspaceName: string;
+  /** The plan's name for the badge beside the workspace, e.g. "Free", "Pro trial". */
+  planLabel: string;
+  /** The signed-in person, for the account menu pinned at the bottom. */
+  user: { name: string; email: string; image: string | null };
   /** Rendered upsell, or null on a paid plan. Passed in because the plan
       lookup is a server query and this is a client component. */
   upgradeCard?: React.ReactNode;
@@ -103,13 +110,17 @@ export function DashboardSidebar({
 
   return (
     <aside className="flex h-full flex-col">
-      <Link href="/dashboard" className="mb-1 flex items-center gap-2.5 px-3 py-2">
-        <LogoMark size={30} />
-        <span className="min-w-0">
-          <span className="block text-[15px] font-semibold tracking-tight text-ink">
-            MyKavo
-          </span>
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-ink/5"
+      >
+        <LogoMark size={28} />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-semibold tracking-tight text-ink">MyKavo</span>
           <span className="block truncate text-[11px] text-ink-faint">{workspaceName}</span>
+        </span>
+        <span className="shrink-0 rounded-md bg-ink/[0.06] px-1.5 py-0.5 text-[10.5px] font-medium text-ink-secondary">
+          {planLabel}
         </span>
       </Link>
 
@@ -122,17 +133,15 @@ export function DashboardSidebar({
 
       <nav
         data-lenis-prevent
-        className="scroll-quiet mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain py-2 pr-1"
+        className="scroll-quiet mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2 pr-1"
         aria-label="Dashboard"
       >
-        {groups.map((group) => (
-          <div key={group.id} className={group.label ? "pt-3" : undefined}>
-            {group.label && (
-              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-                {group.label}
-              </p>
-            )}
-            <div className="space-y-1">
+        {groups.map((group, i) => (
+          <div key={group.id} className={i > 0 ? "mt-4 border-t border-line/70 pt-4" : undefined}>
+            <p className="px-2 pb-1.5 text-[11px] font-medium text-ink-faint">
+              {group.label ?? "Monitoring"}
+            </p>
+            <div className="space-y-0.5">
               {group.items.map((item) => {
                 const Icon = ICONS[item.id];
                 const active = isNavItemActive(item, pathname);
@@ -142,21 +151,16 @@ export function DashboardSidebar({
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
+                      "flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13.5px] transition-colors",
                       active
-                        ? "bg-ink text-ink-inverse"
-                        : "text-ink-secondary hover:bg-ink/5 hover:text-ink",
+                        ? "bg-ink/[0.07] font-medium text-ink"
+                        : "text-ink-secondary hover:bg-ink/[0.04] hover:text-ink",
                     )}
                   >
-                    <Icon className="size-4.5 shrink-0" aria-hidden />
+                    <Icon className="size-4 shrink-0" aria-hidden />
                     {item.label}
                     {item.badge && (
-                      <span
-                        className={cn(
-                          "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                          active ? "bg-ink-inverse/15 text-ink-inverse" : "bg-primary-soft text-accent",
-                        )}
-                      >
+                      <span className="ml-auto rounded-md bg-primary-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
                         {item.badge}
                       </span>
                     )}
@@ -168,28 +172,98 @@ export function DashboardSidebar({
         ))}
       </nav>
 
-      {/* Pinned footer. `shrink-0` keeps search, the upsell and sign-out at
-          their natural height; the nav above scrolls instead. Before this the
-          nav could not shrink, so on a short viewport the upgrade card and
-          sign-out button spilled out past the sidebar's rounded edge. */}
-      <div className="mt-3 shrink-0 space-y-3">
-        <CommandPaletteTrigger />
-
+      {/* Pinned footer: the plan card, then the account menu. `shrink-0`
+          keeps both at their natural height; the nav above scrolls instead. */}
+      <div className="mt-3 shrink-0 space-y-3 border-t border-line/70 pt-3">
         {upgradeCard}
-
-        <div className="flex items-center justify-between gap-2 px-1">
-          <span className="px-3 text-[11px] font-medium text-ink-faint">Theme</span>
-          <ThemeToggle />
-        </div>
-
-        <button
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ink-secondary transition-colors hover:bg-critical-soft hover:text-critical-strong"
-        >
-          <LogOut className="size-4.5 shrink-0" aria-hidden />
-          Sign out
-        </button>
+        <AccountMenu user={user} onSignOut={handleSignOut} />
       </div>
     </aside>
+  );
+}
+
+/**
+ * The person, at the foot of the sidebar: avatar, name and email, opening a
+ * small menu with the theme switch, settings and sign out.
+ */
+function AccountMenu({
+  user,
+  onSignOut,
+}: {
+  user: { name: string; email: string; image: string | null };
+  onSignOut: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: PointerEvent) {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      {open && (
+        <div
+          role="menu"
+          className="absolute inset-x-0 bottom-full mb-2 rounded-xl border border-line bg-card p-1.5 shadow-card"
+        >
+          <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+            <span className="text-[12px] text-ink-secondary">Theme</span>
+            <ThemeToggle />
+          </div>
+          <Link
+            role="menuitem"
+            href="/dashboard/settings"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-ink/5 hover:text-ink"
+          >
+            <Settings className="size-4" aria-hidden />
+            Account settings
+          </Link>
+          <button
+            role="menuitem"
+            type="button"
+            onClick={onSignOut}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-critical-soft hover:text-critical-strong"
+          >
+            <LogOut className="size-4" aria-hidden />
+            Sign out
+          </button>
+        </div>
+      )}
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ink/5"
+      >
+        {user.image ? (
+          // eslint-disable-next-line @next/next/no-img-element -- avatar may be an inline data URL, which next/image cannot optimize
+          <img src={user.image} alt="" className="size-8 shrink-0 rounded-full bg-card object-cover" />
+        ) : (
+          <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-[13px] font-semibold text-ink-inverse">
+            {user.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
+          <span className="block truncate text-[11.5px] text-ink-faint">{user.email}</span>
+        </span>
+        <ChevronsUpDown className="size-4 shrink-0 text-ink-faint" aria-hidden />
+      </button>
+    </div>
   );
 }

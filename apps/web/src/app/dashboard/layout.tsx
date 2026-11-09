@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { prisma, canStartTrial, resumeAutoPaused, trialDaysLeft, TRIAL_DAYS } from "@mykavo/database";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { canManageBilling } from "@/lib/team";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { isPlatformAdmin } from "@/lib/platform-admin";
-import { greetingForHour, hourInTimeZone, timezoneFromNetlifyGeo } from "@/lib/greeting";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { ActivityBeacon } from "@/components/dashboard/activity-beacon";
 import { SignupTracker } from "@/components/analytics/signup-tracker";
 import { recordSignupAttribution } from "@/lib/attribution/record";
-import { Greeting } from "@/components/dashboard/greeting";
+import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { UpgradeCard } from "@/components/dashboard/upgrade-card";
 import { VerifyEmailBanner } from "@/components/dashboard/verify-email-banner";
 import { getLiveCampaign } from "@/lib/billing/campaign-server";
@@ -38,17 +36,11 @@ export default async function DashboardLayout({
   // again (see plan-sweep.ts in the worker). Never blocks the page.
   await resumeAutoPaused(prisma, workspace.id, ["DORMANT"]).catch(() => []);
 
-  // Greeting follows the visitor's clock, not the server's (Netlify = UTC).
-  // Server guess from the request's geo timezone; the client re-derives from
-  // the actual local clock after mount.
-  const visitorTz = timezoneFromNetlifyGeo((await headers()).get("x-nf-geo"));
-  const visitorHour = (visitorTz ? hourInTimeZone(visitorTz) : null) ?? new Date().getHours();
-  const initialGreeting = greetingForHour(visitorHour);
   // All memberships power the sidebar workspace switcher (shown when >1).
   // monitoringLive gates the sidebar's "Deeper analysis" group: the audit,
   // Search Console and analyser pages have nothing to show before a baseline
   // exists, so on day one they would be dead ends in the navigation.
-  const [memberships, plan, websiteLimit, websitesUsed, monitoringLive, appStatus, newSignup] =
+  const [memberships, plan, websiteLimit, websitesUsed, monitoringLive, appStatus, newSignup, attentionCount] =
     await Promise.all([
     prisma.workspaceMember.findMany({
       where: { userId: session.user.id },
@@ -64,6 +56,12 @@ export default async function DashboardLayout({
       getAppAccessStatus(session.user.email),
       // A brand-new account: remember where it came from, once.
       recordSignupAttribution(session.user),
+      // Open HIGH and CRITICAL changes: the dot on the top bar's bell.
+      prisma.changeEvent
+        .count({
+          where: { website: { workspaceId: workspace.id }, status: "NEW", severity: { in: ["HIGH", "CRITICAL"] } },
+        })
+        .catch(() => 0),
     ]);
   const appApproved = canDownloadApp(appStatus);
   // Only the owner can start it (POST /api/billing/trial), so only the owner is
@@ -92,14 +90,20 @@ export default async function DashboardLayout({
       />
     ) : null;
 
+  const navAccess = { monitoringLive, appApproved, isBlogAdmin: blogAdmin, isPlatformAdmin: platformAdmin };
+  const planLabel = plan.trial ? `${plan.name} trial` : plan.name;
+
   return (
     // data-clarity-mask: if Clarity is already running (a visitor came in from a
     // public page without a reload), it masks everything in the signed-in app.
     // data-dashboard: big monitors scale the whole dashboard up (globals.css).
+    // #dashboard-shell carries data-sidebar-collapsed when the top bar's
+    // toggle hides the sidebar (components/dashboard/topbar.tsx).
     <div
+      id="dashboard-shell"
       data-clarity-mask="True"
       data-dashboard=""
-      className="mx-auto flex min-h-[calc(100vh/var(--dash-zoom,1))] w-full max-w-360 gap-6 p-4 lg:p-6 min-[1800px]:max-w-400"
+      className="group/shell flex min-h-[calc(100vh/var(--dash-zoom,1))] w-full bg-surface"
     >
       <ActivityBeacon />
       {newSignup ? <SignupTracker userId={session.user.id} {...newSignup} /> : null}
@@ -107,9 +111,11 @@ export default async function DashboardLayout({
         isBlogAdmin={blogAdmin}
         isPlatformAdmin={platformAdmin}
       />
-      <div className="sticky top-6 hidden h-[calc(100vh/var(--dash-zoom,1)-3rem)] w-60 shrink-0 overflow-hidden rounded-card bg-card p-3 shadow-card lg:block">
+      <div className="sticky top-0 hidden h-[calc(100vh/var(--dash-zoom,1))] w-64 shrink-0 overflow-hidden px-3 py-4 lg:block group-data-[sidebar-collapsed]/shell:lg:hidden">
         <DashboardSidebar
           workspaceName={workspace.name}
+          planLabel={planLabel}
+          user={{ name: session.user.name, email: session.user.email, image: session.user.image ?? null }}
           monitoringLive={monitoringLive}
           appApproved={appApproved}
           isBlogAdmin={blogAdmin}
@@ -119,51 +125,34 @@ export default async function DashboardLayout({
           upgradeCard={upgradeCard}
         />
       </div>
-      <div className="min-w-0 flex-1 rounded-card bg-surface p-5 sm:p-7">
-        <DashboardMobileNav
-          monitoringLive={monitoringLive}
-          appApproved={appApproved}
-          isBlogAdmin={blogAdmin}
-          isPlatformAdmin={platformAdmin}
+      <div className="min-w-0 flex-1 p-3 lg:py-3 lg:pl-0 lg:pr-3 group-data-[sidebar-collapsed]/shell:lg:pl-3">
+        <DashboardTopbar
+          workspaceName={workspace.name}
+          access={navAccess}
+          attentionCount={attentionCount}
+          showUpgrade={(plan.id === "free" || Boolean(plan.trial)) && canManageBilling(role)}
+          canAddWebsite={role !== "VIEWER"}
         />
-        {/* The sidebar (and its card) is hidden below lg. Without this copy a
-            phone never sees the trial countdown or the offer to start one.
-            The plain Free upsell stays in the sidebar: on a phone it would
-            sit above every page's content. */}
-        {liveCampaign && canManageBilling(role) ? (
-          <PromoBar campaign={liveCampaign} variant="inline" href="/dashboard/billing" placement="dashboard_bar" />
-        ) : null}
-        {emailVerified ? null : <VerifyEmailBanner email={session.user.email} trialDays={TRIAL_DAYS} />}
-        {plan.trial || trialAvailable ? (
-          <div className="mb-4 max-w-md lg:hidden">{upgradeCard}</div>
-        ) : null}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div>
-            <Greeting
-              name={session.user.name.split(" ")[0]}
-              initialGreeting={initialGreeting}
-            />
-            <p className="text-[13px] text-ink-secondary">
-              Here&apos;s what changed across your websites
-            </p>
-          </div>
-          {session.user.image ? (
-            // eslint-disable-next-line @next/next/no-img-element -- avatar may be an inline data URL, which next/image cannot optimize
-            <img
-              src={session.user.image}
-              alt={`${session.user.name} profile photo`}
-              className="size-11 shrink-0 rounded-full bg-card object-cover shadow-card"
-            />
-          ) : (
-            <span
-              className="inline-flex size-11 items-center justify-center rounded-full bg-card text-sm font-semibold text-ink shadow-card"
-              aria-label="Account"
-            >
-              {session.user.name.charAt(0).toUpperCase()}
-            </span>
-          )}
+        <div className="mx-auto w-full max-w-[1400px] px-1 pb-10 pt-6 sm:px-3 lg:px-5 lg:pt-8">
+          <DashboardMobileNav
+            monitoringLive={monitoringLive}
+            appApproved={appApproved}
+            isBlogAdmin={blogAdmin}
+            isPlatformAdmin={platformAdmin}
+          />
+          {/* The sidebar (and its card) is hidden below lg. Without this copy a
+              phone never sees the trial countdown or the offer to start one.
+              The plain Free upsell stays in the sidebar: on a phone it would
+              sit above every page's content. */}
+          {liveCampaign && canManageBilling(role) ? (
+            <PromoBar campaign={liveCampaign} variant="inline" href="/dashboard/billing" placement="dashboard_bar" />
+          ) : null}
+          {emailVerified ? null : <VerifyEmailBanner email={session.user.email} trialDays={TRIAL_DAYS} />}
+          {plan.trial || trialAvailable ? (
+            <div className="mb-4 max-w-md lg:hidden">{upgradeCard}</div>
+          ) : null}
+          {children}
         </div>
-        {children}
       </div>
     </div>
   );
