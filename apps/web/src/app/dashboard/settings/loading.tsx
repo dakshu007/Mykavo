@@ -4,7 +4,14 @@ import { Skeleton, SkeletonCardHeader } from "@/components/dashboard/skeleton";
 /** Settings skeleton: plan, team, profile, and workspace cards, matching page.tsx. */
 export default function SettingsLoading() {
   return (
-    <div role="status" aria-label="Loading settings" className="max-w-2xl space-y-6">
+    <div role="status" aria-label="Loading settings" className="max-w-5xl lg:grid lg:grid-cols-[190px_minmax(0,1fr)] lg:gap-10">
+      {/* Section index. */}
+      <div className="hidden space-y-2 lg:block">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-7 w-full rounded-lg" />
+        ))}
+      </div>
+      <div className="space-y-5">
       {/* Current plan: name + price line, then a 2-column grid of limit tiles. */}
       <Card>
         <SkeletonCardHeader action />
@@ -64,6 +71,7 @@ export default function SettingsLoading() {
           ))}
         </div>
       </Card>
+      </div>
     </div>
   );
 }

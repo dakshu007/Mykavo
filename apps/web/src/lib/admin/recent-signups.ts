@@ -27,6 +27,8 @@ export interface SignupRow {
   websites: number;
   /** True when the account has done the one thing that makes it a real user. */
   activated: boolean;
+  /** Up to the first three websites they added, for icons on the Users page. */
+  sites?: { name: string; url: string }[];
 }
 
 export interface SignupsReport {
@@ -62,7 +64,12 @@ export async function getRecentSignups(
           name: true,
           email: true,
           createdAt: true,
-          ownedWorkspaces: { select: { _count: { select: { websites: true } } } },
+          ownedWorkspaces: {
+            select: {
+              _count: { select: { websites: true } },
+              websites: { select: { name: true, url: true }, orderBy: { createdAt: "asc" }, take: 3 },
+            },
+          },
         },
       }),
       prisma.user.count(),
@@ -85,6 +92,7 @@ export async function getRecentSignups(
           joinedAt: user.createdAt.toISOString(),
           websites,
           activated: isActivated(websites),
+          sites: user.ownedWorkspaces.flatMap((w) => w.websites ?? []).slice(0, 3),
         };
       }),
       total,

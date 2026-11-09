@@ -79,7 +79,7 @@ export function SummaryRow({
 }
 
 /** At least two digits, so single figures still read as a board: 04, 22. */
-function FlapNumber({ value, index }: { value: number; index: number }) {
+export function FlapNumber({ value, index }: { value: number; index: number }) {
   const digits = String(Math.max(0, Math.floor(value))).padStart(2, "0").split("");
   return (
     <span className="flex">

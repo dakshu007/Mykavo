@@ -36,7 +36,7 @@ export default async function UsersPage() {
   if (!isPlatformAdmin(session.user)) notFound();
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <Suspense fallback={<SignupsSkeleton />}>
         <SignupsPanel />
       </Suspense>
