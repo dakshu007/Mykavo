@@ -130,7 +130,7 @@ export function AuthShowcase() {
               <li
                 key={item.title}
                 className={`flex items-center gap-3 rounded-xl bg-white/[0.03] px-3 py-2.5 transition-all duration-500 ${
-                  i < feedShown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+                  i < feedShown ? "opacity-100" : "opacity-[0.12] blur-[1.5px] grayscale"
                 }`}
               >
                 <span className={`w-[74px] shrink-0 rounded-full px-2 py-0.5 text-center text-[11px] font-semibold ${TONE[item.severity]}`}>
