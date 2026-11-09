@@ -859,3 +859,13 @@ html[data-promo] {
     --dash-zoom: 1.6;
   }
 }
+
+/*
+ * Dashboard redesign: tighter corners inside the signed-in app, so page cards
+ * match the top bar and stat cards (12-16px) instead of the marketing site's
+ * 24px pillows. Scoped to the dashboard shell; public pages keep theirs.
+ */
+[data-dashboard] {
+  --radius-card: 16px;
+  --radius-tile: 12px;
+}
