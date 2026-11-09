@@ -26,10 +26,11 @@ export default async function SignupPage({
 
   return (
     <>
-      <h1 className="mb-1 text-xl font-semibold tracking-tight text-ink">
-        Create your account
+      <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Create account</p>
+      <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.025em] text-ink">
+        Start watching.
       </h1>
-      <p className="mb-6 text-sm text-ink-secondary">
+      <p className="mb-8 mt-2 text-[15px] leading-6 text-ink-secondary">
         Includes a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites, then the Free plan unless you upgrade. No credit card required.
       </p>
       <AuthForm

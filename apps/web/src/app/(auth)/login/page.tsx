@@ -25,8 +25,9 @@ export default async function LoginPage({
 
   return (
     <>
-      <h1 className="mb-1 text-xl font-semibold tracking-tight text-ink">Welcome back</h1>
-      <p className="mb-6 text-sm text-ink-secondary">Sign in to your MyKavo dashboard.</p>
+      <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Sign in</p>
+      <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.025em] text-ink">Welcome back.</h1>
+      <p className="mb-8 mt-2 text-[15px] text-ink-secondary">Your websites kept watch while you were away.</p>
       <AuthForm
         mode="login"
         googleEnabled={googleEnabled}

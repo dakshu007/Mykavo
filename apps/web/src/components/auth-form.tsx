@@ -46,7 +46,7 @@ function Field({
         autoFocus={autoFocus}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 w-full rounded-field border border-line bg-card px-4 text-[15px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+        className="h-12 w-full rounded-xl border border-line bg-card px-4 text-[15px] text-ink transition-shadow placeholder:text-ink-faint focus:border-ink focus:shadow-[0_0_0_3px_var(--color-primary-soft)] focus:outline-none"
       />
     </div>
   );
@@ -57,7 +57,7 @@ function SubmitButton({ loading, children }: { loading: boolean; children: React
     <button
       type="submit"
       disabled={loading}
-      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[15px] font-medium text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-60"
+      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-ink bg-primary text-[15px] font-semibold text-[#16181d] shadow-[3px_3px_0_var(--color-ink)] transition-[transform,box-shadow,background-color] duration-150 hover:-translate-x-px hover:-translate-y-px hover:bg-primary-hover hover:shadow-[4px_4px_0_var(--color-ink)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60 motion-reduce:transition-none"
     >
       {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
       {children}
