@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { BlogCta } from "@/components/blog/blog-cta";
 import { GoogleButton } from "@/components/landing/google-cta";
 import { ShareButtons } from "@/components/blog/share-buttons";
+import { WriteForUsBox } from "@/components/blog/write-for-us-box";
 import { ReadingProgress } from "@/components/blog/reading-progress";
 import { PostTool } from "@/components/blog/post-tool";
 import { BlogStickyCta } from "@/components/blog/blog-sticky-cta";
@@ -390,6 +391,8 @@ export default async function BlogPostPage({ params }: Params) {
                   />
                 )}
               </aside>
+
+              <WriteForUsBox slug={post.slug} />
 
               {related.length > 0 && (
                 <nav aria-label="Keep reading" className="mt-8">
