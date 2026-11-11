@@ -407,9 +407,13 @@ function InboxPanel({ f }: { f: ReportFrame }) {
 const LABEL =
   "Animation: a monthly client report. 1, Build: the report assembles - 99.98% uptime, 412 ms average response, 7 changes caught, 30 scans, SSL valid, Lighthouse scores 91, 98, 100 and 96. 2, Brand: the agency picks its colour and logo, and the MyKavo report becomes a Northstar Studio report. 3, Deliver: the report is scheduled monthly, lands in the client's inbox as a PDF and is opened.";
 
-export function ClientReportAnimation() {
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T);
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function ClientReportAnimation({ lazy = false }: { lazy?: boolean } = {}) {
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, 0, lazy);
   const f = reportFrameAt(t);
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
+
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK, opacity: f.fade })}>

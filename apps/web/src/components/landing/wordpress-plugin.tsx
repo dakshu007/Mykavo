@@ -60,7 +60,7 @@ export function WordPressPluginSection() {
             aria-label="MyKavo for WordPress - see everything the plugin does"
             className="block min-w-0 overflow-hidden rounded-[18px] border-2 border-[#151515] bg-[#FBFAF6] shadow-[10px_10px_0_#FFD400] transition-transform hover:-translate-y-0.5"
           >
-            <WpUpdateAnimation />
+            <WpUpdateAnimation lazy />
           </Link>
         </div>
 

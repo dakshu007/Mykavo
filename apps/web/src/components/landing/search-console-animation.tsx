@@ -714,15 +714,18 @@ const frameShell = (f: GscFrame, w: number, h: number): CSSProperties => ({
   opacity: f.fade,
 });
 
-function Landscape() {
+function Landscape({ lazy }: { lazy: boolean }) {
   const W = 1080;
   const H = 614;
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, FIRST_T, lazy);
   const f = gscFrameAt(t);
   const winW = 1068;
   const winH = 484;
   const pad = 18;
   const leftW = 580;
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
+
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0" })}>
@@ -765,14 +768,17 @@ function RangePills() {
   );
 }
 
-function Portrait() {
+function Portrait({ lazy }: { lazy: boolean }) {
   const W = 400;
   const H = 804;
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, FIRST_T, lazy);
   const f = gscFrameAt(t);
   const winW = 388;
   const winH = 640;
   const pad = 12;
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
+
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0" })}>
@@ -801,14 +807,15 @@ function Portrait() {
   );
 }
 
-export function SearchConsoleAnimation() {
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function SearchConsoleAnimation({ lazy = false }: { lazy?: boolean } = {}) {
   return (
     <>
       <div className="hidden md:block">
-        <Landscape />
+        <Landscape lazy={lazy} />
       </div>
       <div className="md:hidden">
-        <Portrait />
+        <Portrait lazy={lazy} />
       </div>
     </>
   );

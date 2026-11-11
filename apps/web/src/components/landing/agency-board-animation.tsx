@@ -319,9 +319,13 @@ function Drawer({ f }: { f: AgencyFrame }) {
 const LABEL =
   "Animation: an agency's MyKavo dashboard of client websites. A scan checks every site. aurora-outdoor.com turns up 3 critical changes and jumps to the top, and meridianlegal.co 2 high changes second. The agency opens aurora-outdoor.com, sees the three changes, marks them fixed and rescans, and it drops back as resolved. A deploy check on bloomandroot.shop comes back verified, and monthly reports are sent to every client.";
 
-export function AgencyBoardAnimation() {
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function AgencyBoardAnimation({ lazy = false }: { lazy?: boolean } = {}) {
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, FIRST_T, lazy);
   const f = agencyFrameAt(t);
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
+
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK, opacity: f.fade })}>

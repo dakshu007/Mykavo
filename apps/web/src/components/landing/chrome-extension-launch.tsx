@@ -77,7 +77,7 @@ export function ChromeExtensionLaunch() {
         </div>
 
         <div className="mx-auto mt-14 max-w-5xl rounded-[24px] border border-white/10 bg-[#FBFAF3] p-4 shadow-[10px_10px_0_#FFD400] sm:p-7">
-          <ChromeExtensionAnimation />
+          <ChromeExtensionAnimation lazy />
         </div>
       </div>
     </section>

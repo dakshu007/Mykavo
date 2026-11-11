@@ -80,9 +80,20 @@ export function aiFrameAt(t: number) {
 
 const abs = (s: CSSProperties): CSSProperties => ({ position: "absolute", ...s });
 
-export function AiInsightsAnimation() {
-  const { wrapRef, t, k } = useStageClock(STAGE_W, STILL_T, INTRO + 8);
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function AiInsightsAnimation({ lazy = false }: { lazy?: boolean } = {}) {
+  const { wrapRef, t, k, near } = useStageClock(STAGE_W, STILL_T, INTRO + 8, lazy);
   const f = aiFrameAt(t);
+
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near)
+    return (
+      <div
+      ref={wrapRef}
+      role="img"
+      aria-label={`Animation: a critical alert says the pricing page is now set to noindex. The Explain this change button is pressed and MyKavo AI answers: "${AI_HEADLINE}" It explains why it matters and lists three fix steps for WordPress, marked Act now.`}
+      style={{ position: "relative", width: "100%", aspectRatio: `${STAGE_W} / ${STAGE_H}`, overflow: "hidden" }} />
+    );
 
   return (
     <div

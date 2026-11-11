@@ -38,9 +38,14 @@ const poppins = Poppins({
   style: ["normal"],
 });
 
+// Mono is only for small labels (eyebrows, the offer countdown), so it is
+// not preloaded: it no longer competes with the page and the heading font
+// for the first moments of a phone's connection. It still loads with the
+// stylesheet, and the size-matched fallback keeps labels from shifting.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -130,8 +135,8 @@ export default function RootLayout({
         <AttributionCapture />
         {children}
         {/* Google tag (gtag.js) - production only.
-            lazyOnload: analytics waits until the page has loaded and the
-            browser is idle, so it never competes with first paint.
+            Analytics waits for the visitor's first interaction (or a few
+            seconds after load), so it never competes with the page loading.
             Page URLs are redacted before gtag sees them: private pages
             (/r/, /status/, /invite/, /unsubscribe, /connect/, /dashboard,
             sign-in) carry tokens in the path or query - see

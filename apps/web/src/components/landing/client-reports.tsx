@@ -62,7 +62,7 @@ export function ClientReportsSection() {
 
           {/* Report animation: build, brand, deliver */}
           <div>
-            <ClientReportAnimation />
+            <ClientReportAnimation lazy />
             <p className="mt-6 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">
               Illustrative report · invented agency and numbers
             </p>

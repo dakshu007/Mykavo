@@ -121,7 +121,7 @@ export function AlertChannelsSection() {
         {/* Tablet and desktop: the delivery animation (scan, severity gate,
             grouping, fan-out to each channel). Phones keep the static grid. */}
         <div className="mx-auto mt-14 hidden max-w-5xl md:block">
-          <AlertChannelsAnimation />
+          <AlertChannelsAnimation lazy />
         </div>
 
         {/* Small screens: hub above a 2x2 grid */}

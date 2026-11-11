@@ -269,6 +269,9 @@ export function CategoryTabs() {
               after={active.after}
               severity={active.severity}
               onTick={onTick}
+              // Only the first scene waits to be scrolled near; once the
+              // tabs move on, each next scene draws at once.
+              lazy={activeKey === "availability"}
               label={`${active.name} example: ${active.headline}. Baseline ${active.before}, current scan ${active.after}, severity ${active.severity}.`}
             />
           </div>

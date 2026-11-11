@@ -616,6 +616,19 @@
 html[data-promo] {
   --promo-h: 40px;
 }
+/* The bar's backdrop, painted with the page: until the bar itself mounts
+   (after the page's scripts run), its reserved strip shows the bar's dark
+   colour instead of an empty gap that turns black a moment later. The bar
+   (z-index 60) covers it; if the offer is withdrawn, data-promo goes and so
+   does this. Marketing pages only: the dashboard bar is inline. */
+html[data-promo] body:has([data-landing-nav])::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: var(--promo-h);
+  z-index: 59;
+  background: #0b0b0b;
+}
 
 @keyframes promo-shimmer {
   0% { transform: translateX(-120%); }
@@ -892,4 +905,15 @@ html[data-promo] {
 }
 @media (prefers-reduced-motion: reduce) {
   .flap-digit { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Homepage: every section below the hero is skipped by the browser's
+   rendering work (style, layout, paint) until it nears the screen. The page
+   is ~25 sections and thousands of elements; laying all of them out on load
+   was one of the largest costs on a phone. `auto` remembers each section's real height
+   once it has been seen, so the scrollbar settles after the first pass. */
+[data-home] > section:not(:first-child) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1200px;
 }

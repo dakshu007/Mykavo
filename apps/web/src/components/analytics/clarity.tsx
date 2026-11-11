@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { isPrivateAnalyticsPath } from "@/lib/analytics-privacy";
+import { useEngaged } from "./use-engaged";
 
 /**
  * Microsoft Clarity (heatmaps and session recordings) - public pages only,
@@ -17,8 +18,11 @@ import { isPrivateAnalyticsPath } from "@/lib/analytics-privacy";
  * dashboard layout therefore also carries data-clarity-mask, which makes
  * Clarity mask everything inside it.
  *
- * Loaded lazyOnload, after the page and Google Analytics, so it never
- * competes with first paint.
+ * Loaded on the visitor's first interaction, or 8 seconds after load (see
+ * useEngaged): Clarity walks the whole page to record it, which on a phone
+ * was a long task in the very seconds the page was becoming usable. A
+ * recording of a visitor who never scrolled, tapped or moved the pointer has
+ * little to show, so the later fallback costs almost nothing.
  */
 
 export const CLARITY_PROJECT_ID = "yq0hjq8pqa";
@@ -32,9 +36,10 @@ const SNIPPET = `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||
 
 export function Clarity() {
   const pathname = usePathname() ?? "/";
-  if (!isClarityPath(pathname)) return null;
+  const engaged = useEngaged(8000);
+  if (!engaged || !isClarityPath(pathname)) return null;
   return (
-    <Script id="ms-clarity" strategy="lazyOnload">
+    <Script id="ms-clarity" strategy="afterInteractive">
       {SNIPPET}
     </Script>
   );

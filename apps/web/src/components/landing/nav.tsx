@@ -216,7 +216,7 @@ export function LandingNav() {
           the spacer and added to the nav's offset, so nothing overlaps. */}
       <SitePromoBar />
       <div aria-hidden className="h-[var(--promo-h,0px)]" />
-      <header className="fixed inset-x-0 top-[calc(var(--promo-h,0px)+1rem)] z-50 px-4 sm:top-[calc(var(--promo-h,0px)+1.25rem)]">
+      <header data-landing-nav className="fixed inset-x-0 top-[calc(var(--promo-h,0px)+1rem)] z-50 px-4 sm:top-[calc(var(--promo-h,0px)+1.25rem)]">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 whitespace-nowrap rounded-full xl:max-w-5xl border border-[#151515]/15 bg-white/95 pl-5 pr-2 shadow-[0_2px_0_#15151522,0_18px_40px_-18px_rgba(21,21,21,0.35)]">
         <Link href="/" aria-label="MyKavo home" className="flex shrink-0 items-center gap-2">
           <LogoMark size={24} />

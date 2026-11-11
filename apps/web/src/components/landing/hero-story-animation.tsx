@@ -773,10 +773,10 @@ const LABEL =
   "Animation: how MyKavo works. 1, Baseline: MyKavo snapshots a product page and saves it as the approved baseline, capturing five signals - status, screenshot, title, the Add to cart button and the robots tag. 2, Scan: a theme update removes the Add to cart button and sets the page to noindex, and the scan runs. 3, Compare: each signal is checked against the baseline; status and title match, while the screenshot, the button and the robots tag changed. 4, Alert: one grouped alert, ranked by severity, goes to email, Slack and push. 5, Resolve: the fix is deployed, MyKavo rescans and every signal matches again.";
 
 /** Wide screens: Baseline page · signal spine · Live page. */
-function Landscape() {
+function Landscape({ lazy }: { lazy: boolean }) {
   const W = 1080;
   const H = 680;
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_FRAME_T);
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, FIRST_FRAME_T, lazy);
   const f = heroFrameAt(t);
 
   const top = 190;
@@ -786,6 +786,9 @@ function Landscape() {
   const nodeX = (W - nodeW) / 2;
   const slide = (1 - f.baselineP) * (liveX - leftX);
   const dimmed = 1 - f.dim * 0.7;
+
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
 
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
@@ -858,15 +861,18 @@ function Landscape() {
 }
 
 /** Phones: the live page, with the signals listed under it. */
-function Portrait() {
+function Portrait({ lazy }: { lazy: boolean }) {
   const W = 400;
   const H = 900;
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_FRAME_T);
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, FIRST_FRAME_T, lazy);
   const f = heroFrameAt(t);
   const top = 190;
   const cardX = (W - CARD_W) / 2;
   const listTop = top + CARD_H + 24;
   const dimmed = 1 - f.dim * 0.7;
+
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
 
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
@@ -902,14 +908,15 @@ function Portrait() {
   );
 }
 
-export function HeroStoryAnimation() {
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function HeroStoryAnimation({ lazy = false }: { lazy?: boolean } = {}) {
   return (
     <>
       <div className="hidden md:block">
-        <Landscape />
+        <Landscape lazy={lazy} />
       </div>
       <div className="md:hidden">
-        <Portrait />
+        <Portrait lazy={lazy} />
       </div>
     </>
   );

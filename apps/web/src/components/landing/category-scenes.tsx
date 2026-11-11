@@ -585,6 +585,7 @@ export function CategoryScene({
   severity,
   label,
   onTick,
+  lazy = false,
 }: {
   scene: SceneKey;
   before: string;
@@ -593,8 +594,10 @@ export function CategoryScene({
   label: string;
   /** Called with the scene's clock on every frame it draws. */
   onTick?: (t: number) => void;
+  /** Draw the stage only once it nears the screen (see useStageClock). */
+  lazy?: boolean;
 }) {
-  const { wrapRef, t, k, fitted } = useStageClock(SCENE_W, 12);
+  const { wrapRef, t, k, fitted, near } = useStageClock(SCENE_W, 12, 0, lazy);
   const tick = useRef(onTick);
   useEffect(() => {
     tick.current = onTick;
@@ -603,6 +606,9 @@ export function CategoryScene({
     tick.current?.(t);
   }, [t]);
   const Scene = SCENES[scene];
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={label} style={{ position: "relative", width: "100%", aspectRatio: `${SCENE_W} / ${SCENE_H}`, overflow: stageClip(fitted) }} />;
+
   return (
     <div ref={wrapRef} role="img" aria-label={label} style={{ position: "relative", width: "100%", aspectRatio: `${SCENE_W} / ${SCENE_H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: SCENE_W, height: SCENE_H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK })}>

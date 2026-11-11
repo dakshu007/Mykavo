@@ -310,11 +310,22 @@ function Tile({ src, label, alt, children }: { src: string; label: string; alt: 
   );
 }
 
-export function WpUpdateAnimation() {
-  const { wrapRef, t, k } = useStageClock(STAGE_W, STILL_T);
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function WpUpdateAnimation({ lazy = false }: { lazy?: boolean } = {}) {
+  const { wrapRef, t, k, near } = useStageClock(STAGE_W, STILL_T, 0, lazy);
 
   const a = frameAt(t);
   const [th0, th1, th2, th3] = a.th;
+
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near)
+    return (
+      <div
+      ref={wrapRef}
+      role="img"
+      aria-label="Animation: the MyKavo plugin connects WordPress to MyKavo. When WooCommerce updates, MyKavo checks four pages and finds 2 changes on the checkout page, shown before and after. When WordPress updates, it reports Verified - nothing changed."
+      style={{ position: "relative", width: "100%", aspectRatio: "6 / 5", overflow: "hidden" }} />
+    );
 
   return (
     <div

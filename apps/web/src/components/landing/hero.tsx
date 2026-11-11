@@ -31,15 +31,8 @@ export function LandingHero() {
         <div className="flex justify-center">
           <Link
             href="/ai-connector?from=home_pill"
-            className="hero-launch group relative flex items-center gap-2.5 overflow-hidden rounded-full border border-[#151515] bg-white py-1 pl-1 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
+            className="hero-launch group relative flex items-center gap-2.5 overflow-hidden rounded-full border border-[#151515] bg-white py-2 pl-3.5 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
           >
-            <span className="flex items-center gap-1.5 rounded-full bg-[#151515] px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFD400]">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#FFD400] opacity-70 motion-reduce:animate-none" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-[#FFD400]" />
-              </span>
-              New
-            </span>
             <McpIcon className="size-3.5 shrink-0" />
             <span className="sm:hidden">Claude &amp; ChatGPT connector</span>
             <span className="hidden sm:inline">Ask Claude &amp; ChatGPT about your sites</span>
@@ -135,7 +128,7 @@ export function LandingHero() {
 
         {/* How MyKavo works, as one loop: baseline, scan, compare, alert, resolve. */}
         <div className="relative mx-auto mt-14 max-w-5xl">
-          <HeroStoryAnimation />
+          <HeroStoryAnimation lazy />
           <p className="mt-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[#6B6B60]">
             Illustrative example · how every scan works
           </p>

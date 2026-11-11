@@ -66,7 +66,7 @@ export function SearchConsoleSection() {
         </div>
 
         <div className="mt-14 lg:mt-16">
-          <SearchConsoleAnimation />
+          <SearchConsoleAnimation lazy />
           <p className="mt-6 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#9C9E93]">
             Illustrative data · example store
           </p>

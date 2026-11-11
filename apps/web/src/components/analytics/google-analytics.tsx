@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { analyticsPageLocation, analyticsReferrer } from "@/lib/analytics-privacy";
+import { useEngaged } from "./use-engaged";
 
 /**
  * Google Analytics 4 (gtag.js) with redacted page URLs.
@@ -84,10 +85,15 @@ export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
     ensureGtag(w)("event", "page_view", { page_location: state.location });
   }, []);
 
+  // gtag.js itself waits for the visitor's first interaction, or 4 seconds
+  // after load (see useEngaged). The page view and any events above are
+  // already queued in dataLayer and are sent the moment it arrives.
+  const engaged = useEngaged(4000);
+  if (!engaged) return null;
   return (
     <Script
       src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
-      strategy="lazyOnload"
+      strategy="afterInteractive"
     />
   );
 }

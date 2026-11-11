@@ -164,7 +164,7 @@ export function AppDownloadSection() {
         {/* Tablet and desktop: the web <-> phone sync animation. On phones the
             full scene would shrink past readable, so they keep the phone mock. */}
         <div className="mx-auto mt-14 hidden max-w-5xl md:block">
-          <AppSyncAnimation />
+          <AppSyncAnimation lazy />
         </div>
 
         {/* Small screens: phone mock only, spark above */}

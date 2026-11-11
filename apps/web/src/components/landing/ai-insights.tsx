@@ -84,7 +84,7 @@ export function AiInsightsSection() {
           </div>
 
           <div>
-            <AiInsightsAnimation />
+            <AiInsightsAnimation lazy />
             <p className="mt-3 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#9C9E93]">
               Illustrative alert and AI answer
             </p>

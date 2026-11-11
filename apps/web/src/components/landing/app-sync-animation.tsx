@@ -246,10 +246,21 @@ function Stage({ children, k }: { children: ReactNode; k: number }) {
   );
 }
 
-export function AppSyncAnimation() {
-  const { wrapRef, t, k } = useStageClock(STAGE_W, STILL_T);
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function AppSyncAnimation({ lazy = false }: { lazy?: boolean } = {}) {
+  const { wrapRef, t, k, near } = useStageClock(STAGE_W, STILL_T, 0, lazy);
 
   const a = syncFrameAt(t);
+
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near)
+    return (
+      <div
+      ref={wrapRef}
+      role="img"
+      aria-label="Animation: a scan started on the MyKavo web dashboard appears on the Android app at the same time. A push notification arrives on the phone, the change is swiped away as resolved, and the web dashboard updates a moment later."
+      style={{ position: "relative", width: "100%", aspectRatio: "2 / 1", overflow: "hidden", borderRadius: 16 }} />
+    );
 
   return (
     <div

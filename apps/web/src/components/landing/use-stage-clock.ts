@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 
 /**
  * The clock and scale behind the homepage animations (hero, WordPress, web
@@ -55,21 +55,26 @@ function whenPageSettled(run: () => void): () => void {
   };
 }
 
-export function useStageClock(stageWidth: number, stillT: number, startAt = 0) {
+export function useStageClock(stageWidth: number, stillT: number, startAt = 0, lazy = false) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState(startAt);
+  // See the effect below: a lazy stage is drawn once it nears the screen.
+  const [near, setNear] = useState(!lazy);
   const [k, setK] = useState(1);
   const [fitted, setFitted] = useState(false);
 
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const measure = () => {
-      setK(el.clientWidth / stageWidth);
+    // The observer's first callback, right after layout, gives the starting
+    // width. Reading el.clientWidth here instead forced a layout of the whole
+    // page in the middle of hydration, once per animation on the page.
+    const ro = new ResizeObserver((entries) => {
+      const width = entries[entries.length - 1]?.contentRect.width ?? 0;
+      if (width <= 0) return;
+      setK(width / stageWidth);
       setFitted(true);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
+    });
     ro.observe(el);
 
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
@@ -113,7 +118,33 @@ export function useStageClock(stageWidth: number, stillT: number, startAt = 0) {
     };
   }, [stageWidth, stillT, startAt]);
 
-  return { wrapRef, t, k, fitted };
+  // Lazy: until the wrapper is within a screen of view, the animation renders
+  // only its empty wrapper (same size and label), so the stage's markup stays
+  // out of the server HTML and out of hydration. The homepage carries a dozen
+  // of these below the fold; together they were most of its HTML and most of
+  // the work a phone did on load. A stage in a hidden layout (the phone
+  // version on a desktop, and back) is never drawn at all.
+  useEffect(() => {
+    if (near) return;
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          // A transition: React draws the stage in small slices between
+          // other work instead of one long task, so a stage that comes into
+          // range during page load never blocks a tap.
+          startTransition(() => setNear(true));
+        }
+      },
+      { rootMargin: "100% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near]);
+
+  return { wrapRef, t, k, fitted, near };
 }
 
 /** Wrapper overflow for a stage: clipped until `k` has been measured. */

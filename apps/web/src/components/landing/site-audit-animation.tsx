@@ -214,9 +214,20 @@ const pill = (s: CSSProperties): CSSProperties => ({
   ...s,
 });
 
-export function SiteAuditAnimation() {
-  const { wrapRef, t, k } = useStageClock(STAGE_W, STILL_T);
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function SiteAuditAnimation({ lazy = false }: { lazy?: boolean } = {}) {
+  const { wrapRef, t, k, near } = useStageClock(STAGE_W, STILL_T, 0, lazy);
   const a = auditFrameAt(t);
+
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near)
+    return (
+      <div
+      ref={wrapRef}
+      role="img"
+      aria-label="Animation: a site audit crawls 1,247 pages, finds issues and sorts them by severity - errors, then warnings, then notices. A broken internal link is opened to show how to fix it and marked fixed, other fixes follow, and the health score rises."
+      style={{ position: "relative", width: "100%", aspectRatio: "640 / 540", overflow: "hidden" }} />
+    );
 
   return (
     <div

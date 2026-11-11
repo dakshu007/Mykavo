@@ -661,11 +661,14 @@ function Window({ f, w, h, compact }: { f: ChromeFrame; w: number; h: number; co
 const LABEL =
   "How the MyKavo Chrome extension works: open any page and click MyKavo for an instant SEO check, press Protect to add the website to MyKavo in one click, then the extension shows it protected and flags critical changes, with an email alert.";
 
-function Landscape() {
+function Landscape({ lazy }: { lazy: boolean }) {
   const W = 1080;
   const H = 620;
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, FIRST_T, lazy);
   const f = chromeFrameAt(t);
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
+
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK, opacity: f.fade })}>
@@ -679,11 +682,14 @@ function Landscape() {
   );
 }
 
-function Portrait() {
+function Portrait({ lazy }: { lazy: boolean }) {
   const W = 400;
   const H = 680;
-  const { wrapRef, t, k, fitted } = useStageClock(W, STILL_T, FIRST_T);
+  const { wrapRef, t, k, fitted, near } = useStageClock(W, STILL_T, FIRST_T, lazy);
   const f = chromeFrameAt(t);
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near) return <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }} />;
+
   return (
     <div ref={wrapRef} role="img" aria-label={LABEL} style={{ position: "relative", width: "100%", aspectRatio: `${W} / ${H}`, overflow: stageClip(fitted) }}>
       <div aria-hidden style={abs({ left: 0, top: 0, width: W, height: H, transform: `scale(${k})`, transformOrigin: "0 0", color: INK, opacity: f.fade })}>
@@ -697,14 +703,15 @@ function Portrait() {
   );
 }
 
-export function ChromeExtensionAnimation() {
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function ChromeExtensionAnimation({ lazy = false }: { lazy?: boolean } = {}) {
   return (
     <>
       <div className="hidden md:block">
-        <Landscape />
+        <Landscape lazy={lazy} />
       </div>
       <div className="md:hidden">
-        <Portrait />
+        <Portrait lazy={lazy} />
       </div>
     </>
   );

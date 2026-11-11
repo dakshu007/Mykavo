@@ -292,10 +292,21 @@ function Icon({ size, radius }: { size: number; radius: number | string }) {
   return <img src={ICON} alt="" width={size} height={size} style={{ display: "block", width: size, height: size, borderRadius: radius, flex: `0 0 ${size}px` }} />;
 }
 
-export function AlertChannelsAnimation() {
-  const { wrapRef, t, k } = useStageClock(STAGE_W, STILL_T);
+/** `lazy`: draw the stage only once it nears the screen (see useStageClock). */
+export function AlertChannelsAnimation({ lazy = false }: { lazy?: boolean } = {}) {
+  const { wrapRef, t, k, near } = useStageClock(STAGE_W, STILL_T, 0, lazy);
   const a = alertFrameAt(t);
   const [email, slack, discord, webhook] = a.cards;
+
+  // Not near the screen yet (lazy): the empty, sized wrapper only.
+  if (!near)
+    return (
+      <div
+      ref={wrapRef}
+      role="img"
+      aria-label="Animation: a scan finds three changes. The severity gate lets Critical and High through and holds Medium back, the two are grouped into one alert, and MyKavo delivers it to email, Slack, Discord and a signed webhook."
+      style={{ position: "relative", width: "100%", aspectRatio: "1000 / 560", overflow: "hidden" }} />
+    );
 
   return (
     <div

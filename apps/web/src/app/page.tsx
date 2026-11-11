@@ -384,7 +384,7 @@ export default function HomePage() {
       <LandingNav />
       <StickyCta />
 
-      <main>
+      <main data-home>
         {/* Hero - badge, headline, URL input, browser-frame dashboard mock */}
         <LandingHero />
 
@@ -575,7 +575,7 @@ export default function HomePage() {
               </div>
 
               <div>
-                <AgencyBoardAnimation />
+                <AgencyBoardAnimation lazy />
                 <p className="mt-6 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">
                   Illustrative dashboard · invented client sites
                 </p>
