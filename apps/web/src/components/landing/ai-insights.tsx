@@ -38,7 +38,6 @@ export function AiInsightsSection() {
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
           <div>
             <p className={`${eyebrowOnDark} mb-4 flex items-center gap-2`}>
-              <span className="rounded-full bg-[#FFD400] px-2 py-0.5 text-[10px] tracking-[0.14em] text-[#151515]">New</span>
               {"// ai website insights //"}
             </p>
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#E9EBDF] sm:text-5xl`}>

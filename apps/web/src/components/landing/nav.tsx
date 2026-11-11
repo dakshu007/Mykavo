@@ -21,10 +21,10 @@ type MenuItem = { href: string; label: string; badge?: string };
 const MCP_LINK = { href: "/ai-connector", label: "MCP" };
 
 const integrations: MenuItem[] = [
-  { href: "/ai-connector", label: "Claude & ChatGPT", badge: "New" },
-  { href: "/platforms", label: "All platforms", badge: "New" },
+  { href: "/ai-connector", label: "Claude & ChatGPT" },
+  { href: "/platforms", label: "All platforms" },
   { href: "/wordpress-plugin", label: "WordPress plugin" },
-  { href: "/chrome-extension", label: "Chrome extension", badge: "New" },
+  { href: "/chrome-extension", label: "Chrome extension" },
   { href: "/shopify-app", label: "Shopify app", badge: "Coming soon" },
 ];
 
@@ -177,7 +177,6 @@ function ToolsPanel({ close }: { close: () => void }) {
               >
                 <t.icon className="size-3.5 shrink-0 text-[#151515]/45 transition-colors group-hover:text-[#151515]" aria-hidden />
                 <span className="truncate">{t.menuLabel}</span>
-                {t.isNew && <span className="size-1.5 shrink-0 rounded-full bg-[#FFD400] ring-1 ring-[#151515]/30" aria-label="New" />}
               </Link>
             ))}
           </div>
@@ -307,7 +306,6 @@ export function LandingNav() {
             >
               <McpIcon className="size-[18px]" />
               {MCP_LINK.label}
-              <SoonBadge>New</SoonBadge>
             </Link>
             {links.map((l) => (
               <Link

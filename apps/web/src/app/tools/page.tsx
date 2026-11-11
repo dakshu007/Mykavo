@@ -103,11 +103,6 @@ export default function ToolsHubPage() {
                   <span className="min-w-0">
                     <span className="flex items-center gap-2">
                       <span className="text-[15px] font-semibold text-[#151515]">{t.name}</span>
-                      {t.isNew && (
-                        <span className="rounded-full bg-[#151515] px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-[#FFD400]">
-                          New
-                        </span>
-                      )}
                     </span>
                     <span className="mt-1 block text-[13px] leading-6 text-[#151515]/65">{t.blurb}</span>
                   </span>
