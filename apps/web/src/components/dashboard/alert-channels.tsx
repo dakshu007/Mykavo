@@ -14,7 +14,7 @@ const SLACK_RESULTS: Record<string, { tone: "ok" | "error"; text: string }> = {
     tone: "ok",
     text: "Slack connected. MyKavo posted a hello message in the channel you picked.",
   },
-  cancelled: { tone: "error", text: "Slack connection cancelled - nothing changed." },
+  cancelled: { tone: "error", text: "Slack connection cancelled. Nothing changed." },
   expired: { tone: "error", text: "That Slack link expired. Press Add to Slack to try again." },
   limit: {
     tone: "error",
@@ -47,7 +47,7 @@ const TYPE_META: Record<
   },
   WEBHOOK: {
     label: "Webhook",
-    hint: "Any HTTPS endpoint - MyKavo POSTs JSON (optionally HMAC-signed).",
+    hint: "Any HTTPS endpoint. MyKavo POSTs JSON, optionally HMAC-signed.",
     placeholder: "https://example.com/hooks/mykavo",
   },
 };
@@ -146,9 +146,9 @@ export function AlertChannels({
   return (
     <div className="space-y-4">
       {initial.length === 0 && !adding && (
-        <p className="text-sm text-ink-secondary">
-          Get change summaries and failure alerts in Slack, Discord, or any webhook -
-          instantly, alongside email.
+        <p className="rounded-xl border border-dashed border-line px-4 py-3.5 text-sm text-ink-secondary">
+          No channels yet. Add Slack, Discord or a webhook to get change summaries and failure alerts
+          there as well.
         </p>
       )}
 
@@ -256,7 +256,7 @@ export function AlertChannels({
             />
             <p className="mt-1.5 text-[13px] text-ink-faint">
               {type === "SLACK" && slackInstall
-                ? "Easier: use Add to Slack instead - you pick the channel in Slack, no URL to copy."
+                ? "Easier: use Add to Slack instead. You pick the channel in Slack, with no URL to copy."
                 : TYPE_META[type].hint}
             </p>
           </div>
