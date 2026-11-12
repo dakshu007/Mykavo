@@ -1,10 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { twoFactor } from "better-auth/plugins";
+import { emailOTP, twoFactor } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
 import { createAuthMiddleware, APIError, getSessionFromCtx } from "better-auth/api";
 import { prisma, startTrial, TRIAL_DAYS } from "@mykavo/database";
-import { sendEmail, verifyEmailEmail } from "@mykavo/email";
+import { sendEmail, verificationCodeEmail, verifyEmailEmail } from "@mykavo/email";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { validateSignupEmail, EMAIL_VALIDATION_MESSAGES } from "@/lib/email-validation";
@@ -12,6 +12,13 @@ import { checkPersonName, NAME_REJECTION_MESSAGES } from "@mykavo/shared";
 import { recordSignupToSheet } from "@/lib/signup-sheet";
 import { enqueueAdminSignupAlert, enqueueWelcomeEmail } from "@/lib/queue";
 import { addSignupToBrevo } from "@/lib/brevo-signup";
+import {
+  EMAIL_CODE_ALLOWED_ATTEMPTS,
+  EMAIL_CODE_EXPIRES_IN_SECONDS,
+  EMAIL_CODE_LENGTH,
+  needsEmailCode,
+  resendWaitSeconds,
+} from "@/lib/email-code";
 
 /**
  * Whether Google sign-in is configured. Drives the "Continue with Google"
@@ -79,6 +86,62 @@ async function startTrialForVerifiedUser(
 }
 
 /**
+ * The latest code issued for an address, for the resend cooldown. Codes are
+ * stored by the emailOTP plugin under this identifier.
+ */
+async function lastCodeIssuedAt(email: string): Promise<Date | null> {
+  const row = await prisma.verification
+    .findFirst({
+      where: { identifier: `email-verification-otp-${email}` },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    })
+    .catch(() => null);
+  return row?.createdAt ?? null;
+}
+
+/** The account a code request or check is about, when it is one that needs a code. */
+async function codeAccount(rawEmail: unknown) {
+  const email = typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+  if (!email) return null;
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, email: true, emailVerified: true, createdAt: true },
+  });
+  return needsEmailCode(user) ? user : null;
+}
+
+/**
+ * Everything a new account sets in motion besides its workspace: the
+ * signup sheet, the admin alert, the welcome email and the Brevo contact.
+ * Google sign-ins (verified on arrival) run it at account creation; email
+ * and password accounts that need a code run it once they have typed it,
+ * so an address nobody can read never gets a welcome email or a place in
+ * the marketing lists.
+ */
+async function announceNewAccount(
+  user: { id: string; email: string; name: string; createdAt: Date },
+  trial: boolean,
+): Promise<void> {
+  // Marketing export - fire-and-forget, never blocks signup.
+  recordSignupToSheet({ email: user.email, name: user.name });
+
+  // Tell the operator. Queued rather than sent here: this runs inside the
+  // request that creates (or confirms) the account, and a push round trip
+  // must never be able to slow that down or fail it. enqueue swallows its
+  // own errors for the same reason.
+  await enqueueAdminSignupAlert({ userId: user.id });
+
+  // Welcome the customer, once (the worker de-duplicates). Never on sign-in:
+  // a welcome on every visit is how a welcome becomes spam.
+  await enqueueWelcomeEmail({ userId: user.id });
+
+  // Into Brevo's lists right away, for campaigns. Capped and
+  // error-swallowing: it can never slow or fail the signup.
+  await addSignupToBrevo(user, { trial });
+}
+
+/**
  * Better Auth server configuration (spec §8: no custom auth).
  * Email + password plus optional Google OAuth.
  *
@@ -109,19 +172,39 @@ export const auth = betterAuth({
   // (strict zod + object storage), and apps/mobile never edits the profile.
   // Off, rather than re-validating a second copy of those rules.
   // /expo-authorization-proxy stays ON: apps/mobile's Google sign-in uses it.
-  disabledPaths: ["/update-user"],
+  disabledPaths: [
+    "/update-user",
+    // emailOTP is only used to confirm a new address. Its other endpoints
+    // would open new ways in (passwordless sign-in, password reset by code,
+    // email change) that skip the password and 2FA: off.
+    "/sign-in/email-otp",
+    "/email-otp/check-verification-otp",
+    "/email-otp/request-password-reset",
+    "/forget-password/email-otp",
+    "/email-otp/reset-password",
+    "/email-otp/request-email-change",
+    "/email-otp/change-email",
+  ],
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
-    // NOT requireEmailVerification: existing password accounts are
-    // unverified, and requiring it would lock them out. Unverified users can
-    // sign in; the dashboard banner asks them to verify, and admin rights,
-    // the admin plan and the Pro trial all wait for verification instead.
+    // Signing up never signs in: a new account must first type the 6-digit
+    // code emailed to it (emailOTP below). Sign-in for those accounts is
+    // held back the same way in the before hook.
+    //
+    // NOT requireEmailVerification: that would also lock out the password
+    // accounts created before codes existed, which were never verified. They
+    // are grandfathered (lib/email-code.ts): they sign in as before, the
+    // dashboard banner asks them to confirm by link, and admin rights, the
+    // admin plan and the Pro trial all wait for verification.
+    autoSignIn: false,
   },
-  // Address verification. Sent on signup, and again from the dashboard
-  // banner. Verifying signs the user in and starts their Pro trial.
+  // Address verification by LINK, for the grandfathered accounts above: sent
+  // from the dashboard banner. New accounts confirm with a code instead
+  // (emailOTP below), so nothing is sent by link at signup. Verifying either
+  // way signs the user in and starts their Pro trial.
   emailVerification: {
-    sendOnSignUp: true,
+    sendOnSignUp: false,
     autoSignInAfterVerification: true,
     expiresIn: VERIFY_EMAIL_EXPIRES_IN_SECONDS,
     sendVerificationEmail: async ({ user, url }, request) => {
@@ -149,8 +232,15 @@ export const auth = betterAuth({
     afterEmailVerification: async (user) => {
       const trial = await startTrialForVerifiedUser(user);
       logger.info("email verified", { userId: user.id, trialStarted: trial });
-      // The signup put this contact in Brevo as Free; now it is on the trial.
-      if (trial) await addSignupToBrevo(user, { trial: true });
+      if (needsEmailCode({ emailVerified: false, createdAt: user.createdAt })) {
+        // A new account that just typed its code: everything its signup
+        // held back until the address was proven (see announceNewAccount).
+        await announceNewAccount(user, trial);
+      } else if (trial) {
+        // A grandfathered account confirming by link: its signup already put
+        // it in Brevo as Free; now it is on the trial.
+        await addSignupToBrevo(user, { trial: true });
+      }
     },
   },
   // Brute-force protection (Phase 10, spec §43/§59). Better Auth enables rate
@@ -168,6 +258,10 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 60, max: 5 },
       // Each one sends an email through our Resend quota.
       "/send-verification-email": { window: 60, max: 3 },
+      "/email-otp/send-verification-otp": { window: 60, max: 3 },
+      // A code is 6 digits and dies after a few wrong guesses (emailOTP
+      // allowedAttempts); this caps how fast anyone can burn through codes.
+      "/email-otp/verify-email": { window: 60, max: 6 },
       // TOTP codes are 6 digits - throttle guessing hard (the plugin also
       // locks the account after repeated failures).
       "/two-factor/verify-totp": { window: 60, max: 6 },
@@ -177,7 +271,54 @@ export const auth = betterAuth({
   // Google Authenticator-style TOTP two-factor auth. Enrollment happens at
   // signup (and from Settings); verification is required on every login for
   // enrolled users. Issuer is what shows up in the authenticator app.
-  plugins: [expo(), twoFactor({ issuer: "MyKavo" })],
+  plugins: [
+    expo(),
+    twoFactor({ issuer: "MyKavo" }),
+    // 6-digit email codes for new email/password accounts (lib/email-code.ts).
+    // Only the confirm-your-address flow is used: the plugin's passwordless
+    // sign-in, password reset and email change endpoints are disabled below.
+    emailOTP({
+      otpLength: EMAIL_CODE_LENGTH,
+      expiresIn: EMAIL_CODE_EXPIRES_IN_SECONDS,
+      allowedAttempts: EMAIL_CODE_ALLOWED_ATTEMPTS,
+      // Stored as a hash, like a password: a leaked verification table must
+      // not be a list of working codes.
+      storeOTP: "hashed",
+      sendVerificationOnSignUp: true,
+      rateLimit: { window: 60, max: 6 },
+      sendVerificationOTP: async ({ email, otp, type }, ctx) => {
+        if (type !== "email-verification") return;
+        const user = await prisma.user
+          .findUnique({ where: { email: email.toLowerCase() }, select: { id: true, name: true } })
+          .catch(() => null);
+        if (process.env.NODE_ENV === "development") {
+          // Local only: there is usually no mail provider, and the flow must
+          // be testable end to end. Never in production.
+          logger.info("email code (development only)", { email, code: otp });
+        }
+        const message = verificationCodeEmail({
+          name: user?.name ?? "",
+          code: otp,
+          expiresInMinutes: EMAIL_CODE_EXPIRES_IN_SECONDS / 60,
+        });
+        const result = await sendEmail({ to: [email], ...message });
+        if (result.ok) {
+          logger.info("email code sent", { userId: user?.id, provider: result.provider });
+          return;
+        }
+        // Never log the code itself.
+        logger.warn("email code failed", { userId: user?.id, provider: result.provider, error: result.error });
+        // At signup the account exists and must not fail over email (the
+        // verify screen can send another); a resend the user is waiting on
+        // should say it did not go.
+        if (ctx?.path === "/email-otp/send-verification-otp") {
+          throw new APIError("INTERNAL_SERVER_ERROR", {
+            message: "We could not send the code just now. Please try again in a minute.",
+          });
+        }
+      },
+    }),
+  ],
   advanced: {
     ipAddress: {
       // The rate limiter keys on this. Netlify's edge sets
@@ -209,6 +350,53 @@ export const auth = betterAuth({
         return;
       }
 
+      // A code is only for an account that needs one: new, unverified, email
+      // and password. Confirming signs the account in, so it must never work
+      // for a verified account (or a grandfathered one, which may have 2FA):
+      // that would let inbox access alone get past a password and 2FA.
+      if (ctx.path === "/email-otp/send-verification-otp" || ctx.path === "/email-otp/verify-email") {
+        if (ctx.path === "/email-otp/send-verification-otp" && ctx.body?.type !== "email-verification") {
+          throw new APIError("BAD_REQUEST", { message: "Invalid code type." });
+        }
+        const account = await codeAccount(ctx.body?.email);
+        if (!account) {
+          throw new APIError("BAD_REQUEST", {
+            message: "This email has nothing to confirm. Sign in instead.",
+          });
+        }
+        if (ctx.path === "/email-otp/send-verification-otp") {
+          const wait = resendWaitSeconds(await lastCodeIssuedAt(account.email));
+          if (wait > 0) {
+            throw new APIError("TOO_MANY_REQUESTS", {
+              message: `A code is already on its way. You can ask for another in ${wait} seconds.`,
+            });
+          }
+        }
+        return;
+      }
+
+      // Signing in to a new account that has not typed its code yet: check
+      // the password first (a wrong one fails as usual, below), then send the
+      // caller to the code screen instead of a session. The screen asks for
+      // the code itself, so a wrong password never sends an email.
+      if (ctx.path === "/sign-in/email") {
+        const account = await codeAccount(ctx.body?.email);
+        if (!account) return;
+        const password = typeof ctx.body?.password === "string" ? ctx.body.password : "";
+        const credential = await prisma.account.findFirst({
+          where: { userId: account.id, providerId: "credential" },
+          select: { password: true },
+        });
+        if (!credential?.password || !password) return;
+        const ok = await ctx.context.password.verify({ hash: credential.password, password });
+        if (!ok) return;
+        throw new APIError("FORBIDDEN", {
+          code: "EMAIL_NOT_VERIFIED",
+          // The web form shows the code screen; the mobile app shows this.
+          message: "Confirm your email to finish signing in. Sign in at mykavo.app once to get your code.",
+        });
+      }
+
       if (ctx.path !== "/sign-up/email") return;
 
       // Name first: it is a pure string check, where the email check does a
@@ -229,6 +417,20 @@ export const auth = betterAuth({
         logger.info("signup email rejected", { reason: result.reason });
         throw new APIError("BAD_REQUEST", {
           message: EMAIL_VALIDATION_MESSAGES[result.reason],
+        });
+      }
+
+      // With autoSignIn off, Better Auth answers a signup for an address
+      // that already has an account with a quiet fake success. Say so
+      // plainly instead, as the form always has.
+      const existing = await prisma.user.findUnique({
+        where: { email: email.trim().toLowerCase() },
+        select: { id: true },
+      });
+      if (existing) {
+        throw new APIError("UNPROCESSABLE_ENTITY", {
+          code: "USER_ALREADY_EXISTS",
+          message: "An account with this email already exists. Sign in instead.",
         });
       }
     }),
@@ -261,32 +463,20 @@ export const auth = betterAuth({
             userId: user.id,
             workspaceId: workspace.id,
           });
+          // A new email/password account has not proven its address yet: it
+          // gets its workspace now, and its trial, welcome email, admin alert
+          // and marketing contact once it types its code
+          // (afterEmailVerification above). Throwaway addresses never get
+          // past this point.
+          if (needsEmailCode(user)) return;
+
           // A 14-day Pro trial, no card - but only for an address that is
-          // already verified (Google sign-in). Email/password signups get it
-          // in afterEmailVerification above, so unverified throwaway
+          // already verified (Google sign-in), so unverified throwaway
           // accounts cannot farm trials. Never fails the signup.
           const trial = user.emailVerified
             ? await startTrialForVerifiedUser(user, workspace.id)
             : false;
-          // Marketing export - fire-and-forget, never blocks signup.
-          recordSignupToSheet({ email: user.email, name: user.name });
-
-          // Tell the operator. Queued rather than sent here: this runs inside
-          // the request that creates the account, and a push round trip must
-          // never be able to slow that down or fail it. enqueue swallows its
-          // own errors for the same reason.
-          await enqueueAdminSignupAlert({ userId: user.id });
-
-          // Welcome the customer. Fires here - on ACCOUNT CREATION - so it
-          // reaches everyone once, whether they signed up with Google or with
-          // an email and password; a hook on sign-in would send it again on
-          // every visit, which is how a welcome becomes spam. Queued and
-          // error-swallowing for the same reason as the line above.
-          await enqueueWelcomeEmail({ userId: user.id });
-
-          // Into Brevo's lists right away, for campaigns. Capped and
-          // error-swallowing: it can never slow or fail the signup.
-          await addSignupToBrevo(user, { trial });
+          await announceNewAccount(user, trial);
         },
       },
     },

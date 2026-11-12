@@ -70,3 +70,47 @@ export function verifyEmailEmail(data: VerifyEmailData): { subject: string; html
 
   return { subject: VERIFY_EMAIL_SUBJECT, html: shell(inner), text };
 }
+
+export interface VerificationCodeData {
+  /** The account holder's display name (may be empty). */
+  name: string;
+  /** The one-time code, digits only. */
+  code: string;
+  /** Whole minutes until the code expires. */
+  expiresInMinutes: number;
+}
+
+/**
+ * The 6-digit code a new email/password account types in to confirm its
+ * address. Same frame as the link email above. The code leads the subject so
+ * it can be read from the notification without opening the email. It only
+ * works for the new account that asked for it, for a few minutes and a few
+ * tries (apps/web/src/lib/email-code.ts).
+ */
+export function verificationCodeEmail(data: VerificationCodeData): { subject: string; html: string; text: string } {
+  const firstName = data.name.trim().split(/\s+/)[0] ?? "";
+  const greeting = firstName ? `Hi ${firstName},` : "Hi,";
+  const code = data.code.replace(/\D/g, "");
+  const minutes = Math.max(1, Math.round(data.expiresInMinutes));
+  const expiry = `The code expires in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+  // Spaced in the email so it reads at a glance; typed without spaces.
+  const spaced = code.split("").join(" ");
+
+  const inner = `
+    <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Confirm your email</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(greeting)}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">Enter this code on the MyKavo sign-up screen to confirm your address and open your dashboard.</p>
+    <div style="margin:0 0 20px;padding:18px 20px;background:#f6f7fb;border:1px solid #e4e7ee;border-radius:12px;text-align:center">
+      <span style="font-family:SFMono-Regular,Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:0.18em;color:#16181d">${esc(spaced)}</span>
+    </div>
+    <p style="margin:0;font-size:12px;color:#9aa1b1">${esc(expiry)} If you did not create a MyKavo account, you can safely ignore this email.</p>
+  `;
+
+  const text =
+    `${greeting}\n\n` +
+    `Your MyKavo confirmation code is ${code}\n\n` +
+    `Enter it on the sign-up screen to confirm your address and open your dashboard.\n\n` +
+    `${expiry} If you did not create a MyKavo account, you can safely ignore this email.`;
+
+  return { subject: `${code} is your MyKavo code`, html: shell(inner), text };
+}

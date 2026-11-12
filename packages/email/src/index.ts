@@ -176,4 +176,10 @@ export {
   type SyncContact,
 } from "./brevo-sync";
 export { INCREMENTAL_WINDOW_MS, runBrevoSyncWith, type BrevoSyncResult, type BrevoSyncStore } from "./brevo-run";
-export { verifyEmailEmail, VERIFY_EMAIL_SUBJECT, type VerifyEmailData } from "./verify-email";
+export {
+  verifyEmailEmail,
+  VERIFY_EMAIL_SUBJECT,
+  type VerifyEmailData,
+  verificationCodeEmail,
+  type VerificationCodeData,
+} from "./verify-email";

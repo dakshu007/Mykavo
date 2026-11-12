@@ -24,16 +24,16 @@ export default async function LoginPage({
   if (session) redirect(next ?? "/dashboard");
 
   return (
-    <>
-      <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-faint">Sign in</p>
-      <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.025em] text-ink">Welcome back.</h1>
-      <p className="mb-8 mt-2 text-[15px] text-ink-secondary">Your websites kept watch while you were away.</p>
-      <AuthForm
-        mode="login"
-        googleEnabled={googleEnabled}
-        redirectTo={next ?? undefined}
-        autoGoogle={params.provider === "google"}
-      />
-    </>
+    <AuthForm
+      mode="login"
+      googleEnabled={googleEnabled}
+      redirectTo={next ?? undefined}
+      autoGoogle={params.provider === "google"}
+      heading={{
+        eyebrow: "Sign in",
+        title: "Welcome back.",
+        subtitle: "Your websites kept watch while you were away.",
+      }}
+    />
   );
 }

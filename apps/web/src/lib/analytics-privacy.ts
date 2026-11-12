@@ -19,6 +19,8 @@ export const PRIVATE_PATH_PREFIXES = [
   "/unsubscribe",
   "/login",
   "/signup",
+  // First-run page: shows the account's name and email.
+  "/welcome",
   "/connect",
   "/shopify-app",
 ] as const;

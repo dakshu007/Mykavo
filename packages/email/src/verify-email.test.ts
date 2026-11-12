@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { verifyEmailEmail, VERIFY_EMAIL_SUBJECT } from "./verify-email";
+import { verificationCodeEmail, verifyEmailEmail, VERIFY_EMAIL_SUBJECT } from "./verify-email";
 
 const base = {
   name: "Ada Lovelace",
@@ -40,6 +40,31 @@ describe("verifyEmailEmail", () => {
 
   it("uses no em or en dashes", () => {
     const email = verifyEmailEmail(base);
+    expect(`${email.subject}${email.html}${email.text}`).not.toMatch(/[–—]/);
+  });
+});
+
+describe("verificationCodeEmail", () => {
+  const data = { name: "Ada Lovelace", code: "482913", expiresInMinutes: 10 };
+
+  it("puts the code in the subject, html and text", () => {
+    const email = verificationCodeEmail(data);
+    expect(email.subject).toBe("482913 is your MyKavo code");
+    expect(email.html).toContain("4 8 2 9 1 3");
+    expect(email.text).toContain("Your MyKavo confirmation code is 482913");
+    expect(email.text).toContain("Hi Ada,");
+    expect(email.text).toContain("expires in 10 minutes.");
+  });
+
+  it("keeps only digits from the code and escapes the name", () => {
+    const email = verificationCodeEmail({ ...data, name: "<b>x</b>", code: "12<script>34" });
+    expect(email.subject).toBe("1234 is your MyKavo code");
+    expect(email.html).not.toContain("<script>");
+    expect(email.html).not.toContain("<b>x");
+  });
+
+  it("uses no em or en dashes", () => {
+    const email = verificationCodeEmail(data);
     expect(`${email.subject}${email.html}${email.text}`).not.toMatch(/[–—]/);
   });
 });
