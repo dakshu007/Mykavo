@@ -118,33 +118,82 @@ export function useStageClock(stageWidth: number, stillT: number, startAt = 0, l
     };
   }, [stageWidth, stillT, startAt]);
 
-  // Lazy: until the wrapper is within a screen of view, the animation renders
-  // only its empty wrapper (same size and label), so the stage's markup stays
-  // out of the server HTML and out of hydration. The homepage carries a dozen
-  // of these below the fold; together they were most of its HTML and most of
-  // the work a phone did on load. A stage in a hidden layout (the phone
-  // version on a desktop, and back) is never drawn at all.
+  // Lazy: the animation first renders only its empty wrapper (same size and
+  // label), so the stage's markup stays out of the server HTML and out of
+  // hydration. The homepage carries a dozen of these; together they were
+  // most of its HTML and most of the work a phone did on load.
+  //
+  // The stage is then drawn in the browser's idle time once the page has
+  // loaded, one stage per idle moment (see scheduleIdleMount), so it is
+  // ready before anyone scrolls to it. Drawing it only as it neared the
+  // screen meant a heavy render in the middle of a scroll, which made the
+  // smooth scroll stutter. Coming within a screen of view still draws it at
+  // once, for anyone who scrolls faster than the idle queue.
   useEffect(() => {
     if (near) return;
     const el = wrapRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          io.disconnect();
-          // A transition: React draws the stage in small slices between
-          // other work instead of one long task, so a stage that comes into
-          // range during page load never blocks a tap.
-          startTransition(() => setNear(true));
-        }
-      },
-      { rootMargin: "100% 0px" },
-    );
+    let done = false;
+    // A transition: React draws the stage in small slices between other
+    // work instead of one long task.
+    const show = () => {
+      if (done) return;
+      done = true;
+      io.disconnect();
+      cancelIdle();
+      startTransition(() => setNear(true));
+    };
+    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && show(), {
+      rootMargin: "100% 0px",
+    });
     io.observe(el);
-    return () => io.disconnect();
+    // A stage in a hidden layout (the phone version on a desktop, and back)
+    // has no size and is never drawn.
+    const cancelIdle = scheduleIdleMount(() => el.getClientRects().length > 0 && show());
+    return () => {
+      done = true;
+      io.disconnect();
+      cancelIdle();
+    };
   }, [near]);
 
   return { wrapRef, t, k, fitted, near };
+}
+
+/**
+ * Lazy stages waiting to be drawn, run one per idle moment after the page has
+ * loaded, so drawing a dozen of them never adds up to one long task.
+ */
+const idleQueue: (() => void)[] = [];
+let idleRunning = false;
+
+function runIdleQueue() {
+  if (idleRunning) return;
+  idleRunning = true;
+  const w = window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  };
+  const next = () => {
+    const job = idleQueue.shift();
+    if (!job) {
+      idleRunning = false;
+      return;
+    }
+    job();
+    // Wait for the next idle moment before the next stage.
+    if (w.requestIdleCallback) w.requestIdleCallback(next, { timeout: 1500 });
+    else window.setTimeout(next, 200);
+  };
+  whenPageSettled(next);
+}
+
+function scheduleIdleMount(job: () => void): () => void {
+  idleQueue.push(job);
+  runIdleQueue();
+  return () => {
+    const i = idleQueue.indexOf(job);
+    if (i >= 0) idleQueue.splice(i, 1);
+  };
 }
 
 /** Wrapper overflow for a stage: clipped until `k` has been measured. */

@@ -98,7 +98,11 @@ export function SmoothScroll() {
       // Ticking widgets (the offer bar countdown) mutate every second but
       // sit in fixed elements that never change the page's height. Skip
       // them, or Lenis re-measures the whole layout once a second mid-scroll.
-      if (records.every((r) => (r.target as Element).closest?.("[data-scroll-static]"))) return;
+      // The homepage animations (role="img" stages with a fixed aspect
+      // ratio) re-render up to 30 times a second while on screen and never
+      // change the page's height either: re-reading scrollHeight for them
+      // forced a layout on every frame of a scroll.
+      if (records.every((r) => (r.target as Element).closest?.('[data-scroll-static], [role="img"]'))) return;
       pending = requestAnimationFrame(() => {
         pending = 0;
         const height = document.documentElement.scrollHeight;

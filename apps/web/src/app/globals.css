@@ -906,14 +906,3 @@ html[data-promo] body:has([data-landing-nav])::before {
 @media (prefers-reduced-motion: reduce) {
   .flap-digit { animation: none; }
 }
-
-/* ---------------------------------------------------------------------------
-   Homepage: every section below the hero is skipped by the browser's
-   rendering work (style, layout, paint) until it nears the screen. The page
-   is ~25 sections and thousands of elements; laying all of them out on load
-   was one of the largest costs on a phone. `auto` remembers each section's real height
-   once it has been seen, so the scrollbar settles after the first pass. */
-[data-home] > section:not(:first-child) {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 1200px;
-}
