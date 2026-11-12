@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Gauge } from "lucide-react";
 import { requireSession } from "@/lib/session";
 import { isPlatformAdmin } from "@/lib/platform-admin";
 import { collectUsage, logUsageProblems } from "@/lib/usage/collect";
-import { Card, CardHeader } from "@/components/ui/card";
 import { UsageMeters } from "@/components/dashboard/usage-meters";
 import { WorkerStatus } from "@/components/dashboard/worker-status";
 import { getWorkerLiveness } from "@/lib/usage/worker-health";
@@ -37,9 +35,22 @@ async function WorkerPanel() {
 
 function UsageSkeleton() {
   return (
-    <p className="py-4 text-sm text-ink-secondary">
-      Measuring… storage is counted by walking the bucket, so this takes a few seconds.
-    </p>
+    <div className="space-y-6" aria-busy>
+      <div>
+        <h1 className="text-[30px] font-semibold leading-[1.12] tracking-[-0.025em] text-ink sm:text-[38px]">
+          Measuring every service…
+        </h1>
+        <p className="mt-2 text-[15px] text-ink-secondary">
+          Storage is counted by walking the bucket, so this takes a few seconds.
+        </p>
+      </div>
+      <div className="h-[132px] animate-pulse rounded-2xl border-[1.5px] border-ink/20 bg-card motion-reduce:animate-none" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-56 animate-pulse rounded-2xl border border-line bg-card motion-reduce:animate-none" />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -57,30 +68,23 @@ export default async function UsagePage() {
   if (!isPlatformAdmin(session.user)) notFound();
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <Suspense fallback={null}>
-        <WorkerPanel />
-      </Suspense>
-
-      <Card>
-        <CardHeader
-          icon={Gauge}
-          title="All Usage"
-          action={
-            <span className="rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-accent">
-              Admin only
-            </span>
+    <div className="max-w-6xl space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Suspense
+          fallback={
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">Checking the scan worker…</p>
           }
-        />
-        <p className="mb-5 text-[13px] text-ink-secondary">
-          Every service MyKavo depends on, as a share of its limit. Figures marked
-          &ldquo;Partial&rdquo; are a floor, not a total; anything that could not be read says
-          so instead of showing a number.
-        </p>
-        <Suspense fallback={<UsageSkeleton />}>
-          <UsagePanel />
+        >
+          <WorkerPanel />
         </Suspense>
-      </Card>
+        <span className="rounded-full bg-primary-soft px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em] text-accent">
+          Admin / All usage
+        </span>
+      </div>
+
+      <Suspense fallback={<UsageSkeleton />}>
+        <UsagePanel />
+      </Suspense>
     </div>
   );
 }
