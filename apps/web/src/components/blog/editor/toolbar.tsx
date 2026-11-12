@@ -331,7 +331,12 @@ export function EditorToolbar({
   }
 
   return (
-    <div className="sticky top-0 z-20 -mx-1 rounded-t-tile border-b border-line bg-card/95 px-1 pb-2 backdrop-blur">
+    // Sticks just under the dashboard's floating topbar (sticky top-3, h-14:
+    // its bottom edge is at 68px), with a 12px gap to match. At top-0 it slid
+    // behind the topbar and was hidden while scrolling a long post. Solid
+    // card background, plus a strip (::before) over the 12px gap above it,
+    // so the text scrolling under it never shows through.
+    <div className="sticky top-20 z-20 -mx-1 rounded-b-tile border-b border-line bg-card px-1 py-2 shadow-[0_8px_12px_-12px_rgb(0_0_0/0.35)] before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-3 before:bg-card">
       <div className="flex flex-wrap items-center gap-0.5">
         <label htmlFor="editor-block-type" className="sr-only">
           Block type

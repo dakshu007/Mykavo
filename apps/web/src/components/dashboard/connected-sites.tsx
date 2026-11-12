@@ -13,6 +13,8 @@ export interface ConnectedSiteView {
   connectedAt: string | null;
   lastUsedAt: string | null;
   pluginVersion: string | null;
+  /** WordPress (or Shopify) version the plugin last reported. */
+  platformVersion?: string | null;
   /** When the connection was approved, and by whom (null once that user is gone). */
   createdAt?: string | null;
   createdByName?: string | null;

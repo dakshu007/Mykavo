@@ -71,6 +71,7 @@ export async function loadConnectedSites(
         connectedAt: c.connectedAt?.toISOString() ?? null,
         lastUsedAt: c.lastUsedAt?.toISOString() ?? null,
         pluginVersion: c.pluginVersion,
+        platformVersion: c.platformVersion,
         createdAt: c.createdAt.toISOString(),
         createdByName: c.createdByUser?.name || c.createdByUser?.email || null,
       })),
