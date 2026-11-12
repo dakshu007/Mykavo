@@ -384,6 +384,10 @@ export interface BrevoEmailEvent {
   date: string;
   subject?: string;
   tag?: string;
+  /** One id per email sent, shared by all of that email's events. */
+  messageId?: string;
+  /** Set when the email was sent from a saved Brevo template. */
+  templateId?: number;
 }
 
 /**
