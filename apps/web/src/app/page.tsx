@@ -40,12 +40,14 @@ import { SiteAuditSection } from "@/components/landing/site-audit";
 import { ClientReportsSection } from "@/components/landing/client-reports";
 import { SearchConsoleSection } from "@/components/landing/search-console";
 import { AiInsightsSection } from "@/components/landing/ai-insights";
+import { AiKeywordsSection } from "@/components/landing/ai-keywords";
 import { StickyCta } from "@/components/landing/sticky-cta";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { getPlan, plans } from "@/config/plans";
 import { site } from "@/config/site";
+import { AI_KEYWORDS_NAME, keywordAllowanceSummary } from "@/config/ai-keywords";
 import { FEATURE_LIST, organizationNode, websiteNode } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = withSocial({
@@ -53,13 +55,14 @@ export const metadata: Metadata = withSocial({
   // primary keywords: website monitoring tool / website change detection.
   title: {
     // Matches the H1's promise ("Website monitoring, page by page") while
-    // keeping the phrase people actually search for at the front. A title
-    // that contradicts the headline costs trust on arrival and tells a
-    // search engine the page is about something it is not.
-    absolute: "Website Monitoring, Page by Page - MyKavo Change Detection Tool",
+    // keeping the phrase people actually search for at the front, then names
+    // the second half of the product. A title that contradicts the headline
+    // costs trust on arrival and tells a search engine the page is about
+    // something it is not.
+    absolute: "Website Monitoring, Page by Page, plus an AI Blog Writer - MyKavo",
   },
   description:
-    "The best website monitoring software tells you what changed, not just that the site is up. MyKavo baselines the pages that matter, re-checks them around the clock, and sends one severity-ranked alert with before-and-after proof when a visual, SEO, content, link, script or performance change breaks one.",
+    "MyKavo baselines the pages that matter, re-checks them around the clock and sends one severity-ranked alert with before-and-after proof when a change breaks one. Its AI Keywords & Blog Writer finds the keywords worth writing about and drafts the SEO blog post in one click.",
   keywords: [
     "website monitoring tools",
     "best website monitoring software",
@@ -74,12 +77,14 @@ export const metadata: Metadata = withSocial({
     "SEO monitoring tools",
     "site monitoring tools",
     "broken link monitoring",
+    "ai blog writer",
+    "ai keyword research",
   ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "MyKavo - Site Monitoring Tool for Website Change Detection",
+    title: "MyKavo - Website Monitoring and AI Keywords & Blog Writer",
     description:
-      "Know what changed on every website you manage. Visual, SEO, link, script, performance and uptime monitoring with severity-ranked alerts.",
+      "Know what changed on every website you manage, with severity-ranked alerts. Then find the keywords worth writing about and get the blog post drafted in one click.",
     url: "/",
     type: "website",
   },
@@ -178,7 +183,7 @@ const useCases = [
   { icon: Search, title: "SEO teams", desc: "Know the moment titles, canonicals, robots meta, or indexability signals change unexpectedly." },
   { icon: Wrench, title: "Maintenance businesses", desc: "Prove your maintenance value with monitoring history and clear change reports." },
   { icon: Store, title: "E-commerce", desc: "Checkout buttons, payment scripts, and product pages - watched on every scan." },
-  { icon: Globe, title: "Website owners", desc: "Sleep well knowing someone is watching your most important pages every day." },
+  { icon: Globe, title: "Website owners", desc: "Sleep well knowing someone is watching your most important pages, and know what to write next to grow." },
 ];
 
 const freeTools = [
@@ -271,7 +276,15 @@ const faqs = [
   },
   {
     q: "What does MyKavo AI do?",
-    a: "MyKavo AI Website Insights explains every alert in plain English: what changed, why it matters and step-by-step fixes for your platform (WordPress, Shopify, Webflow and more), with an urgency call of act now, check this week or probably fine. It also writes a short weekly status note for each website. It is included on every plan, free plan too.",
+    a: `Two things. AI Website Insights explains every alert in plain English: what changed, why it matters and step-by-step fixes for your platform (WordPress, Shopify, Webflow and more), with an urgency call of act now, check this week or probably fine, plus a short weekly status note for each website. The ${AI_KEYWORDS_NAME} finds the keywords worth writing about and drafts SEO blog posts. Both are included on every plan, free plan too.`,
+  },
+  {
+    q: `What is the ${AI_KEYWORDS_NAME}?`,
+    a: `It is the part of MyKavo that helps you win new search traffic. MyKavo reads your website and learns your business, then finds the keywords worth writing about from your Google Search Console data (including searches you already rank 8 to 20 for), Google search suggestions and today's live search results, ranked by what to write first. One click writes a full SEO blog post: title, URL slug, meta description, the article, an FAQ section and JSON-LD structured data, plus review notes. You edit it in MyKavo and copy it into your site; it stays a draft and is never published for you. Every plan includes it: ${keywordAllowanceSummary()}.`,
+  },
+  {
+    q: "Does MyKavo replace rank trackers or backlink tools?",
+    a: "No. MyKavo does not track rankings or analyze backlinks, so keep a dedicated SEO suite if you need those. Monitoring protects the traffic you have, and AI Keywords helps you win more: it suggests what to write for your own site, using your own Search Console data where connected, and drafts the post.",
   },
   {
     q: "What is a baseline?",
@@ -481,6 +494,11 @@ export default function HomePage() {
             Straight after "how it works": it is what turns an alert into a
             next step, and the first thing many visitors now look for. */}
         <AiInsightsSection />
+
+        {/* AI Keywords & Blog Writer - the second half of MyKavo. Monitoring
+            protects the traffic you have; this helps you win more. Straight
+            after the AI band so the two AI features read together. */}
+        <AiKeywordsSection />
 
         {/* What it watches - interactive category tabs */}
         <Section id="categories">
@@ -826,8 +844,8 @@ export default function HomePage() {
               <span className="text-[#FFD400]">from your users.</span>
             </h2>
             <p className="relative mx-auto mt-6 max-w-xl text-[15px] leading-7 text-[#9C9E93]">
-              Create a free account - monitor your first website in minutes. No credit card
-              required.
+              Create a free account - monitor your first website in minutes, and get your first
+              keyword report and blog post free. No credit card required.
             </p>
             <div className="relative mx-auto mt-10 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
               <Link

@@ -147,6 +147,8 @@ export const FEATURE_LIST = [
   "Website change detection",
   "AI explanations of every change, with fix steps",
   "AI weekly website status summaries",
+  "AI keyword research from Google Search Console data",
+  "AI SEO blog post writer with FAQ and JSON-LD",
   "Visual regression monitoring with pixel diffs",
   "SEO change monitoring",
   "Technical SEO site audit",

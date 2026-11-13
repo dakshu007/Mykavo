@@ -21,6 +21,9 @@
  * HowTo far more readily than from prose.
  */
 
+import { AGENT_LIMITS } from "@mykavo/keyword-agent/pure";
+import { FREE_REWRITES_PER_POST, FREE_VISIBLE_KEYWORDS, keywordAllowanceSummary } from "./ai-keywords";
+
 export type DocBlock =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
@@ -389,6 +392,106 @@ export const DOC_SECTIONS: DocSection[] = [
     ],
   },
   {
+    slug: "ai-keywords",
+    title: "AI Keywords & Blog Writer",
+    description:
+      "How MyKavo finds the keywords worth writing about for your site and drafts the blog post, and what each plan allows.",
+    articles: [
+      {
+        slug: "keywords-and-blog-writer",
+        title: "AI Keywords & Blog Writer: find what to write, then draft it",
+        description:
+          "What the AI Keywords & Blog Writer does, where its keywords come from, what a drafted post contains, and the monthly allowances per plan.",
+        keywords: ["ai blog writer", "ai keyword research", "striking distance keywords", "seo blog post generator"],
+        capsule:
+          "The AI Keywords & Blog Writer is the part of MyKavo that helps you win new search traffic. It reads your website and learns your business, finds the keywords worth writing about from your Search Console data, Google search suggestions and live search results, ranks them by what to write first, and drafts a full SEO blog post in one click. You edit the draft and copy it into your site.",
+        blocks: [
+          {
+            type: "p",
+            text: "Monitoring protects the traffic you have; AI Keywords helps you win more. You find it in the dashboard under AI Keywords.",
+          },
+          {
+            type: "steps",
+            name: "Write an SEO blog post with the MyKavo AI Keywords & Blog Writer",
+            description:
+              "Confirm your business profile, run a keyword report, then have MyKavo draft a blog post for the keyword you choose.",
+            items: [
+              {
+                title: "Confirm your business profile",
+                text: "MyKavo reads your website and fills in a short profile: your business, audience, services, market and language. Check it and correct anything that is off, because every keyword and post is based on it.",
+              },
+              {
+                title: "Connect Search Console (optional)",
+                text: "Connecting Google Search Console is optional but makes the results better: MyKavo can then use the searches your site already appears for, including striking distance searches where you rank 8 to 20.",
+              },
+              {
+                title: "Run a keyword report",
+                text: "MyKavo combines your Search Console data with Google search suggestions and today's live search results, and ranks the keywords by what to write first.",
+              },
+              {
+                title: "Write the post",
+                text: "Pick a keyword and MyKavo writes a full SEO blog post in one click. If the first version is not right, each post includes one free rewrite.",
+              },
+              {
+                title: "Edit and publish it yourself",
+                text: "Edit the post in MyKavo, then copy it into your site. The post stays a draft in MyKavo until you do.",
+              },
+            ],
+          },
+          { type: "h2", text: "What a drafted post contains" },
+          {
+            type: "ul",
+            items: [
+              "A title and a URL slug",
+              "A meta description",
+              "The article itself",
+              "An FAQ section",
+              "JSON-LD structured data",
+              "Review notes",
+            ],
+          },
+          {
+            type: "note",
+            text: "MyKavo does not publish to your site. There is no automatic WordPress publishing yet: you copy the finished post into your site yourself.",
+          },
+          { type: "h2", text: "Allowances" },
+          {
+            type: "table",
+            head: ["", "Free", "Starter", "Pro", "Agency"],
+            rows: [
+              ["Keyword reports a month", String(AGENT_LIMITS.free.reports), String(AGENT_LIMITS.starter.reports), String(AGENT_LIMITS.pro.reports), String(AGENT_LIMITS.agency.reports)],
+              ["Blog posts a month", String(AGENT_LIMITS.free.posts), String(AGENT_LIMITS.starter.posts), String(AGENT_LIMITS.pro.posts), String(AGENT_LIMITS.agency.posts)],
+              ["Keywords shown per report", `Top ${FREE_VISIBLE_KEYWORDS}`, "All", "All", "All"],
+            ],
+          },
+          {
+            type: "p",
+            text: `Allowances refill every month: on your billing date on paid plans, and on your signup date on Free. Each post includes ${FREE_REWRITES_PER_POST} free rewrite.`,
+          },
+          { type: "h2", text: "What it does not do" },
+          {
+            type: "p",
+            text: "It does not track rankings, analyze backlinks or publish to your site. Treat every draft as a draft: read it, check the facts about your business, and edit it before it goes live. MyKavo does not promise rankings or traffic from a post.",
+          },
+        ],
+        faqs: [
+          {
+            q: "Do I need Google Search Console?",
+            a: "No. Search Console is optional. Without it, MyKavo still finds keywords from Google search suggestions and live search results; with it, MyKavo can also use the searches your site already appears for, which usually gives better results.",
+          },
+          {
+            q: "How many keyword reports and blog posts do I get?",
+            a: `${keywordAllowanceSummary()}. Allowances refill monthly.`,
+          },
+          {
+            q: "Does MyKavo publish the post to my website?",
+            a: "No. The post stays a draft in MyKavo. You edit it there and copy it into your site; there is no automatic WordPress publishing yet.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     slug: "platform",
     title: "Plans, security and data",
     description:
@@ -420,6 +523,8 @@ export const DOC_SECTIONS: DocSection[] = [
               ["Email, Slack, Discord and webhook alerts", "Included", "Included", "Included"],
               ["WordPress plugin", "Included", "Included", "Included"],
               ["WordPress Safe Updates (a check after every update)", "-", "Included", "Included"],
+              ["AI keyword reports a month", String(AGENT_LIMITS.free.reports), String(AGENT_LIMITS.pro.reports), String(AGENT_LIMITS.agency.reports)],
+              ["AI blog posts a month", String(AGENT_LIMITS.free.posts), String(AGENT_LIMITS.pro.posts), String(AGENT_LIMITS.agency.posts)],
             ],
           },
           { type: "h2", text: "Starting on Free" },

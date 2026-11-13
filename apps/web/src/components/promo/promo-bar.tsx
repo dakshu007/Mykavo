@@ -9,8 +9,9 @@ import { campaignPlansLabel, campaignPrice, countdownParts, formatUsd, type Camp
 import { PROMO_ATTR } from "@/lib/campaign-client";
 
 /**
- * The seasonal offer bar: one slim strip across the top of the page, with no
- * close button - it goes away on its own when the offer ends. Each campaign
+ * The seasonal offer bar: one slim strip across the top of the page. It goes
+ * away on its own when the offer ends; on the marketing pages it has no close
+ * button, in the dashboard it can be closed (closable, Dismissible). Each campaign
  * has its own look: Halloween has bats and a bobbing ghost; Black Friday has
  * falling gold sparks, a flickering sign and a pulsing price tag. Light
  * sweeps over both and the countdown ticks every second; all of that stops
@@ -24,11 +25,14 @@ export function PromoBar({
   variant,
   href,
   placement,
+  closable = false,
 }: {
   campaign: Campaign;
   variant: "fixed" | "inline";
   href: string;
   placement: string;
+  /** A close button sits at the right edge (the dashboard's Dismissible): keep content clear of it. */
+  closable?: boolean;
 }) {
   // Null until mounted: the server can't know the visitor's clock, and a
   // countdown rendered there would disagree with the first client render.
@@ -98,7 +102,9 @@ export function PromoBar({
       />
       {bf ? <Sparks /> : <Bats />}
 
-      <div className="relative mx-auto flex h-full max-w-6xl items-center justify-center gap-3 px-3 text-[13px] sm:gap-4 sm:px-5">
+      <div
+        className={`relative mx-auto flex h-full max-w-6xl items-center justify-center gap-3 px-3 text-[13px] sm:gap-4 sm:px-5 ${closable ? "pr-10 sm:pr-10" : ""}`}
+      >
         {bf ? (
           <span className="bf-stamp inline-flex h-6 shrink-0 items-center gap-1 rounded-md bg-[#FFCF00] px-1.5 font-mono text-[11px] font-black text-[#0B0B0B]">
             <Tag className="size-3" aria-hidden />-{campaign.percent}%

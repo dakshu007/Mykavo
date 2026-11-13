@@ -1,4 +1,5 @@
 import { formatLimit, getPlan } from "@/config/plans";
+import { AI_KEYWORDS_NAME, keywordAllowanceSummary } from "@/config/ai-keywords";
 import type { PageOverview } from "./types";
 
 const free = getPlan("free");
@@ -150,7 +151,7 @@ export const PAGE_OVERVIEWS: Record<string, PageOverview> = {
       "Each comparison goes capability by capability and states where the other category is the better choice.",
       "Keep a dedicated uptime tool if you need sub-minute checks, multi-region probing or phone escalation.",
       "A lightweight change detector is the better fit for watching a page you do not own, such as a competitor's pricing page.",
-      "Use a crawler for keyword research, rank tracking, backlink analysis or one-pass audits of very large sites.",
+      "Use an SEO suite or crawler for rank tracking, backlink analysis, large keyword databases or one-pass audits of very large sites.",
     ],
   },
 
@@ -181,7 +182,7 @@ export const PAGE_OVERVIEWS: Record<string, PageOverview> = {
       "A technical SEO crawler gives you a thorough snapshot of a site when you run it; MyKavo runs a comparable crawl and then keeps watching, comparing each scan against an approved baseline. The difference is not depth on day one but whether anyone notices a regression introduced weeks later.",
     takeaways: [
       `MyKavo's site audit crawls up to ${formatLimit(pro.limits.siteAuditPages)} pages per audit on Pro and joins Search Console data to its findings.`,
-      "Crawlers win on depth for very large sites, keyword research, rank tracking, backlinks and JavaScript rendering across a full crawl.",
+      "Crawlers and SEO suites win on depth for very large sites, rank tracking, backlinks and JavaScript rendering across a full crawl.",
       "MyKavo's audit is fetch-based; its change monitoring renders every monitored page in a real browser and captures a screenshot.",
       "An audit finds what is wrong today; monitoring catches the canonical tag that was correct last week and is not anymore.",
     ],
@@ -302,10 +303,10 @@ export const PAGE_OVERVIEWS: Record<string, PageOverview> = {
   },
 
   "/pricing": {
-    answer: `MyKavo has four plans: Free at $0 for ${FREE_PLAN}, Starter at $${starter.priceMonthlyUsd}/month for ${sites(starter.limits.websites)}, Pro at $${pro.priceMonthlyUsd}/month for ${sites(pro.limits.websites)} and Agency at $${agency.priceMonthlyUsd}/month for ${sites(agency.limits.websites)}, with daily scans on every paid plan. Every new account starts on Free, with no card.`,
+    answer: `MyKavo has four plans: Free at $0 for ${FREE_PLAN}, Starter at $${starter.priceMonthlyUsd}/month for ${sites(starter.limits.websites)}, Pro at $${pro.priceMonthlyUsd}/month for ${sites(pro.limits.websites)} and Agency at $${agency.priceMonthlyUsd}/month for ${sites(agency.limits.websites)}, with daily scans on every paid plan. Every plan includes website monitoring and the ${AI_KEYWORDS_NAME}, and every new account starts on Free, with no card.`,
     takeaways: [
-      `Starter covers ${formatLimit(starter.limits.pagesPerWebsite)} pages per website, Pro ${formatLimit(pro.limits.pagesPerWebsite)} and Agency ${formatLimit(agency.limits.pagesPerWebsite)}.`,
-      `Starter and Pro both include every monitoring feature; Pro adds more websites, up to ${pro.limits.maxMembers} team members and a year of history.`,
+      `AI keyword reports and blog posts: ${keywordAllowanceSummary()}, refilled monthly.`,
+      `Starter covers ${formatLimit(starter.limits.pagesPerWebsite)} pages per website, Pro ${formatLimit(pro.limits.pagesPerWebsite)} and Agency ${formatLimit(agency.limits.pagesPerWebsite)}; Pro adds up to ${pro.limits.maxMembers} team members and a year of history.`,
       `Agency adds white-label client reports that email themselves to clients, and room for ${agency.limits.maxMembers} people.`,
       "If you reach a limit, monitoring continues; you are asked to upgrade before adding more websites or pages.",
     ],

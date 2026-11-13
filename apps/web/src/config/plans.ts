@@ -29,6 +29,13 @@ import {
   TRIAL_MAX_WEBSITES,
   type PlanTier,
 } from "@mykavo/shared";
+import { AGENT_LIMITS } from "@mykavo/keyword-agent/pure";
+
+/** The AI Keywords and Blog Writer line on a plan card, from the agent's own limits. */
+function keywordAgentLine(id: keyof typeof AGENT_LIMITS): string {
+  const { reports, posts } = AGENT_LIMITS[id];
+  return `AI Keywords & Blog Writer - ${reports} keyword report${reports === 1 ? "" : "s"} and ${posts} blog post${posts === 1 ? "" : "s"} a month`;
+}
 
 export type PlanId = PlanTier;
 
@@ -159,6 +166,7 @@ export const plans: Plan[] = [
       "1 website",
       "5 monitored pages",
       "Weekly scans",
+      keywordAgentLine("free"),
       "AI Website Insights - 10 explanations a month",
       "30-day history",
       "Email alerts",
@@ -199,6 +207,7 @@ export const plans: Plan[] = [
       "2 websites",
       "10 monitored pages per website",
       "Daily scans",
+      keywordAgentLine("starter"),
       "AI Website Insights - 30 explanations a month",
       "Manual scans - 5 a day",
       "Post-deploy checks",
@@ -242,6 +251,7 @@ export const plans: Plan[] = [
       "8 websites",
       "15 monitored pages per website",
       "Daily scans",
+      keywordAgentLine("pro"),
       "AI Website Insights - 100 explanations a month",
       "Manual scans - 20 a day",
       "Post-deploy checks",
@@ -288,6 +298,7 @@ export const plans: Plan[] = [
       "30 websites",
       "25 monitored pages per website",
       "Daily scans",
+      keywordAgentLine("agency"),
       "AI Website Insights - 500 explanations a month",
       "Manual scans - 100 a day",
       "White-label client reports",
@@ -399,6 +410,7 @@ export function unlimitedAgencyPlan(): Plan {
       "Unlimited websites",
       "Unlimited monitored pages",
       "Daily scans",
+      "AI Keywords & Blog Writer - unlimited keyword reports and blog posts",
       "AI Website Insights - unlimited explanations",
       "Unlimited manual scans",
       "White-label client reports",

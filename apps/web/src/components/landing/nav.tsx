@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, Sparkles, Wrench, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { SitePromoBar } from "./campaign-announcement";
 import { GoogleIcon, McpIcon } from "@/components/brand/integration-icons";
@@ -19,6 +19,9 @@ type MenuItem = { href: string; label: string; badge?: string };
 
 /** The Claude and ChatGPT connector page: first in the nav, with the MCP mark, so it is never missed. */
 const MCP_LINK = { href: "/ai-connector", label: "MCP" };
+
+/** The AI Keywords & Blog Writer page, new in November 2026: second, with a New badge. */
+const BLOG_WRITER_LINK = { href: "/ai-blog-writer", label: "AI Writer" };
 
 const integrations: MenuItem[] = [
   { href: "/ai-connector", label: "Claude & ChatGPT" },
@@ -232,6 +235,14 @@ export function LandingNav() {
             {MCP_LINK.label}
           </Link>
           <Link
+            href={BLOG_WRITER_LINK.href}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13.5px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
+          >
+            <Sparkles className="size-3.5 text-[#151515]" aria-hidden />
+            {BLOG_WRITER_LINK.label}
+            <SoonBadge>New</SoonBadge>
+          </Link>
+          <Link
             href="/pricing"
             className="rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
           >
@@ -242,10 +253,10 @@ export function LandingNav() {
             <Link
               key={l.label}
               href={l.href}
-              // Android steps aside on narrower desktops to make room for the
-              // AI link; it stays in the mobile menu and the footer.
+              // Android and Support step aside on narrower desktops to make room
+              // for the AI links; they stay in the mobile menu and the footer.
               className={`rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515] ${
-                l.href === "/android-app" ? "hidden xl:inline-flex" : ""
+                l.href === "/android-app" || l.href === "/support" ? "hidden xl:inline-flex" : ""
               }`}
             >
               {l.label}
@@ -306,6 +317,15 @@ export function LandingNav() {
             >
               <McpIcon className="size-[18px]" />
               {MCP_LINK.label}
+            </Link>
+            <Link
+              href={BLOG_WRITER_LINK.href}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-xl px-3 py-3 text-[15px] font-semibold text-[#151515] transition-colors hover:bg-[#151515]/[0.04]"
+            >
+              <Sparkles className="size-[18px]" aria-hidden />
+              AI Keywords &amp; Blog Writer
+              <SoonBadge>New</SoonBadge>
             </Link>
             {links.map((l) => (
               <Link

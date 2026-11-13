@@ -906,3 +906,13 @@ html[data-promo] body:has([data-landing-nav])::before {
 @media (prefers-reduced-motion: reduce) {
   .flap-digit { animation: none; }
 }
+
+/* Dashboard toasts (components/keywords/ai-job-watcher.tsx). */
+@keyframes mk-toast-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.mk-toast-in { animation: mk-toast-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .mk-toast-in { animation: none; }
+}

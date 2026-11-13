@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AI_JOB_STARTED_EVENT } from "@/components/keywords/ai-job-watcher";
 
 export interface JobState {
   id: string;
@@ -69,6 +70,9 @@ export function useAgentJob(initial: JobState | null, onDone: (job: JobState) =>
       const data = (await res.json()) as { jobId?: string; error?: string };
       if (!res.ok || !data.jobId) return data.error ?? "Could not start. Please try again.";
       setJob({ id: data.jobId, status: "queued", step: "Waiting to start", progress: 0, error: null });
+      // The dashboard-wide watcher starts following it, so leaving this page
+      // still ends in a "your post is ready" alert (ai-job-watcher.tsx).
+      window.dispatchEvent(new Event(AI_JOB_STARTED_EVENT));
       return null;
     } catch {
       return "Could not reach MyKavo. Check your connection and try again.";

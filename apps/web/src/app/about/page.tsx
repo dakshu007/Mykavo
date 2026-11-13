@@ -16,7 +16,7 @@ import {
 export const metadata: Metadata = withSocial({
   title: "About - The Story Behind MyKavo",
   description:
-    "MyKavo comes from the Tamil word Kaval - protection, vigilance, standing guard. The story behind the name, the reason the product exists, and the developer building it.",
+    "MyKavo comes from the Tamil word Kaval - protection, vigilance, standing guard. The story behind the name, why MyKavo pairs website monitoring with an AI Keywords & Blog Writer, and the developer building it.",
   keywords: [
     "about MyKavo",
     "MyKavo story",
@@ -45,8 +45,8 @@ const principles = [
   },
   {
     icon: Radar,
-    title: "Focused on one question",
-    desc: "Did something important change or break on any website I manage? Everything MyKavo does serves that single question.",
+    title: "Focused on the questions that matter",
+    desc: "Monitoring answers one: did something important change or break on any website I manage? AI Keywords answers the next: what should I write to win more search traffic?",
   },
 ];
 
@@ -101,7 +101,8 @@ export default function AboutPage() {
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-[15px] leading-7 text-[#6B6B60]">
             MyKavo watches the websites you manage so a silent deploy, a plugin update, or a
-            client edit never turns into lost rankings, lost sales, or an awkward phone call.
+            client edit never turns into lost rankings, lost sales, or an awkward phone call. Then
+            its AI Keywords &amp; Blog Writer helps those sites win more search traffic.
           </p>
         </section>
 
@@ -179,6 +180,15 @@ export default function AboutPage() {
               constantly checking your website, MyKavo does the watching for you, so you can
               focus on building your business.
             </p>
+            <p>
+              Keeping a site safe turned out to be only half of the job. The other half is growing
+              it, and the same small teams had no simple way to know what to write next. So MyKavo
+              now includes the{" "}
+              <span className="font-semibold text-[#151515]">AI Keywords &amp; Blog Writer</span>: it
+              learns your business from your website, finds the keywords worth writing about, and
+              drafts the blog post for you to edit and publish. Monitoring protects the traffic you
+              have. AI Keywords helps you win more.
+            </p>
           </div>
         </section>
 
@@ -242,8 +252,8 @@ export default function AboutPage() {
               Put a guardian on your websites.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#F5F5F0]/70">
-              Start on the Free plan and upgrade when you need more. Monitoring in minutes, no credit card
-              required.
+              Start on the Free plan and upgrade when you need more. Monitoring in minutes, a free
+              keyword report and blog post every month, no credit card required.
             </p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Link

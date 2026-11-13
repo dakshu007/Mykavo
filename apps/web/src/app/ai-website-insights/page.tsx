@@ -21,6 +21,7 @@ import { AI_INSIGHTS_PATH } from "@/components/landing/ai-insights";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { getPlan, plans } from "@/config/plans";
 import { site } from "@/config/site";
+import { AI_KEYWORDS_NAME, keywordAllowanceSummary } from "@/config/ai-keywords";
 import {
   ORGANIZATION_ID,
   breadcrumbList,
@@ -106,6 +107,10 @@ const faqs = [
   {
     q: "What data does the AI see?",
     a: "Only the details of the detected change: the page address, the change type and severity, and the before and after values, plus status counts for weekly notes. It never sees passwords or your dashboard. Requests go to Anthropic's Claude API, which does not train its models on this data.",
+  },
+  {
+    q: "Does MyKavo AI also help with content?",
+    a: `Yes, through a separate feature: the ${AI_KEYWORDS_NAME}. AI Website Insights explains changes on the pages you monitor; AI Keywords helps you win more search traffic. It learns your business from your website, finds the keywords worth writing about from your Search Console data, Google search suggestions and live search results, and drafts a full SEO blog post for you to edit and copy into your site. Every plan includes it: ${keywordAllowanceSummary()}.`,
   },
   {
     q: "Which AI model does MyKavo use?",
@@ -446,7 +451,8 @@ export default function AiWebsiteInsightsPage() {
               </table>
             </div>
             <p className="mt-5 text-center text-[14px] text-[#6B6B60]">
-              Every plan also includes website change monitoring and Site Audit.{" "}
+              Every plan also includes website change monitoring, Site Audit and the AI Keywords &amp; Blog
+              Writer.{" "}
               <Link href="/pricing" className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4">
                 Compare plans
               </Link>

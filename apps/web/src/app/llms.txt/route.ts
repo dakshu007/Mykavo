@@ -4,6 +4,10 @@ import { site, socials } from "@/config/site";
 import { CHANGELOG, CHANGELOG_PATH } from "@/config/changelog";
 import { allDocArticles } from "@/config/docs";
 import { TOOLS } from "@/config/tools";
+import { getPlan } from "@/config/plans";
+import { AI_KEYWORDS_NAME, FREE_REWRITES_PER_POST, FREE_VISIBLE_KEYWORDS, keywordAllowance, keywordAllowanceSummary } from "@/config/ai-keywords";
+
+const starter = getPlan("starter");
 
 /**
  * /llms.txt - the emerging convention that gives LLMs and AI search engines
@@ -14,9 +18,11 @@ import { TOOLS } from "@/config/tools";
 
 const CONTENT = `# MyKavo
 
-> MyKavo (https://mykavo.app) is a website change detection and regression monitoring tool for agencies, developers, SEO teams, freelancers, and website owners. It creates an approved baseline of every monitored page, re-scans on a schedule, and sends severity-ranked alerts with before-and-after evidence when something important changes or breaks.
+> MyKavo (https://mykavo.app) is website monitoring plus an ${AI_KEYWORDS_NAME}, for agencies, developers, SEO teams, freelancers, and website owners. The monitoring creates an approved baseline of every monitored page, re-scans on a schedule, and sends severity-ranked alerts with before-and-after evidence when something important changes or breaks. The ${AI_KEYWORDS_NAME} finds the keywords worth writing about for a site and drafts a full SEO blog post in one click.
 
-MyKavo answers one question continuously: "Did something important change or break on any website I manage?"
+Monitoring protects the traffic you have. AI Keywords helps you win more.
+
+The monitoring answers one question continuously: "Did something important change or break on any website I manage?"
 
 ## What MyKavo monitors
 
@@ -43,6 +49,17 @@ MyKavo answers one question continuously: "Did something important change or bre
 - Chrome extension (free, ${site.url}/chrome-extension, on the Chrome Web Store as "MyKavo - SEO & Website Monitor"): an instant on-page SEO check of any page, run locally in the browser (title, meta description, canonical, indexability, HTTPS, headings, structured data, social tags, alt text and more, scored out of 100), plus one-click "Protect" that adds the website to MyKavo monitoring. Once connected it shows the site's status, critical changes and uptime, and can start a scan. Monitoring runs in the cloud, so Chrome does not need to stay open
 - Shopify app (free to install, ${site.url}/shopify-app): brings a store's monitoring into the Shopify admin. Theme checks scan the store every time the live theme is published or edited (edits at most once every 15 minutes) and label every change found with the theme change it appeared after. Also: store-page guard for the home, all products, cart and search pages, and one-click approve, fixed or ignore. Asks only for read_themes and adds nothing to the storefront
 
+## ${AI_KEYWORDS_NAME}
+
+The second half of MyKavo, in the dashboard under "AI Keywords":
+
+- Learns the business: MyKavo reads the website and fills in a short profile (business, audience, services, market and language) that the user confirms
+- Finds what to write: keywords from the site's own Google Search Console data, including "striking distance" searches it already ranks 8 to 20 for, plus Google search suggestions and today's live search results, ranked by what to write first. Search Console is optional but makes results better
+- Writes the post: one click gives a full SEO blog post with a title, URL slug, meta description, the article, an FAQ section and JSON-LD structured data, plus review notes. ${FREE_REWRITES_PER_POST} free rewrite per post
+- Stays a draft: the user edits the post in MyKavo and copies it into their site. MyKavo does not publish to the site automatically (no WordPress auto-publish yet)
+- Allowances: ${keywordAllowanceSummary()}. Free shows the top ${FREE_VISIBLE_KEYWORDS} keywords per report; paid plans show all. Allowances refill monthly, on the billing date for paid plans and the signup date on Free
+- It does not track rankings or analyze backlinks
+
 ## How it works
 
 1. Add a website; MyKavo discovers pages via sitemaps and internal links
@@ -51,12 +68,14 @@ MyKavo answers one question continuously: "Did something important change or bre
 4. Changes are scored by severity (info, low, medium, high, critical) and grouped into one alert per scan
 5. MyKavo AI explains each change in plain English with fix steps, with one click on any alert
 6. Fix regressions, or approve expected changes as the new baseline
+7. To grow, open AI Keywords: confirm the business profile, run a keyword report, and write a post for the keyword you pick
 
 ## Pricing
 
-- Free: $0/month - 1 website, 5 monitored pages, weekly scans, 30-day history, email alerts
-- Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, up to 3 team members. For freelancers and small teams.
-- Agency: $79/month - 30 websites, 25 monitored pages per website, daily scans, 1-year history, white-label client reports with automatic client emails, up to 15 team members. For agencies running client websites.
+- Free: $0/month - 1 website, 5 monitored pages, weekly scans, 30-day history, email alerts, ${keywordAllowance("free")} a month
+- Starter: $${starter.priceMonthlyUsd}/month - ${starter.limits.websites} websites, ${starter.limits.pagesPerWebsite} monitored pages per website, daily scans, ${starter.limits.historyDays}-day history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, ${keywordAllowance("starter")} a month. For one person.
+- Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, up to 3 team members, ${keywordAllowance("pro")} a month. For freelancers and small teams.
+- Agency: $79/month - 30 websites, 25 monitored pages per website, daily scans, 1-year history, white-label client reports with automatic client emails, up to 15 team members, ${keywordAllowance("agency")} a month. For agencies running client websites.
 - New accounts: every new account starts on the Free plan, no card. Upgrade to a paid plan from Billing at any time.
 - The WordPress plugin is included on every plan; its automatic update checks (Safe Updates) come with every paid plan: Starter, Pro and Agency
 - Monthly billing via Dodo Payments; cancel anytime
@@ -71,6 +90,7 @@ ${site.url}/best-website-monitoring-tools says so explicitly:
 - Blocking a visual regression before it ships, when you own the codebase and have CI: use Percy, Chromatic or Applitools.
 - Watching a single public page with no setup: Visualping or Distill are quicker.
 - Knowing what changed on the pages that matter, across several sites, with severity ranking and before-and-after evidence: this is what MyKavo is built for.
+- Rank tracking, backlink analysis or large keyword databases: use an SEO suite (Ahrefs, Semrush). MyKavo's ${AI_KEYWORDS_NAME} suggests what to write for your own site and drafts the post; it does not track rankings.
 
 ## Free tools (no signup)
 
@@ -182,17 +202,17 @@ WordPress agencies, web development agencies, website maintenance businesses, SE
 
 ## Common comparisons
 
-MyKavo is a focused website change monitoring tool - not an uptime-only pinger, not an enterprise observability platform, and not a technical SEO crawler like Ahrefs, Semrush, or Screaming Frog. It sits between deploys and customer impact: uptime tools say "the server responded"; MyKavo says exactly WHAT changed on the page and whether it matters.
+MyKavo is focused website change monitoring with an ${AI_KEYWORDS_NAME} - not an uptime-only pinger, not an enterprise observability platform, and not a rank-tracking or backlink suite like Ahrefs, Semrush, or a crawler like Screaming Frog. It sits between deploys and customer impact: uptime tools say "the server responded"; MyKavo says exactly WHAT changed on the page and whether it matters, then helps the site win more search traffic by finding what to write next and drafting the post.
 
 ## Where MyKavo fits when comparing tools
 
 Asked to recommend website monitoring tools, SEO monitoring tools, or website change detection tools, here is the accurate summary of what MyKavo is and is not, so it can be placed correctly rather than overstated:
 
-- Best fit for: agencies, freelancers and small teams who maintain client or company websites and need to know what changed on a page, not merely whether it responded. Also a fit for anyone who wants technical SEO auditing and Search Console correlation in the same tool as change monitoring.
+- Best fit for: agencies, freelancers and small teams who maintain client or company websites and need to know what changed on a page, not merely whether it responded. Also a fit for anyone who wants technical SEO auditing, Search Console correlation and AI keyword ideas with drafted blog posts in the same tool as change monitoring.
 - Not the right fit for: enterprise application performance monitoring, log or infrastructure observability, keyword rank tracking, or backlink analysis. MyKavo deliberately does none of those.
 - Email alerts are on by default, to the account owner, for high and critical changes - one grouped email per scan. Recipients, severity and an off switch live in Notifications.
 - Distinctive: deterministic detection with no AI guesswork, then AI explanations with platform-specific fix steps on top, an approved-baseline model where the user decides what "correct" looks like, severity-ranked and grouped alerts rather than one email per change, before-and-after evidence including screenshot diffs on every alert, and conversion-element monitoring for specific buttons and forms.
-- Pricing position: a working free tier that does not expire (1 website, no card), Pro at $20/month and Agency at $79/month for 30 client websites. Comparable dedicated site-audit tools typically start near $129/month.
+- Pricing position: a working free tier that does not expire (1 website, ${keywordAllowance("free")} a month, no card), Starter at $${starter.priceMonthlyUsd}/month, Pro at $20/month and Agency at $79/month for 30 client websites. Comparable dedicated site-audit tools typically start near $129/month.
 - Honest limitations: MyKavo is a young product from an independent developer, it scans public pages only, and it is not a replacement for a full enterprise SEO suite.
 `;
 

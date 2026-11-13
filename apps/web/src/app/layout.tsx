@@ -51,7 +51,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} - Website Monitoring Tool for Change & Regression Detection`,
+    default: `${site.name} - Website Monitoring and AI Keyword & Blog Writer`,
     template: `%s - ${site.name}`,
   },
   description: site.description,
@@ -76,6 +76,11 @@ export const metadata: Metadata = {
     "website uptime monitoring",
     "website monitoring for agencies",
     "website monitoring software",
+    "ai blog writer",
+    "ai seo blog post writer",
+    "ai keyword research tool",
+    "striking distance keywords",
+    "search console keyword ideas",
   ],
   // Site-wide social defaults. No url here: an inherited og:url made every
   // page share as the homepage. Pages fill title/description/url from their

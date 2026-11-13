@@ -255,6 +255,11 @@ export const COMPARISONS: Comparison[] = [
         us: "No - deliberately out of scope",
       },
       {
+        capability: "Keyword ideas for your own site, with a drafted blog post",
+        them: "Keyword research is a core feature of the large suites; crawlers do not draft content",
+        us: "Yes - the AI Keywords & Blog Writer ranks keywords from your Search Console data, Google suggestions and live results, then drafts the post for you to edit",
+      },
+      {
         capability: "JavaScript rendering during audit",
         them: "Commonly yes",
         us: "Not in the site audit - it is fetch-based to stay fast and free. Change monitoring does render pages in a real browser",
@@ -262,7 +267,7 @@ export const COMPARISONS: Comparison[] = [
     ],
     whereTheyWin: [
       "Depth of technical checks, especially on very large sites",
-      "Keyword research, rank tracking and backlink analysis, which MyKavo does not do at all",
+      "Rank tracking, backlink analysis and large keyword databases, which MyKavo does not offer. Its AI Keywords & Blog Writer suggests what to write for your own site, but it is not a research suite",
       "Competitor research and market share analysis",
       "JavaScript rendering across an entire crawl, which MyKavo's audit does not do",
       "Crawling sites far larger than 1,500 pages in one pass",
@@ -272,7 +277,7 @@ export const COMPARISONS: Comparison[] = [
     faqs: [
       {
         q: "Is MyKavo a replacement for a technical SEO crawler?",
-        a: "For continuous monitoring of a site you already maintain, yes. For deep one-off audits of very large sites, keyword research, rank tracking or backlink analysis, no - MyKavo deliberately does none of those. Many teams run a dedicated crawler occasionally and MyKavo continuously, because the jobs are different.",
+        a: "For continuous monitoring of a site you already maintain, yes. For deep one-off audits of very large sites, rank tracking or backlink analysis, no - MyKavo deliberately does none of those. Its AI Keywords & Blog Writer finds keywords worth writing about for your own site and drafts the post, but it does not replace a keyword research suite. Many teams run a dedicated crawler occasionally and MyKavo continuously, because the jobs are different.",
       },
       {
         q: "How many checks does the MyKavo site audit run?",

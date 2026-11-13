@@ -43,7 +43,7 @@ export function llmsFullText(): string {
   const parts: string[] = [
     "# MyKavo - full documentation and release notes",
     "",
-    `> MyKavo (${site.url}) is a website change detection and regression monitoring tool. It keeps an approved baseline of every monitored page, re-scans on a schedule, and sends severity-ranked alerts with before-and-after evidence when something important changes or breaks. The short summary is at ${site.url}/llms.txt.`,
+    `> MyKavo (${site.url}) is website change and regression monitoring plus an AI Keywords & Blog Writer. The monitoring keeps an approved baseline of every monitored page, re-scans on a schedule, and sends severity-ranked alerts with before-and-after evidence when something important changes or breaks. The AI Keywords & Blog Writer finds the keywords worth writing about for a site and drafts the SEO blog post. The short summary is at ${site.url}/llms.txt.`,
     "",
   ];
 

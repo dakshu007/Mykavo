@@ -42,6 +42,7 @@ const columns = [
     links: [
       { href: "/whats-new-on-mykavo", label: "What's new" },
       { href: "/ai-website-insights", label: "AI Insights" },
+      { href: "/ai-blog-writer", label: "AI Keywords & Blog Writer" },
       { href: "/ai-connector", label: "AI connector" },
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#categories", label: "What it watches" },
@@ -131,6 +132,9 @@ export function LandingFooter() {
               <span className="text-lg font-semibold tracking-tight text-[#151515]">MyKavo</span>
             </Link>
             <p className="mt-4 max-w-60 text-sm leading-6 text-[#6B6B60]">{site.tagline}</p>
+            <p className="mt-2 max-w-60 text-[13px] leading-5 text-[#6B6B60]">
+              Website monitoring and an AI Keywords &amp; Blog Writer, in one place.
+            </p>
 
             {/* Socials in the v4 language: ink border + offset shadow, gold on
                 hover, shadow collapsing as the tile presses into the page. */}

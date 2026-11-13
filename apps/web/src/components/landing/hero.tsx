@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { McpIcon } from "@/components/brand/integration-icons";
+import { ArrowRight, PenLine } from "lucide-react";
 import { GoogleCta } from "./google-cta";
 import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
 import { getPlan } from "@/config/plans";
@@ -25,17 +24,18 @@ export function LandingHero() {
       />
 
       <div className="relative mx-auto max-w-6xl">
-        {/* Launch pill: the Claude and ChatGPT connector (MCP). A link, not a
-            badge - the one place on the page that says what's new, and where
-            to see it. */}
+        {/* Launch pill: the AI Keywords & Blog Writer. A link, not a badge -
+            the one place on the page that says what's new, and where to see
+            it, on the feature's own page. (The Claude and ChatGPT connector
+            keeps its "MCP" link in the nav.) */}
         <div className="flex justify-center">
           <Link
-            href="/ai-connector?from=home_pill"
+            href="/ai-blog-writer"
             className="hero-launch group relative flex items-center gap-2.5 overflow-hidden rounded-full border border-[#151515] bg-white py-2 pl-3.5 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
           >
-            <McpIcon className="size-3.5 shrink-0" />
-            <span className="sm:hidden">Claude &amp; ChatGPT connector</span>
-            <span className="hidden sm:inline">Ask Claude &amp; ChatGPT about your sites</span>
+            <PenLine className="size-3.5 shrink-0" aria-hidden />
+            <span className="sm:hidden">New: AI Keywords &amp; Blog Writer</span>
+            <span className="hidden sm:inline">New: AI Keywords &amp; Blog Writer, know what to write next</span>
             <span className="hidden items-center gap-1 text-[#151515]/60 transition-colors group-hover:text-[#151515] sm:inline-flex">
               See how <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
             </span>
@@ -83,12 +83,16 @@ export function LandingHero() {
           section of their own further down, under a heading that frames them
           correctly: eight kinds of change, ONE monitoring layer. Here the copy
           carries the loop, which is the thing a first-time visitor has to
-          understand before any of the breadth means anything.
+          understand before any of the breadth means anything. The last
+          sentence names the second half of the product, the AI Keywords &
+          Blog Writer, in one line: monitoring protects the traffic you have,
+          AI Keywords helps you win more.
         */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg lg:mt-4 lg:max-w-3xl [@media(min-width:1024px)_and_(max-height:780px)]:mt-3 [@media(min-width:1024px)_and_(max-height:780px)]:text-base">
-          Pick the pages that matter on every website you manage. MyKavo approves a known-good
-          baseline of each, re-checks them around the clock, and tells you the moment one
-          changes - with before-and-after proof and an AI explanation of how to fix it.
+          Pick the pages that matter on every website you manage. MyKavo re-checks them around
+          the clock against a known-good baseline and tells you the moment one changes, with
+          before-and-after proof and an AI explanation of how to fix it. Then its AI Keywords
+          &amp; Blog Writer finds what to write next and drafts the post.
         </p>
 
         {/* WordPress first (see hero-wordpress.tsx for why); the emailed audit

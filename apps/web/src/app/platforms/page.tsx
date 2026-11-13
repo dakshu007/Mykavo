@@ -379,7 +379,8 @@ export default function PlatformsPage() {
               MyKavo is a website change and regression monitor you can use from the web app at mykavo.app, a WordPress
               plugin, a Chrome extension, an MCP server for AI assistants and deploy hooks for CI. An Android app is
               available by request and a Shopify app is coming soon. Every platform uses the same MyKavo account, and new
-              accounts start on the free plan, which covers one website.
+              accounts start on the free plan, which covers one website. The AI Keywords &amp; Blog Writer, which finds
+              what to write next and drafts the post, lives in the web app.
             </p>
             <dl className="mt-5 grid gap-x-6 gap-y-3 border-t border-white/12 pt-5 sm:grid-cols-2">
               {[

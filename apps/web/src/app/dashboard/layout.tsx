@@ -25,6 +25,10 @@ import { getWorkspacePlan, getEffectiveWebsiteLimit } from "@/lib/limits";
 import { isMonitoringLive } from "@/lib/monitoring-live";
 import { getAppAccessStatus } from "@/lib/app-access";
 import { canDownloadApp } from "@mykavo/shared";
+import { cookies } from "next/headers";
+import { Dismissible } from "@/components/dashboard/dismissible";
+import { AiJobWatcher } from "@/components/keywords/ai-job-watcher";
+import { findLimitHit, HIDE_LIMIT_COOKIE, HIDE_OFFER_COOKIE, HIDE_PROMO_BAR_COOKIE } from "@/lib/dashboard-cards";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -77,15 +81,6 @@ export default async function DashboardLayout({
   // A seasonal offer, confirmed with Dodo, for workspaces that could buy:
   // Free or on a trial that is still running. Paying customers never see it.
   const liveCampaign = plan.id === "free" || plan.trial ? await getLiveCampaign().catch(() => null) : null;
-  const upgradeCard =
-    plan.id === "free" || plan.trial ? (
-      <UpgradeCard
-        websitesUsed={websitesUsed}
-        websiteLimit={websiteLimit}
-        trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
-        campaign={liveCampaign}
-      />
-    ) : null;
 
   // AI Keywords in the main nav once the rollout opens it to this user.
   const keywordAgent = rolloutAllows(
@@ -93,6 +88,48 @@ export default async function DashboardLayout({
     session.user.email,
     session.user.emailVerified === true,
   );
+
+  // A limit already used up (AI posts, keyword reports, websites, AI
+  // explanations) turns the sidebar card into "continue with the next plan".
+  // Only for people who can buy it, and never during a running trial (its
+  // card counts down instead).
+  const limitHit =
+    !plan.trial && canManageBilling(role)
+      ? await findLimitHit({ workspaceId: workspace.id, plan, websitesUsed, websiteLimit, keywordAgent })
+      : null;
+
+  // Closed cards and bars stay closed (components/dashboard/dismissible.tsx).
+  // Keyed by offer or by limit and period, so a new one still shows.
+  const jar = await cookies();
+  const offerKey = liveCampaign ? `campaign:${liveCampaign.id}` : "upgrade";
+  const showLimit = limitHit !== null && jar.get(HIDE_LIMIT_COOKIE)?.value !== limitHit.key;
+  const showOffer = (plan.id === "free" || Boolean(plan.trial)) && (Boolean(plan.trial) || jar.get(HIDE_OFFER_COOKIE)?.value !== offerKey);
+  const showPromoBar =
+    liveCampaign !== null && canManageBilling(role) && jar.get(HIDE_PROMO_BAR_COOKIE)?.value !== liveCampaign.id;
+
+  const card = (
+    <UpgradeCard
+      websitesUsed={websitesUsed}
+      websiteLimit={websiteLimit}
+      trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
+      campaign={liveCampaign}
+      limit={showLimit ? limitHit : null}
+    />
+  );
+  const upgradeCard = showLimit ? (
+    <Dismissible cookie={HIDE_LIMIT_COOKIE} value={limitHit.key} days={30} label="Close this notice">
+      {card}
+    </Dismissible>
+  ) : showOffer ? (
+    // A running trial's countdown can't be closed: it is the only place the end date shows.
+    plan.trial ? (
+      card
+    ) : (
+      <Dismissible cookie={HIDE_OFFER_COOKIE} value={offerKey} days={liveCampaign ? 40 : 14} label="Close this offer">
+        {card}
+      </Dismissible>
+    )
+  ) : null;
   const navAccess = { monitoringLive, appApproved, isBlogAdmin: blogAdmin, isPlatformAdmin: platformAdmin, keywordAgent };
   // A trial plan is already named "Pro trial" (config/plans.ts trialPlan).
   const planLabel = plan.name;
@@ -110,6 +147,7 @@ export default async function DashboardLayout({
       className="group/shell flex min-h-[calc(100vh/var(--dash-zoom,1))] w-full bg-surface"
     >
       <ActivityBeacon />
+      {keywordAgent ? <AiJobWatcher /> : null}
       {newSignup ? <SignupTracker userId={session.user.id} {...newSignup} /> : null}
       <CommandPalette
         isBlogAdmin={blogAdmin}
@@ -150,11 +188,19 @@ export default async function DashboardLayout({
               phone never sees the countdown of a trial that is still running.
               The plain Free upsell stays in the sidebar: on a phone it would
               sit above every page's content. */}
-          {liveCampaign && canManageBilling(role) ? (
-            <PromoBar campaign={liveCampaign} variant="inline" href="/dashboard/billing" placement="dashboard_bar" />
+          {showPromoBar && liveCampaign ? (
+            <Dismissible
+              cookie={HIDE_PROMO_BAR_COOKIE}
+              value={liveCampaign.id}
+              days={40}
+              label="Close this offer"
+              buttonClassName="right-2 top-[20px] -translate-y-1/2 text-[#9C9E93] hover:bg-white/10 hover:text-white"
+            >
+              <PromoBar campaign={liveCampaign} variant="inline" href="/dashboard/billing" placement="dashboard_bar" closable />
+            </Dismissible>
           ) : null}
           {emailVerified ? null : <VerifyEmailBanner email={session.user.email} />}
-          {plan.trial ? (
+          {plan.trial || showLimit ? (
             <div className="mb-4 max-w-md lg:hidden">{upgradeCard}</div>
           ) : null}
           {children}

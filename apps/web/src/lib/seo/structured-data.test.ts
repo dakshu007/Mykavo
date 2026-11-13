@@ -93,6 +93,8 @@ describe("FEATURE_LIST", () => {
       "Uptime and SSL monitoring",
       "Conversion element monitoring",
       "White-label client reports",
+      "AI keyword research",
+      "AI SEO blog post writer",
     ]) {
       expect(FEATURE_LIST).toContain(capability);
     }

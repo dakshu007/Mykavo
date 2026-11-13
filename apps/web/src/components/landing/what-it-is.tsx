@@ -17,10 +17,11 @@ import { eyebrow, fontDisplay } from "./style";
  * baseline), and what comes out (one ranked alert).
  *
  * The negative definition earns its place. "Not uptime checks, not a crawler,
- * not an SEO suite" is the fastest way to place a product in a head that is
- * already full of tools, and it is exactly what the spec says MyKavo is NOT
- * (CLAUDE.md section 1) - so it is honest positioning rather than a jab at
- * anybody.
+ * not a rank tracker" is the fastest way to place a product in a head that is
+ * already full of tools, and it stays honest: MyKavo does not track rankings
+ * or backlinks. It used to say "not an SEO suite", which stopped being true
+ * when the AI Keywords & Blog Writer shipped, so the paragraph now names that
+ * second half in one line and leaves the detail to its own section.
  */
 
 const definitions = [
@@ -74,9 +75,16 @@ export function WhatItIsSection() {
             </span>
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-[15px] leading-7 text-[#6B6B60] sm:text-base">
-            Not uptime checks. Not a crawler. Not an SEO suite. You choose the pages that
+            Not uptime checks. Not a crawler. Not a rank tracker. You choose the pages that
             matter, and MyKavo remembers exactly how each one should look - then tells you
-            when that stops being true.
+            when that stops being true. Alongside it sits the{" "}
+            <a
+              href="#ai-keywords"
+              className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
+            >
+              AI Keywords &amp; Blog Writer
+            </a>
+            : monitoring protects the traffic you have, AI Keywords helps you win more.
           </p>
         </div>
 

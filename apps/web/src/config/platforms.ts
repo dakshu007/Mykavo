@@ -50,6 +50,7 @@ export const PLATFORMS: Platform[] = [
       "Add any website and approve a baseline in minutes",
       "Before-and-after screenshots, diffs and a severity for every change",
       "Site Audit, Search Console and Lighthouse in the same place",
+      "AI Keywords & Blog Writer: find what to write next and draft the post",
       "Alerts by email, Slack, Discord or a signed webhook",
       "Client reports and public status pages",
     ],

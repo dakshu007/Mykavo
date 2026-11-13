@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AGENT_LIMITS, type AgentPlanId } from "@mykavo/keyword-agent/pure";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { Check, Minus } from "lucide-react";
@@ -13,6 +14,7 @@ import { plans, formatLimit, getPlan } from "@/config/plans";
 import { PricingPlans } from "@/components/marketing/pricing-plans";
 import { pricingPlanData } from "@/components/marketing/pricing-plan-data";
 import { yearlyBillingEnabled } from "@/lib/billing/config";
+import { AI_KEYWORDS_NAME, FREE_VISIBLE_KEYWORDS, keywordAllowance, keywordAllowanceSummary } from "@/config/ai-keywords";
 import {
   FEATURE_LIST,
   breadcrumbList,
@@ -23,22 +25,28 @@ import {
 } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = withSocial({
-  title: "Pricing - Website Monitoring Plans from $0",
-  description: "Website change monitoring from $0. Start on the Free plan for 1 website, no card. Starter $7/month for 2 websites, Pro $20/month for 8, Agency $79/month for 30.",
+  title: "Pricing - Website Monitoring and AI Blog Writer Plans from $0",
+  description: "Website monitoring and the AI Keywords & Blog Writer from $0. Start on the Free plan for 1 website, no card. Starter $7/month for 2 websites, Pro $20/month for 8, Agency $79/month for 30.",
   keywords: [
     "website monitoring pricing",
+    "ai blog writer pricing",
     "site monitoring tools pricing",
     "website change detection pricing",
     "affordable website monitoring",
   ],
   alternates: { canonical: "/pricing" },
   openGraph: {
-    title: "MyKavo Pricing - Website Monitoring from $0",
-    description: "A free plan for one website, no card. Starter at $7/month for 2 websites. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.",
+    title: "MyKavo Pricing - Website Monitoring and AI Keywords from $0",
+    description: "A free plan for one website, no card. Starter at $7/month for 2 websites. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members. Every plan includes AI keyword reports and blog posts.",
     url: "/pricing",
     type: "website",
   },
 });
+
+/** AI Keywords & Blog Writer allowances, from the agent's own limits. */
+function agentLimits(id: string) {
+  return AGENT_LIMITS[(id in AGENT_LIMITS ? id : "free") as AgentPlanId];
+}
 
 const comparisonRows: Array<{
   label: string;
@@ -56,6 +64,12 @@ const comparisonRows: Array<{
   { label: "Scan frequency", value: (p) => (p.limits.scanFrequency === "DAILY" ? "Daily" : "Weekly") },
   { label: "History retention", value: (p) => (p.limits.historyDays >= 365 ? "1 year" : `${p.limits.historyDays} days`) },
   { label: "Email alerts", value: () => true },
+  { label: "AI keyword reports", value: (p) => `${formatLimit(agentLimits(p.id).reports)} a month` },
+  { label: "AI blog posts", value: (p) => `${formatLimit(agentLimits(p.id).posts)} a month` },
+  {
+    label: "Keywords shown per report",
+    value: (p) => (agentLimits(p.id).visibleOpportunities === Infinity ? "All" : `Top ${agentLimits(p.id).visibleOpportunities}`),
+  },
   {
     label: "AI change explanations",
     value: (p) => `${formatLimit(p.limits.aiExplanationsPerMonth)} a month`,
@@ -85,7 +99,11 @@ const freePlan = getPlan("free");
 const pricingFaqs = [
   {
     q: "Is AI included?",
-    a: `Yes, on every plan. MyKavo AI Website Insights explains each alert in plain English with fix steps for your platform, and writes a weekly status note for every website. Free includes ${formatLimit(freePlan.limits.aiExplanationsPerMonth)} change explanations a month, Starter ${formatLimit(getPlan("starter").limits.aiExplanationsPerMonth)}, Pro ${formatLimit(proPlan.limits.aiExplanationsPerMonth)} and Agency ${formatLimit(getPlan("agency").limits.aiExplanationsPerMonth)}. Weekly notes don't count toward the allowance.`,
+    a: `Yes, on every plan, in two parts. AI Website Insights explains each alert in plain English with fix steps for your platform, and writes a weekly status note for every website: Free includes ${formatLimit(freePlan.limits.aiExplanationsPerMonth)} change explanations a month, Starter ${formatLimit(getPlan("starter").limits.aiExplanationsPerMonth)}, Pro ${formatLimit(proPlan.limits.aiExplanationsPerMonth)} and Agency ${formatLimit(getPlan("agency").limits.aiExplanationsPerMonth)}, and weekly notes don't count toward that. The ${AI_KEYWORDS_NAME} finds keywords worth writing about and drafts SEO blog posts: ${keywordAllowanceSummary()}. Nothing is a paid add-on.`,
+  },
+  {
+    q: `What is the ${AI_KEYWORDS_NAME}?`,
+    a: `Monitoring protects the traffic you have; AI Keywords helps you win more. MyKavo reads your website and learns your business, then finds the keywords worth writing about from your Google Search Console data (including searches you already rank 8 to 20 for), Google search suggestions and today's live search results, ranked by what to write first. One click writes a full SEO blog post: title, URL slug, meta description, the article, an FAQ section and JSON-LD structured data, plus review notes. You edit it in MyKavo and copy it into your site; MyKavo never publishes it for you. Free shows the top ${FREE_VISIBLE_KEYWORDS} keywords per report, paid plans show all of them, and every post includes one free rewrite. Allowances refill monthly: on your billing date on paid plans, on your signup date on Free. Search Console is optional, but it makes the results better.`,
   },
   {
     q: "Is there a free plan?",
@@ -93,7 +111,7 @@ const pricingFaqs = [
   },
   {
     q: "What's the difference between Starter and Pro?",
-    a: "Both have every monitoring feature: daily scans, AI explanations, post-deploy checks, WordPress Safe Updates, conversion element monitoring and site audits. Starter is sized for one person with up to 2 websites (10 pages each, 90 days of history). Pro covers 8 websites with 15 pages each, up to 3 team members, bigger site audits and a full year of history. Starting on Starter and moving up later takes one click in Billing.",
+    a: `Both have every monitoring feature: daily scans, AI explanations, post-deploy checks, WordPress Safe Updates, conversion element monitoring and site audits. Starter is sized for one person with up to 2 websites (10 pages each, 90 days of history) and ${keywordAllowance("starter")} a month. Pro covers 8 websites with 15 pages each, up to 3 team members, bigger site audits, a full year of history and ${keywordAllowance("pro")} a month. Starting on Starter and moving up later takes one click in Billing.`,
   },
   {
     q: "Should I pick Pro or Agency?",
@@ -183,7 +201,8 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-[#6B6B60]">
-            Start on the Free plan, no card needed, and upgrade when you need more.
+            Website monitoring and the AI Keywords &amp; Blog Writer on every plan. Start on Free,
+            no card needed, and upgrade when you need more.
           </p>
         </div>
 
