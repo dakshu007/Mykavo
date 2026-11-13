@@ -154,6 +154,9 @@ export function PostEditor({
   const [version, setVersion] = useState(post.version);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [rewriteStarting, setRewriteStarting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
@@ -232,7 +235,9 @@ export function PostEditor({
   async function copy(text: string, label: string) {
     try {
       await navigator.clipboard.writeText(text);
+      setCopied(label);
       setMessage({ tone: "ok", text: `${label} copied.` });
+      setTimeout(() => setCopied((c) => (c === label ? null : c)), 2000);
     } catch {
       setMessage({ tone: "error", text: "Your browser blocked copying. Use the download instead." });
     }
@@ -256,7 +261,7 @@ export function PostEditor({
     <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
       <div className="min-w-0 space-y-4">
         <div className="rounded-2xl border border-line bg-card p-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">Post for &ldquo;{post.keyword}&rdquo;</p>
+          <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">01 / Details</p>
           <label className="mt-3 block text-[13px] font-medium text-ink">
             Title <span className="font-normal text-ink-faint">({title.length}/65)</span>
             <input className={`${field} text-[17px] font-semibold`} value={title} maxLength={120} onChange={(e) => { setTitle(e.target.value); setDirty(true); }} />
@@ -285,13 +290,17 @@ export function PostEditor({
         {/* overflow-clip, not hidden: hidden would make this card the sticky
             container and push the toolbar down instead of pinning it. */}
         <div className="overflow-clip rounded-2xl border border-line bg-card">
+          <p className="border-b border-line px-5 pb-2.5 pt-4 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">02 / Post</p>
           {editor ? <Toolbar editor={editor} /> : null}
           {editor ? <EditorContent editor={editor} /> : <div className="min-h-[420px] px-5 py-4 text-ink-faint">Loading editor…</div>}
         </div>
 
         <div className="rounded-2xl border border-line bg-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[15px] font-semibold text-ink">Frequently asked questions</h2>
+            <div>
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">03 / FAQ</p>
+              <h2 className="mt-1 text-[15px] font-semibold text-ink">Frequently asked questions</h2>
+            </div>
             <button
               type="button"
               className={button}
@@ -322,7 +331,7 @@ export function PostEditor({
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-        <div className="rounded-2xl border border-line bg-card p-4">
+        <div className="rounded-2xl border-[1.5px] border-ink bg-card p-4 shadow-[4px_4px_0_var(--color-primary)]">
           <button
             type="button"
             onClick={() => void save()}
@@ -330,7 +339,7 @@ export function PostEditor({
             className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-[14px] font-semibold text-primary-contrast hover:bg-primary-hover disabled:opacity-60"
           >
             {saving ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Save className="size-4" aria-hidden />}
-            {dirty ? "Save changes" : "Saved"}
+            {saving ? "Saving…" : dirty ? "Save changes" : "Saved"}
           </button>
           {message && (
             <p role={message.tone === "error" ? "alert" : "status"} className={`mt-2 text-[13px] ${message.tone === "error" ? "text-critical-strong" : "text-success-strong"}`}>
@@ -346,10 +355,12 @@ export function PostEditor({
           <h2 className="text-[14px] font-semibold text-ink">Use it on your site</h2>
           <div className="mt-3 grid gap-2">
             <button type="button" className={button} onClick={() => void copy(fullHtml(), "HTML")}>
-              <ClipboardCopy className="size-3.5" aria-hidden /> Copy as HTML
+              {copied === "HTML" ? <Check className="size-3.5 text-success-strong" aria-hidden /> : <ClipboardCopy className="size-3.5" aria-hidden />}
+              {copied === "HTML" ? "Copied" : "Copy as HTML"}
             </button>
             <button type="button" className={button} onClick={() => void copy(fullMarkdown(), "Markdown")}>
-              <ClipboardCopy className="size-3.5" aria-hidden /> Copy as Markdown
+              {copied === "Markdown" ? <Check className="size-3.5 text-success-strong" aria-hidden /> : <ClipboardCopy className="size-3.5" aria-hidden />}
+              {copied === "Markdown" ? "Copied" : "Copy as Markdown"}
             </button>
             <button type="button" className={button} onClick={() => download(`${slug || "post"}.html`, fullHtml(), "text/html")}>
               <Download className="size-3.5" aria-hidden /> Download .html
@@ -358,7 +369,8 @@ export function PostEditor({
               <Download className="size-3.5" aria-hidden /> Download .md
             </button>
             <button type="button" className={button} onClick={() => void copy(schema, "Schema")}>
-              <ClipboardCopy className="size-3.5" aria-hidden /> Copy schema (JSON-LD)
+              {copied === "Schema" ? <Check className="size-3.5 text-success-strong" aria-hidden /> : <ClipboardCopy className="size-3.5" aria-hidden />}
+              {copied === "Schema" ? "Copied" : "Copy schema (JSON-LD)"}
             </button>
           </div>
         </div>
@@ -404,26 +416,43 @@ export function PostEditor({
           <button
             type="button"
             className={`${button} mt-2 w-full justify-center`}
-            disabled={rewritesLeft === 0}
+            disabled={rewritesLeft === 0 || rewriteStarting}
+            aria-busy={rewriteStarting}
             onClick={async () => {
               if (!window.confirm("Rewrite this post? The new draft replaces this one, including your edits.")) return;
+              setRewriteStarting(true);
               const err = await rewrite.start(websiteId, { kind: "write", keyword: post.keyword, notes: "", postId: post.id });
+              setRewriteStarting(false);
               if (err) setMessage({ tone: "error", text: err });
             }}
           >
-            <RefreshCw className="size-3.5" aria-hidden /> Rewrite ({rewritesLeft} free)
+            {rewriteStarting ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <RefreshCw className="size-3.5" aria-hidden />}
+            {rewriteStarting ? "Starting…" : `Rewrite (${rewritesLeft} free)`}
           </button>
           <button
             type="button"
-            className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-critical-strong hover:underline"
+            className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-critical-strong hover:underline disabled:opacity-60"
+            disabled={deleting}
+            aria-busy={deleting}
             onClick={async () => {
               if (!window.confirm("Delete this post? This can't be undone, and it still counts toward this month's posts.")) return;
-              const res = await fetch(`/api/keywords/posts/${post.id}`, { method: "DELETE" });
-              if (res.ok) router.push(`/dashboard/keywords/${websiteId}`);
-              else setMessage({ tone: "error", text: "Could not delete the post." });
+              setDeleting(true);
+              try {
+                const res = await fetch(`/api/keywords/posts/${post.id}`, { method: "DELETE" });
+                if (res.ok) {
+                  // Keep the spinner until the list page has loaded.
+                  router.push(`/dashboard/keywords/${websiteId}`);
+                  return;
+                }
+                setMessage({ tone: "error", text: "Could not delete the post." });
+              } catch {
+                setMessage({ tone: "error", text: "Could not reach MyKavo. Try again." });
+              }
+              setDeleting(false);
             }}
           >
-            <Trash2 className="size-3.5" aria-hidden /> Delete post
+            {deleting ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Trash2 className="size-3.5" aria-hidden />}
+            {deleting ? "Deleting…" : "Delete post"}
           </button>
         </div>
       </aside>

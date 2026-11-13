@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@mykavo/database";
 import { FREE_REGENERATIONS_PER_POST } from "@mykavo/keyword-agent/pure";
 import { PostEditor } from "@/components/keywords/post-editor";
+import { Micro } from "@/components/keywords/layout";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { canUseKeywordAgent } from "@/lib/keywords/access";
 
@@ -55,9 +56,25 @@ export default async function PostEditorPage({ params }: Params) {
 
   return (
     <div className="max-w-5xl space-y-5">
-      <Link href={`/dashboard/keywords/${websiteId}`} className="inline-flex items-center gap-1 text-[13px] text-ink-secondary hover:text-ink">
-        <ArrowLeft className="size-3.5" aria-hidden /> {post.website.name}
-      </Link>
+      <div className="min-w-0">
+        <Micro className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Link href="/dashboard/keywords" className="text-accent hover:underline">
+            AI Keywords
+          </Link>
+          <span aria-hidden>/</span>
+          <Link href={`/dashboard/keywords/${websiteId}`} className="inline-flex items-center gap-1 hover:text-ink">
+            <ArrowLeft className="size-3" aria-hidden /> {post.website.name}
+          </Link>
+          <span aria-hidden>/</span>
+          <span>Post</span>
+        </Micro>
+        <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink">
+          A post for <span className="mk-highlight">&ldquo;{post.keyword}&rdquo;</span>
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-[14px] text-ink-secondary">
+          Edit it, check the notes on the right, then copy it into your site. It stays a draft until you publish it there.
+        </p>
+      </div>
       <PostEditor
         websiteId={websiteId}
         post={{
