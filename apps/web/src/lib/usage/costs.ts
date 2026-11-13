@@ -2,8 +2,8 @@
  * The two usage figures that cost money as they grow and that the operator
  * watches most: AI spend (Anthropic) and database egress (Supabase).
  *
- * AI spend is exact: every call's price is stored with it in ai_insight
- * (lib/ai/client.ts). Egress is an estimate from the database server's own
+ * AI spend is exact: every call's price is booked in the ai_usage ledger
+ * (lib/ai/client.ts), which keeps it when a website is deleted. Egress is an estimate from the database server's own
  * bytes-sent counter, sampled hourly by the worker; Supabase meters egress its
  * own way, so the page says "estimated" and links nothing it cannot back up.
  */
@@ -40,19 +40,19 @@ const usd = (micro: number | null | undefined) => (micro ?? 0) / 1_000_000;
 
 export async function collectAiSpend(now: Date): Promise<AiSpend> {
   const monthStart = startOfUtcMonth(now);
-  const [byKind, allTime, last24h, byWorkspace] = await Promise.all([
-    prisma.aiInsight.groupBy({
-      by: ["kind"],
+  const [byFeature, allTime, last24h, byWorkspace] = await Promise.all([
+    prisma.aiUsage.groupBy({
+      by: ["feature", "outcome"],
       where: { createdAt: { gte: monthStart } },
       _count: { _all: true },
       _sum: { costMicroUsd: true },
     }),
-    prisma.aiInsight.aggregate({ _sum: { costMicroUsd: true } }),
-    prisma.aiInsight.aggregate({
+    prisma.aiUsage.aggregate({ _sum: { costMicroUsd: true } }),
+    prisma.aiUsage.aggregate({
       where: { createdAt: { gte: new Date(now.getTime() - DAY_MS) } },
       _sum: { costMicroUsd: true },
     }),
-    prisma.aiInsight.groupBy({
+    prisma.aiUsage.groupBy({
       by: ["workspaceId"],
       where: { createdAt: { gte: monthStart } },
       _count: { _all: true },
@@ -62,22 +62,22 @@ export async function collectAiSpend(now: Date): Promise<AiSpend> {
     }),
   ]);
 
-  const kind = (k: string) => byKind.find((r) => r.kind === k);
+  const used = (feature: string) => byFeature.find((r) => r.feature === feature && r.outcome === "ok");
   const names = await prisma.workspace.findMany({
     where: { id: { in: byWorkspace.map((w) => w.workspaceId) } },
     select: { id: true, name: true },
   });
-  const explanations = kind("change_explanation");
+  const explanations = used("change_explanation");
 
   return {
     configured: aiConfigured(),
-    monthUsd: usd(byKind.reduce((s, r) => s + (r._sum.costMicroUsd ?? 0), 0)),
+    monthUsd: usd(byFeature.reduce((s, r) => s + (r._sum.costMicroUsd ?? 0), 0)),
     budgetUsd: usd(monthlyBudgetMicroUsd()),
     allTimeUsd: usd(allTime._sum.costMicroUsd),
     last24hUsd: usd(last24h._sum.costMicroUsd),
     explanations: explanations?._count._all ?? 0,
-    weeklyNotes: kind("weekly_summary")?._count._all ?? 0,
-    wastedCalls: kind("failed")?._count._all ?? 0,
+    weeklyNotes: used("weekly_summary")?._count._all ?? 0,
+    wastedCalls: byFeature.filter((r) => r.outcome !== "ok").reduce((n, r) => n + r._count._all, 0),
     perExplanationUsd:
       explanations && explanations._count._all > 0
         ? usd(explanations._sum.costMicroUsd) / explanations._count._all

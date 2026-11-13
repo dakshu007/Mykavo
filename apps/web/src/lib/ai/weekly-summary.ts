@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { prisma, getUptimeStats, type Prisma } from "@mykavo/database";
-import { generateStructured, isUniqueViolation, recordFailedCall } from "./client";
+import { generateStructured, isUniqueViolation, markUsageDuplicate } from "./client";
 import { platformsFrom } from "./explain-change";
 
 /**
@@ -238,7 +238,9 @@ export async function getOrCreateWeeklySummary(params: {
     instruction: INSTRUCTION,
     data: await summaryData(params.websiteId, now),
     maxTokens: 600,
+    feature: "weekly_summary",
     workspaceId: params.workspaceId,
+    websiteId: params.websiteId,
   });
   const summary = tidySummary(result.data);
 
@@ -260,7 +262,7 @@ export async function getOrCreateWeeklySummary(params: {
     return { summary, createdAt: row.createdAt };
   } catch (err) {
     if (isUniqueViolation(err)) {
-      await recordFailedCall(params.workspaceId, result.model, result.inputTokens, result.outputTokens, result.costMicroUsd);
+      await markUsageDuplicate(result.usageId);
       const stored = await findAt(params.websiteId, periodStart);
       if (stored) return stored;
     }

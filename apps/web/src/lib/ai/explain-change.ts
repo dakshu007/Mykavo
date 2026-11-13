@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { prisma, type Prisma } from "@mykavo/database";
 import { getWorkspacePlan } from "@/lib/billing/subscription";
-import { AiError, generateStructured, isUniqueViolation, recordFailedCall, startOfUtcMonth } from "./client";
+import { AiError, generateStructured, isUniqueViolation, markUsageDuplicate, startOfUtcMonth } from "./client";
 
 /**
  * "Explain this change": a plain-language read of one change event, what it
@@ -125,10 +125,13 @@ export function changePromptData(change: {
   };
 }
 
-/** How many explanations a workspace has generated this calendar month. */
+/**
+ * How many explanations a workspace has generated this calendar month. Read
+ * from the spend ledger, so deleting a website does not give the quota back.
+ */
 export async function explanationsThisMonth(workspaceId: string, now: Date = new Date()): Promise<number> {
-  return prisma.aiInsight.count({
-    where: { workspaceId, kind: "change_explanation", createdAt: { gte: startOfUtcMonth(now) } },
+  return prisma.aiUsage.count({
+    where: { workspaceId, feature: "change_explanation", outcome: "ok", createdAt: { gte: startOfUtcMonth(now) } },
   });
 }
 
@@ -164,6 +167,7 @@ export async function getOrCreateChangeExplanation(params: {
       currentValue: true,
       metadata: true,
       detectedAt: true,
+      websiteId: true,
       website: { select: { name: true, url: true } },
       monitoredPage: { select: { url: true } },
       currentSnapshot: { select: { technologies: true } },
@@ -181,7 +185,9 @@ export async function getOrCreateChangeExplanation(params: {
     instruction: INSTRUCTION,
     data: changePromptData({ ...change, platforms }),
     maxTokens: 800,
+    feature: "change_explanation",
     workspaceId: params.workspaceId,
+    websiteId: change.websiteId,
   });
   const explanation = tidyExplanation(result.data);
 
@@ -202,7 +208,7 @@ export async function getOrCreateChangeExplanation(params: {
     // A second tab asked at the same moment and stored its answer first:
     // show that one, so everyone sees the same explanation.
     if (isUniqueViolation(err)) {
-      await recordFailedCall(params.workspaceId, result.model, result.inputTokens, result.outputTokens, result.costMicroUsd);
+      await markUsageDuplicate(result.usageId);
       const stored = await findChangeExplanation(params.changeEventId);
       if (stored) return stored;
     }

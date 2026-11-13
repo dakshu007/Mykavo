@@ -1973,6 +1973,29 @@ model AiInsight {
   @@map("ai_insight")
 }
 
+/// One row per paid AI call, kept for good. Unlike ai_insight it has no
+/// foreign keys, so deleting a website, change or workspace never deletes
+/// the record of what was spent. Budgets and plan quotas read this table.
+model AiUsage {
+  id           String   @id @default(cuid())
+  /// "change_explanation" | "weekly_summary" | "unknown" (backfilled failed calls)
+  feature      String
+  /// "ok" (answer used) | "unusable" (refusal or unparseable) | "duplicate" (a racing request stored first)
+  outcome      String
+  workspaceId  String
+  websiteId    String?
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  /// Cost of the call in millionths of a US dollar.
+  costMicroUsd Int
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([workspaceId, feature, createdAt])
+  @@map("ai_usage")
+}
+
 /// Periodic readings of a cumulative counter from outside the database, such
 /// as the database server's bytes sent (Supabase Metrics API). The worker
 /// writes one an hour; the admin usage page turns consecutive readings into

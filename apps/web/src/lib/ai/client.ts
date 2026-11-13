@@ -10,15 +10,16 @@ import { logger } from "@/lib/logger";
  * `generateStructured`, which:
  *
  *   - refuses before calling when the month's global budget is spent
- *     (AI_MONTHLY_BUDGET_USD, default $10, summed from ai_insight.costMicroUsd),
+ *     (AI_MONTHLY_BUDGET_USD, default $10, summed from ai_usage.costMicroUsd),
  *   - asks Claude Haiku 5.5 with thinking off and low effort, for a JSON
  *     answer shaped by a zod schema,
- *   - prices the call from its token usage, so the caller can store the cost
- *     with the result and the next budget check sees it.
+ *   - prices the call from its token usage and books it in ai_usage, the
+ *     spend ledger, so the next budget check sees it.
  *
- * Calls that cost money but give nothing usable (a refusal, an unparseable
- * answer) are recorded as kind "failed" so they still count against the
- * budget.
+ * Every paid call gets one ledger row, including ones that give nothing
+ * usable (a refusal, an unparseable answer: outcome "unusable"). The ledger
+ * has no foreign keys, so deleting a website or a change never erases what
+ * was spent on it, and plan quotas cannot be reset that way.
  *
  * Two requests racing past the budget check can overshoot it by a call each,
  * a fraction of a cent. That is accepted rather than locking.
@@ -31,6 +32,11 @@ const INPUT_USD_PER_MTOK = 0.1;
 const OUTPUT_USD_PER_MTOK = 0.5;
 
 const DEFAULT_MONTHLY_BUDGET_USD = 10;
+
+/** What an AI call was for. Each feature is counted separately in the ledger. */
+export type AiFeature = "change_explanation" | "weekly_summary";
+
+export type AiUsageOutcome = "ok" | "unusable" | "duplicate";
 
 export type AiErrorCode = "not_configured" | "budget_exhausted" | "quota_exhausted" | "refused" | "failed";
 
@@ -73,7 +79,7 @@ export function startOfUtcMonth(now: Date = new Date()): Date {
 
 /** Everything spent on AI this calendar month (UTC), across all workspaces. */
 export async function monthSpendMicroUsd(now: Date = new Date()): Promise<number> {
-  const agg = await prisma.aiInsight.aggregate({
+  const agg = await prisma.aiUsage.aggregate({
     where: { createdAt: { gte: startOfUtcMonth(now) } },
     _sum: { costMicroUsd: true },
   });
@@ -92,6 +98,8 @@ export interface StructuredResult<T> {
   inputTokens: number;
   outputTokens: number;
   costMicroUsd: number;
+  /** The ledger row for this call, null if it could not be written. */
+  usageId: string | null;
 }
 
 /**
@@ -106,7 +114,9 @@ export async function generateStructured<S extends z.ZodType>(params: {
   instruction: string;
   data: unknown;
   maxTokens: number;
+  feature: AiFeature;
   workspaceId: string;
+  websiteId?: string | null;
 }): Promise<StructuredResult<z.infer<S>>> {
   const anthropic = getClient();
   await assertBudgetLeft();
@@ -139,8 +149,19 @@ export async function generateStructured<S extends z.ZodType>(params: {
   const outputTokens = response.usage.output_tokens;
   const cost = costMicroUsd({ inputTokens, outputTokens });
 
-  if (response.stop_reason === "refusal" || response.parsed_output == null) {
-    await recordFailedCall(params.workspaceId, response.model, inputTokens, outputTokens, cost);
+  const usable = response.stop_reason !== "refusal" && response.parsed_output != null;
+  const usageId = await recordUsage({
+    feature: params.feature,
+    outcome: usable ? "ok" : "unusable",
+    workspaceId: params.workspaceId,
+    websiteId: params.websiteId ?? null,
+    model: response.model,
+    inputTokens,
+    outputTokens,
+    costMicroUsd: cost,
+  });
+
+  if (!usable) {
     logger.warn("ai call gave no usable answer", {
       workspaceId: params.workspaceId,
       stopReason: response.stop_reason,
@@ -157,26 +178,48 @@ export async function generateStructured<S extends z.ZodType>(params: {
     inputTokens,
     outputTokens,
     costMicroUsd: cost,
+    usageId,
   };
 }
 
-/** Keeps the cost of a wasted call on the books so the budget stays honest. */
-export async function recordFailedCall(
-  workspaceId: string,
-  model: string,
-  inputTokens: number,
-  outputTokens: number,
-  cost: number,
-): Promise<void> {
+/**
+ * Books one paid call in the ledger. A failed write is logged, not thrown:
+ * the call already happened and the user should still get its answer.
+ */
+export async function recordUsage(row: {
+  feature: AiFeature;
+  outcome: AiUsageOutcome;
+  workspaceId: string;
+  websiteId: string | null;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  costMicroUsd: number;
+}): Promise<string | null> {
   try {
-    await prisma.aiInsight.create({
-      data: { workspaceId, kind: "failed", content: {}, model, inputTokens, outputTokens, costMicroUsd: cost },
-    });
+    const created = await prisma.aiUsage.create({ data: row, select: { id: true } });
+    return created.id;
   } catch (err) {
-    logger.error("ai failed-call record not saved", {
-      workspaceId,
+    logger.error("ai usage record not saved", {
+      workspaceId: row.workspaceId,
+      feature: row.feature,
       error: err instanceof Error ? err.message : String(err),
     });
+    return null;
+  }
+}
+
+/**
+ * A racing request stored its answer first, so this call's answer was thrown
+ * away. Its cost stays on the books; it just no longer counts as a used answer
+ * against the plan quota.
+ */
+export async function markUsageDuplicate(usageId: string | null): Promise<void> {
+  if (!usageId) return;
+  try {
+    await prisma.aiUsage.update({ where: { id: usageId }, data: { outcome: "duplicate" } });
+  } catch (err) {
+    logger.error("ai usage record not updated", { usageId, error: err instanceof Error ? err.message : String(err) });
   }
 }
 
