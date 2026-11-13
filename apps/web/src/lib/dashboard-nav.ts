@@ -23,7 +23,7 @@
  * components cannot drift apart again.
  */
 
-export type NavGroupId = "monitoring" | "analysis" | "integrations" | "account" | "admin";
+export type NavGroupId = "monitoring" | "analysis" | "grow" | "integrations" | "account" | "admin";
 
 /** Stable ids, so the sidebar's icon map is checked at compile time. */
 export type NavItemId =
@@ -150,11 +150,14 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
   ];
 
   if (access.monitoringLive) {
-    groups.push({
-      id: "analysis",
-      label: "Deeper analysis",
-      items: access.keywordAgent ? [...ANALYSIS, AI_KEYWORDS] : ANALYSIS,
-    });
+    groups.push({ id: "analysis", label: "Deeper analysis", items: ANALYSIS });
+  }
+
+  // AI Keywords works from day one (it reads the site itself), so unlike the
+  // analysis tools it does not wait for the first scan: its own group,
+  // shown to everyone the rollout allows.
+  if (access.keywordAgent) {
+    groups.push({ id: "grow", label: "Grow", items: [AI_KEYWORDS] });
   }
 
   groups.push({ id: "integrations", label: "Integrations", items: INTEGRATIONS });

@@ -105,7 +105,8 @@ export default async function DashboardLayout({
     session.user.emailVerified === true,
   );
   const navAccess = { monitoringLive, appApproved, isBlogAdmin: blogAdmin, isPlatformAdmin: platformAdmin, keywordAgent };
-  const planLabel = plan.trial ? `${plan.name} trial` : plan.name;
+  // A trial plan is already named "Pro trial" (config/plans.ts trialPlan).
+  const planLabel = plan.name;
 
   return (
     // data-clarity-mask: if Clarity is already running (a visitor came in from a

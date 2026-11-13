@@ -237,10 +237,17 @@ describe("AI Keywords placement", () => {
     expect(flattenNav(dashboardNav(base)).some((i) => i.id === "keywords")).toBe(false);
   });
 
-  it("moves to the analysis tools once rolled out, once only", () => {
+  it("gets its own Grow group once rolled out, once only", () => {
     for (const isPlatformAdmin of [false, true]) {
-      const items = flattenNav(dashboardNav({ ...base, isPlatformAdmin, keywordAgent: true }));
-      expect(items.filter((i) => i.id === "keywords")).toHaveLength(1);
+      const groups = dashboardNav({ ...base, isPlatformAdmin, keywordAgent: true });
+      expect(groups.find((g) => g.id === "grow")?.items.map((i) => i.id)).toEqual(["keywords"]);
+      expect(flattenNav(groups).filter((i) => i.id === "keywords")).toHaveLength(1);
     }
+  });
+
+  it("shows to a brand-new user before their first scan finishes", () => {
+    const fresh = dashboardNav({ ...base, monitoringLive: false, keywordAgent: true });
+    expect(fresh.find((g) => g.id === "analysis")).toBeUndefined();
+    expect(flattenNav(fresh).some((i) => i.id === "keywords")).toBe(true);
   });
 });
