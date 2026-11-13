@@ -24,6 +24,8 @@ import { PostContent, PostTocMobile, PostTocRail } from "@/components/blog/post-
 import { AiOverview } from "@/components/blog/ai-overview";
 import { MonitorUrlCta } from "@/components/cta/monitor-url-cta";
 import { WordpressPluginCta } from "@/components/cta/wordpress-plugin-cta";
+import { isContentTopic } from "@/lib/content-topic";
+import { AiWriterCta, AiWriterRailCta } from "@/components/cta/ai-writer-cta";
 import { isWordpressTopic } from "@/lib/wordpress-topic";
 import { site } from "@/config/site";
 import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
@@ -131,6 +133,8 @@ export default async function BlogPostPage({ params }: Params) {
   const tool = toolForPost(post);
   // WordPress readers get the plugin pitch instead of the generic sign-up box.
   const wordpressPost = isWordpressTopic(post.slug, post.title, post.primaryKeyword, post.tags);
+  // Keyword and blogging posts pitch the AI Keywords & Blog Writer instead.
+  const contentPost = !wordpressPost && isContentTopic(post.slug, post.title, post.primaryKeyword);
   const postUrl = `${site.url}/blog/${post.slug}`;
   const shareImage = `${postUrl}/opengraph-image`;
 
@@ -329,6 +333,8 @@ export default async function BlogPostPage({ params }: Params) {
                   the next step sits right under it, about their own site. */}
               {wordpressPost ? (
                 <WordpressPluginCta placement="blog:overview" className="mb-8" />
+              ) : contentPost ? (
+                <AiWriterCta placement="blog:overview" className="mb-8" />
               ) : (
                 <MonitorUrlCta from="blog:overview" className="mb-8" />
               )}
@@ -345,6 +351,12 @@ export default async function BlogPostPage({ params }: Params) {
                   midpoint={
                     tool ? (
                       <PostTool tool={tool} />
+                    ) : contentPost ? (
+                      <AiWriterCta
+                        placement="blog:midpoint"
+                        heading="Let MyKavo find the keywords and write the draft."
+                        className="my-10"
+                      />
                     ) : wordpressPost ? (
                       <WordpressPluginCta
                         placement="blog:midpoint"
@@ -427,6 +439,9 @@ export default async function BlogPostPage({ params }: Params) {
               <div className="sticky top-24 space-y-4">
                 {showTocRail && <PostTocRail headings={headings} sticky={false} />}
                 {/* Signup stays in reach for the whole read, not just at the top. */}
+                {contentPost ? (
+                  <AiWriterRailCta />
+                ) : (
                 <div className="rounded-card border-2 border-[#151515] bg-white p-5 text-[#151515] shadow-[5px_5px_0_#FFD400]">
                   <p className="text-[15px] font-semibold leading-snug">Catch this on your own site</p>
                   <p className="mt-1.5 text-[13px] leading-5 text-[#6B6B60]">
@@ -440,6 +455,7 @@ export default async function BlogPostPage({ params }: Params) {
                     or sign up with email
                   </Link>
                 </div>
+                )}
                 <div className="rounded-card bg-card p-5 shadow-card">
                   <p className="label-micro mb-3">Share this post</p>
                   <ShareButtons url={postUrl} title={post.title} compact />

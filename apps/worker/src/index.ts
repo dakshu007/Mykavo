@@ -79,6 +79,7 @@ import { pruneSnapshotText } from "./text-store";
 import { startWatchdog } from "./watchdog";
 import { startKeepWarm } from "./keep-warm";
 import { startEgressSampler } from "./egress-sample";
+import { seedRepoPosts } from "./blog-seed";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
@@ -132,6 +133,10 @@ async function main() {
     ...BOSS_TUNING,
   });
   boss.on("error", (err) => logger.error("pg-boss error", {}, err));
+
+  // Blog posts shipped with the code (blog-seed.ts): inserted once if missing.
+  // In the background, and never fatal: the blog is not the worker's job.
+  void seedRepoPosts().catch((err) => logger.error("repo blog posts failed", {}, err));
 
   await boss.start();
   await ensureQueue(boss, SCAN_WEBSITE_QUEUE, {
