@@ -18,6 +18,15 @@
 # Deploy by pushing to `main`. Do NOT deploy by hand from a laptop - a manual
 # CLI upload is exactly what caused the drift, and nothing here can detect it.
 #
+# THE GATE
+# --------
+# Two jobs. `test` runs every check a contributor runs locally - lint, web and
+# worker typecheck, and every package's tests including the @mykavo/database
+# integration suite against a throwaway Postgres with all migrations applied.
+# `deploy` declares `needs: test`, so GitHub never starts it unless every
+# check passed: a red test means nothing reaches production. Pull requests
+# into main run `test` only, so a change shows red before it is merged.
+#
 # REQUIRED REPOSITORY SECRETS
 #   NETLIFY_AUTH_TOKEN  Netlify personal access token (User settings ->
 #                       Applications -> Personal access tokens). Needs deploy
@@ -42,8 +51,14 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/deploy-web.yml"
 
+  # Checks only, never a deploy: shows a PR red before it can be merged.
+  # No paths filter, so worker-only changes are checked too.
+  pull_request:
+    branches: [main]
+
   # Escape hatch: redeploy an arbitrary ref by hand (e.g. to re-publish after
-  # an infrastructure blip). Requires typing "deploy" to confirm.
+  # an infrastructure blip). Requires typing "deploy" to confirm. The tests
+  # still run first.
   workflow_dispatch:
     inputs:
       confirm:
@@ -56,14 +71,34 @@ permissions:
 
 # Never let two production deploys race. Unlike the APK build this does NOT
 # cancel in progress - killing a half-finished deploy is worse than queueing.
+# Pull requests get their own group and a newer push cancels the older check.
 concurrency:
-  group: deploy-web-production
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('deploy-web-pr-{0}', github.ref) || 'deploy-web-production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
-    environment: production
+    timeout-minutes: 20
+    # A throwaway database for the @mykavo/database integration suite (and
+    # anything else that reads DATABASE_URL). Nothing here can reach
+    # production: the URL points at this container and holds no secrets.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mykavo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mykavo_test
     steps:
       - name: Check confirmation
         if: github.event_name == 'workflow_dispatch' && inputs.confirm != 'deploy'
@@ -73,51 +108,64 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      # Node 20 matches netlify.toml's build.environment NODE_VERSION so the
-      # CLI build here behaves like a Netlify-run build.
+      # Reads the pnpm version from the root package.json "packageManager".
+      # Before setup-node so its pnpm cache works.
+      - uses: pnpm/action-setup@v4
+
+      # Node 20 matches netlify.toml's build.environment NODE_VERSION.
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # Reads the pnpm version from the root package.json "packageManager".
-      - uses: pnpm/action-setup@v4
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # The Prisma client must exist before typecheck/build - the same step
-      # netlify.toml runs in its build command.
       - name: Generate Prisma client
         run: pnpm --filter @mykavo/database exec prisma generate
 
-      # Verification gate, matching the project convention: never deploy on a
-      # red build. Package tests that need a live database are excluded - the
-      # @mykavo/database suite is a live-DB integration suite and has no
-      # Postgres here.
+      # Every migration, in order, on an empty database: also proves the
+      # migrations themselves apply cleanly before they are run on Supabase.
+      - name: Apply migrations to the test database
+        run: pnpm --filter @mykavo/database exec prisma migrate deploy
+
       - name: Lint
         run: pnpm --filter web lint
 
-      - name: Typecheck
+      - name: Typecheck web
         run: pnpm --filter web typecheck
 
-      - name: Unit tests
-        run: |
-          pnpm --filter web test
-          pnpm --filter @mykavo/shared test
-          pnpm --filter @mykavo/comparison-engine test
-          pnpm --filter @mykavo/severity-engine test
-          pnpm --filter @mykavo/email test
-          pnpm --filter @mykavo/scanner test
-          # 89 audit checks and the outreach lead-picker, previously
-          # ungated: this package has always had tests, it was just
-          # never in the list.
-          pnpm --filter @mykavo/seo-audit test
-          # @mykavo/database is a live-DB integration suite with no Postgres
-          # here, but this ONE file needs no database and guards the rule that
-          # decides whether a shared screenshot is safe to delete. Getting it
-          # wrong silently blanks the evidence on approved baselines, so it
-          # gates deploys rather than only running on a developer's machine.
-          pnpm --filter @mykavo/database exec vitest run src/unreferenced-keys.test.ts src/shopify-billing.test.ts
+      # The worker runs scans and alerts; it has no tests of its own (its
+      # logic lives in the packages below), so its typecheck is its gate.
+      - name: Typecheck worker
+        run: pnpm --filter worker typecheck
+
+      # Every package's tests, the database integration suite included.
+      - name: Tests
+        run: pnpm -r --if-present test
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The Prisma client must exist before the build - the same step
+      # netlify.toml runs in its build command.
+      - name: Generate Prisma client
+        run: pnpm --filter @mykavo/database exec prisma generate
 
       # `--filter web` is REQUIRED: it lets Netlify manage base/publish for the
       # monorepo. netlify.toml must not set base/publish itself, or the publish
