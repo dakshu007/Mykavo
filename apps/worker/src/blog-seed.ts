@@ -17,8 +17,27 @@ export async function seedRepoPosts(posts: readonly RepoPost[] = REPO_POSTS, now
   if (due.length === 0) return 0;
   const existing = await prisma.blogPost.findMany({
     where: { slug: { in: due.map((p) => p.slug) } },
-    select: { slug: true },
+    select: { slug: true, publishedAt: true },
   });
+
+  // A changed publish date in the code moves a post that still has a date
+  // it was shipped with. Compare-and-set: a date changed by hand in the
+  // blog admin no longer matches, so it is never overwritten.
+  let moved = 0;
+  for (const row of existing) {
+    const post = due.find((p) => p.slug === row.slug);
+    const current = row.publishedAt?.getTime();
+    if (!post?.movedFrom?.length || current === undefined) continue;
+    const from = post.movedFrom.map((d) => new Date(d));
+    if (!from.some((d) => d.getTime() === current)) continue;
+    const { count } = await prisma.blogPost.updateMany({
+      where: { slug: post.slug, publishedAt: { in: from } },
+      data: { publishedAt: new Date(post.publishedAt) },
+    });
+    moved += count;
+  }
+  if (moved > 0) logger.info("repo blog posts moved to their new publish date", { count: moved });
+
   const have = new Set(existing.map((p) => p.slug));
   const missing = due.filter((p) => !have.has(p.slug));
   if (missing.length === 0) return 0;
