@@ -221,7 +221,7 @@ export function LandingNav() {
       <SitePromoBar />
       <div aria-hidden className="h-[var(--promo-h,0px)]" />
       <header data-landing-nav className="fixed inset-x-0 top-[calc(var(--promo-h,0px)+1rem)] z-50 px-4 sm:top-[calc(var(--promo-h,0px)+1.25rem)]">
-      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 whitespace-nowrap rounded-full xl:max-w-5xl border border-[#151515]/15 bg-white/95 pl-5 pr-2 shadow-[0_2px_0_#15151522,0_18px_40px_-18px_rgba(21,21,21,0.35)]">
+      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 whitespace-nowrap rounded-full xl:max-w-6xl border border-[#151515]/15 bg-white/95 pl-5 pr-2 shadow-[0_2px_0_#15151522,0_18px_40px_-18px_rgba(21,21,21,0.35)]">
         <Link href="/" aria-label="MyKavo home" className="flex shrink-0 items-center gap-2">
           <LogoMark size={24} />
           <span className="text-[16px] font-semibold tracking-tight text-[#151515]">MyKavo</span>
@@ -282,7 +282,7 @@ export function LandingNav() {
           </Link>
           <Link
             href="/signup?provider=google"
-            className="inline-flex items-center gap-2 rounded-full bg-[#FFD400] px-5 py-2.5 text-[13.5px] font-semibold text-[#151515] ring-1 ring-inset ring-black/15 transition-colors hover:bg-[#ffe14d]"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#151515] bg-[#FFD400] px-5 py-2 text-[13.5px] font-semibold text-[#151515] shadow-[0_3px_0_#151515] transition-[transform,box-shadow,background-color] duration-150 ease-out hover:translate-y-[3px] hover:bg-[#ffe14d] hover:shadow-[0_0_0_#151515] active:translate-y-[3px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             <span className="inline-flex size-4.5 items-center justify-center rounded-full bg-white">
               <GoogleIcon className="size-3" />
@@ -380,7 +380,7 @@ export function LandingNav() {
             <Link
               href="/signup?provider=google"
               onClick={() => setOpen(false)}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FFD400] px-4 py-3 text-center text-sm font-semibold text-[#151515] ring-1 ring-inset ring-black/15"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#151515] bg-[#FFD400] px-4 py-3 text-center text-sm font-semibold text-[#151515] shadow-[0_3px_0_#151515] transition-[transform,box-shadow] duration-150 active:translate-y-[3px] active:shadow-none motion-reduce:transition-none"
             >
               <span className="inline-flex size-5 items-center justify-center rounded-full bg-white">
                 <GoogleIcon className="size-3.5" />

@@ -7,7 +7,7 @@ import { SmoothScroll } from "@/components/smooth-scroll";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
 import { site } from "@/config/site";
-import { campaignWindows } from "@/config/campaign";
+import { campaignsForYear } from "@/config/campaign";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 
@@ -111,7 +111,17 @@ const themeBootScript = `try{var t=localStorage.getItem("mykavo-theme");if(t==="
 // offer's calendar window is open (config/campaign.ts), so the page never
 // jumps when the bar arrives. The bar itself then checks the code with Dodo
 // and gives the space back if the code isn't live.
-const promoBootScript = `try{var n=Date.now(),w=${JSON.stringify(campaignWindows(new Date().getUTCFullYear()))};for(var i=0;i<w.length;i++)if(n>=w[i][0]&&n<w[i][1]){document.documentElement.setAttribute("data-promo","");break}}catch(e){}`;
+// The attribute's value is the offer's theme, so the reserved strip can be
+// painted in that offer's colour (globals.css) before the bar mounts.
+const promoWindows = (() => {
+  const year = new Date().getUTCFullYear();
+  const out: [number, number, string][] = [];
+  for (let y = year - 1; y < year + 10; y++) {
+    for (const c of campaignsForYear(y)) out.push([c.startsAt.getTime(), c.endsAt.getTime(), c.theme]);
+  }
+  return out;
+})();
+const promoBootScript = `try{var n=Date.now(),w=${JSON.stringify(promoWindows)};for(var i=0;i<w.length;i++)if(n>=w[i][0]&&n<w[i][1]){document.documentElement.setAttribute("data-promo",w[i][2]);break}}catch(e){}`;
 
 export default function RootLayout({
   children,

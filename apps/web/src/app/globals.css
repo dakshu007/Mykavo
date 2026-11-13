@@ -916,3 +916,57 @@ html[data-promo] body:has([data-landing-nav])::before {
 @media (prefers-reduced-motion: reduce) {
   .mk-toast-in { animation: none; }
 }
+
+/* Black Friday sale tape (promo-bar.tsx BlackFridayBar). The reserved strip
+   is painted gold too, so nothing flashes dark before the bar mounts. */
+html[data-promo="black-friday"] body:has([data-landing-nav])::before {
+  background: #ffd400;
+}
+.bfx-foil {
+  background: linear-gradient(90deg, #ffc400 0%, #ffe45c 25%, #ffd400 50%, #ffe45c 75%, #ffc400 100%);
+  background-size: 200% 100%;
+  animation: bfx-foil 8s linear infinite;
+}
+@keyframes bfx-foil {
+  from { background-position: 0% 0; }
+  to { background-position: -200% 0; }
+}
+.bfx-tape {
+  background-image: repeating-linear-gradient(-45deg, #0b0b0b 0 6px, transparent 6px 16px);
+  background-size: 45px 45px;
+  animation: bfx-tape 2.4s linear infinite;
+}
+@keyframes bfx-tape {
+  from { background-position: 0 0; }
+  to { background-position: 45px 0; }
+}
+/* The old price is struck through, held, then the strike resets. */
+.bfx-strike {
+  transform-origin: left center;
+  animation: bfx-strike 6s cubic-bezier(0.6, 0, 0.2, 1) infinite;
+}
+@keyframes bfx-strike {
+  0%, 8% { transform: translateY(-50%) scaleX(0); }
+  18%, 92% { transform: translateY(-50%) scaleX(1); }
+  100% { transform: translateY(-50%) scaleX(0); }
+}
+/* ...and the new price pops in right after the strike lands. */
+.bfx-pop {
+  animation: bfx-pop 6s ease-out infinite;
+}
+@keyframes bfx-pop {
+  0%, 17% { transform: scale(1); }
+  21% { transform: scale(1.22) rotate(-3deg); }
+  26%, 100% { transform: scale(1); }
+}
+.bfx-live {
+  animation: bfx-live 1.4s ease-in-out infinite;
+}
+@keyframes bfx-live {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(255 59 48 / 0.6); }
+  50% { box-shadow: 0 0 0 5px rgb(255 59 48 / 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bfx-foil, .bfx-tape, .bfx-pop, .bfx-live { animation: none; }
+  .bfx-strike { animation: none; transform: translateY(-50%) scaleX(1); }
+}

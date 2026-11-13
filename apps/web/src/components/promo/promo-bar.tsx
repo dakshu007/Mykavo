@@ -75,6 +75,21 @@ export function PromoBar({
     }
   }
 
+  if (bf) {
+    return (
+      <BlackFridayBar
+        campaign={campaign}
+        variant={variant}
+        href={href}
+        placement={placement}
+        closable={closable}
+        left={left}
+        copied={copied}
+        onCopy={() => void copyCode()}
+      />
+    );
+  }
+
   const position =
     variant === "fixed"
       ? // Its own compositor layer, with layout and paint contained, so the
@@ -240,5 +255,132 @@ function Countdown({ left }: { left: ReturnType<typeof countdownParts> | null })
         </span>
       ))}
     </span>
+  );
+}
+
+/**
+ * Black Friday: a strip of gold sale tape. Foil light sweeps across it and
+ * faint tape stripes slide by; a black tag is cut into its left edge; the
+ * old price gets struck through in red before the new one pops in; the
+ * countdown ticks on black tiles. Every loop stops for reduced motion
+ * (globals.css, "bfx-").
+ */
+function BlackFridayBar({
+  campaign,
+  variant,
+  href,
+  placement,
+  closable,
+  left,
+  copied,
+  onCopy,
+}: {
+  campaign: Campaign;
+  variant: "fixed" | "inline";
+  href: string;
+  placement: string;
+  closable: boolean;
+  left: ReturnType<typeof countdownParts> | null;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  const regular = PLAN_PRICES_USD.pro;
+  const offer = formatUsd(campaignPrice(regular, campaign.percent));
+  const position =
+    variant === "fixed"
+      ? "fixed inset-x-0 top-0 z-[60] h-[var(--promo-h,40px)] transform-gpu [contain:layout_paint]"
+      : "relative mb-4 h-10 rounded-xl border-[1.5px]";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const tiles: [string, string][] = left
+    ? [
+        [String(left.days), "d"],
+        [pad(left.hours), "h"],
+        [pad(left.minutes), "m"],
+        [pad(left.seconds), "s"],
+      ]
+    : [
+        ["--", "d"],
+        ["--", "h"],
+        ["--", "m"],
+        ["--", "s"],
+      ];
+
+  return (
+    <div
+      role="region"
+      aria-label={`${campaign.name} offer`}
+      data-scroll-static={variant === "fixed" ? "" : undefined}
+      className={`${position} bfx-foil overflow-hidden border-b-2 border-[#0B0B0B] text-[#0B0B0B]`}
+    >
+      {/* Sale tape stripes sliding by. */}
+      <div aria-hidden className="bfx-tape pointer-events-none absolute inset-0 opacity-[0.07]" />
+      {/* A bright band of foil light. */}
+      <div
+        aria-hidden
+        className="promo-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-[linear-gradient(100deg,transparent,rgb(255_255_255/0.55),transparent)]"
+      />
+
+      {/* The tag cut into the left edge. */}
+      <div
+        className="absolute inset-y-0 left-0 flex items-center gap-2 bg-[#0B0B0B] pl-3 pr-6 text-[#FFD400] [clip-path:polygon(0_0,100%_0,calc(100%-14px)_100%,0_100%)] sm:pl-4 sm:pr-8"
+      >
+        <span className="bfx-live size-1.5 rounded-full bg-[#FF3B30]" aria-hidden />
+        <span className="hidden font-mono text-[11px] font-black uppercase tracking-[0.18em] sm:inline">Black Friday</span>
+        <span className="font-mono text-[12px] font-black text-white">-{campaign.percent}%</span>
+      </div>
+
+      <div
+        className={`relative mx-auto flex h-full max-w-6xl items-center justify-center gap-2.5 pl-[84px] pr-3 text-[13px] sm:gap-4 sm:pl-[200px] md:pl-4 ${closable ? "pr-10 sm:pr-10" : "sm:pr-5"}`}
+      >
+        <p className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
+          <span className="font-semibold">{campaignPlansLabel(campaign)}</span>
+          <span className="relative hidden font-semibold text-[#0B0B0B]/55 min-[420px]:inline">
+            ${regular}
+            <span aria-hidden className="bfx-strike absolute left-[-2px] right-[-2px] top-1/2 h-[2px] rounded bg-[#E0251B]" />
+          </span>
+          <span>
+            <span className="bfx-pop inline-block text-[16px] font-black tracking-tight">{offer}</span>
+            <span className="font-semibold">/mo</span>
+          </span>
+          <span className="hidden text-[12px] font-medium text-[#0B0B0B]/70 lg:inline">
+            · first {campaign.cycles} months
+          </span>
+        </p>
+
+        <span className="flex shrink-0 items-center gap-0.5 font-mono tabular-nums" aria-label="Time left">
+          {tiles.map(([value, unit], i) => (
+            <span
+              key={unit}
+              className={`items-baseline rounded-[5px] bg-[#0B0B0B] px-1 py-0.5 text-[12px] font-bold text-[#FFD400] shadow-[inset_0_-1px_0_rgb(255_255_255/0.12)] ${i === 3 ? "hidden sm:inline-flex" : "inline-flex"}`}
+            >
+              <span key={value} className={i === 3 ? "promo-tick inline-block" : "inline-block"}>
+                {value}
+              </span>
+              <span className="ml-px text-[9.5px] text-[#FFD400]/60">{unit}</span>
+            </span>
+          ))}
+        </span>
+
+        <button
+          type="button"
+          onClick={onCopy}
+          className="hidden shrink-0 items-center gap-1.5 rounded-md border-[1.5px] border-dashed border-[#0B0B0B]/70 bg-white/40 px-2 py-0.5 font-mono text-[11.5px] font-bold tracking-wider transition-colors hover:bg-white/70 md:inline-flex"
+          aria-label={`Copy code ${campaign.code}`}
+        >
+          {campaign.code}
+          {copied ? <Check className="size-3" aria-hidden /> : <Copy className="size-3 opacity-70" aria-hidden />}
+        </button>
+
+        <Link
+          href={href}
+          onClick={() => track("campaign_banner_clicked", { campaign: campaign.id, placement })}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#0B0B0B] px-3 py-1 text-[12.5px] font-bold text-[#FFD400] shadow-[0_2px_0_rgb(0_0_0/0.35)] transition-[transform,box-shadow] duration-150 hover:translate-y-[2px] hover:shadow-none motion-reduce:transition-none"
+        >
+          <span className="hidden sm:inline">Claim {campaign.percent}% off</span>
+          <span className="sm:hidden">Claim</span>
+          <ArrowRight className="size-3.5" aria-hidden />
+        </Link>
+      </div>
+    </div>
   );
 }
