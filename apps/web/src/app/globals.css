@@ -970,3 +970,18 @@ html[data-promo="black-friday"] body:has([data-landing-nav])::before {
   .bfx-foil, .bfx-tape, .bfx-pop, .bfx-live { animation: none; }
   .bfx-strike { animation: none; transform: translateY(-50%) scaleX(1); }
 }
+
+/* The Kavo runner, the AI loader (components/keywords/kavo-runner.tsx).
+   Legs and arms swing in turn, the body bobs, the shout wiggles. */
+.kv-leg1 { transform-origin: 18px 27px; animation: kv-swing 0.3s ease-in-out infinite alternate; }
+.kv-leg2 { transform-origin: 18px 27px; animation: kv-swing 0.3s ease-in-out infinite alternate-reverse; }
+.kv-arm1 { transform-origin: 21px 16px; animation: kv-swing 0.3s ease-in-out infinite alternate-reverse; }
+.kv-arm2 { transform-origin: 21px 16px; animation: kv-swing 0.3s ease-in-out infinite alternate; }
+.kv-bob { animation: kv-bob 0.15s ease-in-out infinite alternate; }
+.kv-wiggle { animation: kv-wiggle 0.5s ease-in-out infinite alternate; }
+@keyframes kv-swing { from { transform: rotate(40deg); } to { transform: rotate(-40deg); } }
+@keyframes kv-bob { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+@keyframes kv-wiggle { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .kv-leg1, .kv-leg2, .kv-arm1, .kv-arm2, .kv-bob, .kv-wiggle { animation: none; }
+}

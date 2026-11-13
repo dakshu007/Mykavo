@@ -3,6 +3,7 @@ import { agentBudgetMicroUsd, callCostMicroUsd, WEB_SEARCH_MICRO_USD } from "./p
 import { agentLimitsFor, quotaPeriod } from "./limits";
 import { htmlToMarkdown, sanitizePostHtml, slugify } from "./html";
 import { buildJsonLd, jsonLdScripts } from "./jsonld";
+import { clipWords, normalizeProfile } from "./schemas";
 
 describe("pricing", () => {
   it("prices tokens per model and adds web searches", () => {
@@ -110,5 +111,28 @@ describe("markdown, slug and JSON-LD", () => {
     expect((withFaq[1]?.mainEntity as unknown[]).length).toBe(1);
     expect(buildJsonLd({ ...base, faq: [] })).toHaveLength(1);
     expect(jsonLdScripts([{ a: "</script>" }])).not.toContain("</script></script>");
+  });
+});
+
+describe("service names", () => {
+  it("are cut at a word, never mid-word", () => {
+    expect(clipWords("Identifies which plugin, theme or WordPress update broke a site", 60)).toBe(
+      "Identifies which plugin, theme or WordPress update broke a",
+    );
+    expect(clipWords("Short service", 80)).toBe("Short service");
+  });
+
+  it("keep commas inside one service when the profile is tidied", () => {
+    const p = normalizeProfile(
+      {
+        businessType: "Plugin",
+        services: ["Identifies which plugin, theme or WordPress update broke a site"],
+        audience: "Site owners",
+        country: "US",
+        language: "en",
+      } as never,
+      { country: "US", language: "en" },
+    );
+    expect(p.services).toEqual(["Identifies which plugin, theme or WordPress update broke a site"]);
   });
 });

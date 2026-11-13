@@ -54,7 +54,7 @@ export type PostOutput = z.infer<typeof postOutput>;
 /** What a user may save from the setup form (API boundary). */
 export const profileInput = z.object({
   businessType: z.string().trim().min(2).max(80),
-  services: z.array(z.string().trim().min(1).max(60)).min(1).max(10),
+  services: z.array(z.string().trim().min(1).max(80)).min(1).max(10),
   audience: z.string().trim().min(2).max(160),
   country: z.string().trim().regex(/^[A-Za-z]{2}$/),
   language: z.string().trim().regex(/^[A-Za-z]{2}$/),
@@ -63,11 +63,20 @@ export type ProfileInput = z.infer<typeof profileInput>;
 
 const clip = (s: string, n: number) => s.replace(/\s+/g, " ").trim().slice(0, n);
 
+/** Like clip, but never cuts a word in half: "...broke a site" not "...broke a s". */
+export function clipWords(s: string, n: number): string {
+  const t = s.replace(/\s+/g, " ").trim();
+  if (t.length <= n) return t;
+  const cut = t.slice(0, n + 1);
+  const space = cut.lastIndexOf(" ");
+  return (space > n * 0.5 ? cut.slice(0, space) : t.slice(0, n)).replace(/[\s,;:.-]+$/, "");
+}
+
 /** Tidies a model profile into what is stored; null fields fall back. */
 export function normalizeProfile(raw: ProfileOutput, fallback: { country: string; language: string }): ProfileInput {
   const country = /^[A-Za-z]{2}$/.test(raw.country.trim()) ? raw.country.trim().toUpperCase() : fallback.country;
   const language = /^[A-Za-z]{2}$/.test(raw.language.trim()) ? raw.language.trim().toLowerCase() : fallback.language;
-  const services = [...new Set(raw.services.map((s) => clip(s, 60)).filter(Boolean))].slice(0, 10);
+  const services = [...new Set(raw.services.map((s) => clipWords(s, 80)).filter(Boolean))].slice(0, 10);
   return {
     businessType: clip(raw.businessType, 80) || "Business",
     services: services.length > 0 ? services : ["General services"],

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AI_JOB_STARTED_EVENT } from "@/components/keywords/ai-job-watcher";
+import { KavoProgress } from "./kavo-runner";
 
 export interface JobState {
   id: string;
@@ -82,18 +83,7 @@ export function useAgentJob(initial: JobState | null, onDone: (job: JobState) =>
   return { job, running, start, setJob };
 }
 
+/** The AI loader: the Kavo runner (kavo-runner.tsx). */
 export function JobProgress({ job }: { job: JobState }) {
-  const pct = Math.max(4, Math.min(100, job.progress));
-  return (
-    <div role="status" aria-live="polite" className="w-full">
-      <div className="flex items-center justify-between gap-3 text-[13px]">
-        <span className="font-medium text-ink">{job.step ?? "Working"}…</span>
-        <span className="tabular-nums text-ink-faint">{pct}%</span>
-      </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10">
-        <div className="h-full rounded-full bg-accent transition-[width] duration-700 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
-      </div>
-      <p className="mt-2 text-[12px] text-ink-faint">You can leave this page; it keeps working.</p>
-    </div>
-  );
+  return <KavoProgress step={job.step} progress={job.progress} />;
 }

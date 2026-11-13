@@ -14,7 +14,7 @@ const SYSTEM =
 
 const INSTRUCTION = `Describe this business from its own pages.
 - businessType: what kind of business it is, in a few words (for example "Family dental clinic").
-- services: its main products or services, 3 to 8 short items.
+- services: its main products or services, 3 to 8 short items, each a few words with no commas.
 - audience: who it serves, one short phrase.
 - country: ISO 3166-1 alpha-2 code of the main market (use the hint if the pages don't say).
 - language: ISO 639-1 code of the language the site is written in.

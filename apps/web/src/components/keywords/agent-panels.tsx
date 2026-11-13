@@ -7,6 +7,7 @@ import { ArrowRight, Check, Loader2, PenLine, Pencil, Sparkles, Wand2, X } from 
 import type { UpgradeOffer } from "@/lib/keywords/agent-data";
 import { cn } from "@/lib/utils";
 import { JobProgress, useAgentJob, type JobState } from "./use-agent-job";
+import { KavoRunner } from "./kavo-runner";
 
 const primary =
   "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-contrast transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60";
@@ -223,7 +224,7 @@ function ProfileForm({
   const router = useRouter();
   const [values, setValues] = useState({
     businessType: initial.businessType,
-    services: initial.services.join(", "),
+    services: initial.services.join("\n"),
     audience: initial.audience,
     country: initial.country,
     language: initial.language,
@@ -242,8 +243,9 @@ function ProfileForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...values,
+          // One per line: a service may itself contain commas.
           services: values.services
-            .split(",")
+            .split(/\n/)
             .map((s) => s.trim())
             .filter(Boolean),
         }),
@@ -265,7 +267,7 @@ function ProfileForm({
     }
   }
 
-  const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setValues((v) => ({ ...v, [k]: e.target.value }));
   const busy = saving || refreshing;
 
@@ -280,8 +282,15 @@ function ProfileForm({
         <input className={field} value={values.audience} onChange={set("audience")} maxLength={160} required placeholder="Families in Leeds" />
       </label>
       <label className="text-[13px] font-medium text-ink sm:col-span-2">
-        Main products or services <span className="font-normal text-ink-faint">(separate with commas)</span>
-        <input className={field} value={values.services} onChange={set("services")} required placeholder="Invisalign, teeth whitening, check-ups" />
+        Main products or services <span className="font-normal text-ink-faint">(one per line)</span>
+        <textarea
+          className={cn(field, "min-h-[104px] resize-y leading-6")}
+          value={values.services}
+          onChange={set("services")}
+          required
+          rows={4}
+          placeholder={"Invisalign\nTeeth whitening\nCheck-ups"}
+        />
       </label>
       <label className="text-[13px] font-medium text-ink">
         Country <span className="font-normal text-ink-faint">(2 letters, e.g. US, GB, IN)</span>
@@ -449,7 +458,7 @@ export function WriteButton({
   if (write.running && write.job) {
     return size === "compact" ? (
       <span role="status" aria-live="polite" className="inline-flex min-w-[150px] items-center gap-2 text-[12.5px] text-ink">
-        <Loader2 className="size-3.5 shrink-0 animate-spin text-accent" aria-hidden />
+        <KavoRunner className="h-[22px] w-[18px] shrink-0" />
         <span className="truncate">{write.job.step ?? "Writing"}… {write.job.progress}%</span>
       </span>
     ) : (
