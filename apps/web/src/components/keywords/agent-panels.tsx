@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, PenLine, Pencil, Sparkles, Wand2, X } from "lucide-react";
+import { ArrowRight, Check, Loader2, PenLine, Pencil, Sparkles, Wand2, X } from "lucide-react";
+import type { UpgradeOffer } from "@/lib/keywords/agent-data";
 import { cn } from "@/lib/utils";
 import { JobProgress, useAgentJob, type JobState } from "./use-agent-job";
 
@@ -22,6 +24,43 @@ export interface ProfileView {
   country: string;
   language: string;
   confirmed: boolean;
+}
+
+function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
+/**
+ * Where a used-up allowance would leave a grey, disabled button: a way to get
+ * more instead. Billing shows the plans; only owners can buy, and Billing
+ * says so to everyone else.
+ */
+function UpgradeLink({
+  upgrade,
+  from,
+  label,
+  size = "default",
+}: {
+  upgrade: UpgradeOffer;
+  from: string;
+  label: string;
+  size?: "default" | "compact";
+}) {
+  return (
+    <Link
+      href={`/dashboard/billing?from=${from}`}
+      title={`${upgrade.plan}: ${plural(upgrade.reports, "keyword report")} and ${plural(upgrade.posts, "blog post")} a month`}
+      className={
+        size === "compact"
+          ? "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-ink bg-primary px-3 text-[12.5px] font-semibold text-[#16181d] transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          : hero
+      }
+    >
+      <Sparkles className={size === "compact" ? "size-3.5" : "size-4"} aria-hidden />
+      {label}
+      {size === "compact" ? null : <ArrowRight className="size-4" aria-hidden />}
+    </Link>
+  );
 }
 
 function Alert({ children }: { children: React.ReactNode }) {
@@ -278,14 +317,19 @@ export function DeepPanel({
   canRun,
   hasReport,
   reportsLeft,
+  reportsLimit = 1,
   refillsOn,
+  upgrade = null,
 }: {
   websiteId: string;
   job: JobState | null;
   canRun: boolean;
   hasReport: boolean;
   reportsLeft: number | null;
+  reportsLimit?: number;
   refillsOn: string;
+  /** The plan that runs more reports: shown in place of the button once they are used up. */
+  upgrade?: UpgradeOffer | null;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(job?.status === "failed" ? job.error : null);
@@ -301,6 +345,21 @@ export function DeepPanel({
   }
 
   const none = reportsLeft === 0;
+  if (none && upgrade) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-xl">
+          <p className="text-[13.5px] font-semibold text-ink">You&apos;ve used this month&apos;s keyword {plural(reportsLimit, "report")}.</p>
+          <p className="mt-0.5 text-[13px] leading-6 text-ink-secondary">
+            {upgrade.plan} runs <strong className="font-semibold text-ink">{plural(upgrade.reports, "keyword report")}</strong> and
+            writes <strong className="font-semibold text-ink">{plural(upgrade.posts, "blog post")}</strong> a month. Yours refill on{" "}
+            {refillsOn}.
+          </p>
+        </div>
+        <UpgradeLink upgrade={upgrade} from="keywords:report" label={`Upgrade to run more`} />
+      </div>
+    );
+  }
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -345,6 +404,7 @@ export function WriteButton({
   postsLeft,
   disabled,
   size = "default",
+  upgrade = null,
 }: {
   websiteId: string;
   keyword: string;
@@ -352,6 +412,8 @@ export function WriteButton({
   postsLeft: number | null;
   disabled?: boolean;
   size?: "default" | "compact";
+  /** The plan that writes more posts: shown in place of the button once they are used up. */
+  upgrade?: UpgradeOffer | null;
 }) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -394,6 +456,17 @@ export function WriteButton({
       <div className="w-full">
         <JobProgress job={write.job} />
       </div>
+    );
+  }
+
+  if (postsLeft === 0 && upgrade && !disabled) {
+    return (
+      <UpgradeLink
+        upgrade={upgrade}
+        from="keywords:post"
+        size={size}
+        label={size === "compact" ? "Upgrade to write" : "Upgrade to write more"}
+      />
     );
   }
 

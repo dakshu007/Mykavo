@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Building2, ChevronRight, FileText, Lock, Target, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Building2, ChevronRight, FileText, Lock, Sparkles, Target, Wand2 } from "lucide-react";
 import { isGscReauthMessage, type StrikingOpportunity } from "@mykavo/shared";
 import { DeepPanel, SetupPanel, WriteButton } from "@/components/keywords/agent-panels";
 import { Chip, Micro, Popularity, Section, TileStrip, type Tile } from "@/components/keywords/layout";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { loadStrikingReport } from "@/lib/keywords/striking";
 import { canUseKeywordAgent } from "@/lib/keywords/access";
-import { loadAgentPage, type OpportunityView } from "@/lib/keywords/agent-data";
+import { loadAgentPage, type OpportunityView, type UpgradeOffer } from "@/lib/keywords/agent-data";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "AI Keywords - MyKavo", robots: { index: false } };
@@ -48,6 +48,7 @@ interface WriteProps {
   writing: Record<string, string>;
   postsLeft: number | null;
   canWrite: boolean;
+  upgrade: UpgradeOffer | null;
 }
 
 /** One of the top three: the big "write these next" card. */
@@ -75,7 +76,7 @@ function TopPick({ opp, w }: { opp: OpportunityView; w: WriteProps }) {
       </div>
       {w.canWrite && (
         <div className="mt-4">
-          <WriteButton websiteId={w.websiteId} keyword={opp.keyword} runningJobId={w.writing[opp.keyword]} postsLeft={w.postsLeft} />
+          <WriteButton websiteId={w.websiteId} keyword={opp.keyword} runningJobId={w.writing[opp.keyword]} postsLeft={w.postsLeft} upgrade={w.upgrade} />
         </div>
       )}
     </li>
@@ -107,7 +108,7 @@ function KeywordRow({ opp, w }: { opp: OpportunityView; w: WriteProps }) {
             websiteId={w.websiteId}
             keyword={opp.keyword}
             runningJobId={w.writing[opp.keyword]}
-            postsLeft={w.postsLeft}
+            postsLeft={w.postsLeft} upgrade={w.upgrade}
             size="compact"
           />
         )}
@@ -148,7 +149,7 @@ function StrikingRow({ opp, w }: { opp: StrikingOpportunity; w: WriteProps }) {
             websiteId={w.websiteId}
             keyword={opp.query}
             runningJobId={w.writing[opp.query]}
-            postsLeft={w.postsLeft}
+            postsLeft={w.postsLeft} upgrade={w.upgrade}
             size="compact"
           />
         ) : (
@@ -173,6 +174,43 @@ function LockedRow({ count, noun }: { count: number; noun: string }) {
   );
 }
 
+/** A used-up allowance, said once at the top, with the plan that gives more. */
+function UpgradeBar({
+  upgrade,
+  postsOut,
+  reportsOut,
+  refillsOn,
+}: {
+  upgrade: UpgradeOffer;
+  postsOut: boolean;
+  reportsOut: boolean;
+  refillsOn: string;
+}) {
+  const used = postsOut && reportsOut ? "blog posts and keyword reports" : postsOut ? "blog posts" : "keyword reports";
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl border-[1.5px] border-ink bg-primary-soft px-5 py-4 shadow-[4px_4px_0_var(--color-ink)]"
+    >
+      <Sparkles className="size-5 shrink-0 text-accent" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-semibold text-ink">You&apos;ve used this month&apos;s {used}.</p>
+        <p className="mt-0.5 text-[13px] leading-5 text-ink-secondary">
+          Upgrade to {upgrade.plan} to write <strong className="font-semibold text-ink">{upgrade.posts} blog posts</strong> and run{" "}
+          <strong className="font-semibold text-ink">{upgrade.reports} keyword reports</strong> a month. Yours refill on {refillsOn}.
+        </p>
+      </div>
+      <Link
+        href="/dashboard/billing?from=keywords:bar"
+        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border-[1.5px] border-ink bg-primary px-5 text-[13.5px] font-semibold text-[#16181d] shadow-[3px_3px_0_var(--color-ink)] transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        Upgrade to {upgrade.plan}
+        <ArrowUpRight className="size-4" aria-hidden />
+      </Link>
+    </div>
+  );
+}
+
 /** AI Keywords for one website: business, keyword report, already ranking, posts. */
 export default async function KeywordReportPage({ params }: Params) {
   const session = await requireSession();
@@ -189,7 +227,13 @@ export default async function KeywordReportPage({ params }: Params) {
   const confirmed = agent.profile?.confirmed === true;
   const { allowance, report, posts } = agent;
   const canWrite = confirmed && !allowance.blocked;
-  const w: WriteProps = { websiteId: website.id, writing: agent.writing, postsLeft: allowance.postsLeft, canWrite };
+  const w: WriteProps = {
+    websiteId: website.id,
+    writing: agent.writing,
+    postsLeft: allowance.postsLeft,
+    canWrite,
+    upgrade: allowance.upgrade,
+  };
 
   const reportTotal = report ? report.opportunities.length + report.hiddenCount : 0;
   const strikingTotal = strikingOpps.length + strikingHidden;
@@ -277,6 +321,15 @@ export default async function KeywordReportPage({ params }: Params) {
 
       <TileStrip tiles={tiles} />
 
+      {allowance.upgrade && !allowance.blocked && (allowance.postsLeft === 0 || allowance.reportsLeft === 0) && (
+        <UpgradeBar
+          upgrade={allowance.upgrade}
+          postsOut={allowance.postsLeft === 0}
+          reportsOut={allowance.reportsLeft === 0}
+          refillsOn={allowance.refillsOn}
+        />
+      )}
+
       {/* minmax(0,1fr) on phones too: an auto column would grow to the chip row's full width. */}
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-8">
         <nav aria-label="AI Keywords sections" className="min-w-0 lg:sticky lg:top-24 lg:self-start">
@@ -334,7 +387,9 @@ export default async function KeywordReportPage({ params }: Params) {
                   canRun={!allowance.blocked}
                   hasReport={report !== null}
                   reportsLeft={allowance.reportsLeft}
+                  reportsLimit={allowance.reportsLimit}
                   refillsOn={allowance.refillsOn}
+                  upgrade={allowance.upgrade}
                 />
               ) : (
                 <p className="text-[13px] text-ink-secondary">

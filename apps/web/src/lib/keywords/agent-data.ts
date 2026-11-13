@@ -1,5 +1,7 @@
 import { prisma } from "@mykavo/database";
-import type { QuotaKind } from "@mykavo/keyword-agent/pure";
+import { AGENT_LIMITS, type QuotaKind } from "@mykavo/keyword-agent/pure";
+import { getPlan } from "@/config/plans";
+import { nextPlanFor } from "@/lib/dashboard-cards";
 import { loadAllowance, remaining } from "./jobs";
 
 /**
@@ -57,7 +59,24 @@ export interface AgentPageData {
     postsLimit: number;
     refillsOn: string;
     blocked: string | null;
+    /** The plan that gives more, for the "upgrade to write more" buttons. Null on the top plan. */
+    upgrade: UpgradeOffer | null;
   };
+}
+
+export interface UpgradeOffer {
+  plan: string;
+  reports: number;
+  posts: number;
+}
+
+/** Free and Starter move up to Pro (a running trial keeps Pro), Pro to Agency. */
+function upgradeFor(planId: string, onTrial: boolean, unlimited: boolean): UpgradeOffer | null {
+  if (unlimited) return null;
+  const next = onTrial ? getPlan("pro") : planId === "free" || planId === "starter" || planId === "pro" ? nextPlanFor(planId) : null;
+  if (!next) return null;
+  const limits = AGENT_LIMITS[next.id as keyof typeof AGENT_LIMITS];
+  return limits ? { plan: next.name, reports: limits.reports, posts: limits.posts } : null;
 }
 
 const jobSelect = { id: true, kind: true, status: true, step: true, progress: true, error: true, createdAt: true } as const;
@@ -151,6 +170,7 @@ export async function loadAgentPage(workspaceId: string, websiteId: string, now 
       postsLimit: allowance.limits.posts,
       refillsOn: allowance.period.end.toLocaleDateString("en-US", { month: "long", day: "numeric" }),
       blocked: allowance.blocked,
+      upgrade: upgradeFor(allowance.planId, allowance.onTrial, allowance.unlimited),
     },
   };
 }

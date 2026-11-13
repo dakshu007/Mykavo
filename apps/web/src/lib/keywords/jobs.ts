@@ -24,6 +24,8 @@ import { enqueueAiAgentJob } from "@/lib/queue";
 export type AgentJobKind = "setup" | "deep" | "write";
 
 export interface Allowance {
+  /** The plan the allowance comes from ("free" when there is no entitlement). */
+  planId: string;
   limits: AgentLimits;
   unlimited: boolean;
   onTrial: boolean;
@@ -53,6 +55,7 @@ export async function loadAllowance(workspaceId: string, now: Date = new Date())
   const used = { report: 0, post: 0 } as Record<QuotaKind, number>;
   for (const r of rows) if (r.kind === "report" || r.kind === "post") used[r.kind] = r._count._all;
   return {
+    planId: ent?.planId ?? "free",
     limits: agentLimitsFor(ent?.planId ?? "free", onTrial),
     unlimited: ent?.unlimited === true,
     onTrial,
