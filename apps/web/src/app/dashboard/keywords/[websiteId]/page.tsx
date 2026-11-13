@@ -9,6 +9,8 @@ import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { loadStrikingReport } from "@/lib/keywords/striking";
 import { canUseKeywordAgent } from "@/lib/keywords/access";
 import { loadAgentPage, type OpportunityView, type UpgradeOffer } from "@/lib/keywords/agent-data";
+import type { WpDraftView, WpSiteLink } from "@/lib/integrations/wp-drafts";
+import { WordPressMark, WpDraftRowControl } from "@/components/keywords/wordpress-draft";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "AI Keywords - MyKavo", robots: { index: false } };
@@ -225,7 +227,7 @@ export default async function KeywordReportPage({ params }: Params) {
   const connected = Boolean(connection?.property);
   const needsReconnect = connected && isGscReauthMessage(connection?.lastError ?? null);
   const confirmed = agent.profile?.confirmed === true;
-  const { allowance, report, posts } = agent;
+  const { allowance, report, posts, wordpress } = agent;
   const canWrite = confirmed && !allowance.blocked;
   const w: WriteProps = {
     websiteId: website.id,
@@ -274,6 +276,7 @@ export default async function KeywordReportPage({ params }: Params) {
     { id: "report", label: "Keyword report", icon: Wand2 },
     { id: "ranking", label: "Already ranking", icon: Target },
     { id: "posts", label: "Your posts", icon: FileText },
+    { id: "wordpress", label: "Save to WordPress", icon: WordPressMark },
   ];
 
   return (
@@ -558,8 +561,104 @@ export default async function KeywordReportPage({ params }: Params) {
               </ul>
             )}
           </Section>
+
+          <Section
+            id="wordpress"
+            number={5}
+            kind="Publish"
+            title="Save to WordPress"
+            description={
+              wordpress?.supportsDrafts
+                ? "Send any post to WP Admin as a draft. It never publishes: you review it and publish it in WordPress."
+                : "Using WordPress? Your posts can land in WP Admin as drafts, ready to review and publish."
+            }
+            meta={
+              wordpress ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-success" aria-hidden />
+                  {wordpress.siteUrl.replace(/^https?:\/\//, "")}
+                </span>
+              ) : undefined
+            }
+            flush
+          >
+            <WordPressSection
+              websiteId={website.id}
+              link={wordpress}
+              posts={posts.map((p) => ({ id: p.id, title: p.title, keyword: p.keyword, wpDraft: p.wpDraft }))}
+            />
+          </Section>
         </div>
       </div>
     </div>
+  );
+}
+
+/** Section 5: the site's WordPress drafts, or how to connect the plugin. */
+function WordPressSection({
+  websiteId,
+  link,
+  posts,
+}: {
+  websiteId: string;
+  link: WpSiteLink | null;
+  posts: { id: string; title: string; keyword: string; wpDraft: WpDraftView | null }[];
+}) {
+  if (!link) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-5 sm:px-6">
+        <WordPressMark className="size-9 shrink-0" />
+        <p className="min-w-0 flex-1 text-[13px] leading-6 text-ink-secondary">
+          Connect the free MyKavo WordPress plugin and every post here gets a <strong className="font-semibold text-ink">Save to WP Admin</strong>{" "}
+          button: it lands in your Posts as a draft with its title, slug, meta description, FAQ and schema. Not on WordPress? Open any
+          post and copy it as HTML or Markdown.
+        </p>
+        <Link href="/dashboard/wordpress" className={linkButton}>
+          Connect WordPress
+        </Link>
+      </div>
+    );
+  }
+  if (!link.supportsDrafts) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-5 sm:px-6">
+        <WordPressMark className="size-9 shrink-0" />
+        <p className="min-w-0 flex-1 text-[13px] leading-6 text-ink-secondary">
+          Your site runs MyKavo plugin {link.pluginVersion ?? "(an older version)"}. Update it to the latest version to save posts to WP
+          Admin as drafts.
+        </p>
+        <a href={`${link.siteUrl}/wp-admin/plugins.php`} target="_blank" rel="noopener noreferrer" className={linkButton}>
+          Update the plugin
+        </a>
+      </div>
+    );
+  }
+  if (posts.length === 0) {
+    return (
+      <p className="px-5 py-5 text-[13px] leading-6 text-ink-secondary sm:px-6">
+        Connected. Write a post above and save it to WP Admin from here in one click.
+      </p>
+    );
+  }
+  return (
+    <>
+      <ul className="divide-y divide-line">
+        {posts.map((p) => (
+          <li key={p.id} className="grid items-center gap-x-4 gap-y-2 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-6">
+            <Link href={`/dashboard/keywords/${websiteId}/posts/${p.id}`} className="min-w-0 hover:underline">
+              <span className="block truncate text-[14px] font-medium text-ink">{p.title}</span>
+              <span className="block truncate text-[12px] text-ink-faint">For &ldquo;{p.keyword}&rdquo;</span>
+            </Link>
+            <WpDraftRowControl postId={p.id} initial={p.wpDraft} />
+          </li>
+        ))}
+      </ul>
+      <p className="border-t border-line px-5 py-3 text-[11.5px] leading-5 text-ink-faint sm:px-6">
+        Drafts arrive the next time WP Admin opens, or within 15 minutes.{" "}
+        <a href={link.draftsUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-accent hover:underline">
+          Open your WordPress drafts
+        </a>
+      </p>
+    </>
   );
 }

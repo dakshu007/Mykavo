@@ -3,6 +3,7 @@ import { AGENT_LIMITS, type QuotaKind } from "@mykavo/keyword-agent/pure";
 import { getPlan } from "@/config/plans";
 import { nextPlanFor } from "@/lib/dashboard-cards";
 import { loadAllowance, remaining } from "./jobs";
+import { wordpressLinkFor, wpDraftView, type WpDraftView, type WpSiteLink } from "@/lib/integrations/wp-drafts";
 
 /**
  * Everything the AI Keywords page shows besides striking distance, read with
@@ -49,7 +50,9 @@ export interface AgentPageData {
     opportunities: OpportunityView[];
     hiddenCount: number;
   } | null;
-  posts: { id: string; keyword: string; title: string; status: string; updatedAt: string }[];
+  posts: { id: string; keyword: string; title: string; status: string; updatedAt: string; wpDraft: WpDraftView | null }[];
+  /** The site's MyKavo WordPress plugin connection, for "Save as draft in WordPress". */
+  wordpress: WpSiteLink | null;
   /** Write jobs still running, by keyword, so their buttons show progress. */
   writing: Record<string, string>;
   allowance: {
@@ -86,7 +89,7 @@ function jobView(j: { id: string; kind: string; status: string; step: string | n
 }
 
 export async function loadAgentPage(workspaceId: string, websiteId: string, now = new Date()): Promise<AgentPageData> {
-  const [profile, recentJobs, report, posts, allowance] = await Promise.all([
+  const [profile, recentJobs, report, posts, allowance, wordpress] = await Promise.all([
     prisma.contentProfile.findUnique({
       where: { websiteId },
       select: { businessType: true, services: true, audience: true, country: true, language: true, confirmed: true },
@@ -125,9 +128,18 @@ export async function loadAgentPage(workspaceId: string, websiteId: string, now 
       where: { websiteId, workspaceId },
       orderBy: { updatedAt: "desc" },
       take: 50,
-      select: { id: true, keyword: true, title: true, status: true, updatedAt: true },
+      select: {
+        id: true,
+        keyword: true,
+        title: true,
+        status: true,
+        updatedAt: true,
+        version: true,
+        wpDraft: { select: { status: true, editUrl: true, error: true, queuedAt: true, deliveredAt: true, postVersion: true } },
+      },
     }),
     loadAllowance(workspaceId, now),
+    wordpressLinkFor(websiteId),
   ]);
 
   const jobs: AgentPageData["jobs"] = {};
@@ -162,7 +174,12 @@ export async function loadAgentPage(workspaceId: string, websiteId: string, now 
           hiddenCount: Math.max(0, opportunities.length - visible),
         }
       : null,
-    posts: posts.map((p) => ({ ...p, updatedAt: p.updatedAt.toISOString() })),
+    posts: posts.map(({ version, wpDraft, ...p }) => ({
+      ...p,
+      updatedAt: p.updatedAt.toISOString(),
+      wpDraft: wpDraft ? wpDraftView(wpDraft, version) : null,
+    })),
+    wordpress,
     allowance: {
       reportsLeft: left("report"),
       postsLeft: left("post"),

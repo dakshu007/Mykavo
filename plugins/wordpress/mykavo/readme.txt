@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -244,6 +244,10 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Changelog ==
 
+= 1.4.0 =
+* New: drafts from MyKavo's AI Keywords & Blog Writer. Click "Save as draft in WordPress" in MyKavo and the post appears under Posts as a draft, with its title, slug, meta description, FAQ and schema. It never publishes: you review it and publish. The plugin collects drafts when you open WP Admin and every 15 minutes.
+* New: the meta description and focus keyword fill in Yoast SEO or Rank Math when either is active, and the post's schema is added only when no SEO plugin adds its own.
+
 = 1.3.1 =
 * New: your plan's medal (Free steel, Starter bronze, Pro silver, Agency gold) in the top bar, and a Plan tab with everything your plan includes and, on Free and Starter, what Pro adds.
 * New: ChatGPT and Claude (MCP) card with the address to connect them, on Pro and Agency.
@@ -303,6 +307,9 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 * Suggested privacy policy text.
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+Save posts from MyKavo's AI Keywords & Blog Writer straight to your drafts. Nothing is ever published for you.
 
 = 1.3.1 =
 A redesigned, easier-to-read MyKavo screen with your plan at a glance, one-click rollback for any plugin or theme, a crash check after every update, Safe Update All, alerts for silent setting changes, AI crawler controls and llms.txt. Still nothing added to your public pages.

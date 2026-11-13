@@ -25,6 +25,9 @@ import {
   Redo2,
 } from "lucide-react";
 import { htmlToMarkdown, jsonLdScripts, buildJsonLd } from "@mykavo/keyword-agent/pure";
+import { faqHtml, fullPostHtml } from "@/lib/keywords/post-html";
+import type { WpDraftView, WpSiteLink } from "@/lib/integrations/wp-drafts";
+import { WpDraftPanel } from "./wordpress-draft";
 import { JobProgress, useAgentJob, type JobState } from "./use-agent-job";
 
 export interface EditablePost {
@@ -128,22 +131,23 @@ function download(name: string, text: string, type: string) {
   URL.revokeObjectURL(url);
 }
 
-function faqHtml(faq: { question: string; answer: string }[]): string {
-  if (faq.length === 0) return "";
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return `\n<h2>Frequently asked questions</h2>\n${faq.map((f) => `<h3>${esc(f.question)}</h3>\n<p>${esc(f.answer)}</p>`).join("\n")}`;
-}
 
 export function PostEditor({
   websiteId,
   post,
   rewritesLeft,
   rewriting,
+  wordpress = null,
+  wpDraft = null,
 }: {
   websiteId: string;
   post: EditablePost;
   rewritesLeft: number;
   rewriting: JobState | null;
+  /** The site's MyKavo WordPress plugin connection, if any. */
+  wordpress?: WpSiteLink | null;
+  /** Where this post stands in WordPress. */
+  wpDraft?: WpDraftView | null;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(post.title);
@@ -243,7 +247,7 @@ export function PostEditor({
     }
   }
 
-  const fullHtml = () => `<h1>${title.replace(/</g, "&lt;")}</h1>\n${bodyHtml()}${faqHtml(faq)}`;
+  const fullHtml = () => fullPostHtml(title, bodyHtml(), faq);
   const fullMarkdown = () => `# ${title}\n\n${htmlToMarkdown(bodyHtml() + faqHtml(faq))}`;
 
   if (rewrite.running && rewrite.job) {
@@ -350,6 +354,8 @@ export function PostEditor({
             Links can only point to pages on your own site; others are removed when you save.
           </p>
         </div>
+
+        <WpDraftPanel postId={post.id} link={wordpress} initial={wpDraft} dirty={dirty} savedVersion={version} />
 
         <div className="rounded-2xl border border-line bg-card p-4">
           <h2 className="text-[14px] font-semibold text-ink">Use it on your site</h2>

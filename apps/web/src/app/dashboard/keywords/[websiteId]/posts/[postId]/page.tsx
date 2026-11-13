@@ -8,6 +8,7 @@ import { PostEditor } from "@/components/keywords/post-editor";
 import { Micro } from "@/components/keywords/layout";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { canUseKeywordAgent } from "@/lib/keywords/access";
+import { wordpressLinkFor, wpDraftView } from "@/lib/integrations/wp-drafts";
 
 export const metadata: Metadata = { title: "Edit post - MyKavo", robots: { index: false } };
 
@@ -45,14 +46,18 @@ export default async function PostEditorPage({ params }: Params) {
       version: true,
       regenerationsUsed: true,
       website: { select: { id: true, name: true, url: true } },
+      wpDraft: { select: { status: true, editUrl: true, error: true, queuedAt: true, deliveredAt: true, postVersion: true } },
     },
   });
   if (!post) notFound();
 
-  const rewriting = await prisma.aiJob.findFirst({
-    where: { websiteId, kind: "write", status: { in: ["queued", "running"] }, input: { path: ["postId"], equals: post.id } },
-    select: { id: true, status: true, step: true, progress: true, error: true },
-  });
+  const [rewriting, wordpress] = await Promise.all([
+    prisma.aiJob.findFirst({
+      where: { websiteId, kind: "write", status: { in: ["queued", "running"] }, input: { path: ["postId"], equals: post.id } },
+      select: { id: true, status: true, step: true, progress: true, error: true },
+    }),
+    wordpressLinkFor(websiteId),
+  ]);
 
   return (
     <div className="max-w-5xl space-y-5">
@@ -92,6 +97,8 @@ export default async function PostEditorPage({ params }: Params) {
         }}
         rewritesLeft={Math.max(0, FREE_REGENERATIONS_PER_POST - post.regenerationsUsed)}
         rewriting={rewriting}
+        wordpress={wordpress}
+        wpDraft={post.wpDraft ? wpDraftView(post.wpDraft, post.version) : null}
       />
     </div>
   );

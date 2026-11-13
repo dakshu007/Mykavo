@@ -292,6 +292,7 @@ model Website {
   aiJobs            AiJob[]
   keywordReports    KeywordReport[]
   contentPosts      ContentPost[]
+  wpDrafts          WpDraft[]
   gscDaily          GscDaily[]
   gscDimensionRows  GscDimensionRow[]
   siteAudits        SiteAudit[]
@@ -2235,7 +2236,38 @@ model ContentPost {
   aiJobId           String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  wpDraft           WpDraft?
 
   @@index([websiteId, createdAt])
   @@map("content_post")
+}
+
+/// "Save as a draft in WordPress": MyKavo queues a post, the MyKavo WordPress
+/// plugin collects it (GET /api/wp/v1/drafts) and creates or updates a draft
+/// in WP Admin, then reports back. Never published by MyKavo: the owner does
+/// that in WordPress.
+model WpDraft {
+  id                String      @id @default(cuid())
+  contentPostId     String      @unique
+  contentPost       ContentPost @relation(fields: [contentPostId], references: [id], onDelete: Cascade)
+  websiteId         String
+  website           Website     @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  /// "queued" | "delivered" | "failed"
+  status            String      @default("queued")
+  /// The post's version that was queued; a newer save can be sent again.
+  postVersion       Int
+  /// The WordPress post it became; a resend updates it while it is a draft.
+  wpPostId          Int?
+  editUrl           String?
+  /// Plain words from the plugin when WordPress refused it.
+  error             String?
+  requestedByUserId String?
+  queuedAt          DateTime    @default(now())
+  deliveredAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([websiteId, status])
+  @@map("wp_draft")
 }

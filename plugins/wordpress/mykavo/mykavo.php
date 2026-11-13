@@ -3,7 +3,7 @@
  * Plugin Name:       MyKavo - Website Change Monitoring
  * Plugin URI:        https://mykavo.app/wordpress-plugin
  * Description:       See what changed on your site, and whether it matters, without leaving WordPress. Visual, SEO, content, link and script changes with before-and-after screenshots. Adds nothing to the pages your visitors load.
- * Version:           1.3.1
+ * Version:           1.4.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            MyKavo
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MYKAVO_VERSION', '1.3.1' );
+define( 'MYKAVO_VERSION', '1.4.0' );
 define( 'MYKAVO_FILE', __FILE__ );
 define( 'MYKAVO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MYKAVO_URL', plugin_dir_url( __FILE__ ) );
@@ -65,6 +65,7 @@ if ( is_admin() ) {
 	require_once MYKAVO_DIR . 'includes/class-mykavo-bots.php';
 	require_once MYKAVO_DIR . 'includes/class-mykavo-roles.php';
 	require_once MYKAVO_DIR . 'includes/class-mykavo-alerts.php';
+	require_once MYKAVO_DIR . 'includes/class-mykavo-drafts.php';
 	MyKavo_Admin::init();
 	add_action(
 		'admin_init',
@@ -72,8 +73,14 @@ if ( is_admin() ) {
 			MyKavo_Bots::install();
 			MyKavo_Bots::ensure_schedule();
 			MyKavo_Roles::install();
+			// Drafts from MyKavo's AI Blog Writer: collected on wp-admin loads and every 15 minutes.
+			MyKavo_Drafts::ensure_schedule();
+			MyKavo_Drafts::maybe_collect();
 		}
 	);
+	add_action( 'admin_notices', array( 'MyKavo_Drafts', 'admin_notice' ) );
+	add_action( 'admin_post_mykavo_dismiss_drafts', array( 'MyKavo_Drafts', 'handle_dismiss' ) );
+	add_action( 'load-post.php', array( 'MyKavo_Drafts', 'seen' ) );
 	MyKavo_Integrations::init();
 
 	// Silent-disaster alerts: a red notice on every wp-admin screen until dismissed.
@@ -258,6 +265,37 @@ add_action(
 );
 
 /*
+ * Drafts from MyKavo's AI Keywords & Blog Writer (1.4.0): the 15-minute
+ * collection, and the post's JSON-LD on its page. Nothing loads until needed.
+ */
+add_filter(
+	'cron_schedules',
+	static function ( $schedules ) {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-drafts.php';
+		return MyKavo_Drafts::add_interval( $schedules );
+	}
+);
+add_action(
+	'mykavo_drafts_sync',
+	static function () {
+		require_once MYKAVO_DIR . 'includes/class-mykavo-connection.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-api.php';
+		require_once MYKAVO_DIR . 'includes/class-mykavo-drafts.php';
+		MyKavo_Drafts::collect();
+	}
+);
+add_action(
+	'wp_head',
+	static function () {
+		if ( is_singular( 'post' ) && '' !== get_post_meta( get_queried_object_id(), '_mykavo_jsonld', true ) ) {
+			require_once MYKAVO_DIR . 'includes/class-mykavo-drafts.php';
+			MyKavo_Drafts::print_schema();
+		}
+	},
+	20
+);
+
+/*
  * One-off and daily WP-Cron jobs added in 1.3.1. Nothing loads until one runs.
  */
 add_action(
@@ -377,7 +415,7 @@ register_deactivation_hook(
 		require_once MYKAVO_DIR . 'includes/class-mykavo-rollback.php';
 		MyKavo_Bots::unschedule();
 		MyKavo_Rollback::unschedule();
-		foreach ( array( 'mykavo_crash_check', 'mykavo_alert_report', 'mykavo_snapshots_daily', 'mykavo_mail_daily' ) as $hook ) {
+		foreach ( array( 'mykavo_crash_check', 'mykavo_alert_report', 'mykavo_snapshots_daily', 'mykavo_mail_daily', 'mykavo_drafts_sync' ) as $hook ) {
 			wp_unschedule_hook( $hook );
 		}
 	}

@@ -26,12 +26,13 @@ require_once __DIR__ . '/includes/class-mykavo-roles.php';
 MyKavo_Roles::remove();
 
 // Pending and recurring jobs.
-foreach ( array( 'mykavo_rollback_watch', 'mykavo_crash_check', 'mykavo_alert_report', 'mykavo_snapshots_daily', 'mykavo_mail_daily' ) as $mykavo_hook ) {
+foreach ( array( 'mykavo_rollback_watch', 'mykavo_crash_check', 'mykavo_alert_report', 'mykavo_snapshots_daily', 'mykavo_mail_daily', 'mykavo_drafts_sync' ) as $mykavo_hook ) {
 	wp_unschedule_hook( $mykavo_hook );
 }
 
 foreach ( array(
 	'mykavo_connection',
+	'mykavo_new_drafts',
 	'mykavo_updates',
 	'mykavo_settings',
 	'mykavo_features',
