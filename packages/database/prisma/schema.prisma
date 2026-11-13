@@ -287,6 +287,7 @@ model Website {
   aiInsights        AiInsight[]
   gscConnection     GscConnection?
   gscPageDaily      GscPageDaily[]
+  gscQueryPages     GscQueryPage[]
   gscDaily          GscDaily[]
   gscDimensionRows  GscDimensionRow[]
   siteAudits        SiteAudit[]
@@ -1181,6 +1182,30 @@ model GscPageDaily {
   @@unique([websiteId, date, page])
   @@index([websiteId, page, date])
   @@map("gsc_page_daily")
+}
+
+/// Search Console rows keyed by BOTH query and page, for the last 28-day
+/// window: which page ranks for which search. GscDimensionRow holds queries
+/// and pages separately and cannot answer that. Feeds striking distance
+/// keywords (packages/shared/src/striking-distance.ts).
+///
+/// Capped at sync time to the 1,000 rows with the most impressions that rank
+/// in the top 30 (QUERY_PAGE_LIMIT in the worker), and replaced wholesale on
+/// each sync, so it stays small.
+model GscQueryPage {
+  id          String  @id @default(cuid())
+  websiteId   String
+  website     Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  query       String
+  page        String
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+
+  @@unique([websiteId, query, page])
+  @@index([websiteId, position])
+  @@map("gsc_query_page")
 }
 
 model GscDimensionRow {

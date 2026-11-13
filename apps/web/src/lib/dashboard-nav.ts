@@ -44,6 +44,7 @@ export type NavItemId =
   | "users"
   | "tracking"
   | "usage"
+  | "keywords"
   | "app-requests"
   | "automations"
   | "email-marketing"
@@ -177,6 +178,9 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
       { id: "email-marketing", href: "/dashboard/email-marketing", label: "Email marketing", short: "Marketing" },
       { id: "support-questions", href: "/dashboard/support-questions", label: "Support questions", short: "Support" },
       { id: "usage", href: "/dashboard/usage", label: "All Usage" },
+      // Admin preview while the keyword agent is built; moves into the main
+      // nav at rollout (lib/keywords/striking.ts canUseKeywordAgent).
+      { id: "keywords", href: "/dashboard/keywords", label: "AI Keywords", short: "Keywords" },
     );
   }
   if (admin.length > 0) {

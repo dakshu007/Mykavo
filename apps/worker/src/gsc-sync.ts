@@ -64,6 +64,16 @@ async function freshAccessToken(connection: GscConnection): Promise<string> {
  */
 const PAGE_DAILY_LIMIT = 50;
 
+/**
+ * Query x page rows kept per site for striking distance keywords: the ones
+ * with the most impressions among those ranking in the top 30. Google returns
+ * these rows ordered by clicks, so the request asks for more than is kept;
+ * striking-distance searches often have impressions but few clicks.
+ */
+const QUERY_PAGE_LIMIT = 1_000;
+const QUERY_PAGE_REQUEST_ROWS = 5_000;
+const QUERY_PAGE_MAX_POSITION = 30;
+
 export async function runGscSync(job: GscSyncJob): Promise<void> {
   if (!KEY || !CLIENT_ID || !CLIENT_SECRET) {
     logger.warn("gsc sync skipped - GOOGLE_CLIENT_ID/SECRET or GSC_TOKEN_KEY unset");
@@ -153,6 +163,25 @@ export async function runGscSync(job: GscSyncJob): Promise<void> {
       }
     }
 
+    // Which page ranks for which search, last 28 days: striking distance.
+    const queryPage = await querySearchAnalytics({
+      accessToken, property, dimensions: ["query", "page"],
+      startDate: gscDate(30), endDate: end, rowLimit: QUERY_PAGE_REQUEST_ROWS,
+    });
+    const queryPageRows: Prisma.GscQueryPageCreateManyInput[] = queryPage
+      .filter((row) => row.keys[0] && row.keys[1] && row.position <= QUERY_PAGE_MAX_POSITION && row.impressions > 0)
+      .sort((a, b) => b.impressions - a.impressions)
+      .slice(0, QUERY_PAGE_LIMIT)
+      .map((row) => ({
+        websiteId: connection.websiteId,
+        query: row.keys[0] ?? "",
+        page: row.keys[1] ?? "",
+        clicks: Math.round(row.clicks),
+        impressions: Math.round(row.impressions),
+        ctr: row.ctr,
+        position: row.position,
+      }));
+
     await prisma.$transaction([
       prisma.gscDaily.deleteMany({ where: { websiteId: connection.websiteId } }),
       prisma.gscDaily.createMany({
@@ -169,6 +198,8 @@ export async function runGscSync(job: GscSyncJob): Promise<void> {
       prisma.gscDimensionRow.createMany({ data: dimensionRows }),
       prisma.gscPageDaily.deleteMany({ where: { websiteId: connection.websiteId } }),
       prisma.gscPageDaily.createMany({ data: pageDailyRows }),
+      prisma.gscQueryPage.deleteMany({ where: { websiteId: connection.websiteId } }),
+      prisma.gscQueryPage.createMany({ data: queryPageRows, skipDuplicates: true }),
       prisma.gscConnection.update({
         where: { id: connection.id },
         data: { lastSyncAt: new Date(), lastError: null },
@@ -201,6 +232,7 @@ export async function runGscSync(job: GscSyncJob): Promise<void> {
       workspaceId: connection.website.workspaceId,
       dailyRows: daily.length,
       dimensionRows: dimensionRows.length,
+      queryPageRows: queryPageRows.length,
     });
   } catch (err) {
     await prisma.gscConnection.update({

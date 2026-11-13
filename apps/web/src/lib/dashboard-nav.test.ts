@@ -78,7 +78,7 @@ describe("dashboardNav - operator entries", () => {
     const admin = dashboardNav({ ...live, isPlatformAdmin: true }).find(
       (g) => g.id === "admin",
     );
-    expect(admin?.items.map((i) => i.id)).toEqual(["users", "tracking", "app-requests", "automations", "email-marketing", "support-questions", "usage"]);
+    expect(admin?.items.map((i) => i.id)).toEqual(["users", "tracking", "app-requests", "automations", "email-marketing", "support-questions", "usage", "keywords"]);
   });
 
   it("keeps the two privileges independent", () => {
@@ -93,6 +93,7 @@ describe("dashboardNav - operator entries", () => {
       "email-marketing",
       "support-questions",
       "usage",
+      "keywords",
     ]);
   });
 

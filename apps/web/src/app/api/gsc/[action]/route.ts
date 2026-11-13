@@ -138,6 +138,7 @@ export async function POST(request: Request, { params }: Params) {
           prisma.gscDaily.deleteMany({ where: { websiteId: website.id } }),
           prisma.gscDimensionRow.deleteMany({ where: { websiteId: website.id } }),
           prisma.gscPageDaily.deleteMany({ where: { websiteId: website.id } }),
+          prisma.gscQueryPage.deleteMany({ where: { websiteId: website.id } }),
         ]);
         logger.info("gsc disconnected", { websiteId: website.id });
         return NextResponse.json({ ok: true });
