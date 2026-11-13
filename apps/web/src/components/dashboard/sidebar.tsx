@@ -26,9 +26,9 @@ import {
   Activity,
   LifeBuoy,
   ChevronsUpDown,
-  Target,
 } from "lucide-react";
 import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
+import { AiWriterIcon } from "@/components/brand/ai-writer-icon";
 import { LogoMark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -62,7 +62,7 @@ const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   users: UserPlus,
   tracking: Activity,
   usage: Gauge,
-  keywords: Target,
+  keywords: AiWriterIcon,
   "app-requests": MailQuestion,
   automations: Workflow,
   "email-marketing": Megaphone,

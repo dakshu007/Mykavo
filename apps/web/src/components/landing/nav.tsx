@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Menu, Sparkles, Wrench, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { SitePromoBar } from "./campaign-announcement";
 import { GoogleIcon, McpIcon } from "@/components/brand/integration-icons";
+import { AiWriterIcon } from "@/components/brand/ai-writer-icon";
 import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
 
 const links = [
@@ -238,7 +239,7 @@ export function LandingNav() {
             href={BLOG_WRITER_LINK.href}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13.5px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
           >
-            <Sparkles className="size-3.5 text-[#151515]" aria-hidden />
+            <AiWriterIcon className="size-4 text-[#151515]" />
             {BLOG_WRITER_LINK.label}
             <SoonBadge>New</SoonBadge>
           </Link>
@@ -323,7 +324,7 @@ export function LandingNav() {
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 rounded-xl px-3 py-3 text-[15px] font-semibold text-[#151515] transition-colors hover:bg-[#151515]/[0.04]"
             >
-              <Sparkles className="size-[18px]" aria-hidden />
+              <AiWriterIcon className="size-[18px]" />
               AI Keywords &amp; Blog Writer
               <SoonBadge>New</SoonBadge>
             </Link>

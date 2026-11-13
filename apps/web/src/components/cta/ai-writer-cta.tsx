@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+import { AiWriterIcon } from "@/components/brand/ai-writer-icon";
 import { AGENT_LIMITS } from "@mykavo/keyword-agent/pure";
 import { fontDisplay } from "@/components/landing/style";
 import { track } from "@/lib/analytics";
@@ -38,7 +39,7 @@ export function AiWriterCta({
       <div className="relative overflow-hidden rounded-2xl border-2 border-[#151515] bg-[#FFF7CC] p-6 text-[#151515] shadow-[6px_6px_0_#151515] sm:p-8">
         <div className="flex items-start gap-4">
           <span className="hidden size-12 shrink-0 place-items-center rounded-xl border-2 border-[#151515] bg-[#FFD400] sm:grid">
-            <Sparkles className="size-6" aria-hidden />
+            <AiWriterIcon className="size-6" />
           </span>
           <div className="min-w-0">
             <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#6B6B60]">
@@ -89,7 +90,7 @@ export function AiWriterRailCta() {
   return (
     <div className="rounded-card border-2 border-[#151515] bg-white p-5 text-[#151515] shadow-[5px_5px_0_#FFD400]">
       <p className="flex items-center gap-1.5 text-[15px] font-semibold leading-snug">
-        <Sparkles className="size-4" aria-hidden />
+        <AiWriterIcon className="size-4" />
         Know what to write next
       </p>
       <p className="mt-1.5 text-[13px] leading-5 text-[#6B6B60]">
