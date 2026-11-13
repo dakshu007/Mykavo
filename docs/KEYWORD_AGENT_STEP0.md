@@ -9,7 +9,7 @@ scan, change detection and CRITICAL alert run locally the same as before.
 | # | Blocker | Status | Where |
 |---|---|---|---|
 | 1 | Egress: dashboard pages re-ran ~15 queries every 3 to 6 s during scans | Fixed | `lib/live-status.ts`, `/api/live-status`, `LiveRefresh`; background pg-boss queues poll every 60 s |
-| 2 | Google OAuth in Testing (7-day token expiry) | Code fixed; **your Console steps remain** | `docs/GOOGLE_OAUTH_VERIFICATION.md`. 3 of 4 production Search Console connections are currently expired and need one Reconnect after you publish |
+| 2 | Google OAuth in Testing (7-day token expiry) | Fixed | App published to production on 13 Nov, branding verified, read-only scopes only, no review needed (`docs/GOOGLE_OAUTH_VERIFICATION.md`). Connections that expired earlier need one Reconnect |
 | 3 | No AI kill switch, one shared spend cap | Fixed | `app_setting` table, `isAiPaused()` in `@mykavo/database`, toggle on All Usage; agent pool `AI_AGENT_MONTHLY_BUDGET_USD` (default $0) |
 | 4 | AI cost records deleted with a website | Fixed | `ai_usage` ledger, no foreign keys, backfilled (47 rows, totals match) |
 | 5 | Deploys not gated on tests | Fixed | `deploy-web.yml`: `test` job (Postgres service, all migrations, all suites) gates `deploy`; worker follows `worker-release`, moved only after tests pass |
@@ -49,7 +49,6 @@ $79; 1, 2, 8 and 30 sites).
 
 ## Overall
 
-**Safe to build.** No remaining blocker in the codebase. Before *launch* (not before
-building): publish the Google OAuth app and submit verification, and answer the
-decisions above. Build behind the admin-only rollout with the agent cap at $0 until you
+**Safe to build.** No remaining blocker in the codebase. The Google OAuth app is now in
+production. Before *launch* (not before building): answer the decisions above. Build behind the admin-only rollout with the agent cap at $0 until you
 raise it.
