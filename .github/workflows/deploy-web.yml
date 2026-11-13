@@ -175,7 +175,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Full history: from a shallow clone git cannot tell that moving the
+      # branch is a fast-forward and rejects the push.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Move worker-release to the tested commit
         run: git push origin "HEAD:refs/heads/worker-release"
 
