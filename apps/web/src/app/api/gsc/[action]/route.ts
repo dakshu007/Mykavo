@@ -4,7 +4,7 @@ import { prisma } from "@mykavo/database";
 import {
   listProperties,
   listSitemaps,
-  submitSitemap,
+  GscAuthError,
   inspectUrl,
   isGscReauthMessage,
 } from "@mykavo/shared";
@@ -17,7 +17,7 @@ import { logger } from "@/lib/logger";
 
 /**
  * GSC actions, one route: GET properties|export, POST property|sync|
- * disconnect|inspect|resubmit-sitemap. Every action re-checks workspace
+ * disconnect|inspect. Every action re-checks workspace
  * ownership; tokens never leave the server.
  */
 
@@ -73,7 +73,6 @@ const postSchema = z.object({
   websiteId: z.string().min(1),
   property: z.string().max(300).optional(),
   url: z.string().url().max(2000).optional(),
-  feedpath: z.string().url().max(2000).optional(),
 });
 
 export async function POST(request: Request, { params }: Params) {
@@ -99,71 +98,77 @@ export async function POST(request: Request, { params }: Params) {
   if (!owned) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const { website, connection } = owned;
 
-  switch (action) {
-    case "property": {
-      if (!input.property)
-        return NextResponse.json({ error: "Pick a property." }, { status: 400 });
-      // Only allow properties the Google account can actually see.
-      const properties = await listProperties(await gscAccessToken(connection));
-      if (!properties.some((p) => p.siteUrl === input.property))
-        return NextResponse.json({ error: "Property not available on this Google account." }, { status: 400 });
-      await prisma.gscConnection.update({
-        where: { id: connection.id },
-        data: { property: input.property },
-      });
-      await enqueueGscSync({ websiteId: website.id });
-      logger.info("gsc property selected", { websiteId: website.id, property: input.property });
-      return NextResponse.json({ ok: true });
-    }
-    case "sync": {
-      // A dead grant cannot be fixed by syncing again - queueing here would
-      // just re-fail in the worker and report success to the user meanwhile.
-      if (isGscReauthMessage(connection.lastError)) {
-        return NextResponse.json(
-          {
-            error:
-              "Google has revoked this connection. Reconnect Google Search Console to resume syncing.",
-            reauthRequired: true,
-          },
-          { status: 409 },
-        );
+  try {
+    switch (action) {
+      case "property": {
+        if (!input.property)
+          return NextResponse.json({ error: "Pick a property." }, { status: 400 });
+        // Only allow properties the Google account can actually see.
+        const properties = await listProperties(await gscAccessToken(connection));
+        if (!properties.some((p) => p.siteUrl === input.property))
+          return NextResponse.json({ error: "Property not available on this Google account." }, { status: 400 });
+        await prisma.gscConnection.update({
+          where: { id: connection.id },
+          data: { property: input.property },
+        });
+        await enqueueGscSync({ websiteId: website.id });
+        logger.info("gsc property selected", { websiteId: website.id, property: input.property });
+        return NextResponse.json({ ok: true });
       }
-      await enqueueGscSync({ websiteId: website.id });
-      return NextResponse.json({ ok: true });
+      case "sync": {
+        // A dead grant cannot be fixed by syncing again - queueing here would
+        // just re-fail in the worker and report success to the user meanwhile.
+        if (isGscReauthMessage(connection.lastError)) {
+          return NextResponse.json(
+            {
+              error:
+                "Google has revoked this connection. Reconnect Google Search Console to resume syncing.",
+              reauthRequired: true,
+            },
+            { status: 409 },
+          );
+        }
+        await enqueueGscSync({ websiteId: website.id });
+        return NextResponse.json({ ok: true });
+      }
+      case "disconnect": {
+        // Spec: delete stored tokens on disconnect (row carries them all).
+        await prisma.$transaction([
+          prisma.gscConnection.delete({ where: { id: connection.id } }),
+          prisma.gscDaily.deleteMany({ where: { websiteId: website.id } }),
+          prisma.gscDimensionRow.deleteMany({ where: { websiteId: website.id } }),
+          prisma.gscPageDaily.deleteMany({ where: { websiteId: website.id } }),
+        ]);
+        logger.info("gsc disconnected", { websiteId: website.id });
+        return NextResponse.json({ ok: true });
+      }
+      case "inspect": {
+        if (!input.url || !connection.property)
+          return NextResponse.json({ error: "URL and a selected property are required." }, { status: 400 });
+        const result = await inspectUrl({
+          accessToken: await gscAccessToken(connection),
+          property: connection.property,
+          url: input.url,
+        });
+        return NextResponse.json({ result });
+      }
+      case "sitemaps": {
+        if (!connection.property)
+          return NextResponse.json({ error: "Select a property first." }, { status: 400 });
+        const sitemaps = await listSitemaps(await gscAccessToken(connection), connection.property);
+        return NextResponse.json({ sitemaps });
+      }
+      default:
+        return NextResponse.json({ error: "Unknown action" }, { status: 404 });
     }
-    case "disconnect": {
-      // Spec: delete stored tokens on disconnect (row carries them all).
-      await prisma.$transaction([
-        prisma.gscConnection.delete({ where: { id: connection.id } }),
-        prisma.gscDaily.deleteMany({ where: { websiteId: website.id } }),
-        prisma.gscDimensionRow.deleteMany({ where: { websiteId: website.id } }),
-      ]);
-      logger.info("gsc disconnected", { websiteId: website.id });
-      return NextResponse.json({ ok: true });
+  } catch (err) {
+    // Google ended the grant: tell the page to show Reconnect, not a 500.
+    if (err instanceof GscAuthError) {
+      return NextResponse.json(
+        { error: "Google ended this connection. Reconnect Search Console to continue.", reconnect: true },
+        { status: 409 },
+      );
     }
-    case "inspect": {
-      if (!input.url || !connection.property)
-        return NextResponse.json({ error: "URL and a selected property are required." }, { status: 400 });
-      const result = await inspectUrl({
-        accessToken: await gscAccessToken(connection),
-        property: connection.property,
-        url: input.url,
-      });
-      return NextResponse.json({ result });
-    }
-    case "sitemaps": {
-      if (!connection.property)
-        return NextResponse.json({ error: "Select a property first." }, { status: 400 });
-      const sitemaps = await listSitemaps(await gscAccessToken(connection), connection.property);
-      return NextResponse.json({ sitemaps });
-    }
-    case "resubmit-sitemap": {
-      if (!input.feedpath || !connection.property)
-        return NextResponse.json({ error: "Sitemap path required." }, { status: 400 });
-      await submitSitemap(await gscAccessToken(connection), connection.property, input.feedpath);
-      return NextResponse.json({ ok: true });
-    }
-    default:
-      return NextResponse.json({ error: "Unknown action" }, { status: 404 });
+    throw err;
   }
 }

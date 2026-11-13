@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
       eyebrowText="legal"
       title="Privacy Policy"
       intro="This policy explains, in plain English, what data MyKavo collects, why we collect it, where it lives, and the choices you have. MyKavo is operated by Dakshesh Babu, an independent developer. If anything here is unclear, email support@mykavo.app and you will get a straight answer."
-      updated="October 30, 2026"
+      updated="November 13, 2026"
     >
       <h2>1. What data we collect</h2>
       <h3>Account data</h3>
@@ -94,6 +94,42 @@ export default function PrivacyPolicyPage() {
         with the assistant is governed by that provider&apos;s own privacy policy. You can
         disconnect any assistant at any time in AI assistants in your dashboard, which stops its
         access immediately; connection records are deleted with your workspace.
+      </p>
+      <h3>Google Search Console</h3>
+      <p>
+        If you connect Google Search Console to a website, you sign in with Google and grant
+        MyKavo <strong>read-only</strong> access to Search Console
+        (the <code>webmasters.readonly</code> permission). MyKavo can read, never change, your
+        Search Console data. We use it only to show you that website&apos;s search performance in
+        your dashboard: clicks, impressions, click-through rate and average position by day, page,
+        query, country, device and search appearance; the sitemaps Google has for the site; and URL
+        inspection results you ask for. We also use it to email you when clicks drop sharply.
+      </p>
+      <p>
+        The access and refresh tokens Google issues are stored encrypted (AES-256-GCM) and are never
+        sent to your browser. Synced data is replaced on every daily sync, so we keep about the last
+        90 days. Disconnecting Search Console in your dashboard deletes the tokens and all synced
+        data at once; deleting the website or your account does the same. You can also revoke
+        MyKavo&apos;s access at any time at{" "}
+        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">
+          myaccount.google.com/permissions
+        </a>
+        .
+      </p>
+      <p>
+        <strong>Google user data and Limited Use.</strong> MyKavo&apos;s use and transfer of
+        information received from Google APIs adheres to the{" "}
+        <a
+          href="https://developers.google.com/terms/api-services-user-data-policy"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Google API Services User Data Policy
+        </a>
+        , including the Limited Use requirements. We do not sell Google user data, do not use it for
+        advertising, do not share it with anyone except as needed to run the features above, and do
+        not use it to develop, improve or train generalized AI or machine-learning models. Today,
+        Search Console data is not sent to any AI provider.
       </p>
       <h3>Billing data</h3>
       <p>
@@ -193,8 +229,8 @@ export default function PrivacyPolicyPage() {
           </tr>
           <tr>
             <td>Google</td>
-            <td>Optional Google sign-in, Analytics 4 on marketing pages, private mailing-list sheet</td>
-            <td>Sign-in profile, anonymized page analytics, signup name and email</td>
+            <td>Optional Google sign-in, optional Search Console connection (read-only), Analytics 4 on marketing pages, private mailing-list sheet</td>
+            <td>Sign-in profile, your Search Console data (read only, when you connect it), anonymized page analytics, signup name and email</td>
           </tr>
         </tbody>
       </table>

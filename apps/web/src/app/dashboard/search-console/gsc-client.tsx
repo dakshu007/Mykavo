@@ -1,5 +1,7 @@
 "use client";
 
+import { searchConsoleSitemapsUrl } from "@mykavo/shared";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, RefreshCw, SearchCode } from "lucide-react";
@@ -124,9 +126,13 @@ interface SitemapRow {
   contents?: { submitted?: string }[];
 }
 
-export function SitemapsPanel({ websiteId }: { websiteId: string }) {
+/**
+ * Sitemaps Google has for the property. Resubmitting happens in Search
+ * Console itself: it needs write access, and MyKavo only asks Google for
+ * read-only access (an easier scope to get verified, and safer for users).
+ */
+export function SitemapsPanel({ websiteId, property }: { websiteId: string; property: string }) {
   const [sitemaps, setSitemaps] = useState<SitemapRow[] | null>(null);
-  const [note, setNote] = useState("");
 
   useEffect(() => {
     fetch("/api/gsc/sitemaps", {
@@ -138,16 +144,6 @@ export function SitemapsPanel({ websiteId }: { websiteId: string }) {
       .then((d) => setSitemaps(d.sitemaps ?? []))
       .catch(() => setSitemaps([]));
   }, [websiteId]);
-
-  async function resubmit(feedpath: string) {
-    setNote("");
-    const res = await fetch("/api/gsc/resubmit-sitemap", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ websiteId, feedpath }),
-    });
-    setNote(res.ok ? "Resubmitted - Google will re-read it shortly." : "Resubmit failed.");
-  }
 
   if (!sitemaps)
     return <p className="inline-flex items-center gap-2 text-sm text-ink-secondary"><Loader2 className="size-4 animate-spin" aria-hidden /> Loading sitemaps…</p>;
@@ -167,12 +163,16 @@ export function SitemapsPanel({ websiteId }: { websiteId: string }) {
               {Number(sitemap.warnings ?? 0) > 0 && <span className="text-warning-strong"> · {sitemap.warnings} warnings</span>}
             </p>
           </div>
-          <button onClick={() => resubmit(sitemap.path)} className="shrink-0 rounded-full border border-line px-3 py-1.5 text-[12px] font-medium text-ink-secondary hover:text-ink">
-            Resubmit
-          </button>
+          <a
+            href={searchConsoleSitemapsUrl(property)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 rounded-full border border-line px-3 py-1.5 text-[12px] font-medium text-ink-secondary hover:text-ink"
+          >
+            Resubmit in Search Console
+          </a>
         </div>
       ))}
-      {note && <p className="text-[12px] text-ink-faint">{note}</p>}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   encryptToken, decryptToken, signOauthState, verifyOauthState,
   mergePeriods, buildOpportunities, gscDate,
-  GscAuthError, isGscReauthMessage,
+  GscAuthError, isGscReauthMessage, searchConsoleSitemapsUrl,
 } from "./gsc";
 
 const KEY = "a".repeat(64);
@@ -99,5 +99,13 @@ describe("dead-grant detection (GSC reconnect flow)", () => {
     expect(isGscReauthMessage(null)).toBe(false);
     expect(isGscReauthMessage(undefined)).toBe(false);
     expect(isGscReauthMessage("")).toBe(false);
+  });
+});
+
+describe("searchConsoleSitemapsUrl", () => {
+  it("links to the property's sitemaps screen in Search Console", () => {
+    expect(searchConsoleSitemapsUrl("sc-domain:example.com")).toBe(
+      "https://search.google.com/search-console/sitemaps?resource_id=sc-domain%3Aexample.com",
+    );
   });
 });

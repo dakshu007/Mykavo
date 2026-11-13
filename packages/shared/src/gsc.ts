@@ -237,12 +237,9 @@ export async function listSitemaps(accessToken: string, property: string): Promi
   return data.sitemap ?? [];
 }
 
-export async function submitSitemap(accessToken: string, property: string, feedpath: string): Promise<void> {
-  const res = await fetch(
-    `${API}/sites/${encodeURIComponent(property)}/sitemaps/${encodeURIComponent(feedpath)}`,
-    { method: "PUT", headers: { authorization: `Bearer ${accessToken}` } },
-  );
-  if (!res.ok) throw new Error(`Sitemap submit failed: ${res.status}`);
+/** Search Console's own sitemaps screen for a property (resubmitting needs write access MyKavo does not ask for). */
+export function searchConsoleSitemapsUrl(property: string): string {
+  return `https://search.google.com/search-console/sitemaps?resource_id=${encodeURIComponent(property)}`;
 }
 
 export interface UrlInspection {

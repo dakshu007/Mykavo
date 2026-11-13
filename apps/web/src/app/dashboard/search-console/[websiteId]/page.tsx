@@ -372,7 +372,7 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
           <div className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader title="Sitemaps" />
-              <SitemapsPanel websiteId={website.id} />
+              <SitemapsPanel websiteId={website.id} property={connection.property} />
             </Card>
             <Card>
               <CardHeader title="URL inspection" />

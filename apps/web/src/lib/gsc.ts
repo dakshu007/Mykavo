@@ -5,7 +5,7 @@
  */
 
 import { prisma, type GscConnection } from "@mykavo/database";
-import { decryptToken, encryptToken, refreshAccessToken } from "@mykavo/shared";
+import { GscAuthError, decryptToken, encryptToken, refreshAccessToken } from "@mykavo/shared";
 import { env } from "@/lib/env";
 
 export function gscConfigured(): boolean {
@@ -34,11 +34,22 @@ export async function gscAccessToken(connection: GscConnection): Promise<string>
   if (connection.expiresAt > new Date(Date.now() + 2 * 60 * 1000)) {
     return decryptToken(connection.accessTokenEnc, gscKey());
   }
-  const tokens = await refreshAccessToken({
-    refreshToken: decryptToken(connection.refreshTokenEnc, gscKey()),
-    clientId: env.GOOGLE_CLIENT_ID!,
-    clientSecret: env.GOOGLE_CLIENT_SECRET!,
-  });
+  let tokens: Awaited<ReturnType<typeof refreshAccessToken>>;
+  try {
+    tokens = await refreshAccessToken({
+      refreshToken: decryptToken(connection.refreshTokenEnc, gscKey()),
+      clientId: env.GOOGLE_CLIENT_ID!,
+      clientSecret: env.GOOGLE_CLIENT_SECRET!,
+    });
+  } catch (err) {
+    // Google ended the grant (revoked, password change, or the 7-day limit
+    // while the consent screen is in Testing). Record it now so the dashboard
+    // shows "Reconnect" at once instead of after the next daily sync.
+    if (err instanceof GscAuthError) {
+      await prisma.gscConnection.update({ where: { id: connection.id }, data: { lastError: err.message } });
+    }
+    throw err;
+  }
   await prisma.gscConnection.update({
     where: { id: connection.id },
     data: {

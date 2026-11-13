@@ -290,7 +290,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["clicks", "impressions", "queries", "traffic drop", "opportunities", "inspection"],
     answer:
-      "Open a connected website in [Search Console](/dashboard/search-console) to see:\n\n- clicks, impressions, average CTR and average position, with a performance chart\n- **Priority Opportunities**: pages with search traffic that also have Site Audit issues\n- **What changed before the drop**: pages whose clicks fell, matched against changes MyKavo detected on them\n- top queries and top pages (each exportable as CSV), countries, devices and search appearance\n- **Sitemaps**, with resubmit, and **URL inspection**\n\nIf clicks fall more than 40% week over week (from at least 50 clicks), MyKavo emails your alert recipients.",
+      "Open a connected website in [Search Console](/dashboard/search-console) to see:\n\n- clicks, impressions, average CTR and average position, with a performance chart\n- **Priority Opportunities**: pages with search traffic that also have Site Audit issues\n- **What changed before the drop**: pages whose clicks fell, matched against changes MyKavo detected on them\n- top queries and top pages (each exportable as CSV), countries, devices and search appearance\n- **Sitemaps** (resubmitting opens Search Console, since MyKavo only asks Google for read-only access) and **URL inspection**\n\nIf clicks fall more than 40% week over week (from at least 50 clicks), MyKavo emails your alert recipients.",
     related: ["integ-search-console-connect", "change-seo"],
     evalQuestions: [
       "what search console data will I see after connecting",

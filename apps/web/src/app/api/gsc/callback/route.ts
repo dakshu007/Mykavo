@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enqueueGscSync } from "@/lib/queue";
 import { prisma } from "@mykavo/database";
 import { encryptToken, exchangeAuthCode, verifyOauthState } from "@mykavo/shared";
 import { getApiContext } from "@/lib/api-auth";
@@ -44,12 +45,21 @@ export async function GET(request: Request) {
       expiresAt: tokens.expiresAt,
       lastError: null,
     };
-    await prisma.gscConnection.upsert({
+    const saved = await prisma.gscConnection.upsert({
       where: { websiteId: website.id },
       create: { websiteId: website.id, ...data },
       update: data,
+      select: { property: true },
     });
     logger.info("gsc connected", { websiteId: website.id, workspaceId: ctx.workspace.id });
+    // A reconnect keeps the property chosen before: no setup step, and fresh
+    // data straight away instead of at the next daily sync.
+    if (saved.property) {
+      await enqueueGscSync({ websiteId: website.id }).catch((err) =>
+        logger.error("gsc sync enqueue after reconnect failed", { websiteId: website.id }, err),
+      );
+      return NextResponse.redirect(`${appBaseUrl()}/dashboard/search-console/${website.id}?reconnected=1`);
+    }
     return NextResponse.redirect(
       `${appBaseUrl()}/dashboard/search-console/${website.id}?setup=1`,
     );

@@ -10,6 +10,7 @@ import { prisma, Prisma, type GscConnection } from "@mykavo/database";
 import {
   decryptToken,
   encryptToken,
+  isGscReauthMessage,
   refreshAccessToken,
   querySearchAnalytics,
   gscDate,
@@ -214,10 +215,13 @@ export async function runGscSync(job: GscSyncJob): Promise<void> {
 export async function runGscSweep(): Promise<void> {
   const connections = await prisma.gscConnection.findMany({
     where: { property: { not: null } },
-    select: { websiteId: true },
+    select: { websiteId: true, lastError: true },
   });
-  for (const connection of connections) {
+  // A grant Google has ended stays dead until the user reconnects (the
+  // callback clears lastError): retrying it daily only repeats the failure.
+  const live = connections.filter((c) => !isGscReauthMessage(c.lastError));
+  for (const connection of live) {
     await runGscSync({ websiteId: connection.websiteId });
   }
-  logger.info("gsc sweep finished", { connections: connections.length });
+  logger.info("gsc sweep finished", { connections: live.length, awaitingReconnect: connections.length - live.length });
 }
