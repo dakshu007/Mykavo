@@ -7,3 +7,6 @@ CREATE TABLE IF NOT EXISTS "app_setting" (
 
     CONSTRAINT "app_setting_pkey" PRIMARY KEY ("key")
 );
+
+-- RLS, matching every other table (see apps/worker/src/scripts/enable-rls.ts).
+ALTER TABLE "app_setting" ENABLE ROW LEVEL SECURITY;

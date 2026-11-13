@@ -33,3 +33,6 @@ SELECT
     i."createdAt"
 FROM "ai_insight" i
 ON CONFLICT ("id") DO NOTHING;
+
+-- RLS, matching every other table (see apps/worker/src/scripts/enable-rls.ts).
+ALTER TABLE "ai_usage" ENABLE ROW LEVEL SECURITY;
