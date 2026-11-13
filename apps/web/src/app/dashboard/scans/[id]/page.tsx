@@ -8,7 +8,7 @@ import { ScanStatusBadge } from "@/components/dashboard/scan-status";
 import { SetBaselineButton } from "@/components/dashboard/set-baseline-button";
 import { ChangeSeverityBadge, ChangeCategoryChip } from "@/components/dashboard/change-badges";
 import { ApproveScanButton } from "@/components/dashboard/approve-scan-button";
-import { AutoRefresh } from "./auto-refresh";
+import { LiveRefresh } from "@/components/dashboard/live-refresh";
 
 export default async function ScanDetailPage({
   params,
@@ -103,7 +103,15 @@ export default async function ScanDetailPage({
 
   return (
     <div className="space-y-6">
-      {inFlight && <AutoRefresh />}
+      {/* Re-renders as pages finish, not on a fixed timer. */}
+      {inFlight && (
+        <LiveRefresh
+          query={`scan=${scan.id}`}
+          initial={[{ status: scan.status, progress: scan.pagesScanned + scan.pagesFailed }]}
+          watch="progress"
+          intervalMs={5000}
+        />
+      )}
 
       <div>
         <Link

@@ -44,7 +44,7 @@ import {
   type GscSyncJob,
 } from "@mykavo/shared";
 import { logger } from "./logger";
-import { BOSS_TUNING, ON_DEMAND_POLL, SWEEP_POLL, ensureQueue } from "./queue-tuning";
+import { BACKGROUND_POLL, BOSS_TUNING, ON_DEMAND_POLL, SWEEP_POLL, ensureQueue } from "./queue-tuning";
 import { sendTestPush } from "./push";
 import { runScanWebsiteJob } from "./scan-website";
 import { runSchedulerSweep } from "./scheduler";
@@ -170,7 +170,7 @@ async function main() {
   // shrinks immediately rather than at 03:00; the retention sweep drains the
   // same table, so a missed job costs hours, not the saving itself.
   await ensureQueue(boss, ARTIFACT_PURGE_QUEUE, { retryLimit: 2 });
-  await boss.work(ARTIFACT_PURGE_QUEUE, { batchSize: 1, ...ON_DEMAND_POLL }, async () => {
+  await boss.work(ARTIFACT_PURGE_QUEUE, { batchSize: 1, ...BACKGROUND_POLL }, async () => {
     await drainArtifactPurge();
   });
 
@@ -369,7 +369,7 @@ async function main() {
   // web app's signup hook; delivered here so a push round trip can never slow
   // down or fail the request that creates an account.
   await ensureQueue(boss, ADMIN_SIGNUP_QUEUE, { retryLimit: 2 });
-  await boss.work<AdminSignupJob>(ADMIN_SIGNUP_QUEUE, { batchSize: 1, ...ON_DEMAND_POLL }, async ([job]) => {
+  await boss.work<AdminSignupJob>(ADMIN_SIGNUP_QUEUE, { batchSize: 1, ...BACKGROUND_POLL }, async ([job]) => {
     await runAdminSignupJob(job.data.userId);
   });
 
@@ -378,7 +378,7 @@ async function main() {
   // admin job's early returns (no ADMIN_EMAILS, admin's own signup) must
   // never be able to swallow a customer's welcome.
   await ensureQueue(boss, WELCOME_EMAIL_QUEUE, { retryLimit: 3 });
-  await boss.work<WelcomeEmailJob>(WELCOME_EMAIL_QUEUE, { batchSize: 1, ...ON_DEMAND_POLL }, async ([job]) => {
+  await boss.work<WelcomeEmailJob>(WELCOME_EMAIL_QUEUE, { batchSize: 1, ...BACKGROUND_POLL }, async ([job]) => {
     await runWelcomeEmailJob(job.data.userId);
   });
 

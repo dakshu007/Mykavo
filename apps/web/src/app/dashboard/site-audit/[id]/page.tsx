@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
 import { formatLimit, nextPlanUp, type Plan } from "@/config/plans";
-import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
+import { LiveRefresh } from "@/components/dashboard/live-refresh";
+import { AUDIT_PROGRESS_STEP } from "@/lib/live-status";
 import { RunAuditButton } from "../run-audit-button";
 import { FixTip } from "../fix-tip";
 import { HealthGauge, SEVERITY_CHIP, healthTone, isAuditRunning } from "../report-ui";
@@ -81,9 +82,17 @@ export default async function SiteAuditReportPage({ params }: Params) {
 
   return (
     <div className="space-y-6">
-      {/* router.refresh polling - never meta refresh (Chrome fires scheduled
-          refreshes even after client-side navigation away from this page). */}
-      {running && <AutoRefresh intervalMs={6000} />}
+      {/* Re-renders every 25 crawled pages and when the audit finishes -
+          never meta refresh (Chrome fires scheduled refreshes even after
+          client-side navigation away from this page). */}
+      {running && (
+        <LiveRefresh
+          query={`audits=${audit.id}`}
+          initial={[{ status: audit.status, progress: audit.pagesCrawled }]}
+          watch="progress"
+          step={AUDIT_PROGRESS_STEP}
+        />
+      )}
       <div>
         <Link
           href="/dashboard/site-audit"

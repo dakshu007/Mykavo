@@ -49,6 +49,13 @@ export const BOSS_TUNING = {
 /** Queues a person is waiting on (Run scan, test alert, audits, emails). */
 export const ON_DEMAND_POLL = { pollingIntervalSeconds: 10, notifyPollingIntervalSeconds: 60 } as const;
 
+/**
+ * Background jobs nobody is watching (artifact purge, admin and welcome
+ * emails). NOTIFY still delivers them within milliseconds; only the backstop
+ * poll is slower, matching the sweeps.
+ */
+export const BACKGROUND_POLL = { pollingIntervalSeconds: 60, notifyPollingIntervalSeconds: 300 } as const;
+
 /** Cron-fired sweeps: the schedule's own insert NOTIFYs the worker. */
 export const SWEEP_POLL = { pollingIntervalSeconds: 60, notifyPollingIntervalSeconds: 300 } as const;
 

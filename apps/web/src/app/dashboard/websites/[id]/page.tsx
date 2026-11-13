@@ -28,7 +28,7 @@ import { isLoginUrl } from "@mykavo/comparison-engine";
 import { requireSession, getCurrentMembership, getCurrentWorkspace } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
 import { formatLimit, getPlan } from "@/config/plans";
-import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
+import { LiveRefresh } from "@/components/dashboard/live-refresh";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WebsiteStatusBadge } from "@/components/dashboard/website-status";
 import { ScanStatusBadge } from "@/components/dashboard/scan-status";
@@ -130,8 +130,34 @@ export default async function WebsiteDetailPage({
             },
           },
         },
-        scans: { orderBy: { createdAt: "desc" }, take: 5 },
-        performanceAudits: { orderBy: { createdAt: "desc" }, take: 25 },
+        // Only the columns this page shows (it used to re-render every 4 s
+        // during a scan, so every unused column was repeated egress).
+        scans: {
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { id: true, status: true, triggerType: true, pagesRequested: true, pagesScanned: true, pagesFailed: true, createdAt: true },
+        },
+        performanceAudits: {
+          orderBy: { createdAt: "desc" },
+          take: 25,
+          select: {
+            id: true,
+            status: true,
+            url: true,
+            performanceScore: true,
+            accessibilityScore: true,
+            bestPracticesScore: true,
+            seoScore: true,
+            lcpMs: true,
+            fcpMs: true,
+            tbtMs: true,
+            ttiMs: true,
+            speedIndexMs: true,
+            cls: true,
+            errorCode: true,
+            createdAt: true,
+          },
+        },
       },
     }),
     prisma.changeEvent.findMany({
@@ -305,7 +331,11 @@ export default async function WebsiteDetailPage({
             <WebsiteStatusBadge status={website.status} />
             {activeScan ? (
               <>
-                <AutoRefresh intervalMs={4000} />
+                {/* Re-renders only when the scan starts or finishes. */}
+                <LiveRefresh
+                  query={`scan=${activeScan.id}`}
+                  initial={[{ status: activeScan.status, progress: activeScan.pagesScanned + activeScan.pagesFailed }]}
+                />
                 <Link
                   href={`/dashboard/scans/${activeScan.id}`}
                   className="inline-flex h-11 items-center gap-2 rounded-full bg-primary-soft px-6 text-sm font-medium text-accent"

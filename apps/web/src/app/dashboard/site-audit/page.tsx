@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { formatLimit, planLabel } from "@/config/plans";
 import { getWorkspacePlan } from "@/lib/limits";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
-import { AutoRefresh } from "@/app/dashboard/scans/[id]/auto-refresh";
+import { LiveRefresh } from "@/components/dashboard/live-refresh";
 import { RunAuditButton } from "./run-audit-button";
 import { healthTone, isAuditRunning } from "./report-ui";
 
@@ -30,7 +30,24 @@ export default async function SiteAuditPage() {
       id: true,
       name: true,
       url: true,
-      siteAudits: { orderBy: { createdAt: "desc" }, take: 1 },
+      // Summary columns only: the full row carries the issues JSON (up to
+      // 100 URLs per check), which this page never shows.
+      siteAudits: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          completedAt: true,
+          pagesCrawled: true,
+          healthScore: true,
+          errorCount: true,
+          warningCount: true,
+          noticeCount: true,
+          errorMessage: true,
+        },
+      },
     },
   });
 
@@ -44,14 +61,21 @@ export default async function SiteAuditPage() {
     );
   }
 
-  const anyRunning = websites.some((w) => w.siteAudits[0] && isAuditRunning(w.siteAudits[0]));
+  const runningAudits = websites
+    .map((w) => w.siteAudits[0])
+    .filter((a) => a !== undefined && isAuditRunning(a));
 
   return (
     <div className="space-y-6">
-      {/* router.refresh polling - NEVER meta refresh: Chrome fires a scheduled
-          meta refresh even after client-side navigation, yanking the user
-          back to this page from anywhere in the dashboard. */}
-      {anyRunning && <AutoRefresh intervalMs={6000} />}
+      {/* Re-renders when a running audit finishes - never meta refresh:
+          Chrome fires a scheduled meta refresh even after client-side
+          navigation, yanking the user back here from anywhere. */}
+      {runningAudits.length > 0 && (
+        <LiveRefresh
+          query={`audits=${runningAudits.map((a) => a.id).join(",")}`}
+          initial={runningAudits.map((a) => ({ status: a.status, progress: a.pagesCrawled }))}
+        />
+      )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Site Audit</h1>

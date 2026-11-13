@@ -219,7 +219,9 @@ function TrendSection({ trend }: { trend: AuditTrend }) {
   );
 }
 
-const POLL_INTERVAL_MS = 3000;
+// Lighthouse takes 20 to 60 s; a 5 s poll is plenty, and it pauses while the
+// tab is hidden (each poll re-reads the audit list from Postgres = egress).
+const POLL_INTERVAL_MS = 5000;
 /** A pending audit polled longer than this is treated as dead (worker crashed). */
 const STALE_AFTER_MS = 5 * 60 * 1000;
 
@@ -295,12 +297,18 @@ export function PerformanceAuditPanel({
     if (!pollWindow.current || pollWindow.current.id !== latestId) {
       pollWindow.current = { id: latestId, start: Date.now() };
     }
+    const onVisible = () => void refresh();
     const timer = setTimeout(() => {
       const w = pollWindow.current;
       if (w && Date.now() - w.start >= STALE_AFTER_MS) setGaveUpFor(latestId);
-      else void refresh();
+      else if (document.visibilityState === "visible") void refresh();
+      // Hidden tab: no polling; check once when the tab is shown again.
+      else document.addEventListener("visibilitychange", onVisible, { once: true });
     }, POLL_INTERVAL_MS);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [pending, audits, refresh, latestId]);
 
   async function runAudit() {
