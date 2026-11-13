@@ -79,7 +79,7 @@ export function WeeklySummaryCard({
           : {
               kind: "error",
               message: data.error ?? "Could not write this week's summary.",
-              retry: data.code !== "budget_exhausted",
+              retry: data.code !== "budget_exhausted" && data.code !== "paused",
             };
       if (next.kind === "ready") {
         cache.set(id, next);

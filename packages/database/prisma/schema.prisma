@@ -1996,6 +1996,19 @@ model AiUsage {
   @@map("ai_usage")
 }
 
+/// Operator switches that must take effect at once, without a redeploy, in
+/// both the web app and the worker. Read with the helpers in
+/// src/ai-control.ts; never shown to customers.
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+  /// Email of the admin who last changed it.
+  updatedBy String?
+
+  @@map("app_setting")
+}
+
 /// Periodic readings of a cumulative counter from outside the database, such
 /// as the database server's bytes sent (Supabase Metrics API). The worker
 /// writes one an hour; the admin usage page turns consecutive readings into

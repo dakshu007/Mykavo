@@ -9,6 +9,7 @@ type Params = { params: Promise<{ id: string }> };
 
 const STATUS: Record<AiErrorCode, number> = {
   not_configured: 503,
+  paused: 503,
   budget_exhausted: 503,
   quota_exhausted: 402,
   refused: 422,

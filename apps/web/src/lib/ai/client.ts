@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type { z } from "zod";
-import { prisma } from "@mykavo/database";
+import { isAiPaused, prisma } from "@mykavo/database";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
@@ -9,8 +9,14 @@ import { logger } from "@/lib/logger";
  * The one door to the Claude API. Every AI feature goes through
  * `generateStructured`, which:
  *
- *   - refuses before calling when the month's global budget is spent
- *     (AI_MONTHLY_BUDGET_USD, default $10, summed from ai_usage.costMicroUsd),
+ *   - refuses while an admin has paused AI (the kill switch on All Usage,
+ *     app_setting "ai.paused"); monitoring never reads that switch,
+ *   - refuses before calling when the month's budget for the feature's pool
+ *     is spent, summed from ai_usage.costMicroUsd. Two pools with separate
+ *     caps: "core" (change explanations and weekly summaries,
+ *     AI_MONTHLY_BUDGET_USD, default $10) and "agent" (newer AI features
+ *     such as the keyword agent, AI_AGENT_MONTHLY_BUDGET_USD, default $0, so
+ *     nothing in it can spend until the operator sets a cap),
  *   - asks Claude Haiku 5.5 with thinking off and low effort, for a JSON
  *     answer shaped by a zod schema,
  *   - prices the call from its token usage and books it in ai_usage, the
@@ -32,13 +38,27 @@ const INPUT_USD_PER_MTOK = 0.1;
 const OUTPUT_USD_PER_MTOK = 0.5;
 
 const DEFAULT_MONTHLY_BUDGET_USD = 10;
+const DEFAULT_AGENT_MONTHLY_BUDGET_USD = 0;
 
 /** What an AI call was for. Each feature is counted separately in the ledger. */
-export type AiFeature = "change_explanation" | "weekly_summary";
+export type AiFeature = "change_explanation" | "weekly_summary" | "keyword_agent";
+
+/** A spend pool: features that share one monthly cap. */
+export type AiBudgetPool = "core" | "agent";
+
+const POOL_FEATURES: Record<AiBudgetPool, string[]> = {
+  // "unknown" holds failed calls booked before the ledger knew their feature.
+  core: ["change_explanation", "weekly_summary", "unknown"],
+  agent: ["keyword_agent"],
+};
+
+export function budgetPoolOf(feature: string): AiBudgetPool {
+  return POOL_FEATURES.agent.includes(feature) ? "agent" : "core";
+}
 
 export type AiUsageOutcome = "ok" | "unusable" | "duplicate";
 
-export type AiErrorCode = "not_configured" | "budget_exhausted" | "quota_exhausted" | "refused" | "failed";
+export type AiErrorCode = "not_configured" | "paused" | "budget_exhausted" | "quota_exhausted" | "refused" | "failed";
 
 export class AiError extends Error {
   constructor(
@@ -67,28 +87,50 @@ export function costMicroUsd(usage: { inputTokens: number; outputTokens: number 
   return Math.ceil(usage.inputTokens * INPUT_USD_PER_MTOK + usage.outputTokens * OUTPUT_USD_PER_MTOK);
 }
 
-export function monthlyBudgetMicroUsd(raw: string | undefined = env.AI_MONTHLY_BUDGET_USD): number {
-  const usd = raw === undefined || raw.trim() === "" ? DEFAULT_MONTHLY_BUDGET_USD : Number(raw);
-  if (!Number.isFinite(usd) || usd < 0) return DEFAULT_MONTHLY_BUDGET_USD * 1_000_000;
+function parseBudgetMicroUsd(raw: string | undefined, fallbackUsd: number): number {
+  const usd = raw === undefined || raw.trim() === "" ? fallbackUsd : Number(raw);
+  if (!Number.isFinite(usd) || usd < 0) return fallbackUsd * 1_000_000;
   return Math.floor(usd * 1_000_000);
+}
+
+/** The core pool's monthly cap: change explanations and weekly summaries. */
+export function monthlyBudgetMicroUsd(raw: string | undefined = env.AI_MONTHLY_BUDGET_USD): number {
+  return parseBudgetMicroUsd(raw, DEFAULT_MONTHLY_BUDGET_USD);
+}
+
+/** The agent pool's monthly cap, separate from the core one. $0 until set. */
+export function agentBudgetMicroUsd(raw: string | undefined = env.AI_AGENT_MONTHLY_BUDGET_USD): number {
+  return parseBudgetMicroUsd(raw, DEFAULT_AGENT_MONTHLY_BUDGET_USD);
+}
+
+export function poolBudgetMicroUsd(pool: AiBudgetPool): number {
+  return pool === "agent" ? agentBudgetMicroUsd() : monthlyBudgetMicroUsd();
 }
 
 export function startOfUtcMonth(now: Date = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }
 
-/** Everything spent on AI this calendar month (UTC), across all workspaces. */
-export async function monthSpendMicroUsd(now: Date = new Date()): Promise<number> {
+/** What one pool has spent this calendar month (UTC), across all workspaces. */
+export async function monthSpendMicroUsd(pool: AiBudgetPool, now: Date = new Date()): Promise<number> {
   const agg = await prisma.aiUsage.aggregate({
-    where: { createdAt: { gte: startOfUtcMonth(now) } },
+    where: { feature: { in: POOL_FEATURES[pool] }, createdAt: { gte: startOfUtcMonth(now) } },
     _sum: { costMicroUsd: true },
   });
   return agg._sum.costMicroUsd ?? 0;
 }
 
-export async function assertBudgetLeft(now: Date = new Date()): Promise<void> {
-  if ((await monthSpendMicroUsd(now)) >= monthlyBudgetMicroUsd()) {
+export async function assertBudgetLeft(feature: AiFeature, now: Date = new Date()): Promise<void> {
+  const pool = budgetPoolOf(feature);
+  if ((await monthSpendMicroUsd(pool, now)) >= poolBudgetMicroUsd(pool)) {
     throw new AiError("budget_exhausted", "AI insights are paused until next month.");
+  }
+}
+
+/** Throws while an admin has paused AI. Monitoring never calls this. */
+export async function assertAiRunning(): Promise<void> {
+  if (await isAiPaused(prisma)) {
+    throw new AiError("paused", "AI insights are paused right now. Monitoring and alerts are not affected.");
   }
 }
 
@@ -119,7 +161,8 @@ export async function generateStructured<S extends z.ZodType>(params: {
   websiteId?: string | null;
 }): Promise<StructuredResult<z.infer<S>>> {
   const anthropic = getClient();
-  await assertBudgetLeft();
+  await assertAiRunning();
+  await assertBudgetLeft(params.feature);
 
   let response;
   try {

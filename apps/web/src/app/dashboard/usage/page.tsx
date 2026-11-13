@@ -7,6 +7,8 @@ import { collectUsage, logUsageProblems } from "@/lib/usage/collect";
 import { UsageMeters } from "@/components/dashboard/usage-meters";
 import { WorkerStatus } from "@/components/dashboard/worker-status";
 import { getWorkerLiveness } from "@/lib/usage/worker-health";
+import { AiControls } from "@/components/dashboard/ai-controls";
+import { loadAiControls } from "@/lib/ai/controls";
 
 export const metadata: Metadata = {
   title: "All Usage",
@@ -31,6 +33,11 @@ async function UsagePanel() {
  */
 async function WorkerPanel() {
   return <WorkerStatus liveness={await getWorkerLiveness()} />;
+}
+
+/** Three small queries, so the kill switch is usable before the slow figures land. */
+async function AiPanel() {
+  return <AiControls initial={await loadAiControls()} />;
 }
 
 function UsageSkeleton() {
@@ -81,6 +88,10 @@ export default async function UsagePage() {
           Admin / All usage
         </span>
       </div>
+
+      <Suspense fallback={null}>
+        <AiPanel />
+      </Suspense>
 
       <Suspense fallback={<UsageSkeleton />}>
         <UsagePanel />

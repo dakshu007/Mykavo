@@ -17,7 +17,7 @@ import {
   projectCycleUsage,
   type CounterReading,
 } from "@mykavo/shared";
-import { aiConfigured, monthlyBudgetMicroUsd, startOfUtcMonth } from "@/lib/ai/client";
+import { aiConfigured, budgetPoolOf, monthlyBudgetMicroUsd, startOfUtcMonth } from "@/lib/ai/client";
 import { env } from "@/lib/env";
 
 const DAY_MS = 86_400_000;
@@ -71,7 +71,9 @@ export async function collectAiSpend(now: Date): Promise<AiSpend> {
 
   return {
     configured: aiConfigured(),
-    monthUsd: usd(byFeature.reduce((s, r) => s + (r._sum.costMicroUsd ?? 0), 0)),
+    // Measured against the core cap, so only the core pool counts here; the
+    // agent pool has its own cap, shown in the AI controls card.
+    monthUsd: usd(byFeature.filter((r) => budgetPoolOf(r.feature) === "core").reduce((s, r) => s + (r._sum.costMicroUsd ?? 0), 0)),
     budgetUsd: usd(monthlyBudgetMicroUsd()),
     allTimeUsd: usd(allTime._sum.costMicroUsd),
     last24hUsd: usd(last24h._sum.costMicroUsd),

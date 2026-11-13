@@ -50,7 +50,7 @@ export function ChangeExplanationCard({
       if (!res.ok || !data.explanation) {
         setError({ message: data.error ?? "Could not explain this change.", code: data.code });
         // Out of allowance: asking again would only get the same answer.
-        asked.current = data.code === "quota_exhausted" || data.code === "budget_exhausted";
+        asked.current = data.code === "quota_exhausted" || data.code === "budget_exhausted" || data.code === "paused";
         return;
       }
       setExplanation(data.explanation);
@@ -135,7 +135,7 @@ export function ChangeExplanationCard({
             >
               See plans <ArrowRight className="size-3.5" aria-hidden />
             </Link>
-          ) : error?.code === "budget_exhausted" ? null : (
+          ) : error?.code === "budget_exhausted" || error?.code === "paused" ? null : (
             <button
               type="button"
               onClick={() => void explain()}
