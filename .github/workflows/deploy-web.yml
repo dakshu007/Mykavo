@@ -152,6 +152,18 @@ jobs:
       - name: Tests
         run: pnpm -r --if-present test
 
+      # A production build. Typecheck and tests cannot catch a server-only
+      # module (node:dns, node:crypto) pulled into a client component; only
+      # the bundler can. Placeholder values only: nothing here is a secret
+      # and the build never reaches production from this job.
+      - name: Production build
+        env:
+          BETTER_AUTH_SECRET: ci-build-placeholder-not-a-secret-000000
+          BETTER_AUTH_URL: http://localhost:3000
+          APP_URL: http://localhost:3000
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: pnpm --filter web build
+
   # Points worker-release at this commit now that every check passed; the
   # worker server picks it up within five minutes (infra/worker/update.sh).
   # A normal (non-force) push: runs are serialised by the concurrency group,

@@ -9,6 +9,7 @@ import { SearchPerformanceChart } from "@/components/charts/search-performance-c
 import {
   buildOpportunities,
   isGscReauthMessage,
+  searchConsoleSitemapsUrl,
   mergePeriods,
   type DimensionMetrics,
   type PageAuditFacts,
@@ -372,7 +373,7 @@ export default async function GscDashboardPage({ params, searchParams }: Params)
           <div className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader title="Sitemaps" />
-              <SitemapsPanel websiteId={website.id} property={connection.property} />
+              <SitemapsPanel websiteId={website.id} sitemapsUrl={searchConsoleSitemapsUrl(connection.property)} />
             </Card>
             <Card>
               <CardHeader title="URL inspection" />

@@ -1,6 +1,5 @@
 "use client";
 
-import { searchConsoleSitemapsUrl } from "@mykavo/shared";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -131,7 +130,8 @@ interface SitemapRow {
  * Console itself: it needs write access, and MyKavo only asks Google for
  * read-only access (an easier scope to get verified, and safer for users).
  */
-export function SitemapsPanel({ websiteId, property }: { websiteId: string; property: string }) {
+/** `sitemapsUrl` is built on the server: the helper lives beside server-only code. */
+export function SitemapsPanel({ websiteId, sitemapsUrl }: { websiteId: string; sitemapsUrl: string }) {
   const [sitemaps, setSitemaps] = useState<SitemapRow[] | null>(null);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export function SitemapsPanel({ websiteId, property }: { websiteId: string; prop
             </p>
           </div>
           <a
-            href={searchConsoleSitemapsUrl(property)}
+            href={sitemapsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 rounded-full border border-line px-3 py-1.5 text-[12px] font-medium text-ink-secondary hover:text-ink"
