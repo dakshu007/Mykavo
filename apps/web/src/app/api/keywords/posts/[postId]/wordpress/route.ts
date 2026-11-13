@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@mykavo/database";
 import { agentContext } from "@/lib/keywords/api";
 import { queueWpDraft, wordpressLinkFor, wpDraftView, WP_DRAFTS_MIN_PLUGIN } from "@/lib/integrations/wp-drafts";
+import { pokeWordPressSite } from "@/lib/integrations/wp-drafts-poke";
 
 type Params = { params: Promise<{ postId: string }> };
 
@@ -53,12 +54,22 @@ export async function POST(_request: Request, { params }: Params) {
     );
   }
 
-  const row = await queueWpDraft({
+  const queued = await queueWpDraft({
     contentPostId: post.id,
     websiteId: post.websiteId,
     workspaceId: gate.ctx.workspace.id,
     postVersion: post.version,
     userId: gate.ctx.userId,
   });
+
+  // Ask the site to collect it now. The plugin pulls the draft and reports
+  // back while this waits, so usually it is already in WordPress when we
+  // answer; if not, it arrives at the next WP Admin visit or WP-Cron run.
+  await pokeWordPressSite(link.siteUrl);
+  const row =
+    (await prisma.wpDraft.findUnique({
+      where: { id: queued.id },
+      select: { status: true, editUrl: true, error: true, queuedAt: true, deliveredAt: true, postVersion: true },
+    })) ?? queued;
   return NextResponse.json({ draft: wpDraftView(row, post.version) });
 }

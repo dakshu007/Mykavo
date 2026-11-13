@@ -12,12 +12,12 @@ import { articleHtml, asFaq } from "@/lib/keywords/post-html";
  */
 
 /** The first plugin release that collects drafts. */
-export const WP_DRAFTS_MIN_PLUGIN = "1.4.0";
+export const WP_DRAFTS_MIN_PLUGIN = "1.3.2";
 
 /** How many queued drafts one collection returns. Small, so a slow site stays fast. */
 export const WP_DRAFTS_BATCH = 5;
 
-/** "1.10.2" >= "1.4.0", numerically. Unknown versions count as too old. */
+/** "1.10.2" >= "1.3.2", numerically. Unknown versions count as too old. */
 export function pluginSupportsDrafts(version: string | null | undefined): boolean {
   if (!version) return false;
   const a = version.split(".").map((n) => Number.parseInt(n, 10) || 0);

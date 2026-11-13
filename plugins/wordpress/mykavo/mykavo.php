@@ -3,7 +3,7 @@
  * Plugin Name:       MyKavo - Website Change Monitoring
  * Plugin URI:        https://mykavo.app/wordpress-plugin
  * Description:       See what changed on your site, and whether it matters, without leaving WordPress. Visual, SEO, content, link and script changes with before-and-after screenshots. Adds nothing to the pages your visitors load.
- * Version:           1.4.0
+ * Version:           1.3.2
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            MyKavo
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MYKAVO_VERSION', '1.4.0' );
+define( 'MYKAVO_VERSION', '1.3.2' );
 define( 'MYKAVO_FILE', __FILE__ );
 define( 'MYKAVO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MYKAVO_URL', plugin_dir_url( __FILE__ ) );
@@ -265,7 +265,7 @@ add_action(
 );
 
 /*
- * Drafts from MyKavo's AI Keywords & Blog Writer (1.4.0): the 15-minute
+ * Drafts from MyKavo's AI Keywords & Blog Writer (1.3.2): the 15-minute
  * collection, and the post's JSON-LD on its page. Nothing loads until needed.
  */
 add_filter(
@@ -444,5 +444,7 @@ add_action(
 		require_once MYKAVO_DIR . 'includes/class-mykavo-forms.php';
 		require_once MYKAVO_DIR . 'includes/class-mykavo-rest.php';
 		MyKavo_Rest::register_routes();
+		require_once MYKAVO_DIR . 'includes/class-mykavo-drafts.php';
+		MyKavo_Drafts::register_routes();
 	}
 );

@@ -4,7 +4,7 @@ Tags: monitoring, change detection, seo, uptime, screenshots
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,117 +12,89 @@ Know when an update breaks your site. MyKavo checks your pages after every plugi
 
 == Description ==
 
-Updates are the number one way WordPress sites break. A plugin, theme or WordPress update - often an automatic one, overnight - quietly changes a layout, removes a checkout button or sets a page to "noindex". Usually a customer notices before you do, and nobody knows which update did it.
+Updates are the number one way WordPress sites break. A plugin, theme or WordPress update, often an automatic one overnight, quietly changes a layout, removes a checkout button or sets a page to "noindex". Usually a customer notices first, and nobody knows which update did it.
 
-MyKavo fixes that. It watches the pages that matter on your site and tells you when something important changes or breaks. This plugin brings that monitoring into WordPress, and adds **Safe Updates**: every time WordPress updates anything, MyKavo checks your pages straight away and tells you whether the update broke something - and exactly which update it was.
+MyKavo watches the pages that matter on your site and tells you when something important changes or breaks. This plugin brings that monitoring into WordPress and adds **Safe Updates**: after every update, MyKavo checks your pages and tells you whether it broke something, and exactly which update it was.
 
 = Safe Updates =
 
-* **Every update is checked.** Plugins, themes, WordPress itself and translations, whether you clicked Update or WordPress did it automatically.
-* **Every plugin switch too.** Activating or deactivating a plugin, or switching theme, breaks sites as often as updates do. Those are checked the same way.
-* **A clear verdict.** "Verified - nothing changed", or "3 changes found after this update", with the before-and-after evidence one click away.
-* **The culprit, named.** Changes found after an update say so: "Appeared after: Updated WooCommerce 8.1.0 → 8.2.0".
-* **A history of every update**, with versions, kept on your site.
-* **Know before you press Update.** On the Plugins screen, a plugin whose last update changed things on your site is flagged: "Last time this plugin updated, 2 things changed on your site."
-* **Roll back in one click.** In the update history, any plugin from WordPress.org has a "Roll back to 8.1.0" button that reinstalls the version you had before, keeps the plugin active, and asks MyKavo to check the site again. This works on every plan, including free. Plugins from other sources cannot be rolled back here.
-* Update checks are included in every paid plan, from Starter. On the free plan, updates are still listed so you know what changed and when, and one-click rollback works.
+* **Every update is checked:** plugins, themes, WordPress and translations, manual or automatic, plus plugin activations and theme switches.
+* **A clear verdict:** "Verified, nothing changed" or "3 changes found after this update", with before-and-after evidence.
+* **The culprit, named:** "Appeared after: Updated WooCommerce 8.1.0 → 8.2.0".
+* **Know before you update:** the Plugins screen flags a plugin whose last update changed things on your site.
+* **One-click rollback** for plugins from WordPress.org, on every plan including free.
+* Update checks come with every paid plan. On Free, updates are still listed and rollback works.
 
-= Safe Update All, snapshots and "did it crash?" (free) =
+= Free safety tools =
 
-* **A saved copy of everything you update.** Right before WordPress updates a plugin or theme, MyKavo zips the folder in wp-content/mykavo-snapshots (closed to the web). Any plugin or theme - premium ones too - can then be rolled back for seven days. The last two copies per plugin are kept, folders over 200 MB are skipped, and nothing is saved when the disk is low. MyKavo never snapshots or rolls back itself.
-* **"Did it crash?"** About ten seconds after an update, the site loads its own home page and up to three monitored pages and looks for a server error, WordPress's "critical error" page, a PHP fatal error or an empty page. If it finds one, the update history says so with a "Roll back now" button.
-* **Safe Update All.** One button: optionally start an UpdraftPlus backup first, update the plugins one at a time, check the site after each, and roll back any update that breaks it, then one verdict: "7 updated, 6 verified, 1 rolled back". On paid plans MyKavo also takes a fresh baseline first and checks the pages afterwards.
-* **Silent-disaster alerts.** "Discourage search engines" switched on, the site or WordPress address changed, the permalinks changed, the admin email changed, or a new administrator appeared: a red notice on every wp-admin screen until someone dismisses it. Paid plans also get an instant email or Slack alert from MyKavo.
-* **Email check.** Optional: WordPress sends one short test email a day to the admin address, and MyKavo shows whether it went out.
-* **For agencies and their clients.** A "MyKavo viewer" role lets a client see the MyKavo screen without being able to change anything. On multisite, Network Admin > MyKavo lists every site's status.
+* **Snapshots.** Right before a plugin or theme updates, MyKavo zips its folder (closed to the web), so any of them, premium ones too, can be rolled back for seven days.
+* **"Did it crash?"** Seconds after an update the site loads its home page and up to three monitored pages and looks for errors, with a "Roll back now" button if one broke.
+* **Safe Update All.** Optional UpdraftPlus backup, then plugins update one at a time, each checked, and any that breaks the site is rolled back.
+* **Silent-disaster alerts.** Search engines discouraged, site address, permalinks or admin email changed, or a new administrator: a notice on every wp-admin screen. Paid plans also get email or Slack alerts.
+* **For agencies.** A read-only "MyKavo viewer" role, and a Network Admin overview on multisite.
 
-= Automatic rollback, update windows and plugin health =
+= Paid plan extras =
 
-These come from MyKavo's service on paid plans. MyKavo makes the decision (whether an update broke something, when updates may run, which plugins are abandoned); the plugin shows the result and carries out what MyKavo says.
+* **Automatic rollback (Pro, Agency):** when MyKavo's check finds a critical change after a plugin update, those plugins go back to their previous version.
+* **Update windows (Agency):** automatic updates only on the days and hours you choose.
+* **Plugin health and known vulnerabilities:** abandoned plugins and plugins with known security issues flagged; Pro and Agency can update vulnerable ones automatically.
+* **Update risk:** how the same update went on other MyKavo sites, shown next to "Update now".
+* **Watch buttons and forms:** pick the button, link or form that matters and get alerted if it disappears or changes; the block editor warns before you remove one. Contact forms are checked too.
+* **Site report (Agency):** the last 30 days on one branded page, ready to share.
 
-* **Automatic rollback (Pro and Agency).** When MyKavo's check after a plugin update finds a critical change, the plugins from that update are put back to their previous version from WordPress.org automatically, and MyKavo checks the site again. You can switch it off on the Safe Updates screen. MyKavo never rolls itself back, never rolls back a rollback, and WordPress will not automatically update a rolled back plugin straight back to the version that broke.
-* **Update windows (Agency).** Choose the days and hours, in your time zone, when WordPress may install automatic updates. Outside the window, automatic plugin, theme and core updates wait for the next one, so they happen when someone is around.
-* **Plugin health (paid plans, from Starter).** Once a day the plugin sends MyKavo the list of installed plugins, and MyKavo flags the ones that were closed on WordPress.org or have not been updated in two years.
-* **Known security issues.** Every plan sees how many installed plugins have a known vulnerability. Paid plans, from Starter, see which plugin, what the issue is and the version that fixes it; Pro and Agency can have vulnerable plugins updated automatically as soon as the fix is out.
-* **Update risk.** On the Plugins screen, next to "Update now": "Updated on 214 MyKavo sites, 3% saw changes" (anonymous results of Safe Updates across MyKavo). On Pro and Agency, an automatic update MyKavo marks risky waits 48 hours.
-* **Watch buttons and forms.** On the Pages tab, open a page, click the button, link or form that matters, and MyKavo alerts you if it disappears or changes. In the block editor, a MyKavo panel warns before you save an edit that removes a watched element or changes the page title or SEO description. The free plan watches one element; more come with Pro and Agency.
-* **Contact forms (paid).** Pages with a Contact Form 7, Gravity Forms or WPForms form are checked by MyKavo (from Starter), and on Pro and Agency MyKavo also sends a labelled test entry.
-* **Your site report (Agency).** A Site report tab with the last 30 days on one page - updates, rollbacks, uptime, SSL, changes caught and AI crawler visits - with your logo and brand colour, ready to share or print as a PDF.
-* **Your plan at a glance.** The plan medal (Free steel, Starter bronze, Pro silver, Agency gold) in the top bar, a Plan tab with everything your plan includes, a Site audit card that opens your MyKavo site audit, and, on Pro and Agency, the address to connect ChatGPT, Claude or any MCP app to MyKavo.
+= AI Keywords & Blog Writer drafts =
+
+Write a post with MyKavo's AI Keywords & Blog Writer, click "Save as draft in WordPress", and it appears under Posts as a draft with its title, slug, meta description, FAQ and schema. Yoast SEO and Rank Math fields are filled in when either is active. Nothing is ever published for you: you review the draft and publish it.
 
 = See which AI reads your site =
 
-ChatGPT, Claude, Perplexity and other AI systems send crawlers to read your pages before they quote or recommend them. The **AI crawlers** screen shows:
+* **AI crawler visits:** ChatGPT, Claude, Perplexity and other AI crawlers, which pages they read, and errors served to them.
+* **Block AI training, allow AI search (free):** one switch writes the robots.txt rules, or allow and block each crawler yourself.
+* **Real or fake (free):** OpenAI, Perplexity and Amazon crawlers are verified, so fakes are counted separately.
+* **Fix errors served to AI (free):** one-click redirects for addresses that answered a crawler with 404.
+* **llms.txt (free):** your site's name, description and important pages for AI assistants; paid plans add a summary of each page.
 
-* **Who visits.** Visits from OAI-SearchBot, ChatGPT-User, GPTBot, Claude-SearchBot, Claude-User, ClaudeBot, PerplexityBot, Perplexity-User, Amazonbot, DuckAssistBot, Meta-ExternalAgent, MistralAI-User, CCBot and Bytespider, and why each one visits (AI search answers, a person asking about your page, or training).
-* **Which pages AI reads most**, and visits per day for the last 30 days.
-* **Errors served to AI.** Pages that answered a crawler with 404 or 5xx - pages AI cannot quote.
+Crawlers are counted by their User-Agent name only: no IP addresses, no cookies, nothing about human visitors.
 
-* **Block AI training, allow AI search (free).** One switch adds rules to your robots.txt that ask crawlers collecting AI training data (GPTBot, ClaudeBot, CCBot, Google-Extended, Applebot-Extended, Bytespider and Meta-ExternalAgent) to stay away, while the crawlers that read pages for AI search answers or open a page someone asked about (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot and Perplexity-User) are left alone. It works with the robots.txt WordPress generates; if your site has its own robots.txt file, the screen shows the rules to copy into it.
-* **Last 12 months (paid plans, from Starter).** Twelve months of AI crawler visits kept by MyKavo, by month and by crawler, with the day each crawler first visited.
-* **Allow or block each AI crawler (free).** A table with every known AI crawler, each allowed or blocked in robots.txt, plus a "Block training, allow search" button.
-* **Real or fake? (free).** Anyone can call themselves GPTBot. Visits from OpenAI and Perplexity crawlers are checked against the IP ranges those companies publish, and Amazonbot by reverse DNS, so fakes are counted separately. Only a salted hash of the address is cached for six hours; addresses are never stored. Requests that come through a proxy or CDN are not checked.
-* **Fix errors served to AI (free).** Addresses that answered an AI crawler with 404 get a "Create redirect" button. The redirect only runs on requests that would otherwise be a 404. Paid plans, from Starter, also get a suggested target page from MyKavo.
-* **llms.txt (free).** Switch on a /llms.txt for AI assistants: your site's name, description and important pages. Paid plans, from Starter, add a one-line summary of each page written by MyKavo.
+= Built for WooCommerce =
 
-Crawlers are counted by the name they send in the User-Agent header. No IP addresses, no cookies and nothing about human visitors are ever recorded. You can switch counting off on that screen.
-
-= Built for WooCommerce stores =
-
-A broken cart or checkout loses sales every minute it stays broken. If WooCommerce is active, MyKavo shows whether your Shop, Cart, Checkout and My account pages are monitored, and adds the missing ones in one click.
-
-On Pro and Agency, **Guard checkout** goes further: MyKavo also watches the Place order, Proceed to checkout and Add to cart buttons on your cart, checkout and a product page, and sends a critical alert the moment one goes missing.
+MyKavo shows whether your Shop, Cart, Checkout and My account pages are monitored and adds the missing ones in one click. On Pro and Agency, **Guard checkout** also watches the Place order, Proceed to checkout and Add to cart buttons.
 
 = What you see in WordPress =
 
-* **Safe Updates:** a check and a verdict after every update, with the update named.
-* **One clear status.** "All clear", or exactly how many important changes need attention, at the top of the screen and as a badge in the admin menu.
-* **Before-and-after screenshots.** Drag a slider across the old and new version of a page, or switch to the highlighted differences.
-* **The exact values that changed.** Old and new title, meta description, robots tag, canonical URL, button text and more, side by side.
-* **Severity you can trust.** Every change is ranked Critical, High, Medium, Low or Info. Ad slots and other noise are filtered out, so alerts mean something.
-* **One-click decisions.** Accept an intentional change as the new baseline, mark it fixed, or ignore it.
-* **Run a scan on demand.** Check the site right after an update and watch the progress live.
-* **Uptime, response time and SSL expiry** at a glance.
-* **Scan history and monitored pages**, with a link to each page.
-* **A small Dashboard widget** with the current status.
-* **Monitor any page from WordPress.** A "Monitor with MyKavo" link under every published page and post, or paste an address on the Pages tab.
-* **Site Health.** MyKavo's status appears in Tools > Site Health, and its details in the Info tab for support requests.
-* **WP-CLI.** `wp mykavo status`, `wp mykavo changes`, `wp mykavo scan --wait`, `wp mykavo monitor`, `wp mykavo updates` and more, for scripted maintenance runs.
+* One clear status, with a badge in the admin menu
+* Before-and-after screenshots with a slider and highlighted differences
+* The exact old and new values: title, meta description, robots tag, canonical, button text
+* Severity from Critical to Info, with noise filtered out
+* Accept a change as the new baseline, mark it fixed, or ignore it
+* Scans on demand, uptime, response time and SSL expiry
+* A Dashboard widget, Site Health integration and WP-CLI (`wp mykavo status`, `wp mykavo scan --wait` and more)
 
 = What MyKavo detects =
 
-* Pages that go down or return errors (404, 500)
-* Visual changes, measured against an approved baseline
-* SEO changes: title, meta description, canonical, robots / noindex, headings, structured data
+* Pages that go down or return errors
+* Visual changes against an approved baseline
+* SEO changes: title, meta description, canonical, noindex, headings, structured data
 * Broken internal links
-* Tracking and third-party scripts added or removed (Google Analytics, Tag Manager, Meta Pixel and others)
+* Tracking scripts added or removed (Google Analytics, Tag Manager, Meta Pixel and others)
 * Performance regressions: page weight, request count, response time
-* Missing or changed buttons and forms you choose to watch (conversion elements)
+* Missing or changed buttons and forms you watch
 
 = Built to never slow your site down =
 
-Many plugins get deleted because they make a site slower. MyKavo is built so that cannot happen:
-
-* **Nothing on the public site.** No scripts, no styles, no database queries and no remote requests on the pages your visitors load. The only things that run are two text matches - the User-Agent header, to spot AI crawlers, and the request path, to answer /llms.txt - and human visitors stop there. A redirect is looked up only on a request that is already a 404.
-* **AI crawler counting is one counter update.** A request from an AI crawler adds one row update to a small table, after the page has been built. Rows older than 35 days are deleted.
-* **No autoloaded options.** The connection is stored in a single option that WordPress only reads on MyKavo's own screens.
-* **One small daily job.** Once a day, WP-Cron sends the AI crawler totals and the list of installed plugins to MyKavo. The scanning itself runs on MyKavo's servers, not yours.
-* **Snapshots and checks run only during updates.** A snapshot is taken while WordPress is already updating, and the "did it crash?" check is one WP-Cron job a few seconds later.
-* **Automatic rollback waits quietly.** On plans with automatic rollback, WP-Cron asks MyKavo every five minutes, for up to 40 minutes after a plugin update, how its check went. Nothing else runs between updates.
-* **Admin screens only.** Scripts load on the MyKavo screen alone (plus a 2 KB script for the Dashboard widget), using only libraries WordPress already includes.
-* **Update checks cost nothing extra.** The plugin notes versions while WordPress is updating, then sends one short report when the update finishes. Nothing runs between updates.
-* **Cached and time-limited.** Answers from MyKavo are cached for a minute, and every request has a short timeout.
+* **Nothing for your visitors.** No scripts, styles or remote requests on public pages. Two quick text matches spot AI crawlers and answer /llms.txt; a redirect is looked up only on a request that is already a 404. Posts saved from the AI Blog Writer get their schema in the page head.
+* **The scanning runs on MyKavo's servers**, not yours. Small WP-Cron jobs send daily totals and collect AI Blog Writer drafts.
+* **No autoloaded options**, admin scripts only on MyKavo's screens, and short, cached requests.
 
 = Secure by design =
 
-* Connecting uses an OAuth-style approval with PKCE. You approve on mykavo.app, and your site receives a key that only works for this one website.
-* The key stays on your server. Your browser never sees it.
-* Only administrators can act on monitoring. Users with the "MyKavo viewer" role can see it, read-only.
-* Disconnect at any time, from WordPress or from your MyKavo account.
+* Connecting uses an OAuth-style approval with PKCE, and the key works for this one website only.
+* The key stays on your server; your browser never sees it.
+* Only administrators can act on monitoring. Disconnect at any time.
 
 = Plans =
 
-MyKavo has a free plan: 1 website, 5 monitored pages and weekly scans, with no card required. Paid plans add daily scans, more websites and pages, manual scans and more. See [mykavo.app/pricing](https://mykavo.app/pricing).
+MyKavo has a free plan: 1 website, 5 monitored pages and weekly scans, no card required. Paid plans add daily scans, more websites and pages, manual scans and more. See [mykavo.app/pricing](https://mykavo.app/pricing).
 
 == External services ==
 
@@ -140,6 +112,7 @@ This plugin connects your site to MyKavo (https://mykavo.app), a website monitor
 * **After a plugin update, on plans with automatic rollback:** your site's server asks mykavo.app for the result of the check every five minutes, for up to 40 minutes.
 * **When a plugin is rolled back (by you, or automatically):** the plugin's earlier version is downloaded from WordPress.org (https://downloads.wordpress.org, operated by the WordPress.org project; see https://wordpress.org/about/privacy/), the same way WordPress downloads any plugin update. The rollback (plugin name and versions) is then reported to mykavo.app so it can check the site again.
 * **When you press Guard checkout:** the addresses of your cart page, checkout page and one product page.
+* **AI Blog Writer drafts, while connected:** when an administrator or editor opens wp-admin (at most once a minute), every 15 minutes from WP-Cron, and when mykavo.app signals that a draft is waiting, your site's server asks mykavo.app for drafts saved for this site, then reports back the ID and edit link of each draft it created.
 * **When you disconnect:** your site tells mykavo.app to revoke its key.
 * **When an important setting changes** (search engine visibility, site or WordPress address, permalinks, admin email, a new administrator), while connected: from WP-Cron, a few seconds later, the kind of change, the old and new value (for example the new admin email address or administrator's login name), the name of the user who made it, and the time.
 * **After an update, the "did it crash?" result:** whether the home page and up to three monitored pages loaded, their status codes and addresses, and what was updated.
@@ -244,7 +217,7 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Changelog ==
 
-= 1.4.0 =
+= 1.3.2 =
 * New: drafts from MyKavo's AI Keywords & Blog Writer. Click "Save as draft in WordPress" in MyKavo and the post appears under Posts as a draft, with its title, slug, meta description, FAQ and schema. It never publishes: you review it and publish. The plugin collects drafts when you open WP Admin and every 15 minutes.
 * New: the meta description and focus keyword fill in Yoast SEO or Rank Math when either is active, and the post's schema is added only when no SEO plugin adds its own.
 
@@ -308,7 +281,7 @@ Your server needs to be able to make outbound HTTPS requests to mykavo.app, whic
 
 == Upgrade Notice ==
 
-= 1.4.0 =
+= 1.3.2 =
 Save posts from MyKavo's AI Keywords & Blog Writer straight to your drafts. Nothing is ever published for you.
 
 = 1.3.1 =

@@ -3,7 +3,8 @@ import { pluginSupportsDrafts, safeEditUrl, wpDraftView } from "@/lib/integratio
 import { articleHtml, faqHtml } from "@/lib/keywords/post-html";
 
 describe("pluginSupportsDrafts", () => {
-  it("needs plugin 1.4.0 or newer", () => {
+  it("needs plugin 1.3.2 or newer", () => {
+    expect(pluginSupportsDrafts("1.3.2")).toBe(true);
     expect(pluginSupportsDrafts("1.4.0")).toBe(true);
     expect(pluginSupportsDrafts("1.10.2")).toBe(true);
     expect(pluginSupportsDrafts("2.0")).toBe(true);

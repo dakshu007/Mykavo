@@ -36,6 +36,48 @@ final class MyKavo_Drafts {
 	/** At most this many drafts per collection. */
 	const BATCH = 5;
 
+	/** Transient that limits pokes from MyKavo to one collection every 20 seconds. */
+	const POKED = 'mykavo_drafts_poked';
+
+	/**
+	 * GET /wp-json/mykavo/v1/drafts/collect: MyKavo pokes this right after
+	 * someone clicks "Save as draft in WordPress", so the draft arrives in
+	 * seconds instead of at the next WP Admin visit or WP-Cron run.
+	 *
+	 * It needs no login on purpose: all it does is make this site ask MyKavo
+	 * for its drafts over its own authenticated connection, so a stranger
+	 * calling it can only cause a harmless pull, at most every 20 seconds.
+	 *
+	 * @return void
+	 */
+	public static function register_routes() {
+		register_rest_route(
+			'mykavo/v1',
+			'/drafts/collect',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'rest_collect' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+	}
+
+	/**
+	 * The poke's handler.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public static function rest_collect() {
+		$saved = 0;
+		if ( null !== MyKavo_Connection::get() && ! get_transient( self::POKED ) ) {
+			set_transient( self::POKED, 1, 20 );
+			$saved = self::collect();
+		}
+		$response = new WP_REST_Response( array( 'saved' => $saved ) );
+		$response->header( 'Cache-Control', 'no-store' );
+		return $response;
+	}
+
 	/**
 	 * The 15-minute WP-Cron interval.
 	 *

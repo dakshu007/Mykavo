@@ -171,11 +171,23 @@ export function WpDraftPanel({
             <Loader2 className="size-3.5 animate-spin text-accent" aria-hidden /> On its way to WordPress
           </p>
           <p className="mt-1 text-[12px] leading-5 text-ink-secondary">
-            It lands as a draft the next time WP Admin opens, or within 15 minutes.
+            Your site didn&apos;t pick it up straight away. It lands as a draft the next time WP Admin opens, or within 15
+            minutes.
           </p>
-          <a href={link.draftsUrl} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-accent hover:underline">
-            Open WP Admin now <ArrowUpRight className="size-3.5" aria-hidden />
-          </a>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <a href={link.draftsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-accent hover:underline">
+              Open WP Admin now <ArrowUpRight className="size-3.5" aria-hidden />
+            </a>
+            <button
+              type="button"
+              onClick={() => void send()}
+              disabled={busy}
+              className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-ink-secondary hover:text-ink disabled:opacity-60"
+            >
+              {busy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <RefreshCw className="size-3.5" aria-hidden />}
+              {busy ? "Sending…" : "Send again now"}
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -187,12 +199,22 @@ export function WpDraftPanel({
               {draft.outdated && (
                 <p className="mt-1 text-[12px] leading-5 text-ink-secondary">You edited it since. Send the latest version to update that draft.</p>
               )}
-              {draft.editUrl && (
-                <a href={draft.editUrl} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-accent hover:underline">
-                  Review and publish in WP Admin <ArrowUpRight className="size-3.5" aria-hidden />
-                </a>
-              )}
             </div>
+          )}
+          {draft?.status === "delivered" && (
+            <a
+              href={draft.editUrl ?? link.draftsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "mt-3 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-semibold",
+                draft.outdated
+                  ? "border border-line text-ink hover:bg-ink/5"
+                  : "bg-primary text-primary-contrast hover:bg-primary-hover",
+              )}
+            >
+              <WordPressMark className="size-4" /> Open draft in WP Admin <ArrowUpRight className="size-3.5" aria-hidden />
+            </a>
           )}
           {draft?.status === "failed" && (
             <p role="alert" className="mt-2.5 flex items-start gap-1.5 text-[12.5px] leading-5 text-critical-strong">
@@ -210,7 +232,7 @@ export function WpDraftPanel({
               )}
             >
               {busy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Send className="size-3.5" aria-hidden />}
-              {busy ? "Sending…" : draft?.status === "failed" ? "Try again" : draft?.outdated ? "Send the latest version" : "Save as draft in WordPress"}
+              {busy ? "Sending to WordPress…" : draft?.status === "failed" ? "Try again" : draft?.outdated ? "Send the latest version" : "Save as draft in WordPress"}
             </button>
           )}
           {dirty && (!draft || draft.status === "failed" || draft.outdated) && (
