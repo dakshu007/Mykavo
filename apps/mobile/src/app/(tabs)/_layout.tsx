@@ -15,6 +15,7 @@ import { useLive } from "@/lib/live";
 import { TAB_EASING } from "@/lib/tab-motion";
 import { TAB_TRANSITION_MS, tabSceneStyle } from "@/lib/tab-transition";
 import { authClient, useSession } from "@/lib/auth";
+import { clearLiveCache } from "@/lib/live-cache";
 import { wipeSecureStorage } from "@/lib/secure-storage";
 import { useTheme } from "@/lib/theme-context";
 
@@ -44,7 +45,7 @@ export default function TabsLayout() {
   // Whether to show the operator-only Usage tab. Fetched once; while it is
   // unknown the tab stays hidden, so it appears rather than disappears - a
   // control that vanishes after a second reads as a glitch.
-  const { data: me } = useLive(api.me, [], { interval: 0 });
+  const { data: me } = useLive(api.me, [], { interval: 0, cache: "me" });
   const showUsage = me?.admin?.usage === true;
 
   // Session-expiry recovery: when the backend stops accepting our session
@@ -61,6 +62,7 @@ export default function TabsLayout() {
         } catch {
           await wipeSecureStorage();
         }
+        await clearLiveCache();
         router.replace("/login");
       })();
     });
@@ -151,7 +153,7 @@ export default function TabsLayout() {
                 screen's own 404 from the API rather than a router crash. */}
             <Tabs.Screen
               name="usage"
-              options={{ title: "Usage", href: showUsage ? undefined : null }}
+              options={{ title: "Command Center", href: showUsage ? undefined : null }}
             />
             <Tabs.Screen name="settings" options={{ title: "Settings" }} />
           </Tabs>

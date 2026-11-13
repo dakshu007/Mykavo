@@ -1,305 +1,551 @@
 /**
- * Usage tab - what every service MyKavo runs on is costing, as a share of its
- * cap. The phone counterpart of the web dashboard's All Usage page, reading
- * the same report from the same collector, so the two can never disagree.
+ * Command Center - the operator's live view of all of MyKavo on one screen:
+ * what needs attention, money, people, the scanner, AI, WordPress, email and
+ * push, plus a live feed of what just happened. Refreshes every 20 seconds
+ * while open and paints the last reading instantly from cache.
  *
- * Operator-only. The tab is hidden for everyone else and /api/mobile/usage
- * answers 404 independently, so hiding it is convenience, not the boundary.
- *
- * Only the QUOTAS are meters here. The web page also lists volumes and table
- * sizes; on a phone that is a scrolling wall, and the question you open your
- * phone to ask is "is anything about to run out?" - so volumes are collapsed
- * behind a toggle and the meters carry the screen.
+ * Operator-only. The tab (route name kept as "usage" so links and tests stay
+ * stable) is hidden for everyone else, and /api/mobile/admin/pulse answers
+ * 404 independently, so hiding it is convenience, not the boundary.
  */
 
-import { ChevronDown, ChevronUp, CircleCheck, OctagonAlert, TriangleAlert } from "lucide-react-native";
-import { useState } from "react";
-import { Pressable, View } from "react-native";
-
-import { Screen } from "@/components/screen";
-import { Card, CardTitle, Divider, ErrorState, LoadingState, Small } from "@/components/ui";
-import { api } from "@/lib/api";
-import { useLive } from "@/lib/live";
-import { useTheme } from "@/lib/theme-context";
-import type { FxPalette } from "@/lib/theme";
+import * as Haptics from "expo-haptics";
+import { useRouter, type Href } from "expo-router";
 import {
-  formatPercent,
-  formatUsageValue,
-  meterFraction,
-  usageLabel,
-  usageLevel,
-  type UsageLevel,
-} from "@/lib/usage";
-import type { UsageMeterItem, UsageStatItem } from "@/lib/types";
+  Activity,
+  ChevronRight,
+  CircleCheck,
+  CreditCard,
+  Gauge,
+  Globe,
+  Info,
+  LifeBuoy,
+  MailQuestion,
+  Megaphone,
+  OctagonAlert,
+  PenLine,
+  Search,
+  Send,
+  ServerCrash,
+  Smartphone,
+  Sparkles,
+  TriangleAlert,
+  UserPlus,
+  Users,
+  Workflow,
+  Zap,
+  type LucideIcon,
+} from "lucide-react-native";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, Switch, Text, View } from "react-native";
 
-/**
- * Fill, track and text per level.
- *
- * Fill colours were chosen by measurement on the web side and are mirrored
- * here: the base status colours fail WCAG 1.4.11 against their own soft
- * tracks in light mode (warning 1.95:1), so the meter uses the -strong steps
- * and a dedicated amber. The TEXT uses warningStrong rather than the fill,
- * because text needs 4.5:1 where a bar needs 3:1.
- */
-function levelStyle(level: UsageLevel, p: FxPalette) {
-  switch (level) {
-    case "critical":
-      return {
-        fill: p.criticalStrong,
-        track: p.criticalSoft,
-        text: p.criticalStrong,
-        Icon: OctagonAlert,
-      };
-    case "warning":
-      return {
-        fill: p.meterWarning,
-        track: p.warningSoft,
-        text: p.warningStrong,
-        Icon: TriangleAlert,
-      };
-    case "ok":
-      return {
-        fill: p.successStrong,
-        track: p.successSoft,
-        text: p.successStrong,
-        Icon: CircleCheck,
-      };
-  }
+import { Bar, Chip } from "@/components/admin";
+import { Screen } from "@/components/screen";
+import { Card, CardTitle, Divider, ErrorState, LoadingState, MicroLabel, Small, StatTile } from "@/components/ui";
+import { api } from "@/lib/api";
+import { timeAgo } from "@/lib/format";
+import { useLive } from "@/lib/live";
+import { fonts, radius, type FxPalette } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
+import type { AdminPulse, PulseAlertLevel, PulseFeedItem } from "@/lib/types";
+
+const money = (n: number) => (n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(n % 1 === 0 ? 0 : 2)}`);
+
+function levelTone(p: FxPalette, level: PulseAlertLevel): { fg: string; bg: string; Icon: LucideIcon } {
+  if (level === "critical") return { fg: p.criticalStrong, bg: p.criticalSoft, Icon: OctagonAlert };
+  if (level === "warning") return { fg: p.warningStrong, bg: p.warningSoft, Icon: TriangleAlert };
+  return { fg: p.info, bg: p.infoSoft, Icon: Info };
 }
 
-/**
- * A row we could not measure.
- *
- * Renders no track at all. An empty bar reads as a meter at 0% - "nothing
- * used" - which is the opposite of "we could not find out", and on a screen
- * whose whole job is capacity that inversion is the worst possible default.
- */
-function MissingRow({ meter }: { meter: UsageMeterItem }) {
+const FEED_ICON: Record<PulseFeedItem["kind"], LucideIcon> = {
+  signup: UserPlus,
+  payment: CreditCard,
+  scan_failed: ServerCrash,
+  change: Zap,
+  ai_post: Sparkles,
+  wp_draft: Send,
+  app_request: Smartphone,
+  service: LifeBuoy,
+  support: LifeBuoy,
+};
+
+/** "Live" dot + seconds since the last reading, ticking without refetching. */
+function LiveBadge({ at, stale }: { at: string; stale: boolean }) {
+  const { palette } = useTheme();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(t);
+  }, []);
+  const secs = Math.max(0, Math.round((now - new Date(at).getTime()) / 1000));
+  const color = stale ? palette.warning : palette.success;
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: stale ? palette.warningSoft : palette.successSoft,
+        borderRadius: radius.pill,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+      }}
+    >
+      <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: color }} />
+      <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 12, color: stale ? palette.warningStrong : palette.successStrong }}>
+        {stale ? "Offline copy" : secs < 10 ? "Live" : `${secs < 60 ? `${secs}s` : `${Math.round(secs / 60)}m`} ago`}
+      </Text>
+    </View>
+  );
+}
+
+function SectionHead({ icon: Icon, title, right }: { icon: LucideIcon; title: string; right?: React.ReactNode }) {
   const { palette } = useTheme();
   return (
-    <View style={{ paddingVertical: 12, gap: 4 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <CardTitle style={{ flex: 1 }} numberOfLines={1}>
-          {meter.label}
-        </CardTitle>
-        <Small color={palette.inkSecondary}>
-          {meter.state === "unconfigured" ? "Not configured" : "Could not read"}
-        </Small>
-      </View>
-      <Small color={palette.inkSecondary}>
-        <Small color={palette.inkFaint}>{meter.provider}. </Small>
-        {meter.detail}
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+      <Icon size={16} color={palette.ink} strokeWidth={2.2} />
+      <CardTitle style={{ flex: 1 }}>{title}</CardTitle>
+      {right}
+    </View>
+  );
+}
+
+/** Label + big number, used in the dense rows inside cards. */
+function Figure({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
+  const { palette } = useTheme();
+  return (
+    <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+      <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 20, lineHeight: 26, color: tone ?? palette.ink }}>{value}</Text>
+      <Small color={palette.inkSecondary} style={{ fontSize: 12 }} numberOfLines={1}>
+        {label}
       </Small>
     </View>
   );
 }
 
-function MeterRow({ meter }: { meter: UsageMeterItem }) {
+function Row({ children }: { children: React.ReactNode }) {
+  return <View style={{ flexDirection: "row", gap: 12, paddingVertical: 8 }}>{children}</View>;
+}
+
+/** Fourteen thin bars: signups per day, today on the right. */
+function Spark({ values }: { values: number[] }) {
   const { palette } = useTheme();
-  if (!Number.isFinite(meter.used)) return <MissingRow meter={meter} />;
-
-  const ratio = meter.limit > 0 ? meter.used / meter.limit : 0;
-  const level = usageLevel(ratio);
-  const { fill, track, text, Icon } = levelStyle(level, palette);
-  const partial = meter.state === "partial";
-  const limit = Number.isFinite(meter.limit)
-    ? formatUsageValue(meter.limit, meter.unit)
-    : "no cap";
-
+  const max = Math.max(1, ...values);
   return (
-    <View style={{ paddingVertical: 12, gap: 8 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <CardTitle style={{ flex: 1 }} numberOfLines={1}>
-          {meter.label}
-        </CardTitle>
-        <Small color={palette.ink} style={{ fontWeight: "600" }}>
-          {partial ? "≥" : ""}
-          {formatUsageValue(meter.used, meter.unit)}
-          <Small color={palette.inkFaint}> / {limit}</Small>
-        </Small>
-      </View>
-
-      <View
-        accessibilityRole="progressbar"
-        accessibilityValue={{ min: 0, max: 100, now: Math.round(ratio * 100) }}
-        accessibilityLabel={`${meter.label}: ${formatPercent(ratio)} of ${limit} used`}
-        style={{ height: 6, borderRadius: 999, backgroundColor: track, overflow: "hidden" }}
-      >
+    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 4, height: 54, marginTop: 8 }}>
+      {values.map((v, i) => (
         <View
+          key={i}
           style={{
-            height: "100%",
-            borderRadius: 999,
-            backgroundColor: fill,
-            width: `${meterFraction(ratio) * 100}%`,
+            flex: 1,
+            height: Math.max(3, (v / max) * 54),
+            borderRadius: 3,
+            backgroundColor: i === values.length - 1 ? palette.primary : v > 0 ? palette.chartGold : palette.surface,
           }}
         />
-      </View>
-
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-        <Icon size={13} color={text} strokeWidth={2.4} />
-        <Small color={text} style={{ fontWeight: "600" }}>
-          {usageLabel(level)}
-        </Small>
-        <Small color={palette.inkSecondary}>{formatPercent(ratio)}</Small>
-      </View>
-
-      <Small color={palette.inkSecondary}>
-        {partial ? <Small color={palette.warningStrong}>Partial. </Small> : null}
-        {meter.detail}
-      </Small>
+      ))}
     </View>
   );
 }
 
-function StatRow({ stat }: { stat: UsageStatItem }) {
+function Alerts({ pulse }: { pulse: AdminPulse }) {
   const { palette } = useTheme();
+  if (pulse.alerts.length === 0) {
+    return (
+      <Card style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: palette.successSoft, alignItems: "center", justifyContent: "center" }}>
+          <CircleCheck size={22} color={palette.successStrong} strokeWidth={2.4} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <CardTitle>All systems calm</CardTitle>
+          <Small color={palette.inkSecondary}>Nothing needs you right now.</Small>
+        </View>
+      </Card>
+    );
+  }
   return (
-    <View style={{ paddingVertical: 10, gap: 2 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <Small style={{ flex: 1 }} numberOfLines={1}>
-          {stat.label}
-        </Small>
-        <Small color={palette.ink} style={{ fontWeight: "600" }}>
-          {stat.value === null ? "-" : formatUsageValue(stat.value, stat.unit)}
-        </Small>
-      </View>
-      {stat.detail ? <Small color={palette.inkSecondary}>{stat.detail}</Small> : null}
-    </View>
+    <Card>
+      <SectionHead icon={TriangleAlert} title="Needs you" right={<Chip label={String(pulse.alerts.length)} fg={palette.inkInverse} bg={palette.ink} />} />
+      {pulse.alerts.map((a, i) => {
+        const t = levelTone(palette, a.level);
+        return (
+          <View key={`${a.title}-${i}`}>
+            {i > 0 ? <Divider /> : null}
+            <View style={{ flexDirection: "row", gap: 12, paddingVertical: 10 }}>
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.bg, alignItems: "center", justifyContent: "center" }}>
+                <t.Icon size={17} color={t.fg} strokeWidth={2.3} />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Small color={palette.ink} style={{ fontFamily: fonts.bodySemiBold }}>
+                  {a.title}
+                </Small>
+                <Small color={palette.inkSecondary} style={{ fontSize: 12 }}>
+                  {a.detail}
+                </Small>
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </Card>
   );
 }
 
-/** Rows we could read first - a screen led by an error reads as broken. */
-function readableFirst(a: UsageMeterItem, b: UsageMeterItem): number {
-  const rank = (m: UsageMeterItem) =>
-    m.state === "measured" || m.state === "partial" ? 0 : 1;
-  return rank(a) - rank(b);
+function AiCard({ pulse, onToggled }: { pulse: AdminPulse; onToggled: () => void }) {
+  const { palette } = useTheme();
+  const [saving, setSaving] = useState(false);
+  const ai = pulse.ai;
+
+  function toggle(next: boolean) {
+    const run = async () => {
+      setSaving(true);
+      try {
+        await api.setAiPaused(!next);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+        onToggled();
+      } catch (err) {
+        Alert.alert("Not saved", err instanceof Error ? err.message : "Try again.");
+      } finally {
+        setSaving(false);
+      }
+    };
+    if (next) {
+      void run();
+      return;
+    }
+    Alert.alert("Pause all AI?", "Explanations, weekly notes and the AI Writer stop for everyone. Monitoring keeps running.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Pause AI", style: "destructive", onPress: () => void run() },
+    ]);
+  }
+
+  return (
+    <Card>
+      <SectionHead
+        icon={Sparkles}
+        title="AI"
+        right={
+          ai.configured ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Small color={ai.paused ? palette.warningStrong : palette.successStrong} style={{ fontFamily: fonts.bodySemiBold }}>
+                {ai.paused ? "Paused" : "Running"}
+              </Small>
+              <Switch
+                value={!ai.paused}
+                disabled={saving}
+                onValueChange={toggle}
+                trackColor={{ false: palette.line, true: palette.success }}
+                thumbColor="#ffffff"
+                accessibilityLabel="AI running"
+              />
+            </View>
+          ) : (
+            <Chip label="Not configured" fg={palette.inkSecondary} bg={palette.surface} />
+          )
+        }
+      />
+      <Row>
+        <Figure label="Spent today" value={money(ai.spentTodayUsd)} />
+        <Figure label="Posts today" value={ai.posts24h} />
+        <Figure label="Posts ever" value={ai.postsTotal} />
+      </Row>
+      <Row>
+        <Figure label="Jobs running" value={ai.jobs24h.running + ai.jobs24h.queued} />
+        <Figure label="Done today" value={ai.jobs24h.done} />
+        <Figure label="Failed today" value={ai.jobs24h.failed} tone={ai.jobs24h.failed > 0 ? palette.criticalStrong : undefined} />
+      </Row>
+      {ai.pools.map((pool) => (
+        <View key={pool.label} style={{ gap: 6, paddingTop: 8 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <Small color={palette.ink}>{pool.label}</Small>
+            <Small color={palette.inkSecondary}>
+              {money(pool.spentUsd)} {pool.capUsd > 0 ? `of ${money(pool.capUsd)}` : "· no cap"}
+            </Small>
+          </View>
+          {pool.capUsd > 0 ? (
+            <Bar
+              value={pool.spentUsd}
+              max={pool.capUsd}
+              color={pool.spentUsd / pool.capUsd >= 0.8 ? palette.criticalStrong : palette.successStrong}
+            />
+          ) : null}
+        </View>
+      ))}
+      <Small color={palette.inkFaint} style={{ fontSize: 11.5, marginTop: 10 }}>
+        AI Writer open to: {ai.rollout === "everyone" ? "everyone" : ai.rollout === "beta" ? "beta list" : "admins only"}
+      </Small>
+      {ai.recentFailures.length > 0 ? (
+        <>
+          <Divider style={{ marginTop: 10 }} />
+          {ai.recentFailures.map((f) => (
+            <View key={f.id} style={{ paddingVertical: 8, gap: 2 }}>
+              <Small color={palette.criticalStrong} style={{ fontFamily: fonts.bodySemiBold, fontSize: 12 }}>
+                {f.kind} failed · {timeAgo(f.at)}
+              </Small>
+              <Small color={palette.inkSecondary} style={{ fontSize: 12 }} numberOfLines={2}>
+                {f.error}
+              </Small>
+            </View>
+          ))}
+        </>
+      ) : null}
+    </Card>
+  );
 }
 
-export default function UsageScreen() {
+function Feed({ items }: { items: PulseFeedItem[] }) {
   const { palette } = useTheme();
-  const [showVolume, setShowVolume] = useState(false);
-  // No polling: measuring walks the storage bucket, so it happens when you
-  // open the tab and when you pull to refresh, not on a timer in your pocket.
-  const { data, error, loading, refreshing, refresh, reload } = useLive(api.usage, [], {
-    interval: 0,
-  });
+  if (items.length === 0) return null;
+  return (
+    <Card>
+      <SectionHead icon={Activity} title="Live feed" />
+      {items.map((item, i) => {
+        const Icon = FEED_ICON[item.kind];
+        const color = item.tone === "good" ? palette.successStrong : item.tone === "bad" ? palette.criticalStrong : palette.inkSecondary;
+        const bg = item.tone === "good" ? palette.successSoft : item.tone === "bad" ? palette.criticalSoft : palette.surface;
+        return (
+          <View key={item.id} style={{ flexDirection: "row", gap: 12 }}>
+            {/* The timeline rail: icon on top, a thin line down to the next one. */}
+            <View style={{ alignItems: "center", width: 30 }}>
+              <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: bg, alignItems: "center", justifyContent: "center", marginTop: 6 }}>
+                <Icon size={15} color={color} strokeWidth={2.3} />
+              </View>
+              {i < items.length - 1 ? <View style={{ flex: 1, width: 2, backgroundColor: palette.line, marginTop: 4 }} /> : null}
+            </View>
+            <View style={{ flex: 1, paddingVertical: 8, gap: 1 }}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <Small color={palette.ink} style={{ flex: 1, fontFamily: fonts.bodySemiBold }} numberOfLines={1}>
+                  {item.title}
+                </Small>
+                <Small color={palette.inkFaint} style={{ fontSize: 11.5 }}>
+                  {timeAgo(item.at)}
+                </Small>
+              </View>
+              <Small color={palette.inkSecondary} style={{ fontSize: 12 }} numberOfLines={1}>
+                {item.detail}
+              </Small>
+            </View>
+          </View>
+        );
+      })}
+    </Card>
+  );
+}
+
+function Shortcut({ icon: Icon, title, badge, href }: { icon: LucideIcon; title: string; badge?: number; href: Href }) {
+  const { palette } = useTheme();
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.push(href)}
+      style={({ pressed }) => ({
+        width: "48%",
+        flexGrow: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        padding: 14,
+        borderRadius: radius.tile,
+        backgroundColor: palette.card,
+        opacity: pressed ? 0.75 : 1,
+      })}
+    >
+      <Icon size={18} color={palette.ink} strokeWidth={2} />
+      <Small color={palette.ink} style={{ flex: 1, fontFamily: fonts.bodyMedium }} numberOfLines={1}>
+        {title}
+      </Small>
+      {badge ? <Chip label={String(badge)} fg={palette.primaryContrast} bg={palette.primary} /> : <ChevronRight size={16} color={palette.inkFaint} />}
+    </Pressable>
+  );
+}
+
+export default function CommandCenterScreen() {
+  const { palette } = useTheme();
+  const { data, error, loading, refreshing, refresh, reload } = useLive(api.pulse, [], { interval: 20000, cache: "pulse" });
 
   if (loading && !data) {
     return (
-      <Screen title="Usage">
+      <Screen title="Command Center">
         <LoadingState />
       </Screen>
     );
   }
-
-  if (error && !data) {
+  if (!data) {
     return (
-      <Screen title="Usage">
-        <ErrorState message={error.message} onRetry={reload} />
+      <Screen title="Command Center">
+        <ErrorState message={error?.message ?? "Could not load the Command Center."} onRetry={reload} />
       </Screen>
     );
   }
 
-  if (!data) return null;
-
-  const meters = [...data.meters].sort(readableFirst);
+  const p = data;
+  const scanOk = p.scans.completed24h + p.scans.partial24h;
+  const sev = p.monitoring.changes24h;
+  const worker =
+    p.worker.state === "healthy"
+      ? { label: "Healthy", fg: palette.successStrong, bg: palette.successSoft }
+      : p.worker.state === "stale"
+        ? { label: "Late", fg: palette.warningStrong, bg: palette.warningSoft }
+        : p.worker.state === "down"
+          ? { label: "Down", fg: palette.criticalStrong, bg: palette.criticalSoft }
+          : { label: "Unknown", fg: palette.inkSecondary, bg: palette.surface };
 
   return (
     <Screen
-      title="Usage"
-      subtitle="Every service MyKavo runs on, as a share of its limit"
+      title="Command Center"
+      subtitle="All of MyKavo, live"
+      headerRight={<LiveBadge at={p.generatedAt} stale={Boolean(error)} />}
       refreshing={refreshing}
       onRefresh={refresh}
     >
-      <Card>
-        <CardTitle style={{ marginBottom: 4 }}>Quotas</CardTitle>
-        {meters.map((meter, index) => (
-          <View key={meter.id}>
-            {index > 0 ? <Divider /> : null}
-            <MeterRow meter={meter} />
-          </View>
-        ))}
-      </Card>
+      <Alerts pulse={p} />
 
-      {data.stats.length > 0 ? (
-        <Card style={{ marginTop: 14 }}>
-          <Pressable
-            onPress={() => setShowVolume((v) => !v)}
-            style={({ pressed }) => ({
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <View style={{ flex: 1 }}>
-              <CardTitle>Volume</CardTitle>
-              <Small color={palette.inkSecondary}>
-                What the quotas above are made of
-              </Small>
-            </View>
-            {showVolume ? (
-              <ChevronUp size={18} color={palette.inkSecondary} />
-            ) : (
-              <ChevronDown size={18} color={palette.inkSecondary} />
-            )}
-          </Pressable>
-          {showVolume
-            ? data.stats.map((stat, index) => (
-                <View key={stat.id}>
-                  {index === 0 ? <Divider /> : <Divider />}
-                  <StatRow stat={stat} />
-                </View>
-              ))
-            : null}
-        </Card>
-      ) : null}
-
-      <Card style={{ marginTop: 14 }}>
-        <CardTitle style={{ marginBottom: 4 }}>No limit to watch</CardTitle>
-        {data.uncapped.map((item, index) => (
-          <View key={item.label}>
-            {index > 0 ? <Divider /> : null}
-            <View style={{ paddingVertical: 10, gap: 2 }}>
-              <Small color={palette.ink}>{item.label}</Small>
-              <Small color={palette.inkSecondary}>{item.detail}</Small>
-            </View>
-          </View>
-        ))}
-      </Card>
-
-      <View style={{ marginTop: 14, gap: 4 }}>
-        <Small color={palette.inkSecondary}>
-          Measured {new Date(data.generatedAt).toLocaleString()}. Pull down to re-measure.
-        </Small>
-        {data.problems.map((problem) => (
-          <Small key={problem} color={palette.criticalStrong}>
-            {problem}
-          </Small>
-        ))}
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        <StatTile label="MRR" value={money(p.revenue.mrrUsd)} gradient={palette.gradientMint} caption={<Small>{p.revenue.paying} paying</Small>} />
+        <StatTile label="Online now" value={p.users.online} gradient={palette.gradientCoral} caption={<Small>{p.users.activeToday} active today</Small>} />
       </View>
+
+      <Card>
+        <SectionHead icon={Users} title="People" right={<Small color={palette.inkSecondary}>{p.users.total} accounts</Small>} />
+        <Row>
+          <Figure label="Signups today" value={p.users.today} tone={p.users.today > 0 ? palette.successStrong : undefined} />
+          <Figure label="This week" value={p.users.week} />
+          <Figure label="Trials live" value={p.revenue.trials} />
+        </Row>
+        <MicroLabel>Signups, last 14 days</MicroLabel>
+        <Spark values={p.users.signups14d} />
+      </Card>
+
+      <Card>
+        <SectionHead icon={CreditCard} title="Revenue" right={<Small color={palette.inkSecondary}>{money(p.revenue.mrrUsd)}/mo</Small>} />
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, paddingVertical: 6 }}>
+          {p.revenue.byPlan.length === 0 ? <Small color={palette.inkSecondary}>No paying workspaces yet.</Small> : null}
+          {p.revenue.byPlan.map((b) => (
+            <Chip key={b.plan} label={`${b.plan} · ${b.count}`} fg={palette.ink} bg={palette.surface} />
+          ))}
+        </View>
+        <Row>
+          <Figure label="On hold" value={p.revenue.onHold} tone={p.revenue.onHold > 0 ? palette.warningStrong : undefined} />
+          <Figure label="Cancelling" value={p.revenue.cancelling} tone={p.revenue.cancelling > 0 ? palette.warningStrong : undefined} />
+          <Figure label="Paying" value={p.revenue.paying} />
+        </Row>
+      </Card>
+
+      <Card>
+        <SectionHead icon={Gauge} title="Scanner" right={<Chip label={worker.label} fg={worker.fg} bg={worker.bg} />} />
+        <Small color={palette.inkSecondary} style={{ fontSize: 12 }}>
+          {p.worker.minutesAgo !== null ? `Last health check ${p.worker.minutesAgo} min ago. ` : ""}
+          {p.worker.detail}
+        </Small>
+        <Row>
+          <Figure label="Scans today" value={p.scans.total24h} />
+          <Figure label="Failed" value={p.scans.failed24h} tone={p.scans.failed24h > 0 ? palette.criticalStrong : undefined} />
+          <Figure label="Avg time" value={p.scans.avgSeconds === null ? "-" : `${p.scans.avgSeconds}s`} />
+        </Row>
+        {p.scans.total24h > 0 ? (
+          <Bar value={scanOk} max={p.scans.total24h} color={p.scans.failed24h / p.scans.total24h > 0.2 ? palette.criticalStrong : palette.successStrong} />
+        ) : null}
+        <Small color={palette.inkFaint} style={{ fontSize: 11.5, marginTop: 6 }}>
+          {p.scans.running} running · {p.scans.queued} queued
+        </Small>
+        {p.scans.recentFailures.length > 0 ? (
+          <>
+            <Divider style={{ marginTop: 10 }} />
+            {p.scans.recentFailures.map((f) => (
+              <View key={f.id} style={{ flexDirection: "row", gap: 8, paddingVertical: 7 }}>
+                <Small color={palette.ink} style={{ flex: 1 }} numberOfLines={1}>
+                  {f.website}
+                </Small>
+                <Small color={palette.criticalStrong} style={{ fontSize: 12 }} numberOfLines={1}>
+                  {f.error}
+                </Small>
+                <Small color={palette.inkFaint} style={{ fontSize: 11.5 }}>
+                  {timeAgo(f.at)}
+                </Small>
+              </View>
+            ))}
+          </>
+        ) : null}
+      </Card>
+
+      <Card>
+        <SectionHead icon={Globe} title="Monitoring" right={<Small color={palette.inkSecondary}>{p.monitoring.pages} pages</Small>} />
+        <Row>
+          <Figure label="Websites" value={p.monitoring.websites} />
+          <Figure label="Active" value={p.monitoring.active} />
+          <Figure label="Errored" value={p.monitoring.errored} tone={p.monitoring.errored > 0 ? palette.warningStrong : undefined} />
+          <Figure label="Down now" value={p.monitoring.openIncidents} tone={p.monitoring.openIncidents > 0 ? palette.criticalStrong : undefined} />
+        </Row>
+        <MicroLabel>Changes found today</MicroLabel>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+          <Chip label={`Critical ${sev.critical}`} fg={palette.criticalStrong} bg={palette.criticalSoft} />
+          <Chip label={`High ${sev.high}`} fg={palette.orangeStrong} bg={palette.orangeSoft} />
+          <Chip label={`Medium ${sev.medium}`} fg={palette.warningStrong} bg={palette.warningSoft} />
+          <Chip label={`Low ${sev.low}`} fg={palette.inkSecondary} bg={palette.surface} />
+          <Chip label={`Info ${sev.info}`} fg={palette.inkSecondary} bg={palette.surface} />
+        </View>
+      </Card>
+
+      <AiCard pulse={p} onToggled={() => void reload()} />
+
+      <Card>
+        <SectionHead icon={PenLine} title="WordPress" right={<Small color={palette.inkSecondary}>{p.wordpress.connected} sites</Small>} />
+        <Row>
+          <Figure label="Drafts today" value={p.wordpress.drafts24h} />
+          <Figure label="Waiting" value={p.wordpress.draftsQueued} />
+          <Figure label="Stuck" value={p.wordpress.draftsStuck} tone={p.wordpress.draftsStuck > 0 ? palette.warningStrong : undefined} />
+          <Figure label="Failed" value={p.wordpress.draftsFailed24h} tone={p.wordpress.draftsFailed24h > 0 ? palette.criticalStrong : undefined} />
+        </Row>
+        {p.wordpress.versions.length > 0 ? (
+          <>
+            <MicroLabel>Plugin versions in use</MicroLabel>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+              {p.wordpress.versions.map((v) => (
+                <Chip key={v.version} label={`${v.version} · ${v.count}`} fg={palette.ink} bg={palette.surface} />
+              ))}
+            </View>
+          </>
+        ) : null}
+      </Card>
+
+      <Card>
+        <SectionHead icon={Send} title="Email and push" />
+        <Row>
+          <Figure label="Emails today" value={p.channels.email24h} />
+          <Figure label="Failed" value={p.channels.emailFailed24h} tone={p.channels.emailFailed24h > 0 ? palette.criticalStrong : undefined} />
+          <Figure label="Phones" value={p.channels.pushDevices} />
+        </Row>
+        {p.channels.appVersions.length > 0 ? (
+          <>
+            <MicroLabel>App versions this week</MicroLabel>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+              {p.channels.appVersions.map((v) => (
+                <Chip key={v.version} label={`${v.version} · ${v.count}`} fg={palette.ink} bg={palette.surface} />
+              ))}
+            </View>
+          </>
+        ) : null}
+      </Card>
+
+      <Feed items={p.feed} />
+
+      <View style={{ gap: 8 }}>
+        <MicroLabel>Go to</MicroLabel>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+          <Shortcut icon={Users} title="Users" href="/users" />
+          <Shortcut icon={Activity} title="Tracking" href="/tracking" />
+          <Shortcut icon={MailQuestion} title="App requests" href="/app-requests" badge={p.inbox.appRequestsPending} />
+          <Shortcut icon={Workflow} title="Automations" href="/automations" />
+          <Shortcut icon={Megaphone} title="Email marketing" href="/email-marketing" />
+          <Shortcut icon={PenLine} title="Blog" href="/blog" />
+          <Shortcut icon={Search} title="Search Console" href="/search-console" />
+          <Shortcut icon={Gauge} title="Infrastructure" href="/infrastructure" />
+        </View>
+      </View>
+
+      <Small color={palette.inkFaint} style={{ textAlign: "center", fontSize: 11.5 }}>
+        {p.inbox.serviceRequests7d} help requests this week · {p.inbox.support24h} support questions today
+      </Small>
     </Screen>
   );
 }

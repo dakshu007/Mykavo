@@ -70,7 +70,7 @@ function textPairs(p: FxPalette): [string, string, number, string][] {
 }
 
 /**
- * Usage-meter fill against its own track (app/(tabs)/usage.tsx).
+ * Usage-meter fill against its own track (app/infrastructure.tsx).
  *
  * Non-text UI, so WCAG 1.4.11's 3:1 applies. A fill that does not separate
  * from its track renders the meter as EMPTY - which on a capacity screen

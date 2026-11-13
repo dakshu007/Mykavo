@@ -18,7 +18,7 @@
 
 import * as Haptics from "expo-haptics";
 import {
-  Gauge,
+  Radar,
   GitCompareArrows,
   Globe,
   History,
@@ -107,7 +107,7 @@ const TAB_ICONS: Record<string, LucideIcon> = {
   websites: Globe,
   changes: GitCompareArrows,
   scans: History,
-  usage: Gauge,
+  usage: Radar,
   settings: Settings,
 };
 

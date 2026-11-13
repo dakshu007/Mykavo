@@ -333,7 +333,7 @@ export default function WebsiteDetailScreen() {
   const { data, error, loading, refreshing, refresh, reload } = useLive(
     () => api.websiteDetail(id),
     [id],
-    { interval: (d) => activeInterval(Boolean(d?.scanInProgress), 20000) },
+    { cache: "website", interval: (d) => activeInterval(Boolean(d?.scanInProgress), 20000) },
   );
 
   function goBack() {

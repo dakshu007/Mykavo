@@ -49,7 +49,11 @@ export interface MeResponse {
     automations?: boolean;
     marketing?: boolean;
     blog: boolean;
+    /** The Command Center (admin tab). Optional: older servers do not send it. */
+    command?: boolean;
   };
+  /** Whether the AI Writer is open to this account. Optional for older servers. */
+  aiWriter?: boolean;
   workspaces: {
     id: string;
     name: string;
@@ -744,4 +748,171 @@ export interface MarketingResponse {
   }[];
   campaigns: MarketingCampaign[];
   errors: Partial<Record<"account" | "report" | "audiences" | "campaigns" | "senders", string>>;
+}
+
+
+/* ------------------------------ AI Writer ------------------------------- */
+
+export interface WriterAllowance {
+  postsLeft: number | null;
+  reportsLeft: number | null;
+  postsLimit: number;
+  reportsLimit: number;
+  refillsOn: string;
+  blocked: string | null;
+}
+
+export interface WriterHomeResponse {
+  websites: {
+    id: string;
+    name: string;
+    url: string;
+    ready: boolean;
+    searchConsole: boolean;
+    wordpress: boolean;
+    posts: number;
+    ideas: number;
+  }[];
+  writing: number;
+  allowance: WriterAllowance;
+}
+
+export interface WriterJob {
+  id: string;
+  kind: string;
+  status: string;
+  step: string | null;
+  progress: number;
+  error: string | null;
+  createdAt: string;
+}
+
+export interface WpDraftView {
+  status: "queued" | "delivered" | "failed";
+  editUrl: string | null;
+  error: string | null;
+  queuedAt: string;
+  deliveredAt: string | null;
+  outdated: boolean;
+  postVersion: number;
+}
+
+export interface WpSiteLink {
+  siteUrl: string;
+  pluginVersion: string | null;
+  supportsDrafts: boolean;
+  draftsUrl: string;
+}
+
+export interface WriterIdea {
+  rank: number;
+  keyword: string;
+  intent: string;
+  cluster: string;
+  reason: string;
+  suggestedTitle: string;
+  competition: string;
+  popularity: number;
+  position: number | null;
+  impressions: number | null;
+}
+
+export interface WriterSiteResponse {
+  website: { id: string; name: string; url: string };
+  profile: { businessType: string; services: string[]; audience: string; country: string; language: string; confirmed: boolean } | null;
+  jobs: Partial<Record<"setup" | "deep" | "write", WriterJob>>;
+  report: { id: string; summary: string | null; createdAt: string; opportunities: WriterIdea[]; hiddenCount: number } | null;
+  posts: { id: string; keyword: string; title: string; status: string; updatedAt: string; wpDraft: WpDraftView | null }[];
+  wordpress: WpSiteLink | null;
+  writing: Record<string, string>;
+  allowance: WriterAllowance & { upgrade: { plan: string; reports: number; posts: number } | null };
+}
+
+export type PostBlock = { type: "h2" | "h3" | "p" | "li" | "quote"; text: string };
+
+export interface WriterPostResponse {
+  id: string;
+  websiteId: string;
+  website: { name: string; url: string };
+  keyword: string;
+  title: string;
+  metaDescription: string;
+  status: string;
+  updatedAt: string;
+  words: number;
+  blocks: PostBlock[];
+  faq: { question: string; answer: string }[];
+  wordpress: WpSiteLink | null;
+  wpDraft: WpDraftView | null;
+}
+
+export interface WriterJobStatus {
+  status: string;
+  step: string | null;
+  progress: number;
+  error: string | null;
+  resultId: string | null;
+  kind: string;
+}
+
+/* --------------------------- Command Center ----------------------------- */
+
+export type PulseAlertLevel = "critical" | "warning" | "info";
+
+export interface PulseFeedItem {
+  id: string;
+  kind: "signup" | "payment" | "scan_failed" | "change" | "ai_post" | "wp_draft" | "app_request" | "service" | "support";
+  title: string;
+  detail: string;
+  at: string;
+  tone: "good" | "bad" | "neutral";
+}
+
+export interface AdminPulse {
+  generatedAt: string;
+  alerts: { level: PulseAlertLevel; title: string; detail: string }[];
+  worker: { state: string; minutesAgo: number | null; detail: string };
+  users: { total: number; today: number; week: number; activeToday: number; online: number; signups14d: number[] };
+  revenue: { mrrUsd: number; paying: number; byPlan: { plan: string; count: number }[]; onHold: number; cancelling: number; trials: number };
+  scans: {
+    total24h: number;
+    completed24h: number;
+    partial24h: number;
+    failed24h: number;
+    running: number;
+    queued: number;
+    avgSeconds: number | null;
+    recentFailures: { id: string; website: string; error: string; at: string }[];
+  };
+  monitoring: {
+    websites: number;
+    active: number;
+    paused: number;
+    errored: number;
+    pages: number;
+    openIncidents: number;
+    changes24h: { critical: number; high: number; medium: number; low: number; info: number };
+  };
+  ai: {
+    configured: boolean;
+    paused: boolean;
+    pools: { label: string; spentUsd: number; capUsd: number }[];
+    spentTodayUsd: number;
+    jobs24h: { running: number; queued: number; done: number; failed: number };
+    posts24h: number;
+    postsTotal: number;
+    rollout: string;
+    recentFailures: { id: string; kind: string; error: string; at: string }[];
+  };
+  wordpress: {
+    connected: number;
+    versions: { version: string; count: number }[];
+    draftsQueued: number;
+    draftsStuck: number;
+    drafts24h: number;
+    draftsFailed24h: number;
+  };
+  channels: { email24h: number; emailFailed24h: number; pushDevices: number; pushDisabled: number; appVersions: { version: string; count: number }[] };
+  inbox: { appRequestsPending: number; serviceRequests7d: number; support24h: number };
+  feed: PulseFeedItem[];
 }

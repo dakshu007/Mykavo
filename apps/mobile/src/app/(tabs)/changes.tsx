@@ -104,7 +104,7 @@ export default function ChangesScreen() {
   const { data, error, loading, refreshing, refresh, reload } = useLive(
     () => api.changes({ status, severity, category }),
     [status, severity, category],
-    { interval: 20000 },
+    { interval: 20000, cache: "changes" },
   );
 
   const hasRefinement = severity !== undefined || category !== undefined;

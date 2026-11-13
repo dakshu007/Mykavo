@@ -6,7 +6,7 @@
  */
 
 import { useFocusEffect, useRouter } from "expo-router";
-import { ChevronRight, Plus } from "lucide-react-native";
+import { ChevronRight, PenLine, Plus } from "lucide-react-native";
 import { useCallback, useRef } from "react";
 import { BackHandler, Platform, Pressable, Text, ToastAndroid, View } from "react-native";
 
@@ -105,7 +105,11 @@ export default function OverviewScreen() {
     }, []),
   );
 
+  // Cached from the tab shell's own read, so this costs nothing on open.
+  const { data: me } = useLive(api.me, [], { interval: 0, cache: "me" });
+
   const { data, error, loading, refreshing, refresh, reload } = useLive(api.overview, [], {
+    cache: "overview",
     interval: (d) => activeInterval(Boolean(d?.websites.some((w) => w.scanInProgress)), 15000),
   });
 
@@ -152,6 +156,46 @@ export default function OverviewScreen() {
           <StatTile label="Baselined pages" value={stats.baselinedPages} />
         </View>
       </View>
+
+      {me?.aiWriter ? (
+        <Pressable
+          onPress={() => router.push("/writer")}
+          accessibilityRole="button"
+          accessibilityLabel="Open the AI Writer"
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 14,
+            padding: 18,
+            borderRadius: radius.card,
+            backgroundColor: palette.ink,
+            opacity: pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.99 : 1 }],
+          })}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: palette.primary,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <PenLine size={20} color={palette.primaryContrast} strokeWidth={2.2} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 16, color: palette.inkInverse }}>
+              AI Writer
+            </Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: palette.inkInverse, opacity: 0.75 }}>
+              Keyword ideas and blog posts that rank
+            </Text>
+          </View>
+          <ChevronRight size={18} color={palette.inkInverse} />
+        </Pressable>
+      ) : null}
 
       <Card>
         <CardHeader

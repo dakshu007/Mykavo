@@ -7,6 +7,7 @@ import { getWorkspacePlan } from "@/lib/limits";
 import { getPlan } from "@/config/plans";
 import { isBlogAdmin } from "@/lib/blog-admin";
 import { isPlatformAdmin } from "@/lib/platform-admin";
+import { canUseKeywordAgent } from "@/lib/keywords/access";
 
 /**
  * Mobile session bootstrap: the signed-in user, every workspace membership
@@ -60,7 +61,11 @@ export async function GET() {
       automations: isPlatformAdmin(session.user),
       marketing: isPlatformAdmin(session.user),
       blog: isBlogAdmin(session.user),
+      command: isPlatformAdmin(session.user),
     },
+    // Whether the AI Writer (keyword agent) is open to this account. Older
+    // apps ignore it; the keyword routes re-check it server-side.
+    aiWriter: await canUseKeywordAgent(session.user),
     workspaces: memberships.map((m) => ({
       id: m.workspaceId,
       name: m.workspace.name,

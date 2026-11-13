@@ -19,7 +19,13 @@ import { API_BASE, authClient } from "./auth";
 import { buildQuery } from "./query";
 import { safeSecureStorage, WORKSPACE_KEY } from "./secure-storage";
 import type {
+  AdminPulse,
   ApiErrorBody,
+  WriterHomeResponse,
+  WriterJobStatus,
+  WriterPostResponse,
+  WriterSiteResponse,
+  WpDraftView,
   AutomationsResponse,
   BlogListResponse,
   MarketingResponse,
@@ -339,6 +345,42 @@ export const api = {
       // a JSON string and the server rejected every publish.
       body: { status },
     }),
+
+  /* ------------------------------ AI Writer ------------------------------ */
+
+  writerHome: () => request<WriterHomeResponse>("/api/mobile/keywords"),
+
+  writerSite: (websiteId: string) =>
+    request<WriterSiteResponse>(`/api/mobile/keywords/${encodeURIComponent(websiteId)}`),
+
+  writerPost: (postId: string) =>
+    request<WriterPostResponse>(`/api/mobile/keywords/posts/${encodeURIComponent(postId)}`),
+
+  /** Start keyword ideas ("deep") or a post ("write") - the web's own route. */
+  startWriterJob: (websiteId: string, input: { kind: "deep" } | { kind: "write"; keyword: string }) =>
+    request<{ jobId: string; reused: boolean }>(`/api/keywords/${encodeURIComponent(websiteId)}/jobs`, {
+      method: "POST",
+      body: input,
+    }),
+
+  writerJob: (jobId: string) =>
+    request<WriterJobStatus>(`/api/keywords/jobs/${encodeURIComponent(jobId)}`),
+
+  /** Queue the post as a WordPress draft - the web's own route. */
+  sendToWordPress: (postId: string) =>
+    request<{ draft: WpDraftView }>(`/api/keywords/posts/${encodeURIComponent(postId)}/wordpress`, {
+      method: "POST",
+      body: {},
+    }),
+
+  /* --------------------------- Command Center ---------------------------- */
+
+  /** Operator-only. Everything the Command Center shows, in one call. */
+  pulse: () => request<AdminPulse>("/api/mobile/admin/pulse"),
+
+  /** The AI kill switch - the web dashboard's own route. */
+  setAiPaused: (paused: boolean) =>
+    request<{ paused: boolean }>("/api/admin/ai-pause", { method: "POST", body: { paused } }),
 
   muteWebsite: (id: string, muteHours: 1 | 8 | 24 | null) =>
     request<{ website: unknown }>(`/api/websites/${id}`, {

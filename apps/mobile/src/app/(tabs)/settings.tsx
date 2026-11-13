@@ -43,6 +43,7 @@ import {
   Pill,
   Small,
 } from "@/components/ui";
+import { clearLiveCache } from "@/lib/live-cache";
 import { api, authedImageSource } from "@/lib/api";
 import { API_BASE, authClient } from "@/lib/auth";
 import { useLive } from "@/lib/live";
@@ -248,6 +249,7 @@ export default function SettingsScreen() {
 
   const { data, error, loading, refreshing, refresh, reload } = useLive(api.me, [], {
     interval: 0,
+    cache: "me",
   });
 
   const [switching, setSwitching] = useState<string | null>(null);
@@ -271,6 +273,7 @@ export default function SettingsScreen() {
     setSigningOut(true);
     try {
       await authClient.signOut();
+      await clearLiveCache();
       router.replace("/login");
     } catch (err) {
       Alert.alert(err instanceof Error ? err.message : "Something went wrong");
@@ -455,6 +458,28 @@ export default function SettingsScreen() {
           </View>
           <ChevronRight size={16} color={palette.inkFaint} />
         </Pressable>
+        {data.aiWriter ? (
+          <>
+            <Divider />
+            <Pressable
+              onPress={() => router.push("/writer")}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 12,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <PenLine size={16} color={palette.inkSecondary} />
+              <View style={{ flex: 1 }}>
+                <Small>AI Writer</Small>
+                <Small color={palette.inkSecondary}>Keyword ideas, blog posts, WordPress drafts</Small>
+              </View>
+              <ChevronRight size={16} color={palette.inkFaint} />
+            </Pressable>
+          </>
+        ) : null}
       </Card>
 
       {/* Operator-only. The server re-checks the same allowlist on every

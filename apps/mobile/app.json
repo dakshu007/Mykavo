@@ -2,7 +2,7 @@
   "expo": {
     "name": "MyKavo",
     "slug": "mykavo",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mykavo",
@@ -15,7 +15,7 @@
       "package": "app.mykavo.mobile",
       "allowBackup": false,
       "adaptiveIcon": {
-        "backgroundColor": "#151515",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -31,9 +31,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#151515",
+          "backgroundColor": "#000000",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 96
+          "imageWidth": 112
         }
       ],
       [

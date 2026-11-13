@@ -84,6 +84,7 @@ export default function ScansScreen() {
     () => api.scans(),
     [],
     {
+      cache: "scans",
       interval: (d) =>
         activeInterval(
           Boolean(d?.scans.some((s) => s.status === "QUEUED" || s.status === "RUNNING")),

@@ -8,7 +8,9 @@ const EXACT: Record<string, string> = {
   "/websites": "Websites",
   "/changes": "Changes",
   "/scans": "Scans",
-  "/usage": "Usage",
+  "/usage": "Command Center",
+  "/infrastructure": "Usage",
+  "/writer": "AI Writer",
   "/settings": "Settings",
   "/website/new": "Add website",
   "/app-requests": "App requests",
@@ -22,6 +24,8 @@ const PREFIX: [string, string][] = [
   ["/website/", "Website detail"],
   ["/change/", "Change detail"],
   ["/scan/", "Scan detail"],
+  ["/writer/post/", "AI post"],
+  ["/writer/", "AI Writer website"],
 ];
 
 export function screenName(pathname: string | null | undefined): string | null {

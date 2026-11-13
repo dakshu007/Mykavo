@@ -125,6 +125,7 @@ export default function ScanDetailScreen() {
     [id],
     {
       enabled: id !== "",
+      cache: "scan",
       interval: (d) =>
         activeInterval(d?.scan.status === "QUEUED" || d?.scan.status === "RUNNING", 30000, 3000),
     },

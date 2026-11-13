@@ -171,7 +171,7 @@ export default function ChangeDetailScreen() {
   const { data, error, loading, refreshing, refresh, reload } = useLive(
     () => api.changeDetail(id),
     [id],
-    { interval: 30000 },
+    { interval: 30000, cache: "change" },
   );
 
   const change = data?.change ?? null;

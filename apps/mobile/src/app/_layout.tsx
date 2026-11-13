@@ -31,6 +31,7 @@ import {
 } from "@/lib/push";
 import { reportScreen } from "@/lib/api";
 import { screenName } from "@/lib/screen-name";
+import { clearLiveCache } from "@/lib/live-cache";
 import { wipeSecureStorage } from "@/lib/secure-storage";
 import { fonts, gold } from "@/lib/theme";
 import { ThemeProvider, useTheme } from "@/lib/theme-context";
@@ -158,7 +159,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Pro
       detail={`${error.message}\n\n${error.stack ?? ""}`.trim()}
       onContinue={() => void retry()}
       onReset={() => {
-        void wipeSecureStorage().then(() => retry());
+        void Promise.all([wipeSecureStorage(), clearLiveCache()]).then(() => retry());
       }}
     />
   );
@@ -310,7 +311,7 @@ export default function RootLayout() {
         }
         onContinue={proceed}
         onReset={() => {
-          void wipeSecureStorage().then(proceed);
+          void Promise.all([wipeSecureStorage(), clearLiveCache()]).then(proceed);
         }}
       />
     );

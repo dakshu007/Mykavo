@@ -35,6 +35,7 @@ export default function WebsitesScreen() {
   const router = useRouter();
   const { palette } = useTheme();
   const { data, error, loading, refreshing, refresh, reload } = useLive(api.websites, [], {
+    cache: "websites",
     interval: 20000,
   });
 
