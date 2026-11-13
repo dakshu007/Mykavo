@@ -1,38 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma, startTrial, trialDaysLeft } from "@mykavo/database";
-import { requireSession, getCurrentMembership } from "@/lib/session";
-import { canManageBilling } from "@/lib/team";
-import { getWorkspaceSubscription } from "@/lib/billing/subscription";
-import { logger } from "@/lib/logger";
 
 /**
- * Starts the workspace's one Pro trial, for accounts that did not get
- * one at signup (they signed up before trials existed). No card. A workspace
- * that pays, or already had a trial, is refused. Daily scans switch on with
- * the worker's next plan sweep (every 15 minutes).
+ * Used to start a workspace's free Pro trial. New trials ended on 13 Nov 2026
+ * (NEW_TRIALS_OPEN in @mykavo/database): new accounts start on Free. Trials
+ * that were already running are not affected by this route. It stays so an
+ * old tab or cached client gets a clear answer instead of a 404.
  */
-export async function POST() {
-  const session = await requireSession();
-  // Trials start only for verified addresses, same as at signup, so a
-  // throwaway address cannot farm one.
-  if (session.user.emailVerified !== true) {
-    return NextResponse.json({ error: "Verify your email to start the Pro trial." }, { status: 403 });
-  }
-  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
-  if (!canManageBilling(role)) {
-    return NextResponse.json({ error: "Only the workspace owner can start a trial." }, { status: 403 });
-  }
-
-  const current = await getWorkspaceSubscription(workspace.id);
-  if (current && current.planId !== "free") {
-    return NextResponse.json({ error: "This workspace is already on a paid plan or a trial." }, { status: 409 });
-  }
-
-  const trial = await startTrial(prisma, workspace.id, { source: "self_serve" });
-  if (!trial) {
-    return NextResponse.json({ error: "This workspace has already used its Pro trial." }, { status: 409 });
-  }
-
-  logger.info("trial started", { workspaceId: workspace.id, source: "self_serve" });
-  return NextResponse.json({ endsAt: trial.endsAt.toISOString(), daysLeft: trialDaysLeft(trial.endsAt) });
+export function POST() {
+  return NextResponse.json(
+    { error: "Free trials have ended. Upgrade to Pro on the Billing page." },
+    { status: 410 },
+  );
 }

@@ -9,8 +9,9 @@
  * Accounts created before the cutoff are grandfathered, not migrated. They
  * keep signing in exactly as before, with the dashboard banner asking them to
  * confirm by link. Marking them "verified" in bulk would have been simpler,
- * but verified is what unlocks admin rights and the Pro trial, and none of
- * these addresses was ever proven. So nothing about their data changes.
+ * but verified is what unlocks admin rights (and, until 13 Nov 2026, the Pro
+ * trial), and none of these addresses was ever proven. So nothing about
+ * their data changes.
  *
  * Google sign-ins arrive verified and never see a code.
  *

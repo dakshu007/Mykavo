@@ -38,14 +38,10 @@ const display = "[font-family:var(--font-poppins),ui-sans-serif,system-ui,sans-s
 export function PricingPlans({
   plans,
   yearlyEnabled,
-  trialDays,
-  trialMaxWebsites,
   tone = "light",
 }: {
   plans: PricingPlan[];
   yearlyEnabled: boolean;
-  trialDays: number;
-  trialMaxWebsites: number;
   /** "dark" for dark pages (Black Friday): every card turns dark, Pro glows gold. */
   tone?: "light" | "dark";
 }) {
@@ -69,10 +65,7 @@ export function PricingPlans({
           const paid = plan.priceMonthlyUsd > 0;
           const offer = !yearly && campaign && paid && campaignCovers(campaign, plan.id) ? campaign : null;
           const nextPath = yearly ? "/dashboard/billing?interval=year" : "/dashboard/billing";
-          const href =
-            offer || yearly || plan.id === "agency" || plan.id === "starter"
-              ? `/signup?next=${encodeURIComponent(nextPath)}`
-              : "/signup";
+          const href = paid ? `/signup?next=${encodeURIComponent(nextPath)}` : "/signup";
           const amount = offer
             ? formatUsd(campaignPrice(plan.priceMonthlyUsd, offer.percent))
             : `$${yearly && paid ? plan.priceYearlyUsd : plan.priceMonthlyUsd}`;
@@ -94,9 +87,7 @@ export function PricingPlans({
               ? `Get ${plan.name} for ${amount}/mo`
               : yearly
                 ? `Get ${plan.name} yearly`
-                : plan.id === "pro"
-                  ? `Try ${plan.name} free for ${trialDays} days`
-                  : `Get ${plan.name}`;
+                : `Get ${plan.name}`;
 
           return (
             <div
@@ -185,11 +176,7 @@ export function PricingPlans({
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </Link>
               <p className={`mt-2.5 min-h-10 text-center text-[11.5px] leading-5 ${inv ? "text-white/45" : "text-[#151515]/45"}`}>
-                {plan.id === "pro" && !offer && !yearly
-                  ? `No card. The trial covers ${trialMaxWebsites} websites.`
-                  : paid
-                    ? "Create your account, then check out from Billing."
-                    : "One website, checked weekly."}
+                {paid ? "Create your account, then check out from Billing." : "One website, checked weekly."}
               </p>
 
               {/* Features. */}

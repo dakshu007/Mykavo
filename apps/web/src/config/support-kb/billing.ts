@@ -34,7 +34,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["pricing", "price", "cost", "plans", "tiers", "fee"],
     answer:
-      "MyKavo has four plans, all billed monthly in US dollars:\n\n- **Free** - $0: 1 website, 5 monitored pages, weekly scans, 30-day history.\n- **Starter** - $7/month: 2 websites, 10 monitored pages each, daily scans, 90-day history, every monitoring feature, 1 user.\n- **Pro** - $20/month: 8 websites, 15 monitored pages each, daily scans, 1-year history, up to 3 team members.\n- **Agency** - $79/month: 30 websites, 25 monitored pages each, daily scans, 1-year history, white-label client reports, up to 15 team members.\n\nEvery new account starts with a **14-day Pro trial**, no card needed. The trial has every Pro feature on up to 3 websites (paid Pro covers 8).\n\nEmail alerts and the WordPress plugin are included on every plan. See the full side-by-side comparison on the [pricing page](/pricing).",
+      "MyKavo has four plans, all billed monthly in US dollars:\n\n- **Free** - $0: 1 website, 5 monitored pages, weekly scans, 30-day history.\n- **Starter** - $7/month: 2 websites, 10 monitored pages each, daily scans, 90-day history, every monitoring feature, 1 user.\n- **Pro** - $20/month: 8 websites, 15 monitored pages each, daily scans, 1-year history, up to 3 team members.\n- **Agency** - $79/month: 30 websites, 25 monitored pages each, daily scans, 1-year history, white-label client reports, up to 15 team members.\n\nEvery new account starts on the **Free plan**, no card needed. There is no free trial of Pro, and every paid plan can be started at any time.\n\nEmail alerts and the WordPress plugin are included on every plan. See the full side-by-side comparison on the [pricing page](/pricing).",
     related: ["billing-pro-plan", "billing-pro-trial", "billing-agency-plan", "billing-free-plan"],
     evalQuestions: [
       "what do your tiers run me each month",
@@ -45,8 +45,9 @@ export const ARTICLES: SupportArticle[] = [
   {
     id: "billing-pro-trial",
     category: "billing",
-    title: "Is there a free trial of Pro, and what do I get?",
+    title: "Is there a free trial of Pro?",
     questions: [
+      "Is there a free trial of Pro?",
       "Is there a free trial of Pro, and what do I get?",
       "free trial",
       "is there a free trial",
@@ -77,7 +78,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["trial", "card", "days", "test"],
     answer:
-      "Every new account starts with a **14-day Pro trial**. It starts by itself when you sign up, and no card is needed.\n\nThe trial includes every Pro feature, with one difference: it covers **up to 3 websites** (paid Pro covers 8). During the trial you get:\n\n- Up to 3 websites, 15 monitored pages each\n- Daily scans, plus manual scans (20 a day)\n- Post-deploy checks and WordPress Safe Updates\n- Conversion element monitoring\n- The rest of Pro's features\n\n[Billing](/dashboard/billing) shows the day your trial ends. There's no Agency trial, but you can upgrade to Pro (8 websites) or Agency at any time during the trial. Signed up before the trial existed? You can start yours from Billing.",
+      "Not any more. Since November 13, 2026, new accounts start on the **Free plan** and free trials of Pro are no longer offered. Free has no time limit and needs no card. When you want daily scans and more websites, upgrade to Pro or Agency from [Billing](/dashboard/billing).\n\nAlready on a Pro trial that started before November 13, 2026? It keeps running until its end date, which [Billing](/dashboard/billing) shows. It has every Pro feature on **up to 3 websites** (paid Pro covers 8). When it ends, your workspace moves to Free unless you upgrade.",
     related: ["billing-trial-websites", "billing-trial-ends", "billing-start-trial"],
     evalQuestions: [
       "can i test the paid tier before buying it",
@@ -115,7 +116,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["pro", "upgrade", "features", "benefits"],
     answer:
-      "**Pro** is $20/month and is built for freelancers and small teams. It includes:\n\n- 8 websites with 15 monitored pages each\n- Daily scans, plus manual scans (20 a day)\n- Post-deploy checks\n- WordPress Safe Updates - a check after every update\n- Conversion element monitoring (buttons, forms, CTAs)\n- 1-year history\n- Site audits of up to 1,500 pages per crawl\n- Up to 3 team members\n- Email alerts\n\nCompared with Free, that means 8 times the websites, daily instead of weekly scans and a full year of history. New accounts start with a 14-day Pro trial on up to 3 websites. Upgrade from [Billing](/dashboard/billing).",
+      "**Pro** is $20/month and is built for freelancers and small teams. It includes:\n\n- 8 websites with 15 monitored pages each\n- Daily scans, plus manual scans (20 a day)\n- Post-deploy checks\n- WordPress Safe Updates - a check after every update\n- Conversion element monitoring (buttons, forms, CTAs)\n- 1-year history\n- Site audits of up to 1,500 pages per crawl\n- Up to 3 team members\n- Email alerts\n\nCompared with Free, that means 8 times the websites, daily instead of weekly scans and a full year of history. There is no free trial of Pro, but you can cancel any time. Upgrade from [Billing](/dashboard/billing).",
     related: ["billing-agency-plan", "billing-upgrade", "billing-pro-trial"],
     evalQuestions: [
       "what's included for twenty bucks a month",
@@ -189,7 +190,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["free", "forever", "limits", "card"],
     answer:
-      "Yes, the Free plan stays free. It's a working plan, not a trial: there's no time limit, no credit card needed and nothing converts to a paid plan on its own. It includes:\n\n- 1 website with 5 monitored pages\n- Weekly scans\n- 30-day history\n- Email alerts\n- The WordPress plugin\n- Shareable client reports (with MyKavo branding)\n- Site audits of up to 150 pages per crawl\n\nFree is single-seat, so it's just you, and manual scans are not included.\n\nNew accounts start with a 14-day Pro trial on up to 3 websites, then move to Free unless they upgrade. Upgrade any time from [Billing](/dashboard/billing).",
+      "Yes, the Free plan stays free. It's a working plan, not a trial: there's no time limit, no credit card needed and nothing converts to a paid plan on its own. It includes:\n\n- 1 website with 5 monitored pages\n- Weekly scans\n- 30-day history\n- Email alerts\n- The WordPress plugin\n- Shareable client reports (with MyKavo branding)\n- Site audits of up to 150 pages per crawl\n\nFree is single-seat, so it's just you, and manual scans are not included.\n\nNew accounts start on Free. Upgrade any time from [Billing](/dashboard/billing).",
     related: ["billing-pro-trial", "billing-trial-ends", "billing-pro-plan"],
     evalQuestions: [
       "will the no-cost plan ever start billing me",
@@ -222,7 +223,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["limit", "websites", "three"],
     answer:
-      "The Pro trial includes every Pro feature but covers **up to 3 websites**. Paid Pro covers 8. When you reach 3, the button on [Websites](/dashboard/websites) reads **Pro trial covers 3 websites - upgrade to Pro for 8**, and adding another site says: \"Your Pro trial covers up to 3 websites. Upgrade to Pro to monitor up to 8.\"\n\nTo add more:\n\n- Upgrade to Pro (8 websites) or Agency (30) in [Billing](/dashboard/billing). You can do this at any time during the trial.\n- Or delete a website you no longer need to free its slot. Paused websites still count.\n\nEach website on the trial gets up to 15 monitored pages, the same as Pro.",
+      "A Pro trial (only accounts that started one before November 13, 2026 have one) includes every Pro feature but covers **up to 3 websites**. Paid Pro covers 8. When you reach 3, the button on [Websites](/dashboard/websites) reads **Pro trial covers 3 websites - upgrade to Pro for 8**, and adding another site says: \"Your Pro trial covers up to 3 websites. Upgrade to Pro to monitor up to 8.\"\n\nTo add more:\n\n- Upgrade to Pro (8 websites) or Agency (30) in [Billing](/dashboard/billing). You can do this at any time during the trial.\n- Or delete a website you no longer need to free its slot. Paused websites still count.\n\nEach website on the trial gets up to 15 monitored pages, the same as Pro.",
     related: ["billing-pro-trial", "trouble-website-limit", "billing-upgrade"],
     evalQuestions: [
       "testing pro and it stops me at three domains",
@@ -259,7 +260,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["ends", "expired", "paused", "over"],
     answer:
-      "Nothing is charged, and there's nothing to cancel. If you haven't upgraded when the 14 days are up, your workspace moves to the Free plan:\n\n- **1 website, checked weekly.** Your oldest monitored website keeps being monitored.\n- **Any other websites are paused, not deleted.**\n- Your baselines are kept. Free keeps 30 days of history, so older scans age out.\n\nWe email you 3 days before the trial ends, and again when it ends. [Billing](/dashboard/billing) shows the end date.\n\nYou can upgrade at any time, during the trial or after it. Upgrading resumes the paused websites automatically.",
+      "Nothing is charged, and there's nothing to cancel. (Trials are no longer offered to new accounts, but trials that started before November 13, 2026 run to their end date.) If you haven't upgraded when the 14 days are up, your workspace moves to the Free plan:\n\n- **1 website, checked weekly.** Your oldest monitored website keeps being monitored.\n- **Any other websites are paused, not deleted.**\n- Your baselines are kept. Free keeps 30 days of history, so older scans age out.\n\nWe email you 3 days before the trial ends, and again when it ends. [Billing](/dashboard/billing) shows the end date.\n\nYou can upgrade at any time, during the trial or after it. Upgrading resumes the paused websites automatically.",
     related: ["billing-pro-trial", "billing-after-downgrade", "billing-upgrade"],
     evalQuestions: [
       "my 14 days of pro ran out, are my extra sites gone",
@@ -270,8 +271,9 @@ export const ARTICLES: SupportArticle[] = [
   {
     id: "billing-start-trial",
     category: "billing",
-    title: "I signed up before the trial existed. Can I start a Pro trial?",
+    title: "Can I start a Pro trial?",
     questions: [
+      "Can I start a Pro trial?",
       "I signed up before the trial existed. Can I start a Pro trial?",
       "how do i start the trial",
       "start free trial",
@@ -293,8 +295,8 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["start", "existing", "extend"],
     answer:
-      "Yes, if your workspace has never had one. Accounts created before the trial existed can start it themselves:\n\n1. Open [Billing](/dashboard/billing), or find the **Try Pro free for 14 days** card in the dashboard sidebar.\n2. Click **Start Pro trial**.\n\nNo card is needed, and it starts straight away: 14 days of every Pro feature on up to 3 websites. Each workspace gets one trial, ever, so it can't be restarted or extended. Only the workspace owner can start it.\n\nNew accounts don't need to do anything: their trial starts at signup.",
-    related: ["billing-pro-trial", "billing-trial-ends", "billing-owner-only"],
+      "No. Free trials of Pro ended on November 13, 2026. New accounts start on the Free plan, and a trial can't be started, restarted or extended, including on accounts created before trials existed. That's why there is no **Start Pro trial** button any more.\n\nTo get Pro's features, upgrade from [Billing](/dashboard/billing). A trial that started before November 13, 2026 keeps running until its end date.",
+    related: ["billing-pro-trial", "billing-trial-ends", "billing-upgrade", "billing-owner-only"],
     evalQuestions: [
       "my account is older, how do i activate the 14 days of pro",
       "can i get another two weeks of pro after mine ran out",

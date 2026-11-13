@@ -506,9 +506,8 @@ export interface AuditReportEmailData {
   hidden: { types: number; errors: number; warnings: number; notices: number };
   /** Signup link that lands on adding this site. */
   fullReportUrl: string;
-  /** Pricing / trial link. */
+  /** Pricing link. */
   proUrl: string;
-  trialDays: number | null;
   proAuditPages: number;
 }
 
@@ -557,9 +556,8 @@ export function auditReportEmail(data: AuditReportEmailData): { subject: string;
           <div style="margin-top:14px">${button(data.fullReportUrl, "See the full report free")}</div>
         </div>`
       : `<div style="margin:18px 0 8px">${button(data.fullReportUrl, "Monitor this site free")}</div>`;
-  const trial = data.trialDays ? ` Try Pro free for ${data.trialDays} days.` : "";
   const pro = `<div style="border-top:1px solid #e4e7ee;margin-top:20px;padding-top:16px;font-size:14px;color:#3a3f4b">
-      <strong>Want this every week?</strong> MyKavo Pro re-audits up to ${data.proAuditPages.toLocaleString("en-US")} pages, watches your key pages around the clock and alerts you the moment something breaks.${trial}
+      <strong>Want this every week?</strong> MyKavo Pro re-audits up to ${data.proAuditPages.toLocaleString("en-US")} pages, watches your key pages around the clock and alerts you the moment something breaks.
       <a href="${esc(data.proUrl)}" style="color:#3556f4;text-decoration:none;font-weight:500">See Pro</a>
     </div>`;
   const inner = `
@@ -588,7 +586,7 @@ export function auditReportEmail(data: AuditReportEmailData): { subject: string;
     (data.hidden.types > 0
       ? `${countOf(data.hidden.types, "more issue type")} (${hiddenParts.join(", ")}) are in your full report, free: ${data.fullReportUrl}\n\n`
       : `Monitor this site free: ${data.fullReportUrl}\n\n`) +
-    `Want this every week? MyKavo Pro re-audits up to ${data.proAuditPages.toLocaleString("en-US")} pages and alerts you the moment something breaks.${trial} ${data.proUrl}\n\n` +
+    `Want this every week? MyKavo Pro re-audits up to ${data.proAuditPages.toLocaleString("en-US")} pages and alerts you the moment something breaks. ${data.proUrl}\n\n` +
     AUDIT_REQUEST_NOTE;
   return { subject, html: shell(inner), text };
 }
@@ -1064,8 +1062,10 @@ export interface WelcomeEmailData {
   /** Absolute link to the docs, for the "how it works" line. */
   docsUrl: string;
   /**
-   * The workspace's running Pro trial (a verified signup starts one), or null.
-   * The numbers come from the caller (TRIAL_DAYS and TRIAL_MAX_WEBSITES in
+   * The workspace's running Pro trial, or null. New accounts start on the
+   * Free plan (no new trials since 13 Nov 2026), so this is null for them;
+   * it is set only for a workspace whose trial started before then and is
+   * still running. The numbers come from the caller (TRIAL_DAYS and TRIAL_MAX_WEBSITES in
    * @mykavo/shared), so this package never writes them down.
    */
   trial?: {
@@ -1095,9 +1095,10 @@ export interface WelcomeEmailData {
  * should know to expect them - and where the switch is if they would rather
  * route them to a teammate, Slack, or nowhere.
  *
- * When the workspace is on its Pro trial, it says so and when it ends: this
- * is the only email a signup gets before the "3 days left" reminder, and
- * without it a new account can read itself as being on Free.
+ * New accounts start on the Free plan and get no trial block. Only a
+ * workspace whose Pro trial started before trials closed (13 Nov 2026) and
+ * is still running gets one, saying when it ends: for those accounts this
+ * is the only email before the "3 days left" reminder.
  */
 export function welcomeEmail(
   data: WelcomeEmailData,

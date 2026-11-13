@@ -10,7 +10,6 @@ import { LogoTile } from "@/components/brand/logo";
 import { getPlan } from "@/config/plans";
 import { SEASONAL_CAMPAIGNS } from "@/config/campaign";
 import { yearlyBillingEnabled } from "@/lib/billing/config";
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { PricingPlans } from "@/components/marketing/pricing-plans";
 import { pricingPlanData } from "@/components/marketing/pricing-plan-data";
 import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
@@ -99,8 +98,8 @@ const faqs = [
     a: `The ${BF.percent}% code applies to monthly Pro. Yearly Pro is already discounted: $${PRO.priceYearlyUsd} for 12 months, two months free.`,
   },
   {
-    q: "I'm on the free trial. Can I still get it?",
-    a: "Yes. Upgrade to Pro from Billing during the sale and the Black Friday price applies. Paying ends the trial and unlocks all 8 websites.",
+    q: "I'm on the Free plan. Can I still get it?",
+    a: "Yes. Upgrade to Pro from Billing during the sale and the Black Friday price applies. Pro unlocks all 8 websites.",
   },
   {
     q: "What happens after 3 months?",
@@ -276,8 +275,6 @@ export default function BlackFridayPage() {
             <PricingPlans
               plans={pricingPlanData()}
               yearlyEnabled={yearlyBillingEnabled}
-              trialDays={TRIAL_DAYS}
-              trialMaxWebsites={TRIAL_MAX_WEBSITES}
               tone="dark"
             />
             <p className="mt-8 text-center text-[14px] text-white/50">

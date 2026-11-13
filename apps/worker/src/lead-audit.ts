@@ -22,7 +22,6 @@ import {
   type AuditResult,
 } from "@mykavo/seo-audit";
 import type { LeadAuditJob } from "@mykavo/shared";
-import { TRIAL_DAYS } from "@mykavo/shared/plan-tier";
 import { assertSafeUrl } from "@mykavo/shared/ssrf";
 import { logger } from "./logger";
 
@@ -83,7 +82,6 @@ export async function runLeadAuditJob(job: LeadAuditJob): Promise<void> {
           },
           fullReportUrl: appUrl(job.fullReportPath),
           proUrl: appUrl(job.proPath),
-          trialDays: TRIAL_DAYS > 0 ? TRIAL_DAYS : null,
           proAuditPages: job.proAuditPages,
         })
       : auditUnavailableEmail({ host: lead.host, monitorUrl: appUrl(job.fullReportPath) });

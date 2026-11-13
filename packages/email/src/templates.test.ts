@@ -572,11 +572,22 @@ describe("welcomeEmail", () => {
   });
 
   /**
-   * Every signup starts on a Pro trial, and this is the only email before the
-   * "3 days left" reminder. Without the trial in it, a new account can read
-   * itself as being on Free.
+   * New accounts start on the Free plan (no new trials since 13 Nov 2026), so
+   * the welcome they get must not mention or promise a trial.
    */
-  describe("with a Pro trial", () => {
+  it("says nothing about a trial for a new account on Free", () => {
+    for (const t of [undefined, null]) {
+      const mail = welcomeEmail({ ...data, trial: t });
+      expect(`${mail.subject}\n${mail.html}\n${mail.text}`.toLowerCase()).not.toContain("trial");
+    }
+  });
+
+  /**
+   * Only a workspace whose trial started before trials closed and is still
+   * running gets this block: for it, the welcome is the only email before
+   * the "3 days left" reminder.
+   */
+  describe("with a Pro trial already running", () => {
     const trial = { endsOn: "Friday, October 24", days: 14, maxWebsites: 3 };
 
     it("says the trial is on, what it covers and when it ends", () => {

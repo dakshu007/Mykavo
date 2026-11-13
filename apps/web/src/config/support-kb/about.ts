@@ -57,7 +57,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["audience", "agencies", "freelancers", "use cases"],
     answer:
-      "MyKavo is built for anyone responsible for websites that matter:\n\n- **Agencies** (WordPress, Shopify, Webflow, SEO and maintenance agencies) watching many client sites from one dashboard\n- **Freelance developers and designers** who want to catch regressions before clients notice\n- **SEO teams** who need to know when titles, canonicals or noindex tags change\n- **SaaS and marketing teams**, and website owners running a few important sites\n\nYou don't need to be technical to start. Add a URL, pick pages and MyKavo does the watching. Every new account starts with a 14-day Pro trial on up to 3 websites, no card needed. If you don't upgrade, you then move to the Free plan, which covers 1 website.",
+      "MyKavo is built for anyone responsible for websites that matter:\n\n- **Agencies** (WordPress, Shopify, Webflow, SEO and maintenance agencies) watching many client sites from one dashboard\n- **Freelance developers and designers** who want to catch regressions before clients notice\n- **SEO teams** who need to know when titles, canonicals or noindex tags change\n- **SaaS and marketing teams**, and website owners running a few important sites\n\nYou don't need to be technical to start. Add a URL, pick pages and MyKavo does the watching. Every new account starts on the Free plan, which covers 1 website and needs no card. Upgrade when you need more.",
     related: ["about-what-is-mykavo", "billing-pro-trial", "about-vs-other-tools", "about-who-runs-mykavo"],
     evalQuestions: [
       "would this suit a one-person web agency",

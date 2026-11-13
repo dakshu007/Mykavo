@@ -20,7 +20,7 @@ import {
   createCheckoutIntent,
   consumeCheckoutIntent,
 } from "./subscription";
-import { startTrial } from "./trial";
+import { canStartTrial, startTrial } from "./trial";
 
 const prisma = new PrismaClient();
 const RUN = `test-sub-${process.pid}-${Math.floor(process.hrtime()[1])}`;
@@ -327,27 +327,37 @@ describe("website add-ons", () => {
   });
 });
 
+/** A trial that was already running when new trials closed. */
+async function existingTrial(days = 14) {
+  const startedAt = new Date();
+  const endsAt = new Date(startedAt.getTime() + days * 86_400_000);
+  await prisma.workspaceTrial.create({ data: { workspaceId, planId: "pro", startedAt, endsAt, source: "signup" } });
+  return { endsAt };
+}
+
 describe("free Pro trial", () => {
-  it("grants Pro while it runs, then returns to Free", async () => {
-    const started = await startTrial(prisma, workspaceId, { source: "signup" });
-    expect(started?.planId).toBe("pro");
+  it("is closed to new workspaces: nothing can start one", async () => {
+    expect(await canStartTrial(prisma, workspaceId)).toBe(false);
+    expect(await startTrial(prisma, workspaceId, { source: "signup" })).toBeNull();
+    expect(await startTrial(prisma, workspaceId, { source: "self_serve" })).toBeNull();
+    expect(await prisma.workspaceTrial.findUnique({ where: { workspaceId } })).toBeNull();
+    expect((await getWorkspaceEntitlement(prisma, workspaceId))?.planId ?? "free").toBe("free");
+  });
+
+  it("a trial already running still grants Pro, then returns to Free", async () => {
+    const started = await existingTrial();
     const ent = await getWorkspaceEntitlement(prisma, workspaceId);
     expect(ent?.planId).toBe("pro");
     expect(ent?.billedBy).toBe("trial");
-    expect(ent?.trialEndsAt?.getTime()).toBe(started?.endsAt.getTime());
+    expect(ent?.trialEndsAt?.getTime()).toBe(started.endsAt.getTime());
 
     await prisma.workspaceTrial.update({ where: { workspaceId }, data: { endsAt: new Date(Date.now() - 1000) } });
     const after = await getWorkspaceEntitlement(prisma, workspaceId);
     expect(after === null || after.planId === "free").toBe(true);
   });
 
-  it("is given once per workspace", async () => {
-    expect(await startTrial(prisma, workspaceId, { source: "signup" })).not.toBeNull();
-    expect(await startTrial(prisma, workspaceId, { source: "reactivation" })).toBeNull();
-  });
-
   it("never outranks a paid plan", async () => {
-    await startTrial(prisma, workspaceId, { source: "signup" });
+    await existingTrial();
     await grantPaidPlan(prisma, { workspaceId, planId: "agency", status: "active", dodoSubscriptionId: `${RUN}-agency` });
     const ent = await getWorkspaceEntitlement(prisma, workspaceId);
     expect(ent?.planId).toBe("agency");

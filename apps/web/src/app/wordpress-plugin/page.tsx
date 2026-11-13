@@ -26,8 +26,7 @@ import { WpNightShiftAnimation } from "@/components/landing/wp-night-shift-anima
 import { PartnerLockup } from "@/components/landing/partner-lockup";
 import { TrackOnView } from "@/components/track-on-view";
 import { LiteYouTube } from "@/components/video/lite-youtube";
-import { formatLimit, plans } from "@/config/plans";
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
+import { plans } from "@/config/plans";
 import { site } from "@/config/site";
 import {
   WP_PLUGIN_DIRECTORY_URL,
@@ -177,7 +176,7 @@ const faqs = [
   },
   {
     q: "Is the plugin free?",
-    a: `Yes. The plugin is free on every plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. Safe Updates - the automatic check after every update - and on-demand scans are part of every paid plan: Starter ($7/month), Pro ($20/month) and Agency ($79/month). New accounts start with a ${TRIAL_DAYS}-day Pro trial, no card, so you can try Safe Updates on up to ${TRIAL_MAX_WEBSITES} websites before paying. On Free, every update is still listed so you know what changed and when.`,
+    a: `Yes. The plugin is free on every plan, and MyKavo has a free plan: one website, five monitored pages and weekly scans, with no card required. Safe Updates - the automatic check after every update - and on-demand scans are part of every paid plan: Starter ($7/month), Pro ($20/month) and Agency ($79/month). On Free, every update is still listed so you know what changed and when.`,
   },
   {
     q: "How does it know which update broke something?",
@@ -728,25 +727,14 @@ export default function WordPressPluginPage() {
                       ))}
                     </dl>
                     <Link
-                      href={plan.id === "agency" || plan.id === "starter" ? "/signup?next=/dashboard/billing" : "/signup"}
+                      href={plan.priceMonthlyUsd > 0 ? "/signup?next=/dashboard/billing" : "/signup"}
                       className="mt-7 rounded-full border border-[#151515] bg-[#151515] px-6 py-3 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                     >
-                      {plan.priceMonthlyUsd === 0
-                        ? "Start free"
-                        : plan.id === "pro"
-                          ? `Try ${plan.name} free for ${TRIAL_DAYS} days`
-                          : `Get ${plan.name}`}
+                      {plan.priceMonthlyUsd === 0 ? "Start free" : `Get ${plan.name}`}
                     </Link>
-                    {plan.id === "pro" && (
+                    {plan.priceMonthlyUsd > 0 && (
                       <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
-                        The trial covers up to {TRIAL_MAX_WEBSITES} websites ({plan.name} has{" "}
-                        {formatLimit(plan.limits.websites)}). No card. Then Free unless you upgrade.
-                      </p>
-                    )}
-                    {(plan.id === "agency" || plan.id === "starter") && (
-                      <p className="mt-3 text-center text-[12.5px] leading-5 text-[#151515]/70">
-                        New accounts start on the {TRIAL_DAYS}-day Pro trial. Switch to {plan.name} from
-                        Billing at any time.
+                        New accounts start on Free. Upgrade to {plan.name} from Billing at any time.
                       </p>
                     )}
                   </div>

@@ -18,9 +18,13 @@ describe("verifyEmailEmail", () => {
     expect(email.text).toContain("expires in 1 hour.");
   });
 
-  it("mentions the trial only when one is offered", () => {
-    expect(verifyEmailEmail(base).text).toContain("14-day Pro trial");
-    expect(verifyEmailEmail({ ...base, trialDays: null }).text).not.toContain("trial");
+  it("says confirming unlocks the Free plan and never offers a trial", () => {
+    for (const data of [base, { ...base, trialDays: null }, { ...base, trialDays: undefined }]) {
+      const email = verifyEmailEmail(data);
+      expect(email.text).toContain("unlocks your account on the Free plan");
+      expect(email.html).toContain("unlocks your account on the Free plan");
+      expect(`${email.subject}${email.html}${email.text}`.toLowerCase()).not.toContain("trial");
+    }
   });
 
   it("escapes everything it interpolates", () => {

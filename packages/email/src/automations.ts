@@ -441,8 +441,8 @@ export function sampleAutomationData(key: AutomationKey, appBase: string, name: 
           addWebsiteUrl: `${appBase}/dashboard/websites/new`,
           alertsUrl: `${appBase}/dashboard/notifications`,
           docsUrl: `${appBase}/docs`,
-          // A verified signup starts a Pro trial; TRIAL_DAYS and TRIAL_MAX_WEBSITES in @mykavo/shared.
-          trial: { endsOn: "Friday, October 24", days: 14, maxWebsites: 3 },
+          // New accounts start on the Free plan (no new trials since 13 Nov 2026), so no trial block.
+          trial: null,
         },
       };
     case "first_website":

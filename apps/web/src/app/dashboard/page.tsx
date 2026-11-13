@@ -22,8 +22,9 @@ import { findWeeklySummary } from "@/lib/ai/weekly-summary";
  * Top to bottom: the summary figures, the attention list (open HIGH/CRITICAL/MEDIUM changes and
  * website problems, grouped by website, worst first), the setup guide while
  * a new account is still setting up, the all-clear card when nothing needs
- * anyone, then the websites list. Trial and upgrade
- * prompts live in the dashboard layout and appear here as on every page.
+ * anyone, then the websites list. Upgrade prompts (and the countdown of a
+ * Pro trial that is still running) live in the dashboard layout and appear
+ * here as on every page.
  */
 export default async function DashboardOverviewPage() {
   const session = await requireSession();

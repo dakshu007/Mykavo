@@ -10,10 +10,8 @@ import {
   CreditCard,
   Globe,
 } from "lucide-react";
-import { prisma, canStartTrial } from "@mykavo/database";
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
+import { prisma } from "@mykavo/database";
 import { requireSession, getCurrentMembership } from "@/lib/session";
-import { canManageBilling } from "@/lib/team";
 import { getWorkspacePlan } from "@/lib/limits";
 import {
   getWorkspaceSubscription,
@@ -32,7 +30,6 @@ import { Card, CardHeader, IconChip } from "@/components/ui/card";
 import { ValueQuoteCard } from "@/components/value-quote";
 import { CancelSubscriptionButton } from "@/components/dashboard/cancel-subscription-button";
 import { ChangePlanButton } from "@/components/dashboard/change-plan-button";
-import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 import { shopifyPlanPageUrl } from "@/lib/integrations/shopify-server";
 import { getLiveCampaign } from "@/lib/billing/campaign-server";
 
@@ -55,7 +52,7 @@ export default async function BillingPage({
   searchParams: Promise<{ checkout?: string; interval?: string }>;
 }) {
   const session = await requireSession();
-  const { workspace, role } = await getCurrentMembership(session.user.id, session.user.name);
+  const { workspace } = await getCurrentMembership(session.user.id, session.user.name);
   const sp = await searchParams;
 
   const [plan, subscription, websiteLimit, websiteCount] = await Promise.all([
@@ -64,13 +61,11 @@ export default async function BillingPage({
     getEffectiveWebsiteLimit(workspace.id),
     prisma.website.count({ where: { workspaceId: workspace.id } }),
   ]);
-  // A free trial grants Pro but nothing is paid: billing treats it as Free
+  // A Pro trial that was already running when new trials closed (13 Nov
+  // 2026) grants Pro but nothing is paid: billing treats it as Free
   // (checkout offers, no "manage billing"), with a countdown on top.
   const trialEndsAt = plan.trial?.endsAt ?? null;
   const isPaid = plan.id !== "free" && !trialEndsAt;
-  // Signed up before trials existed: they never got one, so offer it here.
-  const trialAvailable =
-    plan.id === "free" && canManageBilling(role) && (await canStartTrial(prisma, workspace.id).catch(() => false));
   const free = getPlan("free");
   const starter = getPlan("starter");
   const pro = getPlan("pro");
@@ -299,24 +294,6 @@ export default async function BillingPage({
           <p className="mt-6 text-sm text-ink-secondary">
             You&apos;re on the Free plan - 1 website and 5 monitored pages.
           </p>
-        )}
-
-        {trialAvailable && (
-          <div className="mt-4 rounded-field bg-primary-soft px-4 py-4">
-            <p className="text-sm font-semibold text-ink">Try {pro.name} free for {TRIAL_DAYS} days</p>
-            <p className="mt-1 text-sm text-ink-secondary">
-              Daily scans, a check after every WordPress or Shopify update, and up to {TRIAL_MAX_WEBSITES}{" "}
-              websites. No card needed. When it ends your workspace moves back to Free: your oldest monitored website
-              stays monitored and any others are paused, not deleted. Baselines are kept; other scan
-              history follows Free&apos;s {formatLimit(free.limits.historyDays)}-day window.
-            </p>
-            <div className="mt-3 max-w-60">
-              <StartTrialButton
-                label={`Start ${pro.name} trial`}
-                className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-contrast transition-colors hover:bg-primary-hover disabled:opacity-70"
-              />
-            </div>
-          </div>
         )}
       </Card>
 

@@ -3,7 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { emailOTP, twoFactor } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
 import { createAuthMiddleware, APIError, getSessionFromCtx } from "better-auth/api";
-import { prisma, startTrial, TRIAL_DAYS } from "@mykavo/database";
+import { prisma, startTrial } from "@mykavo/database";
 import { sendEmail, verificationCodeEmail, verifyEmailEmail } from "@mykavo/email";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -37,7 +37,7 @@ const VERIFIED_LANDING_PATH = "/dashboard";
 /**
  * Better Auth builds the link with `callbackURL=/` unless the request passed
  * one, and "/" is the marketing homepage. Point those at the dashboard,
- * where the banner and trial are. Any other callbackURL is left alone:
+ * where the banner is. Any other callbackURL is left alone:
  * /verify-email still runs it through the trusted-origin check.
  */
 function withDashboardCallback(url: string): string {
@@ -52,11 +52,11 @@ function withDashboardCallback(url: string): string {
 }
 
 /**
- * Starts the workspace's 14-day Pro trial for a user whose email is now
- * verified. Signup only starts it for an already-verified address (Google);
- * an email/password account gets it here, on verification, so a stream of
- * throwaway signups cannot farm trials. Idempotent: startTrial allows one
- * trial per workspace. Never throws - Free is a fine fallback.
+ * Used to start the workspace's 14-day Pro trial once its owner's email was
+ * verified. New trials closed on 13 Nov 2026 (NEW_TRIALS_OPEN in
+ * @mykavo/database), so startTrial now always returns null and this returns
+ * false: new accounts start on Free. Kept so the call sites and the Brevo
+ * "trial" flag stay correct if trials ever reopen. Never throws.
  */
 async function startTrialForVerifiedUser(
   user: { id: string; email: string; name: string; createdAt: Date },
@@ -195,14 +195,15 @@ export const auth = betterAuth({
     // NOT requireEmailVerification: that would also lock out the password
     // accounts created before codes existed, which were never verified. They
     // are grandfathered (lib/email-code.ts): they sign in as before, the
-    // dashboard banner asks them to confirm by link, and admin rights, the
-    // admin plan and the Pro trial all wait for verification.
+    // dashboard banner asks them to confirm by link, and admin rights and the
+    // admin plan wait for verification.
     autoSignIn: false,
   },
   // Address verification by LINK, for the grandfathered accounts above: sent
   // from the dashboard banner. New accounts confirm with a code instead
   // (emailOTP below), so nothing is sent by link at signup. Verifying either
-  // way signs the user in and starts their Pro trial.
+  // way signs the user in. It no longer starts a Pro trial: new accounts
+  // start on Free (no new trials since 13 Nov 2026).
   emailVerification: {
     sendOnSignUp: false,
     autoSignInAfterVerification: true,
@@ -212,7 +213,6 @@ export const auth = betterAuth({
         name: user.name,
         verifyUrl: withDashboardCallback(url),
         expiresInHours: VERIFY_EMAIL_EXPIRES_IN_SECONDS / 3600,
-        trialDays: TRIAL_DAYS,
       });
       const result = await sendEmail({ to: [user.email], ...email });
       if (result.ok) {
@@ -238,7 +238,8 @@ export const auth = betterAuth({
         await announceNewAccount(user, trial);
       } else if (trial) {
         // A grandfathered account confirming by link: its signup already put
-        // it in Brevo as Free; now it is on the trial.
+        // it in Brevo as Free; now it is on the trial. Unreachable while new
+        // trials are closed (startTrial returns null).
         await addSignupToBrevo(user, { trial: true });
       }
     },
@@ -464,15 +465,15 @@ export const auth = betterAuth({
             workspaceId: workspace.id,
           });
           // A new email/password account has not proven its address yet: it
-          // gets its workspace now, and its trial, welcome email, admin alert
-          // and marketing contact once it types its code
+          // gets its workspace now, and its welcome email, admin alert and
+          // marketing contact once it types its code
           // (afterEmailVerification above). Throwaway addresses never get
           // past this point.
           if (needsEmailCode(user)) return;
 
-          // A 14-day Pro trial, no card - but only for an address that is
-          // already verified (Google sign-in), so unverified throwaway
-          // accounts cannot farm trials. Never fails the signup.
+          // New accounts start on Free: startTrial returns null since new
+          // trials closed on 13 Nov 2026, so this is false. Kept for
+          // announceNewAccount's Brevo flag. Never fails the signup.
           const trial = user.emailVerified
             ? await startTrialForVerifiedUser(user, workspace.id)
             : false;

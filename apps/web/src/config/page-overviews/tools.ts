@@ -188,7 +188,7 @@ export const TOOL_OVERVIEWS: Record<string, PageOverview> = {
     takeaways: [
       "MyKavo reads only public pages, the way a browser or search engine does, obeys robots.txt and never tries to see behind a login.",
       "Changes it catches include pricing and plan names, homepage rewrites, new or removed pages, third-party script swaps, title rewrites and CTAs.",
-      "Monitored pages are checked weekly on the Free plan and daily on Pro, Agency and the Pro trial.",
+      "Monitored pages are checked weekly on the Free plan and daily on every paid plan.",
       "The Free plan covers one website with five monitored pages and email alerts, with no card required.",
     ],
   },

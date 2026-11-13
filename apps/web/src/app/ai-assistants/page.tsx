@@ -22,7 +22,7 @@ const agencyCap = getPlan("agency").limits.aiAssistantCallsPerDay.toLocaleString
 const faqs = [
   {
     q: "Which plans include the ChatGPT and Claude connector?",
-    a: `Pro and Agency, including the free Pro trial. Pro includes ${proCap} assistant lookups a day per workspace and Agency ${agencyCap}. On Free and Starter the assistant explains that the connector needs Pro.`,
+    a: `Pro and Agency. Pro includes ${proCap} assistant lookups a day per workspace and Agency ${agencyCap}. On Free and Starter the assistant explains that the connector needs Pro.`,
   },
   {
     q: "Can the assistant change anything in my MyKavo account?",
@@ -58,8 +58,8 @@ export default function AiAssistantsPage() {
       <h2>What you need</h2>
       <ul>
         <li>
-          A MyKavo account on the <Link href="/pricing">Pro or Agency plan</Link> (the free Pro trial works too), with at
-          least one website being monitored.
+          A MyKavo account on the <Link href="/pricing">Pro or Agency plan</Link>, with at least one website being
+          monitored.
         </li>
         <li>ChatGPT, Claude, or another assistant that supports MCP connectors.</li>
       </ul>

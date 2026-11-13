@@ -119,7 +119,7 @@ export {
   type ProductEventContext,
   type TrialStatus,
 } from "./event-context";
-export { TRIAL_DAYS, canStartTrial, getActiveTrial, startTrial, trialDaysLeft, type ActiveTrial, type TrialSource } from "./trial";
+export { TRIAL_DAYS, NEW_TRIALS_OPEN, canStartTrial, getActiveTrial, startTrial, trialDaysLeft, type ActiveTrial, type TrialSource } from "./trial";
 export {
   DORMANT_AFTER_DAYS,
   DORMANT_TRIM_AFTER_DAYS,

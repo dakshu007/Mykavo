@@ -1,4 +1,3 @@
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
 import { formatLimit, getPlan } from "@/config/plans";
 import type { PageOverview } from "./types";
 
@@ -241,7 +240,7 @@ export const PAGE_OVERVIEWS: Record<string, PageOverview> = {
       "Hexowatch sells a pool of monthly checks; MyKavo sells websites and monitored pages, with no per-check meter.",
       "MyKavo has no price, keyword or WHOIS monitoring and is not a legal archiving product.",
       "MyKavo adds INFO to CRITICAL severity scoring, a technical SEO audit and Search Console correlation.",
-      `MyKavo's free plan does not expire, and new accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, with no card.`,
+      "MyKavo's free plan does not expire and needs no card.",
     ],
   },
 
@@ -274,7 +273,7 @@ export const PAGE_OVERVIEWS: Record<string, PageOverview> = {
       "The MyKavo WordPress plugin is a free plugin on WordPress.org that connects your site to MyKavo monitoring. With Safe Updates, it checks your key pages against their approved baseline right after every plugin, theme, WordPress or translation update, then shows in wp-admin whether anything changed and which update caused it.",
     takeaways: [
       "It adds nothing to the pages visitors load: no scripts, styles, database queries, autoloaded options or cron jobs.",
-      `Safe Updates comes with paid plans from Starter, and new accounts can try it with a ${TRIAL_DAYS}-day Pro trial, no card.`,
+      "Safe Updates comes with paid plans from Starter.",
       "Approve, fix or ignore changes inside wp-admin, or scan from WP-CLI with wp mykavo scan --wait.",
       "Install it from Plugins, Add New by searching for MyKavo, then connect with one approval on mykavo.app.",
     ],
@@ -303,7 +302,7 @@ export const PAGE_OVERVIEWS: Record<string, PageOverview> = {
   },
 
   "/pricing": {
-    answer: `MyKavo has four plans: Free at $0 for ${FREE_PLAN}, Starter at $${starter.priceMonthlyUsd}/month for ${sites(starter.limits.websites)}, Pro at $${pro.priceMonthlyUsd}/month for ${sites(pro.limits.websites)} and Agency at $${agency.priceMonthlyUsd}/month for ${sites(agency.limits.websites)}, with daily scans on every paid plan. Every new account starts with a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, with no card.`,
+    answer: `MyKavo has four plans: Free at $0 for ${FREE_PLAN}, Starter at $${starter.priceMonthlyUsd}/month for ${sites(starter.limits.websites)}, Pro at $${pro.priceMonthlyUsd}/month for ${sites(pro.limits.websites)} and Agency at $${agency.priceMonthlyUsd}/month for ${sites(agency.limits.websites)}, with daily scans on every paid plan. Every new account starts on Free, with no card.`,
     takeaways: [
       `Starter covers ${formatLimit(starter.limits.pagesPerWebsite)} pages per website, Pro ${formatLimit(pro.limits.pagesPerWebsite)} and Agency ${formatLimit(agency.limits.pagesPerWebsite)}.`,
       `Starter and Pro both include every monitoring feature; Pro adds more websites, up to ${pro.limits.maxMembers} team members and a year of history.`,

@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import {
   prisma,
-  canStartTrial,
   getAgentRollout,
   resumeAutoPaused,
   rolloutAllows,
   trialDaysLeft,
-  TRIAL_DAYS,
 } from "@mykavo/database";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { canManageBilling } from "@/lib/team";
@@ -72,20 +70,12 @@ export default async function DashboardLayout({
         .catch(() => 0),
     ]);
   const appApproved = canDownloadApp(appStatus);
-  // Only the owner can start it (POST /api/billing/trial), so only the owner is
-  // offered it. An unverified owner is not offered it either: verifying the
-  // email starts the trial, and the banner below says so.
   const emailVerified = session.user.emailVerified === true;
-  const trialAvailable =
-    plan.id === "free" &&
-    emailVerified &&
-    canManageBilling(role) &&
-    (await canStartTrial(prisma, workspace.id).catch(() => false));
   // Admin rights follow a VERIFIED allowlisted email, so pass the whole user.
   const blogAdmin = isBlogAdmin(session.user);
   const platformAdmin = isPlatformAdmin(session.user);
   // A seasonal offer, confirmed with Dodo, for workspaces that could buy:
-  // Free or on the trial. Paying customers never see it.
+  // Free or on a trial that is still running. Paying customers never see it.
   const liveCampaign = plan.id === "free" || plan.trial ? await getLiveCampaign().catch(() => null) : null;
   const upgradeCard =
     plan.id === "free" || plan.trial ? (
@@ -93,7 +83,6 @@ export default async function DashboardLayout({
         websitesUsed={websitesUsed}
         websiteLimit={websiteLimit}
         trialDaysLeft={plan.trial ? trialDaysLeft(plan.trial.endsAt) : null}
-        trialAvailable={trialAvailable}
         campaign={liveCampaign}
       />
     ) : null;
@@ -158,14 +147,14 @@ export default async function DashboardLayout({
             keywordAgent={keywordAgent}
           />
           {/* The sidebar (and its card) is hidden below lg. Without this copy a
-              phone never sees the trial countdown or the offer to start one.
+              phone never sees the countdown of a trial that is still running.
               The plain Free upsell stays in the sidebar: on a phone it would
               sit above every page's content. */}
           {liveCampaign && canManageBilling(role) ? (
             <PromoBar campaign={liveCampaign} variant="inline" href="/dashboard/billing" placement="dashboard_bar" />
           ) : null}
-          {emailVerified ? null : <VerifyEmailBanner email={session.user.email} trialDays={TRIAL_DAYS} />}
-          {plan.trial || trialAvailable ? (
+          {emailVerified ? null : <VerifyEmailBanner email={session.user.email} />}
+          {plan.trial ? (
             <div className="mb-4 max-w-md lg:hidden">{upgradeCard}</div>
           ) : null}
           {children}

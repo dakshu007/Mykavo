@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Unplug,
 } from "lucide-react";
-import { TRIAL_DAYS } from "@mykavo/shared";
 import { withSocial } from "@/lib/social-metadata";
 import { GoogleButton } from "@/components/landing/google-cta";
 import { LandingFooter } from "@/components/landing/footer";
@@ -113,7 +112,7 @@ const faqs = [
   },
   {
     q: "Which MyKavo plans include the connector?",
-    a: `Pro and Agency, including the free ${TRIAL_DAYS}-day Pro trial. Pro includes ${PRO_CAP} assistant lookups a day per workspace and Agency ${AGENCY_CAP}. On Free and Starter the assistant explains that the connector needs Pro.`,
+    a: `Pro and Agency. Pro includes ${PRO_CAP} assistant lookups a day per workspace and Agency ${AGENCY_CAP}. On Free and Starter the assistant explains that the connector needs Pro.`,
   },
   {
     q: "Can Claude or ChatGPT change anything in my MyKavo account?",
@@ -256,7 +255,7 @@ export default function AiConnectorPage() {
                 </a>
               </div>
               <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-[#9C9E93]">
-                Pro and Agency · Included in the {TRIAL_DAYS}-day Pro trial · Read-only
+                Pro and Agency · Read-only
               </p>
             </div>
 
@@ -502,8 +501,8 @@ export default function AiConnectorPage() {
               <p className={`${eyebrow} mb-4`}>{"// plans //"}</p>
               <h2 className={`${fontDisplay} text-4xl leading-[1.06] sm:text-5xl`}>Included in Pro and Agency.</h2>
               <p className="mt-5 max-w-md text-[15px] leading-7 text-[#6B6B60]">
-                Every new account starts with a free {TRIAL_DAYS}-day Pro trial, so you can connect Claude or ChatGPT on day
-                one. No card needed to start.
+                Start on the Free plan with no card, then upgrade to Pro or Agency from Billing to connect Claude or
+                ChatGPT.
               </p>
               <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                 <GoogleButton from="ai-connector:plans" />

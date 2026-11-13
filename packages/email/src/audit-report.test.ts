@@ -22,7 +22,6 @@ const base = {
   hidden: { types: 14, errors: 1, warnings: 8, notices: 20 },
   fullReportUrl: "https://mykavo.app/signup?from=audit-email",
   proUrl: "https://mykavo.app/pricing",
-  trialDays: 14,
   proAuditPages: 1500,
 };
 
@@ -33,7 +32,8 @@ describe("auditReportEmail", () => {
     expect(email.html).toContain("Page is noindex");
     expect(email.html).toContain("14 more issue types in your full report");
     expect(email.html).toContain("See the full report free");
-    expect(email.html).toContain("Try Pro free for 14 days.");
+    expect(email.html).toContain("See Pro");
+    expect(`${email.subject}${email.html}${email.text}`.toLowerCase()).not.toContain("trial");
     expect(email.text).toContain("1 error, 8 warnings, 20 notices");
   });
 

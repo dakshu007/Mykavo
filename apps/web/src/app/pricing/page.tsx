@@ -13,7 +13,6 @@ import { plans, formatLimit, getPlan } from "@/config/plans";
 import { PricingPlans } from "@/components/marketing/pricing-plans";
 import { pricingPlanData } from "@/components/marketing/pricing-plan-data";
 import { yearlyBillingEnabled } from "@/lib/billing/config";
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES, TRIAL_REMINDER_DAYS_LEFT } from "@mykavo/shared";
 import {
   FEATURE_LIST,
   breadcrumbList,
@@ -25,7 +24,7 @@ import {
 
 export const metadata: Metadata = withSocial({
   title: "Pricing - Website Monitoring Plans from $0",
-  description: `Website change monitoring from $0. New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites. Starter $7/month for 2 websites, Pro $20/month for 8, Agency $79/month for 30.`,
+  description: "Website change monitoring from $0. Start on the Free plan for 1 website, no card. Starter $7/month for 2 websites, Pro $20/month for 8, Agency $79/month for 30.",
   keywords: [
     "website monitoring pricing",
     "site monitoring tools pricing",
@@ -35,7 +34,7 @@ export const metadata: Metadata = withSocial({
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "MyKavo Pricing - Website Monitoring from $0",
-    description: `New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, then a free plan for one. Starter at $7/month for 2 websites. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.`,
+    description: "A free plan for one website, no card. Starter at $7/month for 2 websites. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members.",
     url: "/pricing",
     type: "website",
   },
@@ -89,8 +88,8 @@ const pricingFaqs = [
     a: `Yes, on every plan. MyKavo AI Website Insights explains each alert in plain English with fix steps for your platform, and writes a weekly status note for every website. Free includes ${formatLimit(freePlan.limits.aiExplanationsPerMonth)} change explanations a month, Starter ${formatLimit(getPlan("starter").limits.aiExplanationsPerMonth)}, Pro ${formatLimit(proPlan.limits.aiExplanationsPerMonth)} and Agency ${formatLimit(getPlan("agency").limits.aiExplanationsPerMonth)}. Weekly notes don't count toward the allowance.`,
   },
   {
-    q: "Is there a free trial?",
-    a: `Yes. Every new account starts with a ${TRIAL_DAYS}-day Pro trial, no card needed. You get every Pro feature, including daily scans and ${formatLimit(proPlan.limits.pagesPerWebsite)} monitored pages per website, on up to ${TRIAL_MAX_WEBSITES} websites. Paid Pro covers ${formatLimit(proPlan.limits.websites)} websites. You can upgrade at any time during the trial, and we email you ${TRIAL_REMINDER_DAYS_LEFT} days before it ends. If you don't upgrade, the account moves to the Free plan: your oldest monitored website stays monitored, checked weekly. Any others are paused, not deleted, and their baselines are kept (Free keeps ${freePlan.limits.historyDays} days of history). Upgrading resumes paused websites. Already on Free and never had a trial? Start it from Billing in your dashboard.`,
+    q: "Is there a free plan?",
+    a: `Yes. MyKavo has a free plan, and every new account starts on it with no card needed. Free covers ${formatLimit(freePlan.limits.websites)} website with ${formatLimit(freePlan.limits.pagesPerWebsite)} monitored pages, weekly scans and ${freePlan.limits.historyDays} days of history, and it does not expire. When you need more, upgrade from Billing in your dashboard: Pro adds daily scans, manual scans and ${formatLimit(proPlan.limits.pagesPerWebsite)} monitored pages per website on up to ${formatLimit(proPlan.limits.websites)} websites.`,
   },
   {
     q: "What's the difference between Starter and Pro?",
@@ -118,7 +117,7 @@ const pricingFaqs = [
   },
   {
     q: "What happens if I hit my plan limits?",
-    a: "MyKavo keeps monitoring everything already configured. It simply asks you to upgrade before adding more websites or pages - nothing is silently dropped. The one exception is a Pro trial that ends without an upgrade: the oldest monitored website stays monitored and any others are paused, not deleted, until you upgrade.",
+    a: "MyKavo keeps monitoring everything already configured. It simply asks you to upgrade before adding more websites or pages - nothing is silently dropped.",
   },
   {
     q: "Do you offer annual billing?",
@@ -184,7 +183,7 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="mt-4 text-[15px] leading-7 text-[#6B6B60]">
-            Every new account starts with a {TRIAL_DAYS}-day Pro trial on up to {TRIAL_MAX_WEBSITES} websites. No card.
+            Start on the Free plan, no card needed, and upgrade when you need more.
           </p>
         </div>
 
@@ -192,8 +191,6 @@ export default function PricingPage() {
         <PricingPlans
           plans={pricingPlans}
           yearlyEnabled={yearlyBillingEnabled}
-          trialDays={TRIAL_DAYS}
-          trialMaxWebsites={TRIAL_MAX_WEBSITES}
         />
 
         {/* A running campaign's offer; nothing outside one. */}
@@ -293,9 +290,7 @@ export default function PricingPage() {
               Ready when <span className="text-[#FFD400]">you are.</span>
             </h2>
             <p className="mx-auto mb-8 mt-3 max-w-md text-[15px] leading-7 text-[#9C9E93]">
-              Every new account starts with a {TRIAL_DAYS}-day Pro trial on up to{" "}
-              {TRIAL_MAX_WEBSITES} websites, no card. Then stay on Free, or upgrade whenever your
-              websites need more.
+              Start on the Free plan, no card needed. Upgrade whenever your websites need more.
             </p>
             <Link
               href="/signup"

@@ -8,11 +8,10 @@ type SendState = "idle" | "sending" | "sent" | "error";
 
 /**
  * Shown on every dashboard page while the signed-in user's email is
- * unverified. Verification is what unlocks the Pro trial, so the banner says
- * that plainly, and lets the user send a fresh link (the signup one expires
+ * unverified, and lets the user send a fresh link (the signup one expires
  * after an hour). Signed-in only: the resend endpoint refuses anonymous calls.
  */
-export function VerifyEmailBanner({ email, trialDays }: { email: string; trialDays: number }) {
+export function VerifyEmailBanner({ email }: { email: string }) {
   const [state, setState] = useState<SendState>("idle");
   const [error, setError] = useState("");
 
@@ -49,8 +48,8 @@ export function VerifyEmailBanner({ email, trialDays }: { email: string; trialDa
         <div className="min-w-0">
           <p className="text-[13px] font-semibold text-ink">Confirm your email address</p>
           <p className="mt-0.5 text-[12px] leading-snug text-ink-secondary">
-            We sent a link to <span className="font-medium break-all text-ink">{email}</span>. Verifying starts
-            your {trialDays}-day Pro trial, no card needed.
+            We sent a link to <span className="font-medium break-all text-ink">{email}</span>. Open it to confirm
+            your address.
           </p>
           <p aria-live="polite" className="mt-1 text-[12px] leading-snug">
             {state === "sent" ? (

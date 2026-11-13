@@ -12,8 +12,12 @@ export interface VerifyEmailData {
   verifyUrl: string;
   /** Whole hours until the link expires. */
   expiresInHours: number;
-  /** Days of Pro the account gets once verified, or null to leave it out. */
-  trialDays: number | null;
+  /**
+   * No longer used: new accounts start on the Free plan (no Pro trial since
+   * 13 Nov 2026), so this email never mentions a trial. Accepted and ignored
+   * so existing callers keep compiling.
+   */
+  trialDays?: number | null;
 }
 
 function esc(s: string): string {
@@ -46,16 +50,13 @@ export function verifyEmailEmail(data: VerifyEmailData): { subject: string; html
   const greeting = firstName ? `Hi ${firstName},` : "Hi,";
   const hours = Math.max(1, Math.round(data.expiresInHours));
   const expiry = `This link expires in ${hours} hour${hours === 1 ? "" : "s"}.`;
-  const trialLine =
-    data.trialDays !== null
-      ? `Confirming also starts your ${data.trialDays}-day Pro trial. No card needed.`
-      : null;
+  const planLine = "Confirming also unlocks your account on the Free plan. No card needed.";
 
   const inner = `
     <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#3556f4">Confirm your email</p>
     <h1 style="margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-0.01em">${esc(greeting)}</h1>
-    <p style="margin:0 0 ${trialLine ? "8px" : "20px"};font-size:14px;color:#5c6270">Confirm this address so MyKavo can send your change alerts to it.</p>
-    ${trialLine ? `<p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(trialLine)}</p>` : ""}
+    <p style="margin:0 0 8px;font-size:14px;color:#5c6270">Confirm this address so MyKavo can send your change alerts to it.</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#5c6270">${esc(planLine)}</p>
     <a href="${esc(data.verifyUrl)}" style="display:inline-block;background:#3556f4;color:#ffffff;text-decoration:none;font-weight:500;font-size:14px;padding:11px 22px;border-radius:9999px">Confirm email</a>
     <p style="margin:20px 0 0;font-size:12px;color:#9aa1b1">Button not working? Paste this link into your browser:<br/><span style="word-break:break-all">${esc(data.verifyUrl)}</span></p>
     <p style="margin:12px 0 0;font-size:12px;color:#9aa1b1">${esc(expiry)} If you did not create a MyKavo account, you can safely ignore this email.</p>
@@ -64,7 +65,7 @@ export function verifyEmailEmail(data: VerifyEmailData): { subject: string; html
   const text =
     `${greeting}\n\n` +
     `Confirm this address so MyKavo can send your change alerts to it.\n` +
-    (trialLine ? `${trialLine}\n` : "") +
+    `${planLine}\n` +
     `\nConfirm: ${data.verifyUrl}\n\n` +
     `${expiry} If you did not create a MyKavo account, you can safely ignore this email.`;
 

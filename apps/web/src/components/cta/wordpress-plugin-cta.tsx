@@ -18,7 +18,7 @@ import { WP_PLUGIN_PAGE_PATH, WP_PLUGIN_REQUIRES } from "@/config/wordpress-plug
  * WordPress.org, and installing it is a familiar step rather than a new
  * account. Every point below is true on the Free plan except where marked:
  * updates are recorded and manual one-click rollback is free; the check
- * after each update (Safe Updates) comes with every paid plan and the trial.
+ * after each update (Safe Updates) comes with every paid plan.
  */
 const POINTS = [
   "Records every plugin, theme and WordPress update",
@@ -80,7 +80,7 @@ export function WordpressPluginCta({
         </div>
         <p className="mt-4 text-[12px] text-[#6B6B60]">
           Free on WordPress.org · WordPress {WP_PLUGIN_REQUIRES.wordpress}+ · PHP {WP_PLUGIN_REQUIRES.php}+ · The check
-          after each update comes with every paid plan and the 14-day Pro trial
+          after each update comes with every paid plan
         </p>
       </div>
     </section>

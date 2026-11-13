@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertCircle, ArrowRight, Check, Globe, Lock, Plus } from "lucide-react";
 import { prisma } from "@mykavo/database";
-import { TRIAL_DAYS } from "@mykavo/shared";
 import { googleEnabled } from "@/lib/auth";
 import { getSession, getCurrentMembership } from "@/lib/session";
 import { getWorkspacePlan } from "@/lib/limits";
@@ -181,7 +180,7 @@ export default async function ConnectChromePage({ searchParams }: { searchParams
             Sign up with email <ArrowRight className="size-4" aria-hidden />
           </Link>
         </div>
-        <p className="mt-3 text-center text-[12px] text-ink-faint">Includes a {TRIAL_DAYS}-day Pro trial · no credit card</p>
+        <p className="mt-3 text-center text-[12px] text-ink-faint">Free plan · no credit card</p>
         <p className="mt-5 border-t border-line pt-4 text-center text-[13px] text-ink-secondary">
           Already have an account?{" "}
           <Link href={`/login?next=${loginNext}`} className="font-semibold text-ink underline-offset-2 hover:underline">

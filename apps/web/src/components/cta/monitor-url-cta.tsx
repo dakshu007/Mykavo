@@ -90,7 +90,7 @@ export function MonitorUrlCta({
           </p>
         )}
         <ul className="mt-4 flex list-none! flex-wrap gap-x-5 gap-y-1.5 pl-0! text-[12.5px] text-[#B9BBB0] *:my-0!">
-          {["Free plan, no credit card", "14-day Pro trial included", "Set up in about a minute"].map((p) => (
+          {["Free plan, no credit card", "Upgrade any time", "Set up in about a minute"].map((p) => (
             <li key={p} className="inline-flex items-center gap-1.5">
               <Check className="size-3.5 text-[#FFD400]" aria-hidden />
               {p}

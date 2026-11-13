@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { getPlan, PAID_PLAN_ID, formatLimit } from "@/config/plans";
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared";
-import { StartTrialButton } from "@/components/dashboard/start-trial-button";
 import { campaignCovers, campaignPrice, formatUsd, type Campaign } from "@/config/campaign";
 
 /**
- * Sidebar upsell, shown on the Free plan and during the Pro trial.
+ * Sidebar upsell, shown on the Free plan and during a Pro trial that is
+ * already running (new trials are no longer offered).
  *
  * Every number is READ FROM THE PLAN CONFIG (spec §37: never hardcode plan
  * limits). The first version of this card hardcoded "{formatLimit(pro.limits.websites)} websites, a year of
@@ -18,15 +17,15 @@ export function UpgradeCard({
   websitesUsed,
   websiteLimit,
   trialDaysLeft = null,
-  trialAvailable = false,
   campaign = null,
 }: {
   websitesUsed: number;
   websiteLimit: number;
-  /** Set during the Pro trial: the card counts down instead of upselling. */
+  /**
+   * Set only while a Pro trial that started before trials closed (13 Nov
+   * 2026) is still running: the card counts down instead of upselling.
+   */
   trialDaysLeft?: number | null;
-  /** Free and never trialed (signed up before trials existed): offer one. */
-  trialAvailable?: boolean;
   /** A running offer (config/campaign.ts): the price line shows it. */
   campaign?: Campaign | null;
 }) {
@@ -35,20 +34,6 @@ export function UpgradeCard({
   const offer = campaign
     ? `${campaign.name}: ${formatUsd(campaignPrice(pro.priceMonthlyUsd, campaign.percent))}/mo for ${campaign.cycles} months, then $${pro.priceMonthlyUsd}.`
     : null;
-  if (trialDaysLeft === null && trialAvailable) {
-    return (
-      <div className="rounded-xl bg-primary-soft p-3.5">
-        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
-          <Sparkles aria-hidden className="size-3.5 text-accent" />
-          Try {pro.name} free for {TRIAL_DAYS} days
-        </p>
-        <p className="mt-1 text-[12px] leading-snug text-ink-secondary">
-          Daily scans, up to {TRIAL_MAX_WEBSITES} websites. No card needed.
-        </p>
-        <StartTrialButton label={`Start ${pro.name} trial`} className="mt-2.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 text-[13px] font-semibold text-primary-contrast shadow-[0_1px_2px_rgb(21_21_21/16%)] transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-primary-hover active:scale-[0.985] active:shadow-none disabled:opacity-70 motion-reduce:transition-none motion-reduce:active:scale-100" />
-      </div>
-    );
-  }
   if (trialDaysLeft !== null) {
     return (
       <div className="rounded-xl bg-primary-soft p-3.5">

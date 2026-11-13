@@ -38,7 +38,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["limit", "pages", "websites", "quota", "plan"],
     answer:
-      "Limits by plan:\n\n- **Free** - 1 website, 5 monitored pages\n- **Pro trial** (free for 14 days) - 3 websites, 15 monitored pages per website\n- **Pro** - 8 websites, 15 monitored pages per website\n- **Agency** - 30 websites, 25 monitored pages per website\n\nThe page limit is per website, so every website you add gets the full allowance. When choosing pages, the counter shows how many you have used, for example \"3 of 5 selected\". Limits are enforced on the server. To raise them, upgrade in [Billing](/dashboard/billing) or compare plans on the [pricing page](/pricing).",
+      "Limits by plan:\n\n- **Free** - 1 website, 5 monitored pages\n- **Pro trial** (only trials started before November 13, 2026) - 3 websites, 15 monitored pages per website\n- **Pro** - 8 websites, 15 monitored pages per website\n- **Agency** - 30 websites, 25 monitored pages per website\n\nThe page limit is per website, so every website you add gets the full allowance. When choosing pages, the counter shows how many you have used, for example \"3 of 5 selected\". Limits are enforced on the server. To raise them, upgrade in [Billing](/dashboard/billing) or compare plans on the [pricing page](/pricing).",
     related: ["scan-edit-pages", "trouble-website-limit", "billing-trial-websites"],
     evalQuestions: [
       "what's the maximum number of urls I can watch on each tier",
@@ -111,7 +111,7 @@ export const ARTICLES: SupportArticle[] = [
     ],
     keywords: ["frequency", "schedule", "daily", "weekly", "interval"],
     answer:
-      "Full page scans run automatically on your plan's schedule:\n\n- **Free** - weekly\n- **Pro**, **Agency** and the free **Pro trial** - daily\n\nThe next scan is timed from when the last one finished. If a scan fails, MyKavo tries again within a day.\n\nSeparately, your homepage gets a quick uptime and SSL check every 5 minutes on every plan. On Pro, Agency and the Pro trial you can also run a scan yourself at any time.",
+      "Full page scans run automatically on your plan's schedule:\n\n- **Free** - weekly\n- **Pro**, **Agency** and a **Pro trial** that is still running - daily\n\nThe next scan is timed from when the last one finished. If a scan fails, MyKavo tries again within a day.\n\nSeparately, your homepage gets a quick uptime and SSL check every 5 minutes on every plan. On Pro, Agency and the Pro trial you can also run a scan yourself at any time.",
     related: ["scan-manual", "scan-uptime-ssl"],
     evalQuestions: [
       "how regularly does the scanner revisit my pages",

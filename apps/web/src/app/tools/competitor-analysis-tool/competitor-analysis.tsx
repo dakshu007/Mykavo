@@ -7,7 +7,6 @@ import { ToolCta } from "@/components/tools/tool-cta";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 // Subpath, not the barrel: the barrel also carries Node-only modules.
-import { TRIAL_DAYS, TRIAL_MAX_WEBSITES } from "@mykavo/shared/plan-tier";
 import type { CompetitorReport, ComparisonRow, Verdict } from "@/lib/tools/competitor";
 
 /** Two URL fields rather than the shared single-URL form, styled to match it. */
@@ -248,7 +247,7 @@ export function CompetitorAnalysis() {
 
           <ToolCta
             heading="This is one moment in time. Watch what changes next."
-            body={`MyKavo can keep checking their pricing page on a schedule and email you the before-and-after the day it moves. New accounts get a ${TRIAL_DAYS}-day Pro trial on up to ${TRIAL_MAX_WEBSITES} websites, no card.`}
+            body={`MyKavo can keep checking their pricing page on a schedule and email you the before-and-after the day it moves. Start on the Free plan, no card needed.`}
             tool="competitor-analysis-tool"
           />
         </>

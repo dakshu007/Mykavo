@@ -4,8 +4,8 @@
  * once, automatically. The activation sweep then emails the score and the
  * top issues ("First site audit" in Admin > Automations).
  *
- * Why: a quiet site can go two weeks without a single change, and a trial
- * that saw nothing looks like a product that did nothing. 6 of 15 trial
+ * Why: a quiet site can go two weeks without a single change, and a new
+ * account that saw nothing looks like a product that did nothing. 6 of 15 trial
  * websites with a baseline never saw a change. An audit gives every new
  * account something real about their own site on day one.
  *

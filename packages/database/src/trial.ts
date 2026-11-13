@@ -1,5 +1,9 @@
 /**
  * Free trials of Pro (14 days, no card). A workspace gets one trial, ever.
+ *
+ * CLOSED to new workspaces since 13 Nov 2026 (NEW_TRIALS_OPEN): new accounts
+ * start on Free. Trials that were already running keep their Pro access,
+ * countdown and reminder emails until they end; nothing here touches them.
  * While it runs and nothing is paid, getWorkspaceEntitlement grants Pro with
  * a smaller website cap, so every existing limit and feature check works
  * unchanged. The worker's trial sweep handles the reminder, the end, and the
@@ -13,6 +17,12 @@ type Db = PrismaClient | Prisma.TransactionClient;
 
 /** Mirrors TRIAL_DAYS in @mykavo/shared (this package does not depend on it). */
 export const TRIAL_DAYS = 14;
+
+/**
+ * Whether a workspace can START a trial. False: no new trials, from signup,
+ * the "try Pro" button or anywhere else. Running trials are unaffected.
+ */
+export const NEW_TRIALS_OPEN = false;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -42,6 +52,7 @@ export async function getActiveTrial(db: Db, workspaceId: string, now: Date = ne
  * missing table means trials are not live: nothing to offer.
  */
 export async function canStartTrial(db: Db, workspaceId: string): Promise<boolean> {
+  if (!NEW_TRIALS_OPEN) return false;
   try {
     const existing = await db.workspaceTrial.findUnique({ where: { workspaceId }, select: { workspaceId: true } });
     return existing === null;
@@ -61,6 +72,7 @@ export async function startTrial(
   workspaceId: string,
   options: { source: TrialSource; now?: Date; days?: number },
 ): Promise<ActiveTrial | null> {
+  if (!NEW_TRIALS_OPEN) return null;
   const now = options.now ?? new Date();
   const endsAt = new Date(now.getTime() + (options.days ?? TRIAL_DAYS) * DAY_MS);
   try {
