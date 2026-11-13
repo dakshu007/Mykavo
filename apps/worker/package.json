@@ -16,7 +16,8 @@
     "dotenv": "^17.0.0",
     "pg-boss": "^12.25.1",
     "tsx": "^4.19.0",
-    "@mykavo/seo-audit": "workspace:*"
+    "@mykavo/seo-audit": "workspace:*",
+    "@mykavo/keyword-agent": "workspace:*"
   },
   "devDependencies": {
     "@netlify/blobs": "^10.7.9",

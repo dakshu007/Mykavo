@@ -67,6 +67,7 @@ COPY packages/comparison-engine/package.json  packages/comparison-engine/
 COPY packages/severity-engine/package.json    packages/severity-engine/
 COPY packages/email/package.json              packages/email/
 COPY packages/seo-audit/package.json          packages/seo-audit/
+COPY packages/keyword-agent/package.json      packages/keyword-agent/
 
 # The web app is not part of this image - the worker only needs its own
 # workspace deps, and installing Next here would triple the image size.

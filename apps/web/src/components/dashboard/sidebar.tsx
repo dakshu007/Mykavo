@@ -79,6 +79,7 @@ export function DashboardSidebar({
   appApproved = false,
   isBlogAdmin = false,
   isPlatformAdmin = false,
+  keywordAgent = false,
   workspaces = [],
   currentWorkspaceId,
 }: {
@@ -96,13 +97,15 @@ export function DashboardSidebar({
   appApproved?: boolean;
   isBlogAdmin?: boolean;
   isPlatformAdmin?: boolean;
+  /** AI Keywords opened to this user by the rollout. */
+  keywordAgent?: boolean;
   /** All workspaces the user belongs to - switcher renders when >1. */
   workspaces?: WorkspaceOption[];
   currentWorkspaceId?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const groups = dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin });
+  const groups = dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin, keywordAgent });
 
   async function handleSignOut() {
     await authClient.signOut();

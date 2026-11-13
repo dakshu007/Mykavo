@@ -17,7 +17,19 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export * from "@prisma/client";
-export { AI_PAUSED_KEY, getAiPauseState, isAiPaused, setAiPaused, type AiPauseState } from "./ai-control";
+export {
+  AI_PAUSED_KEY,
+  AGENT_ROLLOUT_KEY,
+  getAiPauseState,
+  getAgentRollout,
+  isAiPaused,
+  rolloutAllows,
+  setAgentRollout,
+  setAiPaused,
+  type AgentRollout,
+  type AgentRolloutMode,
+  type AiPauseState,
+} from "./ai-control";
 export {
   setSnapshotAsBaseline,
   createInitialBaselinesForScan,

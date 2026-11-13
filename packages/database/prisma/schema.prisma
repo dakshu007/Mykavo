@@ -288,6 +288,10 @@ model Website {
   gscConnection     GscConnection?
   gscPageDaily      GscPageDaily[]
   gscQueryPages     GscQueryPage[]
+  contentProfile    ContentProfile?
+  aiJobs            AiJob[]
+  keywordReports    KeywordReport[]
+  contentPosts      ContentPost[]
   gscDaily          GscDaily[]
   gscDimensionRows  GscDimensionRow[]
   siteAudits        SiteAudit[]
@@ -2014,6 +2018,9 @@ model AiUsage {
   outputTokens Int
   /// Cost of the call in millionths of a US dollar.
   costMicroUsd Int
+  /// Plan tier at call time ("free", "starter", "pro", "agency"), for the
+  /// free vs paid spend split. Null on rows written before it existed.
+  plan         String?
   createdAt    DateTime @default(now())
 
   @@index([createdAt])
@@ -2047,4 +2054,188 @@ model UsageSample {
 
   @@index([metric, sampledAt])
   @@map("usage_sample")
+}
+
+// ---------------------------------------------------------------------------
+// AI Keyword Agent (packages/keyword-agent, docs/keyword-agent.md)
+// ---------------------------------------------------------------------------
+
+/// What the agent knows about a website's business, read from its public
+/// pages by Haiku and confirmed or edited by the user. One per website.
+model ContentProfile {
+  id           String   @id @default(cuid())
+  websiteId    String   @unique
+  website      Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  businessType String
+  services     String[]
+  audience     String
+  /// ISO 3166-1 alpha-2, upper case ("US", "IN").
+  country      String
+  /// ISO 639-1, lower case ("en", "ta").
+  language     String
+  /// Real pages of the site (url + title), the only allowed internal links.
+  pages        Json
+  confirmed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("content_profile")
+}
+
+/// One agent run (site setup, deep analysis or post writing). A tiny row the
+/// page polls for progress; the heavy results live in their own tables.
+model AiJob {
+  id          String    @id @default(cuid())
+  websiteId   String
+  website     Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  workspaceId String
+  /// Who started it, for the "ready" email. No FK: survives user deletion.
+  userId      String?
+  /// "setup" | "deep" | "write"
+  kind        String
+  /// "queued" | "running" | "done" | "failed"
+  status      String    @default("queued")
+  /// Short user-facing step label ("Reading your site").
+  step        String?
+  /// 0..100
+  progress    Int       @default(0)
+  /// Job input (keyword, notes, regenerate target...). Validated on read.
+  input       Json?
+  /// Id of what it produced (report or post).
+  resultId    String?
+  /// Friendly message when it failed.
+  error       String?
+  costMicroUsd Int      @default(0)
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  steps       AgentStep[]
+
+  @@index([websiteId, kind, createdAt])
+  @@index([workspaceId, createdAt])
+  @@map("ai_job")
+}
+
+/// Quota charged when a job is queued, refunded if it fails. No foreign keys,
+/// so deleting a website or post never gives the quota back.
+model AiQuotaUse {
+  id          String    @id @default(cuid())
+  workspaceId String
+  /// "report" | "post"
+  kind        String
+  aiJobId     String    @unique
+  refundedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, kind, createdAt])
+  @@map("ai_quota_use")
+}
+
+/// Log of every model call or tool step in a job, for debugging and evals.
+/// Redacted summaries only; deleted after 7 days by the retention sweep.
+model AgentStep {
+  id           String   @id @default(cuid())
+  aiJobId      String
+  aiJob        AiJob    @relation(fields: [aiJobId], references: [id], onDelete: Cascade)
+  name         String
+  model        String?
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  costMicroUsd Int      @default(0)
+  durationMs   Int      @default(0)
+  ok           Boolean  @default(true)
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@index([aiJobId])
+  @@index([createdAt])
+  @@map("agent_step")
+}
+
+/// Google autocomplete suggestions, shared across users (public data only).
+/// Deleted after 30 days by the retention sweep.
+model AutocompleteCache {
+  id          String   @id @default(cuid())
+  query       String
+  country     String
+  language    String
+  suggestions Json
+  fetchedAt   DateTime @default(now())
+
+  @@unique([query, country, language])
+  @@index([fetchedAt])
+  @@map("autocomplete_cache")
+}
+
+/// One deep analysis: a ranked list of keyword opportunities for a website.
+model KeywordReport {
+  id            String               @id @default(cuid())
+  websiteId     String
+  website       Website              @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  workspaceId   String
+  aiJobId       String?              @unique
+  summary       String?
+  createdAt     DateTime             @default(now())
+  /// Reports older than this are deleted by the retention sweep.
+  expiresAt     DateTime
+  opportunities KeywordOpportunity[]
+
+  @@index([websiteId, createdAt])
+  @@index([expiresAt])
+  @@map("keyword_report")
+}
+
+model KeywordOpportunity {
+  id             String        @id @default(cuid())
+  reportId       String
+  report         KeywordReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  rank           Int
+  keyword        String
+  /// "informational" | "commercial" | "transactional" | "navigational"
+  intent         String
+  cluster        String
+  reason         String
+  suggestedTitle String
+  /// Estimates, always labelled as such: "low" | "medium" | "high"
+  competition    String
+  /// 1..5 popularity proxy from autocomplete; an estimate, not volume.
+  popularity     Int
+  /// Real figures when the keyword is also in Search Console.
+  position       Float?
+  impressions    Int?
+
+  @@index([reportId, rank])
+  @@map("keyword_opportunity")
+}
+
+/// An AI-written draft. Only the latest version is stored.
+model ContentPost {
+  id                String   @id @default(cuid())
+  websiteId         String
+  website           Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  keyword           String
+  title             String
+  slug              String
+  metaDescription   String
+  /// Sanitised HTML (h2, h3, p, lists, links to the site's own pages).
+  bodyHtml          String
+  /// [{ question, answer }]
+  faq               Json
+  /// Built in code from the post, never by the model.
+  jsonLd            Json
+  /// Things the writer says a human should check before publishing.
+  reviewNotes       Json
+  /// "draft" | "exported" | "published"
+  status            String   @default("draft")
+  /// Bumped on every save; a stale save is refused.
+  version           Int      @default(1)
+  regenerationsUsed Int      @default(0)
+  aiJobId           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([websiteId, createdAt])
+  @@map("content_post")
 }

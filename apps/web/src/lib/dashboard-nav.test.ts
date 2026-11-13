@@ -226,3 +226,21 @@ describe("dashboardNav - integrations", () => {
     expect(items.find((i) => i.id === "wordpress")?.badge).toBeUndefined();
   });
 });
+
+describe("AI Keywords placement", () => {
+  const base = { monitoringLive: true, appApproved: false, isBlogAdmin: false, isPlatformAdmin: false };
+
+  it("is an admin preview until the rollout opens it", () => {
+    const admin = dashboardNav({ ...base, isPlatformAdmin: true });
+    expect(admin.find((g) => g.id === "admin")?.items.some((i) => i.id === "keywords")).toBe(true);
+    expect(admin.find((g) => g.id === "analysis")?.items.some((i) => i.id === "keywords")).toBe(false);
+    expect(flattenNav(dashboardNav(base)).some((i) => i.id === "keywords")).toBe(false);
+  });
+
+  it("moves to the analysis tools once rolled out, once only", () => {
+    for (const isPlatformAdmin of [false, true]) {
+      const items = flattenNav(dashboardNav({ ...base, isPlatformAdmin, keywordAgent: true }));
+      expect(items.filter((i) => i.id === "keywords")).toHaveLength(1);
+    }
+  });
+});

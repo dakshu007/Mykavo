@@ -4,7 +4,7 @@ import type { StrikingOpportunity } from "@mykavo/shared";
 vi.mock("@mykavo/database", () => ({ prisma: {} }));
 vi.mock("@/lib/billing/subscription", () => ({ getWorkspacePlan: vi.fn() }));
 
-const { FREE_VISIBLE_OPPORTUNITIES, canUseKeywordAgent, limitForPlan } = await import("./striking");
+const { FREE_VISIBLE_OPPORTUNITIES, limitForPlan } = await import("./striking");
 
 const opp = (i: number): StrikingOpportunity => ({
   query: `query ${i}`,
@@ -35,19 +35,5 @@ describe("limitForPlan", () => {
 
   it("hides nothing when a Free site has fewer than 10", () => {
     expect(limitForPlan(all.slice(0, 4), true).hiddenCount).toBe(0);
-  });
-});
-
-describe("canUseKeywordAgent", () => {
-  it("is admins only while the agent is being built", () => {
-    const prev = process.env.ADMIN_EMAILS;
-    process.env.ADMIN_EMAILS = "owner@mykavo.app";
-    try {
-      expect(canUseKeywordAgent({ email: "owner@mykavo.app", emailVerified: true })).toBe(true);
-      expect(canUseKeywordAgent({ email: "customer@example.com", emailVerified: true })).toBe(false);
-      expect(canUseKeywordAgent({ email: "owner@mykavo.app", emailVerified: false })).toBe(false);
-    } finally {
-      process.env.ADMIN_EMAILS = prev;
-    }
   });
 });

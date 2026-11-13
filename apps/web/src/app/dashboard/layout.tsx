@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { prisma, canStartTrial, resumeAutoPaused, trialDaysLeft, TRIAL_DAYS } from "@mykavo/database";
+import {
+  prisma,
+  canStartTrial,
+  getAgentRollout,
+  resumeAutoPaused,
+  rolloutAllows,
+  trialDaysLeft,
+  TRIAL_DAYS,
+} from "@mykavo/database";
 import { requireSession, getCurrentMembership } from "@/lib/session";
 import { canManageBilling } from "@/lib/team";
 import { isBlogAdmin } from "@/lib/blog-admin";
@@ -90,7 +98,13 @@ export default async function DashboardLayout({
       />
     ) : null;
 
-  const navAccess = { monitoringLive, appApproved, isBlogAdmin: blogAdmin, isPlatformAdmin: platformAdmin };
+  // AI Keywords in the main nav once the rollout opens it to this user.
+  const keywordAgent = rolloutAllows(
+    await getAgentRollout(prisma),
+    session.user.email,
+    session.user.emailVerified === true,
+  );
+  const navAccess = { monitoringLive, appApproved, isBlogAdmin: blogAdmin, isPlatformAdmin: platformAdmin, keywordAgent };
   const planLabel = plan.trial ? `${plan.name} trial` : plan.name;
 
   return (
@@ -120,6 +134,7 @@ export default async function DashboardLayout({
           appApproved={appApproved}
           isBlogAdmin={blogAdmin}
           isPlatformAdmin={platformAdmin}
+          keywordAgent={keywordAgent}
           workspaces={memberships.map((m) => m.workspace)}
           currentWorkspaceId={workspace.id}
           upgradeCard={upgradeCard}
@@ -139,6 +154,7 @@ export default async function DashboardLayout({
             appApproved={appApproved}
             isBlogAdmin={blogAdmin}
             isPlatformAdmin={platformAdmin}
+            keywordAgent={keywordAgent}
           />
           {/* The sidebar (and its card) is hidden below lg. Without this copy a
               phone never sees the trial countdown or the offer to start one.

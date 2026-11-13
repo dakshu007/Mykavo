@@ -23,16 +23,18 @@ export function DashboardMobileNav({
   appApproved = false,
   isBlogAdmin = false,
   isPlatformAdmin = false,
+  keywordAgent = false,
 }: {
   monitoringLive?: boolean;
   appApproved?: boolean;
   isBlogAdmin?: boolean;
   isPlatformAdmin?: boolean;
+  keywordAgent?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const items = flattenNav(
-    dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin }),
+    dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin, keywordAgent }),
   );
 
   async function handleSignOut() {

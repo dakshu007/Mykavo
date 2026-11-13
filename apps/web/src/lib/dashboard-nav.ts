@@ -87,6 +87,11 @@ export interface NavAccess {
   monitoringLive: boolean;
   isBlogAdmin: boolean;
   isPlatformAdmin: boolean;
+  /**
+   * AI Keywords is open to this user through the rollout (beta list or
+   * everyone): shown with the analysis tools instead of under Admin.
+   */
+  keywordAgent?: boolean;
 }
 
 /** The core loop's screens. Always present - this is the product. */
@@ -127,6 +132,8 @@ const ACCOUNT: NavItem[] = [
   { id: "settings", href: "/dashboard/settings", label: "Settings" },
 ];
 
+const AI_KEYWORDS: NavItem = { id: "keywords", href: "/dashboard/keywords", label: "AI Keywords", short: "Keywords" };
+
 /** Shown only to an account approved for the Android app. */
 const APP_DOWNLOAD: NavItem = {
   id: "app",
@@ -143,7 +150,11 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
   ];
 
   if (access.monitoringLive) {
-    groups.push({ id: "analysis", label: "Deeper analysis", items: ANALYSIS });
+    groups.push({
+      id: "analysis",
+      label: "Deeper analysis",
+      items: access.keywordAgent ? [...ANALYSIS, AI_KEYWORDS] : ANALYSIS,
+    });
   }
 
   groups.push({ id: "integrations", label: "Integrations", items: INTEGRATIONS });
@@ -178,10 +189,10 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
       { id: "email-marketing", href: "/dashboard/email-marketing", label: "Email marketing", short: "Marketing" },
       { id: "support-questions", href: "/dashboard/support-questions", label: "Support questions", short: "Support" },
       { id: "usage", href: "/dashboard/usage", label: "All Usage" },
-      // Admin preview while the keyword agent is built; moves into the main
-      // nav at rollout (lib/keywords/striking.ts canUseKeywordAgent).
-      { id: "keywords", href: "/dashboard/keywords", label: "AI Keywords", short: "Keywords" },
     );
+    // Admin preview until the rollout opens it to users; then it lives with
+    // the analysis tools for everyone, admins included.
+    if (!access.keywordAgent) admin.push(AI_KEYWORDS);
   }
   if (admin.length > 0) {
     groups.push({ id: "admin", label: "Admin", items: admin });

@@ -5,16 +5,25 @@
 
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { PrismaClient } from "@prisma/client";
-import { AI_PAUSED_KEY, getAiPauseState, isAiPaused, setAiPaused } from "./ai-control";
+import {
+  AGENT_ROLLOUT_KEY,
+  AI_PAUSED_KEY,
+  getAgentRollout,
+  getAiPauseState,
+  isAiPaused,
+  rolloutAllows,
+  setAgentRollout,
+  setAiPaused,
+} from "./ai-control";
 
 const prisma = new PrismaClient();
 
 beforeEach(async () => {
-  await prisma.appSetting.deleteMany({ where: { key: AI_PAUSED_KEY } });
+  await prisma.appSetting.deleteMany({ where: { key: { in: [AI_PAUSED_KEY, AGENT_ROLLOUT_KEY] } } });
 });
 
 afterAll(async () => {
-  await prisma.appSetting.deleteMany({ where: { key: AI_PAUSED_KEY } });
+  await prisma.appSetting.deleteMany({ where: { key: { in: [AI_PAUSED_KEY, AGENT_ROLLOUT_KEY] } } });
   await prisma.$disconnect();
 });
 
@@ -39,5 +48,27 @@ describe("AI kill switch", () => {
       },
     } as unknown as Pick<PrismaClient, "appSetting">;
     expect(await isAiPaused(broken)).toBe(true);
+  });
+});
+
+describe("AI Keyword Agent rollout", () => {
+  it("starts as admins only and saves a cleaned beta list", async () => {
+    expect((await getAgentRollout(prisma)).mode).toBe("admins");
+    await setAgentRollout(prisma, { mode: "beta", betaEmails: [" Bas@Example.com ", "bas@example.com", "nonsense"] }, "owner@mykavo.app");
+    expect(await getAgentRollout(prisma)).toMatchObject({ mode: "beta", betaEmails: ["bas@example.com"], updatedBy: "owner@mykavo.app" });
+  });
+
+  it("allows beta users only with a verified email, and everyone when launched", () => {
+    const beta = { mode: "beta" as const, betaEmails: ["bas@example.com"] };
+    expect(rolloutAllows(beta, "BAS@example.com", true)).toBe(true);
+    expect(rolloutAllows(beta, "bas@example.com", false)).toBe(false);
+    expect(rolloutAllows(beta, "other@example.com", true)).toBe(false);
+    expect(rolloutAllows({ mode: "admins", betaEmails: ["bas@example.com"] }, "bas@example.com", true)).toBe(false);
+    expect(rolloutAllows({ mode: "everyone", betaEmails: [] }, null, false)).toBe(true);
+  });
+
+  it("fails closed to admins only", async () => {
+    const broken = { appSetting: { findUnique: async () => { throw new Error("down"); } } } as unknown as Pick<PrismaClient, "appSetting">;
+    expect((await getAgentRollout(broken)).mode).toBe("admins");
   });
 });

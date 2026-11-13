@@ -17,6 +17,7 @@
     "@mykavo/comparison-engine": "workspace:*",
     "@mykavo/database": "workspace:*",
     "@mykavo/email": "workspace:*",
+    "@mykavo/keyword-agent": "workspace:*",
     "@mykavo/scanner": "workspace:*",
     "@mykavo/seo-audit": "workspace:*",
     "@mykavo/shared": "workspace:*",

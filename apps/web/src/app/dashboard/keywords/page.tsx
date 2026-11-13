@@ -7,7 +7,7 @@ import { isGscReauthMessage } from "@mykavo/shared";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
-import { canUseKeywordAgent } from "@/lib/keywords/striking";
+import { canUseKeywordAgent } from "@/lib/keywords/access";
 
 export const metadata: Metadata = { title: "AI Keywords - MyKavo", robots: { index: false } };
 
@@ -22,7 +22,7 @@ function hostOf(url: string): string {
 /** AI Keywords home: pick a website. Admins only while the agent is built. */
 export default async function KeywordsPage() {
   const session = await requireSession();
-  if (!canUseKeywordAgent(session.user)) notFound();
+  if (!(await canUseKeywordAgent(session.user))) notFound();
   const workspace = await getCurrentWorkspace(session.user.id, session.user.name);
 
   const websites = await prisma.website.findMany({

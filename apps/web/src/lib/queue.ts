@@ -14,6 +14,8 @@ import {
   ADMIN_SIGNUP_QUEUE,
   WELCOME_EMAIL_QUEUE,
   ARTIFACT_PURGE_QUEUE,
+  AI_AGENT_QUEUE,
+  type AiAgentJob,
   type PushTestJob,
   type AdminSignupJob,
   type WelcomeEmailJob,
@@ -166,6 +168,12 @@ export async function enqueueSiteAudit(job: SiteAuditJob): Promise<string | null
 export async function enqueuePushTest(job: PushTestJob): Promise<string | null> {
   const boss = await getBoss();
   return boss.send(PUSH_TEST_QUEUE, { ...job });
+}
+
+/** Enqueue an AI Keyword Agent job (the ai_job row already exists). */
+export async function enqueueAiAgentJob(job: AiAgentJob): Promise<string | null> {
+  const boss = await getBoss();
+  return boss.send(AI_AGENT_QUEUE, { ...job });
 }
 
 /** Enqueue a Search Console sync. Returns the pg-boss job id. */

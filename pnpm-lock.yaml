@@ -32,6 +32,9 @@ importers:
       '@mykavo/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@mykavo/keyword-agent':
+        specifier: workspace:*
+        version: link:../../packages/keyword-agent
       '@mykavo/scanner':
         specifier: workspace:*
         version: link:../../packages/scanner
@@ -162,6 +165,9 @@ importers:
       '@mykavo/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@mykavo/keyword-agent':
+        specifier: workspace:*
+        version: link:../../packages/keyword-agent
       '@mykavo/scanner':
         specifier: workspace:*
         version: link:../../packages/scanner
@@ -233,6 +239,28 @@ importers:
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@20.19.43)(jsdom@26.1.0)(vite@8.1.3(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0))
 
   packages/email:
+    devDependencies:
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@20.19.43)(jsdom@26.1.0)(vite@8.1.3(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0))
+
+  packages/keyword-agent:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: 0.131.0
+        version: 0.131.0(zod@4.4.3)
+      '@mykavo/database':
+        specifier: workspace:*
+        version: link:../database
+      '@mykavo/shared':
+        specifier: workspace:*
+        version: link:../shared
+      node-html-parser:
+        specifier: ^7.0.1
+        version: 7.1.0
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       vitest:
         specifier: ^4.1.10

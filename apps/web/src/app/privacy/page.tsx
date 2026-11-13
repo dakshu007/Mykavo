@@ -128,8 +128,11 @@ export default function PrivacyPolicyPage() {
         </a>
         , including the Limited Use requirements. We do not sell Google user data, do not use it for
         advertising, do not share it with anyone except as needed to run the features above, and do
-        not use it to develop, improve or train generalized AI or machine-learning models. Today,
-        Search Console data is not sent to any AI provider.
+        not use it to develop, improve or train generalized AI or machine-learning models. Search
+        Console data reaches an AI provider in one case only: when you ask the AI Keyword Agent to
+        write a post for a search you already rank for, that search phrase is sent to Anthropic to
+        write the post. Your positions, clicks, impressions and other Search Console figures are never
+        sent to an AI provider.
       </p>
       <h3>Billing data</h3>
       <p>
@@ -224,8 +227,8 @@ export default function PrivacyPolicyPage() {
           </tr>
           <tr>
             <td>Anthropic (US)</td>
-            <td>AI Website Insights: change explanations and weekly website summaries</td>
-            <td>Details of detected changes (page addresses, before and after values) and website status counts; not used to train AI models</td>
+            <td>AI Website Insights (change explanations, weekly summaries) and the AI Keyword Agent (business profile, keyword research, post drafts)</td>
+            <td>Details of detected changes and website status counts; the public text of your website&apos;s pages, your business details, the keywords you choose and any notes you add to a post; not used to train AI models</td>
           </tr>
           <tr>
             <td>Google</td>

@@ -24,7 +24,7 @@ export default function TermsPage() {
       eyebrowText="legal"
       title="Terms of Service"
       intro="These terms are a plain-English agreement between you and MyKavo. By creating an account or using the service, you agree to them. If anything here is unclear, email support@mykavo.app and we will explain it."
-      updated="October 14, 2026"
+      updated="November 13, 2026"
     >
       <h2>1. Who we are and what MyKavo does</h2>
       <p>
@@ -171,6 +171,13 @@ export default function TermsPage() {
           <strong>You own your data.</strong> The websites you configure, and the snapshots and
           scan history generated for them, belong to you. You grant us permission to store and
           process that data solely to provide the service.
+        </li>
+        <li>
+          <strong>AI-written content is yours, and yours to check.</strong> Keyword suggestions and
+          posts produced by MyKavo&apos;s AI features belong to you. They are drafts: you are
+          responsible for reviewing them, checking facts, prices and claims, and deciding whether and
+          where to publish them. Do not use the AI features to generate spam, misleading content or
+          content for unlawful purposes.
         </li>
         <li>
           <strong>We own the service.</strong> The MyKavo software, design, branding and

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Pause, Play, Sparkles } from "lucide-react";
+import { Loader2, Pause, Play, Rocket, Sparkles } from "lucide-react";
 import type { AiControlsData } from "@/lib/ai/controls";
 
 const money = (usd: number) => (usd < 1 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(2)}`);
@@ -106,6 +106,7 @@ export function AiControls({ initial }: { initial: AiControlsData }) {
           {error}
         </p>
       )}
+      <RolloutControl initial={data.rollout} />
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {data.pools.map((p) => {
           const ratio = p.capUsd > 0 ? Math.min(1, p.spentUsd / p.capUsd) : p.spentUsd > 0 ? 1 : 0;
@@ -137,5 +138,89 @@ export function AiControls({ initial }: { initial: AiControlsData }) {
         })}
       </ul>
     </section>
+  );
+}
+
+const ROLLOUT_OPTIONS: { mode: AiControlsData["rollout"]["mode"]; label: string; detail: string }[] = [
+  { mode: "admins", label: "Admins only", detail: "Only platform admins see AI Keywords." },
+  { mode: "beta", label: "Beta list", detail: "Admins plus the verified emails below." },
+  { mode: "everyone", label: "Everyone", detail: "Every customer, and the public feature page goes live." },
+];
+
+/** Who can use the AI Keyword Agent: admins, a beta list, then everyone. */
+function RolloutControl({ initial }: { initial: AiControlsData["rollout"] }) {
+  const [mode, setMode] = useState(initial.mode);
+  const [emails, setEmails] = useState(initial.betaEmails.join("\n"));
+  const [saved, setSaved] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const dirty = mode !== saved.mode || emails.trim() !== saved.betaEmails.join("\n");
+
+  async function save() {
+    if (mode === "everyone" && saved.mode !== "everyone" && !window.confirm("Open AI Keywords to every customer and publish the feature page?")) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/ai-rollout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode, betaEmails: emails.split(/[\s,]+/).filter(Boolean) }),
+      });
+      const body = (await res.json()) as { mode?: AiControlsData["rollout"]["mode"]; betaEmails?: string[]; error?: string };
+      if (!res.ok || !body.mode || !body.betaEmails) {
+        setMessage(body.error ?? "Could not save.");
+        return;
+      }
+      setSaved({ mode: body.mode, betaEmails: body.betaEmails });
+      setEmails(body.betaEmails.join("\n"));
+      setMessage("Saved.");
+    } catch {
+      setMessage("Could not reach MyKavo. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <fieldset className="mt-4 rounded-xl border border-line px-4 py-3">
+      <legend className="flex items-center gap-1.5 px-1 text-[13px] font-semibold text-ink">
+        <Rocket className="size-3.5 text-accent" aria-hidden /> AI Keyword Agent rollout
+      </legend>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {ROLLOUT_OPTIONS.map((o) => (
+          <label
+            key={o.mode}
+            className={`flex cursor-pointer gap-2 rounded-lg border p-2.5 text-[13px] ${mode === o.mode ? "border-accent bg-primary-soft/40" : "border-line"}`}
+          >
+            <input type="radio" name="rollout" className="mt-0.5" checked={mode === o.mode} onChange={() => setMode(o.mode)} />
+            <span>
+              <span className="block font-medium text-ink">{o.label}</span>
+              <span className="block text-[12px] leading-4 text-ink-faint">{o.detail}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      {mode === "beta" && (
+        <label className="mt-3 block text-[13px] font-medium text-ink">
+          Beta emails <span className="font-normal text-ink-faint">(one per line; the address must be verified)</span>
+          <textarea
+            className="mt-1 block min-h-[80px] w-full rounded-lg border border-line bg-card px-3 py-2 font-mono text-[12px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            value={emails}
+            onChange={(e) => setEmails(e.target.value)}
+          />
+        </label>
+      )}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={!dirty || saving}
+          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 text-[12.5px] font-semibold text-primary-contrast hover:bg-primary-hover disabled:opacity-50"
+        >
+          {saving && <Loader2 className="size-3 animate-spin" aria-hidden />} Save rollout
+        </button>
+        {message && <span role="status" className="text-[12px] text-ink-secondary">{message}</span>}
+      </div>
+    </fieldset>
   );
 }

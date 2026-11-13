@@ -59,6 +59,12 @@ export const LEAD_AUDIT_QUEUE = "lead-audit";
  */
 export const PUSH_TEST_QUEUE = "push-test";
 /**
+ * AI Keyword Agent jobs (site setup, deep analysis, post writing): one queue
+ * with the job kind inside it, polled slowly, separate from every monitoring
+ * queue so AI work can never delay a scan or an alert.
+ */
+export const AI_AGENT_QUEUE = "ai-agent";
+/**
  * Hourly activation pass: the "baseline ready" confirmation and the one-time
  * "add your first website" reminder. Budgeted against the email plan's daily
  * and monthly limits (see apps/worker/src/email-budget.ts) so reminders only
@@ -142,4 +148,9 @@ export interface AdminSignupJob {
  */
 export interface WelcomeEmailJob {
   userId: string;
+}
+
+export interface AiAgentJob {
+  /** ai_job.id; the row holds the kind and the input. */
+  aiJobId: string;
 }

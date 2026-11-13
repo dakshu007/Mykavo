@@ -1,16 +1,6 @@
 import { prisma } from "@mykavo/database";
 import { brandTermsFor, findStrikingDistance, type StrikingOpportunity } from "@mykavo/shared";
-import { isPlatformAdmin, type AdminCandidateInput } from "@/lib/platform-admin";
 import { getWorkspacePlan } from "@/lib/billing/subscription";
-
-/**
- * Who can open the AI Keyword Agent. Platform admins only while it is being
- * built (the spec's rollout: admins, then beta users, then everyone). Every
- * page and route re-checks this server-side.
- */
-export function canUseKeywordAgent(user: AdminCandidateInput): boolean {
-  return isPlatformAdmin(user);
-}
 
 /** Free plans see this many opportunities; the rest are never sent to the browser. */
 export const FREE_VISIBLE_OPPORTUNITIES = 10;

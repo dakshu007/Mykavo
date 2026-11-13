@@ -25,6 +25,8 @@ import {
   CLIENT_REPORT_SWEEP_QUEUE,
   SITE_AUDIT_QUEUE,
   LEAD_AUDIT_QUEUE,
+  AI_AGENT_QUEUE,
+  type AiAgentJob,
   GSC_SYNC_QUEUE,
   GSC_SYNC_SWEEP_QUEUE,
   DOMAIN_SWEEP_QUEUE,
@@ -52,6 +54,7 @@ import { startDatabaseWatch } from "./db-watch";
 import { runAdminSignupJob } from "./admin-signup";
 import { runWelcomeEmailJob } from "./welcome-email";
 import { runRetentionSweep } from "./retention";
+import { runAgentRetention, runAiAgentJob } from "./keyword-agent";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
 import { runHealthSweep } from "./health";
@@ -162,6 +165,11 @@ async function main() {
     await runRetentionSweep();
     const textPruned = await pruneSnapshotText();
     if (textPruned > 0) logger.info("page text pruned", { files: textPruned });
+    // AI Keyword Agent data: separate step, so a failure here never stops
+    // the monitoring retention above (which has already finished).
+    await runAgentRetention()
+      .then((counts) => logger.info("ai agent retention", counts))
+      .catch((err) => logger.error("ai agent retention failed", {}, err));
   });
   await boss.schedule(RETENTION_SWEEP_QUEUE, RETENTION_CRON);
 
@@ -315,6 +323,19 @@ async function main() {
 
   // Site audits (technical SEO crawl): up to ~10 min of polite fetching per
   // run, so strictly one at a time with a single retry on expiry.
+  // AI Keyword Agent (packages/keyword-agent): one queue for all AI jobs,
+  // separate from every monitoring queue, one job at a time, polled slowly
+  // (notify still picks a new job up at once). Never retried: a retry would
+  // spend money twice; a failed job refunds its quota instead.
+  await ensureQueue(boss, AI_AGENT_QUEUE, { retryLimit: 0, expireInSeconds: 20 * 60 });
+  await boss.work<AiAgentJob>(
+    AI_AGENT_QUEUE,
+    { batchSize: 1, pollingIntervalSeconds: 20, notifyPollingIntervalSeconds: 120 },
+    async ([job]) => {
+      if (job) await runAiAgentJob(job.data);
+    },
+  );
+
   await ensureQueue(boss, SITE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 15 * 60 });
   await boss.work<SiteAuditJob>(
     SITE_AUDIT_QUEUE,
