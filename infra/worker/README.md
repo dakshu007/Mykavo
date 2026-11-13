@@ -77,8 +77,10 @@ Add:
 */5 * * * * /home/ubuntu/mykavo/infra/worker/update.sh >> /home/ubuntu/mykavo-update.log 2>&1
 ```
 
-Now a push to `main` reaches the worker within five minutes, the same way
-Netlify already updates the website. No more manual copying.
+Now a push to `main` reaches the worker within five minutes of its tests
+passing, the same way the website is deployed. The script follows the
+`worker-release` branch, which CI moves only after every check passes, so a
+push that breaks the tests never reaches the worker. No more manual copying.
 
 ## 5. Cut over
 

@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-# Auto-deploy: pull main and rebuild ONLY when the commit actually changed.
+# Auto-deploy: follow the worker-release branch and rebuild ONLY when the
+# commit actually changed.
+#
+# worker-release, not main: CI moves worker-release to a commit only after
+# every test passes (.github/workflows/deploy-web.yml, job release-worker), so
+# a push that breaks the tests never reaches the worker, the same gate the
+# website has.
 #
 # Run it from cron every few minutes to get the same behaviour the website
 # already has - push to main, and the server updates itself. That removes the
@@ -12,16 +18,21 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-$HOME/mykavo}"
 cd "$APP_DIR"
 
-git fetch origin main --quiet
+if ! git fetch origin worker-release --quiet 2>/dev/null; then
+  # No tested release yet: keep running what is here rather than deploy
+  # untested code.
+  echo "[$(date -u +%FT%TZ)] no worker-release branch yet, staying on $(git rev-parse --short HEAD)"
+  exit 0
+fi
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/main)
+REMOTE=$(git rev-parse FETCH_HEAD)
 
 if [ "$LOCAL" = "$REMOTE" ]; then
   exit 0   # nothing new - stay quiet so the cron log stays readable
 fi
 
 echo "[$(date -u +%FT%TZ)] updating ${LOCAL:0:7} -> ${REMOTE:0:7}"
-git reset --hard origin/main --quiet
+git reset --hard "$REMOTE" --quiet
 docker compose -f infra/worker/compose.yml up -d --build
 docker image prune -f --filter "dangling=true" >/dev/null   # reclaim disk
 # Build cache grows with every deploy and is never cleaned on its own: by

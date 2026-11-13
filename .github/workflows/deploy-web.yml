@@ -27,6 +27,11 @@
 # check passed: a red test means nothing reaches production. Pull requests
 # into main run `test` only, so a change shows red before it is merged.
 #
+# The scan worker deploys itself: its server runs infra/worker/update.sh every
+# few minutes. It follows the `worker-release` branch, which `release-worker`
+# moves to a commit only after `test` passes. So the worker is gated the same
+# way: a red test never reaches it.
+#
 # REQUIRED REPOSITORY SECRETS
 #   NETLIFY_AUTH_TOKEN  Netlify personal access token (User settings ->
 #                       Applications -> Personal access tokens). Needs deploy
@@ -50,6 +55,9 @@ on:
       - "netlify.toml"
       - "pnpm-lock.yaml"
       - ".github/workflows/deploy-web.yml"
+      # The worker is gated here too (job release-worker below).
+      - "apps/worker/**"
+      - "infra/worker/**"
 
   # Checks only, never a deploy: shows a PR red before it can be merged.
   # No paths filter, so worker-only changes are checked too.
@@ -143,6 +151,21 @@ jobs:
       # Every package's tests, the database integration suite included.
       - name: Tests
         run: pnpm -r --if-present test
+
+  # Points worker-release at this commit now that every check passed; the
+  # worker server picks it up within five minutes (infra/worker/update.sh).
+  # A normal (non-force) push: runs are serialised by the concurrency group,
+  # so it only ever moves forward.
+  release-worker:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Move worker-release to the tested commit
+        run: git push origin "HEAD:refs/heads/worker-release"
 
   deploy:
     needs: test
