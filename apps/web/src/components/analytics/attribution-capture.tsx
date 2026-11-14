@@ -17,6 +17,7 @@ import {
   UTM_COOKIE,
   UTM_MAX_AGE,
 } from "@/lib/attribution/core";
+import { measurementAllowed } from "@/lib/consent";
 
 function setCookie(name: string, value: string, maxAge: number) {
   try {
@@ -47,6 +48,8 @@ export function AttributionCapture() {
 
   useEffect(() => {
     if (!pathname || isAppPath(pathname)) return;
+    // "Only essential" in the cookie banner: no attribution cookies.
+    if (!measurementAllowed()) return;
     if (!hasCookie(FIRST_TOUCH_COOKIE)) {
       setCookie(
         FIRST_TOUCH_COOKIE,

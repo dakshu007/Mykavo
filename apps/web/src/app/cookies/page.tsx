@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { MarketingPageShell } from "@/components/landing/page-shell";
+import { CookieSettingsButton } from "@/components/analytics/cookie-banner";
 
 export const metadata: Metadata = withSocial({
   title: "Cookie Policy - How MyKavo Uses Cookies",
@@ -23,7 +24,7 @@ export default function CookiePolicyPage() {
       eyebrowText="legal"
       title="Cookie Policy"
       intro="MyKavo uses a small number of cookies to keep you signed in, remember your preferences, and understand how people find our marketing pages. This page explains exactly what we use, why, and how you can control it."
-      updated="July 17, 2026"
+      updated="November 14, 2026"
     >
       <h2>What cookies are</h2>
       <p>
@@ -37,8 +38,9 @@ export default function CookiePolicyPage() {
       <h2>What MyKavo uses</h2>
       <p>
         MyKavo (operated by Dakshesh Babu, reachable at{" "}
-        <a href="mailto:support@mykavo.app">support@mykavo.app</a>) uses three small groups of
-        cookies and browser storage. That is the full list - there is nothing else.
+        <a href="mailto:support@mykavo.app">support@mykavo.app</a>) uses a small set of cookies
+        and browser storage, listed below. That is the full list - there is nothing else. When you
+        first visit, a banner asks whether you accept all of them or only the essential ones.
       </p>
       <table>
         <thead>
@@ -78,6 +80,25 @@ export default function CookiePolicyPage() {
             <td>
               Public marketing pages only (homepage, pricing, blog, and similar). The dashboard
               you use after signing in has no analytics cookies at all.
+            </td>
+          </tr>
+          <tr>
+            <td>Essential (required)</td>
+            <td>mk_consent</td>
+            <td>Remembers your answer to the cookie banner for a year, so we do not ask again</td>
+            <td>All pages. Holds only &quot;all&quot; or &quot;essential&quot;.</td>
+          </tr>
+          <tr>
+            <td>Attribution (with your OK)</td>
+            <td>mk_src, mk_utm, mk_cta</td>
+            <td>
+              Where you first landed, the campaign tags of the link you came from (utm_source and
+              similar) and the button that led you to sign up, kept up to 30 days. If you create an
+              account, these are saved with it once so we know which pages and campaigns work.
+            </td>
+            <td>
+              Public pages only. Not written if you choose &quot;Only essential&quot;. They hold no
+              personal details.
             </td>
           </tr>
           <tr>
@@ -127,6 +148,21 @@ export default function CookiePolicyPage() {
         dashboard, on client reports or on sign-in pages. It sets cookies named _clck and _clsk,
         and Microsoft may set its own MUID cookie. Microsoft processes this data under its{" "}
         <a href="https://privacy.microsoft.com/privacystatement">privacy statement</a>.
+      </p>
+
+      <h2>Your choice in the cookie banner</h2>
+      <p>
+        <strong>Accept all</strong> allows the analytics and attribution cookies above.{" "}
+        <strong>Only essential</strong> keeps just what the site needs to work: Google Analytics
+        then runs in its cookieless mode (Google Consent Mode with storage denied, so no _ga
+        cookies), Microsoft Clarity is not loaded, no attribution cookies are written, and any we
+        had already set are removed. Until you choose, visitors in the European Economic Area, the
+        United Kingdom and Switzerland get the cookieless mode by default.
+      </p>
+      <p>
+        You can change your mind at any time:{" "}
+        <CookieSettingsButton className="font-medium underline underline-offset-2" />. The same
+        link is at the bottom of every page.
       </p>
 
       <h2>What we do not do</h2>

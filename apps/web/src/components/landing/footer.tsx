@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/brand/logo";
+import { CookieSettingsButton } from "@/components/analytics/cookie-banner";
 import { site, socials } from "@/config/site";
 import { popularTools, toolHref, TOOLS, TOOLS_HUB_PATH } from "@/config/tools";
 
@@ -198,7 +199,10 @@ export function LandingFooter() {
 
         <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-black/10 pt-6 text-[13px] text-[#6B6B60] sm:flex-row">
           <p>© {new Date().getFullYear()} MyKavo. All rights reserved.</p>
-          <p>Built for people who keep websites working.</p>
+          <div className="flex items-center gap-4">
+            <CookieSettingsButton className="underline-offset-2 transition-colors hover:text-[#151515] hover:underline" />
+            <p>Built for people who keep websites working.</p>
+          </div>
         </div>
 
         {/* Giant clipped wordmark - the final beat */}

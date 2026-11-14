@@ -33,6 +33,8 @@ export type AnalyticsEvent =
   | "tool_used"
   | "preview_viewed"
   | "cta_clicked"
+  // Cookie banner answered. props: choice (all | essential), page
+  | "cookie_consent"
   // Homepage "Email me a free site audit" accepted. props: placement
   | "audit_requested"
   // WordPress plugin page

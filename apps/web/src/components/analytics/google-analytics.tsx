@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { analyticsPageLocation, analyticsReferrer } from "@/lib/analytics-privacy";
+import { gtagConsentDefaults, readConsent } from "@/lib/consent";
 import { useEngaged } from "./use-engaged";
 
 /**
@@ -21,6 +22,9 @@ import { useEngaged } from "./use-engaged";
  * The automatic page_view is off (send_page_view: false); the first page
  * view is sent here with the redacted URL. Later navigations are counted by
  * GA's own history-change page views, exactly as before.
+ *
+ * Consent Mode v2 (lib/consent): the cookie banner's choice decides whether
+ * GA may set cookies; with storage denied it sends cookieless pings only.
  *
  * Google signals and ad personalisation stay off: they add doubleclick.net
  * third-party cookies for advertising features MyKavo does not use.
@@ -56,6 +60,9 @@ function applyLocation(measurementId: string, location: string): void {
   const referrer = state.location ?? analyticsReferrer(document.referrer, window.location.origin);
   gtag("set", { page_location: location, page_referrer: referrer });
   if (!state.configured) {
+    // Consent Mode v2 comes first: the stored cookie choice, or (no choice
+    // yet) denied where the law asks for consent first - see lib/consent.
+    for (const d of gtagConsentDefaults(readConsent())) gtag("consent", "default", d);
     gtag("js", new Date());
     gtag("config", measurementId, {
       send_page_view: false,

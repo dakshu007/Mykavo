@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { track } from "@/lib/analytics";
 import { CTA_COOKIE, CTA_MAX_AGE, cleanPath, ctaPlacement, isAppPath, pageTypeOf } from "@/lib/attribution/core";
 import { sectionAnchors } from "@/lib/section-anchors";
+import { measurementAllowed } from "@/lib/consent";
 
 /**
  * Section tracking for every public page and blog post, with no per-page
@@ -25,6 +26,7 @@ import { sectionAnchors } from "@/lib/section-anchors";
  */
 
 function setCookie(name: string, value: string, maxAge: number) {
+  if (!measurementAllowed()) return;
   try {
     const secure = window.location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `${name}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;

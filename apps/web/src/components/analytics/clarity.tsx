@@ -3,6 +3,8 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { isPrivateAnalyticsPath } from "@/lib/analytics-privacy";
+import { clarityConsentState } from "@/lib/consent";
+import { useConsent } from "./use-consent";
 import { useEngaged } from "./use-engaged";
 
 /**
@@ -23,6 +25,10 @@ import { useEngaged } from "./use-engaged";
  * was a long task in the very seconds the page was becoming usable. A
  * recording of a visitor who never scrolled, tapped or moved the pointer has
  * little to show, so the later fallback costs almost nothing.
+ *
+ * Cookie consent (lib/consent): not loaded at all when the visitor chose
+ * "Only essential"; after "Accept all" Clarity is told so (consentv2).
+ * Before any choice Clarity applies its own regional default.
  */
 
 export const CLARITY_PROJECT_ID = "yq0hjq8pqa";
@@ -37,10 +43,12 @@ const SNIPPET = `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||
 export function Clarity() {
   const pathname = usePathname() ?? "/";
   const engaged = useEngaged(8000);
-  if (!engaged || !isClarityPath(pathname)) return null;
+  const consent = useConsent();
+  if (!engaged || consent === undefined || consent === "essential" || !isClarityPath(pathname)) return null;
+  const consentCall = consent === "all" ? `window.clarity("consentv2",${JSON.stringify(clarityConsentState("all"))});` : "";
   return (
     <Script id="ms-clarity" strategy="afterInteractive">
-      {SNIPPET}
+      {SNIPPET + consentCall}
     </Script>
   );
 }

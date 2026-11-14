@@ -4,6 +4,7 @@ import { Clarity } from "@/components/analytics/clarity";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { AttributionCapture } from "@/components/analytics/attribution-capture";
 import { PageTracker } from "@/components/analytics/page-tracker";
+import { CookieBanner } from "@/components/analytics/cookie-banner";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
@@ -151,6 +152,9 @@ export default function RootLayout({
         <AttributionCapture />
         <PageTracker />
         {children}
+        {/* Accept all / Only essential (lib/consent): decides whether GA,
+            Clarity and the attribution cookies may store anything. */}
+        <CookieBanner />
         {/* Google tag (gtag.js) - production only.
             Analytics waits for the visitor's first interaction (or a few
             seconds after load), so it never competes with the page loading.
