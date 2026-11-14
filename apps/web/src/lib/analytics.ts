@@ -63,6 +63,11 @@ export type AnalyticsEvent =
   | "dashboard_card_dismissed"
   | "ai_post_ready_toast_clicked"
   | "campaign_code_copied"
+  // Black Friday page sections (lib/black-friday-tracking.ts). props: section,
+  // and for clicks target (signup | anchor) and label; for the FAQ, question.
+  | "bf_section_viewed"
+  | "bf_cta_clicked"
+  | "bf_faq_opened"
   // AI insights (lib/ai). props: changeId, or websiteId
   | "ai_explanation_shown"
   | "ai_weekly_summary_shown";

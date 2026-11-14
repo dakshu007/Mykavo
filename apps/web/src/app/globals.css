@@ -742,56 +742,67 @@ html[data-promo] body:has([data-landing-nav])::before {
 }
 
 /* ---------------------------------------------------------------------------
-   Black Friday page (app/black-friday). Every loop below stops for
-   prefers-reduced-motion. */
+   Black Friday page (app/black-friday), "Gold Rush Night". Every loop below
+   stops for prefers-reduced-motion. */
 @keyframes bfp-rise {
   from { transform: translateY(28px); opacity: 0; filter: blur(6px); }
   to { transform: translateY(0); opacity: 1; filter: blur(0); }
 }
 .bfp-rise { animation: bfp-rise 0.9s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes bfp-float {
-  0%, 100% { transform: translateY(0) rotate(var(--r, -6deg)); }
-  50% { transform: translateY(-14px) rotate(calc(var(--r, -6deg) + 2deg)); }
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-14px) rotate(var(--r, 0deg)); }
 }
-.bfp-float { animation: bfp-float 6s ease-in-out infinite; }
+.bfp-float { animation: bfp-float var(--float, 6s) ease-in-out var(--float-delay, 0s) infinite; }
+@keyframes bfp-glow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.06); }
+}
+.bfp-glow { animation: bfp-glow 4s ease-in-out infinite; }
 @keyframes bfp-marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 .bfp-marquee { animation: bfp-marquee var(--speed, 28s) linear infinite; }
-@keyframes bfp-sweep {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-.bfp-sweep { animation: bfp-sweep 7s linear infinite; }
-@keyframes bfp-floor {
-  from { background-position: 0 0; }
-  to { background-position: 0 64px; }
-}
-.bfp-floor { animation: bfp-floor 1.6s linear infinite; }
 @keyframes bfp-ping {
   0% { transform: scale(0.6); opacity: 0.9; }
   100% { transform: scale(2.4); opacity: 0; }
 }
-.bfp-ping { animation: bfp-ping 2.4s cubic-bezier(.2,.6,.3,1) infinite; }
-@keyframes bfp-fall {
-  0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translate3d(var(--dx, 0), 110vh, 0) rotate(var(--spin, 360deg)); opacity: 0.2; }
+.bfp-ping { animation: bfp-ping 1.8s cubic-bezier(.2,.6,.3,1) infinite; }
+/* A band of light sweeps across the gold buttons now and then. */
+.bfp-shine { position: relative; overflow: hidden; }
+.bfp-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.55) 48%, transparent 66%);
+  transform: translateX(-120%);
+  animation: bfp-shine 3.2s ease-in-out infinite;
 }
-.bfp-fall { animation: bfp-fall var(--dur, 9s) linear var(--delay, 0s) infinite; }
-@keyframes bfp-slash {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+@keyframes bfp-shine {
+  0%, 55% { transform: translateX(-120%); }
+  85%, 100% { transform: translateX(120%); }
 }
-@keyframes bfp-drop {
-  0% { transform: translateY(-60%) scale(1.4); opacity: 0; }
-  60% { transform: translateY(6%) scale(0.96); opacity: 1; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
+/* Gold lettering: a light-to-deep gold fill clipped to the text. */
+.bfp-gold {
+  background: linear-gradient(180deg, #fff3b8 0%, #ffcf00 45%, #c98a00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
-.bfp-in .bfp-slash-line { animation: bfp-slash 0.5s 0.35s cubic-bezier(.7,0,.3,1) both; }
-.bfp-in .bfp-old { transition: opacity .4s .8s, transform .4s .8s; opacity: .35; transform: translateY(6px) scale(.9); }
-.bfp-in .bfp-new { animation: bfp-drop 0.7s 1s cubic-bezier(.2,.9,.3,1.2) both; }
+/* The illustrations sit on pure black; this fades their edges into the page. */
+.bfp-img {
+  -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
+}
+/* The paper receipt's torn top and bottom edges. */
+.bfp-receipt {
+  -webkit-mask: radial-gradient(10px at 50% 0, #0000 98%, #000) 50% 0 / 20px 51% repeat-x,
+    radial-gradient(10px at 50% 100%, #0000 98%, #000) 50% 100% / 20px 51% repeat-x;
+  mask: radial-gradient(10px at 50% 0, #0000 98%, #000) 50% 0 / 20px 51% repeat-x,
+    radial-gradient(10px at 50% 100%, #0000 98%, #000) 50% 100% / 20px 51% repeat-x;
+}
 .bfp-reveal { opacity: 0; transform: translateY(30px); transition: opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1); }
 .bfp-reveal.bfp-in { opacity: 1; transform: none; }
 @keyframes bfp-flip {
@@ -799,11 +810,6 @@ html[data-promo] body:has([data-landing-nav])::before {
   to { transform: rotateX(0); opacity: 1; }
 }
 .bfp-flip { animation: bfp-flip 0.45s cubic-bezier(.2,.8,.2,1); transform-origin: 50% 0; }
-@keyframes bfp-glint {
-  0% { transform: translateX(-130%) skewX(-18deg); }
-  55%, 100% { transform: translateX(260%) skewX(-18deg); }
-}
-.bfp-glint { animation: bfp-glint 3.8s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .promo-shimmer,
@@ -818,15 +824,11 @@ html[data-promo] body:has([data-landing-nav])::before {
   .bf-glow::after,
   .bfp-rise,
   .bfp-float,
+  .bfp-glow,
   .bfp-marquee,
-  .bfp-sweep,
-  .bfp-floor,
   .bfp-ping,
-  .bfp-fall,
   .bfp-flip,
-  .bfp-glint,
-  .bfp-in .bfp-slash-line,
-  .bfp-in .bfp-new {
+  .bfp-shine::after {
     animation: none !important;
   }
   .bfp-reveal {
@@ -835,8 +837,7 @@ html[data-promo] body:has([data-landing-nav])::before {
     transition: none;
   }
   .promo-bat,
-  .bf-spark,
-  .bfp-fall {
+  .bf-spark {
     display: none;
   }
 }
