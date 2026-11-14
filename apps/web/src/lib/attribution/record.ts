@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { isMissingTableError, prisma } from "@mykavo/database";
 import { logger } from "@/lib/logger";
-import { CTA_COOKIE, cleanPlacement, decodeFirstTouch, FIRST_TOUCH_COOKIE } from "./core";
+import { CTA_COOKIE, cleanPlacement, decodeFirstTouch, decodeUtm, FIRST_TOUCH_COOKIE, UTM_COOKIE } from "./core";
 
 /** Accounts younger than this get their source recorded on dashboard load. */
 const RECORD_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
@@ -13,6 +13,11 @@ export interface NewSignup {
   referrer: string;
   cta: string;
   method: string;
+  /** The campaign's UTM tags, "" when the signup arrived untagged. */
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
+  utmContent: string;
 }
 
 /**
@@ -29,6 +34,7 @@ export async function recordSignupAttribution(user: { id: string; createdAt: Dat
       const jar = await cookies();
       const first = decodeFirstTouch(jar.get(FIRST_TOUCH_COOKIE)?.value);
       const cta = cleanPlacement(jar.get(CTA_COOKIE)?.value);
+      const utm = decodeUtm(jar.get(UTM_COOKIE)?.value);
       const google = await prisma.account.findFirst({
         where: { userId: user.id, providerId: "google" },
         select: { id: true },
@@ -41,12 +47,26 @@ export async function recordSignupAttribution(user: { id: string; createdAt: Dat
           referrer: first?.referrer ?? "",
           cta,
           method: google ? "google" : "email",
+          utmSource: utm?.source ?? null,
+          utmMedium: utm?.medium ?? null,
+          utmCampaign: utm?.campaign ?? null,
+          utmContent: utm?.content ?? null,
+          utmTerm: utm?.term ?? null,
         },
         update: {},
       });
     }
     if (age >= EVENT_WINDOW_MS) return null;
-    return { landing: row.landing, referrer: row.referrer, cta: row.cta ?? "", method: row.method };
+    return {
+      landing: row.landing,
+      referrer: row.referrer,
+      cta: row.cta ?? "",
+      method: row.method,
+      utmSource: row.utmSource ?? "",
+      utmMedium: row.utmMedium ?? "",
+      utmCampaign: row.utmCampaign ?? "",
+      utmContent: row.utmContent ?? "",
+    };
   } catch (err) {
     if (!isMissingTableError(err)) logger.warn("could not record signup attribution", { error: err instanceof Error ? err.message : String(err) });
     return null;

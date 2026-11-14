@@ -43,6 +43,7 @@ export type NavItemId =
   | "blog"
   | "users"
   | "tracking"
+  | "utm-links"
   | "usage"
   | "keywords"
   | "app-requests"
@@ -182,6 +183,7 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
     admin.push(
       { id: "users", href: "/dashboard/users", label: "Users" },
       { id: "tracking", href: "/dashboard/tracking", label: "Tracking" },
+      { id: "utm-links", href: "/dashboard/utm-links", label: "UTM links", short: "UTM" },
       {
         id: "app-requests",
         href: "/dashboard/app-requests",

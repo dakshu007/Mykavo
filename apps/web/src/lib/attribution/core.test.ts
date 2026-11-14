@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { cleanPath, cleanPlacement, decodeFirstTouch, encodeFirstTouch, isAppPath, referrerHost } from "./core";
+import {
+  cleanPath,
+  cleanPlacement,
+  cleanUtmValue,
+  ctaPlacement,
+  decodeFirstTouch,
+  decodeUtm,
+  encodeFirstTouch,
+  encodeUtm,
+  isAppPath,
+  pageSlug,
+  pageTypeOf,
+  parseUtm,
+  referrerHost,
+  sectionSlug,
+} from "./core";
 
 describe("attribution", () => {
   it("keeps only a clean path", () => {
@@ -35,4 +50,40 @@ describe("attribution", () => {
     expect(isAppPath("/blog")).toBe(false);
     expect(isAppPath("/")).toBe(false);
   });
+
+  it("reads, cleans and round-trips UTM tags", () => {
+    expect(parseUtm("?utm_source=Instagram&utm_medium=Social&utm_campaign=Black%20Friday&x=1")).toEqual({
+      source: "instagram",
+      medium: "social",
+      campaign: "black friday",
+    });
+    expect(parseUtm("?x=1")).toBeNull();
+    expect(parseUtm("?utm_source=<script>")).toEqual({ source: "script" });
+    const utm = { source: "newsletter", content: "hero" };
+    expect(decodeUtm(encodeUtm(utm))).toEqual(utm);
+    expect(decodeUtm("%7Bbad")).toBeNull();
+    expect(cleanUtmValue("x".repeat(300))).toHaveLength(100);
+  });
+
+  it("names pages and sections for CTA placements", () => {
+    expect(pageSlug("/")).toBe("home");
+    expect(pageSlug("/blog/wordpress-memory-limit?x=1")).toBe("blog-wordpress-memory-limit");
+    expect(sectionSlug("What $10 a month gets you")).toBe("what-10-a-month-gets-you");
+    expect(sectionSlug("!!!")).toBe("section");
+    const placement = ctaPlacement("/blog/a-very-long-blog-post-slug-about-wordpress-memory-limits", "Frequently asked questions");
+    expect(placement.length).toBeLessThanOrEqual(60);
+    expect(cleanPlacement(placement)).toBe(placement);
+    expect(ctaPlacement("/pricing", "hero")).toBe("pricing:hero");
+  });
+
+  it("groups pages by type", () => {
+    expect(pageTypeOf("/")).toBe("home");
+    expect(pageTypeOf("/blog")).toBe("blog_index");
+    expect(pageTypeOf("/blog/wordpress-memory-limit")).toBe("blog_post");
+    expect(pageTypeOf("/tools/broken-link-checker")).toBe("tool");
+    expect(pageTypeOf("/pricing")).toBe("pricing");
+    expect(pageTypeOf("/visualping-alternative")).toBe("comparison");
+    expect(pageTypeOf("/black-friday")).toBe("page");
+  });
 });
+

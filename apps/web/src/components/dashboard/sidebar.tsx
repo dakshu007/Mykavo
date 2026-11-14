@@ -24,6 +24,7 @@ import {
   Megaphone,
   BotMessageSquare,
   Activity,
+  Link2,
   LifeBuoy,
   ChevronsUpDown,
 } from "lucide-react";
@@ -61,6 +62,7 @@ const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   blog: PenLine,
   users: UserPlus,
   tracking: Activity,
+  "utm-links": Link2,
   usage: Gauge,
   keywords: AiWriterIcon,
   "app-requests": MailQuestion,

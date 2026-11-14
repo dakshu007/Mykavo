@@ -16,12 +16,20 @@ export function SignupTracker({
   referrer,
   cta,
   method,
+  utmSource = "",
+  utmMedium = "",
+  utmCampaign = "",
+  utmContent = "",
 }: {
   userId: string;
   landing: string;
   referrer: string;
   cta: string;
   method: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
 }) {
   useEffect(() => {
     const key = `mk-signup-tracked-${userId}`;
@@ -39,7 +47,16 @@ export function SignupTracker({
         timer = window.setTimeout(send, 500);
         return;
       }
-      track("account_created", { method, landing, referrer: referrer || "direct", cta: cta || "none" });
+      track("account_created", {
+        method,
+        landing,
+        referrer: referrer || "direct",
+        cta: cta || "none",
+        utm_source: utmSource || "none",
+        utm_medium: utmMedium || "none",
+        utm_campaign: utmCampaign || "none",
+        utm_content: utmContent || "none",
+      });
       try {
         window.localStorage.setItem(key, "1");
       } catch {
@@ -48,7 +65,7 @@ export function SignupTracker({
     };
     send();
     return () => window.clearTimeout(timer);
-  }, [userId, landing, referrer, cta, method]);
+  }, [userId, landing, referrer, cta, method, utmSource, utmMedium, utmCampaign, utmContent]);
 
   return null;
 }

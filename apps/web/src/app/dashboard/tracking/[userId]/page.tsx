@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Globe, History, Laptop, LayoutList, Smartphone } from "lucide-react";
+import { ArrowLeft, CalendarDays, Globe, History, Laptop, LayoutList, Megaphone, Smartphone } from "lucide-react";
 import { requireSession } from "@/lib/session";
 import { isPlatformAdmin } from "@/lib/platform-admin";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -31,7 +31,7 @@ export default async function UserTrackingPage({ params }: { params: Promise<{ u
   const { userId } = await params;
   const data = await loadUserTracking(userId);
   if (!data) notFound();
-  const { row, heat, timeline, pages, devices, websites, workspaces } = data;
+  const { row, heat, timeline, pages, devices, websites, workspaces, source } = data;
 
   return (
     <div className="space-y-6">
@@ -135,6 +135,51 @@ export default async function UserTrackingPage({ params }: { params: Promise<{ u
         </Card>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader icon={Megaphone} title="How they found us" />
+            {source ? (
+              <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-[13px]">
+                <dt className="text-ink-secondary">First page</dt>
+                <dd className="truncate font-mono text-ink">{source.landing}</dd>
+                <dt className="text-ink-secondary">Referrer</dt>
+                <dd className="truncate text-ink">{source.referrer || "Direct"}</dd>
+                <dt className="text-ink-secondary">Clicked</dt>
+                <dd className="truncate font-mono text-ink">{source.cta ?? "Unknown"}</dd>
+                <dt className="text-ink-secondary">Signed up with</dt>
+                <dd className="text-ink">{source.method === "google" ? "Google" : "Email"}</dd>
+                {source.utm.source || source.utm.campaign ? (
+                  <>
+                    <dt className="text-ink-secondary">Campaign</dt>
+                    <dd className="truncate text-ink">{source.utm.campaign ?? "-"}</dd>
+                    <dt className="text-ink-secondary">Source / medium</dt>
+                    <dd className="truncate text-ink">
+                      {source.utm.source ?? "-"} / {source.utm.medium ?? "-"}
+                    </dd>
+                    {source.utm.content ? (
+                      <>
+                        <dt className="text-ink-secondary">Content</dt>
+                        <dd className="truncate text-ink">{source.utm.content}</dd>
+                      </>
+                    ) : null}
+                    {source.utm.term ? (
+                      <>
+                        <dt className="text-ink-secondary">Term</dt>
+                        <dd className="truncate text-ink">{source.utm.term}</dd>
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <dt className="text-ink-secondary">Campaign</dt>
+                    <dd className="text-ink-faint">No UTM tags</dd>
+                  </>
+                )}
+              </dl>
+            ) : (
+              <p className="text-sm text-ink-secondary">Not recorded: the account is older than signup tracking.</p>
+            )}
+          </Card>
+
           <Card>
             <CardHeader icon={LayoutList} title="Pages they use" action={<span className="text-[12px] text-ink-faint">90 days</span>} />
             {pages.length === 0 ? (

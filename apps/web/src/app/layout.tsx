@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Clarity } from "@/components/analytics/clarity";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { AttributionCapture } from "@/components/analytics/attribution-capture";
+import { PageTracker } from "@/components/analytics/page-tracker";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { DM_Sans, Geist_Mono, Poppins } from "next/font/google";
@@ -148,6 +149,7 @@ export default function RootLayout({
         <NavigationProgress />
         {/* Where a visitor first landed, for signup attribution (lib/attribution). */}
         <AttributionCapture />
+        <PageTracker />
         {children}
         {/* Google tag (gtag.js) - production only.
             Analytics waits for the visitor's first interaction (or a few

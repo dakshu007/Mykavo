@@ -1889,6 +1889,12 @@ model SignupAttribution {
   cta       String?
   /// "google" | "email"
   method    String
+  /// UTM tags of the last tagged visit before signup (lib/attribution/core.ts).
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
   createdAt DateTime @default(now())
 
   @@index([createdAt(sort: Desc)])

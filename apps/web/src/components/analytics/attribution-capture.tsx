@@ -11,7 +11,11 @@ import {
   FIRST_TOUCH_COOKIE,
   FIRST_TOUCH_MAX_AGE,
   isAppPath,
+  parseUtm,
   referrerHost,
+  encodeUtm,
+  UTM_COOKIE,
+  UTM_MAX_AGE,
 } from "@/lib/attribution/core";
 
 function setCookie(name: string, value: string, maxAge: number) {
@@ -32,9 +36,11 @@ function hasCookie(name: string): boolean {
 }
 
 /**
- * Remembers where a visitor first landed and, on the sign-up and log-in
- * pages, which call to action brought them (?from=). Read once when the
- * account is created - see lib/attribution. Renders nothing.
+ * Remembers where a visitor first landed, the UTM tags of the last tagged
+ * visit (utm_source, utm_medium, utm_campaign, utm_content, utm_term) and,
+ * on the sign-up and log-in pages, which call to action brought them
+ * (?from=). Read once when the account is created - see lib/attribution.
+ * Renders nothing.
  */
 export function AttributionCapture() {
   const pathname = usePathname();
@@ -51,6 +57,10 @@ export function AttributionCapture() {
         FIRST_TOUCH_MAX_AGE,
       );
     }
+    // Last touch for UTMs: a later tagged visit (a newsletter after an ad)
+    // replaces an earlier one; an untagged visit leaves it alone.
+    const utm = parseUtm(window.location.search);
+    if (utm) setCookie(UTM_COOKIE, encodeUtm(utm), UTM_MAX_AGE);
     if (pathname === "/signup" || pathname === "/login") {
       const from = cleanPlacement(new URLSearchParams(window.location.search).get("from"));
       if (from) setCookie(CTA_COOKIE, from, CTA_MAX_AGE);

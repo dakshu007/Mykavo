@@ -65,6 +65,10 @@ export type AnalyticsEvent =
   | "campaign_code_copied"
   // Black Friday page sections (lib/black-friday-tracking.ts). props: section,
   // and for clicks target (signup | anchor) and label; for the FAQ, question.
+  // Every public page and blog post (components/analytics/page-tracker.tsx).
+  // props: page, page_type, section; clicks add label, target and to.
+  | "section_view"
+  | "cta_click"
   | "bf_section_viewed"
   | "bf_cta_clicked"
   | "bf_faq_opened"

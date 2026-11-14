@@ -264,6 +264,14 @@ export interface UserTracking {
   timeline: TimelineItem[];
   pages: ReturnType<typeof topPages>;
   devices: Array<{ label: string; app: boolean; firstAt: string; lastAt: string; kind: "session" | "push" }>;
+  /** Where the account came from (lib/attribution), null for accounts from before it was recorded. */
+  source: {
+    landing: string;
+    referrer: string;
+    cta: string | null;
+    method: string;
+    utm: { source: string | null; medium: string | null; campaign: string | null; content: string | null; term: string | null };
+  } | null;
 }
 
 export async function loadUserTracking(userId: string): Promise<UserTracking | null> {
@@ -272,7 +280,7 @@ export async function loadUserTracking(userId: string): Promise<UserTracking | n
   if (!user) return null;
   const [row] = buildTrackingRows(input);
 
-  const [memberships, events, baselines, gsc] = await Promise.all([
+  const [memberships, events, baselines, gsc, attribution] = await Promise.all([
     prisma.workspaceMember.findMany({
       where: { userId },
       select: { role: true, workspace: { select: { id: true, name: true, createdAt: true, subscription: { select: { planId: true, createdAt: true } } } } },
@@ -298,6 +306,7 @@ export async function loadUserTracking(userId: string): Promise<UserTracking | n
       where: { connectedById: userId },
       select: { createdAt: true, website: { select: { name: true } } },
     }),
+    prisma.signupAttribution.findUnique({ where: { userId } }).catch(tolerant("signup attribution", null)),
   ]);
 
   const ws = input.workspaces;
@@ -383,6 +392,21 @@ export async function loadUserTracking(userId: string): Promise<UserTracking | n
 
   return {
     row,
+    source: attribution
+      ? {
+          landing: attribution.landing,
+          referrer: attribution.referrer,
+          cta: attribution.cta,
+          method: attribution.method,
+          utm: {
+            source: attribution.utmSource,
+            medium: attribution.utmMedium,
+            campaign: attribution.utmCampaign,
+            content: attribution.utmContent,
+            term: attribution.utmTerm,
+          },
+        }
+      : null,
     workspaces: memberships.map((m) => {
       const raw = ws.find((w) => w.id === m.workspace.id);
       return {

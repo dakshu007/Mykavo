@@ -101,6 +101,13 @@ export function staticEntries(
       hint: "users activity android wordpress plugin app",
     });
     navigation.push({
+      id: "nav-utm-links",
+      section: "Navigation",
+      label: "UTM links",
+      href: "/dashboard/utm-links",
+      hint: "utm campaign tracking link builder social email ads",
+    });
+    navigation.push({
       id: "nav-usage",
       section: "Navigation",
       label: "All Usage",
