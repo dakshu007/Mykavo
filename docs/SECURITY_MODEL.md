@@ -44,7 +44,7 @@ Per-page budgets (spec §43): at most 300 requests and 25 MB of response data pe
 - **Container to host.** `DOCKER-USER` filters forwarded traffic only. Traffic from the container to the host's own addresses (for example the bridge gateway) goes through `INPUT` and is not covered by these rules; the host exposes only `sshd` (keys only, fail2ban).
 - **Lighthouse routing.** Lighthouse drives Chrome directly over CDP, so there is no per-request routing or request budget for audits; egress is enforced by the proxy and the final URL check only.
 - **Out-of-process iframes.** Page weight from CDP covers the main page process; bytes loaded by cross-site iframes that Chromium isolates into other processes are not counted toward page weight or the byte budget (the request budget and egress checks still apply).
-- **Direct `fetch` callers.** A few call sites still validate with `assertSafeUrl` and then call the global `fetch` themselves (webhook/Slack/Discord dispatch in `packages/shared/src/channels.ts`, link checks in `packages/shared/src/link-check.ts`, used by the broken-links tool). Those validate every hop but resolve DNS again at connect time, so they are not DNS-pinned yet.
+- **Direct `fetch` callers (fixed November 2026).** Status probes and webhook posts that used to validate with `assertSafeUrl` and then call the global `fetch` (and so resolve DNS twice) now connect through `pinnedFetch`, which vets the URL and connects to exactly the vetted addresses: `channels.ts`, `link-check.ts`, and the free tools `status-check.ts` (bulk status, broken links) and `redirect-chain.ts`. New code must not pair `assertSafeUrl` with `fetch`.
 
 ## 2. Scanned Content Handling
 

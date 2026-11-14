@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { recordExtensionEvent } from "@/lib/extension-tracking";
 import { cleanVersion, isExtensionEvent, isValidInstallId } from "@/lib/integrations/extension-connect";
-import { rateLimit } from "@/lib/security/rate-limit";
+import { clientKey, rateLimit } from "@/lib/security/rate-limit";
 
 const bodySchema = z.object({
   install: z.string().max(64),
@@ -10,9 +10,9 @@ const bodySchema = z.object({
   v: z.string().max(20).optional(),
 });
 
+/** The client IP for rate limits: Netlify's own header first, which a client cannot forge. */
 function clientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  return clientKey(request);
 }
 
 /**

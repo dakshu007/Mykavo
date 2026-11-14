@@ -12,7 +12,7 @@
  */
 
 import { createHmac } from "node:crypto";
-import { assertSafeUrl } from "./ssrf";
+import { assertSafeUrl, pinnedFetch } from "./ssrf";
 
 export const WEBHOOK_CHANNEL_TYPES = ["SLACK", "DISCORD", "WEBHOOK"] as const;
 
@@ -219,7 +219,7 @@ export async function dispatchChannelMessage(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DISPATCH_TIMEOUT_MS);
   try {
-    const response = await fetch(prepared.url, {
+    const response = await pinnedFetch(prepared.url, {
       method: "POST",
       // Webhook endpoints must answer directly; following redirects would
       // re-open the SSRF window after validation.

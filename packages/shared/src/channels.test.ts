@@ -15,6 +15,13 @@ import {
 } from "./channels";
 import { assertSafeUrl, UnsafeUrlError } from "./ssrf";
 
+// Dispatch connects with pinnedFetch (DNS-pinned). Route it to the global
+// fetch the tests below stub, keeping the real assertSafeUrl checks.
+vi.mock("./ssrf", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./ssrf")>();
+  return { ...actual, pinnedFetch: (url: string | URL, init?: RequestInit) => fetch(url, init) };
+});
+
 const MESSAGE: ChannelMessage = {
   title: "3 changes detected on example.com - highest: HIGH",
   lines: ["1 HIGH · 2 MEDIUM", "[HIGH] Title changed - /pricing"],

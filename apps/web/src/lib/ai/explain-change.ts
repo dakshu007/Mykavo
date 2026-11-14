@@ -148,12 +148,49 @@ export async function getOrCreateChangeExplanation(params: {
 
   const plan = await getWorkspacePlan(params.workspaceId);
   const limit = plan.limits.aiExplanationsPerMonth;
-  if (Number.isFinite(limit) && (await explanationsThisMonth(params.workspaceId)) >= limit) {
-    throw new AiError(
-      "quota_exhausted",
-      `You've used all ${limit} AI explanations included in your plan this month.`,
-    );
+  // Reserve under a workspace lock: explanations still being written count
+  // against the limit, so parallel requests cannot all pass the same check.
+  const reservation = `explanation:${params.changeEventId}`;
+  if (Number.isFinite(limit)) {
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"ai-explain:" + params.workspaceId})::int8)`;
+      const [done, inFlight] = await Promise.all([
+        tx.aiUsage.count({
+          where: {
+            workspaceId: params.workspaceId,
+            feature: "change_explanation",
+            outcome: "ok",
+            createdAt: { gte: startOfUtcMonth() },
+          },
+        }),
+        // A reservation left by a crashed request stops counting after a while.
+        tx.aiQuotaUse.count({
+          where: { workspaceId: params.workspaceId, kind: "explanation", createdAt: { gte: new Date(Date.now() - IN_FLIGHT_MS) } },
+        }),
+      ]);
+      if (done + inFlight >= limit) {
+        throw new AiError("quota_exhausted", `You've used all ${limit} AI explanations included in your plan this month.`);
+      }
+      // One reservation per change; a second tab asking for the same change shares it.
+      await tx.aiQuotaUse.createMany({
+        data: [{ workspaceId: params.workspaceId, kind: "explanation", aiJobId: reservation }],
+        skipDuplicates: true,
+      });
+    });
   }
+  try {
+    return await generateExplanation(params);
+  } finally {
+    if (Number.isFinite(limit)) {
+      await prisma.aiQuotaUse.deleteMany({ where: { aiJobId: reservation } }).catch(() => undefined);
+    }
+  }
+}
+
+/** How long an unfinished explanation keeps its place in the quota. */
+const IN_FLIGHT_MS = 5 * 60 * 1000;
+
+async function generateExplanation(params: { workspaceId: string; changeEventId: string }): Promise<ChangeExplanation> {
 
   const change = await prisma.changeEvent.findUniqueOrThrow({
     where: { id: params.changeEventId },

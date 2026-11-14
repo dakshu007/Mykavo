@@ -50,7 +50,19 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
   const params = Object.fromEntries(Object.entries(sp).map(([k, v]) => [k, first(v)]));
   const state = await resolveAuthorize(params);
   if (state.kind === "fatal") return <Fatal message={state.message} />;
-  if (state.kind === "error") redirect(state.redirectTo);
+  // Anyone can register a client with any https redirect address, so an
+  // instant redirect here would let a mykavo.app link bounce visitors to a
+  // phishing page. Show the error and let the person choose to go back.
+  if (state.kind === "error") {
+    return (
+      <>
+        <Fatal message="The app that sent you here made a request MyKavo can't accept. Go back to it and try connecting again." />
+        <a href={state.redirectTo} rel="noopener noreferrer" className="mt-3 block text-center text-xs text-ink-faint underline underline-offset-4">
+          Return to the app
+        </a>
+      </>
+    );
+  }
 
   const { req, clientName, destination } = state;
   const session = await getSession();

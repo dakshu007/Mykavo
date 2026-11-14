@@ -14,6 +14,14 @@ export async function GET() {
     include: { _count: { select: { monitoredPages: true } } },
     orderBy: { createdAt: "asc" },
   });
+  // The badge/status, client report and deploy hook tokens (and the report
+  // recipients) are for members who may act for the website: a viewer gets
+  // the list without them, as on GET /api/websites/[id].
+  if (ctx.role === "VIEWER") {
+    return NextResponse.json({
+      websites: websites.map((w) => ({ ...w, publicToken: null, reportToken: null, deployToken: null, reportRecipients: null })),
+    });
+  }
   return NextResponse.json({ websites });
 }
 

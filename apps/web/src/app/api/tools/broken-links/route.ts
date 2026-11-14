@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { safeFetch, UnsafeUrlError } from "@/lib/security/ssrf";
+import { pinnedFetch, safeFetch, UnsafeUrlError } from "@/lib/security/ssrf";
 import { clientKey, rateLimit } from "@/lib/security/rate-limit";
 import { parseUrlInput } from "@/lib/url";
 import {
@@ -24,9 +24,20 @@ const PAGE_TIMEOUT_MS = 8_000;
 const LINK_BUDGET_MS = 14_000;
 const LINK_TIMEOUT_MS = 5_000;
 const LINK_CONCURRENCY = 5;
+/** Links checked per other website in one request (see POST). */
+const MAX_LINKS_PER_OTHER_HOST = 10;
+const NOT_CHECKED_TOO_MANY = `Not checked: this page links to that site more than ${MAX_LINKS_PER_OTHER_HOST} times.`;
+
+function hostOf(url: string): string | null {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
 
 /** Forces GET - used to confirm a failure, since some servers mishandle HEAD. */
-const getOnly = (url: string, init: RequestInit) => fetch(url, { ...init, method: "GET" });
+const getOnly = (url: string, init: RequestInit) => pinnedFetch(url, { ...init, method: "GET" });
 
 /**
  * HEAD first (cheap, via status-check); any 4xx/5xx is re-checked with GET
@@ -79,10 +90,27 @@ export async function POST(request: Request) {
 
     const all = extractLinks(page.body, page.finalUrl);
     const links = all.slice(0, MAX_LINKS_CHECKED);
+    // A page's links to its own site are all checked. Links to any one OTHER
+    // site are capped, so a page full of links to someone else's server can't
+    // turn this free tool into a way to flood it.
+    const ownHost = hostOf(page.finalUrl);
+    const perHost = new Map<string, number>();
+    const skipped = new Set(
+      links.filter((link) => {
+        const host = hostOf(link.url);
+        if (!host || host === ownHost) return false;
+        const n = (perHost.get(host) ?? 0) + 1;
+        perHost.set(host, n);
+        return n > MAX_LINKS_PER_OTHER_HOST;
+      }),
+    );
     const probes = await mapWithBudget(
       links,
       { concurrency: LINK_CONCURRENCY, budgetMs: LINK_BUDGET_MS },
-      (link) => probeLink(link.url),
+      (link) =>
+        skipped.has(link)
+          ? Promise.resolve<LinkProbe>({ status: null, finalUrl: null, redirectCount: 0, error: NOT_CHECKED_TOO_MANY })
+          : probeLink(link.url),
       (): LinkProbe => ({ status: null, finalUrl: null, redirectCount: 0, error: NOT_CHECKED_TIME_LIMIT }),
     );
 

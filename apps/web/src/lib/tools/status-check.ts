@@ -5,7 +5,7 @@
  * response bodies are never read. Server-only at runtime (DNS lookups).
  */
 
-import { assertSafeUrl, UnsafeUrlError } from "@/lib/security/ssrf";
+import { assertSafeUrl, pinnedFetch, UnsafeUrlError } from "@/lib/security/ssrf";
 import { parseUrlInput } from "@/lib/url";
 import { SAFE_FETCH_USER_MESSAGES } from "./user-messages";
 
@@ -41,7 +41,7 @@ export async function checkUrlStatus(
     timeoutMs = 10_000,
     maxRedirects = 5,
     userAgent = "MyKavoBot/0.1 (+https://mykavo.app/bot; bulk url status checker)",
-    fetchImpl = fetch,
+    fetchImpl = pinnedFetch,
     validateUrl = assertSafeUrl,
   } = options;
 

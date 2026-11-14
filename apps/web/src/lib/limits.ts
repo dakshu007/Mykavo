@@ -114,10 +114,13 @@ export async function assertScanAllowed(
   }
 
   if (triggerType === "MANUAL" && plan.limits.manualScansPerDay !== Infinity) {
+    // Deploy checks (deploy hook, WordPress/Shopify update events) share the
+    // manual quota, so they count here too: counting MANUAL alone let a
+    // looped deploy hook rescan without limit.
     const usedToday = await prisma.scan.count({
       where: {
         website: { workspaceId },
-        triggerType: "MANUAL",
+        triggerType: { in: ["MANUAL", "DEPLOY"] },
         createdAt: { gte: startOfUtcDay() },
       },
     });

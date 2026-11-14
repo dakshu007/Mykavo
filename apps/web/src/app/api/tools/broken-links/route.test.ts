@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Route test with the network replaced: safeFetch serves the page, and the
- * per-link status checks (status-check.ts uses global fetch with manual
+ * per-link status checks (status-check.ts uses pinnedFetch with manual
  * redirects) hit a stubbed fetch. The SSRF guard is mocked to block one host.
  */
 
@@ -21,6 +21,8 @@ vi.mock("@/lib/security/ssrf", async () => {
       if (!p) return { finalUrl: url, status: 404, headers: new Headers(), body: "", bodyBytes: 0, redirectChain: [], responseTimeMs: 1 };
       return { finalUrl: url, status: p.status, headers: new Headers(p.headers ?? { "content-type": "text/html" }), body: p.body, bodyBytes: p.body.length, redirectChain: [], responseTimeMs: 1 };
     }),
+    // Status probes connect with pinnedFetch; route it to the stubbed fetch.
+    pinnedFetch: (url: string | URL, init?: RequestInit) => fetch(url, init),
     assertSafeUrl: vi.fn(async (u: string | URL) => {
       const url = new URL(u);
       if (url.hostname === "10.0.0.1") throw new actual.UnsafeUrlError("BLOCKED_IP", "x");

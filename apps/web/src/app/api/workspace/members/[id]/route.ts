@@ -22,7 +22,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const { id } = await params;
   const member = await prisma.workspaceMember.findFirst({
     where: { id, workspaceId: ctx.workspace.id },
-    select: { id: true, role: true },
+    select: { id: true, role: true, userId: true },
   });
   if (!member) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (member.role === "OWNER") {
@@ -42,14 +42,28 @@ export async function PATCH(request: Request, { params }: Params) {
     );
   }
 
-  const updated = await prisma.workspaceMember.update({
-    where: { id: member.id },
-    data: { role: body.role },
-  });
+  // A viewer may not act for a website, so the WordPress and Chrome
+  // connections this member created stop working with the demotion: they
+  // can approve baselines, dismiss changes and start scans. (Shopify
+  // connections belong to the store, not the person, and are kept.)
+  const [updated, revoked] = await prisma.$transaction([
+    prisma.workspaceMember.update({
+      where: { id: member.id },
+      data: { role: body.role },
+    }),
+    prisma.siteConnection.updateMany({
+      where:
+        body.role === "VIEWER"
+          ? { workspaceId: ctx.workspace.id, createdByUserId: member.userId, revokedAt: null, platform: { not: "shopify" } }
+          : { id: "__none__" },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
   logger.info("workspace member role changed", {
     workspaceId: ctx.workspace.id,
     memberId: member.id,
     role: body.role,
+    revokedConnections: revoked.count,
   });
   return NextResponse.json({ member: { id: updated.id, role: updated.role } });
 }

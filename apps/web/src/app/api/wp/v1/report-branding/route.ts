@@ -19,6 +19,21 @@ const bodySchema = z.object({
 export async function PUT(request: Request) {
   const ctx = await authenticateSiteRequest(request);
   if (!ctx) return unauthorizedSite();
+  // Branding is workspace-wide, but a site token speaks for one website (an
+  // agency's client may hold the WordPress admin). Only a WordPress
+  // connection made by a current owner or admin may change it.
+  const actor = ctx.platform === "wordpress" && ctx.actingUserId
+    ? await prisma.workspaceMember.findFirst({
+        where: { workspaceId: ctx.workspaceId, userId: ctx.actingUserId },
+        select: { role: true },
+      })
+    : null;
+  if (!actor || (actor.role !== "OWNER" && actor.role !== "ADMIN")) {
+    return NextResponse.json(
+      { error: "Only a workspace owner or admin can change report branding. Change it in MyKavo under Settings > Agency branding.", reason: "ROLE" },
+      { status: 403 },
+    );
+  }
   const plan = await getWorkspacePlan(ctx.workspaceId);
   if (!plan.limits.whiteLabelReports) {
     return NextResponse.json(

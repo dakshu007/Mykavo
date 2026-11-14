@@ -173,10 +173,20 @@ function websitesOverLimit<T extends { status: string; baselines: unknown[] }>(w
  */
 async function enforcePaidWebsiteLimits(now: Date): Promise<number> {
   let paused = 0;
-  for (const workspaceId of await possiblyPaidWorkspaceIds(now)) {
+  // Paid workspaces, plus any workspace running more websites than Free
+  // allows: a cancelled, expired or refunded subscription (or a Shopify store
+  // that stopped paying) drops to Free without passing through a trial end,
+  // and used to keep every website it built up while paying.
+  const overFree = await prisma.website.groupBy({
+    by: ["workspaceId"],
+    where: { status: { not: "PAUSED" } },
+    _count: { _all: true },
+    having: { workspaceId: { _count: { gt: FREE_WEBSITE_LIMIT } } },
+  });
+  const candidates = new Set([...(await possiblyPaidWorkspaceIds(now)), ...overFree.map((g) => g.workspaceId)]);
+  for (const workspaceId of [...candidates].sort()) {
     const ent = await getWorkspaceEntitlement(prisma, workspaceId);
-    if (!ent || ent.planId === "free") continue;
-    const limit = websiteLimitFor(ent);
+    const limit = ent ? websiteLimitFor(ent) : FREE_WEBSITE_LIMIT;
     if (!Number.isFinite(limit)) continue;
     const websites = await prisma.website.findMany({
       where: { workspaceId, status: { not: "PAUSED" } },
@@ -190,7 +200,7 @@ async function enforcePaidWebsiteLimits(now: Date): Promise<number> {
     });
     if (websites.length <= limit) continue;
     const done = await autoPauseWebsites(prisma, websitesOverLimit(websites, limit), "OVER_LIMIT", now);
-    if (done.length) logger.info("websites over the plan limit paused", { workspaceId, plan: ent.planId, websites: done.length });
+    if (done.length) logger.info("websites over the plan limit paused", { workspaceId, plan: ent?.planId ?? "free", websites: done.length });
     paused += done.length;
   }
   return paused;

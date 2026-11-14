@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clientKey } from "@/lib/security/rate-limit";
 import { z } from "zod";
 import { recordLead, type LeadKind } from "@/lib/lead-sheet";
 import { logger } from "@/lib/logger";
@@ -72,9 +73,9 @@ function rateLimited(ip: string): boolean {
   return false;
 }
 
+/** The client IP for rate limits: Netlify's own header first, which a client cannot forge. */
 function clientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  return clientKey(request);
 }
 
 export async function POST(request: Request) {

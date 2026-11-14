@@ -8,7 +8,7 @@ import {
   sha256Hex,
   verifyPkce,
 } from "@/lib/integrations/site-connection";
-import { rateLimit } from "@/lib/security/rate-limit";
+import { clientKey, rateLimit } from "@/lib/security/rate-limit";
 import { logger } from "@/lib/logger";
 
 const bodySchema = z.object({
@@ -17,9 +17,9 @@ const bodySchema = z.object({
   site: z.string().min(1).max(2048),
 });
 
+/** The client IP for rate limits: Netlify's own header first, which a client cannot forge. */
 function clientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  return clientKey(request);
 }
 
 function hostOf(url: string): string | null {

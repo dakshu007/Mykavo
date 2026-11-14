@@ -20,6 +20,7 @@ import {
   createSafeHostResolver,
   isBlockedIp,
   parseIpv6,
+  pinnedFetch,
   pinnedLookup,
   resolveSafeHost,
   safeFetch,
@@ -262,5 +263,27 @@ describe("safeFetch", () => {
   it("refuses a hostname that resolves to a private address", async () => {
     dns.answers.set("rebind.example.com", [{ address: "192.168.0.10", family: 4 }]);
     await expect(safeFetch("https://rebind.example.com/")).rejects.toBeInstanceOf(UnsafeUrlError);
+  });
+});
+
+describe("pinnedFetch", () => {
+  it("refuses a host that resolves to a private address, before connecting", async () => {
+    dns.answers.set("rebind.example.com", [{ address: "127.0.0.1", family: 4 }]);
+    await expect(pinnedFetch("http://rebind.example.com:9001/x", { method: "HEAD" })).rejects.toMatchObject({
+      code: "BLOCKED_IP",
+    });
+    // One lookup, and it is the answer the connection would have used.
+    expect(dns.calls).toEqual(["rebind.example.com"]);
+  });
+
+  it("refuses literal internal IPs, other schemes and credentials", async () => {
+    await expect(pinnedFetch("http://169.254.169.254/latest/meta-data/")).rejects.toBeInstanceOf(UnsafeUrlError);
+    await expect(pinnedFetch("http://[::1]/")).rejects.toBeInstanceOf(UnsafeUrlError);
+    await expect(pinnedFetch("file:///etc/passwd")).rejects.toMatchObject({ code: "SCHEME_NOT_ALLOWED" });
+    await expect(pinnedFetch("https://user:pass@example.com/")).rejects.toMatchObject({ code: "CREDENTIALS_IN_URL" });
+  });
+
+  it("only sends string bodies", async () => {
+    await expect(pinnedFetch("https://example.com/", { method: "POST", body: new Uint8Array([1]) })).rejects.toBeInstanceOf(TypeError);
   });
 });

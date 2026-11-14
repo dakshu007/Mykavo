@@ -8,7 +8,7 @@
  * Server-only at runtime (DNS lookups); clients may `import type` from here.
  */
 
-import { assertSafeUrl, UnsafeUrlError } from "@/lib/security/ssrf";
+import { assertSafeUrl, pinnedFetch, UnsafeUrlError } from "@/lib/security/ssrf";
 
 export const MAX_REDIRECT_HOPS = 10;
 
@@ -51,7 +51,7 @@ export async function followRedirectChain(
     maxHops = MAX_REDIRECT_HOPS,
     timeoutMs = 10_000,
     userAgent = "MyKavoBot/0.1 (+https://mykavo.app/bot; redirect chain checker)",
-    fetchImpl = fetch,
+    fetchImpl = pinnedFetch,
     validateUrl = assertSafeUrl,
   } = options;
 

@@ -11,7 +11,7 @@
  * slow origin never reads as a broken link.
  */
 
-import { assertSafeUrl, UnsafeUrlError } from "./ssrf";
+import { assertSafeUrl, pinnedFetch, UnsafeUrlError } from "./ssrf";
 
 /** Per-scan cap on network probes - link checking must stay cheap (spec §43). */
 export const MAX_LINK_CHECKS_PER_SCAN = 150;
@@ -119,7 +119,8 @@ export async function probeLinkStatus(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
     try {
-      return await fetch(url.href, {
+      // Pinned: connects to the vetted addresses only (no rebinding window).
+      return await pinnedFetch(url.href, {
         method,
         redirect: "manual",
         signal: controller.signal,

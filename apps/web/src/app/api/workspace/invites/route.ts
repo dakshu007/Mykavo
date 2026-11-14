@@ -46,6 +46,13 @@ export async function POST(request: Request) {
     );
   }
 
+  // Only the owner makes admins (as with role changes): otherwise an admin
+  // could invite a second account of their own as an admin that only the
+  // owner can ever remove.
+  if (input.role === "ADMIN" && ctx.role !== "OWNER") {
+    return NextResponse.json({ error: "Only the workspace owner can invite admins." }, { status: 403 });
+  }
+
   if (emailsMatch(input.email, ctx.userEmail)) {
     return NextResponse.json(
       { error: "You're already in this workspace." },

@@ -446,6 +446,67 @@ function pinnedGet(
   });
 }
 
+/**
+ * A `fetch` replacement for status probes and webhook posts: vets the URL
+ * (scheme, credentials, host, every resolved address) and connects to
+ * exactly those addresses in one step, so there is no second DNS lookup to
+ * rebind. Never follows redirects (callers re-vet each hop by calling it
+ * again) and returns status and headers only: the body is discarded.
+ *
+ * Use it wherever code would call the global `fetch` on a user-influenced
+ * URL and only needs the status: `assertSafeUrl` + `fetch` validates one DNS
+ * answer and connects to another.
+ */
+export async function pinnedFetch(rawUrl: string | URL, requestInit: RequestInit = {}): Promise<Response> {
+  if (requestInit.body !== undefined && requestInit.body !== null && typeof requestInit.body !== "string") {
+    throw new TypeError("pinnedFetch only sends string bodies.");
+  }
+  const headers: Record<string, string> = {};
+  new Headers(requestInit.headers ?? {}).forEach((value, name) => {
+    headers[name] = value;
+  });
+  const init = {
+    method: requestInit.method,
+    headers,
+    body: (requestInit.body ?? undefined) as string | undefined,
+    signal: requestInit.signal ?? undefined,
+  };
+  const { url, addresses } = await vetUrl(rawUrl, resolveSafeHost);
+  const res = await new Promise<IncomingMessage>((resolve, reject) => {
+    const send = url.protocol === "https:" ? httpsRequest : httpRequest;
+    const req = send(
+      url,
+      {
+        method: init.method ?? "GET",
+        agent: false,
+        lookup: pinnedLookup(addresses),
+        signal: init.signal,
+        headers: {
+          ...(init.headers ?? {}),
+          ...(init.body !== undefined ? { "content-length": String(Buffer.byteLength(init.body)) } : {}),
+        },
+      },
+      resolve,
+    );
+    req.on("error", (err) => {
+      if (err.name === "AbortError") {
+        const abort = new Error("The request was aborted.");
+        abort.name = "AbortError";
+        reject(abort);
+        return;
+      }
+      reject(err);
+    });
+    req.end(init.body);
+  });
+  res.destroy();
+  const status = res.statusCode ?? 0;
+  if (status < 200 || status > 599) {
+    throw new UnsafeUrlError("FETCH_FAILED", "The server sent an unusable response.");
+  }
+  return new Response(null, { status, headers: toHeaders(res.headers) });
+}
+
 async function readCapped(
   stream: Readable,
   maxBytes: number,

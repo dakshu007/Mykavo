@@ -33,11 +33,11 @@ export async function POST(_request: Request, { params }: Params) {
   if (!website) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Server-side plan enforcement (spec §39): daily quota + crawl page cap.
+  // Use is recorded in scan_quota_use, which has no link to the website, so
+  // deleting a website no longer gives its audits back. The siteAudit count
+  // covers audits started before that record existed.
   const plan = await getWorkspacePlan(ctx.workspace.id);
-  const usedToday = await prisma.siteAudit.count({
-    where: { website: { workspaceId: ctx.workspace.id }, createdAt: { gte: startOfUtcDay() } },
-  });
-  if (usedToday >= plan.limits.siteAuditsPerDay) {
+  const quotaExceeded = () => {
     const next = nextPlanUp(plan.id);
     const upsell = next
       ? ` Upgrade to ${next.name} for ${next.limits.siteAuditsPerDay} audits a day and ${formatLimit(next.limits.siteAuditPages)}-page crawls.`
@@ -46,11 +46,19 @@ export async function POST(_request: Request, { params }: Params) {
       { error: `You've used all ${plan.limits.siteAuditsPerDay} site audit${plan.limits.siteAuditsPerDay === 1 ? "" : "s"} for today (resets at midnight UTC).${upsell}` },
       { status: 429 },
     );
-  }
+  };
 
-  // One audit at a time per website - same advisory-lock pattern as scans.
+  // One audit at a time per website, and the daily quota checked and used
+  // under one workspace lock, so parallel requests cannot both pass it.
   const created = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"site-audit-quota:" + ctx.workspace.id})::int8)`;
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"site-audit:" + website.id})::int8)`;
+    const since = startOfUtcDay();
+    const [recorded, existing] = await Promise.all([
+      tx.scanQuotaUse.count({ where: { workspaceId: ctx.workspace.id, kind: "site_audit", createdAt: { gte: since } } }),
+      tx.siteAudit.count({ where: { website: { workspaceId: ctx.workspace.id }, createdAt: { gte: since } } }),
+    ]);
+    if (Math.max(recorded, existing) >= plan.limits.siteAuditsPerDay) return { overQuota: true as const };
     const active = await tx.siteAudit.findFirst({
       where: {
         websiteId: website.id,
@@ -62,8 +70,10 @@ export async function POST(_request: Request, { params }: Params) {
     });
     if (active) return { conflictId: active.id };
     const audit = await tx.siteAudit.create({ data: { websiteId: website.id } });
+    await tx.scanQuotaUse.create({ data: { workspaceId: ctx.workspace.id, kind: "site_audit" } });
     return { audit };
   });
+  if ("overQuota" in created) return quotaExceeded();
   if ("conflictId" in created) {
     return NextResponse.json(
       { error: "An audit is already running for this website.", auditId: created.conflictId },

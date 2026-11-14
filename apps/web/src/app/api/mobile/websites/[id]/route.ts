@@ -100,7 +100,8 @@ export async function GET(_request: Request, { params }: Params) {
       nextScanAt: website.nextScanAt,
       muteAlertsUntil: website.muteAlertsUntil,
       badgeEnabled: website.badgeEnabled,
-      publicToken: website.publicToken,
+      // A credential (status page and badge): not for viewers, as on the web.
+      publicToken: ctx.role === "VIEWER" ? null : website.publicToken,
       statusPageEnabled: website.statusPageEnabled,
       ignoredSelectors: website.ignoredSelectors,
       screenshotMasks: website.screenshotMasks,
