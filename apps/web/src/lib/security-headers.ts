@@ -17,6 +17,7 @@
 const GTM = "https://www.googletagmanager.com";
 const GA = "https://*.google-analytics.com";
 const GA_ANALYTICS = "https://*.analytics.google.com";
+const GA_APEX = "https://analytics.google.com https://stats.g.doubleclick.net https://www.google.com";
 const DODO_CHECKOUT = "https://checkout.dodopayments.com";
 /**
  * Microsoft Clarity on public pages. Scripts come from exactly two hosts (the
@@ -28,20 +29,20 @@ const CLARITY_COLLECT = "https://*.clarity.ms https://c.bing.com";
 const YOUTUBE_EMBED = "https://www.youtube-nocookie.com";
 
 /**
- * The CSP is shipped REPORT-ONLY first. A policy that is wrong by one
- * directive takes the whole site down, and no amount of reading source
- * beats real traffic for finding the one asset nobody remembered. Violations
- * go to /api/csp-report; once the reports are quiet, switch the header name
- * to `Content-Security-Policy` to start enforcing.
+ * The CSP is ENFORCED in production (November 2026), after shipping
+ * report-only first: a policy that is wrong by one directive takes the
+ * whole site down, so real traffic was read before switching. Violations
+ * still go to /api/csp-report, now meaning "this was blocked".
+ * Development keeps it report-only: the dev server's tooling uses eval.
  *
  * HONEST LIMIT: script-src carries 'unsafe-inline'. Next.js emits inline
  * bootstrap scripts, and the alternative - per-request nonces - forces every
  * static page to render dynamically, which would cost this site most of its
  * caching for a partial XSS mitigation. So CSP here is NOT a strong XSS
- * defence. What it does still buy is real: object-src blocks plugin-based
- * attacks, base-uri stops <base> tag hijacking of every relative URL,
- * form-action stops a injected form posting credentials to another host, and
- * frame-ancestors blocks clickjacking.
+ * defence. What it does still buy is real: script sources are limited to us
+ * and the analytics hosts, object-src blocks plugin-based attacks, base-uri
+ * stops <base> tag hijacking of every relative URL, form-action stops forms
+ * posting to non-web schemes, and frame-ancestors blocks clickjacking.
  */
 const CSP_DIRECTIVES = [
   "default-src 'self'",
@@ -51,7 +52,12 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' ${GA} ${GA_ANALYTICS} ${GTM} ${CLARITY_COLLECT}`,
+  // GA4 also posts to the apex analytics.google.com (a *. wildcard never
+  // matches the apex) and, with Google Signals, to stats.g.doubleclick.net
+  // and google.com; both showed up in real violation reports. Signals'
+  // regional google.<tld> audience pings stay blocked: they are ad
+  // remarketing, not measurement.
+  `connect-src 'self' ${GA} ${GA_ANALYTICS} ${GA_APEX} ${GTM} ${CLARITY_COLLECT}`,
   `frame-src 'self' ${DODO_CHECKOUT} ${YOUTUBE_EMBED}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
@@ -60,8 +66,14 @@ const CSP_DIRECTIVES = [
   // Without this, an injected <base href> silently repoints every relative
   // URL on the page - including form posts and script sources.
   "base-uri 'self'",
-  // Credentials and billing forms may only post back to us.
-  `form-action 'self' ${DODO_CHECKOUT}`,
+  // Our forms post to us, but Chrome also applies form-action to the
+  // REDIRECT after a post, and three approve forms redirect off-site by
+  // design: WordPress connect returns to the customer's wp-admin (any
+  // domain, sometimes plain http), and AI assistant connect returns to the
+  // app's redirect URI (claude.ai, or http://127.0.0.1 for local clients).
+  // So any http(s) target is allowed; javascript:, data: and other schemes
+  // are not.
+  "form-action 'self' https: http:",
   // Clickjacking: the modern equivalent of X-Frame-Options, which is also
   // sent below for older browsers.
   "frame-ancestors 'self'",
@@ -103,8 +115,16 @@ export const securityHeaders: Array<{ key: string; value: string }> = [
       "camera=(), microphone=(), geolocation=(), usb=(), magnetometer=(), browsing-topics=()",
   },
   { key: "X-DNS-Prefetch-Control", value: "on" },
-  {
-    key: "Content-Security-Policy-Report-Only",
-    value: `${CSP_DIRECTIVES}; report-uri ${CSP_REPORT_PATH}`,
-  },
+  cspHeader(),
 ];
+
+/** The CSP header: enforced in production, report-only in development. */
+export function cspHeader(env: string | undefined = process.env.NODE_ENV): { key: string; value: string } {
+  if (env === "production") {
+    return {
+      key: "Content-Security-Policy",
+      value: `${CSP_DIRECTIVES}; ${CSP_ENFORCE_ONLY_DIRECTIVES.join("; ")}; report-uri ${CSP_REPORT_PATH}`,
+    };
+  }
+  return { key: "Content-Security-Policy-Report-Only", value: `${CSP_DIRECTIVES}; report-uri ${CSP_REPORT_PATH}` };
+}

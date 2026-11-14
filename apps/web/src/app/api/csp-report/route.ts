@@ -3,10 +3,9 @@ import { NextResponse } from "next/server";
 /**
  * CSP violation collector.
  *
- * The policy ships report-only (see lib/security-headers), so browsers post
- * here instead of blocking. Reading these tells us exactly what a real policy
- * would break BEFORE it breaks it - far better evidence than reading source
- * and hoping nothing was missed.
+ * The policy is enforced in production (see lib/security-headers): each
+ * report here is something a browser BLOCKED, so a burst of them after a
+ * release means the policy is missing a source the site now needs.
  *
  * Unauthenticated by necessity: browsers post these without credentials, and
  * a violation report is not sensitive. That also makes it trivially
@@ -42,7 +41,7 @@ export async function POST(request: Request): Promise<Response> {
       JSON.stringify({
         level: "warn",
         app: "csp",
-        msg: "csp violation (report-only - nothing was blocked)",
+        msg: "csp violation (blocked in production, reported only in development)",
         documentUri: short(report["document-uri"]),
         directive: short(report["violated-directive"] ?? report["effective-directive"], 80),
         blockedUri: short(report["blocked-uri"]),

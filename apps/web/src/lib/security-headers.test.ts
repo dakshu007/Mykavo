@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { securityHeaders, CSP_REPORT_PATH } from "./security-headers";
+import { cspHeader, securityHeaders, CSP_REPORT_PATH } from "./security-headers";
 
 const byKey = (key: string) =>
   securityHeaders.find((h) => h.key.toLowerCase() === key.toLowerCase())?.value;
 
+// Tests run outside production, where the header is report-only; the
+// production header is checked through cspHeader("production").
 const csp = byKey("Content-Security-Policy-Report-Only") ?? "";
+const enforced = cspHeader("production");
 
 describe("security headers", () => {
   // The regression this file exists for: next.config returned [] in
@@ -44,11 +47,29 @@ describe("security headers", () => {
 });
 
 describe("content security policy", () => {
-  // Enforcing on the first deploy risks taking the whole site down over one
-  // forgotten asset. Report-only first, tighten from real violations.
-  it("ships report-only, not enforcing", () => {
+  // Enforced in production since November 2026, after a report-only period.
+  // Development stays report-only: the dev server's tooling uses eval.
+  it("enforces in production and only reports in development", () => {
+    expect(enforced.key).toBe("Content-Security-Policy");
+    expect(enforced.value).toContain(`report-uri ${CSP_REPORT_PATH}`);
+    expect(enforced.value).toContain("upgrade-insecure-requests");
+    expect(cspHeader("development").key).toBe("Content-Security-Policy-Report-Only");
     expect(byKey("Content-Security-Policy")).toBeUndefined();
-    expect(csp).toContain(`report-uri ${CSP_REPORT_PATH}`);
+  });
+
+  // The analytics hosts real violation reports showed GA4 posting to.
+  it("lets Google Analytics send its data", () => {
+    for (const host of ["https://analytics.google.com", "https://stats.g.doubleclick.net", "https://*.google-analytics.com"]) {
+      expect(enforced.value).toContain(host);
+    }
+  });
+
+  // Approve forms (WordPress, AI assistant connect) redirect to the
+  // customer's own site after posting, and Chrome checks that redirect
+  // against form-action: 'self' alone would break every connection.
+  it("lets approve forms redirect to the customer's site, but no other scheme", () => {
+    const formAction = enforced.value.split(";").find((d) => d.trim().startsWith("form-action")) ?? "";
+    expect(formAction.trim().split(/\s+/).slice(1).sort()).toEqual(["'self'", "http:", "https:"]);
   });
 
   it("locks down the directives that work even with 'unsafe-inline' scripts", () => {
