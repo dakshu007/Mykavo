@@ -1,10 +1,15 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, PenLine } from "lucide-react";
 import { GoogleCta } from "./google-cta";
 import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
 import { getPlan } from "@/config/plans";
 import { LandingAuditForm } from "./audit-form";
+import { Suspense } from "react";
 import { HeroWordPress } from "./hero-wordpress";
+import { HeroAiWriter } from "./hero-ai-writer";
+import { Snowfall } from "./snowfall";
+import { HeroWpReviews } from "./wp-reviews";
 import { HeroStoryAnimation } from "./hero-story-animation";
 import { fontDisplay } from "./style";
 
@@ -17,11 +22,22 @@ import { fontDisplay } from "./style";
 export function LandingHero() {
   return (
     <section className="relative overflow-hidden px-5 pb-16 pt-32 sm:pt-40 lg:px-8 lg:pt-28 [@media(min-width:1024px)_and_(max-height:780px)]:pt-[6.5rem] [@media(min-width:1024px)_and_(max-height:690px)]:pt-[5.75rem]">
-      {/* Faint dot grid backdrop */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle,#15151514_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent)]"
-      />
+      {/* Winter-into-spring backdrop: a hazy sky over snow-dusted hills and
+          lavender, with soft snow falling in front (components/landing/
+          snowfall). The image fades into the page canvas at the bottom, so
+          the story animation below sits on the usual paper. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[1240px] sm:h-[1180px] lg:h-[1120px]">
+        <Image
+          src="/home/winter-spring.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-bottom"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(251,250,243,0.35)_0%,rgba(251,250,243,0)_30%,rgba(251,250,243,0)_70%,#FBFAF3_100%)]" />
+        <Snowfall />
+      </div>
 
       <div className="relative mx-auto max-w-6xl">
         {/* Launch pill: the AI Keywords & Blog Writer. A link, not a badge -
@@ -88,17 +104,25 @@ export function LandingHero() {
           Blog Writer, in one line: monitoring protects the traffic you have,
           AI Keywords helps you win more.
         */}
-        <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#6B6B60] sm:text-lg lg:mt-4 lg:max-w-3xl [@media(min-width:1024px)_and_(max-height:780px)]:mt-3 [@media(min-width:1024px)_and_(max-height:780px)]:text-base">
+        <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#45453f] sm:text-lg lg:mt-4 lg:max-w-3xl [@media(min-width:1024px)_and_(max-height:780px)]:mt-3 [@media(min-width:1024px)_and_(max-height:780px)]:text-base">
           Pick the pages that matter on every website you manage. MyKavo re-checks them around
           the clock against a known-good baseline and tells you the moment one changes, with
           before-and-after proof and an AI explanation of how to fix it. Then its AI Keywords
           &amp; Blog Writer finds what to write next and drafts the post.
         </p>
 
-        {/* WordPress first (see hero-wordpress.tsx for why); the emailed audit
-            stays one click away for every other kind of site. */}
+        {/* The two halves of MyKavo, side by side: the WordPress plugin
+            (monitoring, see hero-wordpress.tsx for why it leads) and the AI
+            Keywords & Blog Writer (growth). The emailed audit stays one click
+            away for every other kind of site. */}
         <div className="mt-9 lg:mt-6 [@media(min-width:1024px)_and_(max-height:780px)]:mt-5">
-          <HeroWordPress />
+          <div className="mx-auto grid max-w-2xl gap-5 lg:max-w-[1080px] lg:grid-cols-2">
+            <HeroWordPress variant="card" />
+            <HeroAiWriter />
+          </div>
+          <Suspense fallback={null}>
+            <HeroWpReviews />
+          </Suspense>
           <details className="group/audit mx-auto mt-5 max-w-2xl">
             <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1.5 text-[13.5px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
               Not on WordPress? Get a free site audit by email

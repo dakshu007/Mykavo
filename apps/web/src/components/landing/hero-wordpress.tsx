@@ -24,14 +24,26 @@ const STEPS = [
   { icon: BellRing, time: "02:16", text: "“Add to cart” missing on /shop, caused by the WooCommerce update", tone: "alert" },
 ] as const;
 
-export function HeroWordPress() {
+/**
+ * `wide` (default): one card, text left and the example right on laptops.
+ * `card`: a single column, for the hero's two-card row beside the AI Writer;
+ * the reviews then render under the row (HeroWpReviews), not here.
+ */
+export function HeroWordPress({ variant = "wide" }: { variant?: "wide" | "card" }) {
+  const wide = variant === "wide";
   return (
     <>
-      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-[#151515] bg-white p-5 text-left shadow-[5px_5px_0_#151515] sm:p-6 lg:grid lg:max-w-[980px] lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] lg:gap-x-7 lg:px-7 lg:py-6">
+      <div
+        className={
+          wide
+            ? "mx-auto w-full max-w-2xl rounded-2xl border border-[#151515] bg-white p-5 text-left shadow-[5px_5px_0_#151515] sm:p-6 lg:grid lg:max-w-[980px] lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] lg:gap-x-7 lg:px-7 lg:py-6"
+            : "flex h-full flex-col rounded-2xl border border-[#151515] bg-white/95 p-5 text-left shadow-[5px_5px_0_#151515] backdrop-blur sm:p-6"
+        }
+      >
         {/* On wide screens: text and install on the left, the example alert on
             the right, so the whole card (download button included) sits above
             the fold on a laptop. */}
-        <div className="flex items-start gap-3.5 lg:col-start-1 lg:row-start-1">
+        <div className={`flex items-start gap-3.5 ${wide ? "lg:col-start-1 lg:row-start-1" : ""}`}>
           <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#21759B] text-white">
             <WordPressGlyph className="size-6" />
           </span>
@@ -44,7 +56,7 @@ export function HeroWordPress() {
           </div>
         </div>
 
-        <ol className="mt-4 space-y-1.5 rounded-xl bg-[#F6F5EE] p-3.5 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center lg:p-4" aria-label="Example: what happens after an update">
+        <ol className={`mt-4 space-y-1.5 rounded-xl bg-[#F6F5EE] p-3.5 ${wide ? "lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center lg:p-4" : ""}`} aria-label="Example: what happens after an update">
           {STEPS.map((s) => (
             <li key={s.text} className="flex items-start gap-2.5 text-[13px] leading-5">
               <span className="w-11 shrink-0 font-mono text-[11.5px] leading-5 text-[#6B6B60]">{s.time}</span>
@@ -58,7 +70,7 @@ export function HeroWordPress() {
           <li className="pl-[3.4rem] font-mono text-[10.5px] uppercase tracking-[0.14em] text-[#6B6B60]">Example alert</li>
         </ol>
 
-        <div className="lg:col-start-1 lg:row-start-2">
+        <div className={wide ? "lg:col-start-1 lg:row-start-2" : "mt-auto"}>
         <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <WpPluginInstall placement="home_hero" />
           <Link
@@ -75,9 +87,11 @@ export function HeroWordPress() {
         </div>
       </div>
       {/* Real 4 and 5 star reviews from WordPress.org, once there are some. */}
-      <Suspense fallback={null}>
-        <HeroWpReviews />
-      </Suspense>
+      {wide ? (
+        <Suspense fallback={null}>
+          <HeroWpReviews />
+        </Suspense>
+      ) : null}
     </>
   );
 }
