@@ -1,60 +1,81 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, PenLine } from "lucide-react";
-import { GoogleCta } from "./google-cta";
+import { ArrowDown, ArrowRight, PenLine } from "lucide-react";
 import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
+import { WordPressGlyph } from "@/components/brand/integration-icons";
 import { getPlan } from "@/config/plans";
 import { LandingAuditForm } from "./audit-form";
-import { Suspense } from "react";
-import { HeroWordPress } from "./hero-wordpress";
+import { GoogleButton } from "./google-cta";
 import { HeroAiWriter } from "./hero-ai-writer";
-import { Snowfall } from "./snowfall";
-import { HeroWpReviews } from "./wp-reviews";
 import { HeroStoryAnimation } from "./hero-story-animation";
+import { HeroWordPress } from "./hero-wordpress";
+import { Snowfall } from "./snowfall";
 import { fontDisplay } from "./style";
+import { HeroWpReviews } from "./wp-reviews";
 
 /**
- * Bright hero (playground/ballpark-style): badge pill, huge Poppins headline
- * with a gold highlighter sweep, honest sub-copy, the product-led URL input,
- * CTA pair, and the browser-chrome dashboard mock as the centerpiece.
- * Fully static server markup - fast, no scroll hijacking.
+ * Home hero, in two parts.
+ *
+ * 1. The scene: a full-screen winter-into-spring landscape with snow
+ *    falling. The sky carries only what a first-time visitor needs (what's
+ *    new, the category headline, one line of copy, one call to action); the
+ *    two halves of MyKavo sit on the hills as two slim glass tiles, so the
+ *    picture stays visible instead of being covered by cards.
+ * 2. "Pick where to start": the full WordPress plugin and AI Blog Writer
+ *    cards, on the paper canvas just below the scene, then the story
+ *    animation of how every scan works.
  */
+
+const TILES = [
+  {
+    href: "/wordpress-plugin?from=home_hero_tile",
+    title: "Free WordPress plugin",
+    sub: "A check after every update",
+    icon: <WordPressGlyph className="size-5" />,
+    iconClass: "bg-[#21759B] text-white",
+  },
+  {
+    href: "/ai-blog-writer?from=home_hero_tile",
+    title: "AI Blog Writer",
+    sub: "Posts built to rank",
+    icon: <PenLine className="size-[18px]" aria-hidden />,
+    iconClass: "bg-[#FFD400] text-[#151515] ring-1 ring-[#151515]/80",
+    badge: "New",
+  },
+] as const;
+
 export function LandingHero() {
   return (
-    <section className="relative overflow-hidden px-5 pb-16 pt-32 sm:pt-40 lg:px-8 lg:pt-28 [@media(min-width:1024px)_and_(max-height:780px)]:pt-[6.5rem] [@media(min-width:1024px)_and_(max-height:690px)]:pt-[5.75rem]">
-      {/* Winter-into-spring backdrop: a hazy sky over snow-dusted hills and
-          lavender, with soft snow falling in front (components/landing/
-          snowfall). The image fades into the page canvas at the bottom, so
-          the story animation below sits on the usual paper. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[1240px] sm:h-[1180px] lg:h-[1120px]">
+    <>
+      <section
+        data-track-section="hero"
+        className="relative isolate flex min-h-[max(calc(100svh-var(--promo-h,0px)),660px)] flex-col overflow-hidden px-5 pb-6 pt-24 sm:pb-8 sm:pt-32 lg:px-8 lg:pt-28"
+      >
         <Image
           src="/home/winter-spring.webp"
           alt=""
           fill
           priority
           sizes="100vw"
-          className="object-cover object-bottom"
+          className="-z-30 object-cover object-[50%_88%]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(251,250,243,0.35)_0%,rgba(251,250,243,0)_30%,rgba(251,250,243,0)_70%,#FBFAF3_100%)]" />
-        <Snowfall />
-      </div>
+        {/* Brighten the sky behind the headline, keep the hills clear. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(ellipse_75%_55%_at_50%_30%,rgba(251,250,243,0.72),rgba(251,250,243,0.25)_55%,transparent_75%)]"
+        />
+        <Snowfall className="-z-10" />
 
-      <div className="relative mx-auto max-w-6xl">
-        {/* Launch pill: the AI Keywords & Blog Writer. A link, not a badge -
-            the one place on the page that says what's new, and where to see
-            it, on the feature's own page. (The Claude and ChatGPT connector
-            keeps its "MCP" link in the nav.) */}
-        <div className="flex justify-center">
+        <div className="relative mx-auto w-full max-w-5xl text-center">
           <Link
             href="/ai-blog-writer"
-            className="hero-launch group relative flex items-center gap-2.5 overflow-hidden rounded-full border border-[#151515] bg-white py-2 pl-3.5 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
+            className="hero-launch group relative inline-flex items-center gap-2.5 overflow-hidden rounded-full border border-white/80 bg-white/70 py-2 pl-3.5 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[0_8px_30px_-12px_rgba(21,21,21,0.25)] backdrop-blur-md transition-transform hover:-translate-y-0.5"
           >
-            <PenLine className="size-3.5 shrink-0" aria-hidden />
-            <span className="sm:hidden">New: AI Keywords &amp; Blog Writer</span>
-            <span className="hidden sm:inline">New: AI Keywords &amp; Blog Writer, know what to write next</span>
-            <span className="hidden items-center gap-1 text-[#151515]/60 transition-colors group-hover:text-[#151515] sm:inline-flex">
-              See how <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-            </span>
+            <span className="rounded-full bg-[#151515] px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.08em] text-[#FFD400]">New</span>
+            <span className="sm:hidden">AI Keywords &amp; Blog Writer</span>
+            <span className="hidden sm:inline">AI Keywords &amp; Blog Writer: know what to write next</span>
+            <ArrowRight className="size-3.5 text-[#151515]/60 transition-transform group-hover:translate-x-0.5" aria-hidden />
             <span aria-hidden className="hero-launch-shine pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-[#FFD400]/40 to-transparent" />
           </Link>
           <style>{`
@@ -62,106 +83,100 @@ export function LandingHero() {
             .hero-launch-shine { animation: hero-launch-shine 4.5s ease-in-out 1.5s infinite; }
             @media (prefers-reduced-motion: reduce) { .hero-launch-shine { display: none; } }
           `}</style>
+
+          {/* The headline names the category; "page by page" is the
+              differentiator (the unit of work is a page, not a whole site). */}
+          <h1 className={`${fontDisplay} mx-auto mt-6 max-w-4xl text-[40px] leading-[1.02] text-[#151515] sm:mt-7 sm:text-6xl lg:text-[76px]`}>
+            Website monitoring,
+            <br />
+            <span className="relative inline-block whitespace-nowrap">
+              <span aria-hidden className="absolute inset-x-[-6px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]" />
+              <span className="relative">page by page.</span>
+            </span>
+          </h1>
+
+          <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-6 text-[#33332d] sm:mt-6 sm:text-[18px] sm:leading-7">
+            MyKavo re-checks the pages that matter on every website you manage and tells you the moment one changes, with
+            before-and-after proof.<span className="hidden sm:inline"> Then its AI Blog Writer finds what to write next and drafts the post.</span>
+          </p>
+
+          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:mt-8 sm:flex-row">
+            <GoogleButton label="Start monitoring free" from="home_hero" />
+            <a
+              href="#start"
+              className="hidden h-13 items-center gap-2 rounded-full border border-white/80 bg-white/60 px-6 text-[15px] font-semibold text-[#151515] backdrop-blur-md transition-colors hover:bg-white/85 sm:inline-flex"
+            >
+              Pick where to start
+              <ArrowDown className="size-4" aria-hidden />
+            </a>
+          </div>
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[#33332d] [text-shadow:0_1px_8px_rgba(255,255,255,0.9)] sm:text-[11.5px]">
+            Free plan · No credit card<span className="hidden sm:inline"> · Monitoring in minutes</span>
+          </p>
         </div>
 
-        {/*
-          THE HEADLINE NAMES THE CATEGORY.
+        {/* The two halves of MyKavo, resting on the hills. */}
+        <div className="relative mx-auto mt-auto grid w-full max-w-3xl gap-2.5 pt-10 sm:grid-cols-2 sm:gap-3 sm:pt-14">
+          {TILES.map((t) => (
+            <Link
+              key={t.title}
+              href={t.href}
+              className="group flex items-center gap-3.5 rounded-2xl border border-white/75 bg-white/55 px-4 py-3.5 text-left shadow-[0_16px_40px_-20px_rgba(21,40,60,0.45)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/75"
+            >
+              <span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl ${t.iconClass}`}>{t.icon}</span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-[15px] font-semibold text-[#151515]">
+                  {t.title}
+                  {"badge" in t ? (
+                    <span className="rounded-full bg-[#151515] px-1.5 py-px font-mono text-[9px] uppercase tracking-[0.08em] text-[#FFD400]">{t.badge}</span>
+                  ) : null}
+                </span>
+                <span className="block text-[13px] text-[#3d3d38]">{t.sub}</span>
+              </span>
+              <ArrowRight className="size-4 shrink-0 text-[#151515]/60 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </Link>
+          ))}
+        </div>
+      </section>
 
-          It used to be the brand tagline - "Know what changed. Fix what
-          matters." - which is a good tagline and a bad headline: the largest
-          text on the page told a first-time visitor nothing about what this
-          product IS. Readers said so directly. The category now lives in the
-          headline ("website monitoring"), the differentiator in the gold
-          ("page by page" - the unit of work is a page, not a whole site), and
-          the tagline keeps its home in the nav, the footer and every email.
-        */}
-        <h1
-          className={`${fontDisplay} mx-auto mt-8 max-w-4xl text-center text-[44px] leading-[1.04] text-[#151515] sm:text-6xl lg:mt-5 lg:text-[68px] [@media(min-width:1024px)_and_(max-height:780px)]:text-[54px] [@media(min-width:1024px)_and_(max-height:690px)]:mt-4 [@media(min-width:1024px)_and_(max-height:690px)]:text-[48px]`}
-        >
-          Website monitoring,
-          <br />
-          <span className="relative inline-block whitespace-nowrap">
-            <span
-              aria-hidden
-              className="absolute inset-x-[-6px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]"
-            />
-            <span className="relative">page by page.</span>
-          </span>
-        </h1>
-
-        {/*
-          One job, stated once, in plain words.
-
-          This used to enumerate seven change categories in a single breath -
-          "visual, SEO, content, link, script, performance, and conversion" -
-          which is the fastest way to read as seven products rather than one.
-          The categories are genuinely worth knowing about, so they still get a
-          section of their own further down, under a heading that frames them
-          correctly: eight kinds of change, ONE monitoring layer. Here the copy
-          carries the loop, which is the thing a first-time visitor has to
-          understand before any of the breadth means anything. The last
-          sentence names the second half of the product, the AI Keywords &
-          Blog Writer, in one line: monitoring protects the traffic you have,
-          AI Keywords helps you win more.
-        */}
-        <p className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-7 text-[#45453f] sm:text-lg lg:mt-4 lg:max-w-3xl [@media(min-width:1024px)_and_(max-height:780px)]:mt-3 [@media(min-width:1024px)_and_(max-height:780px)]:text-base">
-          Pick the pages that matter on every website you manage. MyKavo re-checks them around
-          the clock against a known-good baseline and tells you the moment one changes, with
-          before-and-after proof and an AI explanation of how to fix it. Then its AI Keywords
-          &amp; Blog Writer finds what to write next and drafts the post.
-        </p>
-
-        {/* The two halves of MyKavo, side by side: the WordPress plugin
-            (monitoring, see hero-wordpress.tsx for why it leads) and the AI
-            Keywords & Blog Writer (growth). The emailed audit stays one click
-            away for every other kind of site. */}
-        <div className="mt-9 lg:mt-6 [@media(min-width:1024px)_and_(max-height:780px)]:mt-5">
-          <div className="mx-auto grid max-w-2xl gap-5 lg:max-w-[1080px] lg:grid-cols-2">
+      {/* Pick where to start: the full cards, on the paper canvas. */}
+      <section id="start" data-track-section="pick-where-to-start" className="relative scroll-mt-24 px-5 pb-16 pt-16 lg:px-8 lg:pt-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center">
+            <p className="font-mono text-[11.5px] font-semibold uppercase tracking-[0.22em] text-[#8a6d00]">Pick where to start</p>
+            <h2 className={`${fontDisplay} mx-auto mt-3 max-w-3xl text-[34px] leading-[1.08] text-[#151515] sm:text-[44px]`}>
+              Protect the traffic you have. Win the traffic you don&apos;t.
+            </h2>
+          </div>
+          <div className="mx-auto mt-10 grid max-w-2xl gap-5 lg:max-w-[1080px] lg:grid-cols-2">
             <HeroWordPress variant="card" />
             <HeroAiWriter />
           </div>
           <Suspense fallback={null}>
             <HeroWpReviews />
           </Suspense>
-          <details className="group/audit mx-auto mt-5 max-w-2xl">
+          <details className="group/audit mx-auto mt-6 max-w-2xl">
             <summary className="mx-auto flex w-fit cursor-pointer list-none items-center gap-1.5 text-[13.5px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
               Not on WordPress? Get a free site audit by email
             </summary>
             <div className="mt-4">
               <LandingAuditForm />
               <p className="mt-3 text-center text-[13px] text-[#6B6B60]">
-                Up to {getPlan("free").limits.siteAuditPages} pages, {AUDIT_CHECK_COUNT} checks, emailed to you in
-                minutes. No signup needed.
+                Up to {getPlan("free").limits.siteAuditPages} pages, {AUDIT_CHECK_COUNT} checks, emailed to you in minutes. No
+                signup needed.
               </p>
             </div>
           </details>
-        </div>
 
-        {/* Google first: one tap instead of a form is the single biggest
-            reduction in signup friction available, and the link starts the
-            handoff rather than landing on a form that merely offers it. */}
-        <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row sm:items-start">
-          <GoogleCta />
-          <Link
-            href="/#how-it-works"
-            className="inline-flex h-13 items-center gap-2 rounded-full border border-[#151515]/20 bg-white px-7 text-sm font-semibold text-[#151515] transition-colors hover:border-[#151515]/40"
-          >
-            See How MyKavo Works
-          </Link>
+          {/* How MyKavo works, as one loop: baseline, scan, compare, alert, resolve. */}
+          <div className="relative mx-auto mt-16 max-w-5xl">
+            <HeroStoryAnimation lazy />
+            <p className="mt-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[#6B6B60]">
+              Illustrative example · how every scan works
+            </p>
+          </div>
         </div>
-
-        <p className="mt-5 text-center font-mono text-[11.5px] uppercase tracking-[0.14em] text-[#6B6B60]">
-          Free plan · No credit card · Monitoring in minutes
-        </p>
-
-        {/* How MyKavo works, as one loop: baseline, scan, compare, alert, resolve. */}
-        <div className="relative mx-auto mt-14 max-w-5xl">
-          <HeroStoryAnimation lazy />
-          <p className="mt-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[#6B6B60]">
-            Illustrative example · how every scan works
-          </p>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
