@@ -376,10 +376,10 @@ export const pagesA: WriterPage[] = [
     capsule:
       "MyKavo is an AI content writer built for one job: SEO blog posts for your own website. Instead of filling a calendar with generic topics, it plans from your Google Search Console data, Google suggestions and today's results, ranks what to write first, and writes each post with its title, meta, FAQ and schema. It does not write ads, emails or social posts.",
     widget: {
-      kind: "topics",
-      title: "Find topics people really search for",
+      kind: "grader",
+      title: "Grade any draft in seconds",
       intro:
-        "Type a topic from your business. You get live Google suggestions, the exact phrases people type, grouped into post ideas. This is the raw material MyKavo turns into a ranked content plan.",
+        "Paste a draft from MyKavo, another tool or your own keyboard, and see how it handles the basics a post needs to compete in search. Nothing you paste leaves your browser.",
     },
     sections: [
       {

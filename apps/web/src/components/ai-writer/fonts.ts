@@ -19,6 +19,9 @@ export const bodoni = Bodoni_Moda({
   style: ["italic", "normal"],
   weight: ["400", "500"],
   display: "swap",
+  // The serif lines are small and secondary: let the giant Spartan words
+  // (the LCP element) take the early bandwidth instead.
+  preload: false,
   variable: "--font-bodoni",
 });
 

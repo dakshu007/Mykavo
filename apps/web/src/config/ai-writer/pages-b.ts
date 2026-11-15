@@ -189,10 +189,10 @@ export const pagesB: WriterPage[] = [
     capsule:
       "MyKavo is a free AI blog writer with a plan that stays free: one keyword report and one complete SEO post every month, no card required, no expiry. The post includes a title, slug, meta description, article, FAQ, JSON-LD and review notes. The free plan also monitors one website for changes. Paid plans start at $7 a month.",
     widget: {
-      kind: "topics",
-      title: "Pick your free post",
+      kind: "anatomy",
+      title: "See what your free post includes",
       intro:
-        "You get one free post a month, so make it count. Type a topic and see real searches people type into Google, grouped into posts. Choose the one your site has the best shot at.",
+        "Your free post is the full package, not a sample. Click through the eight parts every MyKavo post includes, free plan or paid.",
     },
     sections: [
       {

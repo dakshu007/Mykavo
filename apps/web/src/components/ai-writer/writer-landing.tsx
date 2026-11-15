@@ -13,6 +13,7 @@ import { breadcrumbList, faqPage, jsonLdScript, ORGANIZATION_ID, organizationNod
 import { withSocial } from "@/lib/social-metadata";
 import { bodoni, fontGiant, fontSerif, spartan } from "./fonts";
 import { PostAnatomy } from "./post-anatomy";
+import { MotionStory } from "./motion-story";
 import { PostGrader } from "./post-grader";
 import { SkyBand, SkyHero } from "./sky-hero";
 import { TopicFinder } from "./topic-finder";
@@ -27,6 +28,20 @@ export function writerMetadata(page: WriterPage): Metadata {
     openGraph: { title: page.metaTitle, description: page.metaDescription, url: page.path, type: "website" },
   });
 }
+
+/** Topics the hero search types out, per page, so each page speaks to its reader. */
+const SEARCH_EXAMPLES: Record<string, string[]> = {
+  "/ai-blog-writer": ["wordpress speed", "home workouts", "email marketing", "dog training", "coffee shop"],
+  "/best-ai-blog-writer": ["meal prep", "personal finance", "yoga for beginners", "dog training"],
+  "/seo-blog-writer": ["local seo", "shopify seo", "seo for dentists", "wordpress speed"],
+  "/ai-content-writer": ["email marketing", "saas onboarding", "interior design", "real estate"],
+  "/ai-article-writer": ["home workouts", "budget travel", "gardening", "skin care"],
+  "/free-ai-blog-writer": ["coffee shop", "bakery", "photography", "yoga"],
+  "/blog-post-generator": ["wedding cakes", "dog training", "bike repair", "cold brew"],
+  "/ai-blog-writer-for-wordpress": ["woocommerce", "wordpress speed", "elementor", "wordpress security"],
+  "/alternatives/jasper-alternative": ["b2b marketing", "saas pricing", "email marketing", "content strategy"],
+  "/alternatives/surfer-seo-alternative": ["on page seo", "keyword research", "link building", "technical seo"],
+};
 
 /** "seo-blog-writer" from "/seo-blog-writer", for CTA placements and analytics. */
 function slugOf(path: string): string {
@@ -84,7 +99,7 @@ function jsonLd(page: WriterPage) {
 
 function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
-    <p className={`font-mono text-[11.5px] font-semibold uppercase tracking-[0.22em] ${dark ? "text-[#FFD400]" : "text-[#8a6d00]"}`}>
+    <p className={`font-mono text-[11.5px] font-semibold uppercase tracking-[0.22em] ${dark ? "text-[#FFD400]" : "text-[#6b5500]"}`}>
       {children}
     </p>
   );
@@ -114,11 +129,11 @@ export function WriterLanding({ page }: { page: WriterPage }) {
       ))}
       <LandingNav />
       <main>
-        <SkyHero hero={page.hero} from={from} />
+        <SkyHero hero={page.hero} from={from} examples={SEARCH_EXAMPLES[page.path] ?? SEARCH_EXAMPLES["/ai-blog-writer"]} />
 
         {/* The direct answer, then the four facts that make it "built to rank". */}
         <section id="what-it-is" className="relative border-b border-black/10">
-          <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:px-8 lg:py-20">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-5 py-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:px-8 lg:py-20">
             <div>
               {page.breadcrumb ? (
                 <nav aria-label="Breadcrumb" className="mb-4 text-[13px] text-[#6B6B60]">
@@ -147,6 +162,22 @@ export function WriterLanding({ page }: { page: WriterPage }) {
           </div>
         </section>
 
+        {/* How it works, told as you scroll. */}
+        <section id="how-it-works" data-track-section="how-it-works" className="scroll-mt-24 border-b border-black/10 bg-[#F3F1E6]">
+          <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-24">
+            <div className="mx-auto mb-14 max-w-3xl text-center lg:mb-6">
+              <Eyebrow>How it works</Eyebrow>
+              <h2 className={`${fontGiant} mt-4 text-[clamp(36px,5.2vw,68px)] font-extrabold uppercase leading-[0.92] tracking-[-0.02em]`}>
+                From search to post, in five steps
+              </h2>
+              <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-[#4a4a42]">
+                Scroll through what happens between &ldquo;what should I write?&rdquo; and a finished draft in your editor.
+              </p>
+            </div>
+            <MotionStory />
+          </div>
+        </section>
+
         {/* The interactive tool. */}
         <section id="try-it" data-track-section="try-it" className="scroll-mt-24 bg-[#151515] text-white">
           <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-24">
@@ -169,13 +200,17 @@ export function WriterLanding({ page }: { page: WriterPage }) {
             <section
               key={s.id}
               id={s.id}
-              className="grid gap-8 border-b border-black/10 py-16 last:border-b-0 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16 lg:py-24"
+              className="grid grid-cols-1 gap-8 border-b border-black/10 py-16 last:border-b-0 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16 lg:py-24"
             >
               <div className={i % 2 === 1 ? "lg:order-2" : ""}>
                 <div className="flex items-center gap-3">
-                  <span className={`${fontGiant} text-[56px] font-extrabold leading-none text-[#FFD400] [-webkit-text-stroke:1.5px_#151515]`}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                  {/* Decorative ordinal, drawn as generated content: the black
+                      stroke makes it readable, and screen readers skip it. */}
+                  <span
+                    aria-hidden
+                    data-n={String(i + 1).padStart(2, "0")}
+                    className={`${fontGiant} text-[56px] font-extrabold leading-none text-[#FFD400] [-webkit-text-stroke:1.5px_#151515] before:content-[attr(data-n)]`}
+                  />
                   <Eyebrow>{s.eyebrow}</Eyebrow>
                 </div>
                 <h2 className="mt-5 text-[clamp(30px,3.6vw,46px)] font-semibold leading-[1.08] tracking-[-0.02em]">{s.title}</h2>

@@ -112,7 +112,7 @@ export function PostAnatomy({ from }: { from: string }) {
   const r = { active, onPick: pick };
 
   return (
-    <div className="grid gap-5 rounded-[28px] border border-white/10 bg-[#1d1d1b] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-5 rounded-[28px] border border-white/10 bg-[#1d1d1b] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
       <div className="min-w-0 rounded-2xl border border-white/10 bg-[#121211] p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex gap-1.5" aria-hidden>
@@ -120,7 +120,7 @@ export function PostAnatomy({ from }: { from: string }) {
             <span className="size-2.5 rounded-full bg-white/15" />
             <span className="size-2.5 rounded-full bg-white/15" />
           </div>
-          <span className="text-[11px] uppercase tracking-[0.16em] text-white/40">Illustration of a MyKavo draft</span>
+          <span className="text-[11px] uppercase tracking-[0.16em] text-white/65">Illustration of a MyKavo draft</span>
         </div>
         <div className="space-y-3 text-white">
           <Region id="title" {...r}>
@@ -187,7 +187,7 @@ export function PostAnatomy({ from }: { from: string }) {
             {part.why}
           </p>
         </div>
-        <p className="mt-4 text-[13px] text-white/50">Every MyKavo post includes all eight parts. A chatbot prompt usually gives you only the article.</p>
+        <p className="mt-4 text-[13px] text-white/65">Every MyKavo post includes all eight parts. A chatbot prompt usually gives you only the article.</p>
       </div>
     </div>
   );

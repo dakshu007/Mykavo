@@ -143,7 +143,7 @@ export function LandingHero() {
       <section id="start" data-track-section="pick-where-to-start" className="relative scroll-mt-24 px-5 pb-16 pt-16 lg:px-8 lg:pt-20">
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
-            <p className="font-mono text-[11.5px] font-semibold uppercase tracking-[0.22em] text-[#8a6d00]">Pick where to start</p>
+            <p className="font-mono text-[11.5px] font-semibold uppercase tracking-[0.22em] text-[#6b5500]">Pick where to start</p>
             <h2 className={`${fontDisplay} mx-auto mt-3 max-w-3xl text-[34px] leading-[1.08] text-[#151515] sm:text-[44px]`}>
               Protect the traffic you have. Win the traffic you don&apos;t.
             </h2>

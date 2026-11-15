@@ -35,10 +35,10 @@ export const pagesC: WriterPage[] = [
     capsule:
       "MyKavo is an AI blog writer for WordPress that starts from your own Search Console data, Google suggestions and today's results, writes the complete post, and saves it to WordPress as a draft through the free MyKavo plugin. It never publishes on its own. You review the draft in WP Admin and publish when it is ready. The free plan includes one post a month.",
     widget: {
-      kind: "topics",
-      title: "Find your next WordPress post",
+      kind: "grader",
+      title: "Check a post before it reaches WordPress",
       intro:
-        "Type what your WordPress site is about. These are real searches people type into Google right now, grouped into posts. Pick one and MyKavo writes it, ready for your drafts.",
+        "Paste any draft and see how it handles the basics: a short answer up top, clear sections, an FAQ and links. It runs in your browser, nothing is sent anywhere.",
     },
     sections: [
       {

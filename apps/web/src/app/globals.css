@@ -994,17 +994,17 @@ html[data-promo="black-friday"] body:has([data-landing-nav])::before {
   .cookie-banner { animation: none; }
 }
 
-/* AI Writer sky hero (components/ai-writer/sky-hero.tsx): sky and its
-   front cloud bank pan together (so the cut-out stays aligned), the glass
-   chips float. Off for
+/* AI Writer sky (components/ai-writer/sky-scene.tsx, motion-story.tsx):
+   clouds drift across the sky, scenes rise in step by step. Off for
    reduced motion. */
-@keyframes sky-drift { from { transform: scale(1.06) translateX(-1.2%); } to { transform: scale(1.06) translateX(1.2%); } }
-@keyframes sky-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes sky-drift-x { from { transform: translate3d(-45vw, 0, 0); } to { transform: translate3d(110vw, 0, 0); } }
+@keyframes ms-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes ms-scan { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
 @keyframes anatomy-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.sky-hero .sky-front { transform-origin: 50% 100%; animation: sky-drift 26s ease-in-out infinite alternate; }
-.sky-hero .sky-back { transform-origin: 50% 100%; animation: sky-drift 26s ease-in-out infinite alternate; }
-.sky-chip { animation: sky-float 7s ease-in-out infinite; }
+.sky-drift { animation-name: sky-drift-x; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform; }
+.ms-in { animation: ms-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ms-scan > span { animation: ms-scan 1.4s ease-in-out infinite; }
 .anatomy-panel { animation: anatomy-in 260ms ease-out both; }
 @media (prefers-reduced-motion: reduce) {
-  .sky-hero .sky-front, .sky-hero .sky-back, .sky-chip, .anatomy-panel { animation: none; }
+  .sky-drift, .ms-in, .ms-scan > span, .anatomy-panel { animation: none; }
 }

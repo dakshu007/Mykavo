@@ -31,7 +31,7 @@ function ScoreRing({ score }: { score: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[38px] font-semibold leading-none text-white">{score}</span>
-        <span className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/50">of 100</span>
+        <span className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/65">of 100</span>
       </div>
     </div>
   );
@@ -56,7 +56,7 @@ export function PostGrader({ from }: { from: string }) {
   };
 
   return (
-    <div className="grid gap-5 rounded-[28px] border border-white/10 bg-[#1d1d1b] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-5 rounded-[28px] border border-white/10 bg-[#1d1d1b] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-3">
         <label className="block">
           <span className="text-[13px] font-medium text-white/70">The search this post targets</span>
@@ -88,7 +88,7 @@ export function PostGrader({ from }: { from: string }) {
             className="mt-1.5 min-h-[300px] w-full flex-1 resize-y rounded-xl border border-white/15 bg-white/[0.06] p-4 font-mono text-[13px] leading-relaxed text-white/90 outline-none focus-visible:border-[#FFD400] focus-visible:ring-2 focus-visible:ring-[#FFD400]/30"
           />
         </label>
-        <p className="text-[12.5px] text-white/45">Checked in your browser. Nothing you paste is sent anywhere.</p>
+        <p className="text-[12.5px] text-white/60">Checked in your browser. Nothing you paste is sent anywhere.</p>
       </div>
 
       <div className="min-w-0" aria-live="polite">

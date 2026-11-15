@@ -31,10 +31,10 @@ export const hubPage: WriterPage = {
   capsule:
     "MyKavo's AI blog writer finds the searches your site can actually win, from your own Google Search Console data, Google suggestions and today's live results, and then writes the complete SEO post in one click: title, URL slug, meta description, article, FAQ and JSON-LD. You edit it and publish it. The free plan includes one post a month.",
   widget: {
-    kind: "topics",
-    title: "Find your next post, live",
-    intro:
-      "Type any topic. These are real searches people type into Google right now, grouped into the posts they ask for. Pick one and MyKavo writes it.",
+    kind: "anatomy",
+      title: "Take a finished post apart",
+      intro:
+        "Every MyKavo post ships with eight parts that help it compete in search. Click through each one to see what it does and why it matters.",
   },
   sections: [
     {

@@ -16,7 +16,7 @@ const GROUPS: { kind: TopicKind; title: string; hint: string; Icon: typeof HelpC
 
 function Dots({ value }: { value: number }) {
   return (
-    <span className="inline-flex shrink-0 gap-0.5" aria-label={`Popularity ${value} of 5`} title={`Popularity ${value} of 5 (from Google autocomplete, not search volume)`}>
+    <span role="img" className="inline-flex shrink-0 gap-0.5" aria-label={`Popularity ${value} of 5`} title={`Popularity ${value} of 5 (from Google autocomplete, not search volume)`}>
       {[1, 2, 3, 4, 5].map((n) => (
         <span key={n} className={`size-1.5 rounded-full ${n <= value ? "bg-[#FFD400]" : "bg-white/20"}`} />
       ))}
@@ -144,16 +144,16 @@ export function TopicFinder({ from }: { from: string }) {
               <span className="font-semibold text-white">{data.total} real searches</span> around &ldquo;{data.seed}&rdquo;. Dots show
               how strongly Google suggests each one (not search volume).
             </p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               {GROUPS.map(({ kind, title, hint, Icon }) => {
                 const items = data[kind];
                 if (items.length === 0) return null;
                 return (
-                  <div key={kind} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div key={kind} className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                     <div className="flex items-center gap-2">
                       <Icon className="size-4 text-[#FFD400]" aria-hidden />
                       <p className="text-[14px] font-semibold text-white">{title}</p>
-                      <p className="text-[12.5px] text-white/45">{hint}</p>
+                      <p className="text-[12.5px] text-white/60">{hint}</p>
                     </div>
                     <ul className="mt-3 space-y-1">
                       {items.map((t) => (
