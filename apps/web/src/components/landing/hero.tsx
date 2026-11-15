@@ -1,27 +1,26 @@
 import { Suspense } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, PenLine } from "lucide-react";
 import { AUDIT_CHECK_COUNT } from "@mykavo/seo-audit";
 import { WordPressGlyph } from "@/components/brand/integration-icons";
+import { SKY_BG, SkyScene } from "@/components/ai-writer/sky-scene";
 import { getPlan } from "@/config/plans";
 import { LandingAuditForm } from "./audit-form";
 import { GoogleButton } from "./google-cta";
 import { HeroAiWriter } from "./hero-ai-writer";
 import { HeroStoryAnimation } from "./hero-story-animation";
 import { HeroWordPress } from "./hero-wordpress";
-import { Snowfall } from "./snowfall";
 import { fontDisplay } from "./style";
 import { HeroWpReviews } from "./wp-reviews";
 
 /**
  * Home hero, in two parts.
  *
- * 1. The scene: a full-screen winter-into-spring landscape with snow
- *    falling. The sky carries only what a first-time visitor needs (what's
- *    new, the category headline, one line of copy, one call to action); the
- *    two halves of MyKavo sit on the hills as two slim glass tiles, so the
- *    picture stays visible instead of being covered by cards.
+ * 1. The scene: a full-screen clear blue sky with a few clouds drifting
+ *    across (the same sky as the AI Writer pages). It carries only what a
+ *    first-time visitor needs (what's new, the category headline, one line
+ *    of copy, one call to action); the two halves of MyKavo sit at the
+ *    bottom as two slim glass tiles.
  * 2. "Pick where to start": the full WordPress plugin and AI Blog Writer
  *    cards, on the paper canvas just below the scene, then the story
  *    animation of how every scan works.
@@ -50,22 +49,9 @@ export function LandingHero() {
     <>
       <section
         data-track-section="hero"
-        className="relative isolate flex min-h-[max(calc(100svh-var(--promo-h,0px)),660px)] flex-col overflow-hidden px-5 pb-6 pt-24 sm:pb-8 sm:pt-32 lg:px-8 lg:pt-28"
+        className={`relative isolate flex min-h-[max(calc(100svh-var(--promo-h,0px)),660px)] flex-col overflow-hidden px-5 pb-6 pt-24 sm:pb-8 sm:pt-32 lg:px-8 lg:pt-28 ${SKY_BG}`}
       >
-        <Image
-          src="/home/winter-spring.webp"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="-z-30 object-cover object-[50%_88%]"
-        />
-        {/* Brighten the sky behind the headline, keep the hills clear. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(ellipse_75%_55%_at_50%_30%,rgba(251,250,243,0.72),rgba(251,250,243,0.25)_55%,transparent_75%)]"
-        />
-        <Snowfall className="-z-10" />
+        <SkyScene eager dense />
 
         <div className="relative mx-auto w-full max-w-5xl text-center">
           <Link
@@ -86,16 +72,16 @@ export function LandingHero() {
 
           {/* The headline names the category; "page by page" is the
               differentiator (the unit of work is a page, not a whole site). */}
-          <h1 className={`${fontDisplay} mx-auto mt-6 max-w-4xl text-[40px] leading-[1.02] text-[#151515] sm:mt-7 sm:text-6xl lg:text-[76px]`}>
+          <h1 className={`${fontDisplay} mx-auto mt-6 max-w-4xl text-[40px] leading-[1.02] text-white [text-shadow:0_2px_24px_rgba(4,24,70,0.4)] sm:mt-7 sm:text-6xl lg:text-[76px]`}>
             Website monitoring,
             <br />
             <span className="relative inline-block whitespace-nowrap">
               <span aria-hidden className="absolute inset-x-[-6px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]" />
-              <span className="relative">page by page.</span>
+              <span className="relative text-[#151515] [text-shadow:none]">page by page.</span>
             </span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-6 text-[#33332d] sm:mt-6 sm:text-[18px] sm:leading-7">
+          <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-6 text-white/95 [text-shadow:0_1px_14px_rgba(4,24,70,0.5)] sm:mt-6 sm:text-[18px] sm:leading-7">
             MyKavo re-checks the pages that matter on every website you manage and tells you the moment one changes, with
             before-and-after proof.<span className="hidden sm:inline"> Then its AI Blog Writer finds what to write next and drafts the post.</span>
           </p>
@@ -104,24 +90,24 @@ export function LandingHero() {
             <GoogleButton label="Start monitoring free" from="home_hero" />
             <a
               href="#start"
-              className="hidden h-13 items-center gap-2 rounded-full border border-white/80 bg-white/60 px-6 text-[15px] font-semibold text-[#151515] backdrop-blur-md transition-colors hover:bg-white/85 sm:inline-flex"
+              className="hidden h-13 items-center gap-2 rounded-full border border-white/80 bg-white/85 px-6 text-[15px] font-semibold text-[#151515] backdrop-blur-md transition-colors hover:bg-white/85 sm:inline-flex"
             >
               Pick where to start
               <ArrowDown className="size-4" aria-hidden />
             </a>
           </div>
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[#33332d] [text-shadow:0_1px_8px_rgba(255,255,255,0.9)] sm:text-[11.5px]">
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-white [text-shadow:0_1px_10px_rgba(4,24,70,0.5)] sm:text-[11.5px]">
             Free plan · No credit card<span className="hidden sm:inline"> · Monitoring in minutes</span>
           </p>
         </div>
 
-        {/* The two halves of MyKavo, resting on the hills. */}
+        {/* The two halves of MyKavo, as glass tiles at the foot of the sky. */}
         <div className="relative mx-auto mt-auto grid w-full max-w-3xl gap-2.5 pt-10 sm:grid-cols-2 sm:gap-3 sm:pt-14">
           {TILES.map((t) => (
             <Link
               key={t.title}
               href={t.href}
-              className="group flex items-center gap-3.5 rounded-2xl border border-white/75 bg-white/55 px-4 py-3.5 text-left shadow-[0_16px_40px_-20px_rgba(21,40,60,0.45)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/75"
+              className="group flex items-center gap-3.5 rounded-2xl border border-white/80 bg-white/80 px-4 py-3.5 text-left shadow-[0_16px_40px_-20px_rgba(21,40,60,0.45)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/95"
             >
               <span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl ${t.iconClass}`}>{t.icon}</span>
               <span className="min-w-0 flex-1">
