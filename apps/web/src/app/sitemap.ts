@@ -4,6 +4,7 @@ import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
 import { TOOLS, TOOLS_HUB_PATH, toolHref } from "@/config/tools";
 import { ALTERNATIVES } from "@/config/alternatives";
+import { WRITER_PAGES } from "@/config/ai-writer";
 import { DOC_SECTIONS, allDocArticles } from "@/config/docs";
 import { embedUrl, getTutorialVideos, watchPath } from "@/lib/youtube";
 import { videoSitemapDescription, xmlEscape } from "@/lib/seo/video-sitemap";
@@ -37,7 +38,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/brand",
     "/site-audit",
     "/ai-website-insights",
-    "/ai-blog-writer",
+    // The AI Writer cluster: /ai-blog-writer and its keyword pages.
+    ...WRITER_PAGES.map((p) => p.path),
     "/ai-assistants",
     "/ai-connector",
     "/black-friday",

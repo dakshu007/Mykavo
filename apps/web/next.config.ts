@@ -22,7 +22,12 @@ const nextConfig: NextConfig = {
   },
   // The page's address as it was first shared, misspelled.
   async redirects() {
-    return [{ source: "/chrom-extension", destination: "/chrome-extension", permanent: true }];
+    return [
+      { source: "/chrom-extension", destination: "/chrome-extension", permanent: true },
+      // The roundup moved to a landing page, so the two stop competing for
+      // "best ai blog writer" (config/ai-writer, /best-ai-blog-writer).
+      { source: "/blog/best-ai-blog-writers", destination: "/best-ai-blog-writer", permanent: true },
+    ];
   },
   // Dev-only CORS so the Expo WEB dev preview (http://localhost:8081) can call
   // the local Next dev server with credentials. No-op in production builds.

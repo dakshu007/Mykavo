@@ -91,8 +91,23 @@ const columns = [
     ],
   },
   {
+    title: "AI Writer",
+    links: [
+      { href: "/ai-blog-writer", label: "AI blog writer" },
+      { href: "/best-ai-blog-writer", label: "Best AI blog writer" },
+      { href: "/seo-blog-writer", label: "SEO blog writer" },
+      { href: "/ai-content-writer", label: "AI content writer" },
+      { href: "/ai-article-writer", label: "AI article writer" },
+      { href: "/free-ai-blog-writer", label: "Free AI blog writer" },
+      { href: "/blog-post-generator", label: "Blog post generator" },
+      { href: "/ai-blog-writer-for-wordpress", label: "AI writer for WordPress" },
+    ],
+  },
+  {
     title: "Alternatives",
     links: [
+      { href: "/alternatives/jasper-alternative", label: "Jasper alternative" },
+      { href: "/alternatives/surfer-seo-alternative", label: "Surfer SEO alternative" },
       { href: "/alternatives/visualping-alternative", label: "Visualping alternative" },
       { href: "/alternatives/hexometer-alternative", label: "Hexometer alternative" },
       { href: "/alternatives/distill-alternative", label: "Distill alternative" },
@@ -127,7 +142,7 @@ export function LandingFooter() {
   return (
     <footer className="overflow-hidden border-t border-black/10 bg-[#F3F1E6]">
       <div className="mx-auto max-w-7xl px-5 pt-16 lg:px-8">
-        <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.15fr_repeat(6,minmax(0,1fr))]">
+        <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.15fr_repeat(7,minmax(0,1fr))]">
           <div>
             <Link href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
               <LogoMark size={28} />

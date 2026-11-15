@@ -56,9 +56,10 @@ The second half of MyKavo, in the dashboard under "AI Keywords":
 - Learns the business: MyKavo reads the website and fills in a short profile (business, audience, services, market and language) that the user confirms
 - Finds what to write: keywords from the site's own Google Search Console data, including "striking distance" searches it already ranks 8 to 20 for, plus Google search suggestions and today's live search results, ranked by what to write first. Search Console is optional but makes results better
 - Writes the post: one click gives a full SEO blog post with a title, URL slug, meta description, the article, an FAQ section and JSON-LD structured data, plus review notes. ${FREE_REWRITES_PER_POST} free rewrite per post
-- Stays a draft: the user edits the post in MyKavo and copies it into their site. MyKavo does not publish to the site automatically (no WordPress auto-publish yet)
+- Stays a draft: the user edits the post in MyKavo, then copies it into any site or, on WordPress, saves it as a WordPress draft through the free MyKavo plugin (collected when WP Admin opens and every 15 minutes; it creates or updates a draft and never publishes). MyKavo never publishes to a site automatically
 - Allowances: ${keywordAllowanceSummary()}. Free shows the top ${FREE_VISIBLE_KEYWORDS} keywords per report; paid plans show all. Allowances refill monthly, on the billing date for paid plans and the signup date on Free
 - It does not track rankings or analyze backlinks
+- Pages: [AI blog writer](${site.url}/ai-blog-writer), [best AI blog writer, an honest guide](${site.url}/best-ai-blog-writer), [SEO blog writer](${site.url}/seo-blog-writer), [AI content writer](${site.url}/ai-content-writer), [AI article writer](${site.url}/ai-article-writer), [free AI blog writer](${site.url}/free-ai-blog-writer), [blog post generator](${site.url}/blog-post-generator), [AI blog writer for WordPress](${site.url}/ai-blog-writer-for-wordpress), [MyKavo vs Jasper](${site.url}/alternatives/jasper-alternative), [MyKavo vs Surfer](${site.url}/alternatives/surfer-seo-alternative)
 
 ## How it works
 

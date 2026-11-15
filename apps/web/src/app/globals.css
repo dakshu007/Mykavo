@@ -993,3 +993,18 @@ html[data-promo="black-friday"] body:has([data-landing-nav])::before {
 @media (prefers-reduced-motion: reduce) {
   .cookie-banner { animation: none; }
 }
+
+/* AI Writer sky hero (components/ai-writer/sky-hero.tsx): sky and its
+   front cloud bank pan together (so the cut-out stays aligned), the glass
+   chips float. Off for
+   reduced motion. */
+@keyframes sky-drift { from { transform: scale(1.06) translateX(-1.2%); } to { transform: scale(1.06) translateX(1.2%); } }
+@keyframes sky-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes anatomy-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.sky-hero .sky-front { transform-origin: 50% 100%; animation: sky-drift 26s ease-in-out infinite alternate; }
+.sky-hero .sky-back { transform-origin: 50% 100%; animation: sky-drift 26s ease-in-out infinite alternate; }
+.sky-chip { animation: sky-float 7s ease-in-out infinite; }
+.anatomy-panel { animation: anatomy-in 260ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .sky-hero .sky-front, .sky-hero .sky-back, .sky-chip, .anatomy-panel { animation: none; }
+}

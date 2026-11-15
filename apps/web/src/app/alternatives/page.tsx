@@ -71,6 +71,32 @@ export default function AlternativesPage() {
         ))}
       </div>
 
+      <h2>Comparing AI blog writers</h2>
+      <p>
+        MyKavo also writes SEO blog posts, from your own Search Console data. These two
+        comparisons cover the writing tools people most often weigh it against, with each
+        vendor&apos;s prices taken from its own pricing page.
+      </p>
+      <div className="not-prose my-8 grid gap-4 sm:grid-cols-2">
+        {[
+          { href: "/alternatives/jasper-alternative", name: "Jasper", title: "A Jasper alternative for SEO blog posts" },
+          { href: "/alternatives/surfer-seo-alternative", name: "Surfer", title: "A Surfer SEO alternative that writes the post" },
+        ].map((a) => (
+          <Link
+            key={a.href}
+            href={a.href}
+            className="group rounded-2xl border border-black/15 bg-white px-6 py-5 no-underline transition-shadow hover:shadow-[4px_4px_0_#151515]"
+          >
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#6B6B60]">vs {a.name}</p>
+            <p className="mt-2 text-[17px] font-semibold leading-snug text-[#151515]">{a.title}</p>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-[14px] font-medium text-[#151515]">
+              Read the comparison
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        ))}
+      </div>
+
       <h2>How these pages are written</h2>
       <p>
         Every claim about another product was taken from that vendor&apos;s own site or a major
