@@ -110,8 +110,16 @@ function Badge({ children }: { children: React.ReactNode }) {
   );
 }
 
-const island =
-  "flex h-14 items-center rounded-2xl border border-[#151515]/10 bg-white/85 shadow-[0_10px_30px_-14px_rgba(21,21,21,0.28)] backdrop-blur-xl";
+/**
+ * The glass islands adapt to what is behind them. Over a coloured hero (the
+ * sky) a light frosted glass is enough; once the page scrolls onto the paper
+ * canvas, white-on-white would vanish, so the islands turn solid with a
+ * crisper border and a deeper two-layer shadow that reads on any background.
+ */
+const islandBase = "flex h-14 items-center rounded-2xl border backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300";
+const islandTop = "border-[#151515]/10 bg-white/85 shadow-[0_10px_30px_-14px_rgba(21,21,21,0.28)]";
+const islandScrolled =
+  "border-[#151515]/15 bg-white shadow-[0_1px_2px_rgba(21,21,21,0.08),0_12px_32px_-8px_rgba(21,21,21,0.32)]";
 
 const topLink =
   "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[14.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]";
@@ -206,6 +214,26 @@ export function LandingNav() {
     setPanelOpen(false);
   };
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+
+  // Solid islands once the page has scrolled at all (see islandScrolled).
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 24);
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+  const island = `${islandBase} ${scrolled ? islandScrolled : islandTop}`;
 
   useEffect(() => {
     if (!panelOpen) return;
