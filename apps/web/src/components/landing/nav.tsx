@@ -2,85 +2,221 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Menu, Wrench, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { SitePromoBar } from "./campaign-announcement";
 import { GoogleIcon, McpIcon } from "@/components/brand/integration-icons";
-import { AiWriterIcon } from "@/components/brand/ai-writer-icon";
-import { TOOL_CATEGORIES, TOOLS, TOOLS_HUB_PATH, toolHref, toolsByCategory, type ToolCategory } from "@/config/tools";
+import { TOOLS, TOOLS_HUB_PATH, toolHref } from "@/config/tools";
 
-const links = [
-  { href: "/pricing", label: "Pricing" },
-  { href: "/android-app", label: "Android" },
-  { href: "/blog", label: "Blog" },
-  { href: "/support", label: "Support" },
-];
+/**
+ * Site header, alyn.dev-style: two clean glass islands (logo + links on the
+ * left, the connector, log in and the main call to action on the right) and
+ * one wide "Product" panel underneath them with every page grouped into
+ * columns, small grey headings over plain links.
+ */
 
-type MenuItem = { href: string; label: string; badge?: string };
+type NavLink = { href: string; label: string; badge?: string };
+type NavGroup = { title: string; links: NavLink[] };
 
-/** The Claude and ChatGPT connector page: first in the nav, with the MCP mark, so it is never missed. */
-const MCP_LINK = { href: "/ai-connector", label: "MCP" };
-
-/** The AI Keywords & Blog Writer page, new in November 2026: second, with a New badge. */
-const BLOG_WRITER_LINK = { href: "/ai-blog-writer", label: "AI Writer" };
-
-const integrations: MenuItem[] = [
-  { href: "/ai-connector", label: "Claude & ChatGPT" },
-  { href: "/platforms", label: "All platforms" },
+const PLATFORMS: NavLink[] = [
   { href: "/wordpress-plugin", label: "WordPress plugin" },
+  { href: "/shopify-app", label: "Shopify app", badge: "Soon" },
+  { href: "/website-monitoring-for-webflow", label: "Webflow" },
   { href: "/chrome-extension", label: "Chrome extension" },
-  { href: "/shopify-app", label: "Shopify app", badge: "Coming soon" },
+  { href: "/android-app", label: "Android app" },
+  { href: "/platforms", label: "All platforms" },
 ];
 
-function SoonBadge({ children }: { children: React.ReactNode }) {
+const popularTools = TOOLS.filter((t) => t.popular).slice(0, 7);
+
+const GROUPS: NavGroup[] = [
+  {
+    title: "Monitor",
+    links: [
+      { href: "/#categories", label: "What it watches" },
+      { href: "/visual-regression-testing", label: "Visual regression" },
+      { href: "/seo-monitoring", label: "SEO monitoring" },
+      { href: "/website-content-monitoring", label: "Content monitoring" },
+      { href: "/site-audit", label: "Site Audit" },
+      { href: "/ai-website-insights", label: "AI Website Insights" },
+      { href: "/#client-reports", label: "Client reports" },
+      { href: "/preview", label: "Dashboard preview" },
+    ],
+  },
+  {
+    title: "AI Writer",
+    links: [
+      { href: "/ai-blog-writer", label: "AI blog writer", badge: "New" },
+      { href: "/best-ai-blog-writer", label: "Best AI blog writer" },
+      { href: "/seo-blog-writer", label: "SEO blog writer" },
+      { href: "/ai-content-writer", label: "AI content writer" },
+      { href: "/ai-article-writer", label: "AI article writer" },
+      { href: "/free-ai-blog-writer", label: "Free AI blog writer" },
+      { href: "/blog-post-generator", label: "Blog post generator" },
+      { href: "/ai-blog-writer-for-wordpress", label: "For WordPress" },
+    ],
+  },
+  {
+    title: "Free tools",
+    links: [
+      ...popularTools.map((t) => ({ href: toolHref(t.slug), label: t.menuLabel })),
+      { href: TOOLS_HUB_PATH, label: `All ${TOOLS.length} tools` },
+    ],
+  },
+  {
+    title: "Compare",
+    links: [
+      { href: "/alternatives/jasper-alternative", label: "vs Jasper" },
+      { href: "/alternatives/surfer-seo-alternative", label: "vs Surfer" },
+      { href: "/alternatives/visualping-alternative", label: "vs Visualping" },
+      { href: "/alternatives/distill-alternative", label: "vs Distill" },
+      { href: "/alternatives/hexometer-alternative", label: "vs Hexometer" },
+      { href: "/alternatives/hexowatch-alternative", label: "vs Hexowatch" },
+      { href: "/best-website-monitoring-tools", label: "Best monitoring tools" },
+      { href: "/alternatives", label: "All comparisons" },
+    ],
+  },
+  {
+    title: "Learn",
+    links: [
+      { href: "/blog", label: "Blog" },
+      { href: "/docs", label: "Docs" },
+      { href: "/video-tutorials", label: "Video tutorials" },
+      { href: "/whats-new-on-mykavo", label: "What's new" },
+      { href: "/support", label: "Support" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
+];
+
+const ASSISTANTS: NavLink[] = [
+  { href: "/ai-connector", label: "Claude & ChatGPT" },
+  { href: "/ai-assistants", label: "AI assistants (MCP)" },
+];
+
+/** Plain links in the left island, after the Product menu. */
+const TOP_LINKS: NavLink[] = [
+  { href: "/ai-blog-writer", label: "AI Writer", badge: "New" },
+  { href: "/pricing", label: "Pricing" },
+  { href: TOOLS_HUB_PATH, label: "Free tools" },
+  { href: "/blog", label: "Blog" },
+];
+
+function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-[#FFD400] px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-[#151515]">
+    <span className="rounded-full bg-[#FFD400] px-1.5 py-px font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-[#151515]">
       {children}
     </span>
   );
 }
 
-/**
- * A header dropdown (Integrations, Tools): opens on hover or click, closes
- * on outside click, Escape or mouse-leave.
- */
-function NavMenu({
-  label,
-  heading,
-  items = [],
-  panelClassName = "left-1/2 w-64 -translate-x-1/2",
-  children,
-}: {
-  label: string;
-  heading: string;
-  items?: MenuItem[];
-  /** Position and width of the panel; defaults to a narrow list centred on the button. */
-  panelClassName?: string;
-  /** Custom panel content (the Tools grid); receives a close callback. */
-  children?: (close: () => void) => React.ReactNode;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+const island =
+  "flex h-14 items-center rounded-2xl border border-[#151515]/10 bg-white/85 shadow-[0_10px_30px_-14px_rgba(21,21,21,0.28)] backdrop-blur-xl";
+
+const topLink =
+  "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[14.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]";
+
+function GroupList({ group, onPick }: { group: NavGroup; onPick: () => void }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[13px] font-medium text-[#6B6B60]">{group.title}</p>
+      <ul className="mt-3 space-y-0.5">
+        {group.links.map((l) => (
+          <li key={l.href}>
+            <Link
+              href={l.href}
+              // Hidden menu links stay in the page; prefetching them all would
+              // cost every visitor dozens of requests per page.
+              prefetch={false}
+              onClick={onPick}
+              className="-mx-2 flex items-center gap-2 rounded-lg px-2 py-[7px] text-[15px] text-[#151515]/85 transition-colors hover:bg-[#151515]/[0.04] hover:text-[#151515]"
+            >
+              <span className="truncate">{l.label}</span>
+              {l.badge ? <Badge>{l.badge}</Badge> : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The wide Product panel under both islands. */
+function MegaPanel({ onPick }: { onPick: () => void }) {
+  return (
+    <div className="grid gap-x-8 gap-y-8 rounded-[26px] border border-[#151515]/10 bg-white/95 p-7 shadow-[0_30px_70px_-30px_rgba(21,21,21,0.45)] backdrop-blur-xl lg:grid-cols-4 xl:grid-cols-[minmax(0,1.05fr)_repeat(5,minmax(0,1fr))_minmax(0,1fr)]">
+      <div className="min-w-0">
+        <Link
+          href="/signup?provider=google&from=nav:panel"
+          prefetch={false}
+          onClick={onPick}
+          className="group block rounded-2xl bg-[#FFD400]/20 p-4 transition-colors hover:bg-[#FFD400]/35"
+        >
+          <p className="text-[16px] font-semibold text-[#151515]">Start monitoring free</p>
+          <p className="mt-1 text-[13px] leading-snug text-[#5b5b52]">Know what changed on every site you manage. No card.</p>
+          <span className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-[#151515]">
+            Get started <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </span>
+        </Link>
+        <div className="mt-7">
+          <GroupList group={{ title: "By platform", links: PLATFORMS }} onPick={onPick} />
+        </div>
+      </div>
+      {GROUPS.map((g) => (
+        <GroupList key={g.title} group={g} onPick={onPick} />
+      ))}
+      <div className="min-w-0">
+        <GroupList group={{ title: "With AI assistants", links: ASSISTANTS }} onPick={onPick} />
+        <div className="mt-7">
+          <GroupList
+            group={{
+              title: "Company",
+              links: [
+                { href: "/about", label: "About" },
+                { href: "/partners", label: "Partners" },
+                { href: "/demo", label: "Book a demo" },
+              ],
+            }}
+            onPick={onPick}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LandingNav() {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   // A short grace period before a hover-close, so crossing the gap between
-  // the button and the panel (or a wobbly mouse) never makes it flicker.
+  // the button and the panel never makes it flicker.
   const closeTimer = useRef<number | undefined>(undefined);
   const openNow = () => {
     window.clearTimeout(closeTimer.current);
-    setMenuOpen(true);
+    setPanelOpen(true);
   };
   const closeSoon = () => {
     window.clearTimeout(closeTimer.current);
-    closeTimer.current = window.setTimeout(() => setMenuOpen(false), 140);
+    closeTimer.current = window.setTimeout(() => setPanelOpen(false), 160);
+  };
+  const closeNow = () => {
+    window.clearTimeout(closeTimer.current);
+    setPanelOpen(false);
   };
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!panelOpen) return;
     const onPointer = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setMenuOpen(false);
+      if (!headerRef.current?.contains(e.target as Node)) setPanelOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") {
+        setPanelOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -88,308 +224,187 @@ function NavMenu({
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [menuOpen]);
-
-  return (
-    <div
-      ref={ref}
-      className="relative"
-      onMouseEnter={openNow}
-      onMouseLeave={closeSoon}
-    >
-      <button
-        type="button"
-        // Open-only: hover already opens the menu, so a toggling click
-        // would immediately close it for mouse users. Touch devices get
-        // open-on-tap; closing is outside-tap, Escape, or mouse-leave.
-        onClick={openNow}
-        aria-expanded={menuOpen}
-        aria-haspopup="menu"
-        className="flex items-center gap-1 rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
-      >
-        {label}
-        <ChevronDown
-          className={`size-3.5 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
-          aria-hidden
-        />
-      </button>
-      {/* Always mounted so it can animate both ways. The top padding is the
-          gap below the nav pill (the button sits ~10px above the pill's
-          edge); being padding, it is also the hover bridge across that gap. */}
-      <div
-        role="menu"
-        aria-label={heading}
-        className={`absolute top-full origin-top pt-[22px] transition-[opacity,translate,scale,visibility] duration-200 ease-out motion-reduce:transition-none ${panelClassName} ${
-          menuOpen
-            ? "visible translate-y-0 scale-100 opacity-100"
-            : "pointer-events-none invisible -translate-y-1.5 scale-[0.97] opacity-0"
-        }`}
-      >
-          {children ? (
-            children(() => setMenuOpen(false))
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white p-1.5 shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
-              <p className="px-3 pb-1 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
-                {heading}
-              </p>
-              {items.map((t) => (
-                <Link
-                  key={t.href}
-                  href={t.href}
-                  // Hidden menu items stay in the page; prefetching them all
-                  // cost every visitor ~60 requests and ~500 KB per page.
-                  prefetch={false}
-                  role="menuitem"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
-                >
-                  {t.label}
-                  {t.badge && <SoonBadge>{t.badge}</SoonBadge>}
-                </Link>
-              ))}
-            </div>
-          )}
-      </div>
-    </div>
-  );
-}
-
-const TOOL_COLUMNS: ToolCategory[] = ["seo", "health", "detect"];
-
-/**
- * The Tools menu: three short columns instead of one long list, so nineteen
- * tools fit on one screen without scrolling. Names only (the hub page has the
- * descriptions); a small gold dot marks new tools.
- */
-function ToolsPanel({ close }: { close: () => void }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-[#151515]/15 bg-white shadow-[0_2px_0_#15151522,0_24px_50px_-18px_rgba(21,21,21,0.4)]">
-      <div className="grid grid-cols-3 gap-1 p-2">
-        {TOOL_COLUMNS.map((cat) => (
-          <div key={cat} className="min-w-0">
-            <p className="px-2.5 pb-1.5 pt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B6B60]">
-              {TOOL_CATEGORIES[cat].title}
-            </p>
-            {toolsByCategory(cat).map((t) => (
-              <Link
-                key={t.slug}
-                href={toolHref(t.slug)}
-                prefetch={false}
-                role="menuitem"
-                onClick={close}
-                className="group flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-[#151515]/80 transition-colors hover:bg-[#FFD400]/25 hover:text-[#151515]"
-              >
-                <t.icon className="size-3.5 shrink-0 text-[#151515]/45 transition-colors group-hover:text-[#151515]" aria-hidden />
-                <span className="truncate">{t.menuLabel}</span>
-              </Link>
-            ))}
-          </div>
-        ))}
-      </div>
-      <Link
-        href={TOOLS_HUB_PATH}
-        prefetch={false}
-        role="menuitem"
-        onClick={close}
-        className="group flex items-center justify-between border-t border-[#151515]/10 bg-[#FBFAF3] px-5 py-3 text-[13px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
-      >
-        <span>
-          All {TOOLS.length} free tools <span className="font-normal text-[#6B6B60]">- no signup needed</span>
-        </span>
-        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-      </Link>
-    </div>
-  );
-}
-
-/**
- * Floating "island" navigation (ballpark.ing-style): a centered white pill
- * with an ink hairline and crisp offset shadow, hovering over the warm paper
- * canvas. Spark + wordmark left, links + Integrations and Tools dropdowns center, gold CTA
- * right. Collapses to a hamburger card on small screens.
- */
-export function LandingNav() {
-  const [open, setOpen] = useState(false);
+  }, [panelOpen]);
 
   return (
     <>
-      {/* The "MyKavo for Chrome is live" popup (app-announcement.tsx) used to
-          render here. Removed: it covered the content readers came for. */}
       {/* A seasonal offer bar across the very top. Its height (--promo-h,
           set before first paint only while an offer runs) is held open by
           the spacer and added to the nav's offset, so nothing overlaps. */}
       <SitePromoBar />
       <div aria-hidden className="h-[var(--promo-h,0px)]" />
-      <header data-landing-nav className="fixed inset-x-0 top-[calc(var(--promo-h,0px)+1rem)] z-50 px-4 sm:top-[calc(var(--promo-h,0px)+1.25rem)]">
-      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-4 whitespace-nowrap rounded-full xl:max-w-6xl border border-[#151515]/15 bg-white/95 pl-5 pr-2 shadow-[0_2px_0_#15151522,0_18px_40px_-18px_rgba(21,21,21,0.35)]">
-        <Link href="/" aria-label="MyKavo home" className="flex shrink-0 items-center gap-2">
-          <LogoMark size={24} />
-          <span className="text-[16px] font-semibold tracking-tight text-[#151515]">MyKavo</span>
-        </Link>
-
-        <nav aria-label="Main" className="hidden items-center lg:flex">
-          <Link
-            href={MCP_LINK.href}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13.5px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
-          >
-            <McpIcon className="size-4 text-[#151515]" />
-            {MCP_LINK.label}
-          </Link>
-          <Link
-            href={BLOG_WRITER_LINK.href}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13.5px] font-semibold text-[#151515] transition-colors hover:bg-[#FFD400]/30"
-          >
-            <AiWriterIcon className="size-4 text-[#151515]" />
-            {BLOG_WRITER_LINK.label}
-            <SoonBadge>New</SoonBadge>
-          </Link>
-          <Link
-            href="/pricing"
-            className="rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515]"
-          >
-            Pricing
-          </Link>
-          <NavMenu label="Integrations" heading="Integrations" items={integrations} />
-          {links.slice(1).map((l) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              // Android and Support step aside on narrower desktops to make room
-              // for the AI links; they stay in the mobile menu and the footer.
-              className={`rounded-full px-3 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:bg-[#151515]/[0.05] hover:text-[#151515] ${
-                l.href === "/android-app" || l.href === "/support" ? "hidden xl:inline-flex" : ""
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
-
-          <NavMenu
-            label="Tools"
-            heading="Free tools"
-            panelClassName="-right-28 w-[640px] xl:left-1/2 xl:right-auto xl:-translate-x-1/2"
-          >
-            {(close) => <ToolsPanel close={close} />}
-          </NavMenu>
-        </nav>
-
-        <div className="hidden items-center gap-1.5 lg:flex">
-          <Link
-            href="/login"
-            className="rounded-full px-3.5 py-2 text-[13.5px] font-medium text-[#151515]/70 transition-colors hover:text-[#151515]"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/signup?provider=google"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[#151515] bg-[#FFD400] px-5 py-2 text-[13.5px] font-semibold text-[#151515] shadow-[0_3px_0_#151515] transition-[transform,box-shadow,background-color] duration-150 ease-out hover:translate-y-[3px] hover:bg-[#ffe14d] hover:shadow-[0_0_0_#151515] active:translate-y-[3px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-          >
-            <span className="inline-flex size-4.5 items-center justify-center rounded-full bg-white">
-              <GoogleIcon className="size-3" />
-            </span>
-            Start free
-          </Link>
-        </div>
-
-        {/* Mobile toggle */}
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls="landing-menu"
-          className="inline-flex size-10 items-center justify-center rounded-full text-[#151515] transition-colors hover:bg-[#151515]/5 lg:hidden"
-        >
-          <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
-          {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
-        </button>
-      </div>
-
-      {/* Mobile dropdown card */}
-      {open && (
-        <div
-          id="landing-menu"
-          className="mx-auto mt-2 max-w-4xl rounded-3xl border border-[#151515]/15 bg-white p-4 shadow-[0_24px_60px_-20px_rgba(21,21,21,0.4)] lg:hidden"
-        >
-          <nav aria-label="Main mobile" className="flex flex-col">
-            <Link
-              href={MCP_LINK.href}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-xl px-3 py-3 text-[15px] font-semibold text-[#151515] transition-colors hover:bg-[#151515]/[0.04]"
-            >
-              <McpIcon className="size-[18px]" />
-              {MCP_LINK.label}
-            </Link>
-            <Link
-              href={BLOG_WRITER_LINK.href}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-xl px-3 py-3 text-[15px] font-semibold text-[#151515] transition-colors hover:bg-[#151515]/[0.04]"
-            >
-              <AiWriterIcon className="size-[18px]" />
-              AI Keywords &amp; Blog Writer
-              <SoonBadge>New</SoonBadge>
-            </Link>
-            {links.map((l) => (
-              <Link
-                key={l.label}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="rounded-xl px-3 py-3 text-[15px] font-medium text-[#151515]/85 transition-colors hover:bg-[#151515]/[0.04]"
-              >
-                {l.label}
+      <header
+        ref={headerRef}
+        data-landing-nav
+        onMouseLeave={closeSoon}
+        className="fixed inset-x-0 top-[calc(var(--promo-h,0px)+0.75rem)] z-50 px-3 sm:top-[calc(var(--promo-h,0px)+1rem)] sm:px-4"
+      >
+        <div className="relative mx-auto max-w-7xl">
+          <div className="flex items-center justify-between gap-3 whitespace-nowrap">
+            {/* Left island: logo and the main links. */}
+            <div className={`${island} gap-1 pl-4 pr-2`}>
+              <Link href="/" aria-label="MyKavo home" className="mr-3 flex shrink-0 items-center gap-2" onMouseEnter={closeSoon}>
+                <LogoMark size={24} />
+                <span className="text-[17px] font-semibold tracking-tight text-[#151515]">MyKavo</span>
               </Link>
-            ))}
-            <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B6B60]">
-              Integrations
-            </p>
-            {integrations.map((t) => (
+              <nav aria-label="Main" className="hidden items-center gap-0.5 lg:flex">
+                <button
+                  ref={triggerRef}
+                  type="button"
+                  onMouseEnter={openNow}
+                  onClick={() => (panelOpen ? closeNow() : openNow())}
+                  aria-expanded={panelOpen}
+                  aria-controls="nav-product-panel"
+                  className={`${topLink} ${panelOpen ? "bg-[#151515]/[0.05] text-[#151515]" : ""}`}
+                >
+                  Product
+                  <ChevronDown className={`size-3.5 transition-transform duration-200 ${panelOpen ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {TOP_LINKS.map((l) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onMouseEnter={closeSoon}
+                    className={`${topLink} ${l.href === TOOLS_HUB_PATH ? "hidden xl:inline-flex" : ""}`}
+                  >
+                    {l.label}
+                    {l.badge ? <Badge>{l.badge}</Badge> : null}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            {/* Right island: connector, log in, the main call to action. */}
+            <div className={`${island} hidden gap-1.5 px-2 lg:flex`} onMouseEnter={closeSoon}>
               <Link
-                key={t.href}
-                href={t.href}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[#151515]/75 transition-colors hover:bg-[#151515]/[0.04]"
+                href="/ai-connector"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#151515]/10 bg-white px-3 text-[14px] font-medium text-[#151515] transition-colors hover:border-[#151515]/25"
               >
-                {t.label}
-                {t.badge && <SoonBadge>{t.badge}</SoonBadge>}
+                <McpIcon className="size-4" />
+                <span className="hidden xl:inline">Claude &amp; ChatGPT</span>
+                <span className="xl:hidden">MCP</span>
               </Link>
-            ))}
-            {/* One link, not the full list: nineteen tools would turn the
-                phone menu into a scroll. The hub groups them properly. */}
-            <Link
-              href={TOOLS_HUB_PATH}
-              onClick={() => setOpen(false)}
-              className="mt-3 flex items-center justify-between rounded-xl border border-[#151515]/10 bg-[#FBFAF3] px-3 py-3 text-[15px] font-medium text-[#151515]/85 transition-colors hover:bg-[#FFD400]/25"
-            >
-              <span className="flex items-center gap-2.5">
-                <Wrench className="size-4 text-[#151515]/60" aria-hidden />
-                Free tools
-              </span>
-              <span className="flex items-center gap-1.5 font-mono text-[11px] text-[#6B6B60]">
-                {TOOLS.length}
-                <ArrowRight className="size-4 text-[#151515]" aria-hidden />
-              </span>
-            </Link>
-          </nav>
-          <div className="mt-2 grid grid-cols-2 gap-2 border-t border-black/10 pt-4">
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className="rounded-full border border-[#151515]/20 px-4 py-3 text-center text-sm font-medium text-[#151515]"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup?provider=google"
-              onClick={() => setOpen(false)}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#151515] bg-[#FFD400] px-4 py-3 text-center text-sm font-semibold text-[#151515] shadow-[0_3px_0_#151515] transition-[transform,box-shadow] duration-150 active:translate-y-[3px] active:shadow-none motion-reduce:transition-none"
-            >
-              <span className="inline-flex size-5 items-center justify-center rounded-full bg-white">
-                <GoogleIcon className="size-3.5" />
-              </span>
-              Start free
-            </Link>
+              <Link href="/login" className="inline-flex h-10 items-center rounded-xl px-3 text-[14px] font-medium text-[#151515]/75 transition-colors hover:text-[#151515]">
+                Log in
+              </Link>
+              <Link
+                href="/signup?provider=google"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#151515] px-4 text-[14px] font-semibold text-white transition-colors hover:bg-[#2a2a28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD400] focus-visible:ring-offset-2"
+              >
+                <span className="inline-flex size-4.5 items-center justify-center rounded-full bg-white">
+                  <GoogleIcon className="size-3" />
+                </span>
+                Start free
+              </Link>
+            </div>
+
+            {/* Mobile: the same right-hand call to action, compact, and the menu toggle. */}
+            <div className={`${island} gap-1 px-1.5 lg:hidden`}>
+              <Link
+                href="/signup?provider=google"
+                className="inline-flex h-10 items-center rounded-xl bg-[#151515] px-3.5 text-[13.5px] font-semibold text-white"
+              >
+                Start free
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMobileOpen((v) => !v)}
+                aria-expanded={mobileOpen}
+                aria-controls="landing-menu"
+                className="inline-flex size-10 items-center justify-center rounded-xl text-[#151515] transition-colors hover:bg-[#151515]/5"
+              >
+                <span className="sr-only">{mobileOpen ? "Close menu" : "Open menu"}</span>
+                {mobileOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+              </button>
+            </div>
           </div>
+
+          {/* The Product panel: always mounted so it can animate both ways.
+              The top padding is the hover bridge from the islands. */}
+          <div
+            id="nav-product-panel"
+            onMouseEnter={openNow}
+            className={`absolute inset-x-0 top-full hidden origin-top pt-2.5 transition-[opacity,translate,visibility] duration-200 ease-out motion-reduce:transition-none lg:block ${
+              panelOpen ? "visible translate-y-0 opacity-100" : "pointer-events-none invisible -translate-y-1.5 opacity-0"
+            }`}
+          >
+            <MegaPanel onPick={closeNow} />
+          </div>
+
+          {/* Mobile menu card. */}
+          {mobileOpen ? (
+            <div
+              id="landing-menu"
+              className="mt-2 max-h-[calc(100svh-7rem)] overflow-y-auto rounded-[22px] border border-[#151515]/10 bg-white p-4 shadow-[0_24px_60px_-20px_rgba(21,21,21,0.4)] lg:hidden"
+            >
+              <nav aria-label="Main mobile" className="flex flex-col">
+                {TOP_LINKS.map((l) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-3 text-[16px] font-medium text-[#151515] hover:bg-[#151515]/[0.04]"
+                  >
+                    {l.label}
+                    {l.badge ? <Badge>{l.badge}</Badge> : null}
+                  </Link>
+                ))}
+                <Link
+                  href="/ai-connector"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-3 py-3 text-[16px] font-medium text-[#151515] hover:bg-[#151515]/[0.04]"
+                >
+                  <McpIcon className="size-[18px]" />
+                  Claude &amp; ChatGPT
+                </Link>
+                <div className="mt-2 border-t border-black/10 pt-2">
+                  {[{ title: "By platform", links: PLATFORMS }, ...GROUPS].map((g) => (
+                    <details key={g.title} className="group [&_summary::-webkit-details-marker]:hidden">
+                      <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-3 text-[15px] font-medium text-[#151515]/80 hover:bg-[#151515]/[0.04]">
+                        {g.title}
+                        <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+                      </summary>
+                      <ul className="mb-2 ml-3 border-l border-black/10 pl-3">
+                        {g.links.map((l) => (
+                          <li key={l.href}>
+                            <Link
+                              href={l.href}
+                              prefetch={false}
+                              onClick={() => setMobileOpen(false)}
+                              className="flex items-center gap-2 rounded-lg px-2 py-2 text-[14.5px] text-[#151515]/80 hover:bg-[#151515]/[0.04]"
+                            >
+                              {l.label}
+                              {l.badge ? <Badge>{l.badge}</Badge> : null}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ))}
+                </div>
+              </nav>
+              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-black/10 pt-4">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-xl border border-[#151515]/15 px-4 py-3 text-center text-sm font-medium text-[#151515]"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup?provider=google"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#151515] px-4 py-3 text-center text-sm font-semibold text-white"
+                >
+                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-white">
+                    <GoogleIcon className="size-3.5" />
+                  </span>
+                  Start free
+                </Link>
+              </div>
+            </div>
+          ) : null}
         </div>
-      )}
       </header>
     </>
   );
