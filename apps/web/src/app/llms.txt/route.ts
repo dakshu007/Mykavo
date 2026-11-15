@@ -157,7 +157,8 @@ ${CHANGELOG.slice(0, 3)
 - [Pricing](${site.url}/pricing): plans and comparison
 - [About](${site.url}/about): the story behind MyKavo
 - [Blog](${site.url}/blog): guides on website monitoring
-- [Support](${site.url}/support): help and contact
+- [Support](${site.url}/support): help center and the instant assistant
+- [Contact](${site.url}/contact): every way to reach MyKavo (support@mykavo.app)
 - [What's new](${site.url}${CHANGELOG_PATH}): release notes, newest first
 - [Brand assets](${site.url}/brand): logo, logomark, app icon and colors
 - [MyKavo for WordPress](${site.url}/wordpress-plugin): the free plugin, also at https://wordpress.org/plugins/mykavo/

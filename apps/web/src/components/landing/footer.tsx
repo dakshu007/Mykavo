@@ -111,6 +111,7 @@ const columns = [
       { href: "/brand", label: "Brand assets" },
       { href: "/write-for-us", label: "Write for us" },
       { href: "/support", label: "Support" },
+      { href: "/contact", label: "Contact" },
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
       { href: "/cookies", label: "Cookie Policy" },

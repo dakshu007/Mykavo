@@ -36,6 +36,14 @@ export function organizationNode() {
     logo: `${site.url}/icon.png`,
     description: site.description,
     founder: { "@type": "Person", name: "Dakshesh B" },
+    // How to reach MyKavo, for answer engines asked "how do I contact MyKavo".
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: "support@mykavo.app",
+      url: `${site.url}/contact`,
+      availableLanguage: "English",
+    },
     // sameAs ties this domain to the same brand entity elsewhere, which is
     // how knowledge panels and AI answer engines resolve "who is MyKavo".
     // MyKavo's own E-E-A-T Analyzer scores sites on having it.
