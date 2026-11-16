@@ -1,7 +1,7 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
-import { EXTERNAL_LINK_REL, isExternalHref } from "@/lib/outbound-links";
+import { followMarker, isExternalHref, isNofollowLink } from "@/lib/outbound-links";
 
 /**
  * Shared markdown renderer for the public blog and the CMS live preview.
@@ -23,15 +23,17 @@ export function BlogMarkdown({
   headingIds?: Record<number, string>;
 }) {
   const components: Components = {
-    // Links out of the site are nofollowed: see lib/outbound-links.
-    a: ({ node, href, children, ...rest }) => {
+    // Links out of the site are nofollowed by default, and the editor's
+    // "Mark as nofollow" box can override that per link: see lib/outbound-links.
+    a: ({ node, href, title, children, ...rest }) => {
       void node; // react-markdown's AST node, not an <a> attribute
-      return isExternalHref(href) ? (
-        <a {...rest} href={href} target="_blank" rel={EXTERNAL_LINK_REL}>
-          {children}
-        </a>
-      ) : (
-        <a {...rest} href={href}>
+      const external = isExternalHref(href);
+      const nofollow = isNofollowLink(href, title);
+      // A follow marker is an instruction, not a tooltip.
+      const shownTitle = followMarker(title) ? undefined : title;
+      const rel = [nofollow && "nofollow", external && "noopener noreferrer"].filter(Boolean).join(" ") || undefined;
+      return (
+        <a {...rest} href={href} title={shownTitle} target={external ? "_blank" : undefined} rel={rel}>
           {children}
         </a>
       );

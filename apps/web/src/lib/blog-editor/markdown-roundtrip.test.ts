@@ -80,6 +80,13 @@ describe("roundTripMarkdown - shortcode regions are byte-identical", () => {
     expect(roundTripMarkdown(raw)).toBe(raw);
   });
 
+  it.each([
+    ["nofollow internal link", 'See [pricing](/pricing "nofollow") here.'],
+    ["dofollow external link", 'Read [the guide](https://example.com/guide "dofollow") first.'],
+  ])("keeps the follow marker on a %s", (_name, raw) => {
+    expect(roundTripMarkdown(raw)).toBe(raw);
+  });
+
   it("keeps every shortcode region byte-identical in a mixed post", () => {
     const input = [
       "# Launch notes",

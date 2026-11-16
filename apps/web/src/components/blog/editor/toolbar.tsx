@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
 import { compressImage } from "@/lib/blog-editor/compress-image";
+import { defaultNofollow, followMarker, followTitleFor, isNofollowLink } from "@/lib/outbound-links";
 import {
   Bold,
   Code,
@@ -104,8 +105,15 @@ const popoverFieldClass =
 
 function LinkPopover({ editor, onClose }: { editor: Editor; onClose: () => void }) {
   const current = String(editor.getAttributes("link").href ?? "");
+  const currentTitle = editor.getAttributes("link").title as string | null | undefined;
   const [href, setHref] = useState(current);
   const [error, setError] = useState<string | null>(null);
+  // Starts at the link's saved choice, or the default for its URL; once the
+  // author ticks or unticks it, typing a new URL no longer changes it.
+  const [nofollowChoice, setNofollowChoice] = useState<boolean | null>(
+    followMarker(currentTitle) ? isNofollowLink(current, currentTitle) : null,
+  );
+  const nofollow = nofollowChoice ?? defaultNofollow(href.trim());
 
   function apply() {
     const value = href.trim();
@@ -113,7 +121,10 @@ function LinkPopover({ editor, onClose }: { editor: Editor; onClose: () => void 
       setError("Use an https://, mailto:, or relative link.");
       return;
     }
-    editor.chain().focus().extendMarkRange("link").setLink({ href: value }).run();
+    // Keep a real title the author set; replace only a follow marker.
+    const keptTitle = currentTitle && !followMarker(currentTitle) ? currentTitle : null;
+    const title = followTitleFor(value, nofollow) ?? keptTitle;
+    editor.chain().focus().extendMarkRange("link").setLink({ href: value, title }).run();
     onClose();
   }
 
@@ -146,6 +157,20 @@ function LinkPopover({ editor, onClose }: { editor: Editor; onClose: () => void 
         className={popoverFieldClass}
       />
       {error && <p className="mt-1.5 text-[12px] text-critical">{error}</p>}
+      <label className="mt-2.5 flex cursor-pointer items-start gap-2 text-[13px] text-ink">
+        <input
+          type="checkbox"
+          checked={nofollow}
+          onChange={(event) => setNofollowChoice(event.target.checked)}
+          className="mt-0.5 size-4 shrink-0 accent-primary"
+        />
+        <span>
+          Mark as nofollow
+          <span className="block text-[12px] text-ink-secondary">
+            On by default for links to other sites. Keep it on for sponsored, affiliate and guest-post links.
+          </span>
+        </span>
+      </label>
       <div className="mt-2.5 flex items-center gap-2">
         <button
           type="button"
