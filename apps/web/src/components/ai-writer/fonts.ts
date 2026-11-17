@@ -1,4 +1,5 @@
-import { Bodoni_Moda, League_Spartan } from "next/font/google";
+import { Bodoni_Moda } from "next/font/google";
+import localFont from "next/font/local";
 
 /**
  * Display faces for the AI Writer pages only (the sky hero and its echoes).
@@ -7,9 +8,12 @@ import { Bodoni_Moda, League_Spartan } from "next/font/google";
  * and the oval ring. Loaded here, not in the root layout, so no other page
  * pays for them.
  */
-export const spartan = League_Spartan({
-  subsets: ["latin"],
-  weight: ["700", "800"],
+// Self-hosted (OFL): League Spartan is a variable font, so Google serves one
+// file for both weights, and next/font/google intermittently failed the
+// build on that duplicate ("queries have exactly one entry"). This is the
+// same latin file, read from the repo: no network at build time.
+export const spartan = localFont({
+  src: [{ path: "./fonts/league-spartan-latin.woff2", weight: "700 800", style: "normal" }],
   display: "swap",
   variable: "--font-spartan",
 });

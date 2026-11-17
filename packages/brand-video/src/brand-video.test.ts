@@ -115,6 +115,24 @@ describe("normalizeCapture", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("keeps only labelled, distinct numbers and drops menu buttons from services", () => {
+    const kit = normalizeCapture({
+      ...RAW,
+      stats: [
+        { value: "21+ reviews", label: "·" },
+        { value: "5.0", label: "GOOGLE RATING" },
+        { value: "21+", label: "FIVE-STAR REVIEWS" },
+        { value: "21+", label: "duplicate" },
+      ],
+      navItems: ["Pricing", "Join now", "Book a call", "Gallery"],
+    });
+    expect(kit.stats).toEqual([
+      { value: "5.0", label: "GOOGLE RATING" },
+      { value: "21+", label: "FIVE-STAR REVIEWS" },
+    ]);
+    expect(kit.services).toEqual(["Pricing", "Gallery"]);
+  });
+
   it("falls back to the hostname for a name", () => {
     expect(brandNameFrom({ siteName: null, title: null, url: "https://www.acme-tools.com/x" })).toBe("Acme-tools");
   });

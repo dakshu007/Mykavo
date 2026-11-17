@@ -168,6 +168,8 @@ function clean(text: string | null | undefined, max: number): string | null {
   return (space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[,;:.\-\s]+$/, "");
 }
 
+const CTA_WORDS = /^(join|sign (up|in)|log ?in|get started|start|book|buy|shop now|try|subscribe|register|enrol|enroll|download)\b/i;
+
 /** "Acme | Fast invoicing" -> "Acme"; prefers og:site_name. */
 export function brandNameFrom(raw: Pick<RawBrandCapture, "siteName" | "title" | "url">): string {
   const site = clean(raw.siteName, 60);
@@ -260,11 +262,16 @@ export function normalizeCapture(raw: RawBrandCapture): NormalizedBrand {
     if (valuePoints.length >= 8) break;
   }
 
+  // A number needs a real label ("5.0 Google rating"), not a separator, and
+  // each number appears once ("21+" and "21+ reviews" are the same fact).
   const stats: StatItem[] = [];
+  const numberOf = (v: string) => /\d[\d,.]*/.exec(v)?.[0]?.replace(/,/g, "") ?? v;
   for (const s of raw.stats) {
     const value = clean(s.value, 16);
-    if (!value || stats.some((x) => x.value === value)) continue;
-    stats.push({ value, label: clean(s.label, 60) ?? "" });
+    const label = clean(s.label, 60);
+    if (!value || !label || !/[A-Za-z\u00C0-\uFFFF]{2,}/.test(label)) continue;
+    if (stats.some((x) => x.value === value || numberOf(x.value) === numberOf(value))) continue;
+    stats.push({ value, label });
     if (stats.length >= 4) break;
   }
 
@@ -274,7 +281,14 @@ export function normalizeCapture(raw: RawBrandCapture): NormalizedBrand {
       raw.navItems
         .map((n) => clean(n, 40))
         // The logo link's own text is the brand name, not a service.
-        .filter((n): n is string => n !== null && n.length >= 2 && n.toLowerCase() !== name.toLowerCase()),
+        .filter(
+          (n): n is string =>
+            n !== null &&
+            n.length >= 2 &&
+            n.toLowerCase() !== name.toLowerCase() &&
+            // Buttons in the menu ("Join now", "Book a call") are not services.
+            !CTA_WORDS.test(n),
+        ),
     ),
   ].slice(0, 12);
 
