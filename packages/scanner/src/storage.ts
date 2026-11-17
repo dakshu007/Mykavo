@@ -41,6 +41,12 @@ export interface ArtifactStorage {
    * loses money quietly.
    */
   usage?(options?: { maxPages?: number }): Promise<StorageUsage>;
+  /**
+   * A short-lived URL the browser can load the object from directly, for
+   * files too large to pass through a serverless function (exported videos).
+   * Optional: only R2 can sign. Callers fall back to an authorized route.
+   */
+  signedGetUrl?(key: string, options?: { expiresSeconds?: number; downloadName?: string; contentType?: string }): Promise<string>;
 }
 
 export interface StorageUsage {
@@ -189,6 +195,7 @@ export function parseListObjectsPage(xml: string): {
 export class R2Storage implements ArtifactStorage {
   private clientPromise: Promise<{
     fetch: (input: string, init?: RequestInit) => Promise<Response>;
+    sign: (input: string, init?: RequestInit & { aws?: { signQuery?: boolean } }) => Promise<Request>;
   }> | null = null;
 
   constructor(
@@ -260,6 +267,22 @@ export class R2Storage implements ArtifactStorage {
     if (!res.ok && res.status !== 404) {
       throw new Error(`R2 delete failed for ${key}: ${res.status} ${await res.text()}`);
     }
+  }
+
+  async signedGetUrl(
+    key: string,
+    options: { expiresSeconds?: number; downloadName?: string; contentType?: string } = {},
+  ): Promise<string> {
+    const client = await this.client();
+    const url = new URL(this.url(key));
+    url.searchParams.set("X-Amz-Expires", String(Math.max(60, Math.min(options.expiresSeconds ?? 3600, 7 * 86_400))));
+    if (options.downloadName) {
+      const safe = options.downloadName.replace(/[^A-Za-z0-9._-]+/g, "-").slice(0, 80) || "download";
+      url.searchParams.set("response-content-disposition", `attachment; filename="${safe}"`);
+    }
+    if (options.contentType) url.searchParams.set("response-content-type", options.contentType);
+    const signed = await client.sign(url.toString(), { method: "GET", aws: { signQuery: true } });
+    return signed.url;
   }
 
   async exists(key: string): Promise<boolean> {

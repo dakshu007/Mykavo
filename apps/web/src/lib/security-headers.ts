@@ -49,9 +49,14 @@ const CSP_DIRECTIVES = [
   `script-src 'self' 'unsafe-inline' ${GTM} https://www.google-analytics.com ${CLARITY}`,
   // Next.js and Tailwind both emit inline styles; there is no nonce-free
   // alternative, and injected CSS is a far smaller prize than injected JS.
-  "style-src 'self' 'unsafe-inline'",
+  // Google Fonts: the Brand Video preview renders in the customer's own
+  // brand fonts (packages/brand-video compose.ts), exactly as the export.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  // Exported brand videos play from short-lived signed links to the private
+  // R2 bucket (too large to pass through a serverless response).
+  "media-src 'self' blob: https://*.r2.cloudflarestorage.com",
   // GA4 also posts to the apex analytics.google.com (a *. wildcard never
   // matches the apex) and, with Google Signals, to stats.g.doubleclick.net
   // and google.com; both showed up in real violation reports. Signals'

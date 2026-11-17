@@ -106,7 +106,20 @@ export function AiControls({ initial }: { initial: AiControlsData }) {
           {error}
         </p>
       )}
-      <RolloutControl initial={data.rollout} />
+      <RolloutControl
+        initial={data.rollout}
+        title="AI Keyword Agent rollout"
+        endpoint="/api/admin/ai-rollout"
+        feature="AI Keywords"
+        confirmText="Open AI Keywords to every customer and publish the feature page?"
+      />
+      <RolloutControl
+        initial={data.videoRollout}
+        title="Brand Video rollout"
+        endpoint="/api/admin/video-rollout"
+        feature="Brand Video"
+        confirmText="Open Brand Video to every customer?"
+      />
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {data.pools.map((p) => {
           const ratio = p.capUsd > 0 ? Math.min(1, p.spentUsd / p.capUsd) : p.spentUsd > 0 ? 1 : 0;
@@ -141,14 +154,28 @@ export function AiControls({ initial }: { initial: AiControlsData }) {
   );
 }
 
-const ROLLOUT_OPTIONS: { mode: AiControlsData["rollout"]["mode"]; label: string; detail: string }[] = [
-  { mode: "admins", label: "Admins only", detail: "Only platform admins see AI Keywords." },
-  { mode: "beta", label: "Beta list", detail: "Admins plus the verified emails below." },
-  { mode: "everyone", label: "Everyone", detail: "Every customer, and the public feature page goes live." },
-];
+function rolloutOptions(feature: string): { mode: AiControlsData["rollout"]["mode"]; label: string; detail: string }[] {
+  return [
+    { mode: "admins", label: "Admins only", detail: `Only platform admins see ${feature}.` },
+    { mode: "beta", label: "Beta list", detail: "Admins plus the verified emails below." },
+    { mode: "everyone", label: "Everyone", detail: "Every customer." },
+  ];
+}
 
-/** Who can use the AI Keyword Agent: admins, a beta list, then everyone. */
-function RolloutControl({ initial }: { initial: AiControlsData["rollout"] }) {
+/** Who can use a feature: admins, a beta list, then everyone. */
+function RolloutControl({
+  initial,
+  title,
+  endpoint,
+  feature,
+  confirmText,
+}: {
+  initial: AiControlsData["rollout"];
+  title: string;
+  endpoint: string;
+  feature: string;
+  confirmText: string;
+}) {
   const [mode, setMode] = useState(initial.mode);
   const [emails, setEmails] = useState(initial.betaEmails.join("\n"));
   const [saved, setSaved] = useState(initial);
@@ -157,11 +184,11 @@ function RolloutControl({ initial }: { initial: AiControlsData["rollout"] }) {
   const dirty = mode !== saved.mode || emails.trim() !== saved.betaEmails.join("\n");
 
   async function save() {
-    if (mode === "everyone" && saved.mode !== "everyone" && !window.confirm("Open AI Keywords to every customer and publish the feature page?")) return;
+    if (mode === "everyone" && saved.mode !== "everyone" && !window.confirm(confirmText)) return;
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/admin/ai-rollout", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ mode, betaEmails: emails.split(/[\s,]+/).filter(Boolean) }),
@@ -184,15 +211,15 @@ function RolloutControl({ initial }: { initial: AiControlsData["rollout"] }) {
   return (
     <fieldset className="mt-4 rounded-xl border border-line px-4 py-3">
       <legend className="flex items-center gap-1.5 px-1 text-[13px] font-semibold text-ink">
-        <Rocket className="size-3.5 text-accent" aria-hidden /> AI Keyword Agent rollout
+        <Rocket className="size-3.5 text-accent" aria-hidden /> {title}
       </legend>
       <div className="grid gap-2 sm:grid-cols-3">
-        {ROLLOUT_OPTIONS.map((o) => (
+        {rolloutOptions(feature).map((o) => (
           <label
             key={o.mode}
             className={`flex cursor-pointer gap-2 rounded-lg border p-2.5 text-[13px] ${mode === o.mode ? "border-accent bg-primary-soft/40" : "border-line"}`}
           >
-            <input type="radio" name="rollout" className="mt-0.5" checked={mode === o.mode} onChange={() => setMode(o.mode)} />
+            <input type="radio" name={`rollout-${endpoint}`} className="mt-0.5" checked={mode === o.mode} onChange={() => setMode(o.mode)} />
             <span>
               <span className="block font-medium text-ink">{o.label}</span>
               <span className="block text-[12px] leading-4 text-ink-faint">{o.detail}</span>

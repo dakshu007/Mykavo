@@ -233,7 +233,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   // the snapshots and change events that name them, and nothing afterwards
   // can say which objects in the bucket belonged to this site. Skipping this
   // is why deleted websites used to keep costing money forever.
-  const { screenshotKeys, diffKeys } = await collectWebsiteArtifactKeys(prisma, website.id);
+  const { screenshotKeys, diffKeys, ownedKeys } = await collectWebsiteArtifactKeys(prisma, website.id);
 
   await prisma.website.delete({ where: { id: website.id } });
 
@@ -248,7 +248,7 @@ export async function DELETE(_request: Request, { params }: Params) {
     queued = await queueArtifactDeletions(
       prisma,
       ctx.workspace.id,
-      [...unreferenced, ...diffKeys],
+      [...unreferenced, ...diffKeys, ...ownedKeys],
       "website_deleted",
     );
     // Deleting the objects is unbounded work - thousands of them for a site

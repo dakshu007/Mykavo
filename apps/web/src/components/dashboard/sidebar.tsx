@@ -27,6 +27,7 @@ import {
   Link2,
   LifeBuoy,
   ChevronsUpDown,
+  Clapperboard,
 } from "lucide-react";
 import { ShopifyGlyph, WordPressGlyph } from "@/components/brand/integration-icons";
 import { AiWriterIcon } from "@/components/brand/ai-writer-icon";
@@ -65,6 +66,7 @@ const ICONS: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   "utm-links": Link2,
   usage: Gauge,
   keywords: AiWriterIcon,
+  "brand-video": Clapperboard,
   "app-requests": MailQuestion,
   automations: Workflow,
   "email-marketing": Megaphone,
@@ -82,6 +84,7 @@ export function DashboardSidebar({
   isBlogAdmin = false,
   isPlatformAdmin = false,
   keywordAgent = false,
+  brandVideo = false,
   workspaces = [],
   currentWorkspaceId,
 }: {
@@ -101,13 +104,14 @@ export function DashboardSidebar({
   isPlatformAdmin?: boolean;
   /** AI Keywords opened to this user by the rollout. */
   keywordAgent?: boolean;
+  brandVideo?: boolean;
   /** All workspaces the user belongs to - switcher renders when >1. */
   workspaces?: WorkspaceOption[];
   currentWorkspaceId?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const groups = dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin, keywordAgent });
+  const groups = dashboardNav({ monitoringLive, appApproved, isBlogAdmin, isPlatformAdmin, keywordAgent, brandVideo });
 
   async function handleSignOut() {
     await authClient.signOut();

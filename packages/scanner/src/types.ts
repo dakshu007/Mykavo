@@ -50,6 +50,11 @@ export interface ScanPageOptions {
    * CSS selectors covered with a solid block in the screenshot only - * content is still compared (spec §25). Invalid selectors are skipped.
    */
   screenshotMasks?: string[];
+  /**
+   * Also capture the brand kit (brand.ts) under this storage prefix. Only
+   * the homepage, and only when the worker needs a fresh kit.
+   */
+  brand?: { prefix: string };
 }
 
 /** Which per-page budget stopped further requests (scan-page.ts). */
@@ -112,6 +117,8 @@ export interface PageScanResult {
   technologies: TechEntry[];
   /** Observed state of each requested monitored element (Phase 9). */
   elements: MonitoredElementCheck[];
+  /** The brand kit capture, when options.brand asked for one (null if it failed). */
+  brand?: import("./brand").BrandCaptureResult | null;
 }
 
 export class ScanPageError extends Error {

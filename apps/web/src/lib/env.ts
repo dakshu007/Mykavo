@@ -172,6 +172,9 @@ function buildSchema(ctxRef: { allowMasked: boolean; deferred: string[] }) {
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MONTHLY_BUDGET_USD: z.string().optional(),
   AI_AGENT_MONTHLY_BUDGET_USD: z.string().optional(),
+  // Brand videos have their own AI cap (scene plans only; exports use no AI).
+  // Default 0: the AI cannot write scripts until set. Exports still work.
+  AI_VIDEO_MONTHLY_BUDGET_USD: z.string().optional(),
   // Day of the month the Supabase billing cycle renews (1-28, Supabase >
   // Billing), for the admin egress meter. Defaults to the 1st. The readings
   // themselves come from the worker (SUPABASE_METRICS_KEY, worker env).

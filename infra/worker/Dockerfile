@@ -41,6 +41,15 @@ RUN ( apt-get update \
  ) || echo "WARNING: Postgres 17 install failed - database backups disabled in this image" ; \
  rm -rf /var/lib/apt/lists/*
 
+# ffmpeg for brand video exports (apps/worker/src/brand-video/render.ts):
+# Chromium draws each frame, ffmpeg encodes them to H.264. Wrapped like the
+# Postgres install: a mirror outage must never block a monitoring deploy. A
+# worker without ffmpeg fails exports with a clear message and refunds them.
+RUN ( apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ffmpeg \
+ ) || echo "WARNING: ffmpeg install failed - brand video exports disabled in this image" ; \
+ rm -rf /var/lib/apt/lists/*
+
 # Persistent worker data (backups now, more later) lives on a named volume
 # mounted here by compose.yml. Created and owned in the image so the volume
 # inherits pwuser ownership the first time Docker populates it.
@@ -68,6 +77,7 @@ COPY packages/severity-engine/package.json    packages/severity-engine/
 COPY packages/email/package.json              packages/email/
 COPY packages/seo-audit/package.json          packages/seo-audit/
 COPY packages/keyword-agent/package.json      packages/keyword-agent/
+COPY packages/brand-video/package.json        packages/brand-video/
 
 # The web app is not part of this image - the worker only needs its own
 # workspace deps, and installing Next here would triple the image size.

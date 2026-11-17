@@ -52,9 +52,16 @@ export interface AgentRun {
 export interface AgentDeps {
   db: AgentDb;
   client: Pick<Anthropic, "messages">;
-  /** Raw AI_AGENT_MONTHLY_BUDGET_USD. */
+  /** Raw AI_AGENT_MONTHLY_BUDGET_USD (or the feature's own budget variable). */
   budgetUsd: string | undefined;
   now?: () => Date;
+  /**
+   * The ai_usage.feature this spend is booked to and capped by. Defaults to
+   * the keyword agent; brand videos pass their own so each has its own cap.
+   */
+  feature?: string;
+  /** Named in the "reached this month's limit" message. */
+  featureLabel?: string;
 }
 
 export const DATA_RULE =
@@ -75,11 +82,14 @@ export async function assertCanSpend(deps: AgentDeps, run?: AgentRun): Promise<v
   const budget = agentBudgetMicroUsd(deps.budgetUsd);
   const now = deps.now?.() ?? new Date();
   const spent = await deps.db.aiUsage.aggregate({
-    where: { feature: AGENT_FEATURE, createdAt: { gte: startOfUtcMonth(now) } },
+    where: { feature: deps.feature ?? AGENT_FEATURE, createdAt: { gte: startOfUtcMonth(now) } },
     _sum: { costMicroUsd: true },
   });
   if ((spent._sum.costMicroUsd ?? 0) >= budget) {
-    throw new AgentError("budget", "The AI keyword agent has reached this month's limit. It will be back next month.");
+    throw new AgentError(
+      "budget",
+      `${deps.featureLabel ?? "The AI keyword agent"} has reached this month's limit. It will be back next month.`,
+    );
   }
 }
 
@@ -110,7 +120,7 @@ async function book(
   try {
     await deps.db.aiUsage.create({
       data: {
-        feature: AGENT_FEATURE,
+        feature: deps.feature ?? AGENT_FEATURE,
         outcome: ok ? "ok" : "unusable",
         workspaceId: run.workspaceId,
         websiteId: run.websiteId,

@@ -15,7 +15,9 @@ import {
   WELCOME_EMAIL_QUEUE,
   ARTIFACT_PURGE_QUEUE,
   AI_AGENT_QUEUE,
+  BRAND_VIDEO_QUEUE,
   type AiAgentJob,
+  type BrandVideoJob,
   type PushTestJob,
   type AdminSignupJob,
   type WelcomeEmailJob,
@@ -174,6 +176,11 @@ export async function enqueuePushTest(job: PushTestJob): Promise<string | null> 
 export async function enqueueAiAgentJob(job: AiAgentJob): Promise<string | null> {
   const boss = await getBoss();
   return boss.send(AI_AGENT_QUEUE, { ...job });
+}
+
+export async function enqueueBrandVideoJob(job: BrandVideoJob): Promise<string | null> {
+  const boss = await getBoss();
+  return boss.send(BRAND_VIDEO_QUEUE, { ...job });
 }
 
 /** Enqueue a Search Console sync. Returns the pg-boss job id. */
