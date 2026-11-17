@@ -63,6 +63,12 @@ async function createBoss(): Promise<PgBoss> {
   await boss
     .createQueue(LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60, notify: true })
     .catch(() => {});
+  // Brand videos: same policy as the worker sets (apps/worker/src/index.ts).
+  // Created here too, so a click that lands before the worker has started
+  // its new release still finds the queue instead of failing to enqueue.
+  await boss
+    .createQueue(BRAND_VIDEO_QUEUE, { retryLimit: 0, expireInSeconds: 20 * 60, notify: true })
+    .catch(() => {});
   return boss;
 }
 
