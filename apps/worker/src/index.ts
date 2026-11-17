@@ -31,6 +31,7 @@ import {
   GSC_SYNC_SWEEP_QUEUE,
   DOMAIN_SWEEP_QUEUE,
   DB_BACKUP_QUEUE,
+  BLOG_AUDIO_SWEEP_QUEUE,
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
   WELCOME_EMAIL_QUEUE,
@@ -80,6 +81,7 @@ import { startWatchdog } from "./watchdog";
 import { startKeepWarm } from "./keep-warm";
 import { startEgressSampler } from "./egress-sample";
 import { seedRepoPosts } from "./blog-seed";
+import { runBlogAudioSweep } from "./blog-audio";
 
 const SWEEP_CRON = process.env.SCHEDULER_CRON ?? "*/5 * * * *"; // every 5 minutes
 const RETENTION_CRON = process.env.RETENTION_CRON ?? "0 3 * * *"; // daily 03:00 UTC
@@ -107,6 +109,7 @@ const WP_PLUGIN_HEALTH_CRON = process.env.WP_PLUGIN_HEALTH_CRON ?? "10 4 * * *";
 const AI_CRAWLER_ALERT_CRON = process.env.AI_CRAWLER_ALERT_CRON ?? "50 10 * * *"; // daily 10:50 UTC
 // Before the 03:00 retention sweep, so each dump holds the day's data intact.
 const BACKUP_CRON = process.env.BACKUP_CRON ?? "30 2 * * *"; // daily 02:30 UTC
+const BLOG_AUDIO_CRON = process.env.BLOG_AUDIO_CRON ?? "*/10 * * * *"; // every 10 minutes
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -289,6 +292,14 @@ async function main() {
     await runDomainSweep();
   });
   await boss.schedule(DOMAIN_SWEEP_QUEUE, DOMAIN_CRON);
+
+  // "Listen to this article": narrates new and edited blog posts with
+  // ElevenLabs. A no-op until ELEVENLABS_API_KEY is set (blog-audio.ts).
+  await ensureQueue(boss, BLOG_AUDIO_SWEEP_QUEUE, { expireInSeconds: 60 * 60 });
+  await boss.work(BLOG_AUDIO_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
+    await runBlogAudioSweep();
+  });
+  await boss.schedule(BLOG_AUDIO_SWEEP_QUEUE, BLOG_AUDIO_CRON);
 
   // WordPress Plugin Health: WordPress.org lookups (one a second, at most
   // 200 a run, ~4 minutes) and one email per workspace about new risks.

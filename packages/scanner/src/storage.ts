@@ -41,6 +41,14 @@ export interface ArtifactStorage {
    * loses money quietly.
    */
   usage?(options?: { maxPages?: number }): Promise<StorageUsage>;
+  /**
+   * A time-limited URL that reads the object directly from storage.
+   *
+   * Optional: only R2 has one. Used for files too large to pass through a
+   * serverless function (blog narration MP3s), where the app checks what may
+   * be read and then redirects the browser to this URL.
+   */
+  signedUrl?(key: string, expiresSeconds: number): Promise<string>;
 }
 
 export interface StorageUsage {
@@ -189,6 +197,10 @@ export function parseListObjectsPage(xml: string): {
 export class R2Storage implements ArtifactStorage {
   private clientPromise: Promise<{
     fetch: (input: string, init?: RequestInit) => Promise<Response>;
+    sign: (
+      input: string,
+      init?: RequestInit & { aws?: { signQuery?: boolean } },
+    ) => Promise<Request>;
   }> | null = null;
 
   constructor(
@@ -260,6 +272,15 @@ export class R2Storage implements ArtifactStorage {
     if (!res.ok && res.status !== 404) {
       throw new Error(`R2 delete failed for ${key}: ${res.status} ${await res.text()}`);
     }
+  }
+
+  async signedUrl(key: string, expiresSeconds: number): Promise<string> {
+    const client = await this.client();
+    const url = new URL(this.url(key));
+    // SigV4 presigned URLs last at most 7 days.
+    url.searchParams.set("X-Amz-Expires", String(Math.min(Math.max(1, Math.floor(expiresSeconds)), 604800)));
+    const signed = await client.sign(url.toString(), { method: "GET", aws: { signQuery: true } });
+    return signed.url;
   }
 
   async exists(key: string): Promise<boolean> {

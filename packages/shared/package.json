@@ -16,7 +16,8 @@
     "./app-access": "./src/app-access.ts",
     "./plan-tier": "./src/plan-tier.ts",
     "./campaign": "./src/campaign.ts",
-    "./product-events": "./src/product-events.ts"
+    "./product-events": "./src/product-events.ts",
+    "./blog-narration": "./src/blog-narration.ts"
   },
   "scripts": {
     "test": "vitest run"

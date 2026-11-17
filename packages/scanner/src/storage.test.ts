@@ -24,6 +24,10 @@ vi.mock("aws4fetch", () => ({
       aws.captured = { url, init };
       return new Response(null, { status: 200 });
     }
+    async sign(url: string, init?: RequestInit) {
+      aws.captured = { url, init };
+      return new Request(`${url}&X-Amz-Signature=sig`);
+    }
   },
 }));
 
@@ -206,5 +210,17 @@ describe("R2Storage.put", () => {
       "https://acct.r2.cloudflarestorage.com/mykavo/blog-images/abc.jpg",
     );
     expect(result?.init?.method).toBe("PUT");
+  });
+});
+
+describe("R2Storage.signedUrl", () => {
+  it("presigns a GET for the object with a clamped expiry", async () => {
+    const r2 = new R2Storage({ accountId: "acct", accessKeyId: "key", secretAccessKey: "secret", bucket: "mykavo" });
+    const url = new URL(await r2.signedUrl("blog-audio/a b.mp3", 999_999_999));
+    expect(url.host).toBe("acct.r2.cloudflarestorage.com");
+    expect(url.pathname).toBe("/mykavo/blog-audio/a%20b.mp3");
+    expect(url.searchParams.get("X-Amz-Expires")).toBe("604800");
+    expect(url.searchParams.get("X-Amz-Signature")).toBe("sig");
+    expect(aws.captured?.init).toMatchObject({ method: "GET", aws: { signQuery: true } });
   });
 });

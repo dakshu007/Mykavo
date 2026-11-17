@@ -41,6 +41,14 @@ RUN ( apt-get update \
  ) || echo "WARNING: Postgres 17 install failed - database backups disabled in this image" ; \
  rm -rf /var/lib/apt/lists/*
 
+# ffmpeg encodes blog narration to MP3 (apps/worker/src/blog-audio.ts).
+# Wrapped like the Postgres install: a mirror outage must not block a deploy;
+# without ffmpeg the narration sweep fails per post and logs why.
+RUN ( apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ffmpeg \
+ ) || echo "WARNING: ffmpeg install failed - blog narration disabled in this image" ; \
+ rm -rf /var/lib/apt/lists/*
+
 # Persistent worker data (backups now, more later) lives on a named volume
 # mounted here by compose.yml. Created and owned in the image so the volume
 # inherits pwuser ownership the first time Docker populates it.

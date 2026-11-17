@@ -42,6 +42,8 @@ export type AnalyticsEvent =
   | "wp_plugin_downloaded"
   | "wp_plugin_directory_clicked"
   | "blog_ai_summary"
+  | "blog_audio_play"
+  | "blog_audio_progress"
   // Shopify app page
   | "shopify_app_viewed"
   // Chrome extension page

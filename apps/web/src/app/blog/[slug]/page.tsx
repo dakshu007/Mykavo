@@ -23,6 +23,8 @@ import { fontSans, fontDisplay, gold } from "@/components/landing/style";
 import { collectFaqItems, parsePost, readingTimeMinutes } from "@/components/blog/blocks";
 import { PostContent, PostTocMobile, PostTocRail } from "@/components/blog/post-content";
 import { AiOverview } from "@/components/blog/ai-overview";
+import { AudioPlayer, type AudioChapter } from "@/components/blog/audio-player";
+import { buildNarration } from "@mykavo/shared/blog-narration";
 import { MonitorUrlCta } from "@/components/cta/monitor-url-cta";
 import { WordpressPluginCta } from "@/components/cta/wordpress-plugin-cta";
 import { isContentTopic } from "@/lib/content-topic";
@@ -77,6 +79,44 @@ async function getRelatedPosts(post: { id: string; tags: string[] }) {
   return [...tagged, ...recent];
 }
 
+/**
+ * The post's narration, only while it still reads the post's current text:
+ * after an edit the worker narrates it again, and until then no player.
+ */
+async function getPostAudio(
+  post: { id: string; title: string; authorName: string; content: string },
+  headings: ReadonlyArray<{ text: string; id: string; depth: number }>,
+) {
+  const audio = await prisma.blogAudio
+    .findUnique({ where: { postId: post.id } })
+    .catch(() => null);
+  if (!audio || audio.status !== "ready" || !audio.storageKey || audio.durationMs <= 0) return null;
+  if (audio.narrationHash !== buildNarration(post).hash) return null;
+
+  const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const byText = new Map(headings.filter((h) => h.depth === 2).map((h) => [normalize(h.text), h.id]));
+  const rawChapters = Array.isArray(audio.chapters) ? audio.chapters : [];
+  const chapters: AudioChapter[] = rawChapters.flatMap((c) => {
+    if (!c || typeof c !== "object" || Array.isArray(c)) return [];
+    const { title, startMs } = c as { title?: unknown; startMs?: unknown };
+    if (typeof title !== "string" || typeof startMs !== "number") return [];
+    return [{ title, startMs, headingId: byText.get(normalize(title)) ?? null }];
+  });
+  const peaks = (Array.isArray(audio.peaks) ? audio.peaks : []).filter(
+    (v): v is number => typeof v === "number",
+  );
+  const name = audio.storageKey.slice(audio.storageKey.lastIndexOf("/") + 1);
+  return { src: `/api/blog-audio/${name}`, durationMs: audio.durationMs, chapters, peaks };
+}
+
+/** ISO 8601 duration for schema.org, e.g. PT12M41S. */
+function isoDuration(ms: number): string {
+  const total = Math.max(1, Math.round(ms / 1000));
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
+  return `PT${m > 0 ? `${m}M` : ""}${sec}S`;
+}
+
 /** Only live posts are visible publicly - drafts and scheduled posts 404. */
 async function getPublishedPost(slug: string) {
   return prisma.blogPost.findFirst({
@@ -125,6 +165,7 @@ export default async function BlogPostPage({ params }: Params) {
   const { segments, headings } = parsePost(post.content);
   const faqItems = collectFaqItems(segments);
   const readMinutes = readingTimeMinutes(post.content);
+  const audio = await getPostAudio(post, headings);
   const showTocRail = headings.length >= 2;
   const author = await resolveAuthor(post.authorName);
   const authorName = author?.name ?? post.authorName;
@@ -187,6 +228,19 @@ export default async function BlogPostPage({ params }: Params) {
     isPartOf: { "@type": "Blog", "@id": `${site.url}/blog#blog` },
     ...(post.tags.length > 0 ? { articleSection: post.tags } : {}),
     ...(jsonLdKeywords ? { keywords: jsonLdKeywords } : {}),
+    ...(audio
+      ? {
+          audio: {
+            "@type": "AudioObject",
+            name: `${post.title} (audio)`,
+            description: "The article read aloud by an AI narrator.",
+            contentUrl: `${site.url}${audio.src}`,
+            encodingFormat: "audio/mpeg",
+            duration: isoDuration(audio.durationMs),
+            inLanguage: "en",
+          },
+        }
+      : {}),
   };
 
   const breadcrumbJsonLd = breadcrumbList([
@@ -340,6 +394,19 @@ export default async function BlogPostPage({ params }: Params) {
               {/* The post's answer, stated up front - the excerpt, written as
                   a self-contained answer, is what AI answers and readers in
                   a hurry both want first. */}
+              {audio && (
+                <AudioPlayer
+                  src={audio.src}
+                  slug={post.slug}
+                  title={post.title}
+                  author={authorName}
+                  artwork={shareImage}
+                  durationMs={audio.durationMs}
+                  chapters={audio.chapters}
+                  peaks={audio.peaks}
+                  className="mb-8"
+                />
+              )}
               <AiOverview answer={post.excerpt} takeaways={post.keyTakeaways} className="mb-6" />
               {/* Many readers get their answer from the overview and leave:
                   the next step sits right under it, about their own site. */}

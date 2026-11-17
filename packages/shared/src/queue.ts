@@ -29,6 +29,11 @@ export const GSC_SYNC_QUEUE = "gsc-sync";
 export const GSC_SYNC_SWEEP_QUEUE = "gsc-sync-sweep";
 /** Weekly RDAP pass: when does each monitored domain expire? */
 export const DOMAIN_SWEEP_QUEUE = "domain-sweep";
+/**
+ * "Listen to this article": narrates blog posts that have no audio yet, or
+ * whose text changed since they were narrated (apps/worker/src/blog-audio.ts).
+ */
+export const BLOG_AUDIO_SWEEP_QUEUE = "blog-audio-sweep";
 /** Nightly pg_dump onto the worker's disk, proven by a restore (db-backup.ts). */
 export const DB_BACKUP_QUEUE = "db-backup";
 /**

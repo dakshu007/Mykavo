@@ -1008,3 +1008,18 @@ html[data-promo="black-friday"] body:has([data-landing-nav])::before {
 @media (prefers-reduced-motion: reduce) {
   .sky-drift, .ms-in, .ms-scan > span, .anatomy-panel { animation: none; }
 }
+
+/* Blog narration player: bars around the playhead breathe while playing. */
+@keyframes audio-eq {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.45); }
+}
+@keyframes audio-ping {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.audio-eq { animation: audio-eq 0.9s ease-in-out infinite; transform-origin: center; }
+.audio-ping { animation: audio-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .audio-eq, .audio-ping { animation: none; }
+}
