@@ -37,7 +37,6 @@ import {
   type ElementObservation,
 } from "./extract";
 import type { ArtifactStorage } from "./storage";
-import { captureBrand } from "./brand";
 import {
   ScanPageError,
   type PageResourceLimit,
@@ -549,10 +548,6 @@ export async function scanPage(
       }
     }
 
-    // Brand kit (brand videos). After the monitoring screenshot, so nothing
-    // it does to the page can change what monitoring compares.
-    const brand = options.brand ? await captureBrand(activePage, finalUrl, storage, options.brand.prefix) : null;
-
     if (resourceLimit !== null) {
       console.warn(
         `[scan-page] resource budget hit (${resourceLimit}): ${requestCount} requests, ${pageWeightBytes} bytes for ${url}`,
@@ -585,7 +580,6 @@ export async function scanPage(
       platformFingerprint,
       technologies,
       elements,
-      brand,
     };
   } finally {
     await context.close().catch(() => {});

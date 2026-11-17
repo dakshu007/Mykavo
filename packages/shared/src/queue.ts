@@ -65,12 +65,6 @@ export const PUSH_TEST_QUEUE = "push-test";
  */
 export const AI_AGENT_QUEUE = "ai-agent";
 /**
- * Brand video jobs (brand kit refresh, AI scene plan, MP4 export): their own
- * queue, one job at a time, because an export holds a browser and ffmpeg for
- * a few minutes and must never delay a scan or an AI writer job.
- */
-export const BRAND_VIDEO_QUEUE = "brand-video";
-/**
  * Hourly activation pass: the "baseline ready" confirmation and the one-time
  * "add your first website" reminder. Budgeted against the email plan's daily
  * and monthly limits (see apps/worker/src/email-budget.ts) so reminders only
@@ -158,10 +152,5 @@ export interface WelcomeEmailJob {
 
 export interface AiAgentJob {
   /** ai_job.id; the row holds the kind and the input. */
-  aiJobId: string;
-}
-
-export interface BrandVideoJob {
-  /** ai_job.id; kind "brand", "video-script" or "video-render". */
   aiJobId: string;
 }

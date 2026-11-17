@@ -32,4 +32,3 @@ export {
   type MonitoredElementInput,
   type MonitoredElementCheck,
 } from "./types";
-export { captureBrand, extractBrandInPage, type BrandCaptureResult, type RawBrandCapture } from "./brand";

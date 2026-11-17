@@ -46,7 +46,6 @@ export type NavItemId =
   | "utm-links"
   | "usage"
   | "keywords"
-  | "brand-video"
   | "app-requests"
   | "automations"
   | "email-marketing"
@@ -94,8 +93,6 @@ export interface NavAccess {
    * everyone): shown with the analysis tools instead of under Admin.
    */
   keywordAgent?: boolean;
-  /** Brand Video is open to this user through its own rollout. */
-  brandVideo?: boolean;
 }
 
 /** The core loop's screens. Always present - this is the product. */
@@ -137,7 +134,6 @@ const ACCOUNT: NavItem[] = [
 ];
 
 const AI_KEYWORDS: NavItem = { id: "keywords", href: "/dashboard/keywords", label: "AI Keywords", short: "Keywords" };
-const BRAND_VIDEO: NavItem = { id: "brand-video", href: "/dashboard/brand-video", label: "Brand Video", short: "Video", badge: "Beta" };
 
 /** Shown only to an account approved for the Android app. */
 const APP_DOWNLOAD: NavItem = {
@@ -161,10 +157,9 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
   // AI Keywords works from day one (it reads the site itself), so unlike the
   // analysis tools it does not wait for the first scan: its own group,
   // shown to everyone the rollout allows.
-  const grow: NavItem[] = [];
-  if (access.keywordAgent) grow.push(AI_KEYWORDS);
-  if (access.brandVideo) grow.push(BRAND_VIDEO);
-  if (grow.length > 0) groups.push({ id: "grow", label: "Grow", items: grow });
+  if (access.keywordAgent) {
+    groups.push({ id: "grow", label: "Grow", items: [AI_KEYWORDS] });
+  }
 
   groups.push({ id: "integrations", label: "Integrations", items: INTEGRATIONS });
 
@@ -203,7 +198,6 @@ export function dashboardNav(access: NavAccess): NavGroup[] {
     // Admin preview until the rollout opens it to users; then it lives with
     // the analysis tools for everyone, admins included.
     if (!access.keywordAgent) admin.push(AI_KEYWORDS);
-    if (!access.brandVideo) admin.push(BRAND_VIDEO);
   }
   if (admin.length > 0) {
     groups.push({ id: "admin", label: "Admin", items: admin });

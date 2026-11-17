@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import {
   prisma,
   getAgentRollout,
-  getVideoRollout,
   resumeAutoPaused,
   rolloutAllows,
   trialDaysLeft,
@@ -90,13 +89,6 @@ export default async function DashboardLayout({
     session.user.emailVerified === true,
   );
 
-  // Brand Video under Grow once its own rollout opens it to this user.
-  const brandVideo = rolloutAllows(
-    await getVideoRollout(prisma),
-    session.user.email,
-    session.user.emailVerified === true,
-  );
-
   // A limit already used up (AI posts, keyword reports, websites, AI
   // explanations) turns the sidebar card into "continue with the next plan".
   // Only for people who can buy it, and never during a running trial (its
@@ -138,7 +130,7 @@ export default async function DashboardLayout({
       </Dismissible>
     )
   ) : null;
-  const navAccess = { monitoringLive, appApproved, isBlogAdmin: blogAdmin, isPlatformAdmin: platformAdmin, keywordAgent, brandVideo };
+  const navAccess = { monitoringLive, appApproved, isBlogAdmin: blogAdmin, isPlatformAdmin: platformAdmin, keywordAgent };
   // A trial plan is already named "Pro trial" (config/plans.ts trialPlan).
   const planLabel = plan.name;
 
@@ -171,7 +163,6 @@ export default async function DashboardLayout({
           isBlogAdmin={blogAdmin}
           isPlatformAdmin={platformAdmin}
           keywordAgent={keywordAgent}
-          brandVideo={brandVideo}
           workspaces={memberships.map((m) => m.workspace)}
           currentWorkspaceId={workspace.id}
           upgradeCard={upgradeCard}
@@ -192,7 +183,6 @@ export default async function DashboardLayout({
             isBlogAdmin={blogAdmin}
             isPlatformAdmin={platformAdmin}
             keywordAgent={keywordAgent}
-            brandVideo={brandVideo}
           />
           {/* The sidebar (and its card) is hidden below lg. Without this copy a
               phone never sees the countdown of a trial that is still running.

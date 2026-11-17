@@ -23,9 +23,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.81.0(react@19.3.0))
-      '@mykavo/brand-video':
-        specifier: workspace:*
-        version: link:../../packages/brand-video
       '@mykavo/comparison-engine':
         specifier: workspace:*
         version: link:../../packages/comparison-engine
@@ -159,9 +156,6 @@ importers:
 
   apps/worker:
     dependencies:
-      '@mykavo/brand-video':
-        specifier: workspace:*
-        version: link:../../packages/brand-video
       '@mykavo/comparison-engine':
         specifier: workspace:*
         version: link:../../packages/comparison-engine
@@ -189,15 +183,9 @@ importers:
       pg-boss:
         specifier: ^12.25.1
         version: 12.25.1
-      playwright:
-        specifier: ^1.58.0
-        version: 1.61.1
       tsx:
         specifier: ^4.19.0
         version: 4.23.0
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
     devDependencies:
       '@netlify/blobs':
         specifier: ^10.7.9
@@ -208,19 +196,6 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
-
-  packages/brand-video:
-    dependencies:
-      '@mykavo/keyword-agent':
-        specifier: workspace:*
-        version: link:../keyword-agent
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@20.19.43)(jsdom@26.1.0)(vite@8.1.3(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0))
 
   packages/comparison-engine:
     dependencies:
@@ -3541,8 +3516,8 @@ packages:
     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
     engines: {node: '>=0.10'}
 
-  legacy-javascript@0.0.4:
-    resolution: {integrity: sha512-UTmeKBVxnfJcpmpOvzzNnLsQT99BXHpPlc/ZKddIRmWmrR0fw6335I3lq4+sJoP60UTbBNaYsGYVPc65YB1x3A==}
+  legacy-javascript@0.0.3:
+    resolution: {integrity: sha512-1r6MT4dVaJyXt4G07Cm2cQ0AUaLJdefiEp4SmIAylA++gnEQ82YvmzE58RkM5EP0fk5hROLCslUPGnwIYdZQVA==}
 
   lenis@1.3.26:
     resolution: {integrity: sha512-s/xTCZCxTFvHbAN1OzuhNaN5YPJH2ail0XAkctKW1b+RUAG4nUL5UHLXwNko1h8aEeT2jspBXegMgPJd8zcuag==}
@@ -6143,7 +6118,7 @@ snapshots:
 
   '@paulirish/trace_engine@0.0.59':
     dependencies:
-      legacy-javascript: 0.0.4
+      legacy-javascript: 0.0.3
       third-party-web: 0.30.0
 
   '@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)':
@@ -8408,7 +8383,7 @@ snapshots:
     dependencies:
       language-subtag-registry: 0.3.23
 
-  legacy-javascript@0.0.4: {}
+  legacy-javascript@0.0.3: {}
 
   lenis@1.3.26(react@19.3.0):
     optionalDependencies:

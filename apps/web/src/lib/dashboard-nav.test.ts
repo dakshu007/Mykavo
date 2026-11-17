@@ -78,7 +78,7 @@ describe("dashboardNav - operator entries", () => {
     const admin = dashboardNav({ ...live, isPlatformAdmin: true }).find(
       (g) => g.id === "admin",
     );
-    expect(admin?.items.map((i) => i.id)).toEqual(["users", "tracking", "utm-links", "app-requests", "automations", "email-marketing", "support-questions", "usage", "keywords", "brand-video"]);
+    expect(admin?.items.map((i) => i.id)).toEqual(["users", "tracking", "utm-links", "app-requests", "automations", "email-marketing", "support-questions", "usage", "keywords"]);
   });
 
   it("keeps the two privileges independent", () => {
@@ -95,7 +95,6 @@ describe("dashboardNav - operator entries", () => {
       "support-questions",
       "usage",
       "keywords",
-      "brand-video",
     ]);
   });
 
@@ -251,19 +250,5 @@ describe("AI Keywords placement", () => {
     const fresh = dashboardNav({ ...base, monitoringLive: false, keywordAgent: true });
     expect(fresh.find((g) => g.id === "analysis")).toBeUndefined();
     expect(flattenNav(fresh).some((i) => i.id === "keywords")).toBe(true);
-  });
-});
-
-describe("dashboardNav - brand video", () => {
-  const base = { monitoringLive: true, appApproved: false, isBlogAdmin: false, isPlatformAdmin: false };
-  it("lists Brand Video under Grow once the rollout opens it", () => {
-    const grow = dashboardNav({ ...base, brandVideo: true }).find((g) => g.id === "grow");
-    expect(grow?.items.map((i) => i.id)).toEqual(["brand-video"]);
-    const both = dashboardNav({ ...base, brandVideo: true, keywordAgent: true }).find((g) => g.id === "grow");
-    expect(both?.items.map((i) => i.id)).toEqual(["keywords", "brand-video"]);
-  });
-  it("hides it from customers the rollout does not include", () => {
-    const ids = dashboardNav(base).flatMap((g) => g.items.map((i) => i.id));
-    expect(ids).not.toContain("brand-video");
   });
 });

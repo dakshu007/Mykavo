@@ -8,19 +8,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@mykavo/brand-video": "workspace:*",
     "@mykavo/comparison-engine": "workspace:*",
     "@mykavo/database": "workspace:*",
     "@mykavo/email": "workspace:*",
-    "@mykavo/keyword-agent": "workspace:*",
     "@mykavo/scanner": "workspace:*",
-    "@mykavo/seo-audit": "workspace:*",
     "@mykavo/shared": "workspace:*",
     "dotenv": "^17.0.0",
     "pg-boss": "^12.25.1",
-    "playwright": "^1.58.0",
     "tsx": "^4.19.0",
-    "zod": "^4.4.3"
+    "@mykavo/seo-audit": "workspace:*",
+    "@mykavo/keyword-agent": "workspace:*"
   },
   "devDependencies": {
     "@netlify/blobs": "^10.7.9",

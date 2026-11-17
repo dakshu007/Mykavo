@@ -26,8 +26,6 @@ import {
   SITE_AUDIT_QUEUE,
   LEAD_AUDIT_QUEUE,
   AI_AGENT_QUEUE,
-  BRAND_VIDEO_QUEUE,
-  type BrandVideoJob,
   type AiAgentJob,
   GSC_SYNC_QUEUE,
   GSC_SYNC_SWEEP_QUEUE,
@@ -57,7 +55,6 @@ import { runAdminSignupJob } from "./admin-signup";
 import { runWelcomeEmailJob } from "./welcome-email";
 import { runRetentionSweep } from "./retention";
 import { runAgentRetention, runAiAgentJob } from "./keyword-agent";
-import { runBrandVideoJob } from "./brand-video/jobs";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
 import { runHealthSweep } from "./health";
@@ -341,18 +338,6 @@ async function main() {
     { batchSize: 1, pollingIntervalSeconds: 20, notifyPollingIntervalSeconds: 120 },
     async ([job]) => {
       if (job) await runAiAgentJob(job.data);
-    },
-  );
-
-  // Brand videos (packages/brand-video): brand kit refreshes, AI scene plans
-  // and MP4 exports. One at a time - an export holds its own Chromium and
-  // ffmpeg for minutes - and never retried, like the AI queue above.
-  await ensureQueue(boss, BRAND_VIDEO_QUEUE, { retryLimit: 0, expireInSeconds: 20 * 60 });
-  await boss.work<BrandVideoJob>(
-    BRAND_VIDEO_QUEUE,
-    { batchSize: 1, pollingIntervalSeconds: 20, notifyPollingIntervalSeconds: 120 },
-    async ([job]) => {
-      if (job) await runBrandVideoJob(job.data, pool);
     },
   );
 

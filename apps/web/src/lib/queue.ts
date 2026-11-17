@@ -15,9 +15,7 @@ import {
   WELCOME_EMAIL_QUEUE,
   ARTIFACT_PURGE_QUEUE,
   AI_AGENT_QUEUE,
-  BRAND_VIDEO_QUEUE,
   type AiAgentJob,
-  type BrandVideoJob,
   type PushTestJob,
   type AdminSignupJob,
   type WelcomeEmailJob,
@@ -62,12 +60,6 @@ async function createBoss(): Promise<PgBoss> {
     .catch(() => {});
   await boss
     .createQueue(LIGHTHOUSE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 5 * 60, notify: true })
-    .catch(() => {});
-  // Brand videos: same policy as the worker sets (apps/worker/src/index.ts).
-  // Created here too, so a click that lands before the worker has started
-  // its new release still finds the queue instead of failing to enqueue.
-  await boss
-    .createQueue(BRAND_VIDEO_QUEUE, { retryLimit: 0, expireInSeconds: 20 * 60, notify: true })
     .catch(() => {});
   return boss;
 }
@@ -182,11 +174,6 @@ export async function enqueuePushTest(job: PushTestJob): Promise<string | null> 
 export async function enqueueAiAgentJob(job: AiAgentJob): Promise<string | null> {
   const boss = await getBoss();
   return boss.send(AI_AGENT_QUEUE, { ...job });
-}
-
-export async function enqueueBrandVideoJob(job: BrandVideoJob): Promise<string | null> {
-  const boss = await getBoss();
-  return boss.send(BRAND_VIDEO_QUEUE, { ...job });
 }
 
 /** Enqueue a Search Console sync. Returns the pg-boss job id. */

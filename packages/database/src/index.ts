@@ -20,12 +20,8 @@ export * from "@prisma/client";
 export {
   AI_PAUSED_KEY,
   AGENT_ROLLOUT_KEY,
-  VIDEO_ROLLOUT_KEY,
   getAiPauseState,
   getAgentRollout,
-  getRollout,
-  getVideoRollout,
-  setRollout,
   isAiPaused,
   rolloutAllows,
   setAgentRollout,
@@ -33,7 +29,6 @@ export {
   type AgentRollout,
   type AgentRolloutMode,
   type AiPauseState,
-  type RolloutKey,
 } from "./ai-control";
 export {
   setSnapshotAsBaseline,

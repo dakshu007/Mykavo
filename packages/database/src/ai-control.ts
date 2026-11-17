@@ -69,18 +69,10 @@ export interface AgentRollout {
 
 const MODES: AgentRolloutMode[] = ["admins", "beta", "everyone"];
 
-/**
- * Brand videos have their own switch, so they can go to a beta list while
- * the keyword agent is already open to everyone (or the other way round).
- */
-export const VIDEO_ROLLOUT_KEY = "ai.video.rollout";
-
-export type RolloutKey = typeof AGENT_ROLLOUT_KEY | typeof VIDEO_ROLLOUT_KEY;
-
 /** Fails closed to admins only. */
-export async function getRollout(db: Pick<PrismaClient, "appSetting">, key: RolloutKey): Promise<AgentRollout> {
+export async function getAgentRollout(db: Pick<PrismaClient, "appSetting">): Promise<AgentRollout> {
   try {
-    const row = await db.appSetting.findUnique({ where: { key } });
+    const row = await db.appSetting.findUnique({ where: { key: AGENT_ROLLOUT_KEY } });
     const value = (row?.value ?? {}) as { mode?: unknown; betaEmails?: unknown };
     const mode = MODES.includes(value.mode as AgentRolloutMode) ? (value.mode as AgentRolloutMode) : "admins";
     const betaEmails = Array.isArray(value.betaEmails)
@@ -92,9 +84,8 @@ export async function getRollout(db: Pick<PrismaClient, "appSetting">, key: Roll
   }
 }
 
-export async function setRollout(
+export async function setAgentRollout(
   db: Pick<PrismaClient, "appSetting">,
-  key: RolloutKey,
   value: { mode: AgentRolloutMode; betaEmails: string[] },
   updatedBy: string,
 ): Promise<AgentRollout> {
@@ -103,27 +94,11 @@ export async function setRollout(
     betaEmails: [...new Set(value.betaEmails.map((e) => e.trim().toLowerCase()).filter((e) => e.includes("@")))].slice(0, 200),
   };
   const row = await db.appSetting.upsert({
-    where: { key },
-    create: { key, value: clean, updatedBy },
+    where: { key: AGENT_ROLLOUT_KEY },
+    create: { key: AGENT_ROLLOUT_KEY, value: clean, updatedBy },
     update: { value: clean, updatedBy },
   });
   return { ...clean, updatedAt: row.updatedAt, updatedBy: row.updatedBy };
-}
-
-export function getAgentRollout(db: Pick<PrismaClient, "appSetting">): Promise<AgentRollout> {
-  return getRollout(db, AGENT_ROLLOUT_KEY);
-}
-
-export function setAgentRollout(
-  db: Pick<PrismaClient, "appSetting">,
-  value: { mode: AgentRolloutMode; betaEmails: string[] },
-  updatedBy: string,
-): Promise<AgentRollout> {
-  return setRollout(db, AGENT_ROLLOUT_KEY, value, updatedBy);
-}
-
-export function getVideoRollout(db: Pick<PrismaClient, "appSetting">): Promise<AgentRollout> {
-  return getRollout(db, VIDEO_ROLLOUT_KEY);
 }
 
 /** Pure: may this (verified) email use the agent under this rollout? */

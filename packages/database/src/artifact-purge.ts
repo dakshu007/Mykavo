@@ -22,9 +22,7 @@
 
 import type { PrismaClient } from "@prisma/client";
 
-type Db = Pick<PrismaClient, "pageSnapshot" | "changeEvent" | "pendingArtifactDeletion"> &
-  // Optional so callers (and tests) without the brand tables still work.
-  Partial<Pick<PrismaClient, "brandKit" | "brandVideo">>;
+type Db = Pick<PrismaClient, "pageSnapshot" | "changeEvent" | "pendingArtifactDeletion">;
 
 /** Why a key was queued. Free text; it only ever reaches a log line. */
 export type PurgeReason = "website_deleted" | "workspace_deleted";
@@ -34,8 +32,6 @@ export interface WebsiteArtifactKeys {
   screenshotKeys: string[];
   /** Owned by exactly one snapshot, so safe to delete outright. */
   diffKeys: string[];
-  /** Brand kit images and exported videos: owned by this website alone. */
-  ownedKeys: string[];
 }
 
 /**
@@ -71,17 +67,7 @@ export async function collectWebsiteArtifactKeys(
     if (typeof key === "string" && key.length > 0) diffKeys.add(key);
   }
 
-  const ownedKeys: string[] = [];
-  const kit = await db.brandKit?.findUnique({
-    where: { websiteId },
-    select: { logoKey: true, heroKey: true, pageKey: true },
-  });
-  if (kit) ownedKeys.push(...[kit.logoKey, kit.heroKey, kit.pageKey].filter((k): k is string => Boolean(k)));
-  const videos = (await db.brandVideo?.findMany({ where: { websiteId }, select: { videoKey: true, posterKey: true } })) ?? [];
-  for (const v of videos) ownedKeys.push(...[v.videoKey, v.posterKey].filter((k): k is string => Boolean(k)));
-
   return {
-    ownedKeys,
     screenshotKeys: snapshots
       .map((row) => row.screenshotStorageKey)
       .filter((key): key is string => key !== null),

@@ -37,7 +37,6 @@ import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";
 import { checkLinksForScan } from "./check-links";
 import { notifyForScan } from "./notify";
-import { brandCaptureDue, brandPrefix, homepageOf, saveBrandCapture } from "./brand-kit";
 
 const PAGE_CONCURRENCY = 3;
 
@@ -131,11 +130,6 @@ export async function runScanWebsiteJob(
   const done = new Set(existing.map((s) => s.monitoredPageId));
   const pending = pages.filter((p) => !done.has(p.id));
 
-  // Brand kit (brand videos): read from the homepage on this scan when the
-  // kit is missing or old. Never blocks or fails the scan.
-  const brandPage = homepageOf(pages, website.normalizedUrl);
-  const captureBrandOn = brandPage && (await brandCaptureDue(website.id).catch(() => false)) ? brandPage.id : null;
-
   let scanned = existing.length;
   let failed = 0;
 
@@ -163,14 +157,8 @@ export async function runScanWebsiteJob(
           elements: elementInputs,
           ignoredSelectors,
           screenshotMasks,
-          ...(page.id === captureBrandOn ? { brand: { prefix: brandPrefix(website.workspaceId, website.id) } } : {}),
         }),
       );
-      if (result.brand) {
-        await saveBrandCapture({ websiteId: website.id, workspaceId: website.workspaceId, capture: result.brand, storage }).catch(
-          (err) => logger.warn("brand kit not saved", { ...log, error: err instanceof Error ? err.message : String(err) }),
-        );
-      }
       const savedSnapshot = await prisma.pageSnapshot.create({
         select: { id: true },
         data: {
