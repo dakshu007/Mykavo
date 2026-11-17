@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { noBreakHyphens, splitTitle } from "@/lib/blog-title";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -256,7 +257,18 @@ export default async function BlogPostPage({ params }: Params) {
             <h1
               className={`${fontDisplay} mt-4 text-[34px] leading-[1.08] tracking-[-0.01em] text-[#151515] sm:text-5xl lg:text-[54px]`}
             >
-              {post.title}
+              {(() => {
+                // A trailing "(...)" goes on its own line, unbroken.
+                const { main, aside } = splitTitle(post.title);
+                return aside ? (
+                  <>
+                    {main}{" "}
+                    <span className="mt-1 block">{noBreakHyphens(aside)}</span>
+                  </>
+                ) : (
+                  post.title
+                );
+              })()}
             </h1>
             <p className="mt-5 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-[#6B6B60]">
               {author?.image ? (
