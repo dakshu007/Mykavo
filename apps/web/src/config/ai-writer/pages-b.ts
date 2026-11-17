@@ -52,7 +52,7 @@ export const pagesB: WriterPage[] = [
           "One search per article, chosen from real data",
           "Subtopics drawn from what page one already covers",
           "Follow-up questions answered in the FAQ",
-          "No padding written to hit a word count",
+          "1,800 to 2,200 words, built from depth, not padding",
         ],
         links: [{ label: "How to find keywords for your website", href: "/blog/how-to-find-keywords-for-your-website" }],
       },
@@ -124,7 +124,7 @@ export const pagesB: WriterPage[] = [
       },
       {
         q: "How long are the articles MyKavo writes?",
-        a: "As long as the search needs. MyKavo shapes each article around what the current top results cover, so a simple question gets a tighter piece and a broad topic gets more sections. It does not pad articles to reach a fixed word count.",
+        a: "Every article is 1,800 to 2,200 words, laid out as a short answer-first intro, five to eight headed sections and a clear next step. MyKavo fills that length with what the current top results cover and readers ask next: examples, steps, comparisons and common mistakes, not filler.",
       },
       {
         q: "Is there a free AI article writer?",

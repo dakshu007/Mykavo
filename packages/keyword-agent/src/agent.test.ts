@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AgentError, assertCanSpend, researchCall, structuredCall, type AgentDeps, type AgentRun } from "./claude";
 import { buildProfile } from "./pipelines/setup";
 import { runDeepAnalysis } from "./pipelines/deep";
-import { MIN_WORDS, writePost } from "./pipelines/write";
+import { MIN_WORDS, TARGET_WORDS, writePost } from "./pipelines/write";
 import { seedsOutput } from "./schemas";
 import { collectAutocomplete, parseAutocomplete } from "./autocomplete";
 import { extractPageSummary, parseSitemapLocs, pickPages, readSite, SiteReadError } from "./site-reader";
@@ -257,7 +257,7 @@ describe("writePost", () => {
   it("sanitises the draft, keeps only real links and builds JSON-LD in code", async () => {
     const f = fakeDeps();
     f.parseQueue.push(
-      ok({ onTopic: true, title: "Invisalign Cost in 2026: A Clear Guide", metaDescription: "m".repeat(200), bodyHtml: body(MIN_WORDS), faq: [{ question: "Is it worth it?", answer: "Often." }], reviewNotes: ["Check prices"] }, undefined, "claude-sonnet-5-5"),
+      ok({ onTopic: true, title: "Invisalign Cost in 2026: A Clear Guide", metaDescription: "m".repeat(200), bodyHtml: body(TARGET_WORDS.min), faq: [{ question: "Is it worth it?", answer: "Often." }], reviewNotes: ["Check prices"] }, undefined, "claude-sonnet-5-5"),
     );
     const post = await writePost(f.deps, run(), input);
     expect(post.bodyHtml).not.toMatch(/<h1|<script|invented\.example/);
@@ -266,6 +266,32 @@ describe("writePost", () => {
     expect(post.slug).toBe("invisalign-cost-in-2026-a-clear-guide");
     expect(post.metaDescription).toHaveLength(170);
     expect(post.jsonLd.map((b) => b["@type"])).toEqual(["BlogPosting", "FAQPage"]);
+    expect(f.parse).toHaveBeenCalledTimes(1);
+    const sent = JSON.stringify(f.parse.mock.calls[0]![0]);
+    expect(sent).toContain("1,800 to 2,200 words");
+    expect(sent).toContain("5 to 8 h2 sections");
+  });
+
+  it("gives a short draft one expansion pass and saves the longer version", async () => {
+    const f = fakeDeps();
+    f.parseQueue.push(
+      ok({ onTopic: true, title: "T", metaDescription: "M", bodyHtml: body(900), faq: [], reviewNotes: [] }, undefined, "claude-sonnet-5-5"),
+      ok({ bodyHtml: body(1900) }, undefined, "claude-sonnet-5-5"),
+    );
+    const post = await writePost(f.deps, run(), input);
+    expect(f.parse).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(f.parse.mock.calls[1]![0])).toMatch(/is 9\d\d words, too short/);
+    expect(post.wordCount).toBeGreaterThanOrEqual(TARGET_WORDS.min);
+    expect(post.bodyHtml).not.toMatch(/<script|invented\.example/);
+  });
+
+  it("does not save a draft that is still short after the expansion pass", async () => {
+    const f = fakeDeps();
+    f.parseQueue.push(
+      ok({ onTopic: true, title: "T", metaDescription: "M", bodyHtml: body(900), faq: [], reviewNotes: [] }, undefined, "claude-sonnet-5-5"),
+      ok({ bodyHtml: body(MIN_WORDS - 100) }, undefined, "claude-sonnet-5-5"),
+    );
+    await expect(writePost(f.deps, run(), input)).rejects.toMatchObject({ code: "failed" });
   });
 
   it("refuses off-topic keywords and thin drafts", async () => {

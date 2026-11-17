@@ -51,6 +51,9 @@ export const postOutput = z.object({
 });
 export type PostOutput = z.infer<typeof postOutput>;
 
+/** The expansion pass returns only the lengthened article body. */
+export const postExpandOutput = z.object({ bodyHtml: z.string() });
+
 /** What a user may save from the setup form (API boundary). */
 export const profileInput = z.object({
   businessType: z.string().trim().min(2).max(80),
