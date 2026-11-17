@@ -86,9 +86,13 @@ export async function assertCanSpend(deps: AgentDeps, run?: AgentRun): Promise<v
     _sum: { costMicroUsd: true },
   });
   if ((spent._sum.costMicroUsd ?? 0) >= budget) {
+    // A budget of 0 means it was never set on this server (the worker reads
+    // its own env), not that a month's spend ran out: say which.
     throw new AgentError(
       "budget",
-      `${deps.featureLabel ?? "The AI keyword agent"} has reached this month's limit. It will be back next month.`,
+      budget === 0
+        ? `${deps.featureLabel ?? "The AI keyword agent"} isn't switched on for this server yet. Please try again later.`
+        : `${deps.featureLabel ?? "The AI keyword agent"} has reached this month's limit. It will be back next month.`,
     );
   }
 }
