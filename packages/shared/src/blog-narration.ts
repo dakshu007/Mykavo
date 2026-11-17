@@ -55,7 +55,7 @@ export function speakableInline(input: string): string {
       .replace(/\s*\/\s*(?:mo|month)\b/gi, " a month")
       .replace(/\s*\/\s*(?:yr|year)\b/gi, " a year")
       .replace(/\s*(?:→|->)\s*/g, " to ")
-      .replace(/\s*[–—]\s*/g, ", ")
+      .replace(/\s*[\u2013\u2014]\s*/g, ", ")
       .replace(/\s+/g, " ")
       .trim()
   );
