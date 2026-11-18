@@ -15,7 +15,7 @@ import { livePostWhere } from "@/lib/blog-schedule";
  * blog-audio/ can be reached, and only files recorded for a live post are.
  */
 
-const NAME_PATTERN = /^[a-z0-9-]{1,120}\.mp3$/;
+const NAME_PATTERN = /^([a-z0-9-]{1,120})\.(mp3|json)$/;
 // Signed URLs outlive the cached redirect by hours, so a listener who
 // pauses for a while can still seek or resume.
 const SIGNED_URL_SECONDS = 6 * 60 * 60;
@@ -25,10 +25,28 @@ type Params = { params: Promise<{ name: string }> };
 
 export async function GET(request: Request, { params }: Params) {
   const { name } = await params;
-  if (!NAME_PATTERN.test(name)) {
+  const match = NAME_PATTERN.exec(name);
+  if (!match) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const key = `blog-audio/${name}`;
+  const key = `blog-audio/${match[1]}.mp3`;
+
+  // <name>.json: the read-along timeline for that narration, loaded by the
+  // player only once someone presses play.
+  if (match[2] === "json") {
+    const row = await prisma.blogAudio.findFirst({
+      where: { storageKey: key, status: "ready", timelineVersion: { gt: 0 }, post: livePostWhere() },
+      select: { timeline: true, timelineVersion: true },
+    });
+    if (!row?.timeline) {
+      return NextResponse.json({ error: "Not found" }, { status: 404, headers: { "cache-control": "no-store" } });
+    }
+    return NextResponse.json(
+      { version: row.timelineVersion, segments: row.timeline },
+      { headers: { "cache-control": "public, max-age=600, s-maxage=600" } },
+    );
+  }
+
   const audio = await prisma.blogAudio.findFirst({
     where: { storageKey: key, status: "ready", post: livePostWhere() },
     select: { byteSize: true },

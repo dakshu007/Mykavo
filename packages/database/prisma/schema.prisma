@@ -26,22 +26,22 @@ model User {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  sessions          Session[]
-  accounts          Account[]
-  twoFactors        TwoFactor[]
-  ownedWorkspaces   Workspace[]        @relation("WorkspaceOwner")
-  memberships       WorkspaceMember[]
-  sentInvites       WorkspaceInvite[]  @relation("WorkspaceInviter")
-  approvedBaselines Baseline[]         @relation("BaselineApprover")
-  changeNotes       ChangeNote[]       @relation("ChangeNoteAuthor")
-  pushDevices       PushDevice[]
-  oauthGrants       OAuthGrant[]
-  decidedAppAccess  AppAccessRequest[] @relation("AppAccessDecider")
-  siteConnections   SiteConnection[]   @relation("SiteConnectionCreator")
-  automationRuns    AutomationFlowRun[]
-  activityDays      UserActivityDay[]
-  activityEvents    ActivityEvent[]
-  extensionInstalls ExtensionInstall[]
+  sessions             Session[]
+  accounts             Account[]
+  twoFactors           TwoFactor[]
+  ownedWorkspaces      Workspace[]           @relation("WorkspaceOwner")
+  memberships          WorkspaceMember[]
+  sentInvites          WorkspaceInvite[]     @relation("WorkspaceInviter")
+  approvedBaselines    Baseline[]            @relation("BaselineApprover")
+  changeNotes          ChangeNote[]          @relation("ChangeNoteAuthor")
+  pushDevices          PushDevice[]
+  oauthGrants          OAuthGrant[]
+  decidedAppAccess     AppAccessRequest[]    @relation("AppAccessDecider")
+  siteConnections      SiteConnection[]      @relation("SiteConnectionCreator")
+  automationRuns       AutomationFlowRun[]
+  activityDays         UserActivityDay[]
+  activityEvents       ActivityEvent[]
+  extensionInstalls    ExtensionInstall[]
   productUpdateNotices ProductUpdateNotice[]
 
   @@map("user")
@@ -754,7 +754,7 @@ model ChangeEvent {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
-  notes ChangeNote[]
+  notes      ChangeNote[]
   aiInsights AiInsight[]
 
   @@index([websiteId, status, severity])
@@ -816,21 +816,21 @@ model NotificationChannel {
 }
 
 model Notification {
-  id           String                  @id @default(cuid())
-  workspaceId  String
-  workspace    Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  websiteId    String?
-  website      Website?                @relation(fields: [websiteId], references: [id], onDelete: SetNull)
-  scanId       String?
-  scan         Scan?                   @relation(fields: [scanId], references: [id], onDelete: SetNull)
-  channelType  NotificationChannelType
-  recipient    String
-  subject      String
-  status       NotificationStatus      @default(PENDING)
-  sentAt       DateTime?
-  errorCode    String?
-  errorMessage String?
-  createdAt    DateTime                @default(now())
+  id             String                  @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  websiteId      String?
+  website        Website?                @relation(fields: [websiteId], references: [id], onDelete: SetNull)
+  scanId         String?
+  scan           Scan?                   @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  channelType    NotificationChannelType
+  recipient      String
+  subject        String
+  status         NotificationStatus      @default(PENDING)
+  sentAt         DateTime?
+  errorCode      String?
+  errorMessage   String?
+  createdAt      DateTime                @default(now())
   /// Set when an automated email (Admin > Automations) produced this row.
   automationSend EmailAutomationSend?
 
@@ -996,27 +996,33 @@ model BlogPost {
 /// only shows the player while the audio still matches the post, and an
 /// edited post is narrated again on the next sweep.
 model BlogAudio {
-  id            String    @id @default(cuid())
-  postId        String    @unique
-  post          BlogPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  postId          String    @unique
+  post            BlogPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
   // "ready" or "failed".
-  status        String    @default("ready")
-  narrationHash String
-  storageKey    String?
-  voiceId       String
-  modelId       String
-  durationMs    Int       @default(0)
-  byteSize      Int       @default(0)
-  characters    Int       @default(0)
+  status          String    @default("ready")
+  narrationHash   String
+  storageKey      String?
+  voiceId         String
+  modelId         String
+  durationMs      Int       @default(0)
+  byteSize        Int       @default(0)
+  characters      Int       @default(0)
   // [{ title, startMs }] - one per H2 section, in reading order.
-  chapters      Json      @default("[]")
+  chapters        Json      @default("[]")
   // Waveform: a fixed number of loudness values, 0-100.
-  peaks         Json      @default("[]")
-  error         String?
-  attempts      Int       @default(0)
-  generatedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  peaks           Json      @default("[]")
+  // Read-along: per narrated block, the start time of every word
+  // (packages/shared/read-along.ts TimelineSegment[]). Served separately
+  // from the page (/api/blog-audio/<name>.json) so only listeners load it.
+  timeline        Json?
+  // TIMELINE_VERSION it was built with; 0 = no timeline yet.
+  timelineVersion Int       @default(0)
+  error           String?
+  attempts        Int       @default(0)
+  generatedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@map("blog_audio")
 }
@@ -1341,26 +1347,26 @@ enum AppAccessStatus {
 /// Only SHA-256 hashes of the code and the token are stored - a database leak
 /// never yields a working credential.
 model SiteConnection {
-  id              String    @id @default(cuid())
+  id              String       @id @default(cuid())
   workspaceId     String
-  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace       Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   /// The one website this connection may read and act on. Deleting the
   /// website deletes the connection, which is what should happen.
   websiteId       String
-  website         Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  website         Website      @relation(fields: [websiteId], references: [id], onDelete: Cascade)
   /// "wordpress" today; room for other CMS plugins later.
   platform        String
   /// The site's own home URL, as the plugin reported it.
   siteUrl         String
   siteName        String?
   createdByUserId String?
-  createdByUser   User?     @relation("SiteConnectionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdByUser   User?        @relation("SiteConnectionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   /// One-time connect code (hash) + PKCE challenge; cleared once exchanged.
-  codeHash        String?   @unique
+  codeHash        String?      @unique
   codeChallenge   String?
   codeExpiresAt   DateTime?
   /// Issued access token (hash) and a short prefix to recognise it by.
-  tokenHash       String?   @unique
+  tokenHash       String?      @unique
   tokenPrefix     String?
   connectedAt     DateTime?
   lastUsedAt      DateTime?
@@ -1369,9 +1375,9 @@ model SiteConnection {
   revokedAt       DateTime?
   /// Site settings MyKavo keeps for the plugin, e.g. { updateWindow: {...} }.
   /// Read defensively (parseSiteSettings in apps/web/src/lib/integrations).
-  settings        Json      @default("{}")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  settings        Json         @default("{}")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   shopifyShop     ShopifyShop?
 
   @@index([workspaceId])
@@ -1455,25 +1461,25 @@ model AiCrawlerAlert {
 /// until Shopify's shop/redact; linked to one MyKavo website through a
 /// SiteConnection (platform "shopify") once a member approves the link.
 model ShopifyShop {
-  id               String              @id @default(cuid())
+  id                 String              @id @default(cuid())
   /// The store's permanent xxx.myshopify.com domain.
-  shop             String              @unique
+  shop               String              @unique
   /// Offline Admin API token, AES-256-GCM encrypted. Cleared on uninstall.
-  accessTokenEnc   String?
-  scope            String?
-  name             String?
+  accessTokenEnc     String?
+  scope              String?
+  name               String?
   /// The storefront address customers use, e.g. https://example.com
-  primaryDomain    String?
-  installedAt      DateTime?
-  uninstalledAt    DateTime?
+  primaryDomain      String?
+  installedAt        DateTime?
+  uninstalledAt      DateTime?
   /// Check the store after theme publishes and edits.
-  themeChecks      Boolean             @default(true)
-  lastThemeCheckAt DateTime?
-  siteConnectionId String?             @unique
-  siteConnection   SiteConnection?     @relation(fields: [siteConnectionId], references: [id], onDelete: SetNull)
-  themeEvents      ShopifyThemeEvent[]
+  themeChecks        Boolean             @default(true)
+  lastThemeCheckAt   DateTime?
+  siteConnectionId   String?             @unique
+  siteConnection     SiteConnection?     @relation(fields: [siteConnectionId], references: [id], onDelete: SetNull)
+  themeEvents        ShopifyThemeEvent[]
   /// gid://shopify/Shop/..., which the Partner API needs to look up billing.
-  shopGid          String?
+  shopGid            String?
   /// Shopify App Pricing: the paid MyKavo plan this store pays for through
   /// Shopify ("pro" | "agency"), or null for none. Read from the Partner
   /// API, never from anything the browser sends.
@@ -1481,10 +1487,10 @@ model ShopifyShop {
   /// The plan handle as configured in the Partner Dashboard.
   billingPlanHandle  String?
   billingPeriodEnd   DateTime?
-  billingCancelAtEnd Boolean   @default(false)
+  billingCancelAtEnd Boolean             @default(false)
   billingCheckedAt   DateTime?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([billingPlan])
   @@map("shopify_shop")
@@ -1551,10 +1557,10 @@ model EmailAutomationSend {
 /// `definition` is a FlowDefinition (@mykavo/shared flows.ts): a tree of
 /// wait / decision / send-email steps, validated before it is saved.
 model AutomationFlow {
-  id             String              @id @default(cuid())
+  id             String                @id @default(cuid())
   name           String
   /// "DRAFT" | "ACTIVE" | "PAUSED"
-  status         String              @default("DRAFT")
+  status         String                @default("DRAFT")
   /// "signup" | "first_website"
   trigger        String
   definition     Json
@@ -1563,8 +1569,8 @@ model AutomationFlow {
   activatedAt    DateTime?
   createdByEmail String?
   updatedByEmail String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
   runs           AutomationFlowRun[]
   events         AutomationFlowEvent[]
 
@@ -1573,17 +1579,17 @@ model AutomationFlow {
 
 /// One account going through one flow.
 model AutomationFlowRun {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   flowId        String
   flow          AutomationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
   userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// "ACTIVE" | "COMPLETED" | "STOPPED"
-  status        String    @default("ACTIVE")
+  status        String         @default("ACTIVE")
   /// The step to process next; null once finished.
   currentStepId String?
-  nextRunAt     DateTime  @default(now())
-  enrolledAt    DateTime  @default(now())
+  nextRunAt     DateTime       @default(now())
+  enrolledAt    DateTime       @default(now())
   finishedAt    DateTime?
   /// Why a run stopped early, in words.
   stopReason    String?
@@ -1595,7 +1601,7 @@ model AutomationFlowRun {
 
 /// What happened at each step, for the builder's counts and activity log.
 model AutomationFlowEvent {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   flowId    String
   flow      AutomationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
   runId     String
@@ -1603,7 +1609,7 @@ model AutomationFlowEvent {
   /// "enrolled" | "sent" | "skipped" | "failed" | "waiting" | "completed" | "stopped"
   kind      String
   detail    String?
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
 
   @@index([flowId, createdAt(sort: Desc)])
   @@index([flowId, stepId, kind])
@@ -1630,7 +1636,6 @@ model BrevoSyncRun {
   @@index([startedAt(sort: Desc)])
   @@map("brevo_sync_run")
 }
-
 
 /// Workspace API keys for the MCP server (/api/mcp). Only a SHA-256 hash of
 /// the key is kept; the key is shown once when created. Read-only access to
@@ -1914,22 +1919,22 @@ model SupportQuestion {
 /// dashboard (apps/web/src/lib/attribution): the first page the visitor
 /// landed on, the referring site and the last call to action clicked.
 model SignupAttribution {
-  userId    String   @id
+  userId      String   @id
   /// First landing path on mykavo.app, e.g. "/blog/seo-monitoring-tools".
-  landing   String
+  landing     String
   /// Referring host, "" for direct.
-  referrer  String   @default("")
+  referrer    String   @default("")
   /// Last CTA placement clicked before signing up, e.g. "tool:script-detector".
-  cta       String?
+  cta         String?
   /// "google" | "email"
-  method    String
+  method      String
   /// UTM tags of the last tagged visit before signup (lib/attribution/core.ts).
   utmSource   String?
   utmMedium   String?
   utmCampaign String?
   utmContent  String?
   utmTerm     String?
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   @@index([createdAt(sort: Desc)])
   @@map("signup_attribution")
@@ -1940,21 +1945,21 @@ model SignupAttribution {
 /// in the future and nothing is paid, the workspace's entitlement is the
 /// trial plan. Kept apart from Subscription so billing webhooks never touch it.
 model WorkspaceTrial {
-  workspaceId String    @id
+  workspaceId    String    @id
   /// "pro"
-  planId      String
-  startedAt   DateTime  @default(now())
-  endsAt      DateTime
+  planId         String
+  startedAt      DateTime  @default(now())
+  endsAt         DateTime
   /// "signup" | "reactivation" | "self_serve"
-  source      String
+  source         String
   /// The "your trial has started" email went out (reactivation trials only).
   startedEmailAt DateTime?
   /// The "3 days left" email went out.
   reminderSentAt DateTime?
   /// The trial-end handling ran (over-limit sites paused).
-  endedAt     DateTime?
+  endedAt        DateTime?
   /// The "trial ended" email went out (or was skipped because they pay).
-  endedEmailAt DateTime?
+  endedEmailAt   DateTime?
 
   @@index([endsAt])
   @@map("workspace_trial")
@@ -1964,12 +1969,12 @@ model WorkspaceTrial {
 /// same rule (packages/database/src/auto-pause.ts). A website the owner
 /// paused has no row here.
 model WebsiteAutoPause {
-  websiteId   String   @id
+  websiteId   String    @id
   workspaceId String
   /// "DORMANT" (nobody active for 30 days on Free) | "OVER_LIMIT" (trial
   /// ended with more websites than the plan allows)
   reason      String
-  pausedAt    DateTime @default(now())
+  pausedAt    DateTime  @default(now())
   /// The paused email went out.
   notifiedAt  DateTime?
 
@@ -2127,31 +2132,31 @@ model ContentProfile {
 /// One agent run (site setup, deep analysis or post writing). A tiny row the
 /// page polls for progress; the heavy results live in their own tables.
 model AiJob {
-  id          String    @id @default(cuid())
-  websiteId   String
-  website     Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
-  workspaceId String
+  id           String      @id @default(cuid())
+  websiteId    String
+  website      Website     @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  workspaceId  String
   /// Who started it, for the "ready" email. No FK: survives user deletion.
-  userId      String?
+  userId       String?
   /// "setup" | "deep" | "write"
-  kind        String
+  kind         String
   /// "queued" | "running" | "done" | "failed"
-  status      String    @default("queued")
+  status       String      @default("queued")
   /// Short user-facing step label ("Reading your site").
-  step        String?
+  step         String?
   /// 0..100
-  progress    Int       @default(0)
+  progress     Int         @default(0)
   /// Job input (keyword, notes, regenerate target...). Validated on read.
-  input       Json?
+  input        Json?
   /// Id of what it produced (report or post).
-  resultId    String?
+  resultId     String?
   /// Friendly message when it failed.
-  error       String?
-  costMicroUsd Int      @default(0)
-  createdAt   DateTime  @default(now())
-  startedAt   DateTime?
-  finishedAt  DateTime?
-  steps       AgentStep[]
+  error        String?
+  costMicroUsd Int         @default(0)
+  createdAt    DateTime    @default(now())
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  steps        AgentStep[]
 
   @@index([websiteId, kind, createdAt])
   @@index([workspaceId, createdAt])

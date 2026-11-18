@@ -6,10 +6,11 @@ import { prisma, type Prisma } from "@mykavo/database";
 import { getDefaultStorage } from "@mykavo/scanner/storage";
 import {
   buildNarration,
-  chunkText,
+  chunkSegments,
   waveformPeaks,
   type NarrationScript,
 } from "@mykavo/shared/blog-narration";
+import { TIMELINE_VERSION, type TimelineSegment } from "@mykavo/shared/read-along";
 import { logger } from "./logger";
 
 /**
@@ -32,9 +33,10 @@ import { logger } from "./logger";
  */
 
 const API_BASE = "https://api.elevenlabs.io/v1";
-// "Ryan - American Documentary Narrator", a library voice built for
-// long-form narration. Override with BLOG_AUDIO_VOICE_ID.
-const DEFAULT_VOICE_ID = "GQQpeRnV5mCWTgxKhGo5";
+// "Jessica - Playful, Bright, Warm", an ElevenLabs premade American voice
+// (no need to add it to the account). Override with BLOG_AUDIO_VOICE_ID.
+// Changing the voice narrates every post again in the new one.
+const DEFAULT_VOICE_ID = "cgSgspJ2msm6clMCkdW9";
 // ElevenLabs' most natural model for long-form narration, and the one that
 // supports request stitching.
 const DEFAULT_MODEL_ID = "eleven_multilingual_v2";
@@ -73,14 +75,23 @@ function spentLastDay(): number {
   return spentWindow.reduce((sum, s) => sum + s.chars, 0);
 }
 
+interface Synthesized {
+  pcm: Buffer;
+  requestId: string | null;
+  /** Start time in seconds of each character of the request text, when ElevenLabs returned one per character. */
+  charStarts: number[] | null;
+}
+
 async function synthesize(
   cfg: AudioConfig,
   text: string,
   sampleRate: number,
   previousRequestIds: string[],
   nextText: string | undefined,
-): Promise<{ pcm: Buffer; requestId: string | null }> {
-  const url = `${API_BASE}/text-to-speech/${encodeURIComponent(cfg.voiceId)}?output_format=pcm_${sampleRate}`;
+): Promise<Synthesized> {
+  // The with-timestamps variant returns the same audio plus the start time
+  // of every character, which is what read-along highlighting runs on.
+  const url = `${API_BASE}/text-to-speech/${encodeURIComponent(cfg.voiceId)}/with-timestamps?output_format=pcm_${sampleRate}`;
   const body: Record<string, unknown> = {
     text,
     model_id: cfg.modelId,
@@ -96,13 +107,26 @@ async function synthesize(
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "xi-api-key": cfg.apiKey, "content-type": "application/json", accept: "audio/pcm" },
+        headers: { "xi-api-key": cfg.apiKey, "content-type": "application/json", accept: "application/json" },
         body: JSON.stringify(body),
         signal: controller.signal,
       });
       if (res.ok) {
         spentWindow.push({ at: Date.now(), chars: text.length });
-        return { pcm: Buffer.from(await res.arrayBuffer()), requestId: res.headers.get("request-id") };
+        const json = (await res.json()) as {
+          audio_base64?: string;
+          alignment?: { characters?: string[]; character_start_times_seconds?: number[] } | null;
+        };
+        if (!json.audio_base64) throw new Error("ElevenLabs returned no audio");
+        const chars = json.alignment?.characters;
+        const starts = json.alignment?.character_start_times_seconds;
+        const charStarts =
+          chars && starts && starts.length === text.length && chars.join("") === text ? starts : null;
+        return {
+          pcm: Buffer.from(json.audio_base64, "base64"),
+          requestId: res.headers.get("request-id"),
+          charStarts,
+        };
       }
       const detail = (await res.text()).slice(0, 400);
       lastError = `ElevenLabs ${res.status}: ${detail}`;
@@ -143,43 +167,70 @@ interface Narrated {
   durationMs: number;
   chapters: Array<{ title: string; startMs: number }>;
   peaks: number[];
+  timeline: TimelineSegment[];
 }
 
 async function narrate(cfg: AudioConfig, script: NarrationScript, title: string): Promise<Narrated> {
-  const pieces = script.chapters.map((chapter) => ({ chapter, chunks: chunkText(chapter.text) }));
-  const flat = pieces.flatMap((p) => p.chunks);
+  const plan = script.chapters.map((chapter) => ({ chapter, chunks: chunkSegments(chapter.segments) }));
+  const flat = plan.flatMap((p) => p.chunks.map((c) => c.text));
 
   // 44.1 kHz where the plan allows it, else 24 kHz; decided on the first
   // request and kept for the whole post (one file, one sample rate).
   let sampleRate = 44100;
   const parts: Buffer[] = [];
   const chapters: Narrated["chapters"] = [];
+  const timeline: TimelineSegment[] = [];
   const requestIds: string[] = [];
   let bytes = 0;
   let index = 0;
+  const msAt = (byteOffset: number) => (byteOffset / 2 / sampleRate) * 1000;
 
-  for (const { chapter, chunks } of pieces) {
+  for (const [chapterIndex, { chapter, chunks }] of plan.entries()) {
     if (parts.length > 0) {
       const pause = Buffer.alloc(Math.round((sampleRate * PAUSE_BETWEEN_CHAPTERS_MS) / 1000) * 2);
       parts.push(pause);
       bytes += pause.length;
     }
-    chapters.push({ title: chapter.title, startMs: Math.round((bytes / 2 / sampleRate) * 1000) });
+    chapters.push({ title: chapter.title, startMs: Math.round(msAt(bytes)) });
+    // One timeline entry per segment of this chapter, filled chunk by chunk.
+    const entries = new Map<number, TimelineSegment>();
+
     for (const chunk of chunks) {
       const next = flat[index + 1];
-      let result: { pcm: Buffer; requestId: string | null };
+      let result: Synthesized;
       try {
-        result = await synthesize(cfg, chunk, sampleRate, requestIds, next);
+        result = await synthesize(cfg, chunk.text, sampleRate, requestIds, next);
       } catch (err) {
         if (index === 0 && sampleRate === 44100 && err instanceof FatalAudioError && /output_format/i.test(err.message)) {
           sampleRate = 24000;
-          result = await synthesize(cfg, chunk, sampleRate, requestIds, next);
+          result = await synthesize(cfg, chunk.text, sampleRate, requestIds, next);
         } else {
           throw err;
         }
       }
       // 16-bit samples: keep the byte count even.
       const pcm = result.pcm.length % 2 === 0 ? result.pcm : result.pcm.subarray(0, result.pcm.length - 1);
+      const chunkStartMs = msAt(bytes);
+      const chunkMs = msAt(pcm.length);
+
+      for (const part of chunk.parts) {
+        let entry = entries.get(part.segment);
+        if (!entry) {
+          entry = { c: chapterIndex, t: chapter.segments[part.segment]!, w: [] };
+          entries.set(part.segment, entry);
+          timeline.push(entry);
+        }
+        const partText = chunk.text.slice(part.start, part.start + part.length);
+        for (const m of partText.matchAll(/\S+/g)) {
+          const at = part.start + (m.index ?? 0);
+          const offset = result.charStarts
+            ? (result.charStarts[at] ?? 0) * 1000
+            : // No per-character timing: spread the words evenly over the chunk.
+              (at / Math.max(1, chunk.text.length)) * chunkMs;
+          entry.w.push(Math.round(chunkStartMs + offset));
+        }
+      }
+
       parts.push(pcm);
       bytes += pcm.length;
       if (result.requestId) requestIds.push(result.requestId);
@@ -204,7 +255,7 @@ async function narrate(cfg: AudioConfig, script: NarrationScript, title: string)
       "-metadata", `title=${title}`, "-metadata", "artist=MyKavo",
       mp3Path,
     ]);
-    return { mp3: await readFile(mp3Path), durationMs, chapters, peaks };
+    return { mp3: await readFile(mp3Path), durationMs, chapters, peaks, timeline };
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -231,7 +282,16 @@ export async function runBlogAudioSweep(now: Date = new Date()): Promise<void> {
         title: true,
         authorName: true,
         content: true,
-        audio: { select: { narrationHash: true, status: true, attempts: true, storageKey: true } },
+        audio: {
+          select: {
+            narrationHash: true,
+            status: true,
+            attempts: true,
+            storageKey: true,
+            timelineVersion: true,
+            voiceId: true,
+          },
+        },
       },
     });
 
@@ -240,7 +300,11 @@ export async function runBlogAudioSweep(now: Date = new Date()): Promise<void> {
       .filter(({ post, script }) => {
         const audio = post.audio;
         if (!audio || audio.narrationHash !== script.hash) return true;
-        return audio.status === "failed" && audio.attempts < MAX_ATTEMPTS;
+        if (audio.status === "failed") return audio.attempts < MAX_ATTEMPTS;
+        // Narrated before read-along existed, or in another voice: narrate
+        // again. `attempts` counts the first narration too, hence the +1.
+        const outdated = audio.timelineVersion < TIMELINE_VERSION || audio.voiceId !== cfg.voiceId;
+        return outdated && audio.attempts < MAX_ATTEMPTS + 1;
       })
       .slice(0, cfg.postsPerSweep);
     if (due.length === 0) return;
@@ -271,8 +335,11 @@ export async function runBlogAudioSweep(now: Date = new Date()): Promise<void> {
           characters: script.characters,
           chapters: result.chapters as unknown as Prisma.InputJsonValue,
           peaks: result.peaks as unknown as Prisma.InputJsonValue,
+          timeline: result.timeline as unknown as Prisma.InputJsonValue,
+          timelineVersion: TIMELINE_VERSION,
           error: null,
-          attempts,
+          // A success starts the retry budget over (re-narrations count up from here).
+          attempts: 1,
           generatedAt: new Date(),
         };
         await prisma.blogAudio.upsert({
@@ -295,6 +362,14 @@ export async function runBlogAudioSweep(now: Date = new Date()): Promise<void> {
         });
       } catch (err) {
         const message = (err instanceof Error ? err.message : String(err)).slice(0, 500);
+        if (sameText && post.audio?.status === "ready") {
+          // Only adding read-along timings to audio that already plays:
+          // keep it live and just note the failure.
+          await prisma.blogAudio.update({ where: { postId: post.id }, data: { error: message, attempts } });
+          logger.error("blog audio re-narration failed", { slug: post.slug, attempts }, err);
+          if (err instanceof FatalAudioError) return;
+          continue;
+        }
         // Keep a working file for the old text rather than wiping it: the
         // page hides a player whose hash no longer matches anyway.
         await prisma.blogAudio.upsert({

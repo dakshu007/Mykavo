@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { TABLE_NOTE_TEXT } from "./read-along";
 
 /**
  * Turns a blog post's markdown into the script a narrator reads for
@@ -24,6 +25,12 @@ export interface NarrationChapter {
   title: string;
   /** What is read aloud for this chapter. */
   text: string;
+  /**
+   * The same text split into the blocks it came from (paragraph, list item,
+   * heading, FAQ question or answer, table note), in reading order. `text`
+   * is these joined by blank lines. Read-along maps each block to the page.
+   */
+  segments: string[];
 }
 
 export interface NarrationScript {
@@ -36,7 +43,7 @@ export interface NarrationScript {
 
 export const INTRO_CHAPTER = "Introduction";
 export const FAQ_CHAPTER = "Frequently asked questions";
-const TABLE_NOTE = "The full comparison table is in the article.";
+const TABLE_NOTE = TABLE_NOTE_TEXT;
 
 /** Inline markdown to the words a listener should hear. */
 export function speakableInline(input: string): string {
@@ -111,6 +118,47 @@ export function chunkText(text: string, max: number = NARRATION_CHUNK_CHARS): st
   }
   if (current) pieces.push(current);
   return pieces;
+}
+
+export interface SegmentChunk {
+  /** Text sent to the speech API: the parts joined by blank lines. */
+  text: string;
+  /** Where each segment (or piece of a long segment) sits in `text`. */
+  parts: Array<{ segment: number; start: number; length: number }>;
+}
+
+/**
+ * Groups a chapter's segments into request-sized chunks, keeping track of
+ * where every segment lands so word timings can be mapped back to it. A
+ * segment longer than `max` is split on sentence boundaries into parts of the
+ * same segment.
+ */
+export function chunkSegments(segments: readonly string[], max: number = NARRATION_CHUNK_CHARS): SegmentChunk[] {
+  const pieces: Array<{ segment: number; text: string }> = [];
+  segments.forEach((segment, index) => {
+    if (segment.length <= max) {
+      pieces.push({ segment: index, text: segment });
+      return;
+    }
+    for (const piece of chunkText(segment, max)) pieces.push({ segment: index, text: piece });
+  });
+
+  const chunks: SegmentChunk[] = [];
+  let current: SegmentChunk | null = null;
+  for (const piece of pieces) {
+    const separator = current && current.text ? "\n\n" : "";
+    if (current && current.text.length + separator.length + piece.text.length > max) {
+      chunks.push(current);
+      current = null;
+    }
+    if (!current) current = { text: "", parts: [] };
+    const sep = current.text ? "\n\n" : "";
+    const start = current.text.length + sep.length;
+    current.text += sep + piece.text;
+    current.parts.push({ segment: piece.segment, start, length: piece.text.length });
+  }
+  if (current) chunks.push(current);
+  return chunks;
 }
 
 export function buildNarration(post: {
@@ -220,14 +268,24 @@ export function buildNarration(post: {
   flush();
 
   const built: NarrationChapter[] = chapters
-    .map((c) => ({ title: c.title, text: c.paragraphs.filter(Boolean).join("\n\n") }))
+    .map((c) => {
+      const segments = c.paragraphs.filter(Boolean);
+      return { title: c.title, text: segments.join("\n\n"), segments };
+    })
     // A heading with nothing under it still gets read, but an empty
     // chapter (no heading text at all) is dropped.
     .filter((c) => c.text.length > 0);
 
   const characters = built.reduce((sum, c) => sum + c.text.length, 0);
   const hash = createHash("sha256")
-    .update(JSON.stringify({ v: NARRATION_VERSION, chapters: built }))
+    // Title and text only: how the text is split into blocks is not part of
+    // what is read, so it must not make stored audio look stale.
+    .update(
+      JSON.stringify({
+        v: NARRATION_VERSION,
+        chapters: built.map(({ title, text }) => ({ title, text })),
+      }),
+    )
     .digest("hex");
   return { chapters: built, characters, hash };
 }

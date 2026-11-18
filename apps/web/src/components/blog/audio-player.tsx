@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, Headphones, ListOrdered, Loader2, Pause, Play, X } from "lucide-react";
+import { ArrowUpRight, Headphones, Highlighter, ListOrdered, Loader2, LocateFixed, Pause, Play, X } from "lucide-react";
 import { fontDisplay } from "@/components/landing/style";
 import { track } from "@/lib/analytics";
+import type { TimelineSegment } from "@mykavo/shared/read-along";
+import { ReadAlong } from "./read-along";
 
 export interface AudioChapter {
   title: string;
@@ -14,6 +16,8 @@ export interface AudioChapter {
 
 interface Props {
   src: string;
+  /** Read-along timeline (word timings), when this narration has one. */
+  timelineSrc?: string | null;
   slug: string;
   title: string;
   author: string;
@@ -34,6 +38,15 @@ function formatTime(seconds: number): string {
   const m = Math.floor((s % 3600) / 60);
   const sec = String(s % 60).padStart(2, "0");
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
+}
+
+/** Brings the block being read into view, unless it already is. */
+function scrollToReading(el: HTMLElement, force = false): void {
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight;
+  if (!force && rect.top >= vh * 0.15 && rect.bottom <= vh * 0.72) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
 }
 
 /** Resamples the stored waveform to `count` bars, keeping each slice's peak. */
@@ -91,13 +104,15 @@ function SkipIcon({ forward }: { forward?: boolean }) {
  * the reader down the page, and lock-screen controls work through the Media
  * Session API.
  */
-export function AudioPlayer({ src, slug, title, author, artwork, durationMs, chapters, peaks, className = "" }: Props) {
+export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artwork, durationMs, chapters, peaks, className = "" }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const cardRef = useRef<HTMLElement>(null);
   const waveRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const milestonesRef = useRef(new Set<number>());
   const draggingRef = useRef(false);
+  const readAlongRef = useRef<ReadAlong | null>(null);
+  const activeElRef = useRef<HTMLElement | null>(null);
 
   const [duration, setDuration] = useState(durationMs / 1000);
   const [time, setTime] = useState(0);
@@ -112,6 +127,10 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
   const [miniDismissed, setMiniDismissed] = useState(false);
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const [started, setStarted] = useState(false);
+  // Read-along: highlight what is being read, and keep it in view.
+  const [readAlongReady, setReadAlongReady] = useState(false);
+  const [readAlongOn, setReadAlongOn] = useState(true);
+  const [follow, setFollow] = useState(true);
 
   const positionKey = `mk-audio:${slug}`;
   const bars = useMemo(() => resample(peaks, barCount), [peaks, barCount]);
@@ -135,6 +154,7 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from localStorage after hydration
     if (saved > 5 && saved < durationMs / 1000 - 5) setResumeAt(saved);
     if ((RATES as readonly number[]).includes(savedRate)) setRate(savedRate);
+    if (readStorage("mk-read-along") === "0") setReadAlongOn(false);
   }, [positionKey, durationMs]);
 
   useEffect(() => {
@@ -178,6 +198,56 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
     };
   }, [playing]);
 
+  // Paint the sentence and word being read; follow it down the page.
+  useEffect(() => {
+    const ra = readAlongRef.current;
+    if (!ra || !readAlongReady) return;
+    if (!readAlongOn || !started) {
+      ra.clear();
+      activeElRef.current = null;
+      return;
+    }
+    const { element } = ra.update(time * 1000);
+    if (element && element !== activeElRef.current) {
+      activeElRef.current = element;
+      if (follow && playing) scrollToReading(element);
+    }
+  }, [time, readAlongOn, readAlongReady, started, follow, playing]);
+
+  useEffect(() => () => readAlongRef.current?.clear(), []);
+
+  // Scrolling by hand means "let me look around": stop following until the
+  // reader asks again (the Follow button).
+  useEffect(() => {
+    if (!playing || !follow || !readAlongOn || !readAlongReady) return;
+    const stop = () => setFollow(false);
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable], [role='slider'], button")) return;
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) stop();
+    };
+    window.addEventListener("wheel", stop, { passive: true });
+    window.addEventListener("touchmove", stop, { passive: true });
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchmove", stop);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [playing, follow, readAlongOn, readAlongReady]);
+
+  const resumeFollowing = () => {
+    setFollow(true);
+    if (activeElRef.current) scrollToReading(activeElRef.current, true);
+  };
+
+  const toggleReadAlong = () => {
+    const next = !readAlongOn;
+    setReadAlongOn(next);
+    writeStorage("mk-read-along", next ? null : "0");
+    if (next) setFollow(true);
+  };
+
   const seek = useCallback(
     (seconds: number) => {
       const audio = audioRef.current;
@@ -194,6 +264,21 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
     setFailed(false);
     if (!started) {
       setStarted(true);
+      // The timeline loads on the first press, never for readers who only read.
+      if (timelineSrc && !readAlongRef.current) {
+        void fetch(timelineSrc)
+          .then((res) => (res.ok ? (res.json() as Promise<{ segments?: TimelineSegment[] }>) : null))
+          .then((data) => {
+            if (!data?.segments?.length) return;
+            const ra = new ReadAlong(data.segments);
+            if (ra.matchedCount === 0) return;
+            readAlongRef.current = ra;
+            setReadAlongReady(true);
+          })
+          .catch(() => {
+            // Read-along is an extra; the audio plays without it.
+          });
+      }
       if (resumeAt !== null) audio.currentTime = resumeAt;
       track("blog_audio_play", { slug, resumed: resumeAt !== null });
       setResumeAt(null);
@@ -204,7 +289,7 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
     } catch {
       // Autoplay policy or a load error; the error event shows the message.
     }
-  }, [rate, resumeAt, slug, started]);
+  }, [rate, resumeAt, slug, started, timelineSrc]);
 
   const toggle = useCallback(() => {
     const audio = audioRef.current;
@@ -472,6 +557,22 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
           <span className="font-mono tabular-nums text-white">{formatTime(shown * duration)}</span>
           <span className="font-mono tabular-nums">-{formatTime(hover !== null ? duration - hover * duration : remaining)}</span>
           <div className="ml-auto flex items-center gap-2">
+            {timelineSrc && (
+              <button
+                type="button"
+                onClick={toggleReadAlong}
+                aria-pressed={readAlongOn}
+                title="Highlight the words as they are read"
+                className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-[#FFD400] ${
+                  readAlongOn
+                    ? "border-[#FFD400] bg-[#FFD400]/15 text-[#FFD400]"
+                    : "border-white/20 text-white hover:border-[#FFD400] hover:text-[#FFD400]"
+                }`}
+              >
+                <Highlighter className="size-3.5" aria-hidden />
+                <span className="hidden sm:inline">Read along</span>
+              </button>
+            )}
             {chapters.length > 1 && (
               <button
                 type="button"
@@ -567,7 +668,7 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
             className="min-w-0 flex-1 text-left focus-visible:outline-2 focus-visible:outline-[#FFD400]"
           >
             <span className="block truncate text-[13px] font-semibold">{chapter?.title ?? title}</span>
-            <span className="block font-mono text-[11px] tabular-nums text-[#9C9E93]">
+            <span className="block truncate font-mono text-[11px] tabular-nums text-[#9C9E93]">
               {formatTime(time)} / {formatTime(duration)} · {rate}×
             </span>
           </button>
@@ -576,10 +677,24 @@ export function AudioPlayer({ src, slug, title, author, artwork, durationMs, cha
             tabIndex={showMini ? 0 : -1}
             onClick={() => seek(time + SKIP_SECONDS)}
             aria-label="Forward 15 seconds"
-            className="hidden shrink-0 rounded-full text-[#C9CBBF] hover:text-white focus-visible:outline-2 focus-visible:outline-[#FFD400] sm:block"
+            className={`hidden shrink-0 rounded-full text-[#C9CBBF] hover:text-white focus-visible:outline-2 focus-visible:outline-[#FFD400] ${
+              readAlongReady && readAlongOn && !follow ? "" : "sm:block"
+            }`}
           >
             <SkipIcon forward />
           </button>
+          {readAlongReady && readAlongOn && !follow && (
+            <button
+              type="button"
+              tabIndex={showMini ? 0 : -1}
+              onClick={resumeFollowing}
+              aria-label="Jump to the words being read and follow them"
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[#FFD400] px-3 text-[12px] font-bold text-[#151515] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD400]"
+            >
+              <LocateFixed className="size-3.5" aria-hidden />
+              Follow
+            </button>
+          )}
           <button
             type="button"
             tabIndex={showMini ? 0 : -1}

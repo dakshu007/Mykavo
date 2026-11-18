@@ -88,7 +88,19 @@ async function getPostAudio(
   headings: ReadonlyArray<{ text: string; id: string; depth: number }>,
 ) {
   const audio = await prisma.blogAudio
-    .findUnique({ where: { postId: post.id } })
+    .findUnique({
+      where: { postId: post.id },
+      // Everything but the timeline, which only listeners load.
+      select: {
+        status: true,
+        storageKey: true,
+        durationMs: true,
+        narrationHash: true,
+        chapters: true,
+        peaks: true,
+        timelineVersion: true,
+      },
+    })
     .catch(() => null);
   if (!audio || audio.status !== "ready" || !audio.storageKey || audio.durationMs <= 0) return null;
   if (audio.narrationHash !== buildNarration(post).hash) return null;
@@ -106,7 +118,13 @@ async function getPostAudio(
     (v): v is number => typeof v === "number",
   );
   const name = audio.storageKey.slice(audio.storageKey.lastIndexOf("/") + 1);
-  return { src: `/api/blog-audio/${name}`, durationMs: audio.durationMs, chapters, peaks };
+  return {
+    src: `/api/blog-audio/${name}`,
+    timelineSrc: audio.timelineVersion > 0 ? `/api/blog-audio/${name.replace(/\.mp3$/, ".json")}` : null,
+    durationMs: audio.durationMs,
+    chapters,
+    peaks,
+  };
 }
 
 /** ISO 8601 duration for schema.org, e.g. PT12M41S. */
@@ -397,6 +415,7 @@ export default async function BlogPostPage({ params }: Params) {
               {audio && (
                 <AudioPlayer
                   src={audio.src}
+                  timelineSrc={audio.timelineSrc}
                   slug={post.slug}
                   title={post.title}
                   author={authorName}

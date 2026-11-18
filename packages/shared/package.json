@@ -17,7 +17,8 @@
     "./plan-tier": "./src/plan-tier.ts",
     "./campaign": "./src/campaign.ts",
     "./product-events": "./src/product-events.ts",
-    "./blog-narration": "./src/blog-narration.ts"
+    "./blog-narration": "./src/blog-narration.ts",
+    "./read-along": "./src/read-along.ts"
   },
   "scripts": {
     "test": "vitest run"

@@ -1023,3 +1023,23 @@ html[data-promo="black-friday"] body:has([data-landing-nav])::before {
 @media (prefers-reduced-motion: reduce) {
   .audio-eq, .audio-ping { animation: none; }
 }
+
+/* Read-along (components/blog/read-along.ts): the sentence being narrated
+   gets a soft gold wash, the word itself solid gold, and the block a faint
+   band. Painted with the CSS Custom Highlight API - no DOM changes. */
+::highlight(mk-read-sentence) {
+  background-color: rgba(255, 212, 0, 0.3);
+}
+::highlight(mk-read-word) {
+  background-color: #ffd400;
+  color: #151515;
+}
+[data-reading] {
+  border-radius: 6px;
+  background-color: rgba(255, 212, 0, 0.09);
+  box-shadow: 0 0 0 6px rgba(255, 212, 0, 0.09);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reading] { transition: none; }
+}

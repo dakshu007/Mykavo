@@ -21,7 +21,12 @@ export function PostContent({ content, midpoint }: { content: string; midpoint?:
       {segments.map((segment, index) => {
         switch (segment.type) {
           case "slot":
-            return <div key={index}>{midpoint}</div>;
+            // Never narrated, so read-along skips it.
+            return (
+              <div key={index} data-read-along="skip">
+                {midpoint}
+              </div>
+            );
           case "markdown":
             return (
               <BlogMarkdown
