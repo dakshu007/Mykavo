@@ -1043,3 +1043,16 @@ html[data-promo="black-friday"] body:has([data-landing-nav])::before {
 @media (prefers-reduced-motion: reduce) {
   [data-reading] { transition: none; }
 }
+
+/* Docked narration player (audio-player.tsx): the sign-up bar steps aside
+   and the page gets room at the bottom, on screens where the player docks. */
+@media (max-width: 1023px) {
+  html[data-audio-dock] [data-sticky-cta] {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(1.5rem);
+  }
+  html[data-audio-dock] body {
+    padding-bottom: 76px;
+  }
+}

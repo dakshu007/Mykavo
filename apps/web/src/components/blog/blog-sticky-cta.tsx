@@ -46,6 +46,7 @@ export function BlogStickyCta() {
 
   return (
     <div
+      data-sticky-cta
       className={`fixed inset-x-3 bottom-3 z-40 transition-all duration-300 lg:hidden ${
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
       }`}

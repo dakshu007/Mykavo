@@ -132,6 +132,7 @@ export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artw
   const [readAlongOn, setReadAlongOn] = useState(true);
   const [follow, setFollow] = useState(true);
 
+  const showMini = playing && !cardVisible && !miniDismissed;
   const positionKey = `mk-audio:${slug}`;
   const bars = useMemo(() => resample(peaks, barCount), [peaks, barCount]);
   const progress = duration > 0 ? Math.min(1, time / duration) : 0;
@@ -236,6 +237,15 @@ export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artw
     };
   }, [playing, follow, readAlongOn, readAlongReady]);
 
+  // While the docked player shows, the page's own bottom bar (the sign-up
+  // CTA) steps aside, and the page gets room so nothing hides under it.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (showMini) root.setAttribute("data-audio-dock", "");
+    else root.removeAttribute("data-audio-dock");
+    return () => root.removeAttribute("data-audio-dock");
+  }, [showMini]);
+
   const resumeFollowing = () => {
     setFollow(true);
     if (activeElRef.current) scrollToReading(activeElRef.current, true);
@@ -265,8 +275,11 @@ export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artw
     if (!started) {
       setStarted(true);
       // The timeline loads on the first press, never for readers who only read.
-      if (timelineSrc && !readAlongRef.current) {
-        void fetch(timelineSrc)
+      // Derived from the audio URL rather than trusted from the page: a page
+      // cached before the post had timings would otherwise never load them.
+      const timelineUrl = timelineSrc ?? src.replace(/\.mp3$/, ".json");
+      if (!readAlongRef.current) {
+        void fetch(timelineUrl)
           .then((res) => (res.ok ? (res.json() as Promise<{ segments?: TimelineSegment[] }>) : null))
           .then((data) => {
             if (!data?.segments?.length) return;
@@ -289,7 +302,7 @@ export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artw
     } catch {
       // Autoplay policy or a load error; the error event shows the message.
     }
-  }, [rate, resumeAt, slug, started, timelineSrc]);
+  }, [rate, resumeAt, slug, started, timelineSrc, src]);
 
   const toggle = useCallback(() => {
     const audio = audioRef.current;
@@ -391,7 +404,6 @@ export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artw
   const playedBars = Math.round(progress * bars.length);
   const hoverBars = hover === null ? -1 : Math.round(hover * bars.length);
   const ring = `conic-gradient(#FFD400 ${progress * 360}deg, rgba(255,255,255,0.14) 0deg)`;
-  const showMini = playing && !cardVisible && !miniDismissed;
   const remaining = Math.max(0, duration - time);
 
   return (
@@ -557,7 +569,7 @@ export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artw
           <span className="font-mono tabular-nums text-white">{formatTime(shown * duration)}</span>
           <span className="font-mono tabular-nums">-{formatTime(hover !== null ? duration - hover * duration : remaining)}</span>
           <div className="ml-auto flex items-center gap-2">
-            {timelineSrc && (
+            {(timelineSrc || readAlongReady) && (
               <button
                 type="button"
                 onClick={toggleReadAlong}
@@ -640,14 +652,19 @@ export function AudioPlayer({ src, timelineSrc = null, slug, title, author, artw
         )}
       </section>
 
-      {/* Mini player: follows the reader once the card is off screen. */}
+      {/* Mini player: follows the reader once the card is off screen. Docked
+          edge to edge at the bottom on phones and tablets (with a progress
+          line along its top), a floating card on desktop. */}
       <div
         aria-hidden={!showMini}
-        className={`fixed inset-x-3 bottom-[88px] z-50 transition-all duration-300 motion-reduce:transition-none sm:inset-x-auto sm:left-5 sm:w-[360px] lg:bottom-6 ${
-          showMini ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
+        className={`fixed inset-x-0 bottom-0 z-50 transition-all duration-300 motion-reduce:transition-none lg:inset-x-auto lg:bottom-6 lg:left-6 lg:w-[380px] ${
+          showMini ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0 lg:translate-y-4"
         }`}
       >
-        <div className="flex items-center gap-3 rounded-2xl border-2 border-[#151515] bg-[#151515] py-2 pl-2 pr-2 text-white shadow-[4px_4px_0_#FFD400]">
+        <div className="relative flex items-center gap-3 rounded-t-[20px] bg-[#151515] pt-3.5 pr-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-4 text-white shadow-[0_-10px_30px_rgba(21,21,21,0.18)] lg:rounded-2xl lg:border-2 lg:border-[#151515] lg:py-2 lg:pr-2 lg:pl-2 lg:shadow-[4px_4px_0_#FFD400]">
+          <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] overflow-hidden rounded-t-[20px] bg-white/10 lg:hidden">
+            <span className="block h-full bg-[#FFD400]" style={{ width: `${progress * 100}%` }} />
+          </span>
           <div className="relative shrink-0">
             <span aria-hidden className="absolute -inset-[3px] rounded-full" style={{ background: ring }} />
             <span aria-hidden className="absolute -inset-px rounded-full bg-[#151515]" />
