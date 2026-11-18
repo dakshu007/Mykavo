@@ -52,6 +52,10 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
+  // Blog narration ("Listen to this article"): /api/blog-audio redirects the
+  // player to a short-lived signed URL on Cloudflare R2, so audio must be
+  // allowed from R2 as well as from us. Media only: nothing executes.
+  "media-src 'self' https://*.r2.cloudflarestorage.com",
   // GA4 also posts to the apex analytics.google.com (a *. wildcard never
   // matches the apex) and, with Google Signals, to stats.g.doubleclick.net
   // and google.com; both showed up in real violation reports. Signals'

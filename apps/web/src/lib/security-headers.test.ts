@@ -80,6 +80,16 @@ describe("content security policy", () => {
     expect(csp).toContain("default-src 'self'");
   });
 
+  it("lets blog narration play from signed R2 URLs, and only media", () => {
+    const mediaSrc = enforced.value.split(";").find((d) => d.trim().startsWith("media-src")) ?? "";
+    expect(mediaSrc.trim().split(/\s+/).slice(1).sort()).toEqual([
+      "'self'",
+      "https://*.r2.cloudflarestorage.com",
+    ]);
+    const scriptSrc = enforced.value.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
+    expect(scriptSrc).not.toContain("r2.cloudflarestorage.com");
+  });
+
   it("allows exactly the third parties the app really loads", () => {
     expect(csp).toContain("https://www.googletagmanager.com");
     expect(csp).toContain("https://*.google-analytics.com");
