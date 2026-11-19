@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { OUR_PRODUCTS, ourProductsByKind, productHref } from "./our-products";
 
 describe("our products config", () => {
-  it("lists two apps and three Chrome extensions", () => {
-    expect(ourProductsByKind("app").map((p) => p.slug)).toEqual(["billzap", "shrinkto"]);
+  it("lists three apps and three Chrome extensions", () => {
+    expect(ourProductsByKind("app").map((p) => p.slug)).toEqual(["billzap", "shrinkto", "habit-tracker"]);
     expect(ourProductsByKind("extension").map((p) => p.slug)).toEqual([
       "image-size-inspector",
       "spacing-inspector",

@@ -20,7 +20,7 @@ import { breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 export const metadata: Metadata = withSocial({
   title: "More from the MyKavo team",
   description:
-    "Other products built by the team behind MyKavo: BillZap, ShrinkTo, and the Image Size Inspector, Spacing Inspector and EEAT Analyser Chrome extensions.",
+    "Other products built by the team behind MyKavo: BillZap, ShrinkTo, Habit Tracker & AI Coach, and the Image Size Inspector, Spacing Inspector and EEAT Analyser Chrome extensions.",
   alternates: { canonical: OUR_PRODUCTS_PAGE_PATH },
 });
 

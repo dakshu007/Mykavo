@@ -3,7 +3,7 @@
  * not partners or integrations, and the copy says so.
  *
  * Descriptions are written only from what each product's own website says
- * (read October 2026). Keep them to one line, keep them factual, and do not
+ * (read October 2026; Habit Tracker from its Google Play listing, November 2026). Keep them to one line, keep them factual, and do not
  * add user counts, ratings or features the product site does not state.
  *
  * Read by the /products page, the free tools hub and the Chrome extension
@@ -32,7 +32,7 @@ export type OurProduct = {
 export const OUR_PRODUCT_KINDS: Record<OurProductKind, { title: string; description: string }> = {
   app: {
     title: "Apps",
-    description: "Standalone products for shops and everyday file work.",
+    description: "Standalone products for shops, everyday file work and daily habits.",
   },
   extension: {
     title: "Chrome extensions",
@@ -58,6 +58,15 @@ export const OUR_PRODUCTS: readonly OurProduct[] = [
     description:
       "Compress JPG, PNG, WebP and AVIF images to an exact KB size in your browser with no upload or signup, plus a set of free PDF tools.",
     url: "https://shrinkto.com/",
+  },
+  {
+    slug: "habit-tracker",
+    name: "Habit Tracker & AI Coach",
+    kind: "app",
+    platform: "Android app",
+    description:
+      "A habit tracker with illustrated habit cards, streaks, widgets and an AI coach for weekly tips, with no account or ads and your habits kept on your phone.",
+    url: "https://habbit-track-daily.netlify.app/",
   },
   {
     slug: "image-size-inspector",
