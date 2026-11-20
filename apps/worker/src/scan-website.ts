@@ -26,12 +26,14 @@ import {
   pageLimitFor,
   parseSelectorList,
   resolveScanOutcome,
+  scanHistoryKey,
   screenshotPrefix,
   type StageFailure,
   withDefaultAdMasks,
 } from "@mykavo/shared";
 import { logger } from "./logger";
 import { saveSnapshotText } from "./text-store";
+import { writeScanHistory } from "./scan-history-store";
 import { planScanFrequency } from "./plan-sweep";
 import { runComparisonForScan } from "./compare-scan";
 import { captureSiteMeta } from "./site-meta";
@@ -159,6 +161,37 @@ export async function runScanWebsiteJob(
           screenshotMasks,
         }),
       );
+      // Links and scripts go to object storage as one file (no database
+      // egress to read them back). If the upload fails they fall back to
+      // PageLink/PageScript rows, so a storage hiccup never loses a scan.
+      const history = {
+        links: result.links.map((l) => ({
+          url: l.url.slice(0, 2048),
+          normalizedUrl: l.normalizedUrl.slice(0, 2048),
+          linkType: l.linkType,
+          statusCode: null,
+        })),
+        scripts: result.scripts.map((s) => ({
+          src: s.src.slice(0, 2048),
+          domain: s.domain,
+          isThirdParty: s.isThirdParty,
+        })),
+      };
+      let historyStored = false;
+      try {
+        await writeScanHistory(
+          storage,
+          scanHistoryKey({ workspaceId: website.workspaceId, scanId, monitoredPageId: page.id }),
+          history,
+        );
+        historyStored = true;
+      } catch (err) {
+        logger.warn("scan history upload failed - storing links and scripts in the database", {
+          ...log,
+          monitoredPageId: page.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
       const savedSnapshot = await prisma.pageSnapshot.create({
         select: { id: true },
         data: {
@@ -194,20 +227,14 @@ export async function runScanWebsiteJob(
             result.technologies.length === 0
               ? undefined
               : (result.technologies as unknown as Prisma.InputJsonValue),
-          links: {
-            create: result.links.map((l) => ({
-              url: l.url.slice(0, 2048),
-              normalizedUrl: l.normalizedUrl.slice(0, 2048),
-              linkType: l.linkType,
-            })),
-          },
-          scripts: {
-            create: result.scripts.map((s) => ({
-              src: s.src.slice(0, 2048),
-              domain: s.domain,
-              isThirdParty: s.isThirdParty,
-            })),
-          },
+          ...(historyStored
+            ? { linkCount: history.links.length, scriptCount: history.scripts.length }
+            : {
+                links: {
+                  create: history.links.map(({ statusCode: _unchecked, ...l }) => l),
+                },
+                scripts: { create: history.scripts },
+              }),
           monitoredElementResults: {
             create: result.elements.map((e) => ({
               monitoredElementId: e.id,

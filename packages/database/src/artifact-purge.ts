@@ -76,6 +76,22 @@ export async function collectWebsiteArtifactKeys(
 }
 
 /**
+ * The scans and pages whose links-and-scripts file this website owns in
+ * object storage (snapshots with a non-null linkCount; see scan-history in
+ * @mykavo/shared, which builds the key). Read before the website is deleted,
+ * like the other artifact keys.
+ */
+export async function collectWebsiteHistoryRefs(
+  db: Db,
+  websiteId: string,
+): Promise<Array<{ scanId: string; monitoredPageId: string }>> {
+  return db.pageSnapshot.findMany({
+    where: { websiteId, linkCount: { not: null } },
+    select: { scanId: true, monitoredPageId: true },
+  });
+}
+
+/**
  * Park keys for a worker to delete.
  *
  * skipDuplicates because the same key can be queued twice - two websites in

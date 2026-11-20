@@ -39,6 +39,7 @@ import {
 } from "@mykavo/comparison-engine";
 import { diffKey, normalizeUrl, parseFingerprint } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
+import { loadSnapshotHistory } from "./scan-history-store";
 import { logger } from "./logger";
 import { loadSnapshotText, saveSnapshotText } from "./text-store";
 
@@ -58,7 +59,9 @@ const CATEGORY_TO_ENUM = {
 
 interface SnapshotRow {
   id: string;
+  scanId: string;
   monitoredPageId: string;
+  linkCount: number | null;
   url: string;
   httpStatus: number | null;
   finalUrl: string | null;
@@ -81,7 +84,9 @@ interface SnapshotRow {
 /** The columns SnapshotRow needs. */
 const SNAPSHOT_SELECT = {
   id: true,
+  scanId: true,
   monitoredPageId: true,
+  linkCount: true,
   url: true,
   httpStatus: true,
   finalUrl: true,
@@ -146,18 +151,18 @@ async function adoptBaselineText(baselineSnapshotId: string, currentSnapshotId: 
   if (lines) await saveSnapshotText(baselineSnapshotId, lines);
 }
 
+/** Where a comparison reads snapshot links and scripts from (see scan-history-store). */
+interface HistorySource {
+  storage: ArtifactStorage;
+  workspaceId: string;
+}
+
 async function toComparable(
   snapshot: SnapshotRow,
+  source: HistorySource,
 ): Promise<{ comparable: ComparableSnapshot; links: LinkObservation[] }> {
-  const [links, scripts, elements] = await Promise.all([
-    prisma.pageLink.findMany({
-      where: { pageSnapshotId: snapshot.id },
-      select: { normalizedUrl: true, linkType: true, statusCode: true },
-    }),
-    prisma.pageScript.findMany({
-      where: { pageSnapshotId: snapshot.id },
-      select: { domain: true, isThirdParty: true, src: true },
-    }),
+  const [history, elements] = await Promise.all([
+    loadSnapshotHistory(source.storage, source.workspaceId, snapshot),
     // Conversion-element observations (Phase 9). Orphaned results (config
     // deleted) are dropped - they can't be matched against the baseline.
     prisma.monitoredElementResult.findMany({
@@ -178,6 +183,11 @@ async function toComparable(
     }),
   ]);
 
+  const links: LinkObservation[] = history.links.map((l) => ({
+    normalizedUrl: l.normalizedUrl,
+    linkType: l.linkType,
+    statusCode: l.statusCode,
+  }));
   const comparable: ComparableSnapshot = {
     httpStatus: snapshot.httpStatus,
     finalUrl: snapshot.finalUrl,
@@ -197,7 +207,7 @@ async function toComparable(
     // feature. comparePlatform treats that as "we do not know" and stays quiet.
     platformFingerprint: parseFingerprint(snapshot.platformFingerprint),
     links,
-    scripts: scripts.map((s) => ({
+    scripts: history.scripts.map((s) => ({
       domain: s.domain,
       isThirdParty: s.isThirdParty,
       service: detectService(s.src),
@@ -265,32 +275,14 @@ export async function runComparisonForScan(
   if (!scan || scan.triggerType === "BASELINE")
     return { changes: 0, highest: null, pagesCompared: 0, pagesFailed: 0 };
 
+  const historySource: HistorySource = { storage, workspaceId: scan.website.workspaceId };
+
   // Idempotency: clear any prior change events for this scan.
   await prisma.changeEvent.deleteMany({ where: { scanId } });
 
   const snapshots = (await prisma.pageSnapshot.findMany({
     where: { scanId, errorCode: null },
-    select: {
-      id: true,
-      monitoredPageId: true,
-      url: true,
-      httpStatus: true,
-      finalUrl: true,
-      domHash: true,
-      textHash: true,
-      title: true,
-      metaDescription: true,
-      canonicalUrl: true,
-      robotsMeta: true,
-      h1Values: true,
-      pageWeightBytes: true,
-      requestCount: true,
-      signInScreen: true,
-      platformFingerprint: true,
-      responseTimeMs: true,
-      screenshotStorageKey: true,
-      errorCode: true,
-    },
+    select: SNAPSHOT_SELECT,
   })) as SnapshotRow[];
 
   const severities: Severity[] = [];
@@ -325,29 +317,7 @@ export async function runComparisonForScan(
       const baseline = await prisma.baseline.findFirst({
         where: { monitoredPageId: snapshot.monitoredPageId, status: "ACTIVE" },
         include: {
-          pageSnapshot: {
-            select: {
-              id: true,
-              monitoredPageId: true,
-              url: true,
-              httpStatus: true,
-              finalUrl: true,
-              domHash: true,
-              textHash: true,
-              title: true,
-              metaDescription: true,
-              canonicalUrl: true,
-              robotsMeta: true,
-              h1Values: true,
-              pageWeightBytes: true,
-              requestCount: true,
-              signInScreen: true,
-              platformFingerprint: true,
-              responseTimeMs: true,
-              screenshotStorageKey: true,
-              errorCode: true,
-            },
-          },
+          pageSnapshot: { select: SNAPSHOT_SELECT },
         },
       });
       // No baseline yet (e.g. page added after the baseline scan) - nothing to
@@ -358,8 +328,8 @@ export async function runComparisonForScan(
       // Sequential, not Promise.all: each call opens three queries, and
       // running both at once doubled the peak connection count against a
       // pooler with a hard session cap.
-      const base = await toComparable(baselineSnap);
-      const curr = await toComparable(snapshot);
+      const base = await toComparable(baselineSnap, historySource);
+      const curr = await toComparable(snapshot, historySource);
       baselineLinkPages.push({ pageUrl: snapshot.url, links: base.links });
       currentLinkPages.push({ pageUrl: snapshot.url, links: curr.links });
 
@@ -473,7 +443,7 @@ export async function runComparisonForScan(
         })) as SnapshotRow | null;
         const seenBefore = new Set(
           previous
-            ? compareSnapshots(base.comparable, (await toComparable(previous)).comparable).map(confirmationKey)
+            ? compareSnapshots(base.comparable, (await toComparable(previous, historySource)).comparable).map(confirmationKey)
             : [],
         );
         for (let i = changes.length - 1; i >= 0; i--) {

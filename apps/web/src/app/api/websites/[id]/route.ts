@@ -4,10 +4,12 @@ import { z } from "zod";
 import {
   prisma,
   collectWebsiteArtifactKeys,
+  collectWebsiteHistoryRefs,
   findUnreferencedScreenshotKeys,
   queueArtifactDeletions,
   resumeStatusFor,
 } from "@mykavo/database";
+import { scanHistoryKey } from "@mykavo/shared";
 import { formatLimit, getPlan, nextPlanUp } from "@/config/plans";
 import { getApiContext, getOwnedWebsite, requireRole } from "@/lib/api-auth";
 import { getWorkspacePlan } from "@/lib/limits";
@@ -234,6 +236,10 @@ export async function DELETE(_request: Request, { params }: Params) {
   // can say which objects in the bucket belonged to this site. Skipping this
   // is why deleted websites used to keep costing money forever.
   const { screenshotKeys, diffKeys } = await collectWebsiteArtifactKeys(prisma, website.id);
+  // Each scanned page's links-and-scripts file, owned by its snapshot alone.
+  const historyKeys = (await collectWebsiteHistoryRefs(prisma, website.id)).map((ref) =>
+    scanHistoryKey({ workspaceId: ctx.workspace.id, ...ref }),
+  );
 
   await prisma.website.delete({ where: { id: website.id } });
 
@@ -248,7 +254,7 @@ export async function DELETE(_request: Request, { params }: Params) {
     queued = await queueArtifactDeletions(
       prisma,
       ctx.workspace.id,
-      [...unreferenced, ...diffKeys],
+      [...unreferenced, ...diffKeys, ...historyKeys],
       "website_deleted",
     );
     // Deleting the objects is unbounded work - thousands of them for a site

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import { prisma } from "@mykavo/database";
+import { parseBrokenLinks } from "@mykavo/shared";
 import { requireSession, getCurrentWorkspace } from "@/lib/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import {
@@ -119,9 +120,12 @@ export default async function SeoHealthPage({
             canonicalUrl: true,
             robotsMeta: true,
             h1Values: true,
-            // Internal link statuses from the worker's per-scan link check.
+            // Broken internal links from the worker's per-scan link check.
+            // Older snapshots kept every link as rows instead; for those,
+            // read only the broken ones.
+            brokenLinks: true,
             links: {
-              where: { linkType: "INTERNAL" },
+              where: { linkType: "INTERNAL", OR: [{ statusCode: 0 }, { statusCode: { gte: 400 } }] },
               select: { normalizedUrl: true, statusCode: true },
             },
           },
@@ -166,7 +170,12 @@ export default async function SeoHealthPage({
     );
   }
 
-  const report = buildSeoReport(scan.snapshots);
+  const report = buildSeoReport(
+    scan.snapshots.map(({ brokenLinks, links, ...snapshot }) => ({
+      ...snapshot,
+      links: brokenLinks === null ? links : parseBrokenLinks(brokenLinks),
+    })),
+  );
   const band = seoScoreBand(report.score);
   const groups = groupIssuesByCheck(report.issues);
   const scanDate = scan.completedAt ?? scan.createdAt;

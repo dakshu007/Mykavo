@@ -50,6 +50,10 @@ export default async function ScanDetailPage({
                 },
               },
             },
+            // Counts for snapshots whose lists are in object storage; older
+            // ones count their PageLink/PageScript rows.
+            linkCount: true,
+            scriptCount: true,
             _count: { select: { links: true, scripts: true } },
           },
           orderBy: { createdAt: "asc" },
@@ -262,8 +266,8 @@ export default async function ScanDetailPage({
                         <p className="mt-1 font-mono text-xs text-ink-faint">
                           HTTP {snap.httpStatus} · {snap.responseTimeMs}ms ·{" "}
                           {Math.round((snap.pageWeightBytes ?? 0) / 1024)} KB ·{" "}
-                          {snap.requestCount} requests · {snap._count.links} links ·{" "}
-                          {snap._count.scripts} scripts
+                          {snap.requestCount} requests · {snap.linkCount ?? snap._count.links} links ·{" "}
+                          {snap.scriptCount ?? snap._count.scripts} scripts
                         </p>
                       </>
                     )}

@@ -465,6 +465,18 @@ model PageSnapshot {
   // shaped as TechEntry[] from @mykavo/shared. Read whole, never queried by
   // element, so JSONB rather than rows.
   technologies               Json?
+  // Links and scripts live in object storage (scanHistoryKey in
+  // @mykavo/shared), not in PageLink/PageScript rows: they are only ever read
+  // whole, one snapshot at a time, and reading them from Postgres was most of
+  // the scan pipeline's database egress. Set when that file was written; null
+  // means the snapshot predates the file (or its upload failed) and its links
+  // and scripts, if any, are the PageLink/PageScript rows.
+  linkCount                  Int?
+  scriptCount                Int?
+  // Broken internal links found by the scan's link check, as
+  // [{ normalizedUrl, statusCode }] - the only part of the link list the
+  // dashboard shows, kept here so the SEO page never opens the file.
+  brokenLinks                Json?
   errorCode                  String?
   errorMessage               String?
   createdAt                  DateTime      @default(now())

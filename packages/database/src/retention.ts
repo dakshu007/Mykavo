@@ -22,6 +22,8 @@ export interface ExpiredSnapshot {
   screenshotStorageKey: string | null;
   scanId: string;
   monitoredPageId: string;
+  /** Non-null when the snapshot's links and scripts are a file in object storage. */
+  linkCount: number | null;
 }
 
 /**
@@ -45,7 +47,13 @@ export async function findExpiredSnapshots(
       createdAt: { lt: params.cutoff },
       ...(protectedIds.length ? { id: { notIn: protectedIds } } : {}),
     },
-    select: { id: true, screenshotStorageKey: true, scanId: true, monitoredPageId: true },
+    select: {
+      id: true,
+      screenshotStorageKey: true,
+      scanId: true,
+      monitoredPageId: true,
+      linkCount: true,
+    },
     orderBy: { createdAt: "asc" },
     take: params.limit,
   });

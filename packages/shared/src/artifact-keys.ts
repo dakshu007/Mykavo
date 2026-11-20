@@ -40,6 +40,20 @@ export function diffKey(params: {
 }
 
 /**
+ * Where a snapshot's links and scripts live: one gzipped JSON file per page
+ * per scan (see scan-history). Owned by exactly one snapshot, like a diff, so
+ * it is deleted with that snapshot by the retention sweep and with the
+ * website when it is deleted.
+ */
+export function scanHistoryKey(params: {
+  workspaceId: string;
+  scanId: string;
+  monitoredPageId: string;
+}): string {
+  return `ws/${params.workspaceId}/scan/${params.scanId}/${params.monitoredPageId}/history.json.gz`;
+}
+
+/**
  * True for a content-addressed screenshot key, i.e. one that may be shared by
  * several snapshots. Legacy per-scan keys are owned by a single snapshot.
  * Reference counting is applied to both regardless - a legacy key simply

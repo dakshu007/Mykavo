@@ -50,6 +50,7 @@ export {
 } from "./retention";
 export {
   collectWebsiteArtifactKeys,
+  collectWebsiteHistoryRefs,
   queueArtifactDeletions,
   takePendingArtifactDeletions,
   clearPendingArtifactDeletion,

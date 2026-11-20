@@ -19,7 +19,7 @@ import {
   autoPauseReasons,
   DORMANT_TRIM_AFTER_DAYS,
 } from "@mykavo/database";
-import { diffKey, historyDaysForPlan } from "@mykavo/shared";
+import { diffKey, historyDaysForPlan, scanHistoryKey } from "@mykavo/shared";
 import { getDefaultStorage, type ArtifactStorage } from "@mykavo/scanner";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runScreenshotShrink } from "./shrink-oversized";
@@ -101,15 +101,14 @@ export async function runRetentionSweep(
       // screenshot key - screenshots are content-addressed now, so the old
       // string replace would have matched nothing and orphaned every diff.
       for (const snap of expired) {
-        await storage
-          .delete(
-            diffKey({
-              workspaceId: website.workspaceId,
-              scanId: snap.scanId,
-              monitoredPageId: snap.monitoredPageId,
-            }),
-          )
-          .catch(() => {});
+        const ref = {
+          workspaceId: website.workspaceId,
+          scanId: snap.scanId,
+          monitoredPageId: snap.monitoredPageId,
+        };
+        await storage.delete(diffKey(ref)).catch(() => {});
+        // The page's links and scripts file, owned by this snapshot alone.
+        if (snap.linkCount !== null) await storage.delete(scanHistoryKey(ref)).catch(() => {});
       }
 
       const candidateKeys = expired

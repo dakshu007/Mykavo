@@ -6,7 +6,7 @@
 
 import "dotenv/config";
 import { PgBoss } from "pg-boss";
-import { BrowserPool } from "@mykavo/scanner";
+import { BrowserPool, getDefaultStorage } from "@mykavo/scanner";
 import {
   SCAN_WEBSITE_QUEUE,
   SCHEDULER_SWEEP_QUEUE,
@@ -55,6 +55,7 @@ import { startDatabaseWatch } from "./db-watch";
 import { runAdminSignupJob } from "./admin-signup";
 import { runWelcomeEmailJob } from "./welcome-email";
 import { runRetentionSweep } from "./retention";
+import { backfillBaselineHistory } from "./scan-history-store";
 import { runAgentRetention, runAiAgentJob } from "./keyword-agent";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
@@ -171,6 +172,11 @@ async function main() {
   await ensureQueue(boss, RETENTION_SWEEP_QUEUE);
   await boss.work(RETENTION_SWEEP_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
     await runRetentionSweep();
+    // Baselines whose links and scripts are still rows (older snapshots, or
+    // an upload that failed) get their file, so comparisons read R2.
+    await backfillBaselineHistory(getDefaultStorage())
+      .then((copied) => copied > 0 && logger.info("baseline scan history copied to storage", { copied }))
+      .catch((err) => logger.error("baseline scan history backfill failed", {}, err));
     const textPruned = await pruneSnapshotText();
     if (textPruned > 0) logger.info("page text pruned", { files: textPruned });
     // AI Keyword Agent data: separate step, so a failure here never stops
@@ -401,6 +407,12 @@ async function main() {
     auditCron: AUDIT_CRON,
     watchdog: true,
   });
+
+  // Right after a deploy, not at 03:00: move baseline links and scripts that
+  // are still rows into storage. A no-op query once they all are.
+  void backfillBaselineHistory(getDefaultStorage())
+    .then((copied) => copied > 0 && logger.info("baseline scan history copied to storage", { copied }))
+    .catch((err) => logger.error("baseline scan history backfill failed", {}, err));
 
   // "Somebody signed up" - to the operator, not to a customer. Enqueued by the
   // web app's signup hook; delivered here so a push round trip can never slow
