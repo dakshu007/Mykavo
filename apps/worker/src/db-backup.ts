@@ -6,8 +6,8 @@
  *   2. Restore it into a throwaway Postgres that listens on a unix socket
  *      only, and compare key table row counts with the live database. A
  *      backup that has never been restored is a hope, not a backup.
- *   3. Copy Sunday's full dump to R2, so losing the server does not lose
- *      the backups with it.
+ *   3. Copy the dump to R2 (every night), so losing the server does not
+ *      lose the backups with it.
  *   4. Prune old dumps (local and R2).
  *
  * Any failure emails ALERT_EMAILS / ADMIN_EMAILS. Monitoring never depends on
@@ -33,6 +33,7 @@ import {
   localBackupsToPrune,
   pgDumpArgs,
   r2BackupKeysToPrune,
+  r2CoreBackupKeysToPrune,
   toLibpqUrl,
 } from "@mykavo/shared";
 import { alertRecipients } from "./db-watch";
@@ -194,7 +195,7 @@ async function copyToR2(file: string, fileName: string, now: Date): Promise<bool
   if (process.env.ARTIFACT_STORE !== "r2") return false;
   const storage = getDefaultStorage();
   await storage.put(backupR2Key(fileName), await readFile(file), "application/octet-stream");
-  for (const key of r2BackupKeysToPrune(now)) {
+  for (const key of [...r2BackupKeysToPrune(now), ...r2CoreBackupKeysToPrune(now)]) {
     await storage.delete(key).catch(() => {});
   }
   return true;
@@ -272,13 +273,12 @@ export async function runDatabaseBackup(now = new Date()): Promise<void> {
       throw new BackupStepError("restore check", `Row counts do not match - ${detail}`);
     }
 
+    // Every dump goes off the server: uploading costs no database egress.
     let offServer = false;
-    if (kind === "full") {
-      try {
-        offServer = await copyToR2(file, fileName, now);
-      } catch (err) {
-        throw new BackupStepError("off-server copy", err instanceof Error ? err.message : String(err));
-      }
+    try {
+      offServer = await copyToR2(file, fileName, now);
+    } catch (err) {
+      throw new BackupStepError("off-server copy", err instanceof Error ? err.message : String(err));
     }
 
     const pruned = await pruneLocal(now);

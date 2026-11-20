@@ -7,6 +7,7 @@ import {
   parseBackupFileName,
   pgDumpArgs,
   r2BackupKeysToPrune,
+  r2CoreBackupKeysToPrune,
   toLibpqUrl,
 } from "./db-backup";
 
@@ -40,14 +41,27 @@ describe("toLibpqUrl", () => {
 });
 
 describe("pgDumpArgs", () => {
-  it("skips history table data on core nights only", () => {
+  it("skips weekly table data on core nights and legacy link rows always", () => {
     const core = pgDumpArgs({ kind: "core", file: "/x.dump", dbUrl: "postgresql://h/db" });
     expect(core).toContain("--exclude-table-data=public.page_link");
+    expect(core).toContain("--exclude-table-data=public.health_check");
+    expect(core).toContain("--exclude-table-data=public.gsc_page_daily");
     expect(core).toContain("--schema=public");
     expect(core.at(-1)).toBe("--dbname=postgresql://h/db");
 
     const full = pgDumpArgs({ kind: "full", file: "/x.dump", dbUrl: "postgresql://h/db" });
-    expect(full.some((a) => a.startsWith("--exclude-table-data"))).toBe(false);
+    const fullExcluded = full.filter((a) => a.startsWith("--exclude-table-data"));
+    expect(fullExcluded).toEqual([
+      "--exclude-table-data=public.page_link",
+      "--exclude-table-data=public.page_script",
+    ]);
+  });
+
+  it("never skips rows a restore cannot rebuild", () => {
+    const core = pgDumpArgs({ kind: "core", file: "/x.dump", dbUrl: "postgresql://h/db" });
+    for (const table of ["user", "workspace", "website", "monitored_page", "baseline", "page_snapshot", "change_event", "subscription", "scan"]) {
+      expect(core).not.toContain(`--exclude-table-data=public.${table}`);
+    }
   });
 });
 
@@ -79,6 +93,15 @@ describe("r2BackupKeysToPrune", () => {
       const day = key.match(/(\d{4}-\d{2}-\d{2})/)![1];
       expect(new Date(`${day}T00:00:00Z`).getUTCDay()).toBe(0);
     }
+  });
+});
+
+describe("r2CoreBackupKeysToPrune", () => {
+  it("targets the week of core dumps just past a 14 day window", () => {
+    const keys = r2CoreBackupKeysToPrune(new Date("2026-11-20T02:30:00Z"));
+    expect(keys).toHaveLength(7);
+    expect(keys[0]).toBe("backups/db/mykavo-2026-11-05-core.dump"); // 15 days back
+    expect(keys[6]).toBe("backups/db/mykavo-2026-10-30-core.dump");
   });
 });
 

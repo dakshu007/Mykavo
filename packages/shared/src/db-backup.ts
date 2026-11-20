@@ -3,8 +3,8 @@
  *
  * The worker (apps/worker/src/db-backup.ts) runs pg_dump every night onto
  * the server's own disk, proves each dump restores into a throwaway Postgres,
- * and copies the weekly full dump to R2 so a lost server does not take the
- * backups with it.
+ * and copies every dump to R2 (full dumps kept 8 weeks, core dumps 14
+ * days) so a lost server does not take the backups with it.
  *
  * WHY TWO KINDS OF DUMP
  * ---------------------
@@ -12,17 +12,48 @@
  * which this project already blew through once (October 2026). A full dump
  * every night would cost ~2.4 GB a month on its own. So:
  *
- *   - FULL (Sundays): every table, every row.
- *   - CORE (other nights): every table's schema, and every table's rows
- *     EXCEPT the three high-volume history tables below, which together are
- *     most of the database but are rebuilt by the next scan anyway.
+ *   - FULL (Sundays): every table's schema and rows, except the legacy
+ *     link and script rows below.
+ *   - CORE (other nights): every table's schema, and the rows of everything
+ *     a restore cannot rebuild on its own: accounts, websites, pages,
+ *     baselines, snapshots, changes, billing. History and data that is
+ *     re-fetched or slow-changing is dumped on Sundays only.
  *
- * Worst case after a disaster: restore the latest core dump for accounts,
- * websites, baselines and changes, plus the latest full dump's history.
+ * Worst case after a disaster: restore the latest core dump, then load the
+ * WEEKLY tables' rows from the latest full dump
+ * (pg_restore --data-only --table=<name> for each).
  */
 
+/**
+ * Rows never dumped. Scan links and scripts now live in object storage, one
+ * file per snapshot (@mykavo/shared scan-history); these tables hold only
+ * older, superseded copies, and every active baseline's lists are already in
+ * storage. Schema is still dumped.
+ */
+export const NEVER_DUMPED_DATA_TABLES = ["page_link", "page_script"] as const;
+
+/**
+ * Rows dumped on Sundays only. None is referenced by a foreign key, so a
+ * core dump without their rows still restores cleanly.
+ *
+ *   - health_check: uptime history, about 290 rows per site per day.
+ *   - gsc_*: Search Console data, re-synced from Google.
+ *   - site_meta_snapshot: rebuilt by the next scan.
+ *   - blog_audio: narration timings; changes only when a post is narrated.
+ *   - activity_event: the admin activity feed.
+ */
+export const WEEKLY_DATA_TABLES = [
+  "health_check",
+  "gsc_page_daily",
+  "gsc_query_page",
+  "gsc_dimension_row",
+  "site_meta_snapshot",
+  "blog_audio",
+  "activity_event",
+] as const;
+
 /** Rows skipped by the nightly core dump. Schema is still dumped. */
-export const CORE_EXCLUDED_DATA_TABLES = ["page_link", "page_script", "health_check"] as const;
+export const CORE_EXCLUDED_DATA_TABLES = [...NEVER_DUMPED_DATA_TABLES, ...WEEKLY_DATA_TABLES] as const;
 
 export type BackupKind = "full" | "core";
 
@@ -47,7 +78,7 @@ export function parseBackupFileName(name: string): { day: string; kind: BackupKi
   return { day: match[1], kind: match[2] as BackupKind };
 }
 
-/** R2 key for the off-server copy of a full dump. */
+/** R2 key for the off-server copy of a dump. */
 export function backupR2Key(fileName: string): string {
   return `backups/db/${fileName}`;
 }
@@ -95,10 +126,9 @@ export function pgDumpArgs(options: { kind: BackupKind; file: string; dbUrl: str
     "--no-security-labels",
     `--file=${options.file}`,
   ];
-  if (options.kind === "core") {
-    for (const table of CORE_EXCLUDED_DATA_TABLES) {
-      args.push(`--exclude-table-data=public.${table}`);
-    }
+  const excluded = options.kind === "core" ? CORE_EXCLUDED_DATA_TABLES : NEVER_DUMPED_DATA_TABLES;
+  for (const table of excluded) {
+    args.push(`--exclude-table-data=public.${table}`);
   }
   args.push(`--dbname=${options.dbUrl}`);
   return args;
@@ -145,6 +175,20 @@ export function r2BackupKeysToPrune(now: Date, keepWeeks = 8): string[] {
     keys.push(backupR2Key(backupFileName(day, "full")));
   }
   return [...new Set(keys)];
+}
+
+/**
+ * R2 also keeps the last `keepDays` nightly core dumps, so a lost server
+ * costs at most a day of data rather than up to six. Like the full dumps,
+ * deletes are computed: the core dumps from the week just past the window.
+ */
+export function r2CoreBackupKeysToPrune(now: Date, keepDays = 14): string[] {
+  const keys: string[] = [];
+  for (let back = keepDays + 1; back <= keepDays + 7; back += 1) {
+    const day = new Date(Date.parse(isoDay(now)) - back * DAY_MS);
+    keys.push(backupR2Key(backupFileName(day, "core")));
+  }
+  return keys;
 }
 
 /**
