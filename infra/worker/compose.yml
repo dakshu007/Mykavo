@@ -16,6 +16,14 @@ services:
     # there to restart it.
     restart: unless-stopped
 
+    # On a deploy, give jobs in flight time to finish before the container is
+    # killed (the worker waits up to 4 minutes; see shutdown in index.ts).
+    # Docker's default of 10 seconds cut AI reports off mid-run.
+    stop_grace_period: 5m
+    # A minimal init as PID 1: forwards SIGTERM to the worker and reaps
+    # finished browser processes.
+    init: true
+
     # Secrets live only on the server, never in this repo (spec §59).
     # Copy the Mac's apps/worker/.env.production to infra/worker/worker.env.
     env_file:

@@ -2165,6 +2165,10 @@ model AiJob {
   /// Friendly message when it failed.
   error        String?
   costMicroUsd Int         @default(0)
+  /// Times the worker re-queued this job because a restart (a deploy, a
+  /// crash) cut it off mid-run. Capped at one so a job that keeps killing
+  /// the worker can't keep spending.
+  restarts     Int         @default(0)
   createdAt    DateTime    @default(now())
   startedAt    DateTime?
   finishedAt   DateTime?

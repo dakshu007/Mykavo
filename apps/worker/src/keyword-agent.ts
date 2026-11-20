@@ -6,8 +6,11 @@
  * always ends the job as done or failed. A failed job gets its quota back.
  *
  * Jobs are never retried by pg-boss (retryLimit 0): a retry would spend money
- * again. A job left "running" by a crash is failed and refunded by the next
- * job or the nightly retention pass.
+ * again. A job a worker restart cut off (a deploy, a crash, a reboot) is
+ * picked up again once when the worker starts (recoverInterruptedAgentJobs);
+ * if that happens a second time it is failed and refunded. A job left
+ * "running" any other way is failed and refunded after 30 minutes by the
+ * next job or the nightly retention pass.
  */
 import { getWorkspaceEntitlement, prisma, Prisma } from "@mykavo/database";
 import { sendEmail } from "@mykavo/email";
@@ -89,6 +92,51 @@ export async function failStaleAgentJobs(now = Date.now()): Promise<number> {
     await finishFailed(job.id, "This job was interrupted. Your allowance has been returned; please try again.");
   }
   return stale.length;
+}
+
+/** How many times a job cut off by a restart is started again. */
+export const MAX_AGENT_JOB_RESTARTS = 1;
+const RESTARTED_STEP = "Picking up where it left off";
+
+/**
+ * Run once when the worker starts. A job still "running" that started before
+ * this process did belongs to a process that no longer exists (there is one
+ * worker container), so it was cut off: start it again once, otherwise fail
+ * and refund it. Without this, a deploy mid-report left the page stuck on
+ * one step until the 30-minute stale check.
+ */
+export async function recoverInterruptedAgentJobs(
+  bootTime: Date,
+  requeue: (aiJobId: string) => Promise<unknown>,
+): Promise<{ requeued: number; failed: number }> {
+  const orphans = await prisma.aiJob.findMany({
+    where: { status: "running", startedAt: { lt: bootTime } },
+    select: { id: true, restarts: true },
+    take: 100,
+  });
+  let requeued = 0;
+  let failed = 0;
+  for (const job of orphans) {
+    if (job.restarts < MAX_AGENT_JOB_RESTARTS) {
+      // Conditional on still running, so two starts can't both claim it.
+      const claimed = await prisma.aiJob.updateMany({
+        where: { id: job.id, status: "running" },
+        data: { status: "queued", restarts: { increment: 1 }, step: RESTARTED_STEP, progress: 5 },
+      });
+      if (claimed.count === 0) continue;
+      try {
+        await requeue(job.id);
+        requeued++;
+      } catch {
+        await finishFailed(job.id, "This job was interrupted. Your allowance has been returned; please try again.");
+        failed++;
+      }
+    } else {
+      await finishFailed(job.id, "This job was interrupted twice. Your allowance has been returned; please try again.");
+      failed++;
+    }
+  }
+  return { requeued, failed };
 }
 
 async function finishFailed(aiJobId: string, message: string): Promise<void> {

@@ -100,4 +100,11 @@ USER pwuser
 
 # tsx runs the TypeScript directly - matches how the Mac worker runs, so
 # there is no build step to drift out of sync.
-CMD ["pnpm", "--filter", "worker", "start"]
+#
+# Started directly, not through `pnpm start`: pnpm does not pass SIGTERM on
+# to the worker, so `docker stop` (every deploy) waited out the grace period
+# and then SIGKILLed it mid-job. tsx does pass it on, so the worker's own
+# shutdown runs and jobs in flight finish. compose.yml adds an init process
+# for signal handling and reaping Chromium's child processes.
+WORKDIR /app/apps/worker
+CMD ["./node_modules/.bin/tsx", "src/index.ts"]

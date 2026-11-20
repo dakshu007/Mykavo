@@ -56,7 +56,7 @@ import { runAdminSignupJob } from "./admin-signup";
 import { runWelcomeEmailJob } from "./welcome-email";
 import { runRetentionSweep } from "./retention";
 import { backfillBaselineHistory } from "./scan-history-store";
-import { runAgentRetention, runAiAgentJob } from "./keyword-agent";
+import { recoverInterruptedAgentJobs, runAgentRetention, runAiAgentJob } from "./keyword-agent";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
 import { runHealthSweep } from "./health";
@@ -119,6 +119,8 @@ if (!DATABASE_URL) {
 }
 
 async function main() {
+  // Anything an earlier process left "running" started before this.
+  const bootTime = new Date();
   const boss = new PgBoss({
     connectionString: DATABASE_URL,
     schema: "pgboss",
@@ -357,6 +359,10 @@ async function main() {
       if (job) await runAiAgentJob(job.data);
     },
   );
+  // A deploy or crash may have cut an AI job off mid-run: pick it up again.
+  void recoverInterruptedAgentJobs(bootTime, (aiJobId) => boss.send(AI_AGENT_QUEUE, { aiJobId }))
+    .then((r) => (r.requeued > 0 || r.failed > 0) && logger.info("interrupted ai jobs recovered", r))
+    .catch((err) => logger.error("ai job recovery failed", {}, err));
 
   await ensureQueue(boss, SITE_AUDIT_QUEUE, { retryLimit: 1, expireInSeconds: 15 * 60 });
   await boss.work<SiteAuditJob>(
@@ -450,7 +456,10 @@ async function main() {
       stopDatabaseWatch();
       stopKeepWarm();
       stopEgressSampler();
-      await boss.stop({ graceful: true, timeout: 30_000 });
+      // Let jobs in flight finish (an AI report takes about 90 seconds, a
+      // scan a few minutes) instead of cutting them off mid-run. compose.yml
+      // gives the container stop_grace_period to match.
+      await boss.stop({ graceful: true, timeout: 240_000 });
       await pool.close();
     } finally {
       process.exit(0);
