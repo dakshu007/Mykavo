@@ -273,9 +273,37 @@ export async function runBlogAudioSweep(now: Date = new Date()): Promise<void> {
   if (!cfg || running) return;
   running = true;
   try {
-    const posts = await prisma.blogPost.findMany({
+    // Cheap pass first: ids and dates only. Reading every post's full text
+    // on every sweep cost ~1.5 MB per run (~200 MB a day of database egress),
+    // so the text is fetched only for posts that may need narrating.
+    const rows = await prisma.blogPost.findMany({
       where: { status: "PUBLISHED", publishedAt: { lte: now } },
       orderBy: { publishedAt: "desc" },
+      select: {
+        id: true,
+        updatedAt: true,
+        audio: {
+          select: { status: true, attempts: true, timelineVersion: true, voiceId: true, updatedAt: true },
+        },
+      },
+    });
+    const candidates = rows
+      .filter((row) => {
+        const audio = row.audio;
+        if (!audio) return true;
+        if (audio.status === "failed") return audio.attempts < MAX_ATTEMPTS || row.updatedAt > audio.updatedAt;
+        // Narrated before read-along existed, or in another voice: narrate
+        // again. `attempts` counts the first narration too, hence the +1.
+        const outdated = audio.timelineVersion < TIMELINE_VERSION || audio.voiceId !== cfg.voiceId;
+        if (outdated && audio.attempts < MAX_ATTEMPTS + 1) return true;
+        // Edited since its audio was last checked: compare the text.
+        return row.updatedAt > audio.updatedAt;
+      })
+      .slice(0, cfg.postsPerSweep * 3);
+    if (candidates.length === 0) return;
+
+    const fetched = await prisma.blogPost.findMany({
+      where: { id: { in: candidates.map((c) => c.id) } },
       select: {
         id: true,
         slug: true,
@@ -294,19 +322,31 @@ export async function runBlogAudioSweep(now: Date = new Date()): Promise<void> {
         },
       },
     });
+    const byId = new Map(fetched.map((p) => [p.id, p]));
+    const posts = candidates.flatMap((c) => {
+      const post = byId.get(c.id);
+      return post ? [post] : [];
+    });
 
+    const unchanged: string[] = [];
     const due = posts
       .map((post) => ({ post, script: buildNarration(post) }))
       .filter(({ post, script }) => {
         const audio = post.audio;
         if (!audio || audio.narrationHash !== script.hash) return true;
-        if (audio.status === "failed") return audio.attempts < MAX_ATTEMPTS;
-        // Narrated before read-along existed, or in another voice: narrate
-        // again. `attempts` counts the first narration too, hence the +1.
+        if (audio.status === "failed" && audio.attempts < MAX_ATTEMPTS) return true;
         const outdated = audio.timelineVersion < TIMELINE_VERSION || audio.voiceId !== cfg.voiceId;
-        return outdated && audio.attempts < MAX_ATTEMPTS + 1;
+        if (audio.status !== "failed" && outdated && audio.attempts < MAX_ATTEMPTS + 1) return true;
+        // Edited, but not in a way that changes what is read (title tags,
+        // SEO fields, CTAs): note it as checked so the text isn't fetched
+        // again until the next edit.
+        unchanged.push(post.id);
+        return false;
       })
       .slice(0, cfg.postsPerSweep);
+    if (unchanged.length > 0) {
+      await prisma.blogAudio.updateMany({ where: { postId: { in: unchanged } }, data: { updatedAt: new Date() } });
+    }
     if (due.length === 0) return;
 
     for (const { post, script } of due) {

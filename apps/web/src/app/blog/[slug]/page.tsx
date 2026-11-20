@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { noBreakHyphens, splitTitle } from "@/lib/blog-title";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { BlogCta } from "@/components/blog/blog-cta";
 import { GoogleButton } from "@/components/landing/google-cta";
@@ -34,10 +35,10 @@ import { site } from "@/config/site";
 import { ORGANIZATION_ID, breadcrumbList, jsonLdScript } from "@/lib/seo/structured-data";
 
 // Cached per slug on first visit and served from the CDN after that,
-// regenerated at most every two minutes; dashboard edits revalidate it on the
+// regenerated at most every ten minutes; dashboard edits revalidate it on the
 // spot (lib/blog-revalidate.ts). Was force-dynamic: every visit rendered from
 // scratch on a serverless function, often a cold one.
-export const revalidate = 120;
+export const revalidate = 600;
 
 // No slugs at build time - each page is rendered on its first request and
 // then cached. Unknown slugs still 404 (notFound below).
@@ -135,12 +136,16 @@ function isoDuration(ms: number): string {
   return `PT${m > 0 ? `${m}M` : ""}${sec}S`;
 }
 
-/** Only live posts are visible publicly - drafts and scheduled posts 404. */
-async function getPublishedPost(slug: string) {
+/**
+ * Only live posts are visible publicly - drafts and scheduled posts 404.
+ * Wrapped in cache() so generateMetadata and the page share one database
+ * read per render instead of each fetching the full post (database egress).
+ */
+const getPublishedPost = cache(async (slug: string) => {
   return prisma.blogPost.findFirst({
     where: { slug, ...livePostWhere() },
   });
-}
+});
 
 /**
  * Escape "<" so post-authored text (e.g. "</script>") can't terminate the
