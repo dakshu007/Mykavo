@@ -50,6 +50,15 @@ describe("postToMarkdown", () => {
     expect(md).toContain("### Is it free?\n\nThere is a free plan.");
   });
 
+  it("doesn't repeat the FAQ heading the post already has", () => {
+    expect(md.match(/## Frequently asked questions/g)).toHaveLength(1);
+  });
+
+  it("adds a FAQ heading when the post has none", () => {
+    const bare = postToMarkdown({ ...post, content: "Intro.\n\n{{faq}}\nQ: One?\nA: Yes.\n{{/faq}}" }, "https://mykavo.app");
+    expect(bare).toContain("## Frequently asked questions\n\n### One?");
+  });
+
   it("drops shortcode furniture", () => {
     expect(md).not.toMatch(/\{\{/);
   });

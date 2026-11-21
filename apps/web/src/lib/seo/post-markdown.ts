@@ -47,7 +47,10 @@ export function postToMarkdown(post: PostForMarkdown, siteUrl: string): string {
     if (segment.type === "markdown") {
       lines.push(segment.content.trim(), "");
     } else if (segment.type === "faq" && segment.items.length > 0) {
-      lines.push("## Frequently asked questions", "");
+      // Posts usually put their own "## Frequently asked questions" heading
+      // just above the FAQ block; only add one when the post didn't.
+      const lastLine = [...lines].reverse().find((l) => l.trim() !== "") ?? "";
+      if (!/^#{1,6}\s/.test(lastLine.trim().split("\n").pop() ?? "")) lines.push("## Frequently asked questions", "");
       for (const item of segment.items) lines.push(`### ${item.question}`, "", item.answer, "");
     }
     // cta, cta-wordpress and toc blocks are page furniture, not content.
