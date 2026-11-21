@@ -418,7 +418,7 @@ export async function collectUsage(now: Date = new Date()): Promise<UsageReport>
           egressQuota,
           "bytes",
           "unconfigured",
-          "Set SUPABASE_METRICS_KEY (a Supabase secret API key) in the worker's environment. It then reads the database's network counter every hour.",
+          "Set SUPABASE_METRICS_KEY (a Supabase secret API key) in the worker's environment (infra/worker/worker.env). It then reads the database's network counter every hour, and this meter fills in within the hour.",
         ),
       );
     } else {
@@ -448,6 +448,29 @@ export async function collectUsage(now: Date = new Date()): Promise<UsageReport>
         state: e.last24hBytes === null ? "unavailable" : "measured",
         order: 8,
         detail: e.last24hBytes === null ? "Needs two readings in the last day." : "Estimated, from hourly readings.",
+      });
+      stats.push({
+        id: "db-egress-daily-avg",
+        label: "Database egress, daily average (7 days)",
+        provider: "Supabase",
+        value: e.dailyAverageBytes,
+        unit: "bytes",
+        state: e.dailyAverageBytes === null ? "unavailable" : "measured",
+        order: 8.1,
+        detail: e.dailyAverageBytes === null ? "Needs a day of readings." : "Estimated, from hourly readings.",
+      });
+      // What can still be used per day without going over the cap this cycle.
+      const daysLeft = Math.max(0, (e.cycleEnd.getTime() - now.getTime()) / 86_400_000);
+      const left = Math.max(0, egressQuota.limit - e.estimatedCycleBytes);
+      stats.push({
+        id: "db-egress-daily-allowance",
+        label: "Egress allowance per day to stay under the cap",
+        provider: "Supabase",
+        value: daysLeft >= 1 ? left / daysLeft : null,
+        unit: "bytes",
+        state: daysLeft >= 1 ? "measured" : "unavailable",
+        order: 8.2,
+        detail: `${formatBytes(left)} left of ${formatBytes(egressQuota.limit)} with ${Math.floor(daysLeft)} day${Math.floor(daysLeft) === 1 ? "" : "s"} to go (resets ${day(e.cycleEnd)}).${e.partial ? " Includes an estimate for the part of the cycle before readings began." : ""}`,
       });
     }
   } else {

@@ -104,11 +104,16 @@ export interface Egress {
   partial: boolean;
   /** When the newest reading was taken. */
   lastReadingAt: Date | null;
+  /** Average per day over the last 7 days of readings (or as many as there are, at least a day). */
+  dailyAverageBytes: number | null;
+  /** Cycle usage including an estimate for any unmeasured start of the cycle. */
+  estimatedCycleBytes: number;
 }
 
+/** The day of the month the Supabase cycle renews (Supabase shows it under Billing). This project renews on the 15th. */
 function cycleDay(): number {
-  const n = Number(env.SUPABASE_BILLING_CYCLE_DAY ?? "1");
-  return Number.isFinite(n) ? n : 1;
+  const n = Number(env.SUPABASE_BILLING_CYCLE_DAY ?? "15");
+  return Number.isFinite(n) ? n : 15;
 }
 
 export async function collectEgress(now: Date): Promise<Egress> {
@@ -136,6 +141,8 @@ export async function collectEgress(now: Date): Promise<Egress> {
       projectedBytes: null,
       partial: ever !== null,
       lastReadingAt: ever?.sampledAt ?? null,
+      dailyAverageBytes: null,
+      estimatedCycleBytes: 0,
     };
   }
 
@@ -149,6 +156,10 @@ export async function collectEgress(now: Date): Promise<Egress> {
   const elapsed = now.getTime() - first.at.getTime();
   const unmeasured = partial && elapsed > 0 ? (cycleBytes / elapsed) * (first.at.getTime() - cycleStart.getTime()) : 0;
 
+  const weekAgo = now.getTime() - 7 * DAY_MS;
+  const lastWeek = readings.filter((r) => r.at.getTime() >= weekAgo);
+  const weekSpan = lastWeek.length >= 2 ? lastWeek[lastWeek.length - 1]!.at.getTime() - lastWeek[0]!.at.getTime() : 0;
+
   return {
     sampling: true,
     cycleStart,
@@ -158,5 +169,7 @@ export async function collectEgress(now: Date): Promise<Egress> {
     projectedBytes: projected === null ? null : projected + unmeasured,
     partial,
     lastReadingAt: readings[readings.length - 1]!.at,
+    dailyAverageBytes: weekSpan >= DAY_MS ? (counterIncrease(lastWeek) / weekSpan) * DAY_MS : null,
+    estimatedCycleBytes: cycleBytes + unmeasured,
   };
 }
