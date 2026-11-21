@@ -23,7 +23,7 @@ export const site = {
    * JSON-LD and the brand facts on /about. Change it here, nowhere else.
    */
   definition:
-    "MyKavo is a website change and regression monitoring tool: it saves an approved baseline of the pages that matter on each website, re-checks them on a schedule, and alerts you with before-and-after proof when something important changes or breaks, such as a page going noindex, a broken checkout button, a removed analytics script or a visual layout change.",
+    "MyKavo is website monitoring plus an AI Keywords & Blog Writer: it re-checks the pages that matter on each website against an approved baseline and alerts you with before-and-after proof when something important changes or breaks (a page going noindex, a broken checkout button, a removed analytics script), and its AI Blog Writer finds the keywords your site can win, from your own Google Search Console data and live search results, and drafts the SEO blog post for you to edit and publish.",
 } as const;
 
 /**

@@ -54,6 +54,8 @@ export function organizationNode() {
       "WordPress update monitoring",
       "Broken link monitoring",
       "Uptime and SSL monitoring",
+      "AI blog writing",
+      "SEO keyword research",
     ],
     // How to reach MyKavo, for answer engines asked "how do I contact MyKavo".
     contactPoint: {

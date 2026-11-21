@@ -102,7 +102,7 @@ export function llmsFullText(): string {
   const parts: string[] = [
     "# MyKavo - full product reference, documentation and release notes",
     "",
-    `> ${site.definition} It also includes an AI Keywords & Blog Writer that finds the keywords worth writing about for a site and drafts the SEO blog post. Website: ${site.url}. The short summary is at ${site.url}/llms.txt; every blog post is available as Markdown by adding .md to its address.`,
+    `> ${site.definition} Website: ${site.url}. The short summary is at ${site.url}/llms.txt; every blog post is available as Markdown by adding .md to its address.`,
     "",
     ...productReference(),
   ];

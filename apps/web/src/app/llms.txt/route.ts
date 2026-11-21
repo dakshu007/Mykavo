@@ -21,7 +21,7 @@ const agency = getPlan("agency");
 
 const CONTENT = `# MyKavo
 
-> ${site.definition} It is built for agencies, developers, SEO teams, freelancers and website owners, and includes an ${AI_KEYWORDS_NAME} that finds the keywords worth writing about for a site and drafts a full SEO blog post in one click. Website: https://mykavo.app
+> ${site.definition} It is built for agencies, developers, SEO teams, freelancers and website owners. Website: https://mykavo.app
 
 Monitoring protects the traffic you have. AI Keywords helps you win more.
 
