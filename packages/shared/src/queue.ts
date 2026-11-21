@@ -34,6 +34,8 @@ export const DOMAIN_SWEEP_QUEUE = "domain-sweep";
  * whose text changed since they were narrated (apps/worker/src/blog-audio.ts).
  */
 export const BLOG_AUDIO_SWEEP_QUEUE = "blog-audio-sweep";
+/** Daily IndexNow submission of changed mykavo.app pages (Bing, and so ChatGPT search). */
+export const INDEXNOW_QUEUE = "indexnow-submit";
 /** Nightly pg_dump onto the worker's disk, proven by a restore (db-backup.ts). */
 export const DB_BACKUP_QUEUE = "db-backup";
 /**

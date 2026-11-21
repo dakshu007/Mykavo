@@ -125,7 +125,7 @@ export const COMPARISONS: Comparison[] = [
       },
       {
         q: "How quickly does MyKavo detect a change?",
-        a: "Availability and SSL are checked every five minutes. Page content is compared on your scan schedule - weekly on the free plan, daily on Pro, plus on-demand manual scans. Change monitoring is deliberately less frequent than an uptime ping because each scan renders the page in a real browser and captures a full screenshot.",
+        a: "Availability and SSL are checked every five minutes. Page content is compared on your scan schedule - weekly on the free plan, daily on every paid plan, plus on-demand manual scans. Change monitoring is deliberately less frequent than an uptime ping because each scan renders the page in a real browser and captures a full screenshot.",
       },
     ],
   },
@@ -289,7 +289,7 @@ export const COMPARISONS: Comparison[] = [
       },
       {
         q: "Does the site audit render JavaScript?",
-        a: "No. The audit is fetch-based, which is what allows it to crawl up to 1,500 pages quickly and stay included in a $20 plan. Per-page browser rendering at that scale would not be economical. Change monitoring is different: it renders every monitored page in a real browser and captures a screenshot, because visual comparison requires it.",
+        a: "No. The audit is fetch-based, which is what allows it to crawl up to 1,500 pages quickly and stay included in every plan. Per-page browser rendering at that scale would not be economical. Change monitoring is different: it renders every monitored page in a real browser and captures a screenshot, because visual comparison requires it.",
       },
     ],
   },

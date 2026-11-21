@@ -37,7 +37,7 @@ export function ChromeExtensionLaunch() {
 
           <p className={`${eyebrowOnDark} mb-4 mt-9`}>{"// just shipped //"}</p>
           <h2 className={`${fontDisplay} text-4xl leading-[1.05] text-[#F5F5F0] sm:text-6xl`}>
-            MyKavo just moved
+            MyKavo just moved{" "}
             <br />
             <span className="relative inline-block whitespace-nowrap">
               <span aria-hidden className="absolute inset-x-[-6px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]" />

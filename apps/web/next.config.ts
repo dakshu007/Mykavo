@@ -29,6 +29,15 @@ const nextConfig: NextConfig = {
       { source: "/blog/best-ai-blog-writers", destination: "/best-ai-blog-writer", permanent: true },
     ];
   },
+  // Plain-Markdown copies of blog posts for AI assistants (app/md/blog).
+  // beforeFiles, so /blog/<slug>.md never reaches the /blog/[slug] page.
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/blog/:slug([a-z0-9-]+).md", destination: "/md/blog/:slug" }],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   // Dev-only CORS so the Expo WEB dev preview (http://localhost:8081) can call
   // the local Next dev server with credentials. No-op in production builds.
   async headers() {

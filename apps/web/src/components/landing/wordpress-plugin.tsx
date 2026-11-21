@@ -24,7 +24,7 @@ export function WordPressPluginSection() {
             <PartnerLockup partner="wordpress" className="mb-7" />
             <p className={`${eyebrow} mb-4`}>{"// for wordpress //"}</p>
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
-              Update WordPress
+              Update WordPress{" "}
               <br />
               <span className="text-[#6B6B60]">without fear.</span>
             </h2>

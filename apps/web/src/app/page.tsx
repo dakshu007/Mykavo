@@ -46,9 +46,8 @@ import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, eyebrowOnDark, fontDisplay, fontSans } from "@/components/landing/style";
 import { getPlan, plans } from "@/config/plans";
-import { site } from "@/config/site";
 import { AI_KEYWORDS_NAME, keywordAllowanceSummary } from "@/config/ai-keywords";
-import { FEATURE_LIST, organizationNode, websiteNode } from "@/lib/seo/structured-data";
+import { FEATURE_LIST, organizationNode, softwareApplicationNode, websiteNode } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = withSocial({
   // Absolute title (not the layout template) so the homepage leads with the
@@ -99,32 +98,25 @@ const jsonLd = {
   "@graph": [
     organizationNode(),
     websiteNode(),
-    {
-      "@type": "SoftwareApplication",
-      name: site.name,
-      applicationCategory: "BusinessApplication",
-      applicationSubCategory: "Website Monitoring Tool",
-      operatingSystem: "Web",
-      description: site.description,
-      url: site.url,
-      // Built from plans.ts so the markup can never quote a stale price.
+    // The same SoftwareApplication node (one @id) as /pricing, so answer
+    // engines see one product, not two. Prices from plans.ts.
+    softwareApplicationNode({
       offers: plans.map((plan) => ({
-        "@type": "Offer",
         name: plan.name,
-        price: String(plan.priceMonthlyUsd),
-        priceCurrency: "USD",
+        priceUsd: plan.priceMonthlyUsd,
         description: plan.headline,
       })),
-      // Single source (lib/seo/structured-data) so this cannot fall behind
-      // what MyKavo actually does - it did once, for five weeks.
       featureList: FEATURE_LIST,
-    },
+    }),
   ],
 };
 
 /* ---------------------------------- data --------------------------------- */
 
 const agencyPlan = getPlan("agency");
+const freePlan = getPlan("free");
+const starterPlan = getPlan("starter");
+const proPlan = getPlan("pro");
 
 
 const problems = [
@@ -292,7 +284,9 @@ const faqs = [
   },
   {
     q: "How many websites can I monitor?",
-    a: `The free plan monitors 1 website with 5 pages. Pro is $20/month for 8 websites with 15 monitored pages each - ideal for freelancers and small teams. Agency is $79/month for 30 websites with 25 pages each, plus white-label client reports and up to 15 team members. New accounts start on the free plan, no card needed.`,
+    // Built from plans.ts: this answer is also FAQPage markup that AI answer
+    // engines quote, so a hand-typed price here would spread a wrong fact.
+    a: `The free plan monitors ${freePlan.limits.websites} website with ${freePlan.limits.pagesPerWebsite} pages, checked weekly. Starter is $${starterPlan.priceMonthlyUsd}/month for ${starterPlan.limits.websites} websites with ${starterPlan.limits.pagesPerWebsite} pages each, checked daily. Pro is $${proPlan.priceMonthlyUsd}/month for ${proPlan.limits.websites} websites with ${proPlan.limits.pagesPerWebsite} pages each - ideal for freelancers and small teams. Agency is $${agencyPlan.priceMonthlyUsd}/month for ${agencyPlan.limits.websites} websites with ${agencyPlan.limits.pagesPerWebsite} pages each, plus white-label client reports and up to ${agencyPlan.limits.maxMembers} team members. New accounts start on the free plan, no card needed.`,
   },
   {
     q: "Is it safe to point MyKavo at my site?",
@@ -458,7 +452,7 @@ export default function HomePage() {
         <Section id="how-it-works">
           <p className={`${eyebrow} mb-4 text-center`}>{"// how it works //"}</p>
           <DisplayHeading>
-            Baseline. Monitor.
+            Baseline. Monitor.{" "}
             <br />
             <span className="text-[#6B6B60]">Detect. Fix.</span>
           </DisplayHeading>
@@ -504,7 +498,7 @@ export default function HomePage() {
         <Section id="categories">
           <p className={`${eyebrow} mb-4 text-center`}>{"// what mykavo watches //"}</p>
           <DisplayHeading>
-            Eight kinds of change.
+            Eight kinds of change.{" "}
             <br />
             <span className="text-[#6B6B60]">One monitoring layer.</span>
           </DisplayHeading>
@@ -555,7 +549,7 @@ export default function HomePage() {
               <div>
                 <p className={`${eyebrow} mb-4`}>{"// for agencies //"}</p>
                 <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
-                  Every client website,
+                  Every client website,{" "}
                   <br />
                   <span className="text-[#6B6B60]">one dashboard.</span>
                 </h2>
@@ -682,7 +676,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
             <p className={`${eyebrow} mb-4 text-center`}>{"// pricing //"}</p>
             <DisplayHeading>
-              Simple plans that scale
+              Simple plans that scale{" "}
               <br />
               <span className="text-[#6B6B60]">with your websites.</span>
             </DisplayHeading>

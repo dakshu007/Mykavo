@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { withSocial } from "@/lib/social-metadata";
 import Link from "next/link";
 import { Eye, Radar, ShieldCheck, Zap } from "lucide-react";
@@ -6,7 +7,8 @@ import { LandingNav } from "@/components/landing/nav";
 import { LandingFooter } from "@/components/landing/footer";
 import { LogoMark } from "@/components/brand/logo";
 import { eyebrow, fontDisplay, fontSans } from "@/components/landing/style";
-import { site } from "@/config/site";
+import { founder, site } from "@/config/site";
+import { plans } from "@/config/plans";
 import {
   breadcrumbList,
   jsonLdScript,
@@ -71,6 +73,62 @@ const aboutJsonLd = {
   ],
 };
 
+/**
+ * The plain facts about MyKavo, from the same config the rest of the site
+ * uses (definition, plans, founder), so this block and the JSON-LD, llms.txt
+ * and pricing page always agree.
+ */
+function glanceFacts(): { label: string; value: ReactNode }[] {
+  const paid = plans.filter((p) => p.priceMonthlyUsd > 0).map((p) => `${p.name} $${p.priceMonthlyUsd}`);
+  const free = plans.find((p) => p.priceMonthlyUsd === 0);
+  return [
+    { label: "What it is", value: site.definition },
+    {
+      label: "Who it is for",
+      value: "Web agencies, freelancers, developers, SEO teams and website owners who look after websites that matter to them.",
+    },
+    {
+      label: "What it is not",
+      value: "Not an uptime-only monitor, a one-off crawler or a rank tracker. It watches the pages you choose against an approved baseline.",
+    },
+    {
+      label: "Made by",
+      value: (
+        <>
+          <Link href={founder.path} className="font-medium text-[#151515] underline underline-offset-2">
+            {founder.name}
+          </Link>
+          , founder, in India.
+        </>
+      ),
+    },
+    {
+      label: "Where it works",
+      value: "The web app at mykavo.app, a free WordPress plugin on WordPress.org, a free Chrome extension, and AI assistants such as Claude and ChatGPT through the MyKavo connector. An Android app is in early access and a Shopify app is coming soon.",
+    },
+    {
+      label: "Pricing",
+      value: `A free plan${free ? ` for ${free.limits.websites} website with ${free.limits.pagesPerWebsite} pages` : ""}, no card needed. Paid plans per month: ${paid.join(", ")}.`,
+    },
+    {
+      label: "For AI assistants",
+      value: (
+        <>
+          A summary at{" "}
+          <a href="/llms.txt" className="font-medium text-[#151515] underline underline-offset-2">
+            /llms.txt
+          </a>{" "}
+          and the full reference at{" "}
+          <a href="/llms-full.txt" className="font-medium text-[#151515] underline underline-offset-2">
+            /llms-full.txt
+          </a>
+          .
+        </>
+      ),
+    },
+  ];
+}
+
 export default function AboutPage() {
   return (
     <div className={`${fontSans} min-h-svh bg-[#FBFAF3] text-[#151515] antialiased`}>
@@ -104,6 +162,21 @@ export default function AboutPage() {
             client edit never turns into lost rankings, lost sales, or an awkward phone call. Then
             its AI Keywords &amp; Blog Writer helps those sites win more search traffic.
           </p>
+        </section>
+
+        {/* At a glance: the facts an answer engine needs, in one place */}
+        <section aria-labelledby="glance-heading" className="mx-auto mt-16 max-w-3xl px-5 lg:px-8">
+          <h2 id="glance-heading" className={`${fontDisplay} text-2xl text-[#151515] sm:text-3xl`}>
+            MyKavo at a glance
+          </h2>
+          <dl className="mt-6 divide-y divide-[#E8E4D4] rounded-2xl border border-[#E8E4D4] bg-white text-[15px] leading-7">
+            {glanceFacts().map((fact) => (
+              <div key={fact.label} className="grid gap-1 px-6 py-4 sm:grid-cols-[170px_1fr] sm:gap-6">
+                <dt className="font-semibold text-[#151515]">{fact.label}</dt>
+                <dd className="text-[#3d3d38]">{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* The name */}

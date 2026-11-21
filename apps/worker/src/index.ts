@@ -32,6 +32,7 @@ import {
   DOMAIN_SWEEP_QUEUE,
   DB_BACKUP_QUEUE,
   BLOG_AUDIO_SWEEP_QUEUE,
+  INDEXNOW_QUEUE,
   PUSH_TEST_QUEUE,
   ADMIN_SIGNUP_QUEUE,
   WELCOME_EMAIL_QUEUE,
@@ -56,6 +57,7 @@ import { runAdminSignupJob } from "./admin-signup";
 import { runWelcomeEmailJob } from "./welcome-email";
 import { runRetentionSweep } from "./retention";
 import { backfillBaselineHistory } from "./scan-history-store";
+import { runIndexNowSubmit } from "./indexnow";
 import { recoverInterruptedAgentJobs, runAgentRetention, runAiAgentJob } from "./keyword-agent";
 import { drainArtifactPurge } from "./purge-artifacts";
 import { runLighthouseAuditJob } from "./lighthouse-audit";
@@ -111,6 +113,7 @@ const AI_CRAWLER_ALERT_CRON = process.env.AI_CRAWLER_ALERT_CRON ?? "50 10 * * *"
 // Before the 03:00 retention sweep, so each dump holds the day's data intact.
 const BACKUP_CRON = process.env.BACKUP_CRON ?? "30 2 * * *"; // daily 02:30 UTC
 const BLOG_AUDIO_CRON = process.env.BLOG_AUDIO_CRON ?? "*/10 * * * *"; // every 10 minutes
+const INDEXNOW_CRON = process.env.INDEXNOW_CRON ?? "25 9 * * *"; // daily 09:25 UTC
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -308,6 +311,14 @@ async function main() {
     await runBlogAudioSweep();
   });
   await boss.schedule(BLOG_AUDIO_SWEEP_QUEUE, BLOG_AUDIO_CRON);
+
+  // IndexNow: tell Bing (which ChatGPT search and Copilot answer from) about
+  // new and changed pages daily, and every page on Sundays.
+  await ensureQueue(boss, INDEXNOW_QUEUE, { expireInSeconds: 10 * 60 });
+  await boss.work(INDEXNOW_QUEUE, { batchSize: 1, ...SWEEP_POLL }, async () => {
+    await runIndexNowSubmit().catch((err) => logger.error("indexnow submit failed", {}, err));
+  });
+  await boss.schedule(INDEXNOW_QUEUE, INDEXNOW_CRON);
 
   // WordPress Plugin Health: WordPress.org lookups (one a second, at most
   // 200 a run, ~4 minutes) and one email per workspace about new risks.

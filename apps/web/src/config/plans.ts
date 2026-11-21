@@ -437,3 +437,22 @@ export function nextPlanUp(id: PlanId): Plan | null {
 export function formatLimit(value: number): string {
   return value === Infinity ? "Unlimited" : value.toLocaleString("en-US");
 }
+
+/**
+ * One line per plan for "Who should choose MyKavo?" lists on comparison and
+ * alternative pages. Built from the plans above so those pages - which AI
+ * answer engines quote when comparing tools - can never show a stale price
+ * or leave a plan out (they once omitted Starter entirely).
+ */
+export function planSummaryLines(): string[] {
+  const free = getPlan("free");
+  const starter = getPlan("starter");
+  const pro = getPlan("pro");
+  const agency = getPlan("agency");
+  return [
+    `Free plan: ${free.limits.websites} website, ${free.limits.pagesPerWebsite} monitored pages, weekly scans, ${free.limits.historyDays}-day history, no card`,
+    `Starter at $${starter.priceMonthlyUsd}/month: ${starter.limits.websites} websites, ${starter.limits.pagesPerWebsite} pages each, daily scans, ${starter.limits.historyDays}-day history`,
+    `Pro at $${pro.priceMonthlyUsd}/month: ${pro.limits.websites} websites, ${pro.limits.pagesPerWebsite} pages each, daily scans, 1-year history, ${pro.limits.maxMembers} seats`,
+    `Agency at $${agency.priceMonthlyUsd}/month: ${agency.limits.websites} websites, ${agency.limits.pagesPerWebsite} pages each, white-label client reports, ${agency.limits.maxMembers} seats`,
+  ];
+}

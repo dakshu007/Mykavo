@@ -73,7 +73,7 @@ export function LandingHero() {
           {/* The headline names the category; "page by page" is the
               differentiator (the unit of work is a page, not a whole site). */}
           <h1 className={`${fontDisplay} mx-auto mt-6 max-w-4xl text-[40px] leading-[1.02] text-white [text-shadow:0_2px_24px_rgba(4,24,70,0.4)] sm:mt-7 sm:text-6xl lg:text-[76px]`}>
-            Website monitoring,
+            Website monitoring,{" "}
             <br />
             <span className="relative inline-block whitespace-nowrap">
               <span aria-hidden className="absolute inset-x-[-6px] bottom-[6%] top-[14%] -rotate-1 rounded-md bg-[#FFD400]" />

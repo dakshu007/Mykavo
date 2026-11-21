@@ -16,6 +16,14 @@ export const site = {
   longDescription:
     "MyKavo is a website change detection and regression monitoring platform with an AI Keywords & Blog Writer, built for agencies, developers, SEO teams, and website owners managing important websites. MyKavo creates approved website baselines, automatically scans monitored pages, detects meaningful changes, shows clear before-and-after comparisons, and alerts users when important regressions require attention. Its AI Keywords & Blog Writer reads the website, finds the keywords worth writing about from Google Search Console data, Google search suggestions and live search results, and drafts a full SEO blog post for the user to edit and publish.",
   category: "Website Monitoring & AI Keywords SaaS",
+  /**
+   * The one-sentence definition of MyKavo. AI answer engines quote whatever
+   * sentence a site repeats most consistently, so this exact wording is used
+   * wherever MyKavo defines itself: llms.txt, llms-full.txt, Organization
+   * JSON-LD and the brand facts on /about. Change it here, nowhere else.
+   */
+  definition:
+    "MyKavo is a website change and regression monitoring tool: it saves an approved baseline of the pages that matter on each website, re-checks them on a schedule, and alerts you with before-and-after proof when something important changes or breaks, such as a page going noindex, a broken checkout button, a removed analytics script or a visual layout change.",
 } as const;
 
 /**
@@ -44,6 +52,27 @@ export const socials = [
     description: "walkthroughs and feature demos",
   },
 ] as const;
+
+/**
+ * MyKavo's official listings on other platforms. Not shown in the footer (they
+ * are product listings, not social accounts) but emitted with the socials as
+ * Organization `sameAs`, because they are the strongest independent proof
+ * that these products belong to the same MyKavo: WordPress.org and the Chrome
+ * Web Store both show MyKavo as the publisher. Same rule as socials: only
+ * listings MyKavo really owns.
+ */
+export const officialListings = [
+  "https://wordpress.org/plugins/mykavo/",
+  "https://chromewebstore.google.com/detail/mykavo-seo-website-monito/mejgmahebmmcbhmjknnbnfkepopbglpg",
+] as const;
+
+/** The founder, as linked from Organization JSON-LD and the author page. */
+export const founder = {
+  name: "Dakshesh B",
+  /** The author page; its Person node carries the same @id. */
+  path: "/blog/author/dakshesh",
+  sameAs: ["https://www.linkedin.com/in/daksheshb/", "https://dakshesh.co.in/"],
+} as const;
 
 /**
  * Note on the URLs above: share links copied from the apps carry tracking

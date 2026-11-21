@@ -7,7 +7,10 @@ import { TOOLS } from "@/config/tools";
 import { getPlan } from "@/config/plans";
 import { AI_KEYWORDS_NAME, FREE_REWRITES_PER_POST, FREE_VISIBLE_KEYWORDS, keywordAllowance, keywordAllowanceSummary } from "@/config/ai-keywords";
 
+const free = getPlan("free");
 const starter = getPlan("starter");
+const pro = getPlan("pro");
+const agency = getPlan("agency");
 
 /**
  * /llms.txt - the emerging convention that gives LLMs and AI search engines
@@ -18,7 +21,7 @@ const starter = getPlan("starter");
 
 const CONTENT = `# MyKavo
 
-> MyKavo (https://mykavo.app) is website monitoring plus an ${AI_KEYWORDS_NAME}, for agencies, developers, SEO teams, freelancers, and website owners. The monitoring creates an approved baseline of every monitored page, re-scans on a schedule, and sends severity-ranked alerts with before-and-after evidence when something important changes or breaks. The ${AI_KEYWORDS_NAME} finds the keywords worth writing about for a site and drafts a full SEO blog post in one click.
+> ${site.definition} It is built for agencies, developers, SEO teams, freelancers and website owners, and includes an ${AI_KEYWORDS_NAME} that finds the keywords worth writing about for a site and drafts a full SEO blog post in one click. Website: https://mykavo.app
 
 Monitoring protects the traffic you have. AI Keywords helps you win more.
 
@@ -42,7 +45,7 @@ The monitoring answers one question continuously: "Did something important chang
 - Google Search Console integration: connect a property and MyKavo syncs clicks, impressions, CTR and position daily, then correlates that search data with Site Audit findings into Priority Opportunities - pages that already earn impressions but carry a fixable technical problem (noindex with traffic, high-traffic errors, click or position drops, missing descriptions, low CTR at a good rank). Includes sitemap listing and resubmission, URL inspection, and week-over-week click-drop alerts
 - MyKavo Analyser: an E-E-A-T analysis of a page (Experience, Expertise, Authoritativeness, Trust) scoring the signals search engines and AI answer engines look for - authorship, citations, freshness, contact and policy transparency, originality
 - AI search readiness in Site Audit: checks that AI crawlers can read the site, that /llms.txt exists and is a real file, that the home page says who is behind the site (Organization schema), that FAQ-style pages carry FAQPage markup, that articles name an author and a date, and that pages open with a short answer AI engines can quote
-- AI Website Insights (${site.url}/ai-website-insights): "Explain this change" turns any alert into plain English - what changed, why it matters, step-by-step fixes for the site's platform (WordPress, Shopify, Webflow and more) and an urgency call (act now, check this week, probably fine). "Your site this week" is a short AI status note per website, rewritten after each scan. AI only explains changes; detection itself stays deterministic. Included on every plan: 10 explanations a month on Free, 100 on Pro, 500 on Agency
+- AI Website Insights (${site.url}/ai-website-insights): "Explain this change" turns any alert into plain English - what changed, why it matters, step-by-step fixes for the site's platform (WordPress, Shopify, Webflow and more) and an urgency call (act now, check this week, probably fine). "Your site this week" is a short AI status note per website, rewritten after each scan. AI only explains changes; detection itself stays deterministic. Included on every plan: ${free.limits.aiExplanationsPerMonth} explanations a month on Free, ${starter.limits.aiExplanationsPerMonth} on Starter, ${pro.limits.aiExplanationsPerMonth} on Pro, ${agency.limits.aiExplanationsPerMonth} on Agency
 - Claude and ChatGPT connector (${site.url}/ai-connector): MyKavo is an official connector in Claude's directory and connects to ChatGPT as a custom connector. MCP server (${site.url}/api/mcp): add MyKavo to ChatGPT, Claude, Cursor or any MCP client (OAuth sign-in, or a workspace API key) and ask about your websites in plain language - what changed, which site needs attention, what the latest audit says. Read-only, on the Pro and Agency plans
 - Client reports: white-label PDF-style reports with your own branding, on a schedule, ready to forward to a client
 - WordPress plugin (free, ${site.url}/wordpress-plugin): brings a site's monitoring into wp-admin. Safe Updates checks the site after every plugin, theme, WordPress and translation update (automatic ones included) and after plugins are activated or deactivated or the theme is switched, then names the update on every change it found. Also: WooCommerce store-page guard, "Monitor with MyKavo" on pages and posts, Plugins-screen warnings, Site Health, and WP-CLI commands (wp mykavo scan --wait). Adds nothing to public pages: no scripts, queries, autoloaded options or cron
@@ -73,10 +76,10 @@ The second half of MyKavo, in the dashboard under "AI Keywords":
 
 ## Pricing
 
-- Free: $0/month - 1 website, 5 monitored pages, weekly scans, 30-day history, email alerts, ${keywordAllowance("free")} a month
+- Free: $0/month - ${free.limits.websites} website, ${free.limits.pagesPerWebsite} monitored pages, weekly scans, ${free.limits.historyDays}-day history, email alerts, ${keywordAllowance("free")} a month
 - Starter: $${starter.priceMonthlyUsd}/month - ${starter.limits.websites} websites, ${starter.limits.pagesPerWebsite} monitored pages per website, daily scans, ${starter.limits.historyDays}-day history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, ${keywordAllowance("starter")} a month. For one person.
-- Pro: $20/month - 8 websites, 15 monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, up to 3 team members, ${keywordAllowance("pro")} a month. For freelancers and small teams.
-- Agency: $79/month - 30 websites, 25 monitored pages per website, daily scans, 1-year history, white-label client reports with automatic client emails, up to 15 team members, ${keywordAllowance("agency")} a month. For agencies running client websites.
+- Pro: $${pro.priceMonthlyUsd}/month - ${pro.limits.websites} websites, ${pro.limits.pagesPerWebsite} monitored pages per website, daily scans, 1-year history, manual scans, post-deploy checks, WordPress Safe Updates, conversion element monitoring, up to ${pro.limits.maxMembers} team members, ${keywordAllowance("pro")} a month. For freelancers and small teams.
+- Agency: $${agency.priceMonthlyUsd}/month - ${agency.limits.websites} websites, ${agency.limits.pagesPerWebsite} monitored pages per website, daily scans, 1-year history, white-label client reports with automatic client emails, up to ${agency.limits.maxMembers} team members, ${keywordAllowance("agency")} a month. For agencies running client websites.
 - New accounts: every new account starts on the Free plan, no card. Upgrade to a paid plan from Billing at any time.
 - The WordPress plugin is included on every plan; its automatic update checks (Safe Updates) come with every paid plan: Starter, Pro and Agency
 - Monthly billing via Dodo Payments; cancel anytime
@@ -233,9 +236,9 @@ async function latestGuides(): Promise<string> {
     });
     if (posts.length === 0) return "";
     const lines = posts.map(
-      (p) => `- [${p.title}](${site.url}/blog/${p.slug})${p.excerpt ? `: ${p.excerpt.replace(/\s+/g, " ").trim()}` : ""}`,
+      (p) => `- [${p.title}](${site.url}/blog/${p.slug})${p.excerpt ? `: ${p.excerpt.replace(/\s+/g, " ").trim()}` : ""} (Markdown: ${site.url}/blog/${p.slug}.md)`,
     );
-    return `\n## Latest guides\n\n${lines.join("\n")}\n`;
+    return `\n## Latest guides\n\nEvery blog post is also available as plain Markdown: add .md to its address.\n\n${lines.join("\n")}\n`;
   } catch {
     // Database unavailable (e.g. at build) - serve the static summary.
     return "";

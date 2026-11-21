@@ -41,7 +41,7 @@ export function AiInsightsSection() {
               {"// ai website insights //"}
             </p>
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#E9EBDF] sm:text-5xl`}>
-              Every alert,
+              Every alert,{" "}
               <br />
               <span className="relative inline-block">
                 <span aria-hidden className="absolute inset-x-[-6px] bottom-[8%] top-[10%] -rotate-1 rounded-md bg-[#FFD400]" />

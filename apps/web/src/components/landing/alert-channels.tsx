@@ -102,7 +102,7 @@ export function AlertChannelsSection() {
         <h2
           className={`${fontDisplay} text-center text-4xl leading-[1.06] text-[#151515] sm:text-5xl lg:text-[52px]`}
         >
-          One alert,
+          One alert,{" "}
           <br />
           <span className="relative inline-block">
             <span

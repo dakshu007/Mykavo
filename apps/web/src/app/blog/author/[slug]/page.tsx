@@ -71,6 +71,8 @@ export default async function BlogAuthorPage({ params }: Params) {
     url: view.url,
     mainEntity: {
       "@type": "Person",
+      // Same @id the Organization's founder uses (config/site founder.path).
+      "@id": `${view.url}#person`,
       name: view.name,
       ...(view.role ? { jobTitle: view.role } : {}),
       ...(view.bio ? { description: view.bio } : {}),

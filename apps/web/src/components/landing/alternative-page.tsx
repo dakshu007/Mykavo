@@ -3,8 +3,10 @@ import { Check, Minus } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { SeoPageCta } from "@/components/landing/seo-page";
-import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
-import { ALTERNATIVES, VERIFIED_ON, type Alternative } from "@/config/alternatives";
+import { ORGANIZATION_ID, WEBSITE_ID, breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
+import { ALTERNATIVES, PAGES_UPDATED_ON, VERIFIED_ON, type Alternative } from "@/config/alternatives";
+import { site } from "@/config/site";
+import { planSummaryLines } from "@/config/plans";
 
 /**
  * Renderer for named-vendor comparison pages.
@@ -27,11 +29,26 @@ export function AlternativePage({ alternative }: { alternative: Alternative }) {
       eyebrowText="alternatives"
       title={alternative.title}
       intro={alternative.capsule}
-      updated={VERIFIED_ON}
+      updated={PAGES_UPDATED_ON.label}
     >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(faqPage(alternative.faqs)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: alternative.title,
+            url: `${site.url}/alternatives/${alternative.slug}`,
+            description: alternative.capsule,
+            dateModified: PAGES_UPDATED_ON.iso,
+            isPartOf: { "@id": WEBSITE_ID },
+            publisher: { "@id": ORGANIZATION_ID },
+          }),
+        }}
       />
       <script
         type="application/ld+json"
@@ -108,10 +125,8 @@ export function AlternativePage({ alternative }: { alternative: Alternative }) {
       <p>{alternative.bestFor}</p>
       <ul className="not-prose my-6 space-y-2.5">
         {[
-          "Free plan: 1 website, 5 monitored pages, weekly scans, 30-day history, no card",
-          "Pro at $20/month: 8 websites, 15 monitored pages each, daily scans, 1-year history, 3 seats",
-          "Agency at $79/month: 30 websites, 25 pages each, white-label client reports, 15 seats",
-          "Site audit on every plan: 89 checks across 22 categories, with CSV export",
+          ...planSummaryLines(),
+          "Site audit on every plan: 98 checks across 23 categories, with CSV export",
           "Every alert carries the previous and current value, and a screenshot diff for visual change",
         ].map((point) => (
           <li key={point} className="flex items-start gap-3 text-[15px] text-[#151515]/90">

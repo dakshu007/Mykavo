@@ -167,7 +167,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title,
     description,
     keywords: keywords.length > 0 ? keywords : undefined,
-    alternates: { canonical: `/blog/${post.slug}` },
+    // The Markdown copy, for AI assistants that read plain text.
+    alternates: { canonical: `/blog/${post.slug}`, types: { "text/markdown": `/blog/${post.slug}.md` } },
     openGraph: {
       type: "article",
       title,
@@ -226,6 +227,8 @@ export default async function BlogPostPage({ params }: Params) {
     author: author
       ? {
           "@type": "Person",
+          // The author page's Person node, so every post links to one person.
+          "@id": `${author.url}#person`,
           name: author.name,
           ...(author.role ? { jobTitle: author.role } : {}),
           ...(author.bio ? { description: author.bio } : {}),
@@ -237,6 +240,7 @@ export default async function BlogPostPage({ params }: Params) {
       : { "@type": "Organization", "@id": ORGANIZATION_ID, name: site.name, url: site.url },
     publisher: {
       "@type": "Organization",
+      "@id": ORGANIZATION_ID,
       name: site.name,
       url: site.url,
       logo: { "@type": "ImageObject", url: `${site.url}/icon.png` },

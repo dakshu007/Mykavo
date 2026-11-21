@@ -145,7 +145,7 @@ export function AppDownloadSection() {
         <h2
           className={`${fontDisplay} text-center text-4xl leading-[1.06] text-[#E9EBDF] sm:text-5xl lg:text-[52px]`}
         >
-          Web and Android,
+          Web and Android,{" "}
           <br />
           <span className="relative inline-block">
             <span

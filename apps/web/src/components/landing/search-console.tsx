@@ -26,7 +26,7 @@ export function SearchConsoleSection() {
           <div>
             <p className={`${eyebrowOnDark} mb-4`}>{"// search console, correlated //"}</p>
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#E9EBDF] sm:text-5xl`}>
-              Google tells you what ranks.
+              Google tells you what ranks.{" "}
               <br />
               <span className="relative inline-block">
                 <span

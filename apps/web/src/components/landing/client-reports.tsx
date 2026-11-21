@@ -30,7 +30,7 @@ export function ClientReportsSection() {
           <div>
             <p className={`${eyebrow} mb-4`}>{"// client reports //"}</p>
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
-              Prove the retainer.
+              Prove the retainer.{" "}
               <br />
               <span className="relative inline-block">
                 <span aria-hidden className="absolute inset-x-[-6px] bottom-[8%] top-[10%] -rotate-1 rounded-md bg-[#FFD400]" />

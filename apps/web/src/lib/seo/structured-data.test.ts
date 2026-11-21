@@ -9,7 +9,7 @@ import {
   softwareApplicationNode,
 } from "./structured-data";
 import { plans } from "@/config/plans";
-import { socials } from "@/config/site";
+import { founder, officialListings, site, socials } from "@/config/site";
 
 describe("jsonLdScript", () => {
   it("escapes < so a payload cannot break out of its script tag", () => {
@@ -127,9 +127,15 @@ describe("blogIndexGraph", () => {
 });
 
 describe("sameAs (brand entity resolution)", () => {
-  it("emits every configured social profile", () => {
+  it("emits every configured social profile, then the official product listings", () => {
     const node = organizationNode() as { sameAs?: string[] };
-    expect(node.sameAs).toEqual(socials.map((s) => s.href));
+    expect(node.sameAs).toEqual([...socials.map((s) => s.href), ...officialListings]);
+  });
+
+  it("links the founder to the author page's Person node", () => {
+    const node = organizationNode() as { founder: { "@id": string; sameAs: string[] } };
+    expect(node.founder["@id"]).toBe(`${site.url}${founder.path}#person`);
+    expect(node.founder.sameAs.length).toBeGreaterThan(0);
   });
 
   it("only lists absolute https profile URLs", () => {

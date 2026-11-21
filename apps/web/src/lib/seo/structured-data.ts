@@ -16,7 +16,7 @@
  * Every builder below is fed from the same constants the page renders.
  */
 
-import { site, socials } from "@/config/site";
+import { founder, officialListings, site, socials } from "@/config/site";
 
 /** Escape `<` so a JSON-LD payload can never break out of its script tag. */
 export function jsonLdScript(payload: object): string {
@@ -33,9 +33,28 @@ export function organizationNode() {
     "@id": ORGANIZATION_ID,
     name: site.name,
     url: site.url,
-    logo: `${site.url}/icon.png`,
-    description: site.description,
-    founder: { "@type": "Person", name: "Dakshesh B" },
+    logo: { "@type": "ImageObject", url: `${site.url}/icon.png` },
+    description: site.definition,
+    slogan: site.tagline,
+    // The founder's node is the author page's Person (same @id), so the
+    // company, its founder and the posts he writes resolve to one graph.
+    founder: {
+      "@type": "Person",
+      "@id": `${site.url}${founder.path}#person`,
+      name: founder.name,
+      url: `${site.url}${founder.path}`,
+      sameAs: [...founder.sameAs],
+    },
+    // What MyKavo is an authority on, in the words people search with.
+    knowsAbout: [
+      "Website change monitoring",
+      "Website regression monitoring",
+      "Visual regression testing",
+      "SEO change monitoring",
+      "WordPress update monitoring",
+      "Broken link monitoring",
+      "Uptime and SSL monitoring",
+    ],
     // How to reach MyKavo, for answer engines asked "how do I contact MyKavo".
     contactPoint: {
       "@type": "ContactPoint",
@@ -47,7 +66,8 @@ export function organizationNode() {
     // sameAs ties this domain to the same brand entity elsewhere, which is
     // how knowledge panels and AI answer engines resolve "who is MyKavo".
     // MyKavo's own E-E-A-T Analyzer scores sites on having it.
-    ...(socials.length > 0 ? { sameAs: socials.map((s) => s.href) } : {}),
+    // Official social accounts plus the product listings MyKavo publishes.
+    sameAs: [...socials.map((s) => s.href), ...officialListings],
   };
 }
 
@@ -141,6 +161,14 @@ export function softwareApplicationNode(params: {
       description: offer.description,
       availability: "https://schema.org/InStock",
       url: `${site.url}/pricing`,
+      // Says the price is per month, so "$7" is never read as one-off.
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: String(offer.priceUsd),
+        priceCurrency: "USD",
+        unitText: "MONTH",
+        billingDuration: "P1M",
+      },
     })),
     featureList: params.featureList,
   };

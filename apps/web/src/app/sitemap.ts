@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@mykavo/database";
 import { site } from "@/config/site";
 import { TOOLS, TOOLS_HUB_PATH, toolHref } from "@/config/tools";
-import { ALTERNATIVES } from "@/config/alternatives";
+import { ALTERNATIVES, PAGES_UPDATED_ON } from "@/config/alternatives";
 import { WRITER_PAGES } from "@/config/ai-writer";
 import { DOC_SECTIONS, allDocArticles } from "@/config/docs";
 import { embedUrl, getTutorialVideos, watchPath } from "@/lib/youtube";
@@ -70,8 +70,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...DOC_SECTIONS.map((s) => `/docs/${s.slug}`),
     ...allDocArticles().map(({ section, article }) => `/docs/${section.slug}/${article.slug}`),
   ];
+  // Comparison and alternative pages carry the date they last changed
+  // (shown on the page too), so crawlers and AI engines see fresh facts.
+  const COMPARISON_ROUTES = ["/compare/uptime-monitoring", "/compare/visual-change-detection", "/compare/seo-crawlers"];
+  const comparisonsUpdated = new Date(`${PAGES_UPDATED_ON.iso}T00:00:00Z`);
+  const comparisonRoutes = new Set([
+    "/compare",
+    ...COMPARISON_ROUTES,
+    "/alternatives",
+    ...ALTERNATIVES.map((a) => `/alternatives/${a.slug}`),
+  ]);
+  const isComparison = (route: string) => comparisonRoutes.has(route);
   const entries: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${site.url}${route}`,
+    ...(isComparison(route) ? { lastModified: comparisonsUpdated } : {}),
     changeFrequency: "weekly",
     priority: route === "" ? 1 : 0.8,
   }));

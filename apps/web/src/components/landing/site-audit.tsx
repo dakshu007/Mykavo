@@ -142,7 +142,7 @@ export function SiteAuditSection() {
                 sorts the results - rather than with the pricing angle, which
                 now sits below as the supporting line. */}
             <h2 className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}>
-              Every technical issue.
+              Every technical issue.{" "}
               <br />
               <span className="relative inline-block">
                 <span

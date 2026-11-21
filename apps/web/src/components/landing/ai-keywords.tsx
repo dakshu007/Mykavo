@@ -67,7 +67,7 @@ export function AiKeywordsSection() {
               id="ai-keywords-heading"
               className={`${fontDisplay} text-4xl leading-[1.06] text-[#151515] sm:text-5xl`}
             >
-              Know what to write next.
+              Know what to write next.{" "}
               <br />
               <span className="relative inline-block">
                 <span

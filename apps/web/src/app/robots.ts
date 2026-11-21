@@ -30,13 +30,22 @@ const AI_CRAWLERS = [
   "MistralAI-User",
 ];
 
+/**
+ * Public files that happen to be served from under /api/ - blog images,
+ * narration audio and brand logos. Blocking them hid every blog post's image
+ * and audio (the AudioObject in its JSON-LD) from crawlers. The more specific
+ * Allow wins over the /api/ Disallow for Google, Bing and the AI crawlers.
+ */
+const PUBLIC_API_ASSETS = ["/api/blog-images/", "/api/blog-audio/", "/api/brand-logos/"];
+
 export default function robots(): MetadataRoute.Robots {
+  const allow = ["/", ...PUBLIC_API_ASSETS];
   return {
     rules: [
-      { userAgent: "*", allow: "/", disallow: ["/api/"] },
+      { userAgent: "*", allow, disallow: ["/api/"] },
       ...AI_CRAWLERS.map((userAgent) => ({
         userAgent,
-        allow: "/",
+        allow,
         disallow: ["/api/"],
       })),
     ],

@@ -32,6 +32,14 @@
 /** The day every competitor fact on these pages was last checked. */
 export const VERIFIED_ON = "September 20, 2026";
 
+/**
+ * When the comparison and alternative pages last changed (MyKavo's side:
+ * plans, limits, wording). Shown as "Last updated" and emitted as the
+ * pages' dateModified and sitemap lastmod, so it must move whenever these
+ * pages do. VERIFIED_ON stays the date the competitor facts were checked.
+ */
+export const PAGES_UPDATED_ON = { label: "November 21, 2026", iso: "2026-11-21" } as const;
+
 export interface AlternativeRow {
   capability: string;
   /** What the named product does, as published by them. */
@@ -106,7 +114,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Check frequency",
         them: "Down to five-minute intervals on paid plans.",
-        us: "Weekly on Free, daily on Pro, plus manual scans. Uptime and SSL are checked separately every five minutes.",
+        us: "Weekly on Free, daily on Starter, Pro and Agency, plus manual scans on paid plans. Uptime and SSL are checked separately every five minutes.",
       },
       {
         capability: "What is compared",
@@ -116,7 +124,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Technical SEO audit",
         them: "Not the product's purpose.",
-        us: "Included: a full-site crawl scored against 89 checks across 22 categories, with CSV export.",
+        us: "Included: a full-site crawl scored against 98 checks across 23 categories, with CSV export.",
       },
       {
         capability: "Search Console data",
@@ -148,7 +156,7 @@ export const ALTERNATIVES: Alternative[] = [
       },
       {
         q: "Which is cheaper?",
-        a: "Both have free tiers. MyKavo Pro is $20/month for 8 websites with 15 monitored pages each, daily scans, a year of history and 3 seats; Agency is $79/month for 30 websites. Visualping's paid pricing is tiered by check volume and frequency; check their pricing page for the current figures, since they change more often than a comparison page can track.",
+        a: "Both have free tiers. MyKavo Starter is $7/month for 2 websites with 10 monitored pages each, checked daily; Pro is $20/month for 8 websites with 15 pages each, a year of history and 3 seats; Agency is $79/month for 30 websites. Visualping's paid pricing is tiered by check volume and frequency; check their pricing page for the current figures, since they change more often than a comparison page can track.",
       },
       {
         q: "Does MyKavo highlight what changed on a screenshot?",
@@ -222,7 +230,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Technical SEO audit",
         them: "SEO issue checks included.",
-        us: "Full-site crawl scored against 89 checks across 22 categories, each explaining what it is, why it matters and which URLs it affects, with CSV export.",
+        us: "Full-site crawl scored against 98 checks across 23 categories, each explaining what it is, why it matters and which URLs it affects, with CSV export.",
       },
       {
         capability: "Search Console integration",
@@ -239,7 +247,7 @@ export const ALTERNATIVES: Alternative[] = [
       "You want one tool watching infrastructure as well as web pages - DNS, SFTP, IMAP and mail servers are in Hexometer's scope and outside MyKavo's entirely.",
       "You want spelling, grammar and W3C validation checks as part of monitoring. MyKavo does not proofread.",
       "You want the broadest possible list of automated checks rather than a deep answer to one question.",
-      "Its entry plan is published at $12/month, below MyKavo Pro at $20/month - if budget is the deciding factor and you do not need baselines or change history, that difference is real.",
+      "Its entry plan is published at $12/month. MyKavo Starter is $7/month for 2 websites checked daily and Pro is $20/month for 8, so compare on what each plan monitors rather than the headline price.",
     ],
     bestFor:
       "Pick MyKavo if the thing that hurts you is regression - a deploy that silently removed a canonical tag, a plugin update that dropped the analytics script, a theme change that broke the pricing page - and you need evidence of exactly what changed, when, and against what approved state. Pick Hexometer if you want a broad QA sweep across web and server infrastructure in one subscription.",
@@ -328,7 +336,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Technical SEO audit",
         them: "Not offered.",
-        us: "Full-site crawl scored against 89 checks across 22 categories.",
+        us: "Full-site crawl scored against 98 checks across 23 categories.",
       },
       {
         capability: "Mobile apps",
@@ -398,7 +406,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Billing unit",
         them: "Monthly checks - 4,500 on Pro, 10,000 on Business. Frequency and page count both draw from that pool.",
-        us: "Websites and monitored pages. Scans are weekly on Free and daily on Pro, with no per-check meter to budget against.",
+        us: "Websites and monitored pages. Scans are weekly on Free and daily on every paid plan, with no per-check meter to budget against.",
       },
       {
         capability: "Monitor breadth",
@@ -428,7 +436,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Technical SEO audit",
         them: "Not the product's purpose.",
-        us: "Included: a full-site crawl scored against 89 checks across 22 categories, with CSV export.",
+        us: "Included: a full-site crawl scored against 98 checks across 23 categories, with CSV export.",
       },
       {
         capability: "Search Console data",
@@ -443,7 +451,7 @@ export const ALTERNATIVES: Alternative[] = [
       {
         capability: "Entry price",
         them: "Pro at $29/month. A free trial rather than a free plan.",
-        us: `Free plan that does not expire (1 website, 5 pages, weekly, no card). Then $20/month for 8 websites with 15 pages each, or $79/month for 30 websites.`,
+        us: `Free plan that does not expire (1 website, 5 pages, weekly, no card). Then $7/month for 2 websites with 10 pages each, $20/month for 8 websites with 15 pages each, or $79/month for 30 websites.`,
       },
     ],
     whereTheyWin: [
@@ -466,7 +474,7 @@ export const ALTERNATIVES: Alternative[] = [
       },
       {
         q: "How does pricing compare?",
-        a: `They are metered differently, which matters more than the headline figures. Hexowatch sells a pool of monthly checks (4,500 on Pro at $29/month), so frequency and page count compete for the same budget. MyKavo sells websites and pages ($20/month for 8 websites with 15 monitored pages each, scanned daily), so adding a page does not force you to slow down the others. MyKavo also has a free plan that does not expire, with no card.`,
+        a: `They are metered differently, which matters more than the headline figures. Hexowatch sells a pool of monthly checks (4,500 on Pro at $29/month), so frequency and page count compete for the same budget. MyKavo sells websites and pages ($7/month for 2 websites with 10 monitored pages each, or $20/month for 8 websites with 15 pages each, scanned daily), so adding a page does not force you to slow down the others. MyKavo also has a free plan that does not expire, with no card.`,
       },
       {
         q: "How current is this comparison?",

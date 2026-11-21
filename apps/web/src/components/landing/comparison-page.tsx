@@ -3,8 +3,11 @@ import { Check, Minus } from "lucide-react";
 import { MarketingPageShell } from "@/components/landing/page-shell";
 import { PageOverviewBlock } from "@/components/landing/page-overview";
 import { SeoPageCta } from "@/components/landing/seo-page";
-import { breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
+import { ORGANIZATION_ID, WEBSITE_ID, breadcrumbList, faqPage, jsonLdScript } from "@/lib/seo/structured-data";
 import { COMPARISONS, type Comparison } from "@/config/comparisons";
+import { PAGES_UPDATED_ON } from "@/config/alternatives";
+import { site } from "@/config/site";
+import { planSummaryLines } from "@/config/plans";
 
 /**
  * Renderer for the category comparison pages.
@@ -29,11 +32,26 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
       eyebrowText="compare"
       title={comparison.title}
       intro={comparison.capsule}
-      updated="September 9, 2026"
+      updated={PAGES_UPDATED_ON.label}
     >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(faqPage(comparison.faqs)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdScript({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: comparison.title,
+            url: `${site.url}/compare/${comparison.slug}`,
+            description: comparison.capsule,
+            dateModified: PAGES_UPDATED_ON.iso,
+            isPartOf: { "@id": WEBSITE_ID },
+            publisher: { "@id": ORGANIZATION_ID },
+          }),
+        }}
       />
       <script
         type="application/ld+json"
@@ -107,10 +125,8 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
       <p>{comparison.bestFor}</p>
       <ul className="not-prose my-6 space-y-2.5">
         {[
-          "Free plan: 1 website, 5 monitored pages, weekly scans, 30-day history, no card",
-          "Pro at $20/month: 8 websites, 15 pages each, daily scans, 1-year history, 3 seats",
-          "Agency at $79/month: 30 websites, 25 pages each, white-label client reports, 15 seats",
-          "Site audit on every plan: 98 checks across 23 categories",
+          ...planSummaryLines(),
+          "Site audit on every plan: 98 checks across 23 categories, with CSV export",
           "Every alert carries the previous and current value, and a screenshot diff for visual change",
         ].map((point) => (
           <li key={point} className="flex items-start gap-3 text-[15px] text-[#151515]/90">
