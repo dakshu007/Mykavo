@@ -53,7 +53,7 @@ export function postToMarkdown(post: PostForMarkdown, siteUrl: string): string {
       if (!/^#{1,6}\s/.test(lastLine.trim().split("\n").pop() ?? "")) lines.push("## Frequently asked questions", "");
       for (const item of segment.items) lines.push(`### ${item.question}`, "", item.answer, "");
     }
-    // cta, cta-wordpress and toc blocks are page furniture, not content.
+    // cta, cta-wordpress, cta-writer and toc blocks are page furniture, not content.
   }
 
   return `${lines.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`;

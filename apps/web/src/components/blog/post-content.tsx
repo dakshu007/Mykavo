@@ -8,7 +8,7 @@ import { parsePost, withMidpointSlot, type FaqItem, type PostHeading, type Segme
 import { BlogMarkdown } from "./markdown";
 
 /**
- * Renders a post's markdown plus its shortcode blocks ({{cta}}, {{cta-wordpress}}, {{toc}},
+ * Renders a post's markdown plus its shortcode blocks ({{cta}}, {{cta-wordpress}}, {{cta-writer}}, {{toc}},
  * {{faq}}…{{/faq}}) in author order. Used by both the public post page and
  * the editor live preview, so the preview shows exactly what readers see.
  */
@@ -39,6 +39,8 @@ export function PostContent({ content, midpoint }: { content: string; midpoint?:
             return <CtaBlock key={index} />;
           case "cta-wordpress":
             return <WordpressCtaBlock key={index} />;
+          case "cta-writer":
+            return <WriterCtaBlock key={index} />;
           case "toc":
             // Superseded by the automatic table of contents; see TocBlock.
             return null;
@@ -172,6 +174,80 @@ function WordpressCtaBlock() {
         <p className="mt-4 text-[12px] text-ink-faint">
           WordPress {WP_PLUGIN_REQUIRES.wordpress}+ · PHP {WP_PLUGIN_REQUIRES.php}+ · GPL · Free on every MyKavo plan
         </p>
+      </div>
+    </aside>
+  );
+}
+
+const WRITER_CTA_POINTS = [
+  "Keywords from your own Search Console data and today's Google results",
+  "A full SEO post: title, meta description, FAQ and schema",
+  "Stays a draft until you edit it. Never published for you",
+];
+
+const WRITER_EXAMPLE_ROWS = [
+  { keyword: "how to clear cache in wordpress", note: "You rank #12", tag: "Write first" },
+  { keyword: "wordpress not sending email", note: "Weak page one", tag: "Quick win" },
+  { keyword: "increase max upload size", note: "New topic", tag: "Next" },
+];
+
+/**
+ * {{cta-writer}} - "Try the AI Blog Writer" card for posts about blogging and
+ * content. Same dark, high-contrast treatment as {{cta}} so it stops a
+ * skimming reader; the example keyword list on the right is labelled as one.
+ */
+function WriterCtaBlock() {
+  return (
+    <aside className="my-10 overflow-hidden rounded-[24px] border border-[#151515] bg-[#151515] text-left shadow-[6px_6px_0_#FFD400,6px_6px_0_1px_#151515]">
+      <div className="grid gap-8 px-6 py-8 sm:px-9 sm:py-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center">
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FFD400]">
+            MyKavo AI Blog Writer
+          </p>
+          <p className="mt-3 text-[28px] font-semibold leading-[1.1] tracking-tight text-[#F4F5EE] sm:text-[32px]">
+            Know what to write next.{" "}
+            <span className="text-[#FFD400]">Get the draft in one click.</span>
+          </p>
+          <ul className="mt-5 space-y-2.5">
+            {WRITER_CTA_POINTS.map((point) => (
+              <li key={point} className="flex items-start gap-2.5 text-[14px] leading-6 text-[#D9DBD0]">
+                <Check className="mt-0.5 size-4 shrink-0 rounded-full bg-[#FFD400] p-0.5 text-[#151515]" aria-hidden />
+                {point}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <GoogleButton size="md" from="blog:inline-writer" />
+            <Link prefetch={false}
+              href="/ai-blog-writer"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-[#FFD400] px-6 text-[14px] font-semibold text-[#151515] transition-colors hover:bg-[#FFE14D]"
+            >
+              See how it works
+            </Link>
+          </div>
+          <p className="mt-4 text-[12.5px] text-[#9C9E93]">
+            Free plan: 1 keyword report and 1 post a month · No credit card
+          </p>
+        </div>
+        <div aria-hidden className="hidden min-w-0 md:block">
+          <div className="rounded-2xl border border-white/10 bg-[#1F2023] p-4">
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-[#9C9E93]">Example keyword report</p>
+            <div className="mt-3 space-y-2 rounded-xl bg-white p-3 text-[#151515]">
+              {WRITER_EXAMPLE_ROWS.map((row) => (
+                <div key={row.keyword} className="flex items-center justify-between gap-3 rounded-lg bg-[#F1F2EC] px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-semibold leading-snug">{row.keyword}</p>
+                    <p className="mt-0.5 font-mono text-[11px] text-[#6B6B60]">{row.note}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#FFD400] px-2.5 py-1 text-[11px] font-semibold">{row.tag}</span>
+                </div>
+              ))}
+              <div className="rounded-lg border border-dashed border-[#151515]/25 px-3 py-2.5 text-[12px] font-semibold">
+                Write the post →
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
   );

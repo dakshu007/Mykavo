@@ -22,6 +22,7 @@ import {
   FaqBlockWithView,
   TocBlockWithView,
   WordpressCtaBlockWithView,
+  WriterCtaBlockWithView,
 } from "./editor/shortcode-views";
 
 /**
@@ -66,10 +67,11 @@ export function VisualEditor({
       // Base list, with React node views attached to the shortcode nodes.
       ...buildEditorExtensions().filter(
         (extension) =>
-          !["mykavoCta", "mykavoCtaWordpress", "mykavoToc", "mykavoFaq"].includes(extension.name),
+          !["mykavoCta", "mykavoCtaWordpress", "mykavoCtaWriter", "mykavoToc", "mykavoFaq"].includes(extension.name),
       ),
       CtaBlockWithView,
       WordpressCtaBlockWithView,
+      WriterCtaBlockWithView,
       TocBlockWithView,
       FaqBlockWithView,
       createSlashCommandExtension({

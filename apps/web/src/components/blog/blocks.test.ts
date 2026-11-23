@@ -294,3 +294,15 @@ describe("withMidpointSlot", () => {
     expect(out[out.length - 1]).toEqual({ type: "slot" });
   });
 });
+
+describe("cta-writer block", () => {
+  it("splits {{cta-writer}} into its own segment, separate from the other CTAs", () => {
+    const { segments } = parsePost("Intro.\n\n{{cta-writer}}\n\nMiddle.\n\n{{cta}}\n\n{{cta-wordpress}}");
+    expect(segments.map((s) => s.type)).toEqual(["markdown", "cta-writer", "markdown", "cta", "cta-wordpress"]);
+  });
+
+  it("only matches the token on its own line", () => {
+    expect(parsePost("  {{ cta-writer }}  ").segments.map((s) => s.type)).toEqual(["cta-writer"]);
+    expect(parsePost("Use {{cta-writer}} here.").segments.map((s) => s.type)).toEqual(["markdown"]);
+  });
+});

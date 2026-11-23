@@ -3,7 +3,7 @@ import { slugify } from "@/lib/slugify";
 /**
  * Shortcode blocks for blog posts.
  *
- * Authors can drop `{{cta}}`, `{{cta-wordpress}}`, `{{toc}}`, and `{{faq}}…{{/faq}}` blocks into
+ * Authors can drop `{{cta}}`, `{{cta-wordpress}}`, `{{cta-writer}}`, `{{toc}}`, and `{{faq}}…{{/faq}}` blocks into
  * post markdown (via the editor's "/" menu). This module is the single source
  * of truth for parsing them: it splits raw markdown into ordered segments,
  * parses FAQ Q/A pairs, and extracts h2/h3 headings with stable anchor ids.
@@ -42,6 +42,7 @@ export type BlockSegment =
   | MarkdownSegment
   | { type: "cta" }
   | { type: "cta-wordpress" }
+  | { type: "cta-writer" }
   | { type: "toc" }
   | { type: "faq"; items: FaqItem[] };
 
@@ -73,6 +74,12 @@ export const BLOCK_SNIPPETS: readonly BlockSnippet[] = [
     snippet: "{{cta-wordpress}}",
   },
   {
+    command: "cta-writer",
+    label: "AI Blog Writer CTA",
+    description: "“Try the AI Blog Writer” card with a signup button.",
+    snippet: "{{cta-writer}}",
+  },
+  {
     command: "faq",
     label: "FAQ section",
     description: "Q&A accordion - also emits FAQ structured data.",
@@ -86,6 +93,7 @@ export const BLOCK_SNIPPETS: readonly BlockSnippet[] = [
 
 const CTA_TOKEN = /^\{\{\s*cta\s*\}\}$/;
 const CTA_WORDPRESS_TOKEN = /^\{\{\s*cta-wordpress\s*\}\}$/;
+const CTA_WRITER_TOKEN = /^\{\{\s*cta-writer\s*\}\}$/;
 const TOC_TOKEN = /^\{\{\s*toc\s*\}\}$/;
 const FAQ_OPEN_TOKEN = /^\{\{\s*faq\s*\}\}$/;
 const FAQ_CLOSE_TOKEN = /^\{\{\s*\/faq\s*\}\}$/;
@@ -237,6 +245,13 @@ export function parsePost(markdown: string): ParsedPost {
         i += 1;
         continue;
       }
+      if (CTA_WRITER_TOKEN.test(trimmed)) {
+        flush();
+        segments.push({ type: "cta-writer" });
+        sawShortcode = true;
+        i += 1;
+        continue;
+      }
       if (TOC_TOKEN.test(trimmed)) {
         flush();
         segments.push({ type: "toc" });
@@ -299,6 +314,7 @@ export function parsePost(markdown: string): ParsedPost {
 export const SHORTCODE_LINE_TOKENS = {
   cta: CTA_TOKEN,
   ctaWordpress: CTA_WORDPRESS_TOKEN,
+  ctaWriter: CTA_WRITER_TOKEN,
   toc: TOC_TOKEN,
   faqOpen: FAQ_OPEN_TOKEN,
   faqClose: FAQ_CLOSE_TOKEN,

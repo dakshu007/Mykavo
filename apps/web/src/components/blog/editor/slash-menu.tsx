@@ -11,6 +11,7 @@ import {
   ListOrdered,
   MessageCircleQuestion,
   Minus,
+  PenLine,
   Plug,
   Table,
   TableOfContents,
@@ -140,6 +141,19 @@ export function buildSlashItems(actions: { insertImage: () => void }): SlashMenu
           .focus()
           .deleteRange(range)
           .insertContent({ type: "mykavoCtaWordpress" })
+          .run(),
+    },
+    {
+      title: "AI Blog Writer CTA",
+      description: "“Try the AI Blog Writer” card with a signup button.",
+      icon: PenLine,
+      keywords: "cta-writer cta ai blog writer keywords",
+      run: (editor, range) =>
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertContent({ type: "mykavoCtaWriter" })
           .run(),
     },
     {

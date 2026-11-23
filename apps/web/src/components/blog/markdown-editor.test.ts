@@ -11,7 +11,11 @@ describe("markdown editor / menu", () => {
     expect(filterSnippets("cta-wordpress").map((o) => o.command)).toEqual(["cta-wordpress"]);
   });
 
-  it("/cta offers both CTA cards", () => {
-    expect(filterSnippets("cta").map((o) => o.command)).toEqual(["cta", "cta-wordpress"]);
+  it("/cta offers every CTA card", () => {
+    expect(filterSnippets("cta").map((o) => o.command)).toEqual(["cta", "cta-wordpress", "cta-writer"]);
+  });
+
+  it("/cta-writer finds exactly the AI Blog Writer CTA", () => {
+    expect(filterSnippets("cta-writer").map((o) => o.command)).toEqual(["cta-writer"]);
   });
 });

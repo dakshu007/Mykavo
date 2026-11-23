@@ -6,12 +6,13 @@ import {
   ReactNodeViewRenderer,
   type ReactNodeViewProps,
 } from "@tiptap/react";
-import { ListOrdered, MessageCircleQuestion, Plug, X, Zap } from "lucide-react";
+import { ListOrdered, MessageCircleQuestion, PenLine, Plug, X, Zap } from "lucide-react";
 import {
   CtaBlockNode,
   FaqBlockNode,
   TocBlockNode,
   WordpressCtaBlockNode,
+  WriterCtaBlockNode,
 } from "@/lib/blog-editor/shortcode-nodes";
 import { joinFaqRaw, splitFaqRaw } from "@/lib/blog-editor/markdown-roundtrip";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,18 @@ function WordpressCtaChipView({ selected, deleteNode }: ReactNodeViewProps) {
   );
 }
 
+function WriterCtaChipView({ selected, deleteNode }: ReactNodeViewProps) {
+  return (
+    <ChipShell
+      selected={selected}
+      icon={<PenLine className="size-4" aria-hidden />}
+      title="AI Blog Writer CTA"
+      description="Try the AI Keywords & Blog Writer"
+      onRemove={deleteNode}
+    />
+  );
+}
+
 function TocChipView({ selected, deleteNode }: ReactNodeViewProps) {
   return (
     <ChipShell
@@ -160,5 +173,6 @@ function withView(
 
 export const CtaBlockWithView = withView(CtaBlockNode, CtaChipView);
 export const WordpressCtaBlockWithView = withView(WordpressCtaBlockNode, WordpressCtaChipView);
+export const WriterCtaBlockWithView = withView(WriterCtaBlockNode, WriterCtaChipView);
 export const TocBlockWithView = withView(TocBlockNode, TocChipView);
 export const FaqBlockWithView = withView(FaqBlockNode, FaqBlockView);
