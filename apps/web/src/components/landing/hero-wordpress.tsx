@@ -73,7 +73,7 @@ export function HeroWordPress({ variant = "wide" }: { variant?: "wide" | "card" 
         <div className={wide ? "lg:col-start-1 lg:row-start-2" : "mt-auto"}>
         <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <WpPluginInstall placement="home_hero" />
-          <Link
+          <Link prefetch={false}
             href={`${WP_PLUGIN_PAGE_PATH}?from=home_hero`}
             className="group inline-flex items-center justify-center gap-1.5 px-2 text-[14px] font-semibold text-[#151515]"
           >

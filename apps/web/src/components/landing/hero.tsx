@@ -54,7 +54,7 @@ export function LandingHero() {
         <SkyScene eager dense />
 
         <div className="relative mx-auto w-full max-w-5xl text-center">
-          <Link
+          <Link prefetch={false}
             href="/ai-blog-writer"
             className="hero-launch group relative inline-flex items-center gap-2.5 overflow-hidden rounded-full border border-white/80 bg-white/70 py-2 pl-3.5 pr-3.5 text-[13px] font-semibold text-[#151515] shadow-[0_8px_30px_-12px_rgba(21,21,21,0.25)] backdrop-blur-md transition-transform hover:-translate-y-0.5"
           >
@@ -104,7 +104,7 @@ export function LandingHero() {
         {/* The two halves of MyKavo, as glass tiles at the foot of the sky. */}
         <div className="relative mx-auto mt-auto grid w-full max-w-3xl gap-2.5 pt-10 sm:grid-cols-2 sm:gap-3 sm:pt-14">
           {TILES.map((t) => (
-            <Link
+            <Link prefetch={false}
               key={t.title}
               href={t.href}
               className="group flex items-center gap-3.5 rounded-2xl border border-white/80 bg-white/80 px-4 py-3.5 text-left shadow-[0_16px_40px_-20px_rgba(21,40,60,0.45)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/95"

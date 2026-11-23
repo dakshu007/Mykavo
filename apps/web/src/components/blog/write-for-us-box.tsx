@@ -64,7 +64,7 @@ export function WriteForUsBox({ slug }: { slug: string }) {
           <p className="mt-1 text-[14px] leading-6 text-[#5D5D55]">
             Know website monitoring, WordPress or SEO from real work? Pitch us a guide. You keep a byline with one link
             to your site.{" "}
-            <Link href="/write-for-us" className="font-medium text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-2 hover:decoration-[#151515]">
+            <Link prefetch={false} href="/write-for-us" className="font-medium text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-2 hover:decoration-[#151515]">
               Read the guidelines
             </Link>
           </p>

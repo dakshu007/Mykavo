@@ -175,14 +175,14 @@ export function SiteAuditSection() {
               1,500-page audits daily for <span className="font-semibold text-[#151515]">$20/mo</span>,
               monitoring included. The dedicated audit tools start at $129/mo.
             </p>
-            <Link
+            <Link prefetch={false}
               href="/signup"
               className="mt-7 inline-flex items-center gap-2.5 rounded-full border border-black/25 bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)] transition-colors hover:bg-[#ffe14d]"
             >
               <SearchCheck className="size-4.5" aria-hidden />
               Audit your site free
             </Link>
-            <Link
+            <Link prefetch={false}
               href="/site-audit"
               className="ml-4 mt-7 inline-flex items-center gap-1 text-[14px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
             >

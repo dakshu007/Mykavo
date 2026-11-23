@@ -164,7 +164,7 @@ export default async function BlogIndexPage() {
               {posts.length} {posts.length === 1 ? "guide" : "guides"}
             </span>
             <span aria-hidden>·</span>
-            <Link
+            <Link prefetch={false}
               href="/blog/feed.xml"
               className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-[#151515]"
             >
@@ -184,7 +184,7 @@ export default async function BlogIndexPage() {
                 ? "Refresh in a moment to see every guide."
                 : "We're writing our first guides on website change monitoring. Check back soon - or start monitoring in the meantime."}
             </p>
-            <Link
+            <Link prefetch={false}
               href="/signup"
               className="mt-7 rounded-full border border-[#151515] bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-colors hover:bg-[#ffe14d]"
             >

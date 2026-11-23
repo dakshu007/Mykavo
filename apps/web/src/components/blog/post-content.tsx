@@ -85,7 +85,7 @@ function CtaBlock() {
           </ul>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
             <GoogleButton size="md" from="blog:inline" />
-            <Link
+            <Link prefetch={false}
               href="/signup"
               className="inline-flex h-11 items-center justify-center rounded-full bg-[#FFD400] px-6 text-[14px] font-semibold text-[#151515] transition-colors hover:bg-[#FFE14D]"
             >
@@ -162,7 +162,7 @@ function WordpressCtaBlock() {
         </ul>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <WpPluginInstall placement="blog" />
-          <Link
+          <Link prefetch={false}
             href={WP_PLUGIN_PAGE_PATH}
             className="inline-flex items-center justify-center rounded-full border border-line px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:border-ink"
           >

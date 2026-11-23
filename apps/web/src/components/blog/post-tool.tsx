@@ -63,7 +63,7 @@ export function PostTool({ tool }: { tool: BlogToolId }) {
       <div className="mt-5">
         <t.Tool />
       </div>
-      <Link
+      <Link prefetch={false}
         href={t.href}
         className="mt-5 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[#151515] underline-offset-4 hover:underline"
       >

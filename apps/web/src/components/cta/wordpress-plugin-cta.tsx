@@ -69,7 +69,7 @@ export function WordpressPluginCta({
         </ul>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <WpPluginInstall placement={placement} />
-          <Link
+          <Link prefetch={false}
             href={WP_PLUGIN_PAGE_PATH}
             onClick={() => track("cta_clicked", { cta: "wp_plugin_page", placement })}
             className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#151515]/25 bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] no-underline! transition-colors hover:border-[#151515]"

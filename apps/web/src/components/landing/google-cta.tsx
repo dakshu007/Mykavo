@@ -48,7 +48,7 @@ export function GoogleButton({
     ? "shadow-[4px_4px_0_#FFD400] hover:shadow-[5px_6px_0_#FFD400] active:shadow-[2px_2px_0_#FFD400]"
     : "shadow-[4px_4px_0_#151515] hover:shadow-[5px_6px_0_#151515] active:shadow-[2px_2px_0_#151515]";
   return (
-    <Link
+    <Link prefetch={false}
       href={`/signup?${query.toString()}`}
       className={`inline-flex ${pad} items-center justify-center gap-2.5 whitespace-nowrap rounded-full border border-[#151515] bg-white font-semibold text-[#151515] transition-all hover:-translate-y-0.5 active:translate-y-0 ${shadow} ${className}`}
     >
@@ -76,7 +76,7 @@ export function GoogleCta({
     <div className={`flex flex-col items-center gap-2.5 ${className}`}>
       <GoogleButton label={label} size={size} next={next} />
       {emailFallback && (
-        <Link
+        <Link prefetch={false}
           href="/signup"
           className="text-[12.5px] text-[#6B6B60] underline underline-offset-4 transition-colors hover:text-[#151515]"
         >

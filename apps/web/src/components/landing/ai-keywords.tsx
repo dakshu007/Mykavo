@@ -102,20 +102,20 @@ export function AiKeywordsSection() {
             </ol>
 
             <div className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-3">
-              <Link
+              <Link prefetch={false}
                 href="/signup"
                 className="inline-flex items-center gap-2 rounded-full border border-[#151515] bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[4px_4px_0_#151515] transition-all hover:-translate-y-0.5 hover:bg-[#ffe14d]"
               >
                 Try AI Keywords free
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/pricing"
                 className="text-[14px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
               >
                 Compare plans
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/ai-blog-writer"
                 className="text-[14px] font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
               >

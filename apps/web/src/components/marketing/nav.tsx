@@ -21,12 +21,12 @@ export function MarketingNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/60 bg-canvas/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-300 items-center justify-between px-5 lg:px-8">
-        <Link href="/" aria-label="MyKavo home">
+        <Link prefetch={false} href="/" aria-label="MyKavo home">
           <Logo />
         </Link>
         <nav className="hidden items-center gap-7 md:flex" aria-label="Main">
           {links.map((l) => (
-            <Link
+            <Link prefetch={false}
               key={l.href}
               href={l.href}
               className="text-sm font-medium text-ink-secondary transition-colors hover:text-ink"
@@ -61,7 +61,7 @@ export function MarketingNav() {
           <ul className="space-y-1">
             {links.map((l) => (
               <li key={l.href}>
-                <Link
+                <Link prefetch={false}
                   href={l.href}
                   onClick={() => setOpen(false)}
                   className="block rounded-xl px-3 py-2.5 text-[15px] font-medium text-ink hover:bg-ink/5"

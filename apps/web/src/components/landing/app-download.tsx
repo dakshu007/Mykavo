@@ -188,7 +188,7 @@ export function AppDownloadSection() {
         <div className="mt-10 flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             <RequestAppButton />
-            <Link
+            <Link prefetch={false}
               href={ANDROID_APP_PAGE_PATH}
               className="inline-flex items-center gap-2 rounded-full border border-[#E9EBDF]/25 px-5 py-3 text-[13px] font-medium text-[#E9EBDF] transition-colors hover:border-[#FFD400]"
             >

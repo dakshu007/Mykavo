@@ -312,7 +312,7 @@ export default async function BlogPostPage({ params }: Params) {
           {/* Back to the index. The arrow slides out left and a fresh one
               slides in from the right on hover - CSS only, still a plain link,
               and motion-reduce keeps it static. */}
-          <Link
+          <Link prefetch={false}
             href="/blog"
             className="group inline-flex items-center gap-2.5 rounded-full border border-[#151515]/15 bg-white/80 py-1.5 pl-1.5 pr-4 text-sm font-semibold text-[#151515] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[3px_3px_0_#151515] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#151515] active:translate-y-0 active:shadow-[1px_1px_0_#151515] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
@@ -519,7 +519,7 @@ export default async function BlogPostPage({ params }: Params) {
                   <ul className="mt-4 grid gap-4 sm:grid-cols-3">
                     {related.map((r) => (
                       <li key={r.slug}>
-                        <Link
+                        <Link prefetch={false}
                           href={`/blog/${r.slug}`}
                           className="flex h-full flex-col rounded-2xl border border-black/10 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[4px_4px_0_#FFD400]"
                         >
@@ -555,7 +555,7 @@ export default async function BlogPostPage({ params }: Params) {
                     MyKavo watches your pages and tells you when something important changes or breaks.
                   </p>
                   <GoogleButton size="md" className="mt-4 w-full" from="blog:rail" />
-                  <Link
+                  <Link prefetch={false}
                     href="/signup"
                     className="mt-2.5 block text-center text-[12.5px] text-[#6B6B60] underline underline-offset-4 hover:text-[#151515]"
                   >

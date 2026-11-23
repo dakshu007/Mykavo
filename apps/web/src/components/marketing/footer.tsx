@@ -38,7 +38,7 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-300 px-5 py-14 lg:px-8">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <Link href="/" aria-label="MyKavo home" className="inline-flex">
+            <Link prefetch={false} href="/" aria-label="MyKavo home" className="inline-flex">
               <Logo />
             </Link>
             <p className="mt-4 max-w-70 text-sm leading-6 text-ink-secondary">
@@ -52,7 +52,7 @@ export function MarketingFooter() {
               <ul className="space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l.label}>
-                    <Link
+                    <Link prefetch={false}
                       href={l.href}
                       className="text-sm text-ink-secondary transition-colors hover:text-ink"
                     >

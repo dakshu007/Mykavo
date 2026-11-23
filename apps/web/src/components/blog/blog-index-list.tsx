@@ -320,7 +320,7 @@ export function BlogIndexList({
                 </span>
                 <h2 className={`${fontDisplay} text-[26px] leading-tight text-[#151515] sm:text-[32px]`}>
                   {/* The whole card is clickable through this link's overlay. */}
-                  <Link href={`/blog/${featured.slug}`} className="after:absolute after:inset-0">
+                  <Link prefetch={false} href={`/blog/${featured.slug}`} className="after:absolute after:inset-0">
                     {featured.title}
                   </Link>
                 </h2>
@@ -369,7 +369,7 @@ export function BlogIndexList({
                     </ul>
                   )}
                   <h2 className="line-clamp-3 text-[19px] font-semibold leading-snug tracking-[-0.01em] text-[#151515]">
-                    <Link href={`/blog/${post.slug}`} className="after:absolute after:inset-0">
+                    <Link prefetch={false} href={`/blog/${post.slug}`} className="after:absolute after:inset-0">
                       {post.title}
                     </Link>
                   </h2>

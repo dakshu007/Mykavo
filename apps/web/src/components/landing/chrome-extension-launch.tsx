@@ -63,7 +63,7 @@ export function ChromeExtensionLaunch() {
 
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <ChromeStoreButton placement="homepage" variant="dark" />
-            <Link
+            <Link prefetch={false}
               href={CHROME_EXTENSION_PAGE_PATH}
               className="inline-flex items-center gap-2 px-3 py-3 text-sm font-semibold text-[#F5F5F0] underline decoration-[#FFD400] decoration-2 underline-offset-4"
             >

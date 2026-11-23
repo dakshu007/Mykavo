@@ -46,7 +46,7 @@ export function WordPressPluginSection() {
             </ul>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <WpPluginInstall placement="homepage" />
-              <Link
+              <Link prefetch={false}
                 href={WP_PLUGIN_PAGE_PATH}
                 className="inline-flex items-center gap-2 px-2 py-3 text-sm font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
               >
@@ -55,7 +55,7 @@ export function WordPressPluginSection() {
               </Link>
             </div>
           </div>
-          <Link
+          <Link prefetch={false}
             href={WP_PLUGIN_PAGE_PATH}
             aria-label="MyKavo for WordPress - see everything the plugin does"
             className="block min-w-0 overflow-hidden rounded-[18px] border-2 border-[#151515] bg-[#FBFAF6] shadow-[10px_10px_0_#FFD400] transition-transform hover:-translate-y-0.5"
@@ -65,7 +65,7 @@ export function WordPressPluginSection() {
         </div>
 
         {/* Shopify, next in line */}
-        <Link
+        <Link prefetch={false}
           href={SHOPIFY_APP_PAGE_PATH}
           className="group mt-14 flex flex-col gap-5 rounded-2xl border border-black/10 bg-[#FBFAF3] p-6 transition-all hover:-translate-y-0.5 hover:border-[#151515] hover:shadow-[5px_5px_0_#151515] sm:flex-row sm:items-center sm:justify-between sm:px-8"
         >

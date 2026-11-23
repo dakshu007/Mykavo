@@ -158,7 +158,7 @@ export function PromoBar({
           {copied ? <Check className="size-3" aria-hidden /> : <Copy className="size-3 opacity-70" aria-hidden />}
         </button>
 
-        <Link
+        <Link prefetch={false}
           href={href}
           onClick={() => track("campaign_banner_clicked", { campaign: campaign.id, placement })}
           className={`${bf ? "bf-glow bg-[#FFCF00] hover:bg-[#ffdb3d] text-[#0B0B0B]" : "promo-glow bg-[#FF7A1A] hover:bg-[#ff9447] text-[#151515]"} inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[12.5px] font-semibold transition-colors`}
@@ -371,7 +371,7 @@ function BlackFridayBar({
           {copied ? <Check className="size-3" aria-hidden /> : <Copy className="size-3 opacity-70" aria-hidden />}
         </button>
 
-        <Link
+        <Link prefetch={false}
           href={href}
           onClick={() => track("campaign_banner_clicked", { campaign: campaign.id, placement })}
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#0B0B0B] px-3 py-1 text-[12.5px] font-bold text-[#FFD400] shadow-[0_2px_0_rgb(0_0_0/0.35)] transition-[transform,box-shadow] duration-150 hover:translate-y-[2px] hover:shadow-none motion-reduce:transition-none"

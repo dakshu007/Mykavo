@@ -206,11 +206,11 @@ export function DocArticlePage({
           .filter((a) => a.slug !== article.slug)
           .map((a) => (
             <li key={a.slug}>
-              <Link href={`/docs/${section.slug}/${a.slug}`}>{a.title}</Link>
+              <Link prefetch={false} href={`/docs/${section.slug}/${a.slug}`}>{a.title}</Link>
             </li>
           ))}
         <li>
-          <Link href="/docs">All documentation</Link>
+          <Link prefetch={false} href="/docs">All documentation</Link>
         </li>
       </ul>
     </MarketingPageShell>

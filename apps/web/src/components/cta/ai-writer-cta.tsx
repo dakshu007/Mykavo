@@ -61,7 +61,7 @@ export function AiWriterCta({
           ))}
         </ul>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Link
+          <Link prefetch={false}
             href="/signup"
             onClick={() => track("cta_clicked", { cta: "ai_writer_signup", placement })}
             className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#151515] bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] no-underline! shadow-[3px_3px_0_#151515] transition-transform hover:-translate-y-0.5"
@@ -69,7 +69,7 @@ export function AiWriterCta({
             Try it free
             <ArrowRight className="size-4" aria-hidden />
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/ai-blog-writer"
             onClick={() => track("cta_clicked", { cta: "ai_writer_page", placement })}
             className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#151515]/25 bg-white px-6 py-3.5 text-sm font-semibold text-[#151515] no-underline! transition-colors hover:border-[#151515]"
@@ -96,14 +96,14 @@ export function AiWriterRailCta() {
       <p className="mt-1.5 text-[13px] leading-5 text-[#6B6B60]">
         MyKavo finds the keywords your site can win and writes the post for each one.
       </p>
-      <Link
+      <Link prefetch={false}
         href="/signup"
         onClick={() => track("cta_clicked", { cta: "ai_writer_signup", placement: "blog:rail" })}
         className="mt-4 flex h-10 w-full items-center justify-center gap-1.5 rounded-full border-2 border-[#151515] bg-[#FFD400] text-[13.5px] font-semibold text-[#151515] transition-transform hover:-translate-y-0.5"
       >
         Try it free <ArrowRight className="size-4" aria-hidden />
       </Link>
-      <Link
+      <Link prefetch={false}
         href="/ai-blog-writer"
         onClick={() => track("cta_clicked", { cta: "ai_writer_page", placement: "blog:rail" })}
         className="mt-2.5 block text-center text-[12.5px] text-[#6B6B60] underline underline-offset-4 hover:text-[#151515]"

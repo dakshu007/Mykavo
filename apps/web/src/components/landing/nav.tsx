@@ -271,7 +271,7 @@ export function LandingNav() {
           <div className="flex items-center justify-between gap-3 whitespace-nowrap">
             {/* Left island: logo and the main links. */}
             <div className={`${island} gap-1 pl-4 pr-2`}>
-              <Link href="/" aria-label="MyKavo home" className="mr-3 flex shrink-0 items-center gap-2" onMouseEnter={closeSoon}>
+              <Link prefetch={false} href="/" aria-label="MyKavo home" className="mr-3 flex shrink-0 items-center gap-2" onMouseEnter={closeSoon}>
                 <LogoMark size={24} />
                 <span className="text-[17px] font-semibold tracking-tight text-[#151515]">MyKavo</span>
               </Link>
@@ -289,7 +289,7 @@ export function LandingNav() {
                   <ChevronDown className={`size-3.5 transition-transform duration-200 ${panelOpen ? "rotate-180" : ""}`} aria-hidden />
                 </button>
                 {TOP_LINKS.map((l) => (
-                  <Link
+                  <Link prefetch={false}
                     key={l.href}
                     href={l.href}
                     onMouseEnter={closeSoon}
@@ -304,7 +304,7 @@ export function LandingNav() {
 
             {/* Right island: connector, log in, the main call to action. */}
             <div className={`${island} hidden gap-1.5 px-2 lg:flex`} onMouseEnter={closeSoon}>
-              <Link
+              <Link prefetch={false}
                 href="/ai-connector"
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#151515]/10 bg-white px-3 text-[14px] font-medium text-[#151515] transition-colors hover:border-[#151515]/25"
               >
@@ -312,10 +312,10 @@ export function LandingNav() {
                 <span className="hidden xl:inline">Claude &amp; ChatGPT</span>
                 <span className="xl:hidden">MCP</span>
               </Link>
-              <Link href="/login" className="inline-flex h-10 items-center rounded-xl px-3 text-[14px] font-medium text-[#151515]/75 transition-colors hover:text-[#151515]">
+              <Link prefetch={false} href="/login" className="inline-flex h-10 items-center rounded-xl px-3 text-[14px] font-medium text-[#151515]/75 transition-colors hover:text-[#151515]">
                 Log in
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/signup?provider=google"
                 className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#151515] px-4 text-[14px] font-semibold text-white transition-colors hover:bg-[#2a2a28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD400] focus-visible:ring-offset-2"
               >
@@ -328,7 +328,7 @@ export function LandingNav() {
 
             {/* Mobile: the same right-hand call to action, compact, and the menu toggle. */}
             <div className={`${island} gap-1 px-1.5 lg:hidden`}>
-              <Link
+              <Link prefetch={false}
                 href="/signup?provider=google"
                 className="inline-flex h-10 items-center rounded-xl bg-[#151515] px-3.5 text-[13.5px] font-semibold text-white"
               >
@@ -367,7 +367,7 @@ export function LandingNav() {
             >
               <nav aria-label="Main mobile" className="flex flex-col">
                 {TOP_LINKS.map((l) => (
-                  <Link
+                  <Link prefetch={false}
                     key={l.href}
                     href={l.href}
                     onClick={() => setMobileOpen(false)}
@@ -377,7 +377,7 @@ export function LandingNav() {
                     {l.badge ? <Badge>{l.badge}</Badge> : null}
                   </Link>
                 ))}
-                <Link
+                <Link prefetch={false}
                   href="/ai-connector"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 rounded-xl px-3 py-3 text-[16px] font-medium text-[#151515] hover:bg-[#151515]/[0.04]"
@@ -412,14 +412,14 @@ export function LandingNav() {
                 </div>
               </nav>
               <div className="mt-3 grid grid-cols-2 gap-2 border-t border-black/10 pt-4">
-                <Link
+                <Link prefetch={false}
                   href="/login"
                   onClick={() => setMobileOpen(false)}
                   className="rounded-xl border border-[#151515]/15 px-4 py-3 text-center text-sm font-medium text-[#151515]"
                 >
                   Log in
                 </Link>
-                <Link
+                <Link prefetch={false}
                   href="/signup?provider=google"
                   onClick={() => setMobileOpen(false)}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#151515] px-4 py-3 text-center text-sm font-semibold text-white"

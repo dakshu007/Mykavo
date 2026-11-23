@@ -67,14 +67,14 @@ export function AiInsightsSection() {
               {aiAllowanceLine()}.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-              <Link
+              <Link prefetch={false}
                 href="/signup"
                 className="inline-flex items-center gap-2 rounded-full border border-[#FFD400] bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)] transition-colors hover:bg-[#ffe14d]"
               >
                 <Sparkles className="size-4.5" aria-hidden />
                 Try AI insights free
               </Link>
-              <Link
+              <Link prefetch={false}
                 href={AI_INSIGHTS_PATH}
                 className="inline-flex items-center gap-1 text-[14px] font-semibold text-[#E9EBDF] underline decoration-[#FFD400] decoration-2 underline-offset-4"
               >

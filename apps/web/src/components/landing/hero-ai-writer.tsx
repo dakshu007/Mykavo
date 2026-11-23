@@ -48,7 +48,7 @@ export function HeroAiWriter() {
 
       <div className="mt-auto pt-5">
         <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-          <Link
+          <Link prefetch={false}
             href="/signup?provider=google&from=home_hero:ai-writer"
             className="inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 border-[#151515] bg-[#FFD400] px-5 text-[14.5px] font-semibold text-[#151515] shadow-[0_3px_0_#151515] transition-[transform,box-shadow] duration-150 hover:translate-y-[3px] hover:shadow-none motion-reduce:transition-none"
           >
@@ -57,7 +57,7 @@ export function HeroAiWriter() {
             </span>
             Write your first post free
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/ai-blog-writer?from=home_hero"
             className="group inline-flex items-center justify-center gap-1.5 px-2 text-[14px] font-semibold text-[#151515]"
           >

@@ -150,7 +150,7 @@ export function AuthorForm({ author }: { author?: EditorAuthor }) {
 
   return (
     <div className="space-y-6">
-      <Link
+      <Link prefetch={false}
         href="/dashboard/blog/authors"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-secondary transition-colors hover:text-ink"
       >

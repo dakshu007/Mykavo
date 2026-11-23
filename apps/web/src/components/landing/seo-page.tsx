@@ -56,13 +56,13 @@ export function SeoPageCta({ heading }: { heading?: string }) {
         {heading ?? "Know what changed. Fix what matters."}
       </p>
       <div className="mx-auto mt-6 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
-        <Link
+        <Link prefetch={false}
           href="/signup"
           className="bg-[#FFD400] px-6 py-3 text-sm font-semibold text-[#151515] no-underline transition-colors hover:bg-[#ffe14d]"
         >
           Start Monitoring Free
         </Link>
-        <Link
+        <Link prefetch={false}
           href="/preview"
           className="border-l border-[#FFD400]/40 bg-black px-6 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#2a2a2a]"
         >
@@ -82,7 +82,7 @@ export function RelatedLinks({ links }: { links: { href: string; label: string }
       <ul>
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href}>{l.label}</Link>
+            <Link prefetch={false} href={l.href}>{l.label}</Link>
           </li>
         ))}
       </ul>

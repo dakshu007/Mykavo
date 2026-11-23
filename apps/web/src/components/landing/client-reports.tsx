@@ -54,7 +54,7 @@ export function ClientReportsSection() {
               Report links come with every plan. White-label branding and automatic client emails are
               part of the Agency plan
               {agency ? ` - ${agency.limits.websites} client websites for $${agency.priceMonthlyUsd}/month` : ""}.{" "}
-              <Link href="/pricing" className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4">
+              <Link prefetch={false} href="/pricing" className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4">
                 Compare plans
               </Link>
             </p>

@@ -20,7 +20,7 @@ export function TrackedLink({
   ...rest
 }: ComponentProps<typeof Link> & { event: AnalyticsEvent; eventProps?: EventProps }) {
   return (
-    <Link
+    <Link prefetch={false}
       {...rest}
       onClick={(e) => {
         track(event, eventProps);

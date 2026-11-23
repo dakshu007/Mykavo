@@ -55,7 +55,7 @@ export function SearchConsoleSection() {
                 </li>
               ))}
             </ul>
-            <Link
+            <Link prefetch={false}
               href="/signup"
               className="mt-8 inline-flex items-center gap-2.5 rounded-full border border-black/25 bg-[#FFD400] px-7 py-3.5 text-[15px] font-semibold text-[#151515] shadow-[0_14px_40px_-10px_rgba(255,212,0,0.55)] transition-colors hover:bg-[#ffe14d]"
             >

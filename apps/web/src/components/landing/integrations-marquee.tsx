@@ -113,7 +113,7 @@ function Logo({ item }: { item: Item }) {
   );
   if (!item.href) return <span className={logo}>{body}</span>;
   return (
-    <Link
+    <Link prefetch={false}
       href={item.href}
       className={`${logo} hover:opacity-100 focus-visible:rounded-md focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FFD400]`}
     >

@@ -107,19 +107,19 @@ export default function NotFound() {
 
         {/* 6 - the way home */}
         <div style={stage(5)} className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Link
+          <Link prefetch={false}
             href="/"
             className="rounded-full border border-[#151515] bg-[#FFD400] px-7 py-3.5 text-sm font-semibold text-[#151515] shadow-[4px_4px_0_#151515] transition-transform hover:-translate-y-0.5"
           >
             Escort me home
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/dashboard"
             className="rounded-full border border-[#151515] bg-white px-7 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#F3F1E6]"
           >
             Open dashboard
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/support"
             className="px-2 py-3.5 text-sm font-medium text-[#6B6B60] underline decoration-[#FFD400] decoration-2 underline-offset-4 hover:text-[#151515]"
           >

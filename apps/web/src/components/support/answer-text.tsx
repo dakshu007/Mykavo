@@ -66,7 +66,7 @@ export function AnswerText({
               {text}
             </a>
           ) : (
-            <Link key={k} href={node.href} className={linkClass}>
+            <Link prefetch={false} key={k} href={node.href} className={linkClass}>
               {text}
             </Link>
           ),

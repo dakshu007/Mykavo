@@ -98,7 +98,7 @@ export function PricingCampaignBanner() {
           automatically at checkout on monthly billing. Regular price from month {campaign.cycles + 1}. Cancel anytime.
         </p>
       </div>
-      <Link
+      <Link prefetch={false}
         href={bf ? campaign.page : "/signup"}
         onClick={() => track("campaign_banner_clicked", { campaign: campaign.id, placement: "pricing" })}
         className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-[14px] font-semibold transition-colors ${bf ? "bf-glow bg-[#FFCF00] text-[#0B0B0B] hover:bg-[#ffdb3d]" : "promo-glow bg-[#FF7A1A] text-[#151515] hover:bg-[#ff9447]"}`}

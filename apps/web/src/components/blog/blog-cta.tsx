@@ -81,7 +81,7 @@ export function BlogCta({ showMorePosts = true }: { showMorePosts?: boolean }) {
 
           <div className="mt-8 flex flex-col items-center gap-3 lg:items-start">
             <GoogleButton onDark from="blog:end" />
-            <Link
+            <Link prefetch={false}
               href="/signup"
               className="text-[13px] text-[#9C9E93] underline underline-offset-4 transition-colors hover:text-[#E9EBDF]"
             >
@@ -97,7 +97,7 @@ export function BlogCta({ showMorePosts = true }: { showMorePosts?: boolean }) {
           </p>
 
           <p className="mt-5 text-[13px] text-[#9C9E93]">
-            <Link
+            <Link prefetch={false}
               href="/pricing"
               className="text-[#E9EBDF] underline underline-offset-4 hover:text-[#FFD400]"
             >
@@ -107,7 +107,7 @@ export function BlogCta({ showMorePosts = true }: { showMorePosts?: boolean }) {
               <>
                 {" "}
                 or{" "}
-                <Link
+                <Link prefetch={false}
                   href="/blog"
                   className="text-[#E9EBDF] underline underline-offset-4 hover:text-[#FFD400]"
                 >
@@ -166,7 +166,7 @@ export function BlogCta({ showMorePosts = true }: { showMorePosts?: boolean }) {
               </p>
             </div>
           </div>
-          <Link
+          <Link prefetch={false}
             href="/preview"
             className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-[#FFD400] py-2 text-[13px] font-semibold text-[#151515]"
           >

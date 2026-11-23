@@ -270,7 +270,7 @@ export function BlogPostEditor({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
+        <Link prefetch={false}
           href="/dashboard/blog"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-secondary transition-colors hover:text-ink"
         >
@@ -282,7 +282,7 @@ export function BlogPostEditor({
             <span className="text-sm text-ink-secondary">Goes live {localWhen(publishedAtIso)}</span>
           )}
           {post && isLive && (
-            <Link
+            <Link prefetch={false}
               href={`/blog/${post.slug}`}
               target="_blank"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-primary-hover"
@@ -424,7 +424,7 @@ export function BlogPostEditor({
               {matchedAuthor
                 ? "The post shows this author's photo, bio and links. "
                 : "Without a profile the post shows the name only. "}
-              <Link href="/dashboard/blog/authors" className="font-medium text-accent hover:text-primary-hover">
+              <Link prefetch={false} href="/dashboard/blog/authors" className="font-medium text-accent hover:text-primary-hover">
                 {authors.length === 0 ? "Add an author profile" : "Manage authors"}
               </Link>
             </p>

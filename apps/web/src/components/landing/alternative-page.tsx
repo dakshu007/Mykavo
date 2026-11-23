@@ -170,11 +170,11 @@ export function AlternativePage({ alternative }: { alternative: Alternative }) {
       <ul>
         {related.map((a) => (
           <li key={a.slug}>
-            <Link href={`/alternatives/${a.slug}`}>{a.title}</Link>
+            <Link prefetch={false} href={`/alternatives/${a.slug}`}>{a.title}</Link>
           </li>
         ))}
         <li>
-          <Link href="/compare">How MyKavo compares with categories of tool</Link>
+          <Link prefetch={false} href="/compare">How MyKavo compares with categories of tool</Link>
         </li>
       </ul>
     </MarketingPageShell>

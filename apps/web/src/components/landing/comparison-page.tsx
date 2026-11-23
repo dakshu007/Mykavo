@@ -153,7 +153,7 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
       <ul>
         {related.map((c) => (
           <li key={c.slug}>
-            <Link href={`/compare/${c.slug}`}>{c.title}</Link>
+            <Link prefetch={false} href={`/compare/${c.slug}`}>{c.title}</Link>
           </li>
         ))}
       </ul>

@@ -58,10 +58,15 @@ export const metadata: Metadata = withSocial({
     // the second half of the product. A title that contradicts the headline
     // costs trust on arrival and tells a search engine the page is about
     // something it is not.
-    absolute: "Website Monitoring, Page by Page, plus an AI Blog Writer - MyKavo",
+    //
+    // "Website change monitoring" leads again: the November 13 title dropped
+    // "Change Detection Tool" for the AI Blog Writer, and the monitoring
+    // searches ("monitor website for changes", "page change monitoring")
+    // were the ones that fell most in the following week.
+    absolute: "Website Change Monitoring Tool + AI Blog Writer - MyKavo",
   },
   description:
-    "MyKavo baselines the pages that matter, re-checks them around the clock and sends one severity-ranked alert with before-and-after proof when a change breaks one. Its AI Keywords & Blog Writer finds the keywords worth writing about and drafts the SEO blog post in one click.",
+    "Website change monitoring, page by page: MyKavo alerts you with before-and-after proof when an important page breaks. Plus an AI Blog Writer for SEO posts.",
   keywords: [
     "website monitoring tools",
     "best website monitoring software",
@@ -348,13 +353,13 @@ function DisplayHeading({
 function SplitPill() {
   return (
     <div className="mx-auto mt-12 flex w-fit overflow-hidden rounded-full border border-[#151515] shadow-[4px_4px_0_#151515]">
-      <Link
+      <Link prefetch={false}
         href="/signup"
         className="bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
       >
         Start monitoring free
       </Link>
-      <Link
+      <Link prefetch={false}
         href="/preview"
         className="border-l border-[#151515] bg-[#151515] px-6 py-3.5 text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
       >
@@ -576,7 +581,7 @@ export default function HomePage() {
                 <p className="mt-8 text-sm text-[#6B6B60]">
                   The Agency plan covers {agencyPlan.limits.websites} client websites for $
                   {agencyPlan.priceMonthlyUsd}/month, with reports under your own brand.{" "}
-                  <Link
+                  <Link prefetch={false}
                     href="/pricing"
                     className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4"
                   >
@@ -632,7 +637,7 @@ export default function HomePage() {
           </p>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {freeTools.map((tool) => (
-              <Link
+              <Link prefetch={false}
                 key={tool.href}
                 href={tool.href}
                 className={`group flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
@@ -661,7 +666,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-8 text-center">
-            <Link
+            <Link prefetch={false}
               href={TOOLS_HUB_PATH}
               className="inline-flex items-center gap-2 rounded-full border border-[#151515] bg-white px-5 py-2.5 text-[14px] font-semibold text-[#151515] shadow-[3px_3px_0_#151515] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0_#151515]"
             >
@@ -718,7 +723,7 @@ export default function HomePage() {
                         </li>
                       ))}
                     </ul>
-                    <Link
+                    <Link prefetch={false}
                       href={plan.priceMonthlyUsd > 0 ? "/signup?next=/dashboard/billing" : "/signup"}
                       className="mt-8 rounded-full border border-[#151515] bg-[#151515] px-6 py-3.5 text-center text-sm font-semibold text-[#F5F5F0] transition-colors hover:bg-[#2a2a2a]"
                     >
@@ -735,7 +740,7 @@ export default function HomePage() {
             </div>
             <p className="mt-8 text-center text-sm text-[#6B6B60]">
               Full plan details on the{" "}
-              <Link href="/pricing" className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4">
+              <Link prefetch={false} href="/pricing" className="font-semibold text-[#151515] underline decoration-[#FFD400] decoration-2 underline-offset-4">
                 pricing page →
               </Link>
             </p>
@@ -789,7 +794,7 @@ export default function HomePage() {
                     { href: "/website-monitoring-for-webflow", label: "Website monitoring for Webflow" },
                   ].map((l) => (
                     <li key={l.href}>
-                      <Link
+                      <Link prefetch={false}
                         href={l.href}
                         className="text-[14.5px] font-medium text-[#151515]/80 underline decoration-[#FFD400] decoration-2 underline-offset-4 transition-colors hover:text-[#151515]"
                       >
@@ -812,7 +817,7 @@ export default function HomePage() {
                     { href: "/blog", label: "The MyKavo blog" },
                   ].map((l) => (
                     <li key={l.href}>
-                      <Link
+                      <Link prefetch={false}
                         href={l.href}
                         className="text-[14.5px] font-medium text-[#151515]/80 underline decoration-[#FFD400] decoration-2 underline-offset-4 transition-colors hover:text-[#151515]"
                       >
@@ -842,13 +847,13 @@ export default function HomePage() {
               keyword report and blog post free. No credit card required.
             </p>
             <div className="relative mx-auto mt-10 flex w-fit overflow-hidden rounded-full border border-[#FFD400]/40">
-              <Link
+              <Link prefetch={false}
                 href="/signup"
                 className="bg-[#FFD400] px-6 py-3.5 text-sm font-semibold text-[#151515] transition-colors hover:bg-[#ffe14d]"
               >
                 Start monitoring free
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/preview"
                 className="bg-white/[0.06] px-6 py-3.5 text-sm font-semibold text-[#E9EBDF] transition-colors hover:bg-white/[0.12]"
               >

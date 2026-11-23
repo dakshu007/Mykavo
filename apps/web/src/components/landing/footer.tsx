@@ -144,7 +144,7 @@ export function LandingFooter() {
       <div className="mx-auto max-w-7xl px-5 pt-16 lg:px-8">
         <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.15fr_repeat(7,minmax(0,1fr))]">
           <div>
-            <Link href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
+            <Link prefetch={false} href="/" aria-label="MyKavo home" className="inline-flex items-center gap-2.5">
               <LogoMark size={28} />
               <span className="text-lg font-semibold tracking-tight text-[#151515]">MyKavo</span>
             </Link>

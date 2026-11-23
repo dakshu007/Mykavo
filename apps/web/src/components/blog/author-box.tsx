@@ -69,7 +69,7 @@ export function AuthorBox({
             </a>
           ))}
           {showPageLink && (
-            <Link
+            <Link prefetch={false}
               href={author.url.replace(/^https?:\/\/[^/]+/, "") || "/about"}
               className="ml-1 text-[13px] font-semibold text-ink underline decoration-[#FFD400] decoration-2 underline-offset-4"
             >
