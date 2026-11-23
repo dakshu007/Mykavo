@@ -81,12 +81,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...ALTERNATIVES.map((a) => `/alternatives/${a.slug}`),
   ]);
   const isComparison = (route: string) => comparisonRoutes.has(route);
-  const entries: MetadataRoute.Sitemap = routes.map((route) => ({
-    url: `${site.url}${route}`,
-    ...(isComparison(route) ? { lastModified: comparisonsUpdated } : {}),
-    changeFrequency: "weekly",
-    priority: route === "" ? 1 : 0.8,
-  }));
+  // Key pages carry the date their title or copy last changed, so the daily
+  // IndexNow run and search crawlers re-read them. Update when they change.
+  const KEY_PAGES_UPDATED: Record<string, string> = { "": "2026-11-23", "/pricing": "2026-11-23" };
+  const lastModifiedFor = (route: string): Date | undefined => {
+    if (KEY_PAGES_UPDATED[route]) return new Date(`${KEY_PAGES_UPDATED[route]}T00:00:00Z`);
+    return isComparison(route) ? comparisonsUpdated : undefined;
+  };
+  const entries: MetadataRoute.Sitemap = routes.map((route) => {
+    const lastModified = lastModifiedFor(route);
+    return {
+      url: `${site.url}${route}`,
+      ...(lastModified ? { lastModified } : {}),
+      changeFrequency: "weekly" as const,
+      priority: route === "" ? 1 : 0.8,
+    };
+  });
 
   // Listed only once the channel has a video: until then the page is
   // noindexed, and a noindexed URL in the sitemap is a Search Console error.

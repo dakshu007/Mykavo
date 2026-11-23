@@ -25,8 +25,8 @@ import {
 } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = withSocial({
-  title: "Pricing - Website Monitoring and AI Blog Writer Plans from $0",
-  description: "Website monitoring and the AI Keywords & Blog Writer from $0. Start on the Free plan for 1 website, no card. Starter $7/month for 2 websites, Pro $20/month for 8, Agency $79/month for 30.",
+  title: "Pricing - Website Change Monitoring + AI Blog Writer from $0",
+  description: "Website change monitoring and the AI Keywords & Blog Writer from $0. Start on the Free plan for 1 website, no card. Starter $7/month for 2 websites, Pro $20/month for 8, Agency $79/month for 30.",
   keywords: [
     "website monitoring pricing",
     "ai blog writer pricing",
@@ -36,7 +36,7 @@ export const metadata: Metadata = withSocial({
   ],
   alternates: { canonical: "/pricing" },
   openGraph: {
-    title: "MyKavo Pricing - Website Monitoring and AI Keywords from $0",
+    title: "MyKavo Pricing - Website Change Monitoring + AI Blog Writer from $0",
     description: "A free plan for one website, no card. Starter at $7/month for 2 websites. Pro at $20/month for 8 websites. Agency at $79/month for 30 websites, white-label client reports and 15 team members. Every plan includes AI keyword reports and blog posts.",
     url: "/pricing",
     type: "website",

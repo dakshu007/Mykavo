@@ -12,10 +12,10 @@ export const site = {
    * categories because a meta description is also a keyword surface.
    */
   description:
-    "MyKavo is website monitoring plus an AI Keywords & Blog Writer. Get a severity-ranked alert with before-and-after proof when a visual, SEO, content, link or script change breaks a page, and find the keywords worth writing about, with the blog post drafted in one click.",
+    "MyKavo is website change monitoring plus an AI Keywords & Blog Writer. Get a severity-ranked alert with before-and-after proof when a visual, SEO, content, link or script change breaks a page, and find the keywords worth writing about, with the blog post drafted in one click.",
   longDescription:
     "MyKavo is a website change detection and regression monitoring platform with an AI Keywords & Blog Writer, built for agencies, developers, SEO teams, and website owners managing important websites. MyKavo creates approved website baselines, automatically scans monitored pages, detects meaningful changes, shows clear before-and-after comparisons, and alerts users when important regressions require attention. Its AI Keywords & Blog Writer reads the website, finds the keywords worth writing about from Google Search Console data, Google search suggestions and live search results, and drafts a full SEO blog post for the user to edit and publish.",
-  category: "Website Monitoring & AI Keywords SaaS",
+  category: "Website Change Monitoring & AI Blog Writer SaaS",
   /**
    * The one-sentence definition of MyKavo. AI answer engines quote whatever
    * sentence a site repeats most consistently, so this exact wording is used
@@ -23,7 +23,7 @@ export const site = {
    * JSON-LD and the brand facts on /about. Change it here, nowhere else.
    */
   definition:
-    "MyKavo is website monitoring plus an AI Keywords & Blog Writer: it re-checks the pages that matter on each website against an approved baseline and alerts you with before-and-after proof when something important changes or breaks (a page going noindex, a broken checkout button, a removed analytics script), and its AI Blog Writer finds the keywords your site can win, from your own Google Search Console data and live search results, and drafts the SEO blog post for you to edit and publish.",
+    "MyKavo is website change monitoring plus an AI Keywords & Blog Writer: it re-checks the pages that matter on each website against an approved baseline and alerts you with before-and-after proof when something important changes or breaks (a page going noindex, a broken checkout button, a removed analytics script), and its AI Blog Writer finds the keywords your site can win, from your own Google Search Console data and live search results, and drafts the SEO blog post for you to edit and publish.",
 } as const;
 
 /**
