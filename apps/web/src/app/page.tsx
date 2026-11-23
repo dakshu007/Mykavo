@@ -85,10 +85,11 @@ export const metadata: Metadata = withSocial({
     "ai keyword research",
   ],
   alternates: { canonical: "/" },
+  // Shared links show the same promise as the search result.
   openGraph: {
-    title: "MyKavo - Website Monitoring and AI Keywords & Blog Writer",
+    title: "Website Change Monitoring Tool + AI Blog Writer - MyKavo",
     description:
-      "Know what changed on every website you manage, with severity-ranked alerts. Then find the keywords worth writing about and get the blog post drafted in one click.",
+      "Website change monitoring, page by page: MyKavo alerts you with before-and-after proof when an important page breaks. Plus an AI Blog Writer for SEO posts.",
     url: "/",
     type: "website",
   },
