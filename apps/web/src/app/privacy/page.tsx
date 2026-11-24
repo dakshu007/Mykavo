@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
       eyebrowText="legal"
       title="Privacy Policy"
       intro="This policy explains, in plain English, what data MyKavo collects, why we collect it, where it lives, and the choices you have. MyKavo is operated by Dakshesh Babu, an independent developer. If anything here is unclear, email support@mykavo.app and you will get a straight answer."
-      updated="November 13, 2026"
+      updated="November 24, 2026"
     >
       <h2>1. What data we collect</h2>
       <h3>Account data</h3>
@@ -186,6 +186,44 @@ export default function PrivacyPolicyPage() {
         cookie-based ad tracking anywhere on MyKavo.
       </p>
 
+      <h3 id="business-outreach">Business outreach emails</h3>
+      <p>
+        We sometimes send a short, one-to-one email about MyKavo to people at businesses that
+        manage websites, such as web design, SEO and website maintenance agencies. If you received
+        one, this is how it works:
+      </p>
+      <ul>
+        <li>
+          <strong>What we hold</strong> - your name, job title, business email address, company,
+          company website, country and time zone, plus short notes on public information about your
+          company (for example the services it lists) that we used to write the email.
+        </li>
+        <li>
+          <strong>Where it came from</strong> - publicly available professional and company
+          information, found through the data provider Clay and your company&apos;s own website.
+        </li>
+        <li>
+          <strong>Why, and on what basis</strong> - to tell you about a product relevant to your
+          work. We rely on legitimate interests (UK GDPR and EU GDPR Article 6(1)(f)), and we only
+          email business addresses at companies, never personal addresses.
+        </li>
+        <li>
+          <strong>Opting out</strong> - reply &quot;unsubscribe&quot; to any email, or write to{" "}
+          <a href="mailto:support@mykavo.app">support@mykavo.app</a>, and we will not email you
+          again. We keep only your email address on a do-not-contact list so that we never contact
+          you by mistake in future.
+        </li>
+        <li>
+          <strong>How long we keep it</strong> - if you do not reply, we delete your details within
+          6 months of our last email, apart from the do-not-contact list entry if you opted out.
+        </li>
+      </ul>
+      <p>
+        You can ask us for a copy of this data, ask us to correct or delete it, or object to it
+        being used, at any time, using the contact details below. We never sell or share outreach
+        data.
+      </p>
+
       <h2>3. Where your data lives (subprocessors)</h2>
       <p>
         MyKavo runs on a small set of infrastructure providers. Each one processes data only so we
@@ -234,6 +272,16 @@ export default function PrivacyPolicyPage() {
             <td>Google</td>
             <td>Optional Google sign-in, optional Search Console connection (read-only), Analytics 4 on marketing pages, private mailing-list sheet</td>
             <td>Sign-in profile, your Search Console data (read only, when you connect it), anonymized page analytics, signup name and email</td>
+          </tr>
+          <tr>
+            <td>Clay (US)</td>
+            <td>Finding business contacts for outreach emails</td>
+            <td>Business contact and public company information (see Business outreach emails above)</td>
+          </tr>
+          <tr>
+            <td>Google Workspace (Gmail)</td>
+            <td>Sending and receiving business outreach emails</td>
+            <td>Recipient name, business email address and the email exchanged</td>
           </tr>
         </tbody>
       </table>
