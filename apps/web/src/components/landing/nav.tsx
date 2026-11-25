@@ -272,7 +272,7 @@ export function LandingNav() {
             {/* Left island: logo and the main links. */}
             <div className={`${island} gap-1 pl-4 pr-2`}>
               <Link prefetch={false} href="/" aria-label="MyKavo home" className="mr-3 flex shrink-0 items-center gap-2" onMouseEnter={closeSoon}>
-                <LogoMark size={24} />
+                <LogoMark size={24} className="text-[#151515]" />
                 <span className="text-[17px] font-semibold tracking-tight text-[#151515]">MyKavo</span>
               </Link>
               <nav aria-label="Main" className="hidden items-center gap-0.5 lg:flex">
